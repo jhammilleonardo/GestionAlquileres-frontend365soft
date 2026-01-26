@@ -1,0 +1,23 @@
+@use '../../../../styles' as *;
+
+.main-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content-wrapper {
+  flex: 1;
+  margin-left: 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-content {
+  flex: 1;
+  margin-top: 64px;
+  padding: 2rem;
+  background: var(--mat-sys-background);
+  min-height: calc(100vh - 64px);
+}

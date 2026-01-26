@@ -1,0 +1,31 @@
+<mat-toolbar class="header">
+  <button mat-icon-button class="menu-btn" (click)="toggleSidebar()">
+    <mat-icon>menu</mat-icon>
+  </button>
+
+  <span class="header-title">Gestión de Alquileres</span>
+
+  <span class="spacer"></span>
+
+  <div class="header-actions">
+    <button mat-icon-button [matBadge]="notificationCount()" matBadgeColor="warn">
+      <mat-icon>notifications</mat-icon>
+    </button>
+
+    <button mat-icon-button>
+      <mat-icon>search</mat-icon>
+    </button>
+
+    <div class="divider"></div>
+
+    <button mat-button class="user-menu-btn" (click)="goToProfile()">
+      <img [src]="currentUser()?.avatar" alt="User" class="user-avatar" />
+      <span class="user-name">{{ currentUser()?.name }}</span>
+      <mat-icon>expand_more</mat-icon>
+    </button>
+
+    <button mat-icon-button (click)="logout()">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
