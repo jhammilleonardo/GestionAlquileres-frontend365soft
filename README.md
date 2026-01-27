@@ -8,6 +8,7 @@ Sistema de gestión de propiedades y alquileres desarrollado con Angular 21 y An
 - ✅ Layout completo con header y navegación
 - ✅ Sistema de rutas configurado
 - ✅ Angular Material con tema personalizado
+- ✅ Íconos modernos con Lucide (1000+ íconos SVG)
 - ✅ Estructura de carpetas organizada
 - ✅ Componentes standalone (nueva arquitectura de Angular)
 
@@ -64,6 +65,7 @@ src/
 - **Angular 21.1.0** - Framework frontend
 - **Angular Material 21.1.1** - Biblioteca de componentes UI
 - **Angular CDK 21.1.1** - Componentes de desarrollo
+- **Lucide Angular** - Biblioteca de íconos moderna (1000+ íconos SVG)
 - **SCSS** - Preprocesador de CSS
 - **TypeScript 5.9.2** - Lenguaje de programación
 
@@ -100,7 +102,33 @@ Para crear una nueva página/funcionalidad:
 - Respeta el tema establecido en `src/styles.scss`
 - Mantén los estilos específicos del componente en su archivo `.scss`
 
-### 4. Convenciones de Código
+### 4. Íconos con Lucide
+
+El proyecto usa **Lucide icons** en lugar de Material Icons para una mejor calidad visual.
+
+**Cómo usar íconos:**
+
+1. Importar el ícono en tu componente:
+```typescript
+import { LucideAngularModule, IconName } from 'lucide-angular';
+
+export class MyComponent {
+  readonly IconName = IconName;
+}
+```
+
+2. Agregar `LucideAngularModule` a los imports del componente
+
+3. Usar en el template:
+```html
+<lucide-icon [img]="IconName" [size]="20"></lucide-icon>
+```
+
+**Recursos:**
+- Explorar íconos: [lucide.dev/icons](https://lucide.dev/icons)
+- Los estilos globales ya están configurados para alineación perfecta
+
+### 5. Convenciones de Código
 
 - Usar componentes **standalone**
 - Usar **signals** para la gestión de estado
@@ -141,6 +169,7 @@ Este es el punto de partida del proyecto. Las siguientes funcionalidades están 
 
 - El proyecto usa la nueva arquitectura de Angular 21 con componentes standalone
 - Angular Material ya está configurado con un tema personalizado
+- **Lucide icons** está integrado para todos los íconos (no usar Material Icons)
 - El sidebar es colapsable y responsive
 - Todas las páginas están creadas pero vacías, listas para ser desarrolladas
 
