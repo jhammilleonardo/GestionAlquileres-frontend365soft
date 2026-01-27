@@ -2,7 +2,7 @@
   <div class="sidebar-header">
     <div class="logo-section">
       <div class="logo-icon">
-        <mat-icon>apartment</mat-icon>
+        <lucide-icon [img]="Building2" [size]="24"></lucide-icon>
       </div>
       <div class="logo-text" *ngIf="expanded()">
         <h1>365Soft</h1>
@@ -10,26 +10,22 @@
       </div>
     </div>
     <button mat-icon-button class="toggle-btn" (click)="toggleSidebar()">
-      <mat-icon>{{ expanded() ? 'menu_open' : 'menu' }}</mat-icon>
+      <lucide-icon [img]="expanded() ? PanelLeftClose : PanelLeftOpen" [size]="20"></lucide-icon>
     </button>
   </div>
 
   <nav class="sidebar-nav">
     <ul class="nav-list">
       @for (option of menuOptions(); track option.route) {
-        <li class="nav-item">
-          <a
-            class="nav-link"
-            [routerLink]="option.route"
-            routerLinkActive="active"
-            [attr.title]="expanded() ? '' : option.label"
-          >
-            <mat-icon class="nav-icon">{{ option.icon }}</mat-icon>
-            @if (expanded()) {
-              <span class="nav-label">{{ option.label }}</span>
-            }
-          </a>
-        </li>
+      <li class="nav-item">
+        <a class="nav-link" [routerLink]="option.route" routerLinkActive="active"
+          [attr.title]="expanded() ? '' : option.label">
+          <lucide-icon class="nav-icon" [img]="getIconComponent(option.icon)" [size]="20"></lucide-icon>
+          @if (expanded()) {
+          <span class="nav-label">{{ option.label }}</span>
+          }
+        </a>
+      </li>
       }
     </ul>
   </nav>

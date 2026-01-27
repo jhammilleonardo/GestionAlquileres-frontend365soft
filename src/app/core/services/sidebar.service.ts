@@ -24,47 +24,47 @@ export class SidebarService {
     return [
       {
         label: 'Dashboard',
-        icon: 'dashboard',
+        icon: 'LayoutDashboard',
         route: '/dashboard'
       },
       {
         label: 'Propiedades',
-        icon: 'apartment',
+        icon: 'Building2',
         route: '/propiedades'
       },
       {
         label: 'Inquilinos',
-        icon: 'people',
+        icon: 'Users',
         route: '/inquilinos'
       },
       {
         label: 'Contratos',
-        icon: 'description',
+        icon: 'FileText',
         route: '/contratos'
       },
       {
         label: 'Pagos',
-        icon: 'payments',
+        icon: 'CreditCard',
         route: '/pagos'
       },
       {
         label: 'Mantenimiento',
-        icon: 'build',
+        icon: 'Wrench',
         route: '/mantenimiento'
       },
       {
         label: 'Componentes UI',
-        icon: 'widgets',
+        icon: 'Component',
         route: '/componentes'
       },
       {
         label: 'Reportes',
-        icon: 'analytics',
+        icon: 'BarChart3',
         route: '/reportes'
       },
       {
         label: 'Configuración',
-        icon: 'settings',
+        icon: 'Settings',
         route: '/configuracion'
       }
     ];

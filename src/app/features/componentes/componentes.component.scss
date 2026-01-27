@@ -57,6 +57,15 @@
 
   button {
     margin: 0;
+
+    lucide-icon {
+      margin-right: 6px;
+
+      &:last-child {
+        margin-right: 0;
+        margin-left: 6px;
+      }
+    }
   }
 }
 
@@ -88,13 +97,13 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 1rem;
+  align-items: center;
+  justify-items: center;
 
-  mat-icon {
-    font-size: 36px;
-    width: 36px;
-    height: 36px;
+  lucide-icon {
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, color 0.2s ease;
+    color: var(--mat-sys-on-surface);
 
     &:hover {
       transform: scale(1.2);
@@ -102,15 +111,15 @@
   }
 
   &.colored {
-    mat-icon.primary {
+    lucide-icon.primary {
       color: var(--mat-sys-primary);
     }
 
-    mat-icon.accent {
+    lucide-icon.accent {
       color: var(--mat-sys-tertiary);
     }
 
-    mat-icon.warn {
+    lucide-icon.warn {
       color: var(--mat-sys-error);
     }
   }
@@ -122,7 +131,7 @@
   gap: 0.5rem;
   margin: 1rem 0;
 
-  mat-icon {
+  lucide-icon {
     color: var(--mat-sys-primary);
   }
 

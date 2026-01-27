@@ -13,12 +13,12 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
-import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { LucideAngularModule, Heart, Bookmark, Trash2, Hand, Settings, User, Mail, MessageSquare, CheckCircle, XCircle, Code, Home, Search, Plus, Edit, Phone, MapPin, Calendar, ArrowLeft, ArrowRight, Menu, X, Info, AlertTriangle, AlertCircle } from 'lucide-angular';
 
 interface TableColumn {
   name: string;
@@ -44,11 +44,11 @@ interface TableColumn {
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatTableModule,
-    MatIconModule,
     MatChipsModule,
     MatDividerModule,
     MatSlideToggleModule,
-    MatListModule
+    MatListModule,
+    LucideAngularModule
   ],
   templateUrl: './componentes.component.html',
   styleUrl: './componentes.component.scss'
@@ -89,6 +89,33 @@ export class ComponentesComponent {
   // Chips
   chips = ['Angular', 'TypeScript', 'SCSS', 'RxJS'];
   selectedChip = signal('');
+
+  // Lucide icons
+  readonly Heart = Heart;
+  readonly Bookmark = Bookmark;
+  readonly Trash2 = Trash2;
+  readonly Hand = Hand;
+  readonly Settings = Settings;
+  readonly User = User;
+  readonly Mail = Mail;
+  readonly MessageSquare = MessageSquare;
+  readonly CheckCircle = CheckCircle;
+  readonly XCircle = XCircle;
+  readonly Code = Code;
+  readonly Home = Home;
+  readonly Search = Search;
+  readonly Plus = Plus;
+  readonly Edit = Edit;
+  readonly Phone = Phone;
+  readonly MapPin = MapPin;
+  readonly Calendar = Calendar;
+  readonly ArrowLeft = ArrowLeft;
+  readonly ArrowRight = ArrowRight;
+  readonly Menu = Menu;
+  readonly X = X;
+  readonly Info = Info;
+  readonly AlertTriangle = AlertTriangle;
+  readonly AlertCircle = AlertCircle;
 
   constructor() {
     // Simular progreso

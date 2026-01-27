@@ -28,13 +28,13 @@
             <h3>Botones con Íconos</h3>
             <div class="button-group">
               <button mat-icon-button aria-label="Ejemplo">
-                <mat-icon>favorite</mat-icon>
+                <lucide-icon [img]="Heart" [size]="20"></lucide-icon>
               </button>
               <button mat-icon-button color="primary" aria-label="Ejemplo">
-                <mat-icon>bookmark</mat-icon>
+                <lucide-icon [img]="Bookmark" [size]="20"></lucide-icon>
               </button>
               <button mat-icon-button color="warn" aria-label="Ejemplo">
-                <mat-icon>delete</mat-icon>
+                <lucide-icon [img]="Trash2" [size]="20"></lucide-icon>
               </button>
             </div>
           </mat-card-content>
@@ -45,14 +45,14 @@
             <h3>Botones Interactivos (haz clic)</h3>
             <div class="button-group">
               <button mat-raised-button (click)="mostrarMensaje('boton')">
-                <mat-icon>touch_app</mat-icon>
+                <lucide-icon [img]="Hand" [size]="18"></lucide-icon>
                 Click Me
               </button>
               <button mat-raised-button color="primary" (click)="mostrarMensaje('principal')">
                 Principal
               </button>
               <button mat-stroked-button (click)="mostrarMensaje('accion')">
-                <mat-icon>settings</mat-icon>
+                <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
                 Acción
               </button>
             </div>
@@ -74,20 +74,20 @@
             <mat-form-field appearance="fill">
               <mat-label>Nombre</mat-label>
               <input matInput [(ngModel)]="nombre" placeholder="Escribe tu nombre" />
-              <mat-icon matPrefix>person</mat-icon>
+              <lucide-icon matPrefix [img]="User" [size]="20"></lucide-icon>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
               <mat-label>Email</mat-label>
               <input matInput type="email" [(ngModel)]="email" placeholder="tu@email.com" />
-              <mat-icon matPrefix>email</mat-icon>
+              <lucide-icon matPrefix [img]="Mail" [size]="20"></lucide-icon>
               <mat-hint>Usa un email válido</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="fill">
               <mat-label>Mensaje</mat-label>
               <textarea matInput [(ngModel)]="mensaje" rows="3"></textarea>
-              <mat-icon matPrefix>message</mat-icon>
+              <lucide-icon matPrefix [img]="MessageSquare" [size]="20"></lucide-icon>
             </mat-form-field>
           </mat-card-content>
         </mat-card>
@@ -131,7 +131,7 @@
               <mat-label>País</mat-label>
               <mat-select [(ngModel)]="pais">
                 @for (paisItem of paises; track paisItem.value) {
-                  <mat-option [value]="paisItem.value">{{ paisItem.viewValue }}</mat-option>
+                <mat-option [value]="paisItem.value">{{ paisItem.viewValue }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
@@ -217,11 +217,11 @@
 
             <mat-list>
               @for (chip of chips; track chip) {
-                <mat-list-item (click)="onChipClick(chip)">
-                  <mat-icon matListItemIcon>check_circle</mat-icon>
-                  <div matListItemTitle>{{ chip }}</div>
-                  <div matListItemLine>Haz clic para seleccionar</div>
-                </mat-list-item>
+              <mat-list-item (click)="onChipClick(chip)">
+                <lucide-icon matListItemIcon [img]="CheckCircle" [size]="20"></lucide-icon>
+                <div matListItemTitle>{{ chip }}</div>
+                <div matListItemLine>Haz clic para seleccionar</div>
+              </mat-list-item>
               }
             </mat-list>
           </mat-card-content>
@@ -243,10 +243,10 @@
 
             <mat-chip-listbox>
               @for (chip of chips; track chip) {
-                <mat-chip-option (click)="onChipClick(chip)" [selected]="selectedChip() === chip">
-                  <mat-icon matChipAvatar>code</mat-icon>
-                  {{ chip }}
-                </mat-chip-option>
+              <mat-chip-option (click)="onChipClick(chip)" [selected]="selectedChip() === chip">
+                <lucide-icon matChipAvatar [img]="Code" [size]="16"></lucide-icon>
+                {{ chip }}
+              </mat-chip-option>
               }
             </mat-chip-listbox>
           </mat-card-content>
@@ -260,7 +260,7 @@
               <mat-chip color="accent">Accent Chip</mat-chip>
               <mat-chip disabled>Disabled</mat-chip>
               <mat-chip>
-                <mat-icon matChipTrailingIcon>cancel</mat-icon>
+                <lucide-icon matChipTrailingIcon [img]="XCircle" [size]="16"></lucide-icon>
                 Removable
               </mat-chip>
             </mat-chip-set>
@@ -337,36 +337,36 @@
     <!-- ICONOS -->
     <mat-tab label="Íconos">
       <div class="tab-content">
-        <h2>Íconos de Material Design</h2>
-        <p class="description">Más de 2000 íconos disponibles</p>
+        <h2>Íconos de Lucide</h2>
+        <p class="description">Más de 1000 íconos modernos y hermosos disponibles</p>
 
         <mat-card class="example-card">
           <mat-card-content>
             <h3>Algunos Íconos Comunes</h3>
 
             <div class="icons-grid">
-              <mat-icon>home</mat-icon>
-              <mat-icon>person</mat-icon>
-              <mat-icon>settings</mat-icon>
-              <mat-icon>search</mat-icon>
-              <mat-icon>add</mat-icon>
-              <mat-icon>delete</mat-icon>
-              <mat-icon>edit</mat-icon>
-              <mat-icon>check_circle</mat-icon>
-              <mat-icon>cancel</mat-icon>
-              <mat-icon>favorite</mat-icon>
-              <mat-icon>bookmark</mat-icon>
-              <mat-icon>email</mat-icon>
-              <mat-icon>phone</mat-icon>
-              <mat-icon>location_on</mat-icon>
-              <mat-icon>calendar_today</mat-icon>
-              <mat-icon>arrow_back</mat-icon>
-              <mat-icon>arrow_forward</mat-icon>
-              <mat-icon>menu</mat-icon>
-              <mat-icon>close</mat-icon>
-              <mat-icon>info</mat-icon>
-              <mat-icon>warning</mat-icon>
-              <mat-icon>error</mat-icon>
+              <lucide-icon [img]="Home" [size]="28"></lucide-icon>
+              <lucide-icon [img]="User" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Settings" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Search" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Plus" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Trash2" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Edit" [size]="28"></lucide-icon>
+              <lucide-icon [img]="CheckCircle" [size]="28"></lucide-icon>
+              <lucide-icon [img]="XCircle" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Heart" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Bookmark" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Mail" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Phone" [size]="28"></lucide-icon>
+              <lucide-icon [img]="MapPin" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Calendar" [size]="28"></lucide-icon>
+              <lucide-icon [img]="ArrowLeft" [size]="28"></lucide-icon>
+              <lucide-icon [img]="ArrowRight" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Menu" [size]="28"></lucide-icon>
+              <lucide-icon [img]="X" [size]="28"></lucide-icon>
+              <lucide-icon [img]="Info" [size]="28"></lucide-icon>
+              <lucide-icon [img]="AlertTriangle" [size]="28"></lucide-icon>
+              <lucide-icon [img]="AlertCircle" [size]="28"></lucide-icon>
             </div>
 
             <br />
@@ -375,17 +375,17 @@
 
             <h3>Colores de Íconos</h3>
             <div class="icons-grid colored">
-              <mat-icon class="primary">home</mat-icon>
-              <mat-icon class="accent">favorite</mat-icon>
-              <mat-icon class="warn">warning</mat-icon>
+              <lucide-icon class="primary" [img]="Home" [size]="28"></lucide-icon>
+              <lucide-icon class="accent" [img]="Heart" [size]="28"></lucide-icon>
+              <lucide-icon class="warn" [img]="AlertTriangle" [size]="28"></lucide-icon>
             </div>
 
             <br /><br />
 
             <p class="info-text">
-              <mat-icon>info</mat-icon>
+              <lucide-icon [img]="Info" [size]="20"></lucide-icon>
               Encuentra más íconos en:
-              <a href="https://fonts.google.com/icons" target="_blank">Google Fonts Icons</a>
+              <a href="https://lucide.dev/icons" target="_blank">Lucide Icons</a>
             </p>
           </mat-card-content>
         </mat-card>

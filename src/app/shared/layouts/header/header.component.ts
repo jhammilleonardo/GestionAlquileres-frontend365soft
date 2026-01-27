@@ -1,10 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Router } from '@angular/router';
+import { LucideAngularModule, Menu, Bell, Search, ChevronDown, LogOut } from 'lucide-angular';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
@@ -14,10 +14,10 @@ import { SidebarService } from '../../../core/services/sidebar.service';
   standalone: true,
   imports: [
     MatToolbarModule,
-    MatIconModule,
     MatButtonModule,
     MatMenuModule,
-    MatBadgeModule
+    MatBadgeModule,
+    LucideAngularModule
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
@@ -29,6 +29,13 @@ export class HeaderComponent {
 
   currentUser = this.authService.currentUser;
   notificationCount = signal(5);
+
+  // Lucide icons
+  readonly Menu = Menu;
+  readonly Bell = Bell;
+  readonly Search = Search;
+  readonly ChevronDown = ChevronDown;
+  readonly LogOut = LogOut;
 
   toggleSidebar(): void {
     this.sidebarService.toggle();
