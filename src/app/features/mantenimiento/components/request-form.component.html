@@ -1,0 +1,109 @@
+<div class="request-form-dialog">
+    <div class="dialog-header">
+        <div class="header-title">
+            <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
+            <h2>Nueva Solicitud de Mantenimiento</h2>
+        </div>
+        <button mat-icon-button (click)="onCancel()" type="button">
+            <lucide-icon [img]="X" [size]="20"></lucide-icon>
+        </button>
+    </div>
+
+    <form [formGroup]="maintenanceForm" (ngSubmit)="onSubmit()">
+        <div class="dialog-content">
+            <div class="form-grid">
+                <!-- Title -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Título de la solicitud</mat-label>
+                    <input matInput formControlName="title" placeholder="Ej: Fuga de agua en cocina">
+                    <mat-error *ngIf="maintenanceForm.get('title')?.hasError('required')">El título es
+                        requerido</mat-error>
+                    <mat-error *ngIf="maintenanceForm.get('title')?.hasError('minlength')">Mínimo 5
+                        caracteres</mat-error>
+                </mat-form-field>
+
+                <!-- Description -->
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Descripción detallada</mat-label>
+                    <textarea matInput formControlName="description" rows="3"
+                        placeholder="Describe el problema..."></textarea>
+                    <mat-error *ngIf="maintenanceForm.get('description')?.hasError('required')">La descripción es
+                        requerida</mat-error>
+                    <mat-error *ngIf="maintenanceForm.get('description')?.hasError('minlength')">Mínimo 10
+                        caracteres</mat-error>
+                </mat-form-field>
+
+                <!-- Property Info -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Propiedad</mat-label>
+                    <input matInput formControlName="propertyName" placeholder="Nombre de la propiedad">
+                    <mat-error *ngIf="maintenanceForm.get('propertyName')?.hasError('required')">La propiedad es
+                        requerida</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Dirección</mat-label>
+                    <input matInput formControlName="propertyAddress" placeholder="Dirección completa">
+                    <mat-error *ngIf="maintenanceForm.get('propertyAddress')?.hasError('required')">La dirección es
+                        requerida</mat-error>
+                </mat-form-field>
+
+                <!-- Tenant Info -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Inquilino</mat-label>
+                    <input matInput formControlName="tenantName" placeholder="Nombre del inquilino">
+                    <mat-error *ngIf="maintenanceForm.get('tenantName')?.hasError('required')">El inquilino es
+                        requerido</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Email del Inquilino</mat-label>
+                    <input matInput formControlName="tenantEmail" type="email" placeholder="email@ejemplo.com">
+                    <mat-error *ngIf="maintenanceForm.get('tenantEmail')?.hasError('required')">El email es
+                        requerido</mat-error>
+                    <mat-error *ngIf="maintenanceForm.get('tenantEmail')?.hasError('email')">Email inválido</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Teléfono del Inquilino</mat-label>
+                    <input matInput formControlName="tenantPhone" placeholder="+1-555-0000">
+                    <mat-error *ngIf="maintenanceForm.get('tenantPhone')?.hasError('required')">El teléfono es
+                        requerido</mat-error>
+                </mat-form-field>
+
+                <!-- Configuration -->
+                <mat-form-field appearance="outline">
+                    <mat-label>Categoría</mat-label>
+                    <mat-select formControlName="category">
+                        <mat-option *ngFor="let cat of categories" [value]="cat">{{ cat }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Prioridad</mat-label>
+                    <mat-select formControlName="priority">
+                        <mat-option *ngFor="let prio of priorities" [value]="prio">{{ prio }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Horario de Acceso Preferido</mat-label>
+                    <input matInput formControlName="preferredAccessTime" placeholder="Ej: Mañanas, 9 AM - 12 PM">
+                </mat-form-field>
+
+                <div class="checkbox-container">
+                    <mat-checkbox formControlName="permissionToEnter">
+                        Permiso para entrar sin el inquilino presente
+                    </mat-checkbox>
+                </div>
+            </div>
+        </div>
+
+        <div class="dialog-actions">
+            <button mat-button type="button" (click)="onCancel()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="maintenanceForm.invalid">
+                Crear Solicitud
+            </button>
+        </div>
+    </form>
+</div>

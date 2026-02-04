@@ -1,0 +1,210 @@
+<div class="request-detail-dialog">
+    <div class="dialog-header">
+        <div class="header-title">
+            <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
+            <h2>Detalles de Solicitud</h2>
+        </div>
+        <button mat-icon-button (click)="close()">
+            <lucide-icon [img]="X" [size]="20"></lucide-icon>
+        </button>
+    </div>
+
+    <div class="dialog-content">
+        <!-- Request ID and Status -->
+        <div class="request-header-info">
+            <div class="request-id">{{ request.id }}</div>
+            <div class="status-badges">
+                <span class="status-badge" [ngClass]="getStatusColor(request.status)">
+                    {{ request.status }}
+                </span>
+                <span class="priority-badge" [ngClass]="getPriorityColor(request.priority)">
+                    {{ request.priority }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Title and Description -->
+        <div class="section">
+            <h3>{{ request.title }}</h3>
+            <p class="description">{{ request.description }}</p>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Property and Tenant Info -->
+        <div class="section info-grid">
+            <div class="info-item">
+                <lucide-icon [img]="Home" [size]="18"></lucide-icon>
+                <div>
+                    <div class="info-label">Propiedad</div>
+                    <div class="info-value">{{ request.propertyName }}</div>
+                    <div class="info-subtext">{{ request.propertyAddress }}</div>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <lucide-icon [img]="User" [size]="18"></lucide-icon>
+                <div>
+                    <div class="info-label">Inquilino</div>
+                    <div class="info-value">{{ request.tenantName }}</div>
+                    <div class="info-subtext">{{ request.tenantEmail }}</div>
+                    <div class="info-subtext">{{ request.tenantPhone }}</div>
+                </div>
+            </div>
+
+            <div class="info-item">
+                <lucide-icon [img]="Calendar" [size]="18"></lucide-icon>
+                <div>
+                    <div class="info-label">Fechas</div>
+                    <div class="info-value">Creado: {{ formatDate(request.createdAt) }}</div>
+                    <div class="info-subtext">Actualizado: {{ formatDate(request.updatedAt) }}</div>
+                    @if (request.completedAt) {
+                    <div class="info-subtext">Completado: {{ formatDate(request.completedAt) }}</div>
+                    }
+                </div>
+            </div>
+
+            <div class="info-item">
+                <lucide-icon [img]="Clock" [size]="18"></lucide-icon>
+                <div>
+                    <div class="info-label">Acceso Preferido</div>
+                    <div class="info-value">{{ request.preferredAccessTime || 'No especificado' }}</div>
+                    <div class="info-subtext">
+                        Permiso de entrada: {{ request.permissionToEnter ? 'Sí' : 'No' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Management Section -->
+        <div class="section">
+            <h4>Gestión</h4>
+
+            <div class="management-grid">
+                <mat-form-field appearance="outline" class="status-field">
+                    <mat-label>Estado</mat-label>
+                    <mat-select [(ngModel)]="request.status" (ngModelChange)="updateStatus($event)">
+                        @for (status of getStatusValues(); track status) {
+                        <mat-option [value]="status">
+                            <span class="select-option-badge status-badge" [ngClass]="getStatusColor(status)">
+                                {{ status }}
+                            </span>
+                        </mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="priority-field">
+                    <mat-label>Prioridad</mat-label>
+                    <mat-select [(ngModel)]="request.priority" (ngModelChange)="updatePriority($event)">
+                        @for (priority of getPriorityValues(); track priority) {
+                        <mat-option [value]="priority">
+                            <span class="select-option-badge priority-badge" [ngClass]="getPriorityColor(priority)">
+                                {{ priority }}
+                            </span>
+                        </mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Categoría</mat-label>
+                    <mat-select [(ngModel)]="request.category" disabled>
+                        <mat-option [value]="request.category">{{ request.category }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Asignar a</mat-label>
+                    <mat-select [value]="request.assignedToId" (selectionChange)="onStaffAssignment($event.value)">
+                        <mat-option value="">Sin asignar</mat-option>
+                        @for (staff of staffMembers; track staff.id) {
+                        <mat-option [value]="staff.id">{{ staff.name }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            @if (request.estimatedCost || request.actualCost) {
+            <div class="cost-info">
+                <lucide-icon [img]="DollarSign" [size]="18"></lucide-icon>
+                <div>
+                    @if (request.estimatedCost) {
+                    <div>Costo Estimado: ${{ request.estimatedCost }}</div>
+                    }
+                    @if (request.actualCost) {
+                    <div>Costo Real: ${{ request.actualCost }}</div>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Comments Section -->
+        <div class="section">
+            <h4>
+                <lucide-icon [img]="MessageSquare" [size]="18"></lucide-icon>
+                Comentarios y Notas
+            </h4>
+
+            <div class="comments-list">
+                @if (request.comments.length === 0) {
+                <div class="no-comments">
+                    <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
+                    <p>No hay comentarios aún</p>
+                </div>
+                } @else {
+                @for (comment of request.comments; track comment.id) {
+                <div class="comment" [class.internal]="comment.isInternal">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <strong>{{ comment.author }}</strong>
+                            <span class="comment-role">{{ comment.authorRole }}</span>
+                            @if (comment.isInternal) {
+                            <span class="internal-badge">
+                                <lucide-icon [img]="AlertCircle" [size]="12"></lucide-icon>
+                                Interno
+                            </span>
+                            }
+                        </div>
+                        <div class="comment-date">{{ formatDate(comment.createdAt) }}</div>
+                    </div>
+                    <div class="comment-content">{{ comment.content }}</div>
+                </div>
+                }
+                }
+            </div>
+
+            <!-- Add Comment Form -->
+            <div class="add-comment-form">
+                <mat-form-field appearance="outline" class="comment-input">
+                    <mat-label>Agregar comentario...</mat-label>
+                    <textarea matInput rows="3" [ngModel]="newComment()"
+                        (ngModelChange)="newComment.set($event)"></textarea>
+                </mat-form-field>
+
+                <div class="comment-actions">
+                    <label class="internal-checkbox">
+                        <input type="checkbox" [ngModel]="isInternalNote()"
+                            (ngModelChange)="isInternalNote.set($event)">
+                        <span>Nota interna (solo visible para staff)</span>
+                    </label>
+
+                    <button mat-raised-button color="primary" (click)="addComment()" [disabled]="!newComment()">
+                        Agregar Comentario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dialog-actions">
+        <button mat-button (click)="close()">Cancelar</button>
+        <button mat-button color="warn" (click)="delete()">Eliminar</button>
+        <button mat-raised-button color="primary" (click)="save()">Guardar Cambios</button>
+    </div>
+</div>
