@@ -88,9 +88,7 @@
                     <mat-select [(ngModel)]="request.status" (ngModelChange)="updateStatus($event)">
                         @for (status of getStatusValues(); track status) {
                         <mat-option [value]="status">
-                            <span class="select-option-badge status-badge" [ngClass]="getStatusColor(status)">
-                                {{ status }}
-                            </span>
+                            {{ status }}
                         </mat-option>
                         }
                     </mat-select>
@@ -101,9 +99,7 @@
                     <mat-select [(ngModel)]="request.priority" (ngModelChange)="updatePriority($event)">
                         @for (priority of getPriorityValues(); track priority) {
                         <mat-option [value]="priority">
-                            <span class="select-option-badge priority-badge" [ngClass]="getPriorityColor(priority)">
-                                {{ priority }}
-                            </span>
+                            {{ priority }}
                         </mat-option>
                         }
                     </mat-select>

@@ -115,13 +115,40 @@
   align-items: center;
   gap: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: none;
+  border: 3px solid transparent;
   transition: all 0.3s ease;
   color: white;
+  position: relative;
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    &:active {
+      transform: translateY(-2px);
+    }
+
+    &.active {
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+
+      &::after {
+        content: '';
+        position: absolute;
+        top: -3px;
+        left: -3px;
+        right: -3px;
+        bottom: -3px;
+        border-radius: 16px;
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+      }
+    }
   }
 
   .stat-icon {
@@ -134,11 +161,17 @@
     background: rgba(255, 255, 255, 0.25);
     color: white;
     flex-shrink: 0;
+    transition: all 0.3s ease;
 
     lucide-icon {
       width: 28px;
       height: 28px;
     }
+  }
+
+  &.clickable.active .stat-icon {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
   }
 
   .stat-content {
@@ -188,85 +221,12 @@
   margin-bottom: 32px;
   overflow: hidden;
 
-  ::ng-deep .mat-mdc-tab-group {
-    .mat-mdc-tab-header {
-      border-bottom: 2px solid #f1f5f9;
-      background: white;
-    }
-
-    .mat-mdc-tab {
-      min-width: 160px;
-      padding: 0 24px;
-      height: 64px;
-
-      .mdc-tab__content {
-        font-family: inherit;
-      }
-
-      .tab-label-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .tab-label {
-        font-weight: 600;
-        font-size: 15px;
-        color: #64748b;
-        transition: color 0.2s ease;
-      }
-
-      .tab-badge {
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 700;
-        background: #f1f5f9;
-        color: #64748b;
-        min-width: 28px;
-        text-align: center;
-        transition: all 0.2s ease;
-
-        &.pending {
-          background: #fef3c7;
-          color: #d97706;
-        }
-
-        &.in-progress {
-          background: #dbeafe;
-          color: #2563eb;
-        }
-
-        &.completed {
-          background: #d1fae5;
-          color: #059669;
-        }
-      }
-
-      &.mdc-tab--active {
-        .tab-label {
-          color: #111827;
-        }
-
-        .mdc-tab-indicator__content--underline {
-          border-color: #3b82f6;
-          border-width: 3px;
-        }
-      }
-    }
-
-    .mat-mdc-tab-body-wrapper {
-      display: none;
-    }
-  }
-
   .filter-bar {
     padding: 20px 24px;
     display: flex;
     gap: 12px;
-    background: #fafbfc;
+    background: white;
     align-items: center;
-    border-top: 1px solid #f1f5f9;
 
     .search-field {
       flex: 1;

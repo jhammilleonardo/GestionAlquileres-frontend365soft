@@ -16,9 +16,11 @@
     </div>
   </div>
 
-  <!-- Statistics Cards -->
+  <!-- Interactive Statistics Cards -->
   <div class="stats-grid">
-    <div class="stat-card total">
+    <div class="stat-card total clickable"
+         [class.active]="selectedStatus() === 'all'"
+         (click)="filterByStatus('all')">
       <div class="stat-icon">
         <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
       </div>
@@ -28,7 +30,9 @@
       </div>
     </div>
 
-    <div class="stat-card pending">
+    <div class="stat-card pending clickable"
+         [class.active]="selectedStatus() === MaintenanceStatus.PENDING"
+         (click)="filterByStatus(MaintenanceStatus.PENDING)">
       <div class="stat-icon">
         <lucide-icon [img]="Clock" [size]="24"></lucide-icon>
       </div>
@@ -38,7 +42,9 @@
       </div>
     </div>
 
-    <div class="stat-card in-progress">
+    <div class="stat-card in-progress clickable"
+         [class.active]="selectedStatus() === MaintenanceStatus.IN_PROGRESS"
+         (click)="filterByStatus(MaintenanceStatus.IN_PROGRESS)">
       <div class="stat-icon">
         <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
       </div>
@@ -48,7 +54,9 @@
       </div>
     </div>
 
-    <div class="stat-card completed">
+    <div class="stat-card completed clickable"
+         [class.active]="selectedStatus() === MaintenanceStatus.COMPLETED"
+         (click)="filterByStatus(MaintenanceStatus.COMPLETED)">
       <div class="stat-icon">
         <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
       </div>
@@ -59,42 +67,8 @@
     </div>
   </div>
 
-  <!-- Tabs and Filters -->
+  <!-- Filters -->
   <mat-card class="filters-card">
-    <mat-tab-group (selectedIndexChange)="onTabChange($event)" [selectedIndex]="selectedTab()">
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <div class="tab-label-container">
-            <span class="tab-label">Todas</span>
-            <span class="tab-badge">{{ stats().total }}</span>
-          </div>
-        </ng-template>
-      </mat-tab>
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <div class="tab-label-container">
-            <span class="tab-label">Pendientes</span>
-            <span class="tab-badge pending">{{ stats().pending }}</span>
-          </div>
-        </ng-template>
-      </mat-tab>
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <div class="tab-label-container">
-            <span class="tab-label">En Progreso</span>
-            <span class="tab-badge in-progress">{{ stats().inProgress }}</span>
-          </div>
-        </ng-template>
-      </mat-tab>
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <div class="tab-label-container">
-            <span class="tab-label">Completadas</span>
-            <span class="tab-badge completed">{{ stats().completed }}</span>
-          </div>
-        </ng-template>
-      </mat-tab>
-    </mat-tab-group>
 
     <!-- Filter Bar -->
     <div class="filter-bar">

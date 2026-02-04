@@ -9,7 +9,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatCardModule } from '@angular/material/card';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -34,7 +33,6 @@ import { RequestFormComponent } from './components/request-form.component';
     MatChipsModule,
     MatBadgeModule,
     MatCardModule,
-    MatTabsModule,
     MatMenuModule,
     MatDialogModule,
     MatTooltipModule,
@@ -70,7 +68,6 @@ export class MantenimientoComponent {
   selectedStatus = signal<MaintenanceStatus | 'all'>('all');
   selectedPriority = signal<MaintenancePriority | 'all'>('all');
   selectedCategory = signal<MaintenanceCategory | 'all'>('all');
-  selectedTab = signal(0);
 
   // Services
   private maintenanceService = inject(MaintenanceService);
@@ -115,24 +112,8 @@ export class MantenimientoComponent {
   });
 
   // Actions
-  onTabChange(index: number): void {
-    this.selectedTab.set(index);
-
-    // Auto-filter based on tab
-    switch (index) {
-      case 0: // All
-        this.selectedStatus.set('all');
-        break;
-      case 1: // Pending
-        this.selectedStatus.set(MaintenanceStatus.PENDING);
-        break;
-      case 2: // In Progress
-        this.selectedStatus.set(MaintenanceStatus.IN_PROGRESS);
-        break;
-      case 3: // Completed
-        this.selectedStatus.set(MaintenanceStatus.COMPLETED);
-        break;
-    }
+  filterByStatus(status: MaintenanceStatus | 'all'): void {
+    this.selectedStatus.set(status);
   }
 
   clearFilters(): void {
