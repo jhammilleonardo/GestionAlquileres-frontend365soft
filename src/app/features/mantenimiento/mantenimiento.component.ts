@@ -13,11 +13,19 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, Plus, Search, Filter, MoreVertical, Clock, AlertCircle, CheckCircle2, XCircle, Wrench, Home, User, Calendar, TrendingUp } from 'lucide-angular';
+import { LucideAngularModule, Search, Filter, MoreVertical, Clock, AlertCircle, CheckCircle2, XCircle, Wrench, Home, User, Calendar, TrendingUp, MessageSquare } from 'lucide-angular';
 import { MaintenanceService } from '../../core/services/maintenance.service';
-import { MaintenanceRequest, MaintenanceStatus, MaintenancePriority, MaintenanceCategory } from '../../core/models/maintenance-request.model';
+import {
+  MaintenanceRequest,
+  MaintenanceStatus,
+  MaintenancePriority,
+  MaintenanceCategory,
+  MaintenanceStatusLabels,
+  MaintenancePriorityLabels,
+  MaintenanceCategoryLabels
+} from '../../core/models/maintenance-request.model';
 import { RequestDetailComponent } from './components/request-detail.component';
-import { RequestFormComponent } from './components/request-form.component';
+// NOTE: RequestFormComponent removed - Admin cannot create requests (only tenants can)
 
 @Component({
   selector: 'app-mantenimiento',
@@ -44,7 +52,6 @@ import { RequestFormComponent } from './components/request-form.component';
 })
 export class MantenimientoComponent {
   // Icons
-  readonly Plus = Plus;
   readonly Search = Search;
   readonly Filter = Filter;
   readonly MoreVertical = MoreVertical;
@@ -57,11 +64,17 @@ export class MantenimientoComponent {
   readonly User = User;
   readonly Calendar = Calendar;
   readonly TrendingUp = TrendingUp;
+  readonly MessageSquare = MessageSquare;
 
   // Enums for template
   MaintenanceStatus = MaintenanceStatus;
   MaintenancePriority = MaintenancePriority;
   MaintenanceCategory = MaintenanceCategory;
+
+  // Labels for display (Spanish translations)
+  statusLabels = MaintenanceStatusLabels;
+  priorityLabels = MaintenancePriorityLabels;
+  categoryLabels = MaintenanceCategoryLabels;
 
   // State
   searchQuery = signal('');
@@ -86,9 +99,9 @@ export class MantenimientoComponent {
       requests = requests.filter(req =>
         req.title.toLowerCase().includes(query) ||
         req.description.toLowerCase().includes(query) ||
-        req.propertyName.toLowerCase().includes(query) ||
-        req.tenantName.toLowerCase().includes(query) ||
-        req.id.toLowerCase().includes(query)
+        req.ticket_number.toLowerCase().includes(query) ||
+        req.property?.title?.toLowerCase().includes(query) ||
+        req.id.toString().includes(query)
       );
     }
 
@@ -108,7 +121,7 @@ export class MantenimientoComponent {
     }
 
     // Sort by date (newest first)
-    return requests.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return requests.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
   });
 
   // Actions
@@ -123,19 +136,8 @@ export class MantenimientoComponent {
     this.selectedCategory.set('all');
   }
 
-  openNewRequestDialog(): void {
-    const dialogRef = this.dialog.open(RequestFormComponent, {
-      width: '800px',
-      maxWidth: '95vw',
-      panelClass: 'request-form-dialog-panel'
-    });
-
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        // Request was created, list will update automatically via signal
-      }
-    });
-  }
+  // NOTE: openNewRequestDialog removed - Admin cannot create requests
+  // Only tenants can create maintenance requests through the tenant portal
 
   viewRequestDetails(request: MaintenanceRequest): void {
     const dialogRef = this.dialog.open(RequestDetailComponent, {
@@ -154,29 +156,55 @@ export class MantenimientoComponent {
   }
 
   updateRequestStatus(request: MaintenanceRequest, newStatus: MaintenanceStatus): void {
-    this.maintenanceService.updateStatus(request.id, newStatus);
+    this.maintenanceService.updateStatus(request.id, newStatus).subscribe({
+      next: () => {
+        console.log('Status updated successfully');
+      },
+      error: (error) => {
+        console.error('Error updating status:', error);
+        alert('Error al actualizar el estado de la solicitud');
+      }
+    });
   }
 
   updateRequestPriority(request: MaintenanceRequest, newPriority: MaintenancePriority): void {
-    this.maintenanceService.updatePriority(request.id, newPriority);
+    this.maintenanceService.updatePriority(request.id, newPriority).subscribe({
+      next: () => {
+        console.log('Priority updated successfully');
+      },
+      error: (error) => {
+        console.error('Error updating priority:', error);
+        alert('Error al actualizar la prioridad de la solicitud');
+      }
+    });
   }
 
   deleteRequest(request: MaintenanceRequest): void {
     if (confirm(`¿Estás seguro de eliminar la solicitud "${request.title}"?`)) {
-      this.maintenanceService.deleteRequest(request.id);
+      this.maintenanceService.deleteRequest(request.id).subscribe({
+        next: () => {
+          console.log('Request deleted successfully');
+        },
+        error: (error) => {
+          console.error('Error deleting request:', error);
+          alert('Error al eliminar la solicitud');
+        }
+      });
     }
   }
 
   getStatusColor(status: MaintenanceStatus): string {
     switch (status) {
-      case MaintenanceStatus.PENDING:
-        return 'status-pending';
+      case MaintenanceStatus.NEW:
+        return 'status-new';
       case MaintenanceStatus.IN_PROGRESS:
         return 'status-in-progress';
       case MaintenanceStatus.COMPLETED:
         return 'status-completed';
-      case MaintenanceStatus.CANCELLED:
-        return 'status-cancelled';
+      case MaintenanceStatus.DEFERRED:
+        return 'status-deferred';
+      case MaintenanceStatus.CLOSED:
+        return 'status-closed';
       default:
         return '';
     }
@@ -186,12 +214,10 @@ export class MantenimientoComponent {
     switch (priority) {
       case MaintenancePriority.LOW:
         return 'priority-low';
-      case MaintenancePriority.MEDIUM:
-        return 'priority-medium';
+      case MaintenancePriority.NORMAL:
+        return 'priority-normal';
       case MaintenancePriority.HIGH:
         return 'priority-high';
-      case MaintenancePriority.EMERGENCY:
-        return 'priority-emergency';
       default:
         return '';
     }

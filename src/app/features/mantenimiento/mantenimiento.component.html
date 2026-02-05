@@ -6,17 +6,15 @@
         <lucide-icon [img]="Wrench" [size]="32" class="header-icon"></lucide-icon>
         <div>
           <h1>Gestión de Mantenimiento</h1>
-          <p class="subtitle">Administra todas las solicitudes de mantenimiento</p>
+          <p class="subtitle">Administra todas las solicitudes de mantenimiento de los inquilinos</p>
         </div>
       </div>
-      <button mat-raised-button color="primary" class="new-request-btn" (click)="openNewRequestDialog()">
-        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-        Nueva Solicitud
-      </button>
+      <!-- NOTE: Create button removed - Only tenants can create requests -->
     </div>
   </div>
 
   <!-- Interactive Statistics Cards -->
+  @if (stats()) {
   <div class="stats-grid">
     <div class="stat-card total clickable"
          [class.active]="selectedStatus() === 'all'"
@@ -25,20 +23,20 @@
         <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
       </div>
       <div class="stat-content">
-        <div class="stat-value">{{ stats().total }}</div>
+        <div class="stat-value">{{ stats()?.total || 0 }}</div>
         <div class="stat-label">Total Solicitudes</div>
       </div>
     </div>
 
     <div class="stat-card pending clickable"
-         [class.active]="selectedStatus() === MaintenanceStatus.PENDING"
-         (click)="filterByStatus(MaintenanceStatus.PENDING)">
+         [class.active]="selectedStatus() === MaintenanceStatus.NEW"
+         (click)="filterByStatus(MaintenanceStatus.NEW)">
       <div class="stat-icon">
         <lucide-icon [img]="Clock" [size]="24"></lucide-icon>
       </div>
       <div class="stat-content">
-        <div class="stat-value">{{ stats().pending }}</div>
-        <div class="stat-label">Pendientes</div>
+        <div class="stat-value">{{ stats()?.newRequests || 0 }}</div>
+        <div class="stat-label">Nuevas</div>
       </div>
     </div>
 
@@ -49,7 +47,7 @@
         <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
       </div>
       <div class="stat-content">
-        <div class="stat-value">{{ stats().inProgress }}</div>
+        <div class="stat-value">{{ stats()?.byStatus?.IN_PROGRESS || 0 }}</div>
         <div class="stat-label">En Progreso</div>
       </div>
     </div>
@@ -61,11 +59,12 @@
         <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
       </div>
       <div class="stat-content">
-        <div class="stat-value">{{ stats().completed }}</div>
+        <div class="stat-value">{{ stats()?.byStatus?.COMPLETED || 0 }}</div>
         <div class="stat-label">Completadas</div>
       </div>
     </div>
   </div>
+  }
 
   <!-- Filters -->
   <mat-card class="filters-card">
@@ -83,7 +82,7 @@
         <mat-select [ngModel]="selectedPriority()" (ngModelChange)="selectedPriority.set($event)">
           <mat-option value="all">Todas</mat-option>
           <mat-option *ngFor="let priority of getPriorityValues()" [value]="priority">
-            {{ priority }}
+            {{ priorityLabels[priority] }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -93,7 +92,7 @@
         <mat-select [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)">
           <mat-option value="all">Todas</mat-option>
           <mat-option *ngFor="let category of getCategoryValues()" [value]="category">
-            {{ category }}
+            {{ categoryLabels[category] }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -125,7 +124,7 @@
         <div class="request-content">
           <div class="request-header">
             <div class="request-id-section">
-              <span class="request-id">{{ request.id }}</span>
+              <span class="request-id">{{ request.ticket_number }}</span>
             </div>
 
             <button mat-icon-button [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()"
@@ -153,7 +152,7 @@
             <mat-menu #statusMenu="matMenu">
               @for (status of getStatusValues(); track status) {
               <button mat-menu-item (click)="updateRequestStatus(request, status)">
-                {{ status }}
+                {{ statusLabels[status] }}
               </button>
               }
             </mat-menu>
@@ -162,7 +161,7 @@
             <mat-menu #priorityMenu="matMenu">
               @for (priority of getPriorityValues(); track priority) {
               <button mat-menu-item (click)="updateRequestPriority(request, priority)">
-                {{ priority }}
+                {{ priorityLabels[priority] }}
               </button>
               }
             </mat-menu>
@@ -171,21 +170,31 @@
           <div class="request-body">
             <h3 class="request-title">{{ request.title }}</h3>
 
+            @if (request.category) {
             <div class="meta-item" style="color: var(--mat-sys-primary); margin-bottom: 12px; font-weight: 500;">
               <lucide-icon [img]="Wrench" [size]="14"></lucide-icon>
-              <span>{{ request.category }}</span>
+              <span>{{ categoryLabels[request.category] }}</span>
             </div>
+            }
 
             <p class="request-description">{{ request.description }}</p>
 
             <div class="request-meta">
+              @if (request.property?.title) {
               <div class="meta-item">
                 <lucide-icon [img]="Home" [size]="14"></lucide-icon>
-                <span>{{ request.propertyName }}</span>
+                <span>{{ request.property?.title }}</span>
               </div>
+              }
+              @if (request.contract?.contract_number) {
+              <div class="meta-item">
+                <lucide-icon [img]="User" [size]="14"></lucide-icon>
+                <span>{{ request.contract?.contract_number }}</span>
+              </div>
+              }
               <div class="meta-item">
                 <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                <span>{{ formatDate(request.createdAt) }}</span>
+                <span>{{ formatDate(request.created_at) }}</span>
               </div>
             </div>
           </div>
@@ -193,20 +202,20 @@
 
         <div class="request-footer">
           <span class="status-badge" [ngClass]="getStatusColor(request.status)">
-            {{ request.status }}
+            {{ statusLabels[request.status] }}
           </span>
 
           <div class="d-flex align-items-center gap-3">
-            @if (request.comments.length > 0) {
+            @if (request.messages && request.messages.length > 0) {
             <div style="display: flex; align-items: center; gap: 4px; color: #64748b; font-size: 12px;">
-              <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-              <span>{{ request.comments.length }}</span>
+              <lucide-icon [img]="MessageSquare" [size]="14"></lucide-icon>
+              <span>{{ request.messages.length }}</span>
             </div>
             }
 
             <div class="priority-indicator" [ngClass]="getPriorityColor(request.priority)">
-              <lucide-icon [img]="AlertCircle" [size]="14" *ngIf="request.priority === 'Emergencia'"></lucide-icon>
-              <span>{{ request.priority }}</span>
+              <lucide-icon [img]="AlertCircle" [size]="14" *ngIf="request.priority === MaintenancePriority.HIGH"></lucide-icon>
+              <span>{{ priorityLabels[request.priority] }}</span>
             </div>
           </div>
         </div>
