@@ -9,12 +9,10 @@
           <p class="subtitle">Administra todas las solicitudes de mantenimiento de los inquilinos</p>
         </div>
       </div>
-      <!-- NOTE: Create button removed - Only tenants can create requests -->
     </div>
   </div>
 
   <!-- Interactive Statistics Cards -->
-  @if (stats()) {
   <div class="stats-grid">
     <div class="stat-card total clickable"
          [class.active]="selectedStatus() === 'all'"
@@ -64,7 +62,6 @@
       </div>
     </div>
   </div>
-  }
 
   <!-- Filters -->
   <mat-card class="filters-card">

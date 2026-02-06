@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, map, tap, of } from 'rxjs';
 import {
     MaintenanceRequest,
     MaintenanceStatus,
@@ -9,7 +9,8 @@ import {
     UpdateMaintenanceDto,
     CreateMessageDto,
     MaintenanceMessage,
-    MaintenanceRequestType
+    MaintenanceRequestType,
+    PermissionToEnter
 } from '../models/maintenance-request.model';
 import { ApiService } from './api.service';
 
@@ -31,7 +32,7 @@ export class MaintenanceService {
     stats = computed(() => this.statsSignal());
 
     constructor() {
-        // Load initial data
+        // Load initial data from backend
         this.loadAllRequests();
         this.loadStats();
     }

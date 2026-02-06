@@ -25,7 +25,6 @@ import {
   MaintenanceCategoryLabels
 } from '../../core/models/maintenance-request.model';
 import { RequestDetailComponent } from './components/request-detail.component';
-// NOTE: RequestFormComponent removed - Admin cannot create requests (only tenants can)
 
 @Component({
   selector: 'app-mantenimiento',
@@ -136,8 +135,10 @@ export class MantenimientoComponent {
     this.selectedCategory.set('all');
   }
 
-  // NOTE: openNewRequestDialog removed - Admin cannot create requests
-  // Only tenants can create maintenance requests through the tenant portal
+  openRequestForm(): void {
+    // TODO: Implementar formulario de nueva solicitud
+    console.log('Abrir formulario de nueva solicitud');
+  }
 
   viewRequestDetails(request: MaintenanceRequest): void {
     const dialogRef = this.dialog.open(RequestDetailComponent, {
