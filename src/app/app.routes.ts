@@ -9,6 +9,12 @@ import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.c
 import { ComponentesComponent } from './features/componentes/componentes.component';
 
 export const routes: Routes = [
+  // ==================== PUBLIC PORTAL ====================
+  {
+    path: 'publico',
+    loadChildren: () => import('./features/portal-publico/portal-publico.routes').then(m => m.PORTAL_PUBLICO_ROUTES)
+  },
+
   // ==================== TENANT PORTAL ====================
   {
     path: 'portal',

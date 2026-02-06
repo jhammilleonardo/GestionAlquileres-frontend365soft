@@ -1,0 +1,79 @@
+<div class="modal-overlay" (click)="closeModal()">
+  <div class="modal-container small" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeModal()">✕</button>
+
+    <div *ngIf="!submitted" class="modal-content">
+      <h2 class="modal-title">Enviar Mensaje</h2>
+      <p class="modal-subtitle">{{ property.title }}</p>
+
+      <form (ngSubmit)="submitForm()" class="contact-form">
+        <div class="form-group">
+          <label>Nombre Completo *</label>
+          <input
+            type="text"
+            [(ngModel)]="contactForm.name"
+            name="name"
+            required
+            placeholder="Tu nombre"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Email *</label>
+          <input
+            type="email"
+            [(ngModel)]="contactForm.email"
+            name="email"
+            required
+            placeholder="tu.email@ejemplo.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input
+            type="tel"
+            [(ngModel)]="contactForm.phone"
+            name="phone"
+            placeholder="+591 12345678"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Método de Contacto Preferido</label>
+          <select [(ngModel)]="contactForm.preferredContact" name="preferredContact">
+            <option value="email">Email</option>
+            <option value="phone">Teléfono</option>
+            <option value="whatsapp">WhatsApp</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Mensaje *</label>
+          <textarea
+            [(ngModel)]="contactForm.message"
+            name="message"
+            required
+            rows="5"
+            placeholder="¿Tienes alguna pregunta sobre esta propiedad?"
+          ></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="closeModal()">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Enviando...' : 'Enviar Mensaje' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div *ngIf="submitted" class="success-message">
+      <div class="success-icon">✓</div>
+      <h2>¡Mensaje Enviado!</h2>
+      <p>El agente recibirá tu mensaje y se pondrá en contacto contigo pronto.</p>
+    </div>
+  </div>
+</div>
