@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, MessageSquare, Send, Inbox, Archive, Plus, AlertCircle, User } from 'lucide-angular';
+import { LucideAngularModule, MessageSquare, Send, Inbox, Archive, AlertCircle, User } from 'lucide-angular';
 import { TenantMessageService } from '../../../core/services/tenant-message.service';
 import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '../../../core/models/message.model';
 
@@ -39,10 +39,6 @@ import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '
                         <p>Comunícate con tu administrador</p>
                     </div>
                 </div>
-                <button mat-raised-button color="primary" (click)="showNewMessage()">
-                    <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-                    Nuevo Mensaje
-                </button>
             </div>
 
             <!-- Stats -->
@@ -250,12 +246,7 @@ import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '
         }
 
         .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
         }
 
         .header-content {
@@ -553,7 +544,6 @@ export class TenantMessagesComponent implements OnInit {
     readonly Send = Send;
     readonly Inbox = Inbox;
     readonly Archive = Archive;
-    readonly Plus = Plus;
     readonly AlertCircle = AlertCircle;
     readonly User = User;
 

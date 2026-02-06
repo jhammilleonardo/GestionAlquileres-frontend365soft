@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, Wrench, CheckCircle2, Clock, Plus, ArrowRight, Home, FileText, CreditCard, MessageSquare, DollarSign, AlertCircle } from 'lucide-angular';
+import { LucideAngularModule, Wrench, CheckCircle2, Clock, ArrowRight, Home, FileText, CreditCard, MessageSquare, DollarSign, AlertCircle } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
@@ -31,10 +31,6 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                     <h1>Hola, {{ getFirstName() }}</h1>
                     <p>Bienvenido a tu portal de inquilino</p>
                 </div>
-                <button mat-raised-button color="primary" routerLink="/portal/mantenimiento/nueva">
-                    <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-                    Nueva Solicitud
-                </button>
             </div>
 
             <!-- Alerts / Next Payment -->
@@ -76,50 +72,50 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <!-- Maintenance Stats -->
-                <mat-card class="stat-card">
-                    <div class="stat-icon maintenance">
+                <div class="stat-card maintenance">
+                    <div class="stat-icon">
                         <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">{{ maintenanceService.stats()?.active || 0 }}</div>
                         <div class="stat-label">Solicitudes Activas</div>
                     </div>
-                </mat-card>
+                </div>
 
                 <!-- Payment Stats -->
                 @if (paymentService.stats(); as payStats) {
-                    <mat-card class="stat-card">
-                        <div class="stat-icon payment">
+                    <div class="stat-card payment">
+                        <div class="stat-icon">
                             <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
                         </div>
                         <div class="stat-content">
                             <div class="stat-value">\${{ payStats.total_pending.toLocaleString() }}</div>
                             <div class="stat-label">Pendiente de Pago</div>
                         </div>
-                    </mat-card>
+                    </div>
                 }
 
                 <!-- Messages Stats -->
-                <mat-card class="stat-card">
-                    <div class="stat-icon messages">
+                <div class="stat-card messages">
+                    <div class="stat-icon">
                         <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">{{ messageService.unreadCount() }}</div>
                         <div class="stat-label">Mensajes Sin Leer</div>
                     </div>
-                </mat-card>
+                </div>
 
                 <!-- Documents Stats -->
-                <mat-card class="stat-card">
-                    <div class="stat-icon documents">
+                <div class="stat-card documents">
+                    <div class="stat-icon">
                         <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
                     </div>
                     <div class="stat-content">
                         <div class="stat-value">{{ documentService.documents().length }}</div>
                         <div class="stat-label">Documentos</div>
                     </div>
-                </mat-card>
+                </div>
             </div>
 
             <div class="dashboard-grid">
@@ -229,12 +225,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
         }
 
         .welcome-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
         }
 
         .welcome-content h1 {
@@ -281,84 +272,155 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
 
         .property-card {
             margin-bottom: 24px;
-            padding: 20px;
-            background: var(--mat-sys-primary);
-            color: var(--mat-sys-on-primary);
+            padding: 28px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .property-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
         }
 
         .property-header {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             opacity: 0.9;
-            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .property-content {
+            position: relative;
+            z-index: 1;
         }
 
         .property-content h2 {
-            font-size: 1.5rem;
-            margin: 0 0 8px;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 16px;
+            color: white;
+            line-height: 1.2;
         }
 
         .property-meta {
             display: flex;
             align-items: center;
             gap: 16px;
+            flex-wrap: wrap;
         }
 
         .property-meta .meta-item {
             display: flex;
             align-items: center;
-            gap: 6px;
-            opacity: 0.9;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .contract-status {
-            padding: 4px 12px;
+            padding: 8px 16px;
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            background: rgba(255,255,255,0.2);
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
-            padding: 20px;
+            border-radius: 16px;
+            padding: 28px;
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            color: white;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card:active {
+            transform: translateY(-2px);
         }
 
         .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--mat-sys-on-primary);
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
         }
 
-        .stat-icon.maintenance { background: var(--mat-sys-primary); }
-        .stat-icon.payment { background: #10b981; }
-        .stat-icon.messages { background: #f59e0b; }
-        .stat-icon.documents { background: var(--mat-sys-primary); }
+        .stat-card:hover .stat-icon {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .stat-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
 
         .stat-value {
-            font-size: 1.75rem;
+            font-size: 40px;
             font-weight: 700;
-            color: var(--mat-sys-on-surface);
+            color: white;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
         }
 
         .stat-label {
-            color: var(--mat-sys-on-surface-variant);
-            font-size: 14px;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 500;
+            line-height: 1.2;
         }
+
+        .stat-card.maintenance { background: #10b981; }
+        .stat-card.payment { background: #3b82f6; }
+        .stat-card.messages { background: #f59e0b; }
+        .stat-card.documents { background: #28589e; }
 
         .dashboard-grid {
             display: grid;
@@ -538,7 +600,27 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             font-weight: 500;
         }
 
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+        }
+
         @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-value {
+                font-size: 32px;
+            }
+
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -553,7 +635,6 @@ export class TenantDashboardComponent implements OnInit {
     readonly Wrench = Wrench;
     readonly CheckCircle2 = CheckCircle2;
     readonly Clock = Clock;
-    readonly Plus = Plus;
     readonly ArrowRight = ArrowRight;
     readonly Home = Home;
     readonly FileText = FileText;

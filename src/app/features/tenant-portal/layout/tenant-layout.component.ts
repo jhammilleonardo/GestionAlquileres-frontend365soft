@@ -129,63 +129,98 @@ interface NavItem {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
+            padding: 0 20px;
             height: 64px;
-            background: var(--mat-sys-surface);
-            border-bottom: 1px solid var(--mat-sys-outline-variant);
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .header-left {
             display: flex;
             align-items: center;
             gap: 16px;
+            flex: 1;
         }
 
         .menu-toggle {
             display: none;
+            color: #64748b;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
         }
 
         .brand-text {
             font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--mat-sys-on-surface);
+            font-weight: 700;
+            color: #1e293b;
+            white-space: nowrap;
         }
 
         .header-right {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
         }
 
         .notification-btn {
-            color: var(--mat-sys-on-surface-variant);
+            color: #64748b;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .notification-btn:hover {
+            background: #f1f5f9;
+            color: #1e293b;
         }
 
         .user-btn {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            min-height: 48px;
+            transition: all 0.2s;
+        }
+
+        .user-btn:hover {
+            background: #f1f5f9 !important;
+        }
+
+        .user-btn::before,
+        .user-btn .mat-mdc-button-persistent-ripple {
+            display: none !important;
         }
 
         .user-avatar {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: var(--mat-sys-primary);
-            color: var(--mat-sys-on-primary);
+            background: linear-gradient(135deg, var(--mat-sys-primary) 0%, #6366f1 100%);
+            color: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 600;
+            font-weight: 700;
             font-size: 14px;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
         }
 
         .user-name {
-            color: var(--mat-sys-on-surface);
-            font-weight: 500;
+            color: #1e293b;
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
         }
 
         .layout-body {
@@ -273,13 +308,45 @@ interface NavItem {
             padding: 24px;
         }
 
+        ::ng-deep .mat-mdc-menu-panel {
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            margin-top: 8px;
+            min-width: 220px;
+        }
+
+        ::ng-deep .mat-mdc-menu-item {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        ::ng-deep .mat-mdc-menu-item:hover {
+            background: #f1f5f9;
+        }
+
+        ::ng-deep .mat-mdc-menu-item lucide-icon {
+            opacity: 0.7;
+        }
+
         .logout-btn {
-            color: var(--mat-sys-error);
+            color: #dc2626 !important;
+        }
+
+        ::ng-deep .logout-btn:hover {
+            background: #fee2e2 !important;
         }
 
         @media (max-width: 768px) {
             .menu-toggle {
                 display: flex;
+            }
+
+            .brand-text {
+                font-size: 1.1rem;
             }
 
             .tenant-sidebar {
@@ -289,6 +356,7 @@ interface NavItem {
                 bottom: 0;
                 z-index: 99;
                 width: 260px;
+                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
             }
 
             .tenant-sidebar.collapsed {
@@ -297,6 +365,20 @@ interface NavItem {
 
             .user-name {
                 display: none;
+            }
+
+            .header-right {
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .brand-text {
+                font-size: 1rem;
+            }
+
+            .tenant-header {
+                padding: 0 12px;
             }
         }
     `]
