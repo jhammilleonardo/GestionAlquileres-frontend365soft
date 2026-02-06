@@ -47,25 +47,26 @@
         <mat-divider></mat-divider>
 
         <!-- Property and Contract Info -->
-        <div class="section info-grid">
+        <div class="section">
             @if (request.property) {
-            <div class="info-item">
-                <lucide-icon [img]="Home" [size]="18"></lucide-icon>
-                <div>
-                    <div class="info-label">Propiedad</div>
-                    <div class="info-value">{{ request.property.title }}</div>
-                    @if (request.property.status) {
-                    <div class="info-subtext">Estado: {{ request.property.status }}</div>
-                    }
+            <div class="property-contract-card">
+                <div class="property-header">
+                    <lucide-icon [img]="Home" [size]="20"></lucide-icon>
+                    <span class="property-label">MI PROPIEDAD</span>
                 </div>
-            </div>
-            }
-            @if (request.contract) {
-            <div class="info-item">
-                <lucide-icon [img]="User" [size]="18"></lucide-icon>
-                <div>
-                    <div class="info-label">Contrato</div>
-                    <div class="info-value">{{ request.contract.contract_number }}</div>
+
+                <h3 class="property-title">{{ request.property.title }}</h3>
+
+                <div class="property-footer">
+                    @if (request.contract) {
+                    <div class="contract-info">
+                        <lucide-icon [img]="User" [size]="14"></lucide-icon>
+                        <span>{{ request.contract.contract_number }}</span>
+                    </div>
+                    }
+                    @if (request.property.status) {
+                    <span class="status-badge-property">{{ request.property.status }}</span>
+                    }
                 </div>
             </div>
             }

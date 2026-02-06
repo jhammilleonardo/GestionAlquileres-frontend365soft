@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, Wrench, CheckCircle2, Clock, ArrowRight, Home, FileText, CreditCard, MessageSquare, DollarSign, AlertCircle } from 'lucide-angular';
+import { LucideAngularModule, Wrench, CheckCircle2, Clock, Plus, ArrowRight, Home, FileText, CreditCard, MessageSquare, DollarSign, AlertCircle } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
@@ -81,19 +81,6 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                         <div class="stat-label">Solicitudes Activas</div>
                     </div>
                 </div>
-
-                <!-- Payment Stats -->
-                @if (paymentService.stats(); as payStats) {
-                    <div class="stat-card payment">
-                        <div class="stat-icon">
-                            <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value">\${{ payStats.total_pending.toLocaleString() }}</div>
-                            <div class="stat-label">Pendiente de Pago</div>
-                        </div>
-                    </div>
-                }
 
                 <!-- Messages Stats -->
                 <div class="stat-card messages">
@@ -225,7 +212,12 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
         }
 
         .welcome-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .welcome-content h1 {
@@ -272,89 +264,50 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
 
         .property-card {
             margin-bottom: 24px;
-            padding: 28px;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            color: white;
-            border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.25);
-            border: none;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .property-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
+            padding: 20px;
+            background: var(--mat-sys-primary);
+            color: var(--mat-sys-on-primary);
         }
 
         .property-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            gap: 8px;
             opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        .property-content {
-            position: relative;
-            z-index: 1;
+            margin-bottom: 12px;
         }
 
         .property-content h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin: 0 0 16px;
-            color: white;
-            line-height: 1.2;
+            font-size: 1.5rem;
+            margin: 0 0 8px;
         }
 
         .property-meta {
             display: flex;
             align-items: center;
             gap: 16px;
-            flex-wrap: wrap;
         }
 
         .property-meta .meta-item {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 14px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 500;
+            gap: 6px;
+            opacity: 0.9;
         }
 
         .contract-status {
-            padding: 8px 16px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            background: rgba(16, 185, 129, 0.9);
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
         }
 
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
-            margin-bottom: 40px;
+            margin-bottom: 24px;
         }
 
         .stat-card {
@@ -367,15 +320,23 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             transition: all 0.3s ease;
             color: white;
             cursor: pointer;
+
+            &:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+            }
         }
 
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        .stat-card.maintenance {
+            background: #3b82f6;
         }
 
-        .stat-card:active {
-            transform: translateY(-2px);
+        .stat-card.messages {
+            background: #f59e0b;
+        }
+
+        .stat-card.documents {
+            background: #28589e;
         }
 
         .stat-icon {
@@ -388,12 +349,11 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             background: rgba(255, 255, 255, 0.25);
             color: white;
             flex-shrink: 0;
-            transition: all 0.3s ease;
         }
 
-        .stat-card:hover .stat-icon {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(1.1);
+        .stat-icon lucide-icon {
+            width: 28px;
+            height: 28px;
         }
 
         .stat-content {
@@ -407,7 +367,6 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             font-weight: 700;
             color: white;
             line-height: 1;
-            font-variant-numeric: tabular-nums;
         }
 
         .stat-label {
@@ -416,11 +375,6 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             font-weight: 500;
             line-height: 1.2;
         }
-
-        .stat-card.maintenance { background: #10b981; }
-        .stat-card.payment { background: #3b82f6; }
-        .stat-card.messages { background: #f59e0b; }
-        .stat-card.documents { background: #28589e; }
 
         .dashboard-grid {
             display: grid;
@@ -600,27 +554,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             font-weight: 500;
         }
 
-        @media (max-width: 1024px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 16px;
-            }
-        }
-
         @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-
-            .stat-card {
-                padding: 20px;
-            }
-
-            .stat-value {
-                font-size: 32px;
-            }
-
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -635,6 +569,7 @@ export class TenantDashboardComponent implements OnInit {
     readonly Wrench = Wrench;
     readonly CheckCircle2 = CheckCircle2;
     readonly Clock = Clock;
+    readonly Plus = Plus;
     readonly ArrowRight = ArrowRight;
     readonly Home = Home;
     readonly FileText = FileText;

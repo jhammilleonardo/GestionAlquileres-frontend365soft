@@ -45,10 +45,6 @@ import {
                         <p>Gestiona tus solicitudes de mantenimiento</p>
                     </div>
                 </div>
-                <button mat-raised-button color="primary" routerLink="/portal/mantenimiento/nueva">
-                    <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-                    Nueva Solicitud
-                </button>
             </div>
 
             <!-- Stats -->
