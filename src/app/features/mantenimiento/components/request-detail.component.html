@@ -1,0 +1,259 @@
+<div class="request-detail-dialog">
+    <div class="dialog-header">
+        <div class="header-title">
+            <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
+            <h2>Detalles de Solicitud</h2>
+        </div>
+        <button mat-icon-button (click)="close()">
+            <lucide-icon [img]="X" [size]="20"></lucide-icon>
+        </button>
+    </div>
+
+    <div class="dialog-content">
+        <!-- Request ID and Status -->
+        <div class="request-header-info">
+            <div class="request-id">
+                <span class="ticket-label">Ticket:</span>
+                <span class="ticket-number">{{ request.ticket_number }}</span>
+            </div>
+            <div class="status-badges">
+                <span class="status-badge" [ngClass]="getStatusColor(request.status)">
+                    {{ statusLabels[request.status] }}
+                </span>
+                <span class="priority-badge" [ngClass]="getPriorityColor(request.priority)">
+                    {{ priorityLabels[request.priority] }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Request Type Badge -->
+        <div class="request-type-badge">
+            <lucide-icon [img]="Wrench" [size]="16"></lucide-icon>
+            <span>{{ request.request_type === 'MAINTENANCE' ? 'Mantenimiento' : 'Consulta General' }}</span>
+        </div>
+
+        <!-- Title and Description -->
+        <div class="section">
+            <h3>{{ request.title }}</h3>
+            <p class="description">{{ request.description }}</p>
+            @if (request.category) {
+            <div class="category-chip">
+                <lucide-icon [img]="Wrench" [size]="14"></lucide-icon>
+                <span>{{ categoryLabels[request.category] }}</span>
+            </div>
+            }
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Property and Contract Info -->
+        <div class="section">
+            @if (request.property) {
+            <div class="property-contract-card">
+                <div class="property-header">
+                    <lucide-icon [img]="Home" [size]="20"></lucide-icon>
+                    <span class="property-label">MI PROPIEDAD</span>
+                </div>
+
+                <h3 class="property-title">{{ request.property.title }}</h3>
+
+                <div class="property-footer">
+                    @if (request.contract) {
+                    <div class="contract-info">
+                        <lucide-icon [img]="User" [size]="14"></lucide-icon>
+                        <span>{{ request.contract.contract_number }}</span>
+                    </div>
+                    }
+                    @if (request.property.status) {
+                    <span class="status-badge-property">{{ request.property.status }}</span>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Dates Info -->
+        <div class="section info-grid">
+            <div class="info-item">
+                <lucide-icon [img]="Calendar" [size]="18"></lucide-icon>
+                <div>
+                    <div class="info-label">Fechas</div>
+                    <div class="info-value">Creado: {{ formatDate(request.created_at) }}</div>
+                    <div class="info-subtext">Actualizado: {{ formatDate(request.updated_at) }}</div>
+                    @if (request.due_date) {
+                    <div class="info-subtext">Fecha límite: {{ formatDate(request.due_date) }}</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Permission Info (only for MAINTENANCE requests) -->
+        @if (request.request_type === 'MAINTENANCE') {
+        <mat-divider></mat-divider>
+        <div class="section">
+            <h4>Información de Acceso</h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <lucide-icon [img]="Clock" [size]="18"></lucide-icon>
+                    <div>
+                        <div class="info-label">Permiso de Entrada</div>
+                        <div class="info-value">{{ permissionLabels[request.permission_to_enter] }}</div>
+                        @if (request.has_pets) {
+                        <div class="info-subtext">
+                            <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                            Tiene mascotas
+                        </div>
+                        }
+                        @if (request.entry_notes) {
+                        <div class="info-subtext entry-notes">{{ request.entry_notes }}</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        }
+
+        <mat-divider></mat-divider>
+
+        <!-- Management Section -->
+        <div class="section">
+            <h4>Gestión</h4>
+
+            <div class="management-grid">
+                <mat-form-field appearance="outline" class="status-field">
+                    <mat-label>Estado</mat-label>
+                    <mat-select [(ngModel)]="request.status" (ngModelChange)="updateStatus($event)">
+                        @for (status of getStatusValues(); track status) {
+                        <mat-option [value]="status">
+                            {{ statusLabels[status] }}
+                        </mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="priority-field">
+                    <mat-label>Prioridad</mat-label>
+                    <mat-select [(ngModel)]="request.priority" (ngModelChange)="updatePriority($event)">
+                        @for (priority of getPriorityValues(); track priority) {
+                        <mat-option [value]="priority">
+                            {{ priorityLabels[priority] }}
+                        </mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Asignar a</mat-label>
+                    <mat-select [value]="request.assigned_to" (selectionChange)="onStaffAssignment($event.value)">
+                        <mat-option [value]="null">Sin asignar</mat-option>
+                        @for (staff of staffMembers; track staff.id) {
+                        <mat-option [value]="staff.id">{{ staff.name }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Fecha límite</mat-label>
+                    <input matInput type="date" [(ngModel)]="request.due_date">
+                </mat-form-field>
+            </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Messages Section -->
+        <div class="section">
+            <h4>
+                <lucide-icon [img]="MessageSquare" [size]="18"></lucide-icon>
+                Mensajes y Conversación
+            </h4>
+
+            @if (isLoadingMessages()) {
+            <div class="loading-messages">
+                <mat-spinner diameter="32"></mat-spinner>
+                <p>Cargando mensajes...</p>
+            </div>
+            } @else {
+            <div class="messages-list">
+                @if (messages().length === 0) {
+                <div class="no-messages">
+                    <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
+                    <p>No hay mensajes aún</p>
+                </div>
+                } @else {
+                @for (message of messages(); track message.id) {
+                <div class="message" [class.internal]="isMessageInternal(message)">
+                    <div class="message-header">
+                        <div class="message-author">
+                            <lucide-icon [img]="getMessageIcon(message)" [size]="14"></lucide-icon>
+                            @if (isMessageInternal(message)) {
+                            <span class="internal-badge">Nota Interna</span>
+                            } @else {
+                            <span class="public-badge">Público</span>
+                            }
+                        </div>
+                        <div class="message-date">{{ formatDate(message.created_at) }}</div>
+                    </div>
+                    <div class="message-content">{{ message.message }}</div>
+                    @if (message.attachments && message.attachments.length > 0) {
+                    <div class="message-attachments">
+                        @for (attachment of message.attachments; track attachment.id) {
+                        <div class="attachment">
+                            <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                            <span>{{ attachment.file_name }}</span>
+                        </div>
+                        }
+                    </div>
+                    }
+                </div>
+                }
+                }
+            </div>
+
+            <!-- Add Message Form -->
+            <div class="add-message-form">
+                <mat-form-field appearance="outline" class="message-input">
+                    <mat-label>Escribir mensaje...</mat-label>
+                    <textarea matInput rows="3" [ngModel]="newMessage()"
+                        (ngModelChange)="newMessage.set($event)"
+                        placeholder="Escribe tu mensaje aquí..."></textarea>
+                </mat-form-field>
+
+                <div class="message-actions">
+                    <mat-checkbox [ngModel]="isInternalNote()"
+                        (ngModelChange)="isInternalNote.set($event)">
+                        <div class="checkbox-label">
+                            <lucide-icon [img]="Lock" [size]="14"></lucide-icon>
+                            <span>Nota interna (solo staff)</span>
+                        </div>
+                    </mat-checkbox>
+
+                    <button mat-raised-button color="primary"
+                            (click)="addMessage()"
+                            [disabled]="!newMessage() || isSendingMessage()">
+                        @if (isSendingMessage()) {
+                        <mat-spinner diameter="16"></mat-spinner>
+                        } @else {
+                        <lucide-icon [img]="Send" [size]="16"></lucide-icon>
+                        }
+                        {{ isSendingMessage() ? 'Enviando...' : 'Enviar Mensaje' }}
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <div class="dialog-actions">
+        <button mat-button (click)="close()">Cancelar</button>
+        <button mat-button color="warn" (click)="delete()">Eliminar</button>
+        <button mat-raised-button color="primary" (click)="save()" [disabled]="isUpdating()">
+            @if (isUpdating()) {
+            <mat-spinner diameter="16"></mat-spinner>
+            Guardando...
+            } @else {
+            Guardar Cambios
+            }
+        </button>
+    </div>
+</div>

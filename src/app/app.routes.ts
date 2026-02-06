@@ -9,6 +9,13 @@ import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.c
 import { ComponentesComponent } from './features/componentes/componentes.component';
 
 export const routes: Routes = [
+  // ==================== TENANT PORTAL ====================
+  {
+    path: 'portal',
+    loadChildren: () => import('./features/tenant-portal/tenant-portal.routes').then(m => m.TENANT_PORTAL_ROUTES)
+  },
+
+  // ==================== ADMIN PANEL ====================
   {
     path: '',
     component: MainLayoutComponent,
@@ -22,5 +29,11 @@ export const routes: Routes = [
       { path: 'mantenimiento', component: MantenimientoComponent },
       { path: 'componentes', component: ComponentesComponent }
     ]
+  },
+
+  // ==================== FALLBACK ====================
+  {
+    path: '**',
+    redirectTo: '/dashboard'
   }
 ];
