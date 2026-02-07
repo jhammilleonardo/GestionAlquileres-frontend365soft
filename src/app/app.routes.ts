@@ -7,8 +7,21 @@ import { ContratosComponent } from './features/contratos/contratos.component';
 import { PagosComponent } from './features/pagos/pagos.component';
 import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.component';
 import { ComponentesComponent } from './features/componentes/componentes.component';
+import { LoginComponent } from './features/auth/login.component';
+import { RegisterComponent } from './features/auth/register.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // ==================== AUTH ROUTES ====================
+  {
+    path: 'login',
+    component: LoginComponent
+  },
+  {
+    path: 'register',
+    component: RegisterComponent
+  },
+
   // ==================== PUBLIC PORTAL ====================
   {
     path: 'publico',
@@ -21,12 +34,13 @@ export const routes: Routes = [
     loadChildren: () => import('./features/tenant-portal/tenant-portal.routes').then(m => m.TENANT_PORTAL_ROUTES)
   },
 
-  // ==================== ADMIN PANEL ====================
+  // ==================== ADMIN PANEL (PROTECTED) ====================
   {
-    path: '',
+    path: ':slug/admin',
     component: MainLayoutComponent,
+    canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'propiedades', component: PropiedadesComponent },
       { path: 'inquilinos', component: InquilinosComponent },
@@ -37,9 +51,16 @@ export const routes: Routes = [
     ]
   },
 
+  // ==================== ROOT REDIRECT ====================
+  {
+    path: '',
+    redirectTo: '/login',
+    pathMatch: 'full'
+  },
+
   // ==================== FALLBACK ====================
   {
     path: '**',
-    redirectTo: '/dashboard'
+    redirectTo: '/login'
   }
 ];

@@ -19,11 +19,22 @@ export class PropertyService {
   private favoritesSubject = new BehaviorSubject<Set<number>>(new Set());
   public favorites$ = this.favoritesSubject.asObservable();
 
-  // Default tenant slug - puede ser configurado dinámicamente
-  private tenantSlug = 'mi-inmobiliaria';
+  // Default tenant slug - se sincroniza automáticamente desde AuthService
+  private tenantSlug = 'soft-prueba';
 
   constructor(private apiHttp: ApiHttpService) {
     this.loadFavoritesFromStorage();
+    this.syncTenantSlugFromAuth();
+  }
+
+  /**
+   * Sincronizar slug del tenant desde localStorage (configurado por AuthService)
+   */
+  private syncTenantSlugFromAuth(): void {
+    const slug = localStorage.getItem('tenant_slug');
+    if (slug) {
+      this.tenantSlug = slug;
+    }
   }
 
   /**
@@ -31,6 +42,7 @@ export class PropertyService {
    */
   setTenantSlug(slug: string): void {
     this.tenantSlug = slug;
+    localStorage.setItem('tenant_slug', slug);
   }
 
   /**
@@ -67,7 +79,7 @@ export class PropertyService {
     if (filters.limit) params.limit = filters.limit;
 
     const endpoint = `${this.tenantSlug}/catalog/properties`;
-    
+
     return this.apiHttp.get<Property[]>(endpoint, params).pipe(
       map(properties => properties.map(p => this.transformProperty(p))),
       catchError(error => {
@@ -89,7 +101,7 @@ export class PropertyService {
    */
   getPropertyById(id: number): Observable<Property | undefined> {
     const endpoint = `${this.tenantSlug}/catalog/properties/${id}`;
-    
+
     return this.apiHttp.get<Property>(endpoint).pipe(
       map(property => this.transformProperty(property)),
       catchError(error => {
@@ -131,17 +143,17 @@ export class PropertyService {
     // TODO: Implementar endpoint para enviar solicitudes
     // Por ahora retornamos un Observable simulado
     console.log('Application submitted:', application);
-    
-    return of({ 
-      success: true, 
-      message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.' 
+
+    return of({
+      success: true,
+      message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.'
     }).pipe(
       map(response => response),
       catchError(error => {
         console.error('Error submitting application:', error);
-        return of({ 
-          success: false, 
-          message: 'Error al enviar la solicitud. Por favor intente nuevamente.' 
+        return of({
+          success: false,
+          message: 'Error al enviar la solicitud. Por favor intente nuevamente.'
         });
       })
     );
@@ -227,4 +239,126 @@ export class PropertyService {
       console.error('Error loading favorites from storage:', error);
     }
   }
+
+  // ==================== ADMIN CRUD METHODS ====================
+
+  /**
+   * Listar todas las propiedades (admin) con filtros
+   */
+  getAdminProperties(filters?: PropertyFilters): Observable<Property[]> {
+    const params: any = {};
+
+    if (filters) {
+      if (filters.status) params.status = filters.status;
+      if (filters.property_type_id) params.property_type_id = filters.property_type_id;
+      if (filters.property_subtype_id) params.property_subtype_id = filters.property_subtype_id;
+      if (filters.city) params.city = filters.city;
+      if (filters.country) params.country = filters.country;
+      if (filters.search) params.search = filters.search;
+      if (filters.sort_by) params.sort_by = filters.sort_by;
+      if (filters.sort_order) params.sort_order = filters.sort_order;
+      if (filters.page) params.page = filters.page;
+      if (filters.limit) params.limit = filters.limit;
+    }
+
+    const endpoint = `${this.tenantSlug}/admin/properties`;
+    console.log('🌐 GET Request:', endpoint, 'Params:', params);
+    console.log('🔑 Token en localStorage:', localStorage.getItem('access_token') ? '✅ Presente' : '❌ Ausente');
+
+    return this.apiHttp.get<any>(endpoint, params).pipe(
+      map(response => {
+        console.log('📦 Raw properties from API:', response);
+        console.log('📦 Type of response:', typeof response, 'Is Array:', Array.isArray(response));
+
+        // El backend puede devolver un array directamente o un objeto con propiedades
+        let properties: any[] = [];
+        if (Array.isArray(response)) {
+          properties = response;
+        } else if (response && response.items) {
+          properties = response.items;
+        } else if (response && response.data) {
+          properties = response.data;
+        } else {
+          console.warn('⚠️ Formato de respuesta inesperado:', response);
+          properties = [];
+        }
+
+        return properties.map(p => this.transformProperty(p));
+      }),
+      catchError(error => {
+        console.error('❌ Error loading admin properties:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Obtener detalle de una propiedad (admin)
+   */
+  getAdminPropertyById(id: number): Observable<Property | undefined> {
+    const endpoint = `${this.tenantSlug}/admin/properties/${id}`;
+
+    return this.apiHttp.get<Property>(endpoint).pipe(
+      map(property => this.transformProperty(property)),
+      catchError(error => {
+        console.error(`Error loading admin property ${id}:`, error);
+        return of(undefined);
+      })
+    );
+  }
+
+  /**
+   * Crear nueva propiedad (admin)
+   */
+  createProperty(propertyData: any): Observable<Property> {
+    const endpoint = `${this.tenantSlug}/admin/properties`;
+
+    return this.apiHttp.post<Property>(endpoint, propertyData).pipe(
+      map(property => this.transformProperty(property)),
+      tap(() => console.log('Property created successfully')),
+      catchError(error => {
+        console.error('Error creating property:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Actualizar propiedad existente (admin)
+   */
+  updateProperty(id: number, propertyData: any): Observable<Property> {
+    const endpoint = `${this.tenantSlug}/admin/properties/${id}`;
+
+    return this.apiHttp.patch<Property>(endpoint, propertyData).pipe(
+      map(property => this.transformProperty(property)),
+      tap(() => console.log(`Property ${id} updated successfully`)),
+      catchError(error => {
+        console.error(`Error updating property ${id}:`, error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Eliminar propiedad (admin)
+   */
+  deleteProperty(id: number): Observable<void> {
+    const endpoint = `${this.tenantSlug}/admin/properties/${id}`;
+
+    return this.apiHttp.delete<void>(endpoint).pipe(
+      tap(() => console.log(`Property ${id} deleted successfully`)),
+      catchError(error => {
+        console.error(`Error deleting property ${id}:`, error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Actualizar estado de una propiedad (admin)
+   */
+  updatePropertyStatus(id: number, status: PropertyStatus, active: boolean): Observable<Property> {
+    return this.updateProperty(id, { status, active });
+  }
 }
+

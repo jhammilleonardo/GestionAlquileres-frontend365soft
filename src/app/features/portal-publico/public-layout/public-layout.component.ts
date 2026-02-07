@@ -4,10 +4,10 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { FooterComponent } from '../footer/footer.component';
 
 @Component({
-  selector: 'app-public-layout',
-  standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent],
-  template: `
+    selector: 'app-public-layout',
+    standalone: true,
+    imports: [RouterOutlet, NavbarComponent, FooterComponent],
+    template: `
     <div class="public-layout">
       <app-navbar></app-navbar>
       <main class="main-content">
@@ -16,7 +16,7 @@ import { FooterComponent } from '../footer/footer.component';
       <app-footer></app-footer>
     </div>
   `,
-  styles: [`
+    styles: [`
     .public-layout {
       display: flex;
       flex-direction: column;
@@ -28,4 +28,4 @@ import { FooterComponent } from '../footer/footer.component';
     }
   `]
 })
-export class PublicLayoutComponent {}
+export class PublicLayoutComponent { }

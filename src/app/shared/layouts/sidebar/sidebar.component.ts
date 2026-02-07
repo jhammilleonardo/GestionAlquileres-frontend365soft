@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -23,13 +23,13 @@ import { MenuOption } from '../../../core/models/user.model';
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   private sidebarService = inject(SidebarService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
   expanded = this.sidebarService.expanded;
-  menuOptions = signal<MenuOption[]>(this.sidebarService.getMenuOptions());
+  menuOptions = signal<MenuOption[]>([]);
   currentUser = this.authService.currentUser;
 
   // Lucide icons
@@ -44,6 +44,11 @@ export class SidebarComponent {
   readonly ComponentIcon = ComponentIcon;
   readonly BarChart3 = BarChart3;
   readonly Settings = Settings;
+
+  ngOnInit(): void {
+    // Actualizar el menú con las rutas correctas
+    this.menuOptions.set(this.sidebarService.getMenuOptions());
+  }
 
   getIconComponent(iconName: string) {
     const iconMap: Record<string, any> = {

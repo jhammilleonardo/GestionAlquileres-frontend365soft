@@ -5,10 +5,8 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
-// Tailwind CSS Directives
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+// Tailwind CSS v4
+@import "tailwindcss";
 
 html {
   height: 100%;
@@ -36,80 +34,4 @@ body {
   // Reset the user agent margin.
   margin: 0;
   height: 100%;
-}
-
-/* Global Lucide Icon Styles */
-
-// Fix alignment for Lucide icons in Material form fields
-.mat-mdc-form-field {
-  lucide-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-right: 8px;
-  }
-
-  // Prefix icons (left side)
-  .mat-mdc-form-field-icon-prefix lucide-icon {
-    margin-left: 4px;
-    margin-right: 8px;
-  }
-
-  // Suffix icons (right side)
-  .mat-mdc-form-field-icon-suffix lucide-icon {
-    margin-left: 8px;
-    margin-right: 4px;
-  }
-}
-
-// Fix alignment for Lucide icons in buttons
-button {
-  lucide-icon {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    vertical-align: middle !important;
-  }
-}
-
-// Fix alignment for Lucide icons in icon buttons
-.mat-mdc-icon-button {
-  lucide-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin: auto !important;
-  }
-}
-
-// Fix alignment for Lucide icons in list items
-.mat-mdc-list-item {
-  lucide-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-}
-
-// Fix alignment for Lucide icons in chips
-.mat-mdc-chip {
-  lucide-icon {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    vertical-align: middle !important;
-  }
-}
-
-// General Lucide icon styling
-lucide-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
 }

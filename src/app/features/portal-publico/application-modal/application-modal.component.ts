@@ -33,7 +33,7 @@ export class ApplicationModalComponent {
   isSubmitting = false;
   submitted = false;
 
-  constructor(private propertyService: PropertyService) {}
+  constructor(private propertyService: PropertyService) { }
 
   ngOnInit() {
     this.application.propertyId = this.property.id;
