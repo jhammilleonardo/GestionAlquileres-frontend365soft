@@ -1,11 +1,11 @@
-<div class="propiedades-container min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-6">
+<div class="min-h-screen p-6 propiedades-container bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
   <!-- Header -->
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+  <div class="flex flex-col items-start justify-between gap-4 mb-8 sm:flex-row sm:items-center">
     <div>
-      <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <h1 class="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
         Propiedades
       </h1>
-      <p class="text-slate-600 mt-2 flex items-center gap-2">
+      <p class="flex items-center gap-2 mt-2 text-slate-600">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -23,7 +23,7 @@
   </div>
 
   <!-- Filters -->
-  <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-slate-200">
+  <div class="p-6 mb-8 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
     <div class="flex items-center gap-2 mb-4">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
         viewBox="0 0 24 24">
@@ -33,9 +33,9 @@
       <h2 class="text-lg font-semibold text-slate-800">Filtros</h2>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-1">
+        <label class="flex items-center block gap-1 mb-2 text-sm font-medium text-slate-700">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -48,7 +48,7 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Estado</label>
+        <label class="block mb-2 text-sm font-medium text-slate-700">Estado</label>
         <select [(ngModel)]="filters.status" (change)="applyFilters()"
           class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white/50">
           <option [value]="undefined">Todos los estados</option>
@@ -57,7 +57,7 @@
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2 flex items-center gap-1">
+        <label class="flex items-center block gap-1 mb-2 text-sm font-medium text-slate-700">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -85,26 +85,26 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading()" class="text-center py-16">
+  <div *ngIf="isLoading()" class="py-16 text-center">
     <div
-      class="inline-flex items-center justify-center w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin">
+      class="inline-flex items-center justify-center w-16 h-16 border-4 border-blue-200 rounded-full border-t-blue-600 animate-spin">
     </div>
-    <p class="text-slate-600 mt-6 font-medium">Cargando propiedades...</p>
+    <p class="mt-6 font-medium text-slate-600">Cargando propiedades...</p>
   </div>
 
   <!-- Empty State -->
   <div *ngIf="!isLoading() && properties().length === 0"
-    class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-16 text-center border border-slate-200">
+    class="p-16 text-center border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
     <div
-      class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mb-6">
+      class="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor"
         viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
       </svg>
     </div>
-    <h3 class="text-2xl font-bold text-slate-900 mb-2">No hay propiedades</h3>
-    <p class="text-slate-600 mb-8 max-w-md mx-auto">Comienza agregando tu primera propiedad para empezar a gestionar tu
+    <h3 class="mb-2 text-2xl font-bold text-slate-900">No hay propiedades</h3>
+    <p class="max-w-md mx-auto mb-8 text-slate-600">Comienza agregando tu primera propiedad para empezar a gestionar tu
       cartera inmobiliaria</p>
     <button (click)="openCreateModal()"
       class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold">
@@ -117,16 +117,16 @@
 
   <!-- Properties Grid -->
   <div *ngIf="!isLoading() && properties().length > 0" class="space-y-6">
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
       <div *ngFor="let property of properties()"
-        class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-200 transform hover:-translate-y-1">
+        class="overflow-hidden transition-all duration-300 transform border shadow-xl group bg-white/80 backdrop-blur-sm rounded-2xl hover:shadow-2xl border-slate-200 hover:-translate-y-1">
 
         <!-- Image -->
-        <div class="relative h-48 bg-gradient-to-br from-blue-400 to-purple-500 overflow-hidden">
+        <div class="relative h-48 overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500">
           <img *ngIf="property.images && property.images.length > 0" [src]="property.images[0]" [alt]="property.title"
-            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+            class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110" />
           <div *ngIf="!property.images || property.images.length === 0"
-            class="w-full h-full flex items-center justify-center">
+            class="flex items-center justify-center w-full h-full">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-white/50" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -163,12 +163,12 @@
         <!-- Content -->
         <div class="p-6">
           <!-- Title -->
-          <h3 class="text-xl font-bold text-slate-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 class="mb-2 text-xl font-bold transition-colors text-slate-900 line-clamp-2 group-hover:text-blue-600">
             {{ property.title }}
           </h3>
 
           <!-- Type -->
-          <div class="flex items-center gap-2 text-sm text-slate-600 mb-4">
+          <div class="flex items-center gap-2 mb-4 text-sm text-slate-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -181,7 +181,7 @@
           </div>
 
           <!-- Address -->
-          <div class="flex items-start gap-2 text-sm text-slate-600 mb-4">
+          <div class="flex items-start gap-2 mb-4 text-sm text-slate-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none"
               stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -206,7 +206,7 @@
           </div>
 
           <!-- Details -->
-          <div class="grid grid-cols-2 gap-3 mb-6 pb-6 border-b border-slate-200">
+          <div class="grid grid-cols-2 gap-3 pb-6 mb-6 border-b border-slate-200">
             <div class="flex items-center gap-2 text-sm">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
                 viewBox="0 0 24 24">
@@ -271,9 +271,9 @@
     </div>
 
     <!-- Results Summary -->
-    <div class="text-center py-6">
-      <p class="text-sm text-slate-600 font-medium">
-        Mostrando <span class="text-blue-600 font-bold">{{ properties().length }}</span> propiedades
+    <div class="py-6 text-center">
+      <p class="text-sm font-medium text-slate-600">
+        Mostrando <span class="font-bold text-blue-600">{{ properties().length }}</span> propiedades
       </p>
     </div>
   </div>
@@ -281,15 +281,15 @@
 
 <!-- Modal -->
 <div *ngIf="showModal()"
-  class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn"
+  class="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
   style="z-index: 9999;" (click)="closeModal()">
   <div class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-slideUp"
     (click)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div
-      class="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6 flex justify-between items-center sticky top-0 z-10">
+      class="sticky top-0 z-10 flex items-center justify-between px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600">
       <div class="flex items-center gap-3">
-        <div class="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
+        <div class="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" stroke="currentColor"
             viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -301,7 +301,7 @@
         </h2>
       </div>
       <button (click)="closeModal()"
-        class="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-xl transition-all">
+        class="p-2 transition-all text-white/80 hover:text-white hover:bg-white/20 rounded-xl">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -309,11 +309,11 @@
     </div>
 
     <!-- Modal Body -->
-    <div class="overflow-y-auto max-h-[calc(90vh-180px)] p-8 bg-gradient-to-br from-slate-50 to-white"
-      style="scrollbar-width: thin; scrollbar-color: #CBD5E1 #F1F5F9;">
-      <form [formGroup]="propertyForm" class="space-y-8" novalidate>
+    <div class="p-8 overflow-y-auto bg-slate-50"
+      style="max-height: calc(90vh - 180px); scrollbar-width: thin; scrollbar-color: #CBD5E1 #F1F5F9;">
+      <form [formGroup]="propertyForm" class="space-y-6" novalidate>
         <!-- Basic Info -->
-        <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200">
+        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
           <div class="flex items-center gap-2 mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
@@ -324,53 +324,56 @@
             <h3 class="text-lg font-bold text-slate-900">Información Básica</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Título <span
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Título <span
                   class="text-red-500">*</span></label>
               <input type="text" formControlName="title"
-                [class]="'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white ' + (hasError('title') ? 'border-red-500' : 'border-slate-300')"
+                [ngClass]="{'border-red-500': hasError('title'), 'border-slate-300': !hasError('title')}"
+                class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: Apartamento Moderno en Centro" />
-              <p *ngIf="hasError('title')" class="text-xs text-red-500 mt-1">{{ getErrorMessage('title') }}</p>
-              <p *ngIf="!hasError('title')" class="text-xs text-slate-500 mt-1">Un título atractivo que describa la
+              <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-500">{{ getErrorMessage('title') }}</p>
+              <p *ngIf="!hasError('title')" class="mt-1 text-xs text-slate-500">Un título atractivo que describa la
                 propiedad</p>
             </div>
 
             <div class="md:col-span-2">
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Descripción</label>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Descripción</label>
               <textarea formControlName="description" rows="4"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white resize-none"
+                class="w-full px-4 py-3 transition-all bg-white border resize-none border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Describe la propiedad, sus características, ubicación, etc..."></textarea>
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Tipo de Propiedad <span
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Tipo de Propiedad <span
                   class="text-red-500">*</span></label>
               <select formControlName="property_type_id" (change)="onPropertyTypeChange(+$any($event.target).value)"
-                [class]="'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white ' + (hasError('property_type_id') ? 'border-red-500' : 'border-slate-300')">
+                [ngClass]="{'border-red-500': hasError('property_type_id'), 'border-slate-300': !hasError('property_type_id')}"
+                class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">Seleccione un tipo...</option>
                 <option *ngFor="let type of propertyTypes()" [value]="type.id">{{ type.name }}</option>
               </select>
-              <p *ngIf="hasError('property_type_id')" class="text-xs text-red-500 mt-1">{{
+              <p *ngIf="hasError('property_type_id')" class="mt-1 text-xs text-red-500">{{
                 getErrorMessage('property_type_id') }}</p>
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Subtipo <span
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Subtipo <span
                   class="text-red-500">*</span></label>
               <select formControlName="property_subtype_id"
-                [class]="'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white ' + (hasError('property_subtype_id') ? 'border-red-500' : 'border-slate-300')">
+                [ngClass]="{'border-red-500': hasError('property_subtype_id'), 'border-slate-300': !hasError('property_subtype_id')}"
+                class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">Seleccione primero un tipo</option>
                 <option *ngFor="let subtype of filteredSubtypes()" [value]="subtype.id">{{ subtype.name }}</option>
               </select>
-              <p *ngIf="hasError('property_subtype_id')" class="text-xs text-red-500 mt-1">{{
+              <p *ngIf="hasError('property_subtype_id')" class="mt-1 text-xs text-red-500">{{
                 getErrorMessage('property_subtype_id') }}</p>
             </div>
 
             <div class="flex items-center pt-8">
               <input type="checkbox" formControlName="active" id="active"
-                class="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer" />
-              <label for="active" class="ml-3 block text-sm text-slate-900 font-medium cursor-pointer">
+                class="w-5 h-5 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500" />
+              <label for="active" class="block ml-3 text-sm font-medium cursor-pointer text-slate-900">
                 Propiedad Activa (visible en catálogo público)
               </label>
             </div>
@@ -378,7 +381,7 @@
         </div>
 
         <!-- Financial Info -->
-        <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200">
+        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
           <div class="flex items-center gap-2 mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
@@ -388,23 +391,23 @@
             <h3 class="text-lg font-bold text-slate-900">Información Financiera</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Renta Mensual ($)</label>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Renta Mensual ($)</label>
               <input type="number" formControlName="monthly_rent_amount"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="1500" />
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Depósito de Seguridad ($)</label>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Depósito de Seguridad ($)</label>
               <input type="number" formControlName="security_deposit_amount"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="3000" />
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1">
+              <label class="flex items-center block gap-1 mb-2 text-sm font-semibold text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -413,32 +416,32 @@
                 Fecha Disponible
               </label>
               <input type="date" formControlName="availability_date"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white" />
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
 
           <!-- Información de Cuenta Bancaria (Opcional) -->
-          <div class="mt-6 pt-6 border-t border-slate-200">
-            <h4 class="text-sm font-semibold text-slate-700 mb-4">Información de Cuenta Bancaria (Opcional)</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="pt-6 mt-6 border-t border-slate-200">
+            <h4 class="mb-4 text-sm font-semibold text-slate-700">Información de Cuenta Bancaria (Opcional)</h4>
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Número de Cuenta</label>
+                <label class="block mb-2 text-sm font-medium text-slate-700">Número de Cuenta</label>
                 <input type="text" formControlName="account_number"
-                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="123-456-789" />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Tipo de Cuenta</label>
+                <label class="block mb-2 text-sm font-medium text-slate-700">Tipo de Cuenta</label>
                 <input type="text" formControlName="account_type"
-                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Ahorros, Corriente, etc." />
               </div>
 
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-2">Titular de la Cuenta</label>
+                <label class="block mb-2 text-sm font-medium text-slate-700">Titular de la Cuenta</label>
                 <input type="text" formControlName="account_holder_name"
-                  class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Nombre del titular" />
               </div>
             </div>
@@ -446,7 +449,7 @@
         </div>
 
         <!-- Property Details -->
-        <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200">
+        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
           <div class="flex items-center gap-2 mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
@@ -456,23 +459,23 @@
             <h3 class="text-lg font-bold text-slate-900">Detalles de la Propiedad</h3>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Área Total (m²)</label>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Área Total (m²)</label>
               <input type="number" formControlName="total_area"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="85" />
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">Área Construida (m²)</label>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Área Construida (m²)</label>
               <input type="number" formControlName="built_area"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="75" />
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1">
+              <label class="flex items-center block gap-1 mb-2 text-sm font-semibold text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -481,12 +484,12 @@
                 Latitud
               </label>
               <input type="number" step="any" formControlName="latitude"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="-34.6037" />
             </div>
 
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1">
+              <label class="flex items-center block gap-1 mb-2 text-sm font-semibold text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -495,14 +498,14 @@
                 Longitud
               </label>
               <input type="number" step="any" formControlName="longitude"
-                class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="-58.3816" />
             </div>
           </div>
         </div>
 
         <!-- Address -->
-        <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200">
+        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
           <div class="flex items-center gap-2 mb-6">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-600" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
@@ -516,48 +519,51 @@
 
           <div formArrayName="addresses">
             <div *ngFor="let address of addresses.controls; let i = index" [formGroupName]="i" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div class="md:col-span-2">
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Dirección Completa <span
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Dirección Completa <span
                       class="text-red-500">*</span></label>
                   <input type="text" formControlName="street_address"
-                    [class]="'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white ' + (getAddressError(i, 'street_address') ? 'border-red-500' : 'border-slate-300')"
+                    [ngClass]="{'border-red-500': getAddressError(i, 'street_address'), 'border-slate-300': !getAddressError(i, 'street_address')}"
+                    class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Av. Libertador 1234, Piso 5, Depto A" />
-                  <p *ngIf="getAddressError(i, 'street_address')" class="text-xs text-red-500 mt-1">{{
+                  <p *ngIf="getAddressError(i, 'street_address')" class="mt-1 text-xs text-red-500">{{
                     getAddressError(i, 'street_address') }}</p>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Ciudad <span
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Ciudad <span
                       class="text-red-500">*</span></label>
                   <input type="text" formControlName="city"
-                    [class]="'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white ' + (getAddressError(i, 'city') ? 'border-red-500' : 'border-slate-300')"
+                    [ngClass]="{'border-red-500': getAddressError(i, 'city'), 'border-slate-300': !getAddressError(i, 'city')}"
+                    class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Buenos Aires" />
-                  <p *ngIf="getAddressError(i, 'city')" class="text-xs text-red-500 mt-1">{{ getAddressError(i, 'city')
+                  <p *ngIf="getAddressError(i, 'city')" class="mt-1 text-xs text-red-500">{{ getAddressError(i, 'city')
                     }}</p>
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Estado/Provincia</label>
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Estado/Provincia</label>
                   <input type="text" formControlName="state"
-                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Capital Federal" />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Código Postal</label>
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Código Postal</label>
                   <input type="text" formControlName="zip_code"
-                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="1001" />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">País <span
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">País <span
                       class="text-red-500">*</span></label>
                   <input type="text" formControlName="country"
-                    [class]="'w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white ' + (getAddressError(i, 'country') ? 'border-red-500' : 'border-slate-300')"
+                    [ngClass]="{'border-red-500': getAddressError(i, 'country'), 'border-slate-300': !getAddressError(i, 'country')}"
+                    class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Argentina" />
-                  <p *ngIf="getAddressError(i, 'country')" class="text-xs text-red-500 mt-1">{{ getAddressError(i,
+                  <p *ngIf="getAddressError(i, 'country')" class="mt-1 text-xs text-red-500">{{ getAddressError(i,
                     'country') }}</p>
                 </div>
               </div>
@@ -566,7 +572,7 @@
         </div>
 
         <!-- Owner -->
-        <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200" *ngIf="modalMode === 'create'">
+        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200" *ngIf="modalMode === 'create'">
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
@@ -576,38 +582,38 @@
               </svg>
               <h3 class="text-lg font-bold text-slate-900">Información del Propietario</h3>
             </div>
-            <span class="text-xs text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Opcional - puede agregar
+            <span class="px-3 py-1 text-xs rounded-full text-slate-500 bg-slate-100">Opcional - puede agregar
               después</span>
           </div>
 
           <div formArrayName="new_owners">
             <div *ngFor="let owner of owners.controls; let i = index" [formGroupName]="i" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre Completo</label>
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Nombre Completo</label>
                   <input type="text" formControlName="name"
-                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Carlos González" />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Email</label>
                   <input type="email" formControlName="primary_email"
-                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="carlos@example.com" />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">Teléfono</label>
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">Teléfono</label>
                   <input type="tel" formControlName="phone_number"
-                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="+5491112345678" />
                 </div>
 
                 <div>
-                  <label class="block text-sm font-semibold text-slate-700 mb-2">% de Propiedad</label>
+                  <label class="block mb-2 text-sm font-semibold text-slate-700">% de Propiedad</label>
                   <input type="number" formControlName="ownership_percentage" min="0" max="100"
-                    class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="100" />
                 </div>
               </div>
@@ -619,13 +625,13 @@
 
     <!-- Modal Footer -->
     <div
-      class="bg-gradient-to-r from-slate-50 to-white border-t border-slate-200 px-8 py-5 flex justify-end gap-3 sticky bottom-0">
+      class="sticky bottom-0 flex justify-end gap-3 px-8 py-5 border-t bg-gradient-to-r from-slate-50 to-white border-slate-200">
       <button type="button" (click)="closeModal()"
-        class="px-6 py-3 border-2 border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 transition-all hover:border-slate-400">
+        class="px-6 py-3 font-semibold transition-all border-2 border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-400">
         Cancelar
       </button>
       <button type="button" (click)="saveProperty()" [disabled]="isLoading()"
-        class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-lg hover:shadow-xl flex items-center gap-2">
+        class="flex items-center gap-2 px-8 py-3 font-semibold text-white transition-all shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl">
         <svg xmlns="http://www.w3.org/2000/svg" *ngIf="!isLoading()" class="w-5 h-5" fill="none" stroke="currentColor"
           viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
