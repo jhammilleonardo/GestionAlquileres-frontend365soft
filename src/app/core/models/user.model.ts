@@ -5,6 +5,7 @@ export interface User {
   role: 'admin' | 'manager' | 'tenant' | 'owner';
   avatar?: string;
   phoneNumber?: string;
+  tenant_slug?: string;
 }
 
 export interface MenuOption {

@@ -80,20 +80,7 @@ import { AuthService } from '../../core/services/auth.service';
 
                     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
                         <mat-form-field appearance="outline" class="custom-field">
-                            <mat-label>Empresa (slug)</mat-label>
-                            <lucide-icon matIconPrefix [img]="Building2" [size]="20"></lucide-icon>
-                            <input
-                                matInput
-                                formControlName="slug"
-                                placeholder="mi-inmobiliaria"
-                                autocomplete="organization">
-                            @if (loginForm.get('slug')?.hasError('required') && loginForm.get('slug')?.touched) {
-                                <mat-error>El slug es requerido</mat-error>
-                            }
-                        </mat-form-field>
-
-                        <mat-form-field appearance="outline" class="custom-field">
-                            <mat-label>Correo electronico</mat-label>
+                            <mat-label>Correo electrónico</mat-label>
                             <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
                             <input
                                 matInput
@@ -523,7 +510,6 @@ export class LoginComponent {
     errorMessage = signal<string | null>(null);
 
     loginForm = this.fb.group({
-        slug: ['', Validators.required],
         email: ['', [Validators.required, Validators.email]],
         password: ['', Validators.required],
         rememberMe: [false]
@@ -532,7 +518,13 @@ export class LoginComponent {
     constructor() {
         // If already authenticated and has valid token, redirect to dashboard
         if (this.authService.isAuth() && this.authService.getToken()) {
-            this.router.navigate(['/dashboard']);
+            // Obtener slug del usuario autenticado para redirigir
+            const slug = this.authService.getCurrentSlug();
+            if (slug) {
+                this.router.navigate(['/', slug, 'dashboard']);
+            } else {
+                this.router.navigate(['/dashboard']);
+            }
         }
     }
 
@@ -546,15 +538,31 @@ export class LoginComponent {
             return;
         }
 
-        const { slug, email, password, rememberMe } = this.loginForm.value;
+        const { email, password, rememberMe } = this.loginForm.value;
         this.isLoading.set(true);
         this.errorMessage.set(null);
 
-        this.authService.login(slug!, email!, password!, rememberMe!).subscribe({
-            next: () => {
+        this.authService.loginAdmin(email!, password!, rememberMe!).subscribe({
+            next: (response) => {
                 this.isLoading.set(false);
-                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
-                this.router.navigateByUrl(returnUrl);
+
+                // Validar que el role sea ADMIN
+                if (response.user.role !== 'ADMIN') {
+                    this.errorMessage.set('Este login es solo para administradores. Si eres inquilino, usa el portal de inquilinos.');
+                    this.authService.logout();
+                    return;
+                }
+
+                // Redirigir al dashboard con el slug del usuario
+                const slug = response.user.tenant_slug;
+                const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+                if (returnUrl) {
+                    this.router.navigateByUrl(returnUrl);
+                } else if (slug) {
+                    this.router.navigate(['/', slug, 'dashboard']);
+                } else {
+                    this.router.navigate(['/dashboard']);
+                }
             },
             error: (error) => {
                 this.isLoading.set(false);
@@ -568,6 +576,7 @@ export class LoginComponent {
         localStorage.removeItem('tenant_access_token');
         localStorage.removeItem('tenant_user');
         localStorage.removeItem('tenant_slug');
-        this.router.navigate(['/portal/login']);
+        // Redirigir a landing con mensaje
+        this.router.navigate(['/'], { queryParams: { tenant: 'true' } });
     }
 }

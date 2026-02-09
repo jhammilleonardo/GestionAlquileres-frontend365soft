@@ -10,10 +10,17 @@ import { ComponentesComponent } from './features/componentes/componentes.compone
 import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
+import { LandingComponent } from './features/landing/landing.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  // ==================== AUTH ====================
+  // ==================== LANDING PAGE (PÚBLICO) ====================
+  {
+    path: '',
+    component: LandingComponent
+  },
+
+  // ==================== AUTH ADMIN (PÚBLICO - SIN SLUG) ====================
   {
     path: 'login',
     component: LoginComponent
@@ -27,32 +34,44 @@ export const routes: Routes = [
     component: ForgotPasswordComponent
   },
 
-  // ==================== TENANT PORTAL ====================
+  // ==================== RUTAS CON SLUG ====================
   {
-    path: 'portal',
-    loadChildren: () => import('./features/tenant-portal/tenant-portal.routes').then(m => m.TENANT_PORTAL_ROUTES)
-  },
-
-  // ==================== ADMIN PANEL ====================
-  {
-    path: '',
-    component: MainLayoutComponent,
-    canActivate: [authGuard],
+    path: ':slug',
     children: [
-      { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: DashboardComponent },
-      { path: 'propiedades', component: PropiedadesComponent },
-      { path: 'inquilinos', component: InquilinosComponent },
-      { path: 'contratos', component: ContratosComponent },
-      { path: 'pagos', component: PagosComponent },
-      { path: 'mantenimiento', component: MantenimientoComponent },
-      { path: 'componentes', component: ComponentesComponent }
+      // ==================== PORTAL PÚBLICO ====================
+      {
+        path: 'publico',
+        loadChildren: () => import('./features/portal-publico/portal-publico.routes').then(m => m.PORTAL_PUBLICO_ROUTES)
+      },
+
+      // ==================== TENANT PORTAL (INQUILINOS) ====================
+      {
+        path: 'portal',
+        loadChildren: () => import('./features/tenant-portal/tenant-portal.routes').then(m => m.TENANT_PORTAL_ROUTES)
+      },
+
+      // ==================== ADMIN PANEL ====================
+      {
+        path: '',
+        component: MainLayoutComponent,
+        canActivate: [authGuard],
+        children: [
+          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: 'dashboard', component: DashboardComponent },
+          { path: 'propiedades', component: PropiedadesComponent },
+          { path: 'inquilinos', component: InquilinosComponent },
+          { path: 'contratos', component: ContratosComponent },
+          { path: 'pagos', component: PagosComponent },
+          { path: 'mantenimiento', component: MantenimientoComponent },
+          { path: 'componentes', component: ComponentesComponent }
+        ]
+      }
     ]
   },
 
   // ==================== FALLBACK ====================
   {
     path: '**',
-    redirectTo: '/login'
+    redirectTo: '/'
   }
 ];

@@ -91,6 +91,38 @@ export class AuthService {
     }
 
     /**
+     * Login admin without slug (public endpoint)
+     */
+    loginAdmin(email: string, password: string, rememberMe: boolean = false): Observable<LoginResponse> {
+        this.isLoadingSignal.set(true);
+        this.errorSignal.set(null);
+
+        return this.http.post<LoginResponse>(
+            `${environment.apiUrl}auth/admin/login`,
+            { email, password }
+        ).pipe(
+            tap(response => {
+                this.setSession(response, rememberMe);
+                this.isLoadingSignal.set(false);
+            }),
+            catchError(error => {
+                this.isLoadingSignal.set(false);
+                const message = error.error?.message || 'Error al iniciar sesión';
+                this.errorSignal.set(message);
+                throw error;
+            })
+        );
+    }
+
+    /**
+     * Get current tenant slug from user
+     */
+    getCurrentSlug(): string | null {
+        const user = this.currentUserSignal();
+        return user?.tenant_slug || null;
+    }
+
+    /**
      * Logout and clear session
      */
     logout(): void {
@@ -172,7 +204,8 @@ export class AuthService {
             name: response.user.name,
             email: response.user.email,
             role: response.user.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(response.user.name)}&background=0D8ABC&color=fff`
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(response.user.name)}&background=0D8ABC&color=fff`,
+            tenant_slug: response.user.tenant_slug
         };
 
         storage.setItem(this.TOKEN_KEY, response.access_token);

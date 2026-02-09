@@ -16,17 +16,6 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { catchError, tap } from 'rxjs';
 
-interface RegisterAdminDto {
-    company_name: string;
-    slug?: string;
-    name: string;
-    email: string;
-    password: string;
-    phone?: string;
-    currency?: string;
-    locale?: string;
-}
-
 @Component({
     selector: 'app-register',
     standalone: true,
@@ -121,26 +110,9 @@ interface RegisterAdminDto {
                                     formControlName="company_name"
                                     placeholder="Ej: Inmobiliaria ABC"
                                     autocomplete="organization">
+                                <mat-hint>El identificador único se generará automáticamente</mat-hint>
                                 @if (companyForm.get('company_name')?.hasError('required') && companyForm.get('company_name')?.touched) {
                                     <mat-error>Requerido</mat-error>
-                                }
-                            </mat-form-field>
-
-                            <mat-form-field appearance="outline" class="custom-field">
-                                <mat-label>Identificador Único (slug)</mat-label>
-                                <lucide-icon matIconPrefix [img]="Building2" [size]="20"></lucide-icon>
-                                <input
-                                    matInput
-                                    formControlName="slug"
-                                    placeholder="ej: mi-inmobiliaria"
-                                    autocomplete="off"
-                                    (input)="onSlugInput()">
-                                <mat-hint>Solo letras minúsculas, números y guiones. Ej: mi-empresa</mat-hint>
-                                @if (companyForm.get('slug')?.hasError('required') && companyForm.get('slug')?.touched) {
-                                    <mat-error>Requerido</mat-error>
-                                }
-                                @if (companyForm.get('slug')?.hasError('pattern') && companyForm.get('slug')?.touched) {
-                                    <mat-error>Solo letras minúsculas, números y guiones</mat-error>
                                 }
                             </mat-form-field>
 
@@ -738,8 +710,7 @@ export class RegisterComponent {
     successMessage = signal<string | null>(null);
 
     companyForm = this.fb.group({
-        company_name: ['', Validators.required],
-        slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9-]+$/)]]
+        company_name: ['', Validators.required]
     });
 
     adminForm = this.fb.group({
@@ -790,20 +761,12 @@ export class RegisterComponent {
         });
     }
 
-    onSlugInput(): void {
-        const slugControl = this.companyForm.get('slug');
-        if (slugControl) {
-            let value = slugControl.value || '';
-            value = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
-            slugControl.setValue(value, { emitEvent: false });
-        }
-    }
-
     goToTenantPortal(): void {
         // Clear tenant session before navigating to login
         localStorage.removeItem('tenant_access_token');
         localStorage.removeItem('tenant_user');
         localStorage.removeItem('tenant_slug');
+        // TODO: Navegar con slug cuando se tenga
         this.router.navigate(['/portal/login']);
     }
 
@@ -817,23 +780,33 @@ export class RegisterComponent {
         this.successMessage.set(null);
 
         // Prepare data for backend (exclude confirm_password and acceptTerms)
-        const registerData: RegisterAdminDto = {
+        // El slug se genera automáticamente en el backend a partir del company_name
+        const registerData = {
             company_name: this.companyForm.value.company_name!,
-            slug: this.companyForm.value.slug!,
             name: this.adminForm.value.name!,
             email: this.adminForm.value.email!,
             password: this.passwordForm.value.password!,
             phone: this.adminForm.value.phone || undefined
         };
 
-        this.http.post(`${environment.apiUrl}auth/register-admin`, registerData).pipe(
-            tap(() => {
+        this.http.post<any>(`${environment.apiUrl}auth/register-admin`, registerData).pipe(
+            tap((response) => {
                 this.isLoading.set(false);
-                this.successMessage.set('Redirigiendo al inicio de sesión...');
+                this.successMessage.set('Redirigiendo al panel de administración...');
                 setTimeout(() => {
-                    this.router.navigate(['/login'], {
-                        queryParams: { registered: 'true' }
-                    });
+                    // El backend devuelve el slug en la respuesta
+                    const slug = response.tenant?.slug;
+                    if (slug) {
+                        // Redirigir al login con el slug generado
+                        this.router.navigate(['/', slug, 'login'], {
+                            queryParams: { registered: 'true' }
+                        });
+                    } else {
+                        // Fallback si no hay slug
+                        this.router.navigate(['/login'], {
+                            queryParams: { registered: 'true' }
+                        });
+                    }
                 }, 2000);
             }),
             catchError(error => {
