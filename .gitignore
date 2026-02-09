@@ -43,5 +43,7 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 
-#claude 
+#claude
 claude_code_zai_env.sh
+CLAUDE.md
+/docs

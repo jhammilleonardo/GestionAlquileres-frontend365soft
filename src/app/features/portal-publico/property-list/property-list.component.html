@@ -1,0 +1,133 @@
+<div class="property-list-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Encuentra tu Hogar Ideal</h1>
+      <p class="hero-subtitle">Descubre propiedades exclusivas listas para alquilar</p>
+
+      <div class="search-bar-container">
+        <div class="search-bar">
+          <input type="text" [(ngModel)]="filters.search" (keyup.enter)="applyFilters()"
+            placeholder="Buscar por ubicación, código postal o palabra clave..." class="search-input" />
+          <button (click)="applyFilters()" class="search-btn">
+            <span class="search-icon">🔍</span>
+            Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters Section -->
+  <div class="filters-container">
+    <div class="filters-header">
+      <div class="results-info">
+        <h2>{{ filteredProperties.length }} Propiedades Disponibles</h2>
+      </div>
+      <button class="toggle-filters-btn" (click)="toggleFilters()">
+        <span class="filter-icon">⚙️</span>
+        {{ showFilters ? 'Ocultar' : 'Mostrar' }} Filtros
+      </button>
+    </div>
+
+    <div class="filters-panel" [class.active]="showFilters">
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label>Tipo de Propiedad</label>
+          <select [(ngModel)]="filters.property_type_id" (change)="applyFilters()">
+            <option [value]="undefined">Todos los tipos</option>
+            <option *ngFor="let type of propertyTypes" [value]="type.id">{{ type.name }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Ciudad</label>
+          <input type="text" [(ngModel)]="filters.city" (change)="applyFilters()" placeholder="Ciudad" />
+        </div>
+
+        <div class="filter-group">
+          <label>País</label>
+          <input type="text" [(ngModel)]="filters.country" (change)="applyFilters()" placeholder="País" />
+        </div>
+      </div>
+
+      <div class="filters-actions">
+        <button (click)="clearFilters()" class="btn-clear">Limpiar Filtros</button>
+        <button (click)="applyFilters()" class="btn-apply">Aplicar Filtros</button>
+      </div>
+    </div>
+
+    <div class="sort-container">
+      <label>Ordenar por:</label>
+      <select [(ngModel)]="filters.sort_by" (change)="applyFilters()" class="sort-select">
+        <option *ngFor="let option of sortOptions" [value]="option.value">
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Properties Grid -->
+  <div class="properties-section">
+    <div *ngIf="isLoading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Cargando propiedades...</p>
+    </div>
+
+    <div *ngIf="!isLoading && filteredProperties.length === 0" class="no-results">
+      <div class="no-results-icon">🏘️</div>
+      <h3>No se encontraron propiedades</h3>
+      <p>Intenta ajustar tus filtros de búsqueda</p>
+      <button (click)="clearFilters()" class="btn-reset">Reiniciar Búsqueda</button>
+    </div>
+
+    <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
+      <div *ngFor="let property of filteredProperties" class="property-card" (click)="viewProperty(property.id)">
+        <div class="property-image-container">
+          <img [src]="property.images[0]" [alt]="property.title" class="property-image" />
+
+          <div class="property-badges">
+            <span class="badge-status">{{ property.active ? 'Disponible' : 'No Disponible' }}</span>
+          </div>
+
+          <button class="favorite-btn" [class.active]="isFavorite(property.id)"
+            (click)="toggleFavorite(property.id, $event)">
+            {{ isFavorite(property.id) ? '❤️' : '🤍' }}
+          </button>
+
+          <div class="property-price-badge" *ngIf="property.monthly_rent_amount">
+            ${{ property.monthly_rent_amount }}/mes
+          </div>
+        </div>
+
+        <div class="property-content">
+          <h3 class="property-title">{{ property.title }}</h3>
+
+          <div class="property-location">
+            <span class="location-icon">📍</span>
+            {{ getPropertyAddress(property) }}
+          </div>
+
+          <div class="property-features">
+            <div class="feature" *ngIf="property.total_area">
+              <span class="feature-icon">📐</span>
+              <span>{{ property.total_area }}m²</span>
+            </div>
+            <div class="feature" *ngIf="property.built_area">
+              <span class="feature-icon">🏗️</span>
+              <span>{{ property.built_area }}m²</span>
+            </div>
+          </div>
+
+          <div class="property-tags">
+            <span class="tag" *ngIf="property.property_type">{{ property.property_type.name }}</span>
+            <span class="tag" *ngIf="property.property_subtype">{{ property.property_subtype.name }}</span>
+          </div>
+
+          <button class="btn-details">Ver Detalles</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,6 +5,11 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+// Tailwind CSS Directives
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html {
   height: 100%;
   @include mat.theme((color: (primary: mat.$azure-palette,

@@ -1,0 +1,87 @@
+<footer class="footer">
+  <div class="footer-container">
+    <div class="footer-grid">
+      <!-- Company Info -->
+      <div class="footer-section">
+        <div class="footer-logo">
+          <span class="logo-icon">🏠</span>
+          <span class="logo-text">RentHub</span>
+        </div>
+        <p class="footer-description">
+          Tu portal confiable para encontrar el hogar perfecto. Conectamos inquilinos con las mejores propiedades disponibles.
+        </p>
+        <div class="social-links">
+          <a
+            *ngFor="let social of socialLinks"
+            [href]="social.url"
+            [title]="social.name"
+            class="social-link"
+          >
+            {{ social.icon }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-section">
+        <h3 class="footer-title">Enlaces Rápidos</h3>
+        <ul class="footer-links">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="/properties">Propiedades</a></li>
+          <li><a href="/about">Nosotros</a></li>
+          <li><a href="/faq">Preguntas Frecuentes</a></li>
+          <li><a href="/blog">Blog</a></li>
+        </ul>
+      </div>
+
+      <!-- Services -->
+      <div class="footer-section">
+        <h3 class="footer-title">Servicios</h3>
+        <ul class="footer-links">
+          <li><a href="/rent">Alquilar Propiedad</a></li>
+          <li><a href="/list">Publicar Propiedad</a></li>
+          <li><a href="/services">Servicios de Administración</a></li>
+          <li><a href="/screening">Verificación de Inquilinos</a></li>
+          <li><a href="/maintenance">Mantenimiento</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div class="footer-section">
+        <h3 class="footer-title">Contacto</h3>
+        <ul class="footer-contact">
+          <li>
+            <span class="contact-icon">📍</span>
+            <span>Cochabamba, Bolivia</span>
+          </li>
+          <li>
+            <span class="contact-icon">📧</span>
+            <span>info@renthub.com</span>
+          </li>
+          <li>
+            <span class="contact-icon">📞</span>
+            <span>+591 12345678</span>
+          </li>
+          <li>
+            <span class="contact-icon">🕐</span>
+            <span>Lun - Vie: 9AM - 6PM</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="footer-bottom">
+      <div class="footer-bottom-content">
+        <p class="copyright">
+          © {{ currentYear }} RentHub. Todos los derechos reservados.
+        </p>
+        <div class="footer-legal">
+          <a href="/privacy">Privacidad</a>
+          <a href="/terms">Términos</a>
+          <a href="/cookies">Cookies</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
