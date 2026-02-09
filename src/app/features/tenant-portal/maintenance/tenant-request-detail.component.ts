@@ -51,9 +51,44 @@ import {
             </div>
 
             @if (isLoading()) {
-                <div class="loading">
-                    <mat-spinner diameter="40"></mat-spinner>
-                    <p>Cargando solicitud...</p>
+                <div class="detail-grid">
+                    <mat-card class="skeleton-main-card">
+                        <div class="skeleton-header">
+                            <div class="skeleton-badge"></div>
+                            <div class="skeleton-badge"></div>
+                        </div>
+                        <div class="skeleton-line title"></div>
+                        <div class="skeleton-line medium"></div>
+                        <div class="skeleton-line"></div>
+                        <div class="skeleton-line short"></div>
+                        <mat-divider></mat-divider>
+                        <div class="skeleton-meta-grid">
+                            <div class="skeleton-meta-item">
+                                <div class="skeleton-icon"></div>
+                                <div>
+                                    <div class="skeleton-line short"></div>
+                                    <div class="skeleton-line medium"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-meta-item">
+                                <div class="skeleton-icon"></div>
+                                <div>
+                                    <div class="skeleton-line short"></div>
+                                    <div class="skeleton-line medium"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </mat-card>
+
+                    <mat-card class="skeleton-messages-card">
+                        <div class="skeleton-line title"></div>
+                        @for (i of [1,2]; track i) {
+                            <div class="skeleton-message">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line medium"></div>
+                            </div>
+                        }
+                    </mat-card>
                 </div>
             } @else if (request()) {
                 <div class="detail-grid">
@@ -281,6 +316,67 @@ import {
         @media (max-width: 900px) {
             .detail-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .messages-card {
+                order: 2;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-card, .messages-card {
+                padding: 20px;
+            }
+
+            .page-header h1 {
+                font-size: 1.35rem;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .status-row {
+                flex-wrap: wrap;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .send-message {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .send-message button {
+                width: 100%;
+                height: 48px;
+            }
+
+            .message-input {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .main-card, .messages-card {
+                padding: 16px;
+            }
+
+            .main-card h2 {
+                font-size: 1.1rem;
+            }
+
+            .page-header {
+                gap: 8px;
+            }
+
+            .messages-list {
+                max-height: 300px;
             }
         }
 

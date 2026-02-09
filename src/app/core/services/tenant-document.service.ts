@@ -22,12 +22,13 @@ export class TenantDocumentService {
 
     /**
      * Cargar todos los documentos del inquilino
+     * NOTE: Requiere endpoint backend: GET /tenant/documents
      */
     loadDocuments(): void {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        this.http.get<TenantDocument[]>(`${environment.apiUrl}/tenant/documents`)
+        this.http.get<TenantDocument[]>(`${environment.apiUrl}tenant/documents`)
             .pipe(
                 tap(documents => {
                     const parsedDocs = documents.map(d => ({

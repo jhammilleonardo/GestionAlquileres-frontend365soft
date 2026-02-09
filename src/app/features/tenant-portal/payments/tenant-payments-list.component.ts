@@ -97,9 +97,33 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
             <mat-tab-group class="tabs">
                 <mat-tab label="Historial de Pagos">
                     @if (paymentService.isLoading()) {
-                        <div class="loading">
-                            <mat-spinner diameter="40"></mat-spinner>
-                            <p>Cargando pagos...</p>
+                        <div class="payments-table-container">
+                            <table class="payments-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Método</th>
+                                        <th>Referencia</th>
+                                        <th>Monto</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (i of [1,2,3,4,5]; track i) {
+                                        <tr class="skeleton-row">
+                                            <td><div class="skeleton-line short"></div></td>
+                                            <td><div class="skeleton-line short"></div></td>
+                                            <td><div class="skeleton-line short"></div></td>
+                                            <td><div class="skeleton-line medium"></div></td>
+                                            <td><div class="skeleton-line short"></div></td>
+                                            <td><div class="skeleton-badge"></div></td>
+                                            <td><div class="skeleton-line short"></div></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
                         </div>
                     } @else if (paymentService.payments().length === 0) {
                         <div class="empty-state">
@@ -433,6 +457,168 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
         .icon-success { color: #10b981; }
         .icon-warning { color: #f59e0b; }
         .icon-danger { color: #ef4444; }
+
+        /* Skeleton Loaders */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .skeleton-row {
+            pointer-events: none;
+        }
+
+        .skeleton-line {
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-line.short {
+            width: 60px;
+        }
+
+        .skeleton-line.medium {
+            width: 100px;
+        }
+
+        .skeleton-badge {
+            width: 80px;
+            height: 24px;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .next-payment {
+                grid-column: span 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .header-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .page-header button {
+                width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .next-payment {
+                grid-column: span 1;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .payments-table-container {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .payments-table {
+                min-width: 650px;
+            }
+
+            .payments-table th,
+            .payments-table td {
+                padding: 12px 8px;
+                font-size: 13px;
+            }
+
+            .schedule-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .schedule-date {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 8px 16px;
+            }
+
+            .schedule-status {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .tabs {
+                font-size: 14px;
+            }
+
+            .payments-table {
+                min-width: 600px;
+            }
+
+            .schedule-item {
+                padding: 16px;
+            }
+
+            .schedule-content h3 {
+                font-size: 1rem;
+            }
+
+            .schedule-content .amount {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-content lucide-icon {
+                display: none;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .stat-value {
+                font-size: 1.1rem;
+            }
+
+            .page-header button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
     `]
 })
 export class TenantPaymentsListComponent implements OnInit {
@@ -459,20 +645,9 @@ export class TenantPaymentsListComponent implements OnInit {
     }
 
     downloadReceipt(paymentId: number): void {
-        this.paymentService.downloadReceipt(paymentId).subscribe({
-            next: (blob) => {
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `recibo-${paymentId}.pdf`;
-                link.click();
-                window.URL.revokeObjectURL(url);
-            },
-            error: (error) => {
-                console.error('Error downloading receipt:', error);
-                alert('Error al descargar el recibo');
-            }
-        });
+        // SIMULACIÓN: Función deshabilitada temporalmente
+        alert('Función de descarga de recibos no disponible en modo simulación');
+        console.log('Descargar recibo para pago:', paymentId);
     }
 
     formatDate(date: Date): string {

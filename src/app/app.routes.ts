@@ -7,8 +7,26 @@ import { ContratosComponent } from './features/contratos/contratos.component';
 import { PagosComponent } from './features/pagos/pagos.component';
 import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.component';
 import { ComponentesComponent } from './features/componentes/componentes.component';
+import { LoginComponent } from './features/auth/login.component';
+import { RegisterComponent } from './features/auth/register.component';
+import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
+  // ==================== AUTH ====================
+  {
+    path: 'login',
+    component: LoginComponent
+  },
+  {
+    path: 'register',
+    component: RegisterComponent
+  },
+  {
+    path: 'forgot-password',
+    component: ForgotPasswordComponent
+  },
+
   // ==================== TENANT PORTAL ====================
   {
     path: 'portal',
@@ -19,6 +37,7 @@ export const routes: Routes = [
   {
     path: '',
     component: MainLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
@@ -34,6 +53,6 @@ export const routes: Routes = [
   // ==================== FALLBACK ====================
   {
     path: '**',
-    redirectTo: '/dashboard'
+    redirectTo: '/login'
   }
 ];

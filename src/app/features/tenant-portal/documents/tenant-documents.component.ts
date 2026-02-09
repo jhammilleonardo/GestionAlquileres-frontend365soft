@@ -51,9 +51,26 @@ import { TenantDocument, DocumentTypeLabels, DocumentType } from '../../../core/
 
             <!-- Loading -->
             @if (documentService.isLoading()) {
-                <div class="loading">
-                    <mat-spinner diameter="40"></mat-spinner>
-                    <p>Cargando documentos...</p>
+                <div class="documents-grid">
+                    @for (i of [1,2,3,4,5,6]; track i) {
+                        <mat-card class="skeleton-document-card">
+                            <div class="skeleton-doc-header">
+                                <div class="skeleton-doc-icon"></div>
+                                <div class="skeleton-badge"></div>
+                            </div>
+                            <div class="skeleton-line title"></div>
+                            <div class="skeleton-line medium"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-meta">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                            <div class="skeleton-actions">
+                                <div class="skeleton-btn"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </mat-card>
+                    }
                 </div>
             }
 
@@ -337,9 +354,144 @@ import { TenantDocument, DocumentTypeLabels, DocumentType } from '../../../core/
             font-size: 13px;
         }
 
+        /* Skeleton Loaders */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .skeleton-document-card {
+            padding: 24px;
+        }
+
+        .skeleton-doc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .skeleton-doc-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-badge {
+            width: 80px;
+            height: 24px;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-line {
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-line.title {
+            height: 20px;
+            width: 70%;
+        }
+
+        .skeleton-line.short {
+            width: 40%;
+        }
+
+        .skeleton-line.medium {
+            width: 80%;
+        }
+
+        .skeleton-meta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .skeleton-actions {
+            display: flex;
+            gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .skeleton-btn {
+            flex: 1;
+            height: 36px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
         @media (max-width: 768px) {
             .documents-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .stats-row {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .document-card {
+                padding: 20px;
+            }
+
+            .document-actions {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+
+            .document-meta {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-content lucide-icon {
+                display: none;
+            }
+
+            .document-card {
+                padding: 16px;
+            }
+
+            .document-icon {
+                width: 48px;
+                height: 48px;
+            }
+
+            .document-title {
+                font-size: 1rem;
             }
         }
     `]

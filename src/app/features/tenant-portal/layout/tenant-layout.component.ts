@@ -1,4 +1,4 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -86,6 +86,11 @@ interface NavItem {
             </header>
 
             <div class="layout-body">
+                <!-- Mobile Overlay -->
+                @if (!sidebarCollapsed) {
+                    <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+                }
+
                 <!-- Sidebar -->
                 <aside class="tenant-sidebar" [class.collapsed]="sidebarCollapsed">
                     <nav class="sidebar-nav">
@@ -93,7 +98,8 @@ interface NavItem {
                             <a class="nav-item"
                                [routerLink]="item.route"
                                routerLinkActive="active"
-                               [routerLinkActiveOptions]="{ exact: item.route === '/portal/dashboard' }">
+                               [routerLinkActiveOptions]="{ exact: item.route === '/portal/dashboard' }"
+                               (click)="onNavItemClick()">
                                 <lucide-icon [img]="item.icon" [size]="20"></lucide-icon>
                                 <span class="nav-label">{{ item.label }}</span>
                             </a>
@@ -192,6 +198,11 @@ interface NavItem {
             display: flex;
             flex: 1;
             overflow: hidden;
+            position: relative;
+        }
+
+        .sidebar-overlay {
+            display: none;
         }
 
         .tenant-sidebar {
@@ -282,13 +293,40 @@ interface NavItem {
                 display: flex;
             }
 
+            .tenant-header {
+                padding: 0 16px;
+                height: 56px;
+            }
+
+            .brand-text {
+                font-size: 1.1rem;
+            }
+
+            .sidebar-overlay {
+                display: block;
+                position: fixed;
+                top: 56px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 98;
+                animation: fadeIn 0.2s ease;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
             .tenant-sidebar {
                 position: fixed;
                 left: 0;
-                top: 64px;
+                top: 56px;
                 bottom: 0;
                 z-index: 99;
                 width: 260px;
+                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
             }
 
             .tenant-sidebar.collapsed {
@@ -298,10 +336,74 @@ interface NavItem {
             .user-name {
                 display: none;
             }
+
+            .tenant-main {
+                padding: 16px;
+            }
+
+            .contract-info {
+                margin: 12px;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tenant-header {
+                padding: 0 12px;
+            }
+
+            .brand-text {
+                font-size: 1rem;
+            }
+
+            .header-left {
+                gap: 8px;
+            }
+
+            .header-right {
+                gap: 4px;
+            }
+
+            .user-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 13px;
+            }
+
+            .tenant-sidebar {
+                width: 240px;
+            }
+
+            .nav-item {
+                padding: 10px 14px;
+                font-size: 14px;
+            }
+
+            .contract-info {
+                font-size: 13px;
+            }
+
+            .contract-value {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .brand-text {
+                display: none;
+            }
+
+            .tenant-sidebar {
+                width: 220px;
+            }
+
+            .nav-label {
+                font-size: 14px;
+            }
         }
     `]
 })
-export class TenantLayoutComponent {
+export class TenantLayoutComponent implements OnInit {
     readonly Home = Home;
     readonly Wrench = Wrench;
     readonly MessageSquare = MessageSquare;
@@ -327,8 +429,22 @@ export class TenantLayoutComponent {
         { label: 'Mensajes', route: '/portal/mensajes', icon: this.MessageSquare },
     ];
 
+    ngOnInit(): void {
+        // Initialize sidebar state based on screen size
+        if (typeof window !== 'undefined') {
+            this.sidebarCollapsed = window.innerWidth <= 768;
+        }
+    }
+
     toggleSidebar(): void {
         this.sidebarCollapsed = !this.sidebarCollapsed;
+    }
+
+    onNavItemClick(): void {
+        // Close sidebar on mobile when nav item is clicked
+        if (window.innerWidth <= 768) {
+            this.sidebarCollapsed = true;
+        }
     }
 
     getUserInitials(): string {

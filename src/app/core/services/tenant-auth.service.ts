@@ -33,6 +33,7 @@ export class TenantAuthService {
 
     private readonly TOKEN_KEY = 'tenant_access_token';
     private readonly USER_KEY = 'tenant_user';
+    private readonly SLUG_KEY = 'tenant_slug';
 
     // Reactive state with signals
     private currentUserSignal = signal<TenantUser | null>(this.loadUserFromStorage());
@@ -44,7 +45,7 @@ export class TenantAuthService {
     isLoading = this.isLoadingSignal.asReadonly();
     error = this.errorSignal.asReadonly();
     isAuthenticated = computed(() => this.currentUserSignal() !== null);
-    tenantSlug = computed(() => this.currentUserSignal()?.tenant_slug || '');
+    tenantSlug = computed(() => localStorage.getItem(this.SLUG_KEY) || '');
 
     constructor() {
         // Check token validity on init
@@ -55,54 +56,19 @@ export class TenantAuthService {
 
     /**
      * Login with email and password
-     * TODO: Replace with real API call when backend is ready
      */
     login(slug: string, email: string, password: string): Observable<LoginResponse> {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        // SIMULACIÓN: Datos de prueba para desarrollo
-        return of({
-            access_token: 'demo-token-' + Date.now(),
-            user: {
-                id: 1,
-                name: 'Juan Carlos Pérez',
-                email: email,
-                phone: '+34 612 345 678',
-                role: 'TENANT' as const,
-                tenant_slug: slug,
-                contract: {
-                    id: 1,
-                    contract_number: 'CONT-2024-001',
-                    property_title: 'Apartamento Centro Historico',
-                    status: 'ACTIVO'
-                }
-            }
-        }).pipe(
-            tap(response => {
-                setTimeout(() => {
-                    this.setSession(response);
-                    this.isLoadingSignal.set(false);
-                    this.router.navigate(['/portal/dashboard']);
-                }, 500); // Simular delay de red
-            }),
-            catchError(error => {
-                this.isLoadingSignal.set(false);
-                const message = 'Error al iniciar sesión';
-                this.errorSignal.set(message);
-                throw error;
-            })
-        );
-
-        // PRODUCCIÓN: Descomentar cuando el backend esté listo
-        /*
         return this.http.post<LoginResponse>(
             `${environment.apiUrl}auth/${slug}/login`,
             { email, password }
         ).pipe(
             tap(response => {
-                this.setSession(response);
+                this.setSession(response, slug);
                 this.isLoadingSignal.set(false);
+                this.router.navigate(['/portal/dashboard']);
             }),
             catchError(error => {
                 this.isLoadingSignal.set(false);
@@ -111,7 +77,6 @@ export class TenantAuthService {
                 throw error;
             })
         );
-        */
     }
 
     /**
@@ -120,6 +85,7 @@ export class TenantAuthService {
     logout(): void {
         localStorage.removeItem(this.TOKEN_KEY);
         localStorage.removeItem(this.USER_KEY);
+        localStorage.removeItem(this.SLUG_KEY);
         this.currentUserSignal.set(null);
         this.router.navigate(['/portal/login']);
     }
@@ -142,22 +108,11 @@ export class TenantAuthService {
 
     /**
      * Validate current token with backend
-     * TODO: Replace with real API call when backend is ready
      */
     private validateToken(): void {
         const token = this.getToken();
         if (!token) return;
 
-        // SIMULACIÓN: Por ahora, solo verificamos que exista el usuario en localStorage
-        const user = this.loadUserFromStorage();
-        if (user) {
-            this.currentUserSignal.set(user);
-        } else {
-            this.logout();
-        }
-
-        // PRODUCCIÓN: Descomentar cuando el backend esté listo
-        /*
         this.http.get<TenantUser>(`${environment.apiUrl}auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
         }).pipe(
@@ -171,14 +126,14 @@ export class TenantAuthService {
                 this.saveUserToStorage(user);
             }
         });
-        */
     }
 
     /**
      * Set session after successful login
      */
-    private setSession(response: LoginResponse): void {
+    private setSession(response: LoginResponse, slug: string): void {
         localStorage.setItem(this.TOKEN_KEY, response.access_token);
+        localStorage.setItem(this.SLUG_KEY, slug);
         this.saveUserToStorage(response.user);
         this.currentUserSignal.set(response.user);
     }

@@ -1,4 +1,4 @@
-<mat-toolbar class="header">
+<mat-toolbar class="header" [class.sidebar-collapsed]="!sidebarExpanded()">
   <button mat-icon-button class="menu-btn" (click)="toggleSidebar()">
     <lucide-icon [img]="Menu" [size]="20"></lucide-icon>
   </button>
@@ -8,7 +8,8 @@
   <span class="spacer"></span>
 
   <div class="header-actions">
-    <button mat-icon-button [matBadge]="notificationCount()" matBadgeColor="warn">
+    <!-- Notifications - Temporarily disabled until backend is ready -->
+    <button mat-icon-button class="notification-btn">
       <lucide-icon [img]="Bell" [size]="20"></lucide-icon>
     </button>
 
@@ -18,14 +19,38 @@
 
     <div class="divider"></div>
 
-    <button mat-button class="user-menu-btn" (click)="goToProfile()">
-      <img [src]="currentUser()?.avatar" alt="User" class="user-avatar" />
+    <!-- User Menu -->
+    <button mat-button class="user-menu-btn" [matMenuTriggerFor]="userMenu">
+      <div class="user-avatar">
+        {{ getUserInitials() }}
+      </div>
       <span class="user-name">{{ currentUser()?.name }}</span>
-      <lucide-icon [img]="ChevronDown" [size]="16"></lucide-icon>
     </button>
 
-    <button mat-icon-button (click)="logout()">
-      <lucide-icon [img]="LogOut" [size]="20"></lucide-icon>
-    </button>
+    <mat-menu #userMenu="matMenu">
+      <div class="user-menu-header">
+        <div class="menu-avatar">
+          {{ getUserInitials() }}
+        </div>
+        <div class="menu-user-info">
+          <div class="menu-user-name">{{ currentUser()?.name }}</div>
+          <div class="menu-user-email">{{ currentUser()?.email }}</div>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="goToProfile()">
+        <lucide-icon [img]="User" [size]="18"></lucide-icon>
+        <span>Mi Perfil</span>
+      </button>
+      <button mat-menu-item (click)="goToSettings()">
+        <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
+        <span>Configuración</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()" class="logout-item">
+        <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
+        <span>Cerrar Sesión</span>
+      </button>
+    </mat-menu>
   </div>
 </mat-toolbar>

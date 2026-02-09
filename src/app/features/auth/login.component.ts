@@ -9,11 +9,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { LucideAngularModule, Home, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Shield, CalendarDays, FileText, MessageSquare } from 'lucide-angular';
-import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import { LucideAngularModule, Building2, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Shield, BarChart3, Users, FileText } from 'lucide-angular';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
-    selector: 'app-tenant-login',
+    selector: 'app-login',
     standalone: true,
     imports: [
         CommonModule,
@@ -35,26 +35,26 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
             <div class="login-brand">
                 <div class="brand-content">
                     <div class="brand-logo">
-                        <lucide-icon [img]="Home" [size]="56"></lucide-icon>
+                        <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
                     </div>
                     <h1>365Soft</h1>
-                    <h2>Portal del Inquilino</h2>
+                    <h2>Panel de Administración</h2>
                     <p class="brand-tagline">
-                        Gestiona tus pagos, solicitudes de mantenimiento y documentos desde un solo lugar
+                        Gestiona todas tus propiedades, inquilinos y contratos desde un solo lugar
                     </p>
 
                     <div class="features">
                         <div class="feature-item">
-                            <lucide-icon [img]="CalendarDays" [size]="20"></lucide-icon>
-                            <span>Consulta el estado de tus pagos</span>
+                            <lucide-icon [img]="BarChart3" [size]="20"></lucide-icon>
+                            <span>Dashboard con métricas en tiempo real</span>
+                        </div>
+                        <div class="feature-item">
+                            <lucide-icon [img]="Users" [size]="20"></lucide-icon>
+                            <span>Gestión completa de inquilinos</span>
                         </div>
                         <div class="feature-item">
                             <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
-                            <span>Accede a tu contrato y documentos</span>
-                        </div>
-                        <div class="feature-item">
-                            <lucide-icon [img]="MessageSquare" [size]="20"></lucide-icon>
-                            <span>Reporta problemas de mantenimiento</span>
+                            <span>Automatización de contratos y pagos</span>
                         </div>
                     </div>
                 </div>
@@ -65,15 +65,15 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                 <div class="login-form-wrapper">
                     <div class="form-header">
                         <h3>Iniciar Sesión</h3>
-                        <p>Accede a tu portal de inquilino</p>
+                        <p>Accede al panel de administración</p>
                     </div>
 
-                    @if (authService.error()) {
+                    @if (errorMessage()) {
                         <div class="error-alert">
                             <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
                             <div class="error-content">
                                 <strong>Error de autenticación</strong>
-                                <span>{{ authService.error() }}</span>
+                                <span>{{ errorMessage() }}</span>
                             </div>
                         </div>
                     }
@@ -81,7 +81,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
                         <mat-form-field appearance="outline" class="custom-field">
                             <mat-label>Empresa (slug)</mat-label>
-                            <lucide-icon matIconPrefix [img]="Home" [size]="20"></lucide-icon>
+                            <lucide-icon matIconPrefix [img]="Building2" [size]="20"></lucide-icon>
                             <input
                                 matInput
                                 formControlName="slug"
@@ -99,13 +99,13 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                                 matInput
                                 type="email"
                                 formControlName="email"
-                                placeholder="correo@ejemplo.com"
+                                placeholder="admin@empresa.com"
                                 autocomplete="email">
                             @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
                                 <mat-error>El correo es requerido</mat-error>
                             }
                             @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
-                                <mat-error>Ingresa un correo válido</mat-error>
+                                <mat-error>Correo inválido</mat-error>
                             }
                         </mat-form-field>
 
@@ -130,7 +130,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                             <mat-checkbox formControlName="rememberMe" color="primary">
                                 Recordarme
                             </mat-checkbox>
-                            <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+                            <a routerLink="/forgot-password" class="forgot-link">¿Olvidaste tu contraseña?</a>
                         </div>
 
                         <button
@@ -138,8 +138,8 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                             color="primary"
                             type="submit"
                             class="submit-btn"
-                            [disabled]="loginForm.invalid || authService.isLoading()">
-                            @if (authService.isLoading()) {
+                            [disabled]="loginForm.invalid || isLoading()">
+                            @if (isLoading()) {
                                 <mat-spinner diameter="20" color="accent"></mat-spinner>
                                 <span>Iniciando sesión...</span>
                             } @else {
@@ -154,7 +154,9 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                             <span>Conexión segura SSL</span>
                         </div>
                         <div class="help-links">
-                            <span>¿Eres administrador? <a routerLink="/login">Ir al panel</a></span>
+                            <a routerLink="/register" class="help-link">¿No tienes cuenta? Regístrate</a>
+                            <span class="separator">•</span>
+                            <a (click)="goToTenantPortal()" class="help-link tenant-portal-link">Portal del Inquilino</a>
                         </div>
                     </div>
                 </div>
@@ -176,7 +178,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 
         /* Left Side - Branding */
         .login-brand {
-            background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -190,7 +192,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
             position: absolute;
             width: 500px;
             height: 500px;
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(59, 130, 246, 0.1);
             border-radius: 50%;
             top: -200px;
             left: -200px;
@@ -201,7 +203,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
             position: absolute;
             width: 400px;
             height: 400px;
-            background: rgba(16, 185, 129, 0.08);
+            background: rgba(59, 130, 246, 0.08);
             border-radius: 50%;
             bottom: -150px;
             right: -150px;
@@ -217,14 +219,14 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
         .brand-logo {
             width: 80px;
             height: 80px;
-            background: rgba(16, 185, 129, 0.2);
+            background: rgba(59, 130, 246, 0.2);
             backdrop-filter: blur(10px);
             border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 32px;
-            border: 2px solid rgba(16, 185, 129, 0.3);
+            border: 2px solid rgba(59, 130, 246, 0.3);
         }
 
         .brand-content h1 {
@@ -239,7 +241,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
             font-weight: 400;
             margin: 0 0 24px;
             opacity: 0.95;
-            color: #6ee7b7;
+            color: #93c5fd;
         }
 
         .brand-tagline {
@@ -265,7 +267,7 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 
         .feature-item lucide-icon {
             flex-shrink: 0;
-            color: #34d399;
+            color: #60a5fa;
         }
 
         /* Right Side - Form */
@@ -359,13 +361,13 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 
         .forgot-link {
             font-size: 0.875rem;
-            color: #059669;
+            color: #3b82f6;
             text-decoration: none;
             font-weight: 500;
         }
 
         .forgot-link:hover {
-            color: #047857;
+            color: #2563eb;
             text-decoration: underline;
         }
 
@@ -411,19 +413,31 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
         }
 
         .help-links {
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             font-size: 0.875rem;
-            color: #64748b;
         }
 
         .help-links a {
-            color: #059669;
+            color: #64748b;
             text-decoration: none;
-            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
         }
 
         .help-links a:hover {
+            color: #3b82f6;
             text-decoration: underline;
+        }
+
+        .tenant-portal-link {
+            pointer-events: auto;
+        }
+
+        .separator {
+            color: #cbd5e1;
         }
 
         /* Responsive Design */
@@ -435,15 +449,27 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
             .login-brand {
                 display: none;
             }
+
+            .login-form-container {
+                padding: 40px 24px;
+            }
         }
 
         @media (max-width: 640px) {
             .login-form-container {
-                padding: 24px 16px;
+                padding: 32px 20px;
             }
 
             .form-header h3 {
                 font-size: 1.5rem;
+            }
+
+            .form-header p {
+                font-size: 0.9375rem;
+            }
+
+            .login-form-wrapper {
+                max-width: 100%;
             }
 
             .submit-btn {
@@ -461,6 +487,10 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                 margin-bottom: 24px;
             }
 
+            .form-group {
+                margin-bottom: 16px;
+            }
+
             .form-options {
                 flex-direction: column;
                 align-items: flex-start;
@@ -470,8 +500,8 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
         }
     `]
 })
-export class TenantLoginComponent {
-    readonly Home = Home;
+export class LoginComponent {
+    readonly Building2 = Building2;
     readonly Mail = Mail;
     readonly Lock = Lock;
     readonly Eye = Eye;
@@ -479,16 +509,18 @@ export class TenantLoginComponent {
     readonly AlertCircle = AlertCircle;
     readonly CheckCircle2 = CheckCircle2;
     readonly Shield = Shield;
-    readonly CalendarDays = CalendarDays;
+    readonly BarChart3 = BarChart3;
+    readonly Users = Users;
     readonly FileText = FileText;
-    readonly MessageSquare = MessageSquare;
 
-    authService = inject(TenantAuthService);
+    private authService = inject(AuthService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fb = inject(FormBuilder);
 
     showPassword = signal(false);
+    isLoading = signal(false);
+    errorMessage = signal<string | null>(null);
 
     loginForm = this.fb.group({
         slug: ['', Validators.required],
@@ -496,6 +528,13 @@ export class TenantLoginComponent {
         password: ['', Validators.required],
         rememberMe: [false]
     });
+
+    constructor() {
+        // If already authenticated and has valid token, redirect to dashboard
+        if (this.authService.isAuth() && this.authService.getToken()) {
+            this.router.navigate(['/dashboard']);
+        }
+    }
 
     togglePassword(): void {
         this.showPassword.update(v => !v);
@@ -507,17 +546,28 @@ export class TenantLoginComponent {
             return;
         }
 
-        const { slug, email, password } = this.loginForm.value;
-        this.authService.clearError();
+        const { slug, email, password, rememberMe } = this.loginForm.value;
+        this.isLoading.set(true);
+        this.errorMessage.set(null);
 
-        this.authService.login(slug!, email!, password!).subscribe({
+        this.authService.login(slug!, email!, password!, rememberMe!).subscribe({
             next: () => {
-                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/portal/dashboard';
+                this.isLoading.set(false);
+                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/dashboard';
                 this.router.navigateByUrl(returnUrl);
             },
-            error: () => {
-                // Error is handled by the service
+            error: (error) => {
+                this.isLoading.set(false);
+                this.errorMessage.set(error.error?.message || 'Credenciales inválidas. Por favor, intenta nuevamente.');
             }
         });
+    }
+
+    goToTenantPortal(): void {
+        // Clear tenant session before navigating to login
+        localStorage.removeItem('tenant_access_token');
+        localStorage.removeItem('tenant_user');
+        localStorage.removeItem('tenant_slug');
+        this.router.navigate(['/portal/login']);
     }
 }

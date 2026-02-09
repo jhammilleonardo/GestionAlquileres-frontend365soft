@@ -2,13 +2,13 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
+import { MatButtonModule, MatFabButton } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, MessageSquare, Send, Inbox, Archive, Plus, AlertCircle, User } from 'lucide-angular';
+import { LucideAngularModule, MessageSquare, Send, Inbox, Archive, Plus, AlertCircle, User, ArrowLeft } from 'lucide-angular';
 import { TenantMessageService } from '../../../core/services/tenant-message.service';
 import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '../../../core/models/message.model';
 
@@ -55,13 +55,25 @@ import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '
 
             <div class="messages-layout">
                 <!-- Messages List -->
-                <div class="messages-list">
+                <div class="messages-list" [class.mobile-hidden]="showMobileDetail()">
+                    <!-- Mobile New Message Button -->
+                    <button mat-fab class="mobile-fab" color="primary" (click)="showNewMessage()">
+                        <lucide-icon [img]="Plus" [size]="24"></lucide-icon>
+                    </button>
+
                     <mat-card>
                         @if (messageService.isLoading()) {
-                            <div class="loading">
-                                <mat-spinner diameter="32"></mat-spinner>
-                                <p>Cargando mensajes...</p>
-                            </div>
+                            @for (i of [1,2,3,4,5]; track i) {
+                                <div class="skeleton-message-item">
+                                    <div class="skeleton-avatar"></div>
+                                    <div class="skeleton-message-content">
+                                        <div class="skeleton-line short"></div>
+                                        <div class="skeleton-line title"></div>
+                                        <div class="skeleton-line medium"></div>
+                                    </div>
+                                </div>
+                                <mat-divider></mat-divider>
+                            }
                         } @else if (messageService.messages().length === 0) {
                             <div class="empty-state">
                                 <lucide-icon [img]="MessageSquare" [size]="48"></lucide-icon>
@@ -100,9 +112,13 @@ import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '
                 </div>
 
                 <!-- Message Detail / New Message -->
-                <div class="message-detail">
+                <div class="message-detail" [class.mobile-visible]="showMobileDetail()">
                     @if (showNewMessageForm()) {
                         <mat-card class="compose-card">
+                            <!-- Back button for mobile -->
+                            <button mat-icon-button class="mobile-back-btn" (click)="backToList()">
+                                <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
+                            </button>
                             <h2>
                                 <lucide-icon [img]="Send" [size]="24"></lucide-icon>
                                 Nuevo Mensaje
@@ -173,6 +189,10 @@ import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '
                         </mat-card>
                     } @else if (selectedMessage()) {
                         <mat-card class="detail-card">
+                            <!-- Back button for mobile -->
+                            <button mat-icon-button class="mobile-back-btn" (click)="backToList()">
+                                <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
+                            </button>
                             <div class="detail-header">
                                 <div class="sender-info">
                                     <div class="sender-avatar">
@@ -533,13 +553,210 @@ import { Message, MessagePriority, MessagePriorityLabels, MessageStatus } from '
             justify-content: flex-end;
         }
 
+        .mobile-back-btn {
+            display: none;
+        }
+
+        .mobile-hidden {
+            display: block;
+        }
+
+        .mobile-visible {
+            display: block;
+        }
+
+        .mobile-fab {
+            display: none;
+        }
+
+        /* Skeleton Loaders */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .skeleton-message-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+        }
+
+        .skeleton-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            flex-shrink: 0;
+        }
+
+        .skeleton-message-content {
+            flex: 1;
+        }
+
+        .skeleton-line {
+            height: 14px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-line.title {
+            height: 16px;
+            width: 70%;
+        }
+
+        .skeleton-line.short {
+            width: 30%;
+        }
+
+        .skeleton-line.medium {
+            width: 85%;
+        }
+
         @media (max-width: 1024px) {
             .messages-layout {
                 grid-template-columns: 1fr;
+                position: relative;
+            }
+
+            .messages-list {
+                width: 100%;
+            }
+
+            .messages-list.mobile-hidden {
+                display: none !important;
             }
 
             .messages-list mat-card {
                 max-height: 400px;
+            }
+
+            .message-detail {
+                display: none;
+                min-height: 500px;
+                width: 100%;
+                position: relative;
+            }
+
+            .message-detail.mobile-visible {
+                display: block;
+            }
+
+            .mobile-back-btn {
+                display: flex;
+                position: absolute;
+                top: 16px;
+                left: 16px;
+                z-index: 10;
+                background: var(--mat-sys-surface);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+
+            .compose-card,
+            .detail-card {
+                padding-top: 60px;
+            }
+
+            .mobile-fab {
+                display: flex;
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                z-index: 100;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+
+            .page-header button {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .stats-row {
+                flex-wrap: wrap;
+            }
+
+            .messages-list mat-card {
+                max-height: 350px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .compose-card, .detail-card {
+                padding: 20px;
+            }
+
+            .detail-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .sender-info {
+                width: 100%;
+            }
+
+            .priority-badge {
+                align-self: flex-start;
+            }
+
+            .message-item {
+                padding: 12px;
+            }
+
+            .message-avatar {
+                width: 36px;
+                height: 36px;
+            }
+
+            .sender-avatar {
+                width: 48px;
+                height: 48px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-content lucide-icon {
+                display: none;
+            }
+
+            .compose-card h2 {
+                font-size: 1.1rem;
+            }
+
+            .detail-card h2 {
+                font-size: 1.1rem;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .form-actions button {
+                width: 100%;
+            }
+
+            .reply-actions button {
+                width: 100%;
             }
         }
     `]
@@ -552,12 +769,14 @@ export class TenantMessagesComponent implements OnInit {
     readonly Plus = Plus;
     readonly AlertCircle = AlertCircle;
     readonly User = User;
+    readonly ArrowLeft = ArrowLeft;
 
     private fb = inject(FormBuilder);
     messageService = inject(TenantMessageService);
 
     selectedMessage = signal<Message | null>(null);
     showNewMessageForm = signal(false);
+    showMobileDetail = signal(false);
 
     messagePriorityLabels = MessagePriorityLabels;
 
@@ -583,22 +802,31 @@ export class TenantMessagesComponent implements OnInit {
     showNewMessage(): void {
         this.showNewMessageForm.set(true);
         this.selectedMessage.set(null);
+        this.showMobileDetail.set(true);
         this.messageForm.reset({ priority: MessagePriority.NORMAL });
     }
 
     cancelNewMessage(): void {
         this.showNewMessageForm.set(false);
+        this.showMobileDetail.set(false);
     }
 
     selectMessage(message: Message): void {
         this.selectedMessage.set(message);
         this.showNewMessageForm.set(false);
+        this.showMobileDetail.set(true);
         this.replyForm.reset();
 
         // Mark as read
         if (message.status === MessageStatus.UNREAD) {
             this.messageService.markAsRead(message.id).subscribe();
         }
+    }
+
+    backToList(): void {
+        this.showMobileDetail.set(false);
+        this.selectedMessage.set(null);
+        this.showNewMessageForm.set(false);
     }
 
     sendMessage(): void {

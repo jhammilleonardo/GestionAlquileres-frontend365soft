@@ -423,6 +423,81 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
             .profile-grid {
                 grid-template-columns: 1fr;
             }
+
+            .info-card {
+                margin-bottom: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .form-card {
+                padding: 24px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .info-card {
+                padding: 24px;
+            }
+
+            .user-avatar {
+                width: 80px;
+                height: 80px;
+            }
+
+            .info-card h2 {
+                font-size: 1.1rem;
+            }
+
+            .form-card {
+                padding: 20px;
+            }
+
+            .form-actions {
+                flex-direction: column-reverse;
+            }
+
+            .form-actions button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-content lucide-icon {
+                display: none;
+            }
+
+            .info-card {
+                padding: 20px;
+            }
+
+            .user-avatar {
+                width: 72px;
+                height: 72px;
+            }
+
+            .contract-info h3 {
+                font-size: 13px;
+            }
+
+            .info-item {
+                font-size: 13px;
+            }
         }
     `]
 })

@@ -74,9 +74,22 @@ import {
 
             <!-- Loading -->
             @if (maintenanceService.isLoading()) {
-                <div class="loading">
-                    <mat-spinner diameter="40"></mat-spinner>
-                    <p>Cargando solicitudes...</p>
+                <div class="requests-grid">
+                    @for (i of [1,2,3,4,5,6]; track i) {
+                        <mat-card class="skeleton-card">
+                            <div class="skeleton-header">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-badge"></div>
+                            </div>
+                            <div class="skeleton-line title"></div>
+                            <div class="skeleton-line medium"></div>
+                            <div class="skeleton-line"></div>
+                            <div class="skeleton-footer">
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line short"></div>
+                            </div>
+                        </mat-card>
+                    }
                 </div>
             }
 
@@ -313,6 +326,118 @@ import {
         .priority-low { color: #10b981; }
         .priority-normal { color: #f59e0b; }
         .priority-high { color: #ef4444; }
+
+        /* Skeleton Loaders */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .skeleton-card {
+            padding: 20px;
+        }
+
+        .skeleton-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-badge {
+            width: 80px;
+            height: 24px;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-line {
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-line.title {
+            height: 24px;
+            width: 70%;
+        }
+
+        .skeleton-line.short {
+            width: 30%;
+        }
+
+        .skeleton-line.medium {
+            width: 60%;
+        }
+
+        .skeleton-footer {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-content {
+                width: 100%;
+            }
+
+            .stats-row {
+                overflow-x: auto;
+            }
+
+            .requests-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .search-field {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-content lucide-icon {
+                display: none;
+            }
+
+            .header-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .card-footer {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .meta {
+                font-size: 11px;
+            }
+
+            .request-card {
+                padding: 16px;
+            }
+
+            .request-title {
+                font-size: 1rem;
+            }
+        }
     `]
 })
 export class TenantMaintenanceListComponent implements OnInit {

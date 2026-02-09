@@ -29,12 +29,13 @@ export class TenantMessageService {
 
     /**
      * Cargar todos los mensajes
+     * NOTE: Requiere endpoint backend: GET /tenant/messages
      */
     loadMessages(): void {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        this.http.get<Message[]>(`${environment.apiUrl}/tenant/messages`)
+        this.http.get<Message[]>(`${environment.apiUrl}tenant/messages`)
             .pipe(
                 tap(messages => {
                     const parsedMessages = messages.map(m => ({

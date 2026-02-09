@@ -35,12 +35,13 @@ export class TenantPaymentService {
 
     /**
      * Cargar historial de pagos del inquilino
+     * NOTE: Requiere endpoint backend: GET /tenant/payments
      */
     loadPayments(): void {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        this.http.get<Payment[]>(`${environment.apiUrl}/tenant/payments`)
+        this.http.get<Payment[]>(`${environment.apiUrl}tenant/payments`)
             .pipe(
                 tap(payments => {
                     // Convertir fechas de string a Date
@@ -87,9 +88,10 @@ export class TenantPaymentService {
 
     /**
      * Cargar estadísticas de pagos
+     * NOTE: Requiere endpoint backend: GET /tenant/payment-stats
      */
     loadStats(): void {
-        this.http.get<PaymentStats>(`${environment.apiUrl}/tenant/payment-stats`)
+        this.http.get<PaymentStats>(`${environment.apiUrl}tenant/payment-stats`)
             .pipe(
                 tap(stats => {
                     const parsedStats = {

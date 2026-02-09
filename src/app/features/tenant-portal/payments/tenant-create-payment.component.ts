@@ -285,11 +285,68 @@ import { PaymentType, PaymentMethod, PaymentTypeLabels, PaymentMethodLabels } fr
             }
 
             .form-actions {
-                flex-direction: column;
+                flex-direction: column-reverse;
             }
 
             .form-actions button {
                 width: 100%;
+            }
+
+            .page-header h1 {
+                font-size: 1.35rem;
+            }
+
+            .form-card {
+                padding: 24px;
+            }
+
+            .success-card {
+                padding: 32px;
+            }
+
+            .success-actions {
+                flex-direction: column;
+            }
+
+            .success-actions button {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header {
+                gap: 8px;
+            }
+
+            .page-header h1 {
+                font-size: 1.25rem;
+            }
+
+            .form-card {
+                padding: 20px;
+            }
+
+            .success-card {
+                padding: 24px;
+            }
+
+            .success-card h2 {
+                font-size: 1.25rem;
+            }
+
+            .back-btn {
+                margin-right: 4px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .form-card {
+                padding: 16px;
+            }
+
+            .form-grid {
+                gap: 12px;
+                margin-bottom: 20px;
             }
         }
     `]

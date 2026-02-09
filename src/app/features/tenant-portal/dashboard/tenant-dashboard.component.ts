@@ -70,9 +70,34 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             }
 
             <!-- Stats Grid -->
-            <div class="stats-grid">
-                <!-- Maintenance Stats -->
-                <div class="stat-card maintenance">
+            @if (maintenanceService.isLoading() || paymentService.isLoading()) {
+                <div class="stats-grid">
+                    <div class="stat-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton-value"></div>
+                            <div class="skeleton-label"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton-value"></div>
+                            <div class="skeleton-label"></div>
+                        </div>
+                    </div>
+                    <div class="stat-card skeleton">
+                        <div class="skeleton-icon"></div>
+                        <div class="skeleton-content">
+                            <div class="skeleton-value"></div>
+                            <div class="skeleton-label"></div>
+                        </div>
+                    </div>
+                </div>
+            } @else {
+                <div class="stats-grid">
+                    <!-- Maintenance Stats -->
+                    <div class="stat-card maintenance">
                     <div class="stat-icon">
                         <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
                     </div>
@@ -104,6 +129,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                     </div>
                 </div>
             </div>
+            }
 
             <div class="dashboard-grid">
                 <!-- Recent Maintenance Requests -->
@@ -117,8 +143,14 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                     </div>
 
                     @if (maintenanceService.isLoading()) {
-                        <div class="loading">
-                            <mat-spinner diameter="32"></mat-spinner>
+                        <div class="skeleton-list">
+                            @for (i of [1,2,3]; track i) {
+                                <div class="skeleton-request-item">
+                                    <div class="skeleton-line short"></div>
+                                    <div class="skeleton-line medium"></div>
+                                    <div class="skeleton-line short"></div>
+                                </div>
+                            }
                         </div>
                     } @else if (maintenanceService.requests().length === 0) {
                         <div class="empty-state">
@@ -155,8 +187,13 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                     </div>
 
                     @if (paymentService.isLoading()) {
-                        <div class="loading">
-                            <mat-spinner diameter="32"></mat-spinner>
+                        <div class="skeleton-list">
+                            @for (i of [1,2,3]; track i) {
+                                <div class="skeleton-payment-item">
+                                    <div class="skeleton-line short"></div>
+                                    <div class="skeleton-line medium"></div>
+                                </div>
+                            }
                         </div>
                     } @else if (paymentService.payments().length === 0) {
                         <div class="empty-state">
@@ -554,13 +591,180 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             font-weight: 500;
         }
 
+        /* Skeleton Loaders */
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .skeleton {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .skeleton-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .skeleton-value {
+            width: 80px;
+            height: 40px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-label {
+            width: 120px;
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        .skeleton-card {
+            padding: 20px;
+            border-radius: 12px;
+            background: var(--mat-sys-surface);
+            border: 1px solid var(--mat-sys-outline-variant);
+        }
+
+        .skeleton-line {
+            height: 16px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+            margin-bottom: 12px;
+        }
+
+        .skeleton-line.title {
+            height: 24px;
+            width: 60%;
+        }
+
+        .skeleton-line.short {
+            width: 40%;
+        }
+
+        .skeleton-line.medium {
+            width: 70%;
+        }
+
+        .skeleton-list {
+            padding: 16px 0;
+        }
+
+        .skeleton-request-item,
+        .skeleton-payment-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--mat-sys-outline-variant);
+        }
+
+        .skeleton-request-item:last-child,
+        .skeleton-payment-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
+            .welcome-content h1 {
+                font-size: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-icon {
+                width: 48px;
+                height: 48px;
+            }
+
+            .stat-value {
+                font-size: 32px;
+            }
+
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
 
             .actions-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .property-card {
+                padding: 16px;
+            }
+
+            .property-content h2 {
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tenant-main {
+                padding: 16px;
+            }
+
+            .welcome-content h1 {
+                font-size: 1.35rem;
+            }
+
+            .alert-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 16px;
+            }
+
+            .alert-content h3 {
+                font-size: 0.95rem;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-card {
+                padding: 20px;
+            }
+
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .view-all {
+                font-size: 13px;
             }
         }
     `]
