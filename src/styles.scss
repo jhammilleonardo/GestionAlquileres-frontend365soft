@@ -113,3 +113,32 @@ lucide-icon {
     height: 100%;
   }
 }
+
+/* Material Icons Styles */
+.mat-icon {
+  display: inline-block;
+  font-family: 'Material Icons' !important;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'liga';
+}
+
+.material-icons {
+  direction: rtl;
+  display: inline-block;
+  font-family: 'Material Icons' !important;
+  font-size: inherit;
+  letter-spacing: normal;
+  line-height: 1;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+}

@@ -4,6 +4,9 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PropiedadesComponent } from './features/propiedades/propiedades.component';
 import { InquilinosComponent } from './features/inquilinos/inquilinos.component';
 import { ContratosComponent } from './features/contratos/contratos.component';
+import { ContractCreateComponent } from './features/contratos/contract-create/contract-create.component';
+import { ContractDetailComponent } from './features/contratos/contract-detail/contract-detail.component';
+import { ContractEditComponent } from './features/contratos/contract-edit/contract-edit.component';
 import { PagosComponent } from './features/pagos/pagos.component';
 import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.component';
 import { ComponentesComponent } from './features/componentes/componentes.component';
@@ -66,6 +69,9 @@ export const routes: Routes = [
           { path: 'propiedades', component: PropiedadesComponent },
           { path: 'inquilinos', component: InquilinosComponent },
           { path: 'contratos', component: ContratosComponent },
+          { path: 'contratos/nuevo', component: ContractCreateComponent },
+          { path: 'contratos/:id', component: ContractDetailComponent },
+          { path: 'contratos/:id/editar', component: ContractEditComponent },
           { path: 'pagos', component: PagosComponent },
           { path: 'mantenimiento', component: MantenimientoComponent },
           { path: 'componentes', component: ComponentesComponent }

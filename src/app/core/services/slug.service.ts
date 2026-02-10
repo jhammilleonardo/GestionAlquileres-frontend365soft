@@ -178,6 +178,14 @@ export class SlugService {
   }
 
   /**
+   * Construir URL completa de API (para archivos, PDFs, etc.)
+   */
+  buildApiUrl(path: string): string {
+    const apiUrl = 'http://localhost:3000'; // TODO: mover a configuración
+    return `${apiUrl}${path.startsWith('/') ? path : '/' + path}`;
+  }
+
+  /**
    * Verificar si hay error de slug
    */
   hasError(): boolean {

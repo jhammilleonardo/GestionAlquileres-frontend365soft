@@ -48,7 +48,20 @@ export const TENANT_PORTAL_ROUTES: Routes = [
             },
             {
                 path: 'documentos',
-                loadComponent: () => import('./documents/tenant-documents.component').then(m => m.TenantDocumentsComponent)
+                children: [
+                    {
+                        path: '',
+                        loadComponent: () => import('./documents/tenant-documents.component').then(m => m.TenantDocumentsComponent)
+                    },
+                    {
+                        path: 'contratos',
+                        loadComponent: () => import('./documents/tenant-contract-list.component').then(m => m.TenantContractListComponent)
+                    },
+                    {
+                        path: 'contratos/:id',
+                        loadComponent: () => import('./documents/tenant-contract-detail.component').then(m => m.TenantContractDetailComponent)
+                    }
+                ]
             },
             {
                 path: 'mensajes',

@@ -53,6 +53,25 @@ export interface Contract {
         title: string;
         address?: string;
     };
+    // Campos adicionales del contrato
+    late_fee_percentage?: number;
+    grace_days?: number;
+    included_services?: string[];
+    tenant_responsibilities?: string;
+    owner_responsibilities?: string;
+    prohibitions?: string;
+    coexistence_rules?: string;
+    renewal_terms?: string;
+    termination_terms?: string;
+    jurisdiction?: string;
+    auto_renew?: boolean;
+    renewal_notice_days?: number;
+    auto_increase_percentage?: number;
+    // Datos bancarios
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_type?: string;
+    bank_account_holder?: string;
     created_at: Date;
     updated_at: Date;
 }
@@ -95,7 +114,7 @@ export class TenantContractService {
     }
 
     /**
-     * Obtener el contrato activo del inquilino
+     * Cargar el contrato activo del inquilino
      */
     loadCurrentContract(): void {
         if (!this.slug) return;
@@ -103,7 +122,7 @@ export class TenantContractService {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        this.http.get<Contract>(
+        this.http.get<any>(
             `${environment.apiUrl}${this.slug}/tenant/contracts/current`,
             { headers: this.headers }
         ).pipe(
@@ -134,7 +153,7 @@ export class TenantContractService {
             ? `${environment.apiUrl}${this.slug}/tenant/contracts?status=${status}`
             : `${environment.apiUrl}${this.slug}/tenant/contracts`;
 
-        this.http.get<Contract[]>(url, { headers: this.headers })
+        this.http.get<any[]>(url, { headers: this.headers })
             .pipe(
                 tap(contracts => {
                     const processedContracts = contracts.map(c => this.processContract(c));
@@ -155,7 +174,7 @@ export class TenantContractService {
      * Obtener un contrato específico por ID
      */
     getContract(id: number): Observable<Contract> {
-        return this.http.get<Contract>(
+        return this.http.get<any>(
             `${environment.apiUrl}${this.slug}/tenant/contracts/${id}`,
             { headers: this.headers }
         ).pipe(
@@ -173,17 +192,17 @@ export class TenantContractService {
     /**
      * Firmar un contrato digitalmente
      */
-    signContract(contractId: number): Observable<SignContractResponse> {
+    signContract(contractId: number): Observable<Contract> {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        return this.http.post<SignContractResponse>(
+        return this.http.post<any>(
             `${environment.apiUrl}${this.slug}/tenant/contracts/${contractId}/sign`,
             {},
             { headers: this.headers }
         ).pipe(
             tap(response => {
-                const processedContract = this.processContract(response.contract);
+                const processedContract = this.processContract(response);
 
                 // Actualizar el contrato actual si es el mismo
                 if (this.currentContractSignal()?.id === contractId) {
@@ -226,15 +245,51 @@ export class TenantContractService {
     }
 
     /**
-     * Procesar fechas del contrato
+     * Procesar fechas y mapear datos del contrato desde la API
      */
-    private processContract(contract: Contract): Contract {
+    private processContract(contract: any): Contract {
         return {
-            ...contract,
+            id: contract.id,
+            tenant_id: contract.tenant_id,
+            property_id: contract.property_id,
+            contract_number: contract.contract_number,
             start_date: new Date(contract.start_date),
             end_date: new Date(contract.end_date),
             key_delivery_date: contract.key_delivery_date ? new Date(contract.key_delivery_date) : undefined,
-            signed_at: contract.signed_at ? new Date(contract.signed_at) : undefined,
+            monthly_rent: parseFloat(contract.monthly_rent),
+            currency: contract.currency,
+            payment_day: contract.payment_day,
+            deposit_amount: contract.deposit_amount ? parseFloat(contract.deposit_amount) : undefined,
+            payment_method: contract.payment_method,
+            status: contract.status,
+            is_signed: contract.is_signed,
+            signed_at: contract.tenant_signature_date ? new Date(contract.tenant_signature_date) : undefined,
+            signed_ip: contract.signed_ip,
+            // Mapear datos de la propiedad desde campos planos
+            property: {
+                id: contract.property_id,
+                title: contract.property_title || 'Propiedad',
+                address: contract.street_address || `${contract.city || ''}, ${contract.country || ''}`.trim()
+            },
+            // Campos adicionales del contrato
+            late_fee_percentage: contract.late_fee_percentage ? parseFloat(contract.late_fee_percentage) : undefined,
+            grace_days: contract.grace_days,
+            included_services: contract.included_services || [],
+            tenant_responsibilities: contract.tenant_responsibilities,
+            owner_responsibilities: contract.owner_responsibilities,
+            prohibitions: contract.prohibitions,
+            coexistence_rules: contract.coexistence_rules,
+            renewal_terms: contract.renewal_terms,
+            termination_terms: contract.termination_terms,
+            jurisdiction: contract.jurisdiction,
+            auto_renew: contract.auto_renew,
+            renewal_notice_days: contract.renewal_notice_days,
+            auto_increase_percentage: contract.auto_increase_percentage ? parseFloat(contract.auto_increase_percentage) : undefined,
+            // Datos bancarios
+            bank_name: contract.bank_name,
+            bank_account_number: contract.bank_account_number,
+            bank_account_type: contract.bank_account_type,
+            bank_account_holder: contract.bank_account_holder,
             created_at: new Date(contract.created_at),
             updated_at: new Date(contract.updated_at)
         };

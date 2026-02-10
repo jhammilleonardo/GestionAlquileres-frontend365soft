@@ -5,9 +5,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { LucideAngularModule, FileText, Download, Eye, CheckCircle2, Clock, AlertTriangle, FileCheck } from 'lucide-angular';
+import { LucideAngularModule, FileText, Download, Eye, CheckCircle2, Clock, AlertTriangle, FileCheck, FileSignature } from 'lucide-angular';
 import { TenantDocumentService } from '../../../core/services/tenant-document.service';
 import { TenantDocument, DocumentTypeLabels, DocumentType } from '../../../core/models/document.model';
+import { TenantContractListComponent } from './tenant-contract-list.component';
 
 @Component({
     selector: 'app-tenant-documents',
@@ -19,7 +20,8 @@ import { TenantDocument, DocumentTypeLabels, DocumentType } from '../../../core/
         MatChipsModule,
         MatProgressSpinnerModule,
         MatTabsModule,
-        LucideAngularModule
+        LucideAngularModule,
+        TenantContractListComponent
     ],
     template: `
         <div class="documents-container">
@@ -28,143 +30,155 @@ import { TenantDocument, DocumentTypeLabels, DocumentType } from '../../../core/
                 <div class="header-content">
                     <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
                     <div>
-                        <h1>Documentos</h1>
-                        <p>Accede a tus documentos y contratos</p>
+                        <h1>Documentos y Contratos</h1>
+                        <p>Accede a todos tus documentos y gestiona tus contratos de alquiler</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div class="stats-row">
-                <mat-chip-listbox>
-                    <mat-chip-option>
-                        Todos ({{ documentService.documents().length }})
-                    </mat-chip-option>
-                    <mat-chip-option>
-                        Contratos ({{ getCountByType('CONTRACT') }})
-                    </mat-chip-option>
-                    <mat-chip-option>
-                        Pendientes de Firma ({{ pendingSignatureCount() }})
-                    </mat-chip-option>
-                </mat-chip-listbox>
-            </div>
+            <!-- Tabs Navigation -->
+            <mat-tab-group class="docs-tabs" mat-stretch-tabs animationDuration="0ms">
+                <!-- Tab: Documentos Generales -->
+                <mat-tab label="Documentos">
+                    <ng-template matTabContent>
+                        <!-- Stats -->
+                        <div class="stats-row">
+                            <mat-chip-listbox>
+                                <mat-chip-option>
+                                    Todos ({{ documentService.documents().length }})
+                                </mat-chip-option>
+                                <mat-chip-option>
+                                    Pendientes de Firma ({{ pendingSignatureCount() }})
+                                </mat-chip-option>
+                            </mat-chip-listbox>
+                        </div>
 
-            <!-- Loading -->
-            @if (documentService.isLoading()) {
-                <div class="documents-grid">
-                    @for (i of [1,2,3,4,5,6]; track i) {
-                        <mat-card class="skeleton-document-card">
-                            <div class="skeleton-doc-header">
-                                <div class="skeleton-doc-icon"></div>
-                                <div class="skeleton-badge"></div>
-                            </div>
-                            <div class="skeleton-line title"></div>
-                            <div class="skeleton-line medium"></div>
-                            <div class="skeleton-line"></div>
-                            <div class="skeleton-meta">
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-line short"></div>
-                            </div>
-                            <div class="skeleton-actions">
-                                <div class="skeleton-btn"></div>
-                                <div class="skeleton-btn"></div>
-                            </div>
-                        </mat-card>
-                    }
-                </div>
-            }
-
-            <!-- Empty State -->
-            @else if (documentService.documents().length === 0) {
-                <div class="empty-state">
-                    <lucide-icon [img]="FileText" [size]="64"></lucide-icon>
-                    <h2>No hay documentos disponibles</h2>
-                    <p>Aún no tienes documentos en tu cuenta</p>
-                </div>
-            }
-
-            <!-- Documents Grid -->
-            @else {
-                <div class="documents-grid">
-                    @for (doc of documentService.documents(); track doc.id) {
-                        <mat-card class="document-card">
-                            <div class="document-header">
-                                <div class="document-icon">
-                                    <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
-                                </div>
-                                <div class="document-type">
-                                    {{ documentTypeLabels[doc.document_type] }}
-                                </div>
-                            </div>
-
-                            <h3 class="document-title">{{ doc.title }}</h3>
-                            
-                            @if (doc.description) {
-                                <p class="document-description">{{ doc.description }}</p>
-                            }
-
-                            <div class="document-meta">
-                                <div class="meta-item">
-                                    <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                                    {{ formatDate(doc.uploaded_at) }}
-                                </div>
-                                <div class="meta-item">
-                                    {{ formatFileSize(doc.file_size) }}
-                                </div>
-                            </div>
-
-                            <!-- Signature Status -->
-                            @if (doc.requires_signature) {
-                                <div class="signature-status" [class.signed]="doc.is_signed">
-                                    @if (doc.is_signed) {
-                                        <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                                        <span>Firmado el {{ formatDate(doc.signed_at!) }}</span>
-                                    } @else {
-                                        <lucide-icon [img]="AlertTriangle" [size]="16"></lucide-icon>
-                                        <span>Requiere Firma</span>
-                                    }
-                                </div>
-                            }
-
-                            <!-- Expiration Warning -->
-                            @if (doc.expires_at && isExpiringSoon(doc.expires_at)) {
-                                <div class="expiration-warning">
-                                    <lucide-icon [img]="AlertTriangle" [size]="14"></lucide-icon>
-                                    <span>Expira el {{ formatDate(doc.expires_at) }}</span>
-                                </div>
-                            }
-
-                            <!-- Actions -->
-                            <div class="document-actions">
-                                <button 
-                                    mat-stroked-button 
-                                    (click)="viewDocument(doc)"
-                                    class="action-btn">
-                                    <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                                    Ver
-                                </button>
-                                <button 
-                                    mat-stroked-button 
-                                    (click)="downloadDocument(doc)"
-                                    class="action-btn">
-                                    <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-                                    Descargar
-                                </button>
-                                @if (doc.requires_signature && !doc.is_signed) {
-                                    <button 
-                                        mat-raised-button 
-                                        color="primary"
-                                        (click)="signDocument(doc)"
-                                        class="action-btn">
-                                        <lucide-icon [img]="FileCheck" [size]="16"></lucide-icon>
-                                        Firmar
-                                    </button>
+                        <!-- Loading -->
+                        @if (documentService.isLoading()) {
+                            <div class="documents-grid">
+                                @for (i of [1,2,3,4,5,6]; track i) {
+                                    <mat-card class="skeleton-document-card">
+                                        <div class="skeleton-doc-header">
+                                            <div class="skeleton-doc-icon"></div>
+                                            <div class="skeleton-badge"></div>
+                                        </div>
+                                        <div class="skeleton-line title"></div>
+                                        <div class="skeleton-line medium"></div>
+                                        <div class="skeleton-line"></div>
+                                        <div class="skeleton-meta">
+                                            <div class="skeleton-line short"></div>
+                                            <div class="skeleton-line short"></div>
+                                        </div>
+                                        <div class="skeleton-actions">
+                                            <div class="skeleton-btn"></div>
+                                            <div class="skeleton-btn"></div>
+                                        </div>
+                                    </mat-card>
                                 }
                             </div>
-                        </mat-card>
-                    }
-                </div>
-            }
+                        }
+
+                        <!-- Empty State -->
+                        @else if (documentService.documents().length === 0) {
+                            <div class="empty-state">
+                                <lucide-icon [img]="FileText" [size]="64"></lucide-icon>
+                                <h2>No hay documentos disponibles</h2>
+                                <p>Aún no tienes documentos en tu cuenta</p>
+                            </div>
+                        }
+
+                        <!-- Documents Grid -->
+                        @else {
+                            <div class="documents-grid">
+                                @for (doc of documentService.documents(); track doc.id) {
+                                    <mat-card class="document-card">
+                                        <div class="document-header">
+                                            <div class="document-icon">
+                                                <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
+                                            </div>
+                                            <div class="document-type">
+                                                {{ documentTypeLabels[doc.document_type] }}
+                                            </div>
+                                        </div>
+
+                                        <h3 class="document-title">{{ doc.title }}</h3>
+
+                                        @if (doc.description) {
+                                            <p class="document-description">{{ doc.description }}</p>
+                                        }
+
+                                        <div class="document-meta">
+                                            <div class="meta-item">
+                                                <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
+                                                {{ formatDate(doc.uploaded_at) }}
+                                            </div>
+                                            <div class="meta-item">
+                                                {{ formatFileSize(doc.file_size) }}
+                                            </div>
+                                        </div>
+
+                                        <!-- Signature Status -->
+                                        @if (doc.requires_signature) {
+                                            <div class="signature-status" [class.signed]="doc.is_signed">
+                                                @if (doc.is_signed) {
+                                                    <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
+                                                    <span>Firmado el {{ formatDate(doc.signed_at!) }}</span>
+                                                } @else {
+                                                    <lucide-icon [img]="AlertTriangle" [size]="16"></lucide-icon>
+                                                    <span>Requiere Firma</span>
+                                                }
+                                            </div>
+                                        }
+
+                                        <!-- Expiration Warning -->
+                                        @if (doc.expires_at && isExpiringSoon(doc.expires_at)) {
+                                            <div class="expiration-warning">
+                                                <lucide-icon [img]="AlertTriangle" [size]="14"></lucide-icon>
+                                                <span>Expira el {{ formatDate(doc.expires_at) }}</span>
+                                            </div>
+                                        }
+
+                                        <!-- Actions -->
+                                        <div class="document-actions">
+                                            <button
+                                                mat-stroked-button
+                                                (click)="viewDocument(doc)"
+                                                class="action-btn">
+                                                <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
+                                                Ver
+                                            </button>
+                                            <button
+                                                mat-stroked-button
+                                                (click)="downloadDocument(doc)"
+                                                class="action-btn">
+                                                <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+                                                Descargar
+                                            </button>
+                                            @if (doc.requires_signature && !doc.is_signed) {
+                                                <button
+                                                    mat-raised-button
+                                                    color="primary"
+                                                    (click)="signDocument(doc)"
+                                                    class="action-btn">
+                                                    <lucide-icon [img]="FileCheck" [size]="16"></lucide-icon>
+                                                    Firmar
+                                                </button>
+                                            }
+                                        </div>
+                                    </mat-card>
+                                }
+                            </div>
+                        }
+                    </ng-template>
+                </mat-tab>
+
+                <!-- Tab: Contratos -->
+                <mat-tab label="Contratos">
+                    <ng-template matTabContent>
+                        <app-tenant-contract-list></app-tenant-contract-list>
+                    </ng-template>
+                </mat-tab>
+            </mat-tab-group>
         </div>
     `,
     styles: [`
@@ -198,6 +212,24 @@ import { TenantDocument, DocumentTypeLabels, DocumentType } from '../../../core/
         .header-content p {
             color: #64748b;
             margin: 0;
+        }
+
+        .docs-tabs {
+            margin-bottom: 24px;
+        }
+
+        .docs-tabs ::ng-deep .mat-mdc-tab-header {
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .docs-tabs ::ng-deep .mat-mdc-tab {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .docs-tabs ::ng-deep .mat-mdc-tab.mdc-tab--active {
+            color: var(--mat-sys-primary);
+            font-weight: 600;
         }
 
         .stats-row {
@@ -504,6 +536,7 @@ export class TenantDocumentsComponent implements OnInit {
     readonly Clock = Clock;
     readonly AlertTriangle = AlertTriangle;
     readonly FileCheck = FileCheck;
+    readonly FileSignature = FileSignature;
 
     documentService = inject(TenantDocumentService);
 
