@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
 import { LucideAngularModule, CreditCard, Download, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Clock, Plus } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } from '../../../core/models/payment.model';
 
 @Component({
@@ -38,7 +39,7 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
                         <p>Gestiona tus pagos y consulta tu historial</p>
                     </div>
                 </div>
-                <button mat-raised-button color="primary" routerLink="/portal/pagos/nuevo">
+                <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
                     <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
                     Registrar Pago
                 </button>
@@ -633,10 +634,14 @@ export class TenantPaymentsListComponent implements OnInit {
     readonly Plus = Plus;
 
     paymentService = inject(TenantPaymentService);
+    private slugService = inject(SlugService);
 
     paymentStatusLabels = PaymentStatusLabels;
     paymentTypeLabels = PaymentTypeLabels;
     paymentMethodLabels = PaymentMethodLabels;
+
+    // URL para registrar nuevo pago
+    nuevoPagoUrl = computed(() => this.slugService.buildUrl('/portal/pagos/nuevo'));
 
     ngOnInit(): void {
         this.paymentService.loadPayments();

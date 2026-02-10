@@ -12,6 +12,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { LucideAngularModule, Home, Wrench, MessageSquare, User, LogOut, Menu, Bell, FileText, Settings, CreditCard } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { TenantMessageService } from '../../../core/services/tenant-message.service';
+import { SlugService } from '../../../core/services/slug.service';
 
 interface NavItem {
     label: string;
@@ -49,14 +50,14 @@ interface NavItem {
                 </div>
 
                 <div class="header-right">
-                    <button 
-                        mat-icon-button 
+                    <button
+                        mat-icon-button
                         class="notification-btn"
                         [matBadge]="messageService.unreadCount()"
                         [matBadgeHidden]="messageService.unreadCount() === 0"
                         matBadgeColor="warn"
                         matBadgeSize="small"
-                        routerLink="/portal/mensajes">
+                        [routerLink]="mensajesUrl()">
                         <lucide-icon [img]="Bell" [size]="20"></lucide-icon>
                     </button>
 
@@ -68,11 +69,11 @@ interface NavItem {
                     </button>
 
                     <mat-menu #userMenu="matMenu">
-                        <button mat-menu-item routerLink="/portal/perfil">
+                        <button mat-menu-item [routerLink]="perfilUrl()">
                             <lucide-icon [img]="User" [size]="18"></lucide-icon>
                             <span>Mi Perfil</span>
                         </button>
-                        <button mat-menu-item routerLink="/portal/configuracion">
+                        <button mat-menu-item [routerLink]="configuracionUrl()">
                             <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
                             <span>Configuracion</span>
                         </button>
@@ -94,11 +95,11 @@ interface NavItem {
                 <!-- Sidebar -->
                 <aside class="tenant-sidebar" [class.collapsed]="sidebarCollapsed">
                     <nav class="sidebar-nav">
-                        @for (item of navItems; track item.route) {
+                        @for (item of navItems(); track item.route) {
                             <a class="nav-item"
                                [routerLink]="item.route"
                                routerLinkActive="active"
-                               [routerLinkActiveOptions]="{ exact: item.route === '/portal/dashboard' }"
+                               [routerLinkActiveOptions]="{ exact: item.route.endsWith('/dashboard') }"
                                (click)="onNavItemClick()">
                                 <lucide-icon [img]="item.icon" [size]="20"></lucide-icon>
                                 <span class="nav-label">{{ item.label }}</span>
@@ -418,16 +419,23 @@ export class TenantLayoutComponent implements OnInit {
     authService = inject(TenantAuthService);
     messageService = inject(TenantMessageService);
     private router = inject(Router);
+    private slugService = inject(SlugService);
 
     sidebarCollapsed = false;
 
-    navItems: NavItem[] = [
-        { label: 'Inicio', route: '/portal/dashboard', icon: this.Home },
-        { label: 'Mantenimiento', route: '/portal/mantenimiento', icon: this.Wrench },
-        { label: 'Pagos', route: '/portal/pagos', icon: this.CreditCard },
-        { label: 'Documentos', route: '/portal/documentos', icon: this.FileText },
-        { label: 'Mensajes', route: '/portal/mensajes', icon: this.MessageSquare },
-    ];
+    // Computed para generar rutas con slug dinámico
+    navItems = computed<NavItem[]>(() => [
+        { label: 'Inicio', route: this.slugService.buildUrl('/portal/dashboard'), icon: this.Home },
+        { label: 'Mantenimiento', route: this.slugService.buildUrl('/portal/mantenimiento'), icon: this.Wrench },
+        { label: 'Pagos', route: this.slugService.buildUrl('/portal/pagos'), icon: this.CreditCard },
+        { label: 'Documentos', route: this.slugService.buildUrl('/portal/documentos'), icon: this.FileText },
+        { label: 'Mensajes', route: this.slugService.buildUrl('/portal/mensajes'), icon: this.MessageSquare },
+    ]);
+
+    // Computed para URLs con slug
+    mensajesUrl = computed(() => this.slugService.buildUrl('/portal/mensajes'));
+    perfilUrl = computed(() => this.slugService.buildUrl('/portal/perfil'));
+    configuracionUrl = computed(() => this.slugService.buildUrl('/portal/configuracion'));
 
     ngOnInit(): void {
         // Initialize sidebar state based on screen size

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -10,6 +10,7 @@ import { TenantMaintenanceService } from '../../../core/services/tenant-maintena
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
 import { TenantMessageService } from '../../../core/services/tenant-message.service';
 import { TenantDocumentService } from '../../../core/services/tenant-document.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../core/models/maintenance-request.model';
 
 @Component({
@@ -42,7 +43,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                             <h3>Pago Próximo a Vencer</h3>
                             <p>Tu próximo pago de <strong>\${{ stats.next_payment_amount?.toLocaleString() }}</strong> vence el {{ formatDate(stats.next_payment_date) }}</p>
                         </div>
-                        <button mat-raised-button color="primary" routerLink="/portal/pagos/nuevo">Pagar Ahora</button>
+                        <button mat-raised-button color="primary" [routerLink]="pagosNuevoUrl()">Pagar Ahora</button>
                     </mat-card>
                 }
             }
@@ -136,7 +137,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                 <mat-card class="recent-requests">
                     <div class="card-header">
                         <h3>Solicitudes Recientes</h3>
-                        <a routerLink="/portal/mantenimiento" class="view-all">
+                        <a [routerLink]="mantenimientoUrl()" class="view-all">
                             Ver todas
                             <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
                         </a>
@@ -160,7 +161,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                     } @else {
                         <div class="requests-list">
                             @for (request of maintenanceService.requests().slice(0, 5); track request.id) {
-                                <a class="request-item" [routerLink]="['/portal/mantenimiento', request.id]">
+                                <a class="request-item" [routerLink]="buildRequestDetailUrl(request.id)">
                                     <div class="request-info">
                                         <span class="ticket">{{ request.ticket_number }}</span>
                                         <span class="title">{{ request.title }}</span>
@@ -180,7 +181,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                 <mat-card class="recent-payments">
                     <div class="card-header">
                         <h3>Pagos Recientes</h3>
-                        <a routerLink="/portal/pagos" class="view-all">
+                        <a [routerLink]="pagosUrl()" class="view-all">
                             Ver todos
                             <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
                         </a>
@@ -222,19 +223,19 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
             <div class="quick-actions">
                 <h3>Acciones Rápidas</h3>
                 <div class="actions-grid">
-                    <a routerLink="/portal/mantenimiento/nueva" class="action-card">
+                    <a [routerLink]="mantenimientoNuevoUrl()" class="action-card">
                         <lucide-icon [img]="Wrench" [size]="32"></lucide-icon>
                         <span>Reportar Problema</span>
                     </a>
-                    <a routerLink="/portal/pagos/nuevo" class="action-card">
+                    <a [routerLink]="pagosNuevoUrl()" class="action-card">
                         <lucide-icon [img]="CreditCard" [size]="32"></lucide-icon>
                         <span>Registrar Pago</span>
                     </a>
-                    <a routerLink="/portal/mensajes" class="action-card">
+                    <a [routerLink]="mensajesUrl()" class="action-card">
                         <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
                         <span>Enviar Mensaje</span>
                     </a>
-                    <a routerLink="/portal/documentos" class="action-card">
+                    <a [routerLink]="documentosUrl()" class="action-card">
                         <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
                         <span>Ver Documentos</span>
                     </a>
@@ -787,9 +788,22 @@ export class TenantDashboardComponent implements OnInit {
     paymentService = inject(TenantPaymentService);
     messageService = inject(TenantMessageService);
     documentService = inject(TenantDocumentService);
+    private slugService = inject(SlugService);
 
     statusLabels = MaintenanceStatusLabels;
     priorityLabels = MaintenancePriorityLabels;
+
+    // URLs computadas con slug
+    pagosNuevoUrl = computed(() => this.slugService.buildUrl('/portal/pagos/nuevo'));
+    mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
+    mantenimientoNuevoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento/nueva'));
+    pagosUrl = computed(() => this.slugService.buildUrl('/portal/pagos'));
+    mensajesUrl = computed(() => this.slugService.buildUrl('/portal/mensajes'));
+    documentosUrl = computed(() => this.slugService.buildUrl('/portal/documentos'));
+
+    buildRequestDetailUrl(requestId: number): string {
+        return this.slugService.buildUrl(`/portal/mantenimiento/${requestId}`);
+    }
 
     ngOnInit(): void {
         this.maintenanceService.loadMyRequests();

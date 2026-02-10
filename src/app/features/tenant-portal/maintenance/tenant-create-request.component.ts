@@ -1,6 +1,6 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { LucideAngularModule, Wrench, MessageSquare, ArrowLeft, ArrowRight, Check, AlertCircle, Home, Key, Lightbulb, Droplets, Wind, Hammer, Leaf } from 'lucide-angular';
 import { TenantMaintenanceService, CreateTenantMaintenanceDto } from '../../../core/services/tenant-maintenance.service';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import { SlugService } from '../../../core/services/slug.service';
 import {
     MaintenanceCategory,
     MaintenanceRequestType,
@@ -26,6 +27,7 @@ import {
     standalone: true,
     imports: [
         CommonModule,
+        RouterModule,
         FormsModule,
         ReactiveFormsModule,
         MatCardModule,
@@ -42,7 +44,7 @@ import {
     template: `
         <div class="create-request-container">
             <div class="page-header">
-                <button mat-icon-button routerLink="/portal/mantenimiento" class="back-btn">
+                <button mat-icon-button [routerLink]="mantenimientoUrl()" class="back-btn">
                     <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
                 </button>
                 <div>
@@ -162,7 +164,7 @@ import {
 
                     <!-- Submit -->
                     <div class="form-actions">
-                        <button mat-button type="button" routerLink="/portal/mantenimiento">
+                        <button mat-button type="button" [routerLink]="mantenimientoUrl()">
                             Cancelar
                         </button>
                         <button mat-raised-button color="primary" type="submit"
@@ -450,6 +452,10 @@ export class TenantCreateRequestComponent {
     authService = inject(TenantAuthService);
     private router = inject(Router);
     private fb = inject(FormBuilder);
+    private slugService = inject(SlugService);
+
+    // URL para volver a la lista de mantenimiento
+    mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
 
     categories = [
         { value: MaintenanceCategory.PLOMERIA, label: 'Plomeria', icon: Droplets },
@@ -517,7 +523,8 @@ export class TenantCreateRequestComponent {
 
         this.maintenanceService.createRequest(dto).subscribe({
             next: (created) => {
-                this.router.navigate(['/portal/mantenimiento', created.id]);
+                const url = this.slugService.buildUrl(`/portal/mantenimiento/${created.id}`);
+                this.router.navigateByUrl(url);
             },
             error: () => {
                 // Error is handled by the service

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { LucideAngularModule, ArrowLeft, Wrench, Clock, Home, MessageSquare, Send, AlertCircle, CheckCircle2, FileText, User } from 'lucide-angular';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
+import { SlugService } from '../../../core/services/slug.service';
 import {
     MaintenanceRequest,
     MaintenanceMessage,
@@ -39,7 +40,7 @@ import {
         <div class="detail-container">
             <!-- Header -->
             <div class="page-header">
-                <button mat-icon-button routerLink="/portal/mantenimiento" class="back-btn">
+                <button mat-icon-button [routerLink]="mantenimientoUrl()" class="back-btn">
                     <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
                 </button>
                 <div>
@@ -252,7 +253,7 @@ import {
                     <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
                     <h2>Solicitud no encontrada</h2>
                     <p>La solicitud que buscas no existe o no tienes acceso a ella.</p>
-                    <button mat-raised-button color="primary" routerLink="/portal/mantenimiento">
+                    <button mat-raised-button color="primary" [routerLink]="mantenimientoUrl()">
                         Volver a Mis Solicitudes
                     </button>
                 </div>
@@ -618,11 +619,15 @@ export class TenantRequestDetailComponent implements OnInit {
 
     private route = inject(ActivatedRoute);
     private maintenanceService = inject(TenantMaintenanceService);
+    private slugService = inject(SlugService);
 
     statusLabels = MaintenanceStatusLabels;
     priorityLabels = MaintenancePriorityLabels;
     categoryLabels = MaintenanceCategoryLabels;
     permissionLabels = PermissionToEnterLabels;
+
+    // URL para volver a la lista de mantenimiento
+    mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
 
     request = signal<MaintenanceRequest | null>(null);
     messages = signal<MaintenanceMessage[]>([]);

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule, MatChipListboxChange } from '@angular/material/chips';
 import { LucideAngularModule, Plus, Search, Wrench, Clock, Home, MessageSquare, AlertCircle, CheckCircle2, XCircle } from 'lucide-angular';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
+import { SlugService } from '../../../core/services/slug.service';
 import {
     MaintenanceStatus,
     MaintenanceStatusLabels,
@@ -103,7 +104,7 @@ import {
                         <button mat-stroked-button (click)="clearFilters()">Limpiar Filtros</button>
                     } @else {
                         <p>Aun no has creado ninguna solicitud de mantenimiento</p>
-                        <button mat-raised-button color="primary" routerLink="/portal/mantenimiento/nueva">
+                        <button mat-raised-button color="primary" [routerLink]="crearSolicitudUrl()">
                             Crear Primera Solicitud
                         </button>
                     }
@@ -114,7 +115,7 @@ import {
             @else {
                 <div class="requests-grid">
                     @for (request of filteredRequests; track request.id) {
-                        <mat-card class="request-card" [routerLink]="['/portal/mantenimiento', request.id]">
+                        <mat-card class="request-card" [routerLink]="buildRequestDetailUrl(request.id)">
                             <div class="card-header">
                                 <span class="ticket">{{ request.ticket_number }}</span>
                                 <span class="status-badge" [class]="'status-' + request.status.toLowerCase()">
@@ -452,6 +453,7 @@ export class TenantMaintenanceListComponent implements OnInit {
     readonly XCircle = XCircle;
 
     maintenanceService = inject(TenantMaintenanceService);
+    private slugService = inject(SlugService);
 
     statusLabels = MaintenanceStatusLabels;
     priorityLabels = MaintenancePriorityLabels;
@@ -459,6 +461,9 @@ export class TenantMaintenanceListComponent implements OnInit {
 
     searchQuery = '';
     selectedStatus: string = 'all';
+
+    // URL para crear nueva solicitud
+    crearSolicitudUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento/nueva'));
 
     get filteredRequests() {
         let requests = this.maintenanceService.requests();
@@ -516,5 +521,9 @@ export class TenantMaintenanceListComponent implements OnInit {
             day: '2-digit',
             month: 'short'
         });
+    }
+
+    buildRequestDetailUrl(requestId: number): string {
+        return this.slugService.buildUrl(`/portal/mantenimiento/${requestId}`);
     }
 }
