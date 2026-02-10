@@ -13,15 +13,21 @@ import {
     PermissionToEnter
 } from '../models/maintenance-request.model';
 import { ApiService } from './api.service';
+import { SlugService } from './slug.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class MaintenanceService {
     private apiService = inject(ApiService);
+    private slugService = inject(SlugService);
 
-    // TODO: Get slug from auth service or config
-    private readonly tenantSlug = 'mi-empresa'; // This should come from authentication
+    /**
+     * Get the current tenant slug dynamically from SlugService
+     */
+    private get tenantSlug(): string {
+        return this.slugService.getSlug() || '';
+    }
 
     // Signal-based reactive state
     private requestsSignal = signal<MaintenanceRequest[]>([]);
@@ -31,11 +37,9 @@ export class MaintenanceService {
     requests = this.requestsSignal.asReadonly();
     stats = computed(() => this.statsSignal());
 
-    constructor() {
-        // Load initial data from backend
-        this.loadAllRequests();
-        this.loadStats();
-    }
+    // NOTE: Removed automatic data loading from constructor
+    // The component will explicitly call loadAllRequests() and loadStats() in ngOnInit
+    // This ensures the slug is already set by the authGuard before making API calls
 
     // ==================== CRUD Operations ====================
 
@@ -57,7 +61,7 @@ export class MaintenanceService {
             });
         }
 
-        const endpoint = `${this.tenantSlug}/admin/maintenance${params.toString() ? '?' + params.toString() : ''}`;
+        const endpoint = `${this.slugService.buildApiEndpoint('admin/maintenance')}${params.toString() ? '?' + params.toString() : ''}`;
 
         this.apiService.get<MaintenanceRequest[]>(endpoint).subscribe({
             next: (requests) => {
@@ -88,7 +92,7 @@ export class MaintenanceService {
      * Get request by ID
      */
     getRequestById(id: number): Observable<MaintenanceRequest> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/${id}`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
         return this.apiService.get<MaintenanceRequest>(endpoint).pipe(
             map(req => ({
                 ...req,
@@ -107,7 +111,7 @@ export class MaintenanceService {
      * Update an existing request
      */
     updateRequest(id: number, dto: UpdateMaintenanceDto): Observable<MaintenanceRequest> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/${id}`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
         return this.apiService.patch<MaintenanceRequest>(endpoint, dto).pipe(
             tap(() => {
                 // Reload the list after updating
@@ -121,7 +125,7 @@ export class MaintenanceService {
      * Delete a request
      */
     deleteRequest(id: number): Observable<void> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/${id}`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
         return this.apiService.delete<void>(endpoint).pipe(
             tap(() => {
                 // Remove from local state
@@ -179,7 +183,7 @@ export class MaintenanceService {
      * Get messages for a request
      */
     getMessages(requestId: number): Observable<MaintenanceMessage[]> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/${requestId}/messages`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/messages`);
         return this.apiService.get<MaintenanceMessage[]>(endpoint).pipe(
             map(messages => messages.map(msg => ({
                 ...msg,
@@ -192,7 +196,7 @@ export class MaintenanceService {
      * Add a message to a request
      */
     addMessage(requestId: number, dto: CreateMessageDto): Observable<MaintenanceMessage> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/${requestId}/messages`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/messages`);
         return this.apiService.post<MaintenanceMessage>(endpoint, dto);
     }
 
@@ -237,7 +241,7 @@ export class MaintenanceService {
      * Get requests by property (returns observable)
      */
     getRequestsByProperty(propertyId: number): Observable<MaintenanceRequest[]> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/property/${propertyId}`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/property/${propertyId}`);
         return this.apiService.get<MaintenanceRequest[]>(endpoint);
     }
 
@@ -245,7 +249,7 @@ export class MaintenanceService {
      * Get requests by contract (returns observable)
      */
     getRequestsByContract(contractId: number): Observable<MaintenanceRequest[]> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/contract/${contractId}`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/contract/${contractId}`);
         return this.apiService.get<MaintenanceRequest[]>(endpoint);
     }
 
@@ -260,7 +264,7 @@ export class MaintenanceService {
      * Get requests by tenant (returns observable)
      */
     getRequestsByTenant(tenantId: number): Observable<MaintenanceRequest[]> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/tenant/${tenantId}`;
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/tenant/${tenantId}`);
         return this.apiService.get<MaintenanceRequest[]>(endpoint);
     }
 
@@ -285,7 +289,7 @@ export class MaintenanceService {
      * Load statistics from backend
      */
     loadStats(): void {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/stats`;
+        const endpoint = this.slugService.buildApiEndpoint('admin/maintenance/stats');
         this.apiService.get<MaintenanceStats>(endpoint).subscribe({
             next: (stats) => {
                 this.statsSignal.set(stats);
@@ -301,7 +305,7 @@ export class MaintenanceService {
      * Get new requests
      */
     getNewRequests(): Observable<MaintenanceRequest[]> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/new`;
+        const endpoint = this.slugService.buildApiEndpoint('admin/maintenance/new');
         return this.apiService.get<MaintenanceRequest[]>(endpoint);
     }
 
@@ -309,7 +313,7 @@ export class MaintenanceService {
      * Get urgent requests
      */
     getUrgentRequests(): Observable<MaintenanceRequest[]> {
-        const endpoint = `${this.tenantSlug}/admin/maintenance/urgent`;
+        const endpoint = this.slugService.buildApiEndpoint('admin/maintenance/urgent');
         return this.apiService.get<MaintenanceRequest[]>(endpoint);
     }
 

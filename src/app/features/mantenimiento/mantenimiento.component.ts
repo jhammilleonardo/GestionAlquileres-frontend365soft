@@ -1,4 +1,4 @@
-import { Component, computed, signal, inject } from '@angular/core';
+import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -49,7 +49,7 @@ import { RequestDetailComponent } from './components/request-detail.component';
   templateUrl: './mantenimiento.component.html',
   styleUrl: './mantenimiento.component.scss'
 })
-export class MantenimientoComponent {
+export class MantenimientoComponent implements OnInit {
   // Icons
   readonly Search = Search;
   readonly Filter = Filter;
@@ -84,6 +84,13 @@ export class MantenimientoComponent {
   // Services
   private maintenanceService = inject(MaintenanceService);
   private dialog = inject(MatDialog);
+
+  ngOnInit(): void {
+    // Load data when component initializes
+    // This ensures the slug is already set by the authGuard
+    this.maintenanceService.loadAllRequests();
+    this.maintenanceService.loadStats();
+  }
 
   // Computed data
   allRequests = this.maintenanceService.requests;
