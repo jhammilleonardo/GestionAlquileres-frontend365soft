@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
+import { SlugService } from './slug.service';
 
 export enum ContractStatus {
     BORRADOR = 'BORRADOR',
@@ -67,6 +68,7 @@ export interface SignContractResponse {
 export class TenantContractService {
     private http = inject(HttpClient);
     private authService = inject(TenantAuthService);
+    private slugService = inject(SlugService);
 
     // Signal-based reactive state
     private contractsSignal = signal<Contract[]>([]);
@@ -81,7 +83,7 @@ export class TenantContractService {
     error = this.errorSignal.asReadonly();
 
     private get slug(): string {
-        return this.authService.tenantSlug();
+        return this.slugService.getSlug() || '';
     }
 
     private get headers(): HttpHeaders {

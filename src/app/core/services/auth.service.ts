@@ -4,13 +4,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from '../models/user.model';
+import { SlugService } from './slug.service';
 
 export interface AdminUser {
     id: number;
     name: string;
     email: string;
-    role: 'ADMIN' | 'USER';
-    tenant_slug: string;
+    role: 'ADMIN' | 'USER' | 'INQUILINO';
+    tenant_slug?: string;
 }
 
 export interface LoginResponse {
@@ -24,6 +25,7 @@ export interface LoginResponse {
 export class AuthService {
     private http = inject(HttpClient);
     private router = inject(Router);
+    private slugService = inject(SlugService);
 
     private readonly TOKEN_KEY = 'admin_access_token';
     private readonly USER_KEY = 'admin_user';
@@ -68,10 +70,17 @@ export class AuthService {
 
     /**
      * Login with email and password
+     * @param slug Tenant slug from URL
+     * @param email User email
+     * @param password User password
+     * @param rememberMe Whether to remember session
      */
     login(slug: string, email: string, password: string, rememberMe: boolean = false): Observable<LoginResponse> {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
+
+        // Set slug in SlugService
+        this.slugService.setSlug(slug);
 
         return this.http.post<LoginResponse>(
             `${environment.apiUrl}auth/${slug}/login`,
@@ -98,11 +107,15 @@ export class AuthService {
         this.errorSignal.set(null);
 
         return this.http.post<LoginResponse>(
-            `${environment.apiUrl}auth/admin/login`,
+            `${environment.apiUrl}auth/login-admin`,
             { email, password }
         ).pipe(
             tap(response => {
                 this.setSession(response, rememberMe);
+                // Set slug from response after successful login
+                if (response.user?.tenant_slug) {
+                    this.slugService.setSlug(response.user.tenant_slug);
+                }
                 this.isLoadingSignal.set(false);
             }),
             catchError(error => {
@@ -116,10 +129,10 @@ export class AuthService {
 
     /**
      * Get current tenant slug from user
+     * @deprecated Use SlugService.getSlug() instead
      */
     getCurrentSlug(): string | null {
-        const user = this.currentUserSignal();
-        return user?.tenant_slug || null;
+        return this.slugService.getSlug();
     }
 
     /**
@@ -131,6 +144,11 @@ export class AuthService {
         sessionStorage.removeItem(this.TOKEN_KEY);
         sessionStorage.removeItem(this.USER_KEY);
         this.currentUserSignal.set(null);
+
+        // Clear slug from SlugService
+        this.slugService.clearSlug();
+
+        // Redirect to login page
         this.router.navigate(['/login']);
     }
 
@@ -208,9 +226,18 @@ export class AuthService {
             tenant_slug: response.user.tenant_slug
         };
 
-        storage.setItem(this.TOKEN_KEY, response.access_token);
-        this.saveUserToStorage(user, storage);
-        this.currentUserSignal.set(user);
+        // Save token in the correct place based on role
+        if (response.user.role === 'INQUILINO') {
+            // Inquilino - save in tenant_access_token
+            storage.setItem('tenant_access_token', response.access_token);
+            // Also save tenant user data
+            storage.setItem('tenant_user', JSON.stringify(response.user));
+        } else {
+            // Admin - save in admin_access_token
+            storage.setItem(this.TOKEN_KEY, response.access_token);
+            this.saveUserToStorage(user, storage);
+            this.currentUserSignal.set(user);
+        }
     }
 
     /**

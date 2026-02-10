@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import {
@@ -11,6 +11,7 @@ import {
   TenantInfo
 } from '../models/property.model';
 import { ApiHttpService } from './api-http.service';
+import { SlugService } from './slug.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,32 +20,21 @@ export class PropertyService {
   private favoritesSubject = new BehaviorSubject<Set<number>>(new Set());
   public favorites$ = this.favoritesSubject.asObservable();
 
-  // Default tenant slug - puede ser configurado dinámicamente
-  private tenantSlug = 'mi-inmobiliaria';
+  private apiHttp = inject(ApiHttpService);
+  private slugService = inject(SlugService);
 
-  constructor(private apiHttp: ApiHttpService) {
+  constructor() {
     this.loadFavoritesFromStorage();
-  }
-
-  /**
-   * Configurar el slug del tenant/organización
-   */
-  setTenantSlug(slug: string): void {
-    this.tenantSlug = slug;
-  }
-
-  /**
-   * Obtener el slug del tenant actual
-   */
-  getTenantSlug(): string {
-    return this.tenantSlug;
   }
 
   /**
    * Obtener información del tenant/organización
    */
   getTenantInfo(slug?: string): Observable<TenantInfo> {
-    const tenantSlug = slug || this.tenantSlug;
+    const tenantSlug = slug || this.slugService.getSlug();
+    if (!tenantSlug) {
+      throw new Error('No tenant slug available');
+    }
     return this.apiHttp.get<TenantInfo>(`tenants/slug/${tenantSlug}`);
   }
 
@@ -66,8 +56,8 @@ export class PropertyService {
     if (filters.page) params.page = filters.page;
     if (filters.limit) params.limit = filters.limit;
 
-    const endpoint = `${this.tenantSlug}/catalog/properties`;
-    
+    const endpoint = this.slugService.buildApiEndpoint('catalog/properties');
+
     return this.apiHttp.get<Property[]>(endpoint, params).pipe(
       map(properties => properties.map(p => this.transformProperty(p))),
       catchError(error => {
@@ -88,8 +78,8 @@ export class PropertyService {
    * Obtener detalle de una propiedad por ID
    */
   getPropertyById(id: number): Observable<Property | undefined> {
-    const endpoint = `${this.tenantSlug}/catalog/properties/${id}`;
-    
+    const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${id}`);
+
     return this.apiHttp.get<Property>(endpoint).pipe(
       map(property => this.transformProperty(property)),
       catchError(error => {
@@ -103,7 +93,8 @@ export class PropertyService {
    * Obtener tipos de propiedad
    */
   getPropertyTypes(): Observable<PropertyType[]> {
-    return this.apiHttp.get<PropertyType[]>(`${this.tenantSlug}/admin/property-types`).pipe(
+    const endpoint = this.slugService.buildApiEndpoint('admin/property-types');
+    return this.apiHttp.get<PropertyType[]>(endpoint).pipe(
       catchError(error => {
         console.error('Error loading property types:', error);
         return of([]);
@@ -116,7 +107,8 @@ export class PropertyService {
    */
   getPropertySubtypes(typeId?: number): Observable<PropertySubtype[]> {
     const params = typeId ? { typeId } : {};
-    return this.apiHttp.get<PropertySubtype[]>(`${this.tenantSlug}/admin/property-subtypes`, params).pipe(
+    const endpoint = this.slugService.buildApiEndpoint('admin/property-subtypes');
+    return this.apiHttp.get<PropertySubtype[]>(endpoint, params).pipe(
       catchError(error => {
         console.error('Error loading property subtypes:', error);
         return of([]);

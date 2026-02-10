@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
+import { SlugService } from './slug.service';
 
 export interface Notification {
     id: number;
@@ -25,6 +26,7 @@ export interface NotificationStats {
 export class NotificationService {
     private http = inject(HttpClient);
     private authService = inject(TenantAuthService);
+    private slugService = inject(SlugService);
 
     // Signal-based reactive state
     private notificationsSignal = signal<Notification[]>([]);
@@ -45,7 +47,7 @@ export class NotificationService {
     );
 
     private get slug(): string {
-        return this.authService.tenantSlug();
+        return this.slugService.getSlug() || '';
     }
 
     private get headers(): HttpHeaders {

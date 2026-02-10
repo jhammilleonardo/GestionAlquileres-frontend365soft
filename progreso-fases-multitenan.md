@@ -154,7 +154,116 @@ Redirige a `/:slug/dashboard` con el `tenant_slug` que devuelve el backend.
 
 ---
 
-## Flujo del Inquilino (Pendiente FASE 2)
+# Implementación Multitenancy - FASE 2
+
+## Resumen
+
+Se integró SlugService en todos los servicios y guards del sistema para gestionar el slug dinámicamente sin necesidad de ingresarlo manualmente.
+
+---
+
+## Cambios Implementados
+
+### 1. AuthService
+**Archivo:** `src/app/core/services/auth.service.ts`
+
+**Cambios:**
+- Inyecta `SlugService`
+- Método `login()` ahora establece el slug en SlugService
+- Método `loginAdmin()` establece el slug después del login exitoso
+- Método `logout()` limpia el slug usando SlugService
+- Método `getCurrentSlug()` ahora usa SlugService (marcado como @deprecated)
+
+---
+
+### 2. TenantAuthService
+**Archivo:** `src/app/core/services/tenant-auth.service.ts`
+
+**Cambios:**
+- Inyecta `SlugService`
+- Eliminada la constante `SLUG_KEY` (ya no guarda slug en localStorage)
+- Eliminada la propiedad computed `tenantSlug`
+- Método `login()` ahora usa SlugService para establecer y navegar con el slug
+- Método `logout()` usa SlugService para limpiar y navegar
+- Método `setSession()` ya no guarda el slug en localStorage
+
+---
+
+### 3. PropertyService
+**Archivo:** `src/app/core/services/property.service.ts`
+
+**Cambios:**
+- Inyecta `SlugService`
+- Eliminada la propiedad privada `tenantSlug`
+- Eliminados métodos `setTenantSlug()` y `getTenantSlug()`
+- Método `getTenantInfo()` usa SlugService
+- Método `getFilteredProperties()` usa `slugService.buildApiEndpoint()`
+- Método `getPropertyById()` usa `slugService.buildApiEndpoint()`
+- Método `getPropertyTypes()` usa `slugService.buildApiEndpoint()`
+- Método `getPropertySubtypes()` usa `slugService.buildApiEndpoint()`
+
+---
+
+### 4. Auth Guard
+**Archivo:** `src/app/core/guards/auth.guard.ts`
+
+**Cambios:**
+- Inyecta `SlugService`
+- Valida que el slug exista en la URL
+- Establece el slug en SlugService
+- Redirige a `/:slug/login` con el slug correcto
+- Mantiene el `returnUrl` en los query params
+
+---
+
+### 6. Otros Servicios Tenant
+**Archivos modificados:**
+- `src/app/core/services/notification.service.ts`
+- `src/app/core/services/tenant-contract.service.ts`
+- `src/app/core/services/tenant-maintenance.service.ts`
+- `src/app/core/services/tenant-property.service.ts`
+
+**Cambios:**
+- Inyectan `SlugService`
+- Getter `slug` ahora usa `slugService.getSlug()` en lugar de `authService.tenantSlug()`
+
+---
+
+## Estado de Compilación
+
+✅ **Compilación exitosa** - No hay errores de TypeScript
+⚠️ **Warnings de budget** - Solo advertencias de tamaño de bundle (no afectan funcionalidad)
+
+---
+
+### 5. Tenant Auth Guard
+**Archivo:** `src/app/core/guards/tenant-auth.guard.ts`
+
+**Cambios:**
+- Inyecta `SlugService`
+- `tenantAuthGuard`:
+  - Valida que el slug exista en la URL
+  - Establece el slug en SlugService
+  - Redirige a `/:slug/login` con el slug correcto
+- `tenantLoginGuard`:
+  - Establece el slug en SlugService
+  - Redirige a `/:slug/portal/dashboard` si ya está autenticado
+
+---
+
+## Beneficios de la FASE 2
+
+✅ **Slug centralizado**: Todos los servicios usan SlugService como única fuente de verdad
+✅ **Eliminación de código duplicado**: Ya no cada servicio gestiona su propio slug
+✅ **URLs dinámicas**: Los endpoints de API se construyen automáticamente con el slug correcto
+✅ **Redirecciones correctas**: Los guards redirigen manteniendo el slug en la URL
+✅ **Migración transparente**: El código anterior sigue funcionando mientras se migra
+
+---
+
+## Pendientes
+
+### FASE 3: Componentes UI
 
 ```
 1. Admin comparte URL: /:slug/publico/propiedades
@@ -167,20 +276,167 @@ Redirige a `/:slug/dashboard` con el `tenant_slug` que devuelve el backend.
 
 ---
 
-## Pendientes
+# Implementación Multitenancy - FASE 3
 
-### FASE 2: Servicios y Guards
-- [ ] Modificar `PropertyService` para usar SlugService
-- [ ] Modificar `MaintenanceService` y otros servicios
-- [ ] Actualizar `auth.guard.ts` para validar slug
-- [ ] Actualizar `tenant-auth.guard.ts`
+## Resumen
 
-### FASE 3: Componentes UI
-- [ ] Crear componente de registro de inquilino
-- [ ] Actualizar navegación en sidebars
+Se implementaron los componentes de UI necesarios para el flujo completo de registro y login de inquilinos, integrando el sistema de slugs dinámicos en toda la experiencia de usuario.
+
+---
+
+## Cambios Implementados
+
+### 1. TenantRegisterComponent
+**Archivos:**
+- `src/app/features/portal-publico/tenant-register/tenant-register.component.ts`
+- `src/app/features/portal-publico/tenant-register/tenant-register.component.html`
+- `src/app/features/portal-publico/tenant-register/tenant-register.component.scss`
+
+**Funcionalidades:**
+- Formulario de registro para inquilinos (usuarios con rol USER)
+- Campos: `name`, `email`, `password`, `confirmPassword`, `phone` (opcional)
+- Slug obtenido de la URL (ActivatedRoute) - NO es un campo del formulario
+- Validación de coincidencia de contraseñas
+- Endpoint: `POST /auth/:slug/register`
+- Response: `{ id, name, email, role, phone, tenant_id, created_at }`
+- Post-registro: Redirige a `/:slug/login` con query param `registered=true`
+
+**Características:**
+- Diseño responsive con gradiente moderno
+- Validaciones en tiempo real
+- Mensajes de error y éxito
+- Indicador de carga durante el registro
+
+---
+
+### 2. Rutas de Login y Registro con Slug
+**Archivo:** `src/app/app.routes.ts`
+
+**Rutas agregadas:**
+```typescript
+{
+  path: ':slug',
+  children: [
+    { path: 'login', component: LoginComponent },
+    { path: 'register', component: TenantRegisterComponent },
+    // ... otras rutas
+  ]
+}
+```
+
+**URLs disponibles:**
+- `/:slug/login` - Login unificado (Admin/Inquilino)
+- `/:slug/register` - Registro de inquilinos
+
+---
+
+### 3. Navbar Dinámico con Slug
+**Archivo:** `src/app/features/portal-publico/navbar/navbar.component.ts`
+
+**Cambios:**
+- Inyecta `ActivatedRoute` para obtener el slug de la URL
+- Métodos `getLoginPath()` y `getRegisterPath()` que construyen rutas dinámicas
+- Botones de "Iniciar Sesión" y "Registrarse" ahora apuntan a:
+  - Con slug: `/:slug/login` y `/:slug/register`
+  - Sin slug: `/login` y `/register`
+
+**HTML actualizado:**
+```html
+<a [href]="getLoginPath()" class="btn-login">Iniciar Sesión</a>
+<a [href]="getRegisterPath()" class="btn-register">Registrarse</a>
+```
+
+---
+
+### 4. LoginComponent Unificado
+**Archivo:** `src/app/features/auth/login.component.ts`
+
+**Cambios:**
+- Detecta si hay slug en la URL (`route.snapshot.paramMap.get('slug')`)
+- **Con slug**: Usa `authService.login(slug, email, password, rememberMe)`
+- **Sin slug**: Usa `authService.loginAdmin(email, password, rememberMe)`
+- **Redirección según rol:**
+  - `ADMIN` → `/:slug/dashboard`
+  - `USER` → `/:slug/portal/dashboard`
+- Header dinámico: "Accede al panel de administración" o "Accede a tu portal de inquilino"
+- Links dinámicos según contexto
+
+**Lógica de redirección:**
+```typescript
+const loginObservable = this.slug
+    ? this.authService.login(this.slug, email, password, rememberMe)
+    : this.authService.loginAdmin(email, password, rememberMe);
+
+loginObservable.subscribe({
+    next: (response) => {
+        if (response.user.role === 'ADMIN') {
+            this.router.navigate(['/', userSlug, 'dashboard']);
+        } else if (response.user.role === 'USER') {
+            this.router.navigate(['/', userSlug, 'portal', 'dashboard']);
+        }
+    }
+});
+```
+
+---
+
+## Flujo Completo del Inquilino
+
+### Paso 1: Descubrimiento
+```
+Usuario recibe: https://dominio.com/mi-inmobiliaria/publico/propiedades
+```
+- Ve catálogo de propiedades
+- NO requiere autenticación
+
+### Paso 2: Registro
+```
+Click en "Registrarse" → /mi-inmobiliaria/register
+```
+- Llena formulario (name, email, password, phone)
+- Slug viene de la URL (no lo escribe)
+- POST `/auth/mi-inmobiliaria/register`
+- Response: `{ id, name, email, role: "USER", ... }`
+- Redirige a `/mi-inmobiliaria/login?registered=true`
+
+### Paso 3: Login
+```
+Usuario en: /mi-inmobiliaria/login
+```
+- Ingresa email y password
+- Slug viene de la URL
+- POST `/auth/mi-inmobiliaria/login`
+- Response: `{ access_token, user: { role: "USER", ... } }`
+- Redirige a `/mi-inmobiliaria/portal/dashboard`
+
+### Paso 4: Portal del Inquilino
+```
+Usuario accede: /mi-inmobiliaria/portal/dashboard
+```
+- Guard `tenantAuthGuard` verifica autenticación
+- Usuario puede ver sus contratos, pagos, mantenimiento, etc.
+
+---
+
+## Estado de Compilación
+
+✅ **Compilación TypeScript exitosa** - Sin errores
+✅ **Todos los componentes creados y funcionales**
+✅ **Rutas configuradas correctamente**
+✅ **Navegación dinámica con slug implementada**
+
+---
+
+## Pendientes (Opcionales)
+
+### FASE 3: Componentes UI (Continuación)
+- [x] Crear componente de registro de inquilino
+- [x] Actualizar navegación en navbar público
+- [ ] Actualizar navegación en sidebars (admin y tenant)
 - [ ] Crear página de slug no encontrado
+- [ ] Página de recuperación de contraseña con slug
 
 ---
 
 **Fecha:** 2026-02-09
-**Estado:** FASE 1 completada
+**Estado:** FASE 3 completada (parcialmente - funcionalidad core implementada)

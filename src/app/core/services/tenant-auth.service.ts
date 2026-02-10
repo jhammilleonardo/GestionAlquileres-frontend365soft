@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { SlugService } from './slug.service';
 
 export interface TenantUser {
     id: number;
@@ -30,10 +31,10 @@ export interface LoginResponse {
 export class TenantAuthService {
     private http = inject(HttpClient);
     private router = inject(Router);
+    private slugService = inject(SlugService);
 
     private readonly TOKEN_KEY = 'tenant_access_token';
     private readonly USER_KEY = 'tenant_user';
-    private readonly SLUG_KEY = 'tenant_slug';
 
     // Reactive state with signals
     private currentUserSignal = signal<TenantUser | null>(this.loadUserFromStorage());
@@ -45,7 +46,6 @@ export class TenantAuthService {
     isLoading = this.isLoadingSignal.asReadonly();
     error = this.errorSignal.asReadonly();
     isAuthenticated = computed(() => this.currentUserSignal() !== null);
-    tenantSlug = computed(() => localStorage.getItem(this.SLUG_KEY) || '');
 
     constructor() {
         // Check token validity on init
@@ -61,14 +61,18 @@ export class TenantAuthService {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
+        // Set slug in SlugService
+        this.slugService.setSlug(slug);
+
         return this.http.post<LoginResponse>(
             `${environment.apiUrl}auth/${slug}/login`,
             { email, password }
         ).pipe(
             tap(response => {
-                this.setSession(response, slug);
+                this.setSession(response);
                 this.isLoadingSignal.set(false);
-                this.router.navigate(['/portal/dashboard']);
+                // Navigate to tenant portal dashboard with slug
+                this.slugService.navigateTo(['portal', 'dashboard']);
             }),
             catchError(error => {
                 this.isLoadingSignal.set(false);
@@ -83,11 +87,21 @@ export class TenantAuthService {
      * Logout and clear session
      */
     logout(): void {
+        const slug = this.slugService.getSlug();
+
         localStorage.removeItem(this.TOKEN_KEY);
         localStorage.removeItem(this.USER_KEY);
-        localStorage.removeItem(this.SLUG_KEY);
         this.currentUserSignal.set(null);
-        this.router.navigate(['/portal/login']);
+
+        // Clear slug from SlugService
+        this.slugService.clearSlug();
+
+        // Navigate to login with slug
+        if (slug) {
+            this.router.navigate(['/', slug, 'login']);
+        } else {
+            this.router.navigate(['/login']);
+        }
     }
 
     /**
@@ -131,9 +145,8 @@ export class TenantAuthService {
     /**
      * Set session after successful login
      */
-    private setSession(response: LoginResponse, slug: string): void {
+    private setSession(response: LoginResponse): void {
         localStorage.setItem(this.TOKEN_KEY, response.access_token);
-        localStorage.setItem(this.SLUG_KEY, slug);
         this.saveUserToStorage(response.user);
         this.currentUserSignal.set(response.user);
     }

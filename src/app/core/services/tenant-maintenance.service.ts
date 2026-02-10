@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, catchError, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
+import { SlugService } from './slug.service';
 import {
     MaintenanceRequest,
     MaintenanceMessage,
@@ -39,6 +40,7 @@ export interface CreateTenantMessageDto {
 export class TenantMaintenanceService {
     private http = inject(HttpClient);
     private authService = inject(TenantAuthService);
+    private slugService = inject(SlugService);
 
     // Signal-based reactive state
     private requestsSignal = signal<MaintenanceRequest[]>([]);
@@ -53,7 +55,7 @@ export class TenantMaintenanceService {
     error = this.errorSignal.asReadonly();
 
     private get slug(): string {
-        return this.authService.tenantSlug();
+        return this.slugService.getSlug() || '';
     }
 
     private get headers(): HttpHeaders {

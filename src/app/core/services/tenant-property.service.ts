@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
+import { SlugService } from './slug.service';
 
 export interface Property {
     id: number;
@@ -45,6 +46,7 @@ export interface PropertyImage {
 export class TenantPropertyService {
     private http = inject(HttpClient);
     private authService = inject(TenantAuthService);
+    private slugService = inject(SlugService);
 
     // Signal-based reactive state
     private propertiesSignal = signal<Property[]>([]);
@@ -57,7 +59,7 @@ export class TenantPropertyService {
     error = this.errorSignal.asReadonly();
 
     private get slug(): string {
-        return this.authService.tenantSlug();
+        return this.slugService.getSlug() || '';
     }
 
     private get headers(): HttpHeaders {

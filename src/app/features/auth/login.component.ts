@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LucideAngularModule, Building2, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Shield, BarChart3, Users, FileText } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
+import { TenantAuthService } from '../../core/services/tenant-auth.service';
 
 @Component({
     selector: 'app-login',
@@ -65,7 +66,7 @@ import { AuthService } from '../../core/services/auth.service';
                 <div class="login-form-wrapper">
                     <div class="form-header">
                         <h3>Iniciar Sesión</h3>
-                        <p>Accede al panel de administración</p>
+                        <p>{{ slug ? 'Accede a tu portal de inquilino' : 'Accede al panel de administración' }}</p>
                     </div>
 
                     @if (errorMessage()) {
@@ -141,9 +142,11 @@ import { AuthService } from '../../core/services/auth.service';
                             <span>Conexión segura SSL</span>
                         </div>
                         <div class="help-links">
-                            <a routerLink="/register" class="help-link">¿No tienes cuenta? Regístrate</a>
-                            <span class="separator">•</span>
-                            <a (click)="goToTenantPortal()" class="help-link tenant-portal-link">Portal del Inquilino</a>
+                            @if (!slug) {
+                                <a routerLink="/register" class="help-link">¿No tienes cuenta? Regístrate</a>
+                            } @else {
+                                <a [routerLink]="['/', slug, 'register']" class="help-link">¿No tienes cuenta? Regístrate</a>
+                            }
                         </div>
                     </div>
                 </div>
@@ -501,6 +504,7 @@ export class LoginComponent {
     readonly FileText = FileText;
 
     private authService = inject(AuthService);
+    private tenantAuthService = inject(TenantAuthService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fb = inject(FormBuilder);
@@ -509,6 +513,9 @@ export class LoginComponent {
     isLoading = signal(false);
     errorMessage = signal<string | null>(null);
 
+    // Slug from URL (null if accessing /login, has value if /:slug/login)
+    slug: string | null = null;
+
     loginForm = this.fb.group({
         email: ['', [Validators.required, Validators.email]],
         password: ['', Validators.required],
@@ -516,16 +523,36 @@ export class LoginComponent {
     });
 
     constructor() {
-        // If already authenticated and has valid token, redirect to dashboard
-        if (this.authService.isAuth() && this.authService.getToken()) {
-            // Obtener slug del usuario autenticado para redirigir
-            const slug = this.authService.getCurrentSlug();
-            if (slug) {
-                this.router.navigate(['/', slug, 'dashboard']);
-            } else {
-                this.router.navigate(['/dashboard']);
+        // Get slug from URL
+        this.slug = this.route.snapshot.paramMap.get('slug');
+
+        // If already authenticated, redirect to appropriate dashboard
+        // Check for admin token first (only when no slug in URL)
+        const adminToken = this.authService.getToken();
+        const isAdminAuth = this.authService.isAuth();
+
+        if (isAdminAuth && adminToken && !this.slug) {
+            // Admin user authenticated on /login (no slug)
+            // Get slug from stored user data
+            const userJson = localStorage.getItem('admin_user');
+            if (userJson) {
+                try {
+                    const user = JSON.parse(userJson);
+                    const userSlug = user.tenant_slug;
+                    if (userSlug) {
+                        this.router.navigate(['/', userSlug, 'dashboard']);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error parsing user data', e);
+                }
             }
+            // Fallback if no slug found
+            this.router.navigate(['/dashboard']);
         }
+
+        // If we have a slug, don't redirect automatically - let the user login
+        // TenantAuthService will handle the redirect after successful login
     }
 
     togglePassword(): void {
@@ -539,44 +566,43 @@ export class LoginComponent {
         }
 
         const { email, password, rememberMe } = this.loginForm.value;
-        this.isLoading.set(true);
-        this.errorMessage.set(null);
 
-        this.authService.loginAdmin(email!, password!, rememberMe!).subscribe({
-            next: (response) => {
-                this.isLoading.set(false);
-
-                // Validar que el role sea ADMIN
-                if (response.user.role !== 'ADMIN') {
-                    this.errorMessage.set('Este login es solo para administradores. Si eres inquilino, usa el portal de inquilinos.');
-                    this.authService.logout();
-                    return;
+        // If we have a slug, use TenantAuthService for tenant login
+        if (this.slug) {
+            // Tenant login - TenantAuthService handles everything including navigation
+            this.tenantAuthService.login(this.slug, email!, password!).subscribe({
+                next: () => {
+                    this.isLoading.set(false);
+                    // TenantAuthService already handles navigation to /portal/dashboard
+                },
+                error: (error) => {
+                    console.error('Login error:', error);
+                    this.isLoading.set(false);
+                    this.errorMessage.set(error.error?.message || 'Credenciales inválidas. Por favor, intenta nuevamente.');
                 }
+            });
+        } else {
+            // Admin login - use AuthService
+            this.isLoading.set(true);
+            this.errorMessage.set(null);
 
-                // Redirigir al dashboard con el slug del usuario
-                const slug = response.user.tenant_slug;
-                const returnUrl = this.route.snapshot.queryParams['returnUrl'];
-                if (returnUrl) {
-                    this.router.navigateByUrl(returnUrl);
-                } else if (slug) {
-                    this.router.navigate(['/', slug, 'dashboard']);
-                } else {
-                    this.router.navigate(['/dashboard']);
+            this.authService.loginAdmin(email!, password!, rememberMe!).subscribe({
+                next: (response) => {
+                    this.isLoading.set(false);
+                    const userSlug = response.user.tenant_slug;
+
+                    if (userSlug) {
+                        this.router.navigate(['/', userSlug, 'dashboard']);
+                    } else {
+                        this.errorMessage.set('No se pudo determinar la organización');
+                    }
+                },
+                error: (error) => {
+                    console.error('Login error:', error);
+                    this.isLoading.set(false);
+                    this.errorMessage.set(error.error?.message || 'Credenciales inválidas. Por favor, intenta nuevamente.');
                 }
-            },
-            error: (error) => {
-                this.isLoading.set(false);
-                this.errorMessage.set(error.error?.message || 'Credenciales inválidas. Por favor, intenta nuevamente.');
-            }
-        });
-    }
-
-    goToTenantPortal(): void {
-        // Clear tenant session before navigating to login
-        localStorage.removeItem('tenant_access_token');
-        localStorage.removeItem('tenant_user');
-        localStorage.removeItem('tenant_slug');
-        // Redirigir a landing con mensaje
-        this.router.navigate(['/'], { queryParams: { tenant: 'true' } });
+            });
+        }
     }
 }

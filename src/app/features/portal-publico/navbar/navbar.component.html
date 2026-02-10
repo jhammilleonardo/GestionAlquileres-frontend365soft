@@ -23,8 +23,8 @@
       </ul>
 
       <div class="navbar-actions">
-        <a href="/login" class="btn-login">Iniciar Sesión</a>
-        <a href="/register" class="btn-register">Registrarse</a>
+        <a [href]="getLoginPath()" class="btn-login">Iniciar Sesión</a>
+        <a [href]="getRegisterPath()" class="btn-register">Registrarse</a>
       </div>
     </div>
   </div>

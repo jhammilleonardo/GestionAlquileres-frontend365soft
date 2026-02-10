@@ -11,6 +11,7 @@ import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
 import { LandingComponent } from './features/landing/landing.component';
+import { TenantRegisterComponent } from './features/portal-publico/tenant-register/tenant-register.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
@@ -38,6 +39,10 @@ export const routes: Routes = [
   {
     path: ':slug',
     children: [
+      // ==================== AUTH INQUILINO (CON SLUG) ====================
+      { path: 'login', component: LoginComponent },
+      { path: 'register', component: TenantRegisterComponent },
+
       // ==================== PORTAL PÚBLICO ====================
       {
         path: 'publico',
