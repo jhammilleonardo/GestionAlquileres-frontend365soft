@@ -8,10 +8,17 @@
 
       <div class="search-bar-container">
         <div class="search-bar">
-          <input type="text" [(ngModel)]="filters.search" (keyup.enter)="applyFilters()"
-            placeholder="Buscar por ubicación, código postal o palabra clave..." class="search-input" />
-          <button (click)="applyFilters()" class="search-btn">
-            <span class="search-icon">🔍</span>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
+            <lucide-icon [img]="Search" matIconPrefix></lucide-icon>
+            <input
+              matInput
+              type="text"
+              [(ngModel)]="filters.search"
+              (keyup.enter)="applyFilters()"
+              placeholder="Buscar por ubicación, código postal o palabra clave..." />
+          </mat-form-field>
+          <button mat-raised-button (click)="applyFilters()" class="search-btn">
+            <lucide-icon [img]="Search"></lucide-icon>
             Buscar
           </button>
         </div>
@@ -25,75 +32,89 @@
       <div class="results-info">
         <h2>{{ filteredProperties.length }} Propiedades Disponibles</h2>
       </div>
-      <button class="toggle-filters-btn" (click)="toggleFilters()">
-        <span class="filter-icon">⚙️</span>
+      <button mat-stroked-button color="primary" (click)="toggleFilters()">
+        <lucide-icon [img]="showFilters ? X : Settings"></lucide-icon>
         {{ showFilters ? 'Ocultar' : 'Mostrar' }} Filtros
       </button>
     </div>
 
     <div class="filters-panel" [class.active]="showFilters">
       <div class="filters-grid">
-        <div class="filter-group">
-          <label>Tipo de Propiedad</label>
-          <select [(ngModel)]="filters.property_type_id" (change)="applyFilters()">
-            <option [value]="undefined">Todos los tipos</option>
-            <option *ngFor="let type of propertyTypes" [value]="type.id">{{ type.name }}</option>
-          </select>
-        </div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Tipo de Propiedad</mat-label>
+          <lucide-icon [img]="Home" matIconPrefix></lucide-icon>
+          <mat-select [(ngModel)]="filters.property_type_id" (selectionChange)="applyFilters()">
+            <mat-option [value]="undefined">Todos los tipos</mat-option>
+            <mat-option *ngFor="let type of propertyTypes" [value]="type.id">{{ type.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-        <div class="filter-group">
-          <label>Ciudad</label>
-          <input type="text" [(ngModel)]="filters.city" (change)="applyFilters()" placeholder="Ciudad" />
-        </div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Ciudad</mat-label>
+          <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
+          <input matInput type="text" [(ngModel)]="filters.city" (change)="applyFilters()" placeholder="Ej: Lima, Buenos Aires" />
+        </mat-form-field>
 
-        <div class="filter-group">
-          <label>País</label>
-          <input type="text" [(ngModel)]="filters.country" (change)="applyFilters()" placeholder="País" />
-        </div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>País</mat-label>
+          <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
+          <input matInput type="text" [(ngModel)]="filters.country" (change)="applyFilters()" placeholder="Ej: Perú, Argentina" />
+        </mat-form-field>
       </div>
 
       <div class="filters-actions">
-        <button (click)="clearFilters()" class="btn-clear">Limpiar Filtros</button>
-        <button (click)="applyFilters()" class="btn-apply">Aplicar Filtros</button>
+        <button mat-button (click)="clearFilters()">
+          <lucide-icon [img]="X"></lucide-icon>
+          Limpiar Filtros
+        </button>
+        <button mat-raised-button color="primary" (click)="applyFilters()">
+          <lucide-icon [img]="Search"></lucide-icon>
+          Aplicar Filtros
+        </button>
       </div>
     </div>
 
     <div class="sort-container">
-      <label>Ordenar por:</label>
-      <select [(ngModel)]="filters.sort_by" (change)="applyFilters()" class="sort-select">
-        <option *ngFor="let option of sortOptions" [value]="option.value">
-          {{ option.label }}
-        </option>
-      </select>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Ordenar por</mat-label>
+        <mat-select [(ngModel)]="filters.sort_by" (selectionChange)="applyFilters()">
+          <mat-option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
   </div>
 
   <!-- Properties Grid -->
   <div class="properties-section">
     <div *ngIf="isLoading" class="loading-spinner">
-      <div class="spinner"></div>
+      <mat-spinner></mat-spinner>
       <p>Cargando propiedades...</p>
     </div>
 
     <div *ngIf="!isLoading && filteredProperties.length === 0" class="no-results">
-      <div class="no-results-icon">🏘️</div>
+      <lucide-icon [img]="Home" class="no-results-icon"></lucide-icon>
       <h3>No se encontraron propiedades</h3>
       <p>Intenta ajustar tus filtros de búsqueda</p>
-      <button (click)="clearFilters()" class="btn-reset">Reiniciar Búsqueda</button>
+      <button mat-raised-button color="primary" (click)="clearFilters()">
+        <lucide-icon [img]="X"></lucide-icon>
+        Reiniciar Búsqueda
+      </button>
     </div>
 
     <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
-      <div *ngFor="let property of filteredProperties" class="property-card" (click)="viewProperty(property.id)">
-        <div class="property-image-container">
+      <mat-card *ngFor="let property of filteredProperties" class="property-card">
+        <div class="property-image-container" (click)="viewProperty(property.id)">
           <img [src]="property.images[0]" [alt]="property.title" class="property-image" />
 
           <div class="property-badges">
             <span class="badge-status">{{ property.active ? 'Disponible' : 'No Disponible' }}</span>
           </div>
 
-          <button class="favorite-btn" [class.active]="isFavorite(property.id)"
+          <button mat-icon-button class="favorite-btn" [class.active]="isFavorite(property.id)"
             (click)="toggleFavorite(property.id, $event)">
-            {{ isFavorite(property.id) ? '❤️' : '🤍' }}
+            <lucide-icon [img]="Heart" [class.filled]="isFavorite(property.id)"></lucide-icon>
           </button>
 
           <div class="property-price-badge" *ngIf="property.monthly_rent_amount">
@@ -101,33 +122,35 @@
           </div>
         </div>
 
-        <div class="property-content">
+        <mat-card-content>
           <h3 class="property-title">{{ property.title }}</h3>
 
           <div class="property-location">
-            <span class="location-icon">📍</span>
+            <lucide-icon [img]="MapPin" class="location-icon"></lucide-icon>
             {{ getPropertyAddress(property) }}
           </div>
 
           <div class="property-features">
             <div class="feature" *ngIf="property.total_area">
-              <span class="feature-icon">📐</span>
+              <lucide-icon [img]="Maximize" class="feature-icon"></lucide-icon>
               <span>{{ property.total_area }}m²</span>
             </div>
             <div class="feature" *ngIf="property.built_area">
-              <span class="feature-icon">🏗️</span>
+              <lucide-icon [img]="Home" class="feature-icon"></lucide-icon>
               <span>{{ property.built_area }}m²</span>
             </div>
           </div>
 
-          <div class="property-tags">
-            <span class="tag" *ngIf="property.property_type">{{ property.property_type.name }}</span>
-            <span class="tag" *ngIf="property.property_subtype">{{ property.property_subtype.name }}</span>
-          </div>
+          <mat-chip-set class="property-tags">
+            <mat-chip *ngIf="property.property_type">{{ property.property_type.name }}</mat-chip>
+            <mat-chip *ngIf="property.property_subtype">{{ property.property_subtype.name }}</mat-chip>
+          </mat-chip-set>
 
-          <button class="btn-details">Ver Detalles</button>
-        </div>
-      </div>
+          <button mat-stroked-button color="primary" class="btn-details" (click)="viewProperty(property.id)">
+            Ver Detalles
+          </button>
+        </mat-card-content>
+      </mat-card>
     </div>
   </div>
 </div>

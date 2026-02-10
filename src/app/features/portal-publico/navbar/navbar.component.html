@@ -1,8 +1,8 @@
-<nav [class.scrolled]="isScrolled" class="navbar">
+  <nav [class.scrolled]="isScrolled" class="navbar">
   <div class="navbar-container">
     <div class="navbar-brand">
-      <a href="/" class="logo">
-        <span class="logo-icon">🏠</span>
+      <a [routerLink]="getPublicPath('inicio')" class="logo">
+        <lucide-icon [img]="Home" class="logo-icon"></lucide-icon>
         <span class="logo-text">RentHub</span>
       </a>
     </div>
@@ -15,11 +15,41 @@
 
     <div class="navbar-menu" [class.active]="isMenuOpen">
       <ul class="navbar-links">
-        <li><a href="/" class="nav-link active">Inicio</a></li>
-        <li><a href="/properties" class="nav-link">Propiedades</a></li>
-        <li><a href="/about" class="nav-link">Nosotros</a></li>
-        <li><a href="/contact" class="nav-link">Contacto</a></li>
-        <li><a href="/faq" class="nav-link">FAQ</a></li>
+        <li>
+          <a [routerLink]="getPublicPath('inicio')"
+             class="nav-link"
+             [class.active]="isActive('inicio')">
+            Inicio
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="getPublicPath('propiedades')"
+             class="nav-link"
+             [class.active]="isActive('propiedades')">
+            Propiedades
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="getPublicPath('nosotros')"
+             class="nav-link"
+             [class.active]="isActive('nosotros')">
+            Nosotros
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="getPublicPath('contacto')"
+             class="nav-link"
+             [class.active]="isActive('contacto')">
+            Contacto
+          </a>
+        </li>
+        <li>
+          <a [routerLink]="getPublicPath('faq')"
+             class="nav-link"
+             [class.active]="isActive('faq')">
+            FAQ
+          </a>
+        </li>
       </ul>
 
       <div class="navbar-actions">

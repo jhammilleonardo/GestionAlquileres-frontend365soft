@@ -8,7 +8,8 @@ import {
   PropertyStatus,
   PropertyFilters,
   RentalApplication,
-  TenantInfo
+  TenantInfo,
+  PaginatedResponse
 } from '../models/property.model';
 import { ApiHttpService } from './api-http.service';
 import { SlugService } from './slug.service';
@@ -58,10 +59,19 @@ export class PropertyService {
 
     const endpoint = this.slugService.buildApiEndpoint('catalog/properties');
 
-    return this.apiHttp.get<Property[]>(endpoint, params).pipe(
-      map(properties => properties.map(p => this.transformProperty(p))),
+    console.log('PropertyService - Cargando propiedades');
+    console.log('  Slug actual:', this.slugService.getSlug());
+    console.log('  Endpoint:', endpoint);
+    console.log('  Filtros:', params);
+
+    return this.apiHttp.get<PaginatedResponse<Property>>(endpoint, params).pipe(
+      tap(response => {
+        console.log('PropertyService - Respuesta recibida:', response);
+        console.log('PropertyService - Total de propiedades:', response.total);
+      }),
+      map(response => response.items.map(p => this.transformProperty(p))),
       catchError(error => {
-        console.error('Error loading properties:', error);
+        console.error('PropertyService - Error loading properties:', error);
         return of([]);
       })
     );
@@ -185,7 +195,32 @@ export class PropertyService {
     if (!property.images) property.images = [];
     if (!property.amenities) property.amenities = [];
     if (!property.included_items) property.included_items = [];
-    if (!property.addresses) property.addresses = [];
+    if (!property.addresses || property.addresses.length === 0) {
+      property.addresses = [];
+      console.warn('Propiedad sin direcciones:', property.id, property.title);
+    }
+
+    // Si la respuesta tiene property_type_name/code en lugar del objeto, construirlo
+    if (property.property_type_name && !property.property_type) {
+      property.property_type = {
+        id: property.property_type_id,
+        name: property.property_type_name,
+        description: property.property_type_code
+      };
+    }
+
+    if (property.property_subtype_name && !property.property_subtype) {
+      property.property_subtype = {
+        id: property.property_subtype_id,
+        name: property.property_subtype_name,
+        description: property.property_subtype_code
+      };
+    }
+
+    // Asegurar que active tenga un valor
+    if (property.active === undefined) {
+      property.active = property.status === 'DISPONIBLE';
+    }
 
     return property as Property;
   }

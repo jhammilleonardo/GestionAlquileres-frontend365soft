@@ -4,7 +4,7 @@
       <!-- Company Info -->
       <div class="footer-section">
         <div class="footer-logo">
-          <span class="logo-icon">🏠</span>
+          <lucide-icon [img]="Home" class="logo-icon"></lucide-icon>
           <span class="logo-text">RentHub</span>
         </div>
         <p class="footer-description">
@@ -17,7 +17,7 @@
             [title]="social.name"
             class="social-link"
           >
-            {{ social.icon }}
+            <lucide-icon [img]="social.icon"></lucide-icon>
           </a>
         </div>
       </div>
@@ -51,19 +51,19 @@
         <h3 class="footer-title">Contacto</h3>
         <ul class="footer-contact">
           <li>
-            <span class="contact-icon">📍</span>
+            <lucide-icon [img]="MapPin" class="contact-icon"></lucide-icon>
             <span>Cochabamba, Bolivia</span>
           </li>
           <li>
-            <span class="contact-icon">📧</span>
+            <lucide-icon [img]="Mail" class="contact-icon"></lucide-icon>
             <span>info@renthub.com</span>
           </li>
           <li>
-            <span class="contact-icon">📞</span>
+            <lucide-icon [img]="Phone" class="contact-icon"></lucide-icon>
             <span>+591 12345678</span>
           </li>
           <li>
-            <span class="contact-icon">🕐</span>
+            <lucide-icon [img]="Clock" class="contact-icon"></lucide-icon>
             <span>Lun - Vie: 9AM - 6PM</span>
           </li>
         </ul>

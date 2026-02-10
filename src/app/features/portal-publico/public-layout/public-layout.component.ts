@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { RouterOutlet, ActivatedRoute } from '@angular/router';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { FooterComponent } from '../footer/footer.component';
+import { SlugService } from '../../../core/services/slug.service';
 
 @Component({
   selector: 'app-public-layout',
@@ -28,4 +29,18 @@ import { FooterComponent } from '../footer/footer.component';
     }
   `]
 })
-export class PublicLayoutComponent {}
+export class PublicLayoutComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private slugService = inject(SlugService);
+
+  ngOnInit(): void {
+    // Obtener el slug de la ruta padre y establecerlo en el servicio
+    this.route.parent?.paramMap.subscribe(params => {
+      const slug = params.get('slug');
+      if (slug) {
+        console.log('Portal Público - Estableciendo slug:', slug);
+        this.slugService.setSlug(slug);
+      }
+    });
+  }
+}

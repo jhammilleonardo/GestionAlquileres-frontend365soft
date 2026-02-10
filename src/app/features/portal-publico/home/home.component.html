@@ -1,0 +1,66 @@
+<div class="home-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Encuentra tu Hogar Ideal</h1>
+      <p class="hero-subtitle">Descubre propiedades exclusivas listas para alquilar</p>
+      <div class="hero-actions">
+        <button mat-raised-button (click)="navigateToProperties()" class="btn-primary">
+          <lucide-icon [img]="Search"></lucide-icon>
+          Buscar Propiedades
+        </button>
+        <button mat-stroked-button (click)="navigateToAbout()" class="btn-secondary">
+          <lucide-icon [img]="ArrowRight"></lucide-icon>
+          Conoce Más
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section">
+    <div class="container">
+      <h2 class="section-title">¿Por qué elegirnos?</h2>
+      <p class="section-subtitle">Ofrecemos la mejor experiencia en alquiler de propiedades</p>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <lucide-icon [img]="CheckCircle"></lucide-icon>
+          </div>
+          <h3 class="feature-title">Propiedades Verificadas</h3>
+          <p class="feature-description">Todas nuestras propiedades son verificadas y cumplen con los estándares de calidad.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <lucide-icon [img]="Star"></lucide-icon>
+          </div>
+          <h3 class="feature-title">Soporte 24/7</h3>
+          <p class="feature-description">Nuestro equipo está disponible las 24 horas para ayudarte con cualquier consulta.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">
+            <lucide-icon [img]="Home"></lucide-icon>
+          </div>
+          <h3 class="feature-title">Proceso Simplificado</h3>
+          <p class="feature-description">Alquila tu propiedad de forma rápida y sencilla con nuestro sistema en línea.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <h2 class="cta-title">¿Listo para encontrar tu próximo hogar?</h2>
+      <p class="cta-subtitle">Explora nuestra amplia selección de propiedades disponibles</p>
+      <button mat-raised-button (click)="navigateToProperties()" class="btn-cta">
+        Ver Propiedades Disponibles
+        <lucide-icon [img]="ArrowRight"></lucide-icon>
+      </button>
+    </div>
+  </section>
+</div>

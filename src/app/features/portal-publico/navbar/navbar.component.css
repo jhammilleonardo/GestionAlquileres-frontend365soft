@@ -31,7 +31,7 @@
   text-decoration: none;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #4f46e5;
+  color: #2563eb;
   transition: transform 0.3s ease;
 }
 
@@ -40,7 +40,8 @@
 }
 
 .logo-icon {
-  font-size: 2rem;
+  width: 28px;
+  height: 28px;
 }
 
 .mobile-menu-btn {
@@ -56,7 +57,7 @@
 .mobile-menu-btn span {
   width: 25px;
   height: 3px;
-  background: #4f46e5;
+  background: #2563eb;
   border-radius: 3px;
   transition: all 0.3s ease;
 }
@@ -92,13 +93,13 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(to right, #4f46e5, #7c3aed);
+  background: linear-gradient(to right, #2563eb, #1e40af);
   transition: width 0.3s ease;
 }
 
 .nav-link:hover,
 .nav-link.active {
-  color: #4f46e5;
+  color: #2563eb;
 }
 
 .nav-link:hover::after,
@@ -123,26 +124,26 @@
 }
 
 .btn-login {
-  color: #4f46e5;
+  color: #2563eb;
   background: transparent;
-  border: 2px solid #4f46e5;
+  border: 2px solid #2563eb;
 }
 
 .btn-login:hover {
-  background: #f5f3ff;
+  background: #eff6ff;
   transform: translateY(-2px);
 }
 
 .btn-register {
   color: white;
-  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  background: linear-gradient(135deg, #2563eb, #1e40af);
   border: none;
-  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
 
 .btn-register:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
 }
 
 @media (max-width: 968px) {

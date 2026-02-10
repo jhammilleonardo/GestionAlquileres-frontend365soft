@@ -129,3 +129,13 @@ export interface TenantInfo {
   created_at: Date;
   updated_at: Date;
 }
+
+// ==================== PAGINATED RESPONSE ====================
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}

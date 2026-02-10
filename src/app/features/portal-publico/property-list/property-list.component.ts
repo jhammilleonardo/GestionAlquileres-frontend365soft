@@ -1,14 +1,36 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule, MatChipSet } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { LucideAngularModule, Heart, MapPin, Search, Settings, Home, Maximize, X } from 'lucide-angular';
 import { PropertyService } from '../../../core/services/property.service';
 import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtype, SortOption } from '../../../core/models/property.model';
 
 @Component({
   selector: 'app-property-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    MatButtonModule,
+    MatCardModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatProgressSpinnerModule,
+    MatChipsModule,
+    MatIconModule,
+    LucideAngularModule
+  ],
   templateUrl: './property-list.component.html',
   styleUrls: ['./property-list.component.css']
 })
@@ -41,13 +63,24 @@ export class PropertyListComponent implements OnInit {
 
   showFilters = false;
 
+  // Lucide icons
+  readonly Heart = Heart;
+  readonly MapPin = MapPin;
+  readonly Search = Search;
+  readonly Settings = Settings;
+  readonly Home = Home;
+  readonly Maximize = Maximize;
+  readonly X = X;
+
   constructor(
     private propertyService: PropertyService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   ngOnInit(): void {
-    this.loadPropertyTypes();
+    // No cargar types desde admin en portal público - requiere autenticación
+    // this.loadPropertyTypes();
     this.loadProperties();
     this.loadFavorites();
   }
@@ -69,10 +102,13 @@ export class PropertyListComponent implements OnInit {
       next: (properties) => {
         this.filteredProperties = properties;
         this.isLoading = false;
+        // Forzar detección de cambios para actualizar la vista
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading properties:', error);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

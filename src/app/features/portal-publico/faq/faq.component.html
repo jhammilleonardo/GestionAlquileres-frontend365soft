@@ -1,0 +1,51 @@
+<div class="faq-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <lucide-icon [img]="HelpCircle" class="hero-icon"></lucide-icon>
+      <h1 class="hero-title">Preguntas Frecuentes</h1>
+      <p class="hero-subtitle">Encuentra respuestas a las preguntas más comunes sobre nuestros servicios</p>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <div class="container">
+      <div class="faq-header">
+        <h2 class="section-title">¿Tienes alguna pregunta?</h2>
+        <p class="section-subtitle">Aquí encontrarás las respuestas a las preguntas más frecuentes</p>
+        
+        <div class="faq-actions">
+          <button class="btn-action" (click)="openAll()">Abrir Todas</button>
+          <button class="btn-action" (click)="closeAll()">Cerrar Todas</button>
+        </div>
+      </div>
+
+      <div class="faq-list">
+        <div
+          *ngFor="let faq of faqs; let i = index"
+          class="faq-item"
+          [class.active]="faq.isOpen"
+        >
+          <div class="faq-question" (click)="toggleFaq(i)">
+            <h3>{{ faq.question }}</h3>
+            <div class="faq-toggle">
+              <lucide-icon [img]="faq.isOpen ? ChevronUp : ChevronDown"></lucide-icon>
+            </div>
+          </div>
+          <div class="faq-answer" [class.active]="faq.isOpen">
+            <p>{{ faq.answer }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact CTA -->
+      <div class="contact-cta">
+        <h3>¿No encontraste la respuesta que buscabas?</h3>
+        <p>Estamos aquí para ayudarte. Contáctanos directamente.</p>
+        <a routerLink="../contacto" class="btn-contact">Contactar Soporte</a>
+      </div>
+    </div>
+  </section>
+</div>
