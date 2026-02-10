@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
@@ -7,6 +7,7 @@ import { LucideAngularModule, Building2, PanelLeftClose, PanelLeftOpen, LayoutDa
 
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { MenuOption } from '../../../core/models/user.model';
 
 @Component({
@@ -27,9 +28,19 @@ export class SidebarComponent {
   private sidebarService = inject(SidebarService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private slugService = inject(SlugService);
 
   expanded = this.sidebarService.expanded;
-  menuOptions = signal<MenuOption[]>(this.sidebarService.getMenuOptions());
+
+  // Computed para generar opciones de menú con rutas dinámicas que incluyen el slug
+  menuOptions = computed<MenuOption[]>(() => {
+    const baseOptions = this.sidebarService.getMenuOptions();
+    return baseOptions.map(option => ({
+      ...option,
+      route: this.slugService.buildUrl(option.route)
+    }));
+  });
+
   currentUser = this.authService.currentUser;
 
   // Lucide icons
