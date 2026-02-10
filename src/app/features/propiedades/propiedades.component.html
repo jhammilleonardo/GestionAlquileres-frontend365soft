@@ -85,7 +85,7 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading()" class="py-16 text-center">
+  <div *ngIf="isListLoading()" class="py-16 text-center">
     <div
       class="inline-flex items-center justify-center w-16 h-16 border-4 border-blue-200 rounded-full border-t-blue-600 animate-spin">
     </div>
@@ -93,7 +93,7 @@
   </div>
 
   <!-- Empty State -->
-  <div *ngIf="!isLoading() && properties().length === 0"
+  <div *ngIf="!isListLoading() && properties().length === 0"
     class="p-16 text-center border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
     <div
       class="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100">
@@ -116,7 +116,7 @@
   </div>
 
   <!-- Properties Grid -->
-  <div *ngIf="!isLoading() && properties().length > 0" class="space-y-6">
+  <div *ngIf="!isListLoading() && properties().length > 0" class="space-y-6">
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
       <div *ngFor="let property of properties()"
         class="overflow-hidden transition-all duration-300 transform border shadow-xl group bg-white/80 backdrop-blur-sm rounded-2xl hover:shadow-2xl border-slate-200 hover:-translate-y-1">
@@ -138,7 +138,7 @@
           <div class="absolute top-4 right-4">
             <span
               [class]="'px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-lg ' + getStatusBadgeClass(property.status)">
-              {{ property.status }}
+              {{ property.status || 'N/A' }}
             </span>
           </div>
 
@@ -168,16 +168,17 @@
           </h3>
 
           <!-- Type -->
-          <div class="flex items-center gap-2 mb-4 text-sm text-slate-600">
+          <div *ngIf="property.property_type && property.property_subtype"
+            class="flex items-center gap-2 mb-4 text-sm text-slate-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
               </path>
             </svg>
-            <span class="font-medium">{{ property.property_type.name }}</span>
+            <span class="font-medium">{{ property.property_type?.name || 'N/A' }}</span>
             <span class="text-slate-400">•</span>
-            <span>{{ property.property_subtype.name }}</span>
+            <span>{{ property.property_subtype?.name || 'N/A' }}</span>
           </div>
 
           <!-- Address -->
@@ -311,7 +312,7 @@
     <!-- Modal Body -->
     <div class="p-8 overflow-y-auto bg-slate-50"
       style="max-height: calc(90vh - 180px); scrollbar-width: thin; scrollbar-color: #CBD5E1 #F1F5F9;">
-      <form [formGroup]="propertyForm" class="space-y-6" novalidate>
+      <form *ngIf="propertyForm" [formGroup]="propertyForm" class="space-y-6" novalidate>
         <!-- Basic Info -->
         <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
           <div class="flex items-center gap-2 mb-6">
@@ -407,7 +408,7 @@
             </div>
 
             <div>
-              <label class="flex items-center block gap-1 mb-2 text-sm font-semibold text-slate-700">
+              <label class="flex items-center gap-1 mb-2 text-sm font-semibold text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -475,7 +476,7 @@
             </div>
 
             <div>
-              <label class="flex items-center block gap-1 mb-2 text-sm font-semibold text-slate-700">
+              <label class="flex items-center gap-1 mb-2 text-sm font-semibold text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -489,7 +490,7 @@
             </div>
 
             <div>
-              <label class="flex items-center block gap-1 mb-2 text-sm font-semibold text-slate-700">
+              <label class="flex items-center gap-1 mb-2 text-sm font-semibold text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
                   viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -518,8 +519,8 @@
           </div>
 
           <div formArrayName="addresses">
-            <div *ngFor="let address of addresses.controls; let i = index" [formGroupName]="i" class="space-y-6">
-              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <ng-container *ngFor="let address of addresses.controls; let i = index; trackBy: trackByIndex">
+              <div [formGroupName]="i" class="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
                 <div class="md:col-span-2">
                   <label class="block mb-2 text-sm font-semibold text-slate-700">Dirección Completa <span
                       class="text-red-500">*</span></label>
@@ -567,7 +568,7 @@
                     'country') }}</p>
                 </div>
               </div>
-            </div>
+            </ng-container>
           </div>
         </div>
 
@@ -587,8 +588,8 @@
           </div>
 
           <div formArrayName="new_owners">
-            <div *ngFor="let owner of owners.controls; let i = index" [formGroupName]="i" class="space-y-6">
-              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <ng-container *ngFor="let owner of owners.controls; let i = index; trackBy: trackByIndex">
+              <div [formGroupName]="i" class="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
                 <div>
                   <label class="block mb-2 text-sm font-semibold text-slate-700">Nombre Completo</label>
                   <input type="text" formControlName="name"
@@ -617,7 +618,7 @@
                     placeholder="100" />
                 </div>
               </div>
-            </div>
+            </ng-container>
           </div>
         </div>
       </form>
@@ -630,15 +631,14 @@
         class="px-6 py-3 font-semibold transition-all border-2 border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-400">
         Cancelar
       </button>
-      <button type="button" (click)="saveProperty()" [disabled]="isLoading()"
+      <button type="button" (click)="saveProperty()" [disabled]="isSubmitting()"
         class="flex items-center gap-2 px-8 py-3 font-semibold text-white transition-all shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl">
-        <svg xmlns="http://www.w3.org/2000/svg" *ngIf="!isLoading()" class="w-5 h-5" fill="none" stroke="currentColor"
-          viewBox="0 0 24 24">
+        <svg xmlns="http://www.w3.org/2000/svg" *ngIf="!isSubmitting()" class="w-5 h-5" fill="none"
+          stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>{{ isLoading() ? 'Guardando...' : (modalMode === 'create' ? 'Crear Propiedad' : 'Guardar Cambios')
-          }}</span>
+        <span>{{ getButtonText() }}</span>
       </button>
     </div>
   </div>

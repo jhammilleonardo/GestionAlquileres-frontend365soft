@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { PropertyService } from '../../core/services/property.service';
@@ -18,7 +18,9 @@ export class PropiedadesComponent implements OnInit {
   propertySubtypes = signal<PropertySubtype[]>([]);
   filteredSubtypes = signal<PropertySubtype[]>([]);
 
-  isLoading = signal(false);
+  isLoading = signal(false); // Deprecated, split into isListLoading and isSubmitting
+  isListLoading = signal(false);
+  isSubmitting = signal(false);
   showModal = signal(false);
   modalMode: 'create' | 'edit' = 'create';
   selectedProperty: Property | null = null;
@@ -41,7 +43,8 @@ export class PropiedadesComponent implements OnInit {
   constructor(
     private propertyService: PropertyService,
     private authService: AuthService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef
   ) {
     this.propertyForm = this.createForm();
   }
@@ -101,25 +104,36 @@ export class PropiedadesComponent implements OnInit {
   }
 
   get addresses(): FormArray {
+    if (!this.propertyForm) {
+      return this.fb.array([]);
+    }
     return this.propertyForm.get('addresses') as FormArray;
   }
 
   get owners(): FormArray {
+    if (!this.propertyForm) {
+      return this.fb.array([]);
+    }
     return this.propertyForm.get('new_owners') as FormArray;
   }
 
+  getButtonText(): string {
+    if (this.isSubmitting()) return 'Guardando...';
+    return this.modalMode === 'create' ? 'Crear Propiedad' : 'Guardar Cambios';
+  }
+
   loadProperties(): void {
-    this.isLoading.set(true);
+    this.isListLoading.set(true);
     console.log('🔍 Loading properties with filters:', this.filters);
     this.propertyService.getAdminProperties(this.filters).subscribe({
       next: (data) => {
         console.log('✅ Properties loaded successfully:', data);
         this.properties.set(data);
-        this.isLoading.set(false);
+        this.isListLoading.set(false);
       },
       error: (error) => {
         console.error('❌ Error loading properties:', error);
-        this.isLoading.set(false);
+        this.isListLoading.set(false);
         alert('Error al cargar propiedades: ' + error.message);
       }
     });
@@ -168,47 +182,76 @@ export class PropiedadesComponent implements OnInit {
   }
 
   openCreateModal(): void {
+    console.log('🔵 openCreateModal called');
     this.modalMode = 'create';
     this.selectedProperty = null;
-    this.propertyForm.reset({
-      property_type_id: '',
-      property_subtype_id: '',
-      status: PropertyStatus.DISPONIBLE,
-      active: true,
-      images: [],
-      amenities: [],
-      included_items: []
-    });
     this.filteredSubtypes.set([]);
-    this.showModal.set(true);
+
+    // Cerrar modal primero si estaba abierto
+    this.showModal.set(false);
+
+    // Recrear el formulario completamente para evitar problemas con FormArrays
+    this.propertyForm = this.createForm();
+
+    console.log('✅ Form recreated - Addresses:', this.addresses?.length, 'Owners:', this.owners?.length);
+
+    // Pequeño delay para asegurar que el DOM esté listo
+    setTimeout(() => {
+      this.showModal.set(true);
+      console.log('✅ Modal opened');
+    }, 10);
   }
 
   openEditModal(property: Property): void {
+    console.log('🔵 openEditModal called for property:', property.id);
     this.modalMode = 'edit';
     this.selectedProperty = property;
 
-    // Populate form with property data
-    this.propertyForm.patchValue({
-      title: property.title,
-      description: property.description,
-      property_type_id: property.property_type_id,
-      property_subtype_id: property.property_subtype_id,
-      status: property.status,
-      active: property.active,
-      monthly_rent_amount: property.monthly_rent_amount,
-      security_deposit_amount: property.security_deposit_amount,
-      total_area: property.total_area,
-      built_area: property.built_area,
-      availability_date: property.availability_date,
-      latitude: property.latitude,
-      longitude: property.longitude,
-      images: property.images || [],
-      amenities: property.amenities || [],
-      included_items: property.included_items || []
+    // Cerrar modal primero
+    this.showModal.set(false);
+
+    // Recrear el formulario completamente
+    this.propertyForm = this.fb.group({
+      title: [property.title, Validators.required],
+      description: [property.description],
+      property_type_id: [property.property_type_id, Validators.required],
+      property_subtype_id: [property.property_subtype_id, Validators.required],
+      active: [property.active],
+      monthly_rent_amount: [property.monthly_rent_amount],
+      security_deposit_amount: [property.security_deposit_amount],
+      account_number: [property.account_number || ''],
+      account_type: [property.account_type || ''],
+      account_holder_name: [property.account_holder_name || ''],
+      total_area: [property.total_area],
+      built_area: [property.built_area],
+      availability_date: [property.availability_date],
+      latitude: [property.latitude],
+      longitude: [property.longitude],
+      images: [property.images || []],
+      amenities: [property.amenities || []],
+      included_items: [property.included_items || []],
+      addresses: this.fb.array(
+        property.addresses && property.addresses.length > 0
+          ? property.addresses.map(addr => this.fb.group({
+            address_type: [addr.address_type || 'address_1'],
+            street_address: [addr.street_address, Validators.required],
+            city: [addr.city, Validators.required],
+            state: [addr.state || ''],
+            zip_code: [addr.zip_code || ''],
+            country: [addr.country, Validators.required]
+          }))
+          : [this.createAddressGroup()]
+      ),
+      new_owners: this.fb.array([this.createOwnerGroup()])
     });
 
     this.onPropertyTypeChange(property.property_type_id);
-    this.showModal.set(true);
+
+    // Pequeño delay para asegurar que el DOM esté listo
+    setTimeout(() => {
+      this.showModal.set(true);
+      console.log('✅ Edit modal opened');
+    }, 10);
   }
 
   closeModal(): void {
@@ -226,7 +269,7 @@ export class PropiedadesComponent implements OnInit {
       return;
     }
 
-    this.isLoading.set(true);
+    this.isSubmitting.set(true);
     const formData = this.propertyForm.value;
 
     // Convertir valores vacíos a tipos correctos
@@ -235,14 +278,14 @@ export class PropiedadesComponent implements OnInit {
 
     // Validar campos requeridos manualmente
     if (!formData.title || !property_type_id || !property_subtype_id) {
-      this.isLoading.set(false);
+      this.isSubmitting.set(false);
       return;
     }
 
     // Validar que haya al menos una dirección
     if (!formData.addresses || formData.addresses.length === 0) {
       alert('Debe agregar al menos una dirección');
-      this.isLoading.set(false);
+      this.isSubmitting.set(false);
       return;
     }
 
@@ -297,12 +340,12 @@ export class PropiedadesComponent implements OnInit {
       next: () => {
         this.loadProperties();
         this.closeModal();
-        this.isLoading.set(false);
+        this.isSubmitting.set(false);
         alert(`Propiedad ${this.modalMode === 'create' ? 'creada' : 'actualizada'} exitosamente`);
       },
       error: (error) => {
         console.error('Error saving property:', error);
-        this.isLoading.set(false);
+        this.isSubmitting.set(false);
         const errorMessage = error.error?.message || error.message || 'Error desconocido';
         alert(`Error al ${this.modalMode === 'create' ? 'crear' : 'actualizar'} propiedad: ${errorMessage}`);
       }
@@ -314,16 +357,16 @@ export class PropiedadesComponent implements OnInit {
       return;
     }
 
-    this.isLoading.set(true);
+    this.isSubmitting.set(true); // Usamos isSubmitting para bloquear la UI globalmente o localmente
     this.propertyService.deleteProperty(property.id).subscribe({
       next: () => {
         this.loadProperties();
-        this.isLoading.set(false);
+        this.isSubmitting.set(false);
         alert('Propiedad eliminada exitosamente');
       },
       error: (error) => {
         console.error('Error deleting property:', error);
-        this.isLoading.set(false);
+        this.isSubmitting.set(false);
         alert(`Error al eliminar propiedad: ${error.message}`);
       }
     });
@@ -369,14 +412,17 @@ export class PropiedadesComponent implements OnInit {
     }, 100);
   }
   getPropertyAddress(property: Property): string {
-    if (property.addresses && property.addresses.length > 0) {
+    if (property && property.addresses && property.addresses.length > 0) {
       const addr = property.addresses[0];
-      return `${addr.street_address}, ${addr.city}, ${addr.country}`;
+      return `${addr.street_address || ''}, ${addr.city || ''}, ${addr.country || ''}`;
     }
     return 'Sin dirección';
   }
 
-  getStatusBadgeClass(status: PropertyStatus): string {
+  getStatusBadgeClass(status: PropertyStatus | undefined): string {
+    if (!status) {
+      return 'bg-gray-100 text-gray-800';
+    }
     const classes: Record<PropertyStatus, string> = {
       [PropertyStatus.DISPONIBLE]: 'bg-green-100 text-green-800',
       [PropertyStatus.OCUPADO]: 'bg-blue-100 text-blue-800',
@@ -406,10 +452,17 @@ export class PropiedadesComponent implements OnInit {
 
   getAddressError(index: number, fieldName: string): string {
     const addressArray = this.propertyForm.get('addresses') as FormArray;
+    if (!addressArray || addressArray.length === 0 || index >= addressArray.length) {
+      return '';
+    }
     const field = addressArray.at(index)?.get(fieldName);
     if (!field || !field.errors || !field.touched) return '';
 
     if (field.errors['required']) return 'Este campo es requerido';
     return 'Campo inválido';
+  }
+
+  trackByIndex(index: number): number {
+    return index;
   }
 }
