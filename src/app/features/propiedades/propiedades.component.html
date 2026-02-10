@@ -123,10 +123,14 @@
 
         <!-- Image -->
         <div class="relative h-48 overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500">
-          <img *ngIf="property.images && property.images.length > 0" [src]="property.images[0]" [alt]="property.title"
-            class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110" />
-          <div *ngIf="!property.images || property.images.length === 0"
-            class="flex items-center justify-center w-full h-full">
+          <!-- Mostrar siempre el img tag para ver errores de carga -->
+          <img [src]="getPropertyImage(property) || 'data:image/svg+xml,<svg/>'" [alt]="property.title"
+            class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+            [class.hidden]="!getPropertyImage(property)" (load)="onImageLoad(property)"
+            (error)="onImageError(property, getPropertyImage(property))" />
+
+          <!-- Placeholder SVG - mostrar solo si no hay imagen -->
+          <div [class.hidden]="getPropertyImage(property)" class="flex items-center justify-center w-full h-full">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-white/50" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -168,17 +172,16 @@
           </h3>
 
           <!-- Type -->
-          <div *ngIf="property.property_type && property.property_subtype"
-            class="flex items-center gap-2 mb-4 text-sm text-slate-600">
+          <div class="flex items-center gap-2 mb-4 text-sm text-slate-600">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
               </path>
             </svg>
-            <span class="font-medium">{{ property.property_type?.name || 'N/A' }}</span>
+            <span class="font-medium">{{ property.property_type?.name || property.property_type_name || 'N/A' }}</span>
             <span class="text-slate-400">•</span>
-            <span>{{ property.property_subtype?.name || 'N/A' }}</span>
+            <span>{{ property.property_subtype?.name || property.property_subtype_name || 'N/A' }}</span>
           </div>
 
           <!-- Address -->
@@ -201,7 +204,7 @@
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span class="text-2xl font-bold text-slate-900">
-              {{ property.monthly_rent_amount ? ('$' + property.monthly_rent_amount.toLocaleString()) : 'N/A' }}
+              {{ getPropertyPrice(property) }}
             </span>
             <span class="text-sm text-slate-500">/mes</span>
           </div>
@@ -216,8 +219,7 @@
               </svg>
               <div>
                 <p class="text-xs text-slate-500">Área Total</p>
-                <p class="font-semibold text-slate-700">{{ property.total_area ? property.total_area + ' m²' : 'N/A' }}
-                </p>
+                <p class="font-semibold text-slate-700">{{ getPropertyArea(property) }}</p>
               </div>
             </div>
             <div class="flex items-center gap-2 text-sm">
@@ -227,8 +229,8 @@
                   d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
               <div>
-                <p class="text-xs text-slate-500">Disponible</p>
-                <p class="font-semibold text-slate-700">{{ property.availability_date || 'Inmediato' }}</p>
+                <p class="text-xs text-slate-500">Habitaciones</p>
+                <p class="font-semibold text-slate-700">{{ property.bedrooms || 'N/A' }}</p>
               </div>
             </div>
           </div>
@@ -333,7 +335,7 @@
                 [ngClass]="{'border-red-500': hasError('title'), 'border-slate-300': !hasError('title')}"
                 class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: Apartamento Moderno en Centro" />
-              <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-500">{{ getErrorMessage('title') }}</p>
+              <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-500">Campo requerido</p>
               <p *ngIf="!hasError('title')" class="mt-1 text-xs text-slate-500">Un título atractivo que describa la
                 propiedad</p>
             </div>
@@ -354,8 +356,7 @@
                 <option value="">Seleccione un tipo...</option>
                 <option *ngFor="let type of propertyTypes()" [value]="type.id">{{ type.name }}</option>
               </select>
-              <p *ngIf="hasError('property_type_id')" class="mt-1 text-xs text-red-500">{{
-                getErrorMessage('property_type_id') }}</p>
+              <p *ngIf="hasError('property_type_id')" class="mt-1 text-xs text-red-500">Campo requerido</p>
             </div>
 
             <div>
@@ -367,8 +368,7 @@
                 <option value="">Seleccione primero un tipo</option>
                 <option *ngFor="let subtype of filteredSubtypes()" [value]="subtype.id">{{ subtype.name }}</option>
               </select>
-              <p *ngIf="hasError('property_subtype_id')" class="mt-1 text-xs text-red-500">{{
-                getErrorMessage('property_subtype_id') }}</p>
+              <p *ngIf="hasError('property_subtype_id')" class="mt-1 text-xs text-red-500">Campo requerido</p>
             </div>
 
             <div class="flex items-center pt-8">
@@ -381,6 +381,46 @@
           </div>
         </div>
 
+        <!-- Images Section -->
+        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
+          <div class="flex items-center gap-2 mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-600" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <h3 class="text-lg font-bold text-slate-900">Imágenes de la Propiedad <span
+                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h3>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block mb-3 text-sm font-semibold text-slate-700">
+                Seleccione hasta 10 imágenes (JPG, PNG, GIF, WebP - máx. 5MB cada una)
+              </label>
+              <input type="file" (change)="onImagesSelected($event)"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple
+                class="w-full px-4 py-3 text-sm transition-all bg-white border border-slate-300 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div *ngIf="selectedImages.length > 0" class="p-4 border border-blue-200 rounded-lg bg-blue-50">
+              <p class="mb-2 text-sm font-semibold text-blue-900">
+                Imágenes seleccionadas: {{ selectedImages.length }}
+              </p>
+              <ul class="space-y-1">
+                <li *ngFor="let image of selectedImages" class="text-xs text-blue-700">
+                  📷 {{ image.name }}
+                </li>
+              </ul>
+            </div>
+
+            <p class="text-xs text-slate-500">
+              💡 Las imágenes se subirán al crear la propiedad. Si no selecciona imágenes ahora, podrá agregarlas
+              después.
+            </p>
+          </div>
+        </div>
+
         <!-- Financial Info -->
         <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
           <div class="flex items-center gap-2 mb-6">
@@ -389,41 +429,40 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 class="text-lg font-bold text-slate-900">Información Financiera</h3>
+            <h3 class="text-lg font-bold text-slate-900">Información Financiera <span
+                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h3>
           </div>
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
             <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Renta Mensual ($)</label>
-              <input type="number" formControlName="monthly_rent_amount"
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Renta Mensual</label>
+              <input type="number" formControlName="monthly_rent"
                 class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="1500" />
+                placeholder="2500" />
             </div>
 
             <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Depósito de Seguridad ($)</label>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Moneda</label>
+              <select formControlName="currency"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="BOB">BOB - Bolivianos</option>
+                <option value="USD">USD - Dólares</option>
+                <option value="EUR">EUR - Euros</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Depósito de Seguridad</label>
               <input type="number" formControlName="security_deposit_amount"
                 class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="3000" />
-            </div>
-
-            <div>
-              <label class="flex items-center gap-1 mb-2 text-sm font-semibold text-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Fecha Disponible
-              </label>
-              <input type="date" formControlName="availability_date"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             </div>
           </div>
 
           <!-- Información de Cuenta Bancaria (Opcional) -->
           <div class="pt-6 mt-6 border-t border-slate-200">
-            <h4 class="mb-4 text-sm font-semibold text-slate-700">Información de Cuenta Bancaria (Opcional)</h4>
+            <h4 class="mb-4 text-sm font-semibold text-slate-700">Información de Cuenta Bancaria <span
+                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h4>
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
                 <label class="block mb-2 text-sm font-medium text-slate-700">Número de Cuenta</label>
@@ -436,7 +475,7 @@
                 <label class="block mb-2 text-sm font-medium text-slate-700">Tipo de Cuenta</label>
                 <input type="text" formControlName="account_type"
                   class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ahorros, Corriente, etc." />
+                  placeholder="savings, checking, etc." />
               </div>
 
               <div>
@@ -457,22 +496,53 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
             </svg>
-            <h3 class="text-lg font-bold text-slate-900">Detalles de la Propiedad</h3>
+            <h3 class="text-lg font-bold text-slate-900">Detalles de la Propiedad <span
+                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h3>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Área Total (m²)</label>
-              <input type="number" formControlName="total_area"
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Superficie (m²)</label>
+              <input type="number" formControlName="square_meters"
                 class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="85" />
             </div>
 
             <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Área Construida (m²)</label>
-              <input type="number" formControlName="built_area"
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Dormitorios</label>
+              <input type="number" formControlName="bedrooms"
                 class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="75" />
+                placeholder="3" />
+            </div>
+
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Baños</label>
+              <input type="number" step="0.5" formControlName="bathrooms"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="2" />
+            </div>
+
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Estacionamientos</label>
+              <input type="number" formControlName="parking_spaces"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="1" />
+            </div>
+
+            <div>
+              <label class="block mb-2 text-sm font-semibold text-slate-700">Año de Construcción</label>
+              <input type="number" formControlName="year_built"
+                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="2020" />
+            </div>
+
+            <div>
+              <label
+                class="flex items-center gap-2 px-4 py-3 transition-colors cursor-pointer bg-slate-50 rounded-xl hover:bg-slate-100">
+                <input type="checkbox" formControlName="is_furnished"
+                  class="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
+                <span class="text-sm font-semibold text-slate-700">Amoblada</span>
+              </label>
             </div>
 
             <div>
@@ -486,7 +556,7 @@
               </label>
               <input type="number" step="any" formControlName="latitude"
                 class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="-34.6037" />
+                placeholder="-16.5000" />
             </div>
 
             <div>
@@ -500,7 +570,77 @@
               </label>
               <input type="number" step="any" formControlName="longitude"
                 class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="-58.3816" />
+                placeholder="-68.1500" />
+            </div>
+          </div>
+
+          <!-- Property Rules -->
+          <div class="pt-6 mt-6 border-t border-slate-200">
+            <h4 class="mb-4 text-sm font-semibold text-slate-700">Reglas y Políticas de la Propiedad <span
+                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h4>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <!-- Mascotas permitidas -->
+              <div class="flex items-center p-4 transition-all border-2 rounded-xl hover:bg-slate-50"
+                [ngClass]="{'border-blue-500 bg-blue-50': propertyForm.get('pets_allowed')?.value, 'border-slate-200': !propertyForm.get('pets_allowed')?.value}">
+                <input type="checkbox" formControlName="pets_allowed" id="pets_allowed"
+                  class="w-5 h-5 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500" />
+                <label for="pets_allowed" class="flex items-center gap-2 ml-3 cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-sm font-medium text-slate-900">Se permiten mascotas</span>
+                </label>
+              </div>
+
+              <!-- Fumar permitido -->
+              <div class="flex items-center p-4 transition-all border-2 rounded-xl hover:bg-slate-50"
+                [ngClass]="{'border-blue-500 bg-blue-50': propertyForm.get('smoking_allowed')?.value, 'border-slate-200': !propertyForm.get('smoking_allowed')?.value}">
+                <input type="checkbox" formControlName="smoking_allowed" id="smoking_allowed"
+                  class="w-5 h-5 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500" />
+                <label for="smoking_allowed" class="flex items-center gap-2 ml-3 cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                  <span class="text-sm font-medium text-slate-900">Se permite fumar</span>
+                </label>
+              </div>
+
+              <!-- Máximo de ocupantes -->
+              <div>
+                <label class="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Máximo de Ocupantes
+                </label>
+                <input type="number" formControlName="max_occupants" min="1"
+                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: 4" />
+                <p class="mt-1 text-xs text-slate-500">Número máximo de personas permitidas</p>
+              </div>
+
+              <!-- Mínimo de meses de contrato -->
+              <div>
+                <label class="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-700">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Mínimo de Meses de Contrato
+                </label>
+                <input type="number" formControlName="min_lease_months" min="1"
+                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ej: 6" />
+                <p class="mt-1 text-xs text-slate-500">Duración mínima del contrato de alquiler</p>
+              </div>
             </div>
           </div>
         </div>
@@ -528,8 +668,9 @@
                     [ngClass]="{'border-red-500': getAddressError(i, 'street_address'), 'border-slate-300': !getAddressError(i, 'street_address')}"
                     class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Av. Libertador 1234, Piso 5, Depto A" />
-                  <p *ngIf="getAddressError(i, 'street_address')" class="mt-1 text-xs text-red-500">{{
-                    getAddressError(i, 'street_address') }}</p>
+                  <p *ngIf="getAddressError(i, 'street_address')" class="mt-1 text-xs text-red-500">
+                    Este campo es requerido
+                  </p>
                 </div>
 
                 <div>
@@ -539,8 +680,9 @@
                     [ngClass]="{'border-red-500': getAddressError(i, 'city'), 'border-slate-300': !getAddressError(i, 'city')}"
                     class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Buenos Aires" />
-                  <p *ngIf="getAddressError(i, 'city')" class="mt-1 text-xs text-red-500">{{ getAddressError(i, 'city')
-                    }}</p>
+                  <p *ngIf="getAddressError(i, 'city')" class="mt-1 text-xs text-red-500">
+                    Este campo es requerido
+                  </p>
                 </div>
 
                 <div>
@@ -564,8 +706,9 @@
                     [ngClass]="{'border-red-500': getAddressError(i, 'country'), 'border-slate-300': !getAddressError(i, 'country')}"
                     class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Argentina" />
-                  <p *ngIf="getAddressError(i, 'country')" class="mt-1 text-xs text-red-500">{{ getAddressError(i,
-                    'country') }}</p>
+                  <p *ngIf="getAddressError(i, 'country')" class="mt-1 text-xs text-red-500">
+                    Este campo es requerido
+                  </p>
                 </div>
               </div>
             </ng-container>
@@ -638,7 +781,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <span>{{ getButtonText() }}</span>
+        <span [textContent]="getButtonText()"></span>
       </button>
     </div>
   </div>

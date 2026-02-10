@@ -34,7 +34,7 @@ export class ApiHttpService {
      */
     post<T>(endpoint: string, body: any, headers?: any): Observable<T> {
         const httpOptions = {
-            headers: this.getHeaders(headers)
+            headers: this.getHeaders(headers, body)
         };
 
         return this.http.post<T>(`${this.baseUrl}${endpoint}`, body, httpOptions)
@@ -48,7 +48,7 @@ export class ApiHttpService {
      */
     put<T>(endpoint: string, body: any, headers?: any): Observable<T> {
         const httpOptions = {
-            headers: this.getHeaders(headers)
+            headers: this.getHeaders(headers, body)
         };
 
         return this.http.put<T>(`${this.baseUrl}${endpoint}`, body, httpOptions)
@@ -62,7 +62,7 @@ export class ApiHttpService {
      */
     patch<T>(endpoint: string, body: any, headers?: any): Observable<T> {
         const httpOptions = {
-            headers: this.getHeaders(headers)
+            headers: this.getHeaders(headers, body)
         };
 
         return this.http.patch<T>(`${this.baseUrl}${endpoint}`, body, httpOptions)
@@ -105,11 +105,18 @@ export class ApiHttpService {
 
     /**
      * Get headers with default Content-Type and JWT token if available
+     * Note: When body is FormData, Content-Type is omitted to let browser set it automatically with boundary
      */
-    private getHeaders(customHeaders?: any): HttpHeaders {
-        let headers = new HttpHeaders({
-            'Content-Type': 'application/json',
-        });
+    private getHeaders(customHeaders?: any, body?: any): HttpHeaders {
+        // Si el body es FormData, NO establecer Content-Type (el navegador lo hará automáticamente con boundary)
+        const isFormData = body instanceof FormData;
+
+        let headers = new HttpHeaders();
+
+        // Solo establecer Content-Type para JSON si NO es FormData
+        if (!isFormData) {
+            headers = headers.set('Content-Type', 'application/json');
+        }
 
         // Add JWT token if available
         const token = localStorage.getItem('access_token');

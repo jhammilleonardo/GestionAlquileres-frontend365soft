@@ -85,7 +85,7 @@
     <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
       <div *ngFor="let property of filteredProperties" class="property-card" (click)="viewProperty(property.id)">
         <div class="property-image-container">
-          <img [src]="property.images[0]" [alt]="property.title" class="property-image" />
+          <img [src]="property.images?.[0] || 'assets/placeholder.jpg'" [alt]="property.title" class="property-image" />
 
           <div class="property-badges">
             <span class="badge-status">{{ property.active ? 'Disponible' : 'No Disponible' }}</span>

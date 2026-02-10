@@ -201,6 +201,12 @@ export class PropertyService {
       property.updated_at = new Date(property.updated_at);
     }
 
+    // Normalizar images: convertir objeto {0: "path", 1: "path"} a array ["path", "path"]
+    if (property.images && typeof property.images === 'object' && !Array.isArray(property.images)) {
+      const imagesObj = property.images as Record<string, string>;
+      property.images = Object.keys(imagesObj).sort().map(key => imagesObj[key]);
+    }
+
     // Asegurar que arrays existan
     if (!property.images) property.images = [];
     if (!property.amenities) property.amenities = [];
@@ -262,31 +268,12 @@ export class PropertyService {
     }
 
     const endpoint = `${this.tenantSlug}/admin/properties`;
-    console.log('🌐 GET Request:', endpoint, 'Params:', params);
-    console.log('🔑 Token en localStorage:', localStorage.getItem('access_token') ? '✅ Presente' : '❌ Ausente');
 
-    return this.apiHttp.get<any>(endpoint, params).pipe(
-      map(response => {
-        console.log('📦 Raw properties from API:', response);
-        console.log('📦 Type of response:', typeof response, 'Is Array:', Array.isArray(response));
-
-        // El backend puede devolver un array directamente o un objeto con propiedades
-        let properties: any[] = [];
-        if (Array.isArray(response)) {
-          properties = response;
-        } else if (response && response.items) {
-          properties = response.items;
-        } else if (response && response.data) {
-          properties = response.data;
-        } else {
-          console.warn('⚠️ Formato de respuesta inesperado:', response);
-          properties = [];
-        }
-
-        return properties.map(p => this.transformProperty(p));
-      }),
+    // El backend devuelve {items: [], total, page, limit, pages}
+    return this.apiHttp.get<{ items: Property[], total: number, page: number, limit: number, pages: number }>(endpoint, params).pipe(
+      map(response => response.items.map(p => this.transformProperty(p))),
       catchError(error => {
-        console.error('❌ Error loading admin properties:', error);
+        console.error('Error loading admin properties:', error);
         return of([]);
       })
     );
@@ -318,6 +305,22 @@ export class PropertyService {
       tap(() => console.log('Property created successfully')),
       catchError(error => {
         console.error('Error creating property:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Crear nueva propiedad con imágenes (admin) - multipart/form-data
+   */
+  createPropertyWithImages(formData: FormData): Observable<Property> {
+    const endpoint = `${this.tenantSlug}/admin/properties/with-images`;
+
+    return this.apiHttp.post<Property>(endpoint, formData).pipe(
+      map(property => this.transformProperty(property)),
+      tap(() => console.log('Property with images created successfully')),
+      catchError(error => {
+        console.error('Error creating property with images:', error);
         throw error;
       })
     );
