@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
@@ -75,6 +75,7 @@ export class PropertyListComponent implements OnInit {
   constructor(
     private propertyService: PropertyService,
     private router: Router,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -153,7 +154,7 @@ export class PropertyListComponent implements OnInit {
   }
 
   viewProperty(propertyId: number): void {
-    this.router.navigate(['/publico/propiedades', propertyId]);
+    this.router.navigate([propertyId], { relativeTo: this.route });
   }
 
   getPropertyLocation(property: Property): string {

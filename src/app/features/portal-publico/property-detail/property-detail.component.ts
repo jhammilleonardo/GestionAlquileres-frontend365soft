@@ -47,11 +47,13 @@ export class PropertyDetailComponent implements OnInit {
     this.isLoading = true;
     this.propertyService.getPropertyById(id).subscribe({
       next: (property) => {
+        console.log('Property loaded:', property);
         this.property = property || null;
         this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading property:', error);
+        this.property = null;
         this.isLoading = false;
       }
     });
