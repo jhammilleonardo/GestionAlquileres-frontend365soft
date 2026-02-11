@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from './slug.service';
 
-export interface NotificationMetadata {
+export interface TenantNotificationMetadata {
     ticket_number?: string;
     maintenance_request_id?: number;
     property_id?: number;
@@ -19,28 +19,27 @@ export interface NotificationMetadata {
     sender_id?: number;
     message_preview?: string;
     is_from_admin?: boolean;
-    user_id?: number;
-    user_name?: string;
-    user_email?: string;
-    role?: string;
-    phone?: string;
+    contract_id?: number;
     contract_number?: string;
+    payment_id?: number;
+    payment_amount?: number;
+    payment_due_date?: string;
     [key: string]: any;
 }
 
-export interface Notification {
+export interface TenantNotification {
     id: number;
     user_id: number;
     event_type: string;
     title: string;
     message: string;
-    metadata?: NotificationMetadata;
+    metadata?: TenantNotificationMetadata;
     is_read: boolean;
     read_at?: Date | null;
     created_at: Date;
 }
 
-export interface NotificationStats {
+export interface TenantNotificationStats {
     total: number;
     unread: number;
     read: number;
@@ -50,14 +49,14 @@ export interface NotificationStats {
 @Injectable({
     providedIn: 'root'
 })
-export class NotificationService {
+export class TenantNotificationService {
     private http = inject(HttpClient);
     private authService = inject(TenantAuthService);
     private slugService = inject(SlugService);
 
     // Signal-based reactive state
-    private notificationsSignal = signal<Notification[]>([]);
-    private statsSignal = signal<NotificationStats | null>(null);
+    private notificationsSignal = signal<TenantNotification[]>([]);
+    private statsSignal = signal<TenantNotificationStats | null>(null);
     private isLoadingSignal = signal(false);
     private errorSignal = signal<string | null>(null);
 
@@ -117,7 +116,7 @@ export class NotificationService {
             params = params.set('offset', options.offset.toString());
         }
 
-        this.http.get<Notification[]>(
+        this.http.get<TenantNotification[]>(
             `${environment.apiUrl}${this.slug}/notifications`,
             { headers: this.headers, params }
         ).pipe(
@@ -132,7 +131,7 @@ export class NotificationService {
             catchError(error => {
                 this.errorSignal.set('Error al cargar las notificaciones');
                 this.isLoadingSignal.set(false);
-                console.error('Error loading notifications:', error);
+                console.error('Error loading tenant notifications:', error);
                 return of([]);
             })
         ).subscribe();
@@ -144,7 +143,7 @@ export class NotificationService {
     loadStats(): void {
         if (!this.slug) return;
 
-        this.http.get<NotificationStats>(
+        this.http.get<TenantNotificationStats>(
             `${environment.apiUrl}${this.slug}/notifications/stats`,
             { headers: this.headers }
         ).pipe(
@@ -152,7 +151,7 @@ export class NotificationService {
                 this.statsSignal.set(stats);
             }),
             catchError(error => {
-                console.error('Error loading notification stats:', error);
+                console.error('Error loading tenant notification stats:', error);
                 return of(null);
             })
         ).subscribe();
@@ -161,8 +160,8 @@ export class NotificationService {
     /**
      * Obtener una notificación específica
      */
-    getNotification(id: number): Observable<Notification> {
-        return this.http.get<Notification>(
+    getNotification(id: number): Observable<TenantNotification> {
+        return this.http.get<TenantNotification>(
             `${environment.apiUrl}${this.slug}/notifications/${id}`,
             { headers: this.headers }
         ).pipe(
@@ -201,7 +200,7 @@ export class NotificationService {
                 this.loadStats();
             }),
             catchError(error => {
-                console.error('Error marking notification as read:', error);
+                console.error('Error marking tenant notification as read:', error);
                 return of(undefined);
             })
         );
@@ -227,7 +226,7 @@ export class NotificationService {
             }),
             catchError(error => {
                 this.errorSignal.set('Error al marcar todas como leídas');
-                console.error('Error marking all notifications as read:', error);
+                console.error('Error marking all tenant notifications as read:', error);
                 return of(undefined);
             })
         );
@@ -252,7 +251,7 @@ export class NotificationService {
             }),
             catchError(error => {
                 this.errorSignal.set('Error al eliminar la notificación');
-                console.error('Error deleting notification:', error);
+                console.error('Error deleting tenant notification:', error);
                 return of(undefined);
             })
         );

@@ -1,0 +1,173 @@
+<div class="notifications-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <lucide-icon [img]="Bell" [size]="28"></lucide-icon>
+        Notificaciones
+      </h1>
+      <p class="page-subtitle">Mantente informado sobre tu propiedad</p>
+    </div>
+
+    <div class="header-actions">
+      @if (unreadCount() > 0) {
+        <button
+          class="action-btn secondary"
+          (click)="markAllAsRead()"
+          mat-button>
+          <lucide-icon [img]="Check" [size]="18"></lucide-icon>
+          <span>Marcar todas como leídas</span>
+        </button>
+      }
+
+      <button
+        class="action-btn"
+        (click)="refresh()"
+        mat-button>
+        <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
+        <span>Actualizar</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters & Stats -->
+  <div class="filters-section">
+    <div class="filter-tabs">
+      <button
+        class="filter-tab"
+        [class.active]="currentFilter === 'all'"
+        (click)="setFilter('all')">
+        Todas
+        <span class="count">{{ stats()?.total || 0 }}</span>
+      </button>
+
+      <button
+        class="filter-tab"
+        [class.active]="currentFilter === 'unread'"
+        (click)="setFilter('unread')">
+        No leídas
+        <span class="count unread">{{ stats()?.unread || 0 }}</span>
+      </button>
+
+      <button
+        class="filter-tab"
+        [class.active]="currentFilter === 'read'"
+        (click)="setFilter('read')">
+        Leídas
+        <span class="count">{{ readCount }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (error()) {
+    <div class="error-message">
+      <span>{{ error() }}</span>
+      <button (click)="clearError()" mat-icon-button>
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Cargando notificaciones...</p>
+    </div>
+  }
+
+  <!-- Notifications List -->
+  @if (!isLoading() && notifications().length === 0) {
+    <div class="empty-state">
+      <lucide-icon [img]="Bell" [size]="64" class="empty-icon"></lucide-icon>
+      <h2>No tienes notificaciones</h2>
+      <p>
+        @if (currentFilter === 'unread') {
+          ¡Excelente! No tienes notificaciones pendientes.
+        } @else {
+          No hay notificaciones para mostrar en este momento.
+        }
+      </p>
+      <button class="action-btn" (click)="refresh()" mat-button>
+        <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
+        <span>Actualizar</span>
+      </button>
+    </div>
+  }
+
+  @if (!isLoading() && notifications().length > 0) {
+    <div class="notifications-list">
+      @for (notification of notifications(); track notification.id) {
+        <div
+          class="notification-card"
+          [class.unread]="!notification.is_read"
+          (click)="handleNotificationClick(notification)">
+
+          <!-- Left: Icon -->
+          <div class="notification-icon-wrapper">
+            <div class="notification-icon">
+              {{ getNotificationIcon(notification.event_type) }}
+            </div>
+            @if (!notification.is_read) {
+              <div class="unread-indicator"></div>
+            }
+          </div>
+
+          <!-- Center: Content -->
+          <div class="notification-content">
+            <div class="notification-header-row">
+              <span class="notification-type">
+                {{ getNotificationTypeLabel(notification.event_type) }}
+              </span>
+              <span class="notification-time">
+                {{ formatNotificationTime(notification.created_at) }}
+              </span>
+            </div>
+
+            <h3 class="notification-title">{{ notification.title }}</h3>
+            <p class="notification-message">{{ notification.message }}</p>
+
+            @if (notification.metadata) {
+              <div class="notification-metadata">
+                @if (notification.metadata.ticket_number) {
+                  <span class="metadata-tag">
+                    <mat-icon style="font-size: 14px; height: 14px; width: 14px;">confirmation_number</mat-icon>
+                    {{ notification.metadata.ticket_number }}
+                  </span>
+                }
+                @if (notification.metadata.property_title) {
+                  <span class="metadata-tag">
+                    <mat-icon style="font-size: 14px; height: 14px; width: 14px;">home</mat-icon>
+                    {{ notification.metadata.property_title }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Right: Actions -->
+          <div class="notification-actions">
+            @if (!notification.is_read) {
+              <button
+                class="icon-btn"
+                (click)="markAsRead(notification.id, $event)"
+                mat-icon-button
+                matTooltip="Marcar como leída">
+                <lucide-icon [img]="Check" [size]="18"></lucide-icon>
+              </button>
+            }
+
+            <button
+              class="icon-btn delete-btn"
+              (click)="deleteNotification(notification.id, $event)"
+              mat-icon-button
+              matTooltip="Eliminar">
+              <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

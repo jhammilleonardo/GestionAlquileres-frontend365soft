@@ -10,6 +10,7 @@ import { ContractEditComponent } from './features/contratos/contract-edit/contra
 import { PagosComponent } from './features/pagos/pagos.component';
 import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.component';
 import { ComponentesComponent } from './features/componentes/componentes.component';
+import { NotificationsComponent } from './features/notifications/notifications.component';
 import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
@@ -74,7 +75,8 @@ export const routes: Routes = [
           { path: 'contratos/:id/editar', component: ContractEditComponent },
           { path: 'pagos', component: PagosComponent },
           { path: 'mantenimiento', component: MantenimientoComponent },
-          { path: 'componentes', component: ComponentesComponent }
+          { path: 'componentes', component: ComponentesComponent },
+          { path: 'notificaciones', component: NotificationsComponent }
         ]
       }
     ]

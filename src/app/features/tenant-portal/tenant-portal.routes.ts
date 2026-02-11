@@ -68,6 +68,10 @@ export const TENANT_PORTAL_ROUTES: Routes = [
                 loadComponent: () => import('./messages/tenant-messages.component').then(m => m.TenantMessagesComponent)
             },
             {
+                path: 'notificaciones',
+                loadComponent: () => import('./notifications/tenant-notifications.component').then(m => m.TenantNotificationsComponent)
+            },
+            {
                 path: 'perfil',
                 loadComponent: () => import('./profile/tenant-profile.component').then(m => m.TenantProfileComponent)
             },

@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { MenuOption } from '../models/user.model';
+import { Bell } from 'lucide-angular';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +52,11 @@ export class SidebarService {
         label: 'Mantenimiento',
         icon: 'Wrench',
         route: '/mantenimiento'
+      },
+      {
+        label: 'Notificaciones',
+        icon: 'Bell',
+        route: '/notificaciones'
       },
       {
         label: 'Componentes UI',

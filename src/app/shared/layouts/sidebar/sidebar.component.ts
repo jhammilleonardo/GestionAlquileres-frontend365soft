@@ -3,7 +3,7 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Building2, PanelLeftClose, PanelLeftOpen, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings } from 'lucide-angular';
+import { LucideAngularModule, Building2, PanelLeftClose, PanelLeftOpen, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings, Bell } from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -55,6 +55,7 @@ export class SidebarComponent {
   readonly ComponentIcon = ComponentIcon;
   readonly BarChart3 = BarChart3;
   readonly Settings = Settings;
+  readonly Bell = Bell;
 
   getIconComponent(iconName: string) {
     const iconMap: Record<string, any> = {
@@ -66,7 +67,8 @@ export class SidebarComponent {
       'Wrench': Wrench,
       'Component': ComponentIcon,
       'BarChart3': BarChart3,
-      'Settings': Settings
+      'Settings': Settings,
+      'Bell': Bell
     };
     return iconMap[iconName] || Settings;
   }
