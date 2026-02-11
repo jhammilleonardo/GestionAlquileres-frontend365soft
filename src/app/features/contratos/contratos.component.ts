@@ -245,8 +245,10 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
   styles: [`
     .contracts-container {
       max-width: 1400px;
+      width: 100%;
       margin: 0 auto;
       padding: 24px;
+      box-sizing: border-box;
     }
 
     .page-header {
@@ -254,6 +256,8 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
     .page-header h1 {
@@ -266,6 +270,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       display: flex;
       align-items: center;
       gap: 8px;
+      white-space: nowrap;
     }
 
     .loading-container {
@@ -280,7 +285,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     /* Dashboard Metrics */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -292,6 +297,8 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       gap: 16px;
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      min-width: 0;
+      overflow: hidden;
     }
 
     .metric-card.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
@@ -321,18 +328,21 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       display: flex;
       flex-direction: column;
       gap: 4px;
+      min-width: 0;
     }
 
     .metric-value {
       font-size: 28px;
       font-weight: 700;
       line-height: 1;
+      word-break: break-all;
     }
 
     .metric-label {
       font-size: 13px;
       opacity: 0.95;
       font-weight: 500;
+      white-space: nowrap;
     }
 
     /* Filters Card */
@@ -346,6 +356,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      gap: 8px;
     }
 
     .filters-header h3 {
@@ -363,7 +374,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
     .filters-grid {
       display: grid;
-      grid-template-columns: 250px 1fr;
+      grid-template-columns: minmax(180px, 1fr) 1fr;
       gap: 16px;
     }
 
@@ -374,16 +385,19 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       padding: 0 16px;
       background: var(--mat-sys-surface-container-low);
       border-radius: 8px;
+      min-width: 0;
     }
 
     .search-box mat-icon {
       color: var(--mat-sys-on-surface-variant);
+      flex-shrink: 0;
     }
 
     .search-box input {
       border: none;
       background: transparent;
       flex: 1;
+      min-width: 0;
       padding: 12px 0;
       font-size: 14px;
       outline: none;
@@ -392,6 +406,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     /* Contracts Card */
     .contracts-card {
       padding: 20px;
+      overflow: hidden;
     }
 
     .contracts-header {
@@ -399,6 +414,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
+      gap: 8px;
     }
 
     .contracts-header h3 {
@@ -408,6 +424,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .contracts-header .count {
@@ -441,15 +458,18 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     .contracts-table {
       display: flex;
       flex-direction: column;
+      overflow-x: auto;
+      overflow-y: visible;
     }
 
     .table-header,
     .table-row {
       display: grid;
-      grid-template-columns: 140px 200px 1fr 180px 120px 100px 140px;
-      gap: 16px;
-      padding: 12px 16px;
+      grid-template-columns: 90px minmax(160px, 1fr) minmax(130px, 1.2fr) 120px 100px minmax(90px, 1fr) 120px;
+      gap: 12px;
+      padding: 12px;
       align-items: center;
+      min-width: max-content;
     }
 
     .table-header {
@@ -476,6 +496,8 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     .cell {
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
 
     .contract-badge {
@@ -492,19 +514,26 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       display: flex;
       flex-direction: column;
       gap: 2px;
+      min-width: 0;
     }
 
     .tenant-info .name {
       font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .tenant-info .email {
       font-size: 12px;
       color: var(--mat-sys-on-surface-variant);
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .property-title {
       font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .date-range {
@@ -517,6 +546,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     .arrow-icon {
       font-size: 14px;
       color: var(--mat-sys-on-surface-variant);
+      flex-shrink: 0;
     }
 
     .rent-amount {
@@ -535,6 +565,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       font-size: 12px;
       font-weight: 600;
       display: inline-block;
+      white-space: nowrap;
     }
 
     .status-badge.status-borrador {
@@ -558,11 +589,13 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       justify-content: flex-end;
     }
 
+    /* Tablet */
     @media (max-width: 1200px) {
       .table-header,
       .table-row {
-        grid-template-columns: 120px 180px 1fr 150px 100px 90px 120px;
-        gap: 12px;
+        grid-template-columns: 80px minmax(140px, 1fr) minmax(120px, 1.2fr) 110px 90px minmax(80px, 1fr) 110px;
+        gap: 10px;
+        padding: 10px;
       }
     }
 
@@ -573,6 +606,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
       .dashboard-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
 
       .filters-grid {
@@ -581,9 +615,9 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
       .table-header,
       .table-row {
-        grid-template-columns: 1fr;
+        grid-template-columns: 80px 1fr 100px 80px;
         gap: 8px;
-        padding: 16px;
+        padding: 12px;
       }
 
       .table-header {
@@ -593,26 +627,74 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       .table-row {
         display: flex;
         flex-wrap: wrap;
+        gap: 8px;
+        padding: 12px 8px;
       }
 
       .cell {
-        flex: 1 1 45%;
+        flex: 0 0 45%;
+        min-width: 0;
+        padding: 4px 0;
+      }
+
+      .cell.actions {
+        justify-content: center;
       }
     }
 
     @media (max-width: 768px) {
+      .contracts-container {
+        padding: 12px;
+      }
+
       .page-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 16px;
+        gap: 12px;
+      }
+
+      .page-header h1 {
+        font-size: 1.5rem;
       }
 
       .create-button {
+        width: 100%;
         justify-content: center;
       }
 
       .dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .metric-card {
+        padding: 16px;
+      }
+
+      .metric-value {
+        font-size: 24px;
+      }
+
+      .metric-label {
+        font-size: 12px;
+      }
+
+      .filters-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .contracts-header h3 {
+        font-size: 1rem;
+      }
+
+      .table-header,
+      .table-row {
+        padding: 10px 8px;
+      }
+
+      .cell.actions {
+        justify-content: center;
       }
     }
   `]

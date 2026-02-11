@@ -9,6 +9,10 @@ export class SidebarService {
   private expandedSignal = signal(true);
   expanded = this.expandedSignal.asReadonly();
 
+  // Estado del sidebar en móvil
+  private mobileOpenSignal = signal(false);
+  mobileOpen = this.mobileOpenSignal.asReadonly();
+
   toggle(): void {
     this.expandedSignal.update(value => !value);
   }
@@ -19,6 +23,29 @@ export class SidebarService {
 
   collapse(): void {
     this.expandedSignal.set(false);
+  }
+
+  // Métodos para control móvil del sidebar
+  openMobile(): void {
+    this.mobileOpenSignal.set(true);
+    document.body.style.overflow = 'hidden';
+  }
+
+  closeMobile(): void {
+    this.mobileOpenSignal.set(false);
+    document.body.style.overflow = '';
+  }
+
+  toggleMobile(): void {
+    if (this.mobileOpenSignal()) {
+      this.closeMobile();
+    } else {
+      this.openMobile();
+    }
+  }
+
+  isMobile(): boolean {
+    return window.innerWidth < 1024;
   }
 
   getMenuOptions(): MenuOption[] {

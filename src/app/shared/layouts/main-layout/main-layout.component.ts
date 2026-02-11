@@ -19,4 +19,9 @@ import { SidebarService } from '../../../core/services/sidebar.service';
 export class MainLayoutComponent {
   private sidebarService = inject(SidebarService);
   sidebarExpanded = this.sidebarService.expanded;
+  isSidebarMobileOpen = this.sidebarService.mobileOpen;
+
+  closeSidebarMobile(): void {
+    this.sidebarService.closeMobile();
+  }
 }

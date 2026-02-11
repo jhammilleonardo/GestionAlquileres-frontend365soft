@@ -66,7 +66,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   toggleSidebar(): void {
-    this.sidebarService.toggle();
+    // En móvil, abrir el sidebar como overlay
+    if (this.sidebarService.isMobile()) {
+      this.sidebarService.toggleMobile();
+    } else {
+      this.sidebarService.toggle();
+    }
   }
 
   getUserInitials(): string {

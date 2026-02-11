@@ -1,6 +1,11 @@
 <div class="main-layout">
   <app-sidebar></app-sidebar>
 
+  <!-- Overlay para móvil -->
+  @if (isSidebarMobileOpen()) {
+  <div class="sidebar-overlay" (click)="closeSidebarMobile()"></div>
+  }
+
   <div class="main-content-wrapper" [class.sidebar-collapsed]="!sidebarExpanded()">
     <app-header></app-header>
 

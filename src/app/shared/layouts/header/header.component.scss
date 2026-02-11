@@ -3,7 +3,7 @@
 .header {
   position: fixed;
   top: 0;
-  left: 280px;
+  left: 150px;
   right: 0;
   height: 64px;
   background: var(--mat-sys-surface);
@@ -12,11 +12,24 @@
   align-items: center;
   padding: 0 1.5rem;
   z-index: 99;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  box-sizing: border-box;
+  width: auto;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.sidebar-collapsed {
-    left: 80px;
+    left: 40px;
+  }
+
+  // Tablet: sidebar se oculta
+  @media (max-width: 1024px) {
+    left: 0 !important;
+  }
+
+  // Mobile: header ocupa todo el ancho
+  @media (max-width: 767px) {
+    left: 0 !important;
+    padding: 0 1rem;
   }
 }
 
@@ -34,6 +47,11 @@
   text-overflow: ellipsis;
   flex-shrink: 1;
   min-width: 0;
+
+  // Mobile: reducir tamaño de fuente
+  @media (max-width: 767px) {
+    font-size: 1rem;
+  }
 }
 
 .spacer {
@@ -71,6 +89,16 @@
 
   &:hover {
     background: var(--mat-sys-surface-container-low);
+  }
+
+  // Mobile: ocultar nombre de usuario
+  @media (max-width: 767px) {
+    padding: 0.5rem;
+    max-width: none;
+
+    .user-name {
+      display: none;
+    }
   }
 }
 
@@ -232,20 +260,28 @@
 }
 
 .notifications-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  position: fixed;
+  top: 72px; // 64px (header height) + 8px gap
+  right: 1.5rem; // Igual al padding del header
   width: 380px;
-  max-width: 90vw;
+  max-width: calc(100vw - 3rem); // Dejar espacio a ambos lados
   background: var(--mat-sys-surface);
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--mat-sys-outline-variant);
-  z-index: 1000;
+  z-index: 1100; // Mayor que el sidebar (1000) y header (99)
   max-height: 500px;
   display: flex;
   flex-direction: column;
   animation: slideDown 0.2s ease;
+
+  // Mobile: dropdown más ancho
+  @media (max-width: 767px) {
+    width: calc(100vw - 2rem);
+    max-width: calc(100vw - 2rem);
+    right: 1rem;
+    left: 1rem;
+  }
 }
 
 @keyframes slideDown {
@@ -427,13 +463,10 @@
 .dropdown-overlay {
   position: fixed;
   top: 64px;
-  left: 280px;
+  left: 0;
   right: 0;
   bottom: 0;
   z-index: 1;
-  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  .header.sidebar-collapsed & {
-    left: 80px;
-  }
+  // El overlay ahora cubre todo el ancho en todos los casos
+  // Esto es más consistente y funciona mejor en responsive
 }

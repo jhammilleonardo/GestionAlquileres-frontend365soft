@@ -1,9 +1,8 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, computed, DestroyRef, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Building2, PanelLeftClose, PanelLeftOpen, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings, Bell } from 'lucide-angular';
+import { LucideAngularModule, Building2, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings, Bell } from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -18,19 +17,20 @@ import { MenuOption } from '../../../core/models/user.model';
     RouterLink,
     RouterLinkActive,
     MatButtonModule,
-    MatMenuModule,
     LucideAngularModule
   ],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   private sidebarService = inject(SidebarService);
   private authService = inject(AuthService);
   private router = inject(Router);
   private slugService = inject(SlugService);
+  private destroyRef = inject(DestroyRef);
 
   expanded = this.sidebarService.expanded;
+  isMobileOpen = this.sidebarService.mobileOpen;
 
   // Computed para generar opciones de menú con rutas dinámicas que incluyen el slug
   menuOptions = computed<MenuOption[]>(() => {
@@ -41,12 +41,8 @@ export class SidebarComponent {
     }));
   });
 
-  currentUser = this.authService.currentUser;
-
   // Lucide icons
   readonly Building2 = Building2;
-  readonly PanelLeftClose = PanelLeftClose;
-  readonly PanelLeftOpen = PanelLeftOpen;
   readonly LayoutDashboard = LayoutDashboard;
   readonly Users = Users;
   readonly FileText = FileText;
@@ -73,8 +69,25 @@ export class SidebarComponent {
     return iconMap[iconName] || Settings;
   }
 
-  toggleSidebar(): void {
-    this.sidebarService.toggle();
+  ngOnInit(): void {
+    // Escuchar cambios de tamaño de pantalla
+    const resizeObserver = () => {
+      if (!this.sidebarService.isMobile() && this.sidebarService.mobileOpen()) {
+        this.sidebarService.closeMobile();
+      }
+    };
+
+    window.addEventListener('resize', resizeObserver);
+
+    // Limpiar el listener al destruir el componente
+    this.destroyRef.onDestroy(() => {
+      window.removeEventListener('resize', resizeObserver);
+      document.body.style.overflow = '';
+    });
+  }
+
+  ngOnDestroy(): void {
+    document.body.style.overflow = '';
   }
 
   logout(): void {
