@@ -1,6 +1,7 @@
 import { Component, OnInit, signal, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PropertyService } from '../../core/services/property.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtype } from '../../core/models/property.model';
@@ -45,7 +46,8 @@ export class PropiedadesComponent implements OnInit {
     private propertyService: PropertyService,
     private authService: AuthService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {
     this.propertyForm = this.createForm();
   }
@@ -143,10 +145,11 @@ export class PropiedadesComponent implements OnInit {
         console.log('✅ Properties loaded successfully:', data);
         // Log detallado de cada propiedad para debug
         data.forEach((prop, index) => {
+          const imagesLength = Array.isArray(prop.images) ? prop.images.length : (prop.images ? Object.keys(prop.images).length : 0);
           console.log(`Property ${index + 1} [ID:${prop.id}]:`, {
             title: prop.title,
             first_image: prop.first_image,
-            images_length: prop.images ? prop.images.length : 0,
+            images_length: imagesLength,
             images: prop.images
           });
         });
@@ -513,6 +516,11 @@ export class PropiedadesComponent implements OnInit {
     });
   }
 
+  viewPropertyDetail(property: Property): void {
+    const tenantSlug = this.authService.getTenantSlug() || 'soft-prueba';
+    this.router.navigate([`/${tenantSlug}/admin/propiedades`, property.id]);
+  }
+
   deleteProperty(property: Property): void {
     if (!confirm(`¿Está seguro de eliminar la propiedad "${property.title}"?`)) {
       return;
@@ -600,21 +608,10 @@ export class PropiedadesComponent implements OnInit {
         return imagePath;
       }
 
-      // Construir URL completa con el tenant slug
+      // Construir URL completa
       // El path viene como: storage/properties/soft-prueba/8/filename.jpg
-      // Pero necesitamos: soft-prueba/storage/properties/soft-prueba/8/filename.jpg
-      // O mejor aún, extraer el tenant del path y construir correctamente
-
-      // Extraer tenant slug del AuthService o usar el que viene en el path
-      const tenantSlug = this.authService.getTenantSlug() || 'soft-prueba';
-
-      // Si el path ya incluye "storage/", construir URL con tenant al inicio
-      let fullUrl: string;
-      if (imagePath.startsWith('storage/')) {
-        fullUrl = `http://localhost:3000/${tenantSlug}/${imagePath}`;
-      } else {
-        fullUrl = `http://localhost:3000/${imagePath}`;
-      }
+      // Y necesitamos: http://localhost:3000/storage/properties/soft-prueba/8/filename.jpg
+      const fullUrl = `http://localhost:3000/${imagePath}`;
 
       console.log('📸 Full URL:', fullUrl);
       return fullUrl;

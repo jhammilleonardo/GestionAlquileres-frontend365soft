@@ -1,0 +1,416 @@
+<div class="min-h-screen p-6 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+    <!-- Loading State -->
+    <div *ngIf="isLoading()" class="flex items-center justify-center py-20">
+        <div class="w-16 h-16 border-4 border-blue-200 rounded-full border-t-blue-600 animate-spin"></div>
+    </div>
+
+    <!-- Property Detail -->
+    <div *ngIf="!isLoading() && property()" class="mx-auto max-w-7xl">
+        <!-- Header with Back Button -->
+        <div class="flex items-center justify-between mb-6">
+            <button (click)="goBack()"
+                class="flex items-center gap-2 px-4 py-2 transition-all bg-white border shadow-md rounded-xl border-slate-200 hover:shadow-lg hover:-translate-x-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span class="font-medium">Volver</span>
+            </button>
+
+            <button (click)="editProperty()"
+                class="flex items-center gap-2 px-6 py-3 font-semibold text-white transition-all shadow-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl hover:shadow-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar Propiedad
+            </button>
+        </div>
+
+        <!-- Title and Status -->
+        <div class="p-6 mb-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="flex-1">
+                    <h1 class="mb-2 text-4xl font-bold text-slate-900">{{ property()?.title }}</h1>
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>{{ getPropertyAddress() }}</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <span [class]="'px-4 py-2 text-sm font-semibold rounded-xl ' + getStatusClass()">
+                        {{ property()?.status || 'N/A' }}
+                    </span>
+                    <span
+                        [class]="'px-4 py-2 text-sm font-semibold rounded-xl ' + (property()?.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800')">
+                        {{ property()?.active ? 'Activo' : 'Inactivo' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <!-- Left Column: Images -->
+            <div class="lg:col-span-2">
+                <!-- Image Gallery -->
+                <div class="overflow-hidden border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                    <div class="relative aspect-video bg-gradient-to-br from-blue-400 to-purple-500">
+                        <img *ngIf="getCurrentImage()" [src]="getCurrentImage()" [alt]="property()?.title"
+                            class="object-cover w-full h-full" />
+
+                        <div *ngIf="!getCurrentImage()" class="flex items-center justify-center w-full h-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-20 h-20 text-white/50" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <button *ngIf="getImagesArray().length > 1" (click)="previousImage()"
+                            class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
+                        <button *ngIf="getImagesArray().length > 1" (click)="nextImage()"
+                            class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+
+                        <!-- Image Counter -->
+                        <div *ngIf="getImagesArray().length > 0"
+                            class="absolute px-3 py-1 text-sm font-semibold text-white shadow-lg bottom-4 right-4 bg-black/50 rounded-xl backdrop-blur-sm">
+                            {{ currentImageIndex() + 1 }} / {{ getImagesArray().length }}
+                        </div>
+                    </div>
+
+                    <!-- Thumbnails -->
+                    <div *ngIf="getImagesArray().length > 1" class="grid grid-cols-6 gap-2 p-4">
+                        <button *ngFor="let img of getImagesArray(); let i = index" (click)="selectImage(i)"
+                            [class]="'relative overflow-hidden border-2 rounded-lg transition-all aspect-video ' + (i === currentImageIndex() ? 'border-blue-500 ring-2 ring-blue-200' : 'border-slate-200 hover:border-slate-300')">
+                            <img [src]="getThumbnailUrl(img)" [alt]="'Imagen ' + (i + 1)"
+                                class="object-cover w-full h-full" />
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div *ngIf="property()?.description"
+                    class="p-6 mt-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                    <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                        Descripción
+                    </h3>
+                    <p class="leading-relaxed text-slate-700">{{ property()?.description }}</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Details -->
+            <div class="space-y-6">
+                <!-- Price Card -->
+                <div
+                    class="p-6 border shadow-xl bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border-green-200">
+                    <div class="flex items-center gap-2 mb-2 text-sm font-medium text-green-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Precio Mensual
+                    </div>
+                    <div class="text-4xl font-bold text-green-900">
+                        {{ property()?.currency || 'BOB' }} {{ (property()?.monthly_rent || 0).toLocaleString('es-BO')
+                        }}
+                    </div>
+                    <div class="mt-3 text-sm text-green-700">
+                        <div>Depósito: {{ property()?.currency || 'BOB' }} {{ (property()?.security_deposit_amount ||
+                            0).toLocaleString('es-BO') }}</div>
+                    </div>
+                </div>
+
+                <!-- Property Details -->
+                <div class="p-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                    <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Características
+                    </h3>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div *ngIf="property()?.square_meters"
+                            class="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                            </svg>
+                            <div>
+                                <div class="text-xs text-slate-500">Área</div>
+                                <div class="font-semibold text-slate-900">{{ property()?.square_meters }} m²</div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="property()?.bedrooms" class="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            <div>
+                                <div class="text-xs text-slate-500">Habitaciones</div>
+                                <div class="font-semibold text-slate-900">{{ property()?.bedrooms }}</div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="property()?.bathrooms" class="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+                            </svg>
+                            <div>
+                                <div class="text-xs text-slate-500">Baños</div>
+                                <div class="font-semibold text-slate-900">{{ property()?.bathrooms }}</div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="property()?.parking_spaces"
+                            class="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                            </svg>
+                            <div>
+                                <div class="text-xs text-slate-500">Estacionamientos</div>
+                                <div class="font-semibold text-slate-900">{{ property()?.parking_spaces }}</div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="property()?.year_built" class="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <div>
+                                <div class="text-xs text-slate-500">Año</div>
+                                <div class="font-semibold text-slate-900">{{ property()?.year_built }}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-50">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            <div>
+                                <div class="text-xs text-slate-500">Amoblado</div>
+                                <div class="font-semibold text-slate-900">{{ property()?.is_furnished ? 'Sí' : 'No' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Property Rules -->
+                <div *ngIf="property()?.property_rules"
+                    class="p-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                    <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Reglas de la Propiedad
+                    </h3>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">🐾</span>
+                                <span class="font-medium text-slate-700">Mascotas</span>
+                            </div>
+                            <span
+                                [class]="property()?.property_rules?.pets_allowed ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+                                {{ property()?.property_rules?.pets_allowed ? 'Permitidas' : 'No permitidas' }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">🚬</span>
+                                <span class="font-medium text-slate-700">Fumar</span>
+                            </div>
+                            <span
+                                [class]="property()?.property_rules?.smoking_allowed ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+                                {{ property()?.property_rules?.smoking_allowed ? 'Permitido' : 'No permitido' }}
+                            </span>
+                        </div>
+
+                        <div *ngIf="property()?.property_rules?.max_occupants"
+                            class="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">👥</span>
+                                <span class="font-medium text-slate-700">Ocupantes máximos</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">{{ property()?.property_rules?.max_occupants
+                                }}</span>
+                        </div>
+
+                        <div *ngIf="property()?.property_rules?.min_lease_months"
+                            class="flex items-center justify-between p-3 rounded-lg bg-slate-50">
+                            <div class="flex items-center gap-2">
+                                <span class="text-2xl">📅</span>
+                                <span class="font-medium text-slate-700">Contrato mínimo</span>
+                            </div>
+                            <span class="font-semibold text-slate-900">{{ property()?.property_rules?.min_lease_months
+                                }} meses</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Type Info -->
+                <div class="p-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                    <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        Tipo de Propiedad
+                    </h3>
+
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-600">Tipo:</span>
+                            <span class="font-semibold text-slate-900">{{ property()?.property_type?.name ||
+                                property()?.property_type_name || 'N/A' }}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-600">Subtipo:</span>
+                            <span class="font-semibold text-slate-900">{{ property()?.property_subtype?.name ||
+                                property()?.property_subtype_name || 'N/A' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Width Sections -->
+        <div class="grid grid-cols-1 gap-6 mt-6 lg:grid-cols-2">
+            <!-- Addresses -->
+            <div *ngIf="property()?.addresses && property()?.addresses!.length > 0"
+                class="p-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Direcciones
+                </h3>
+
+                <div class="space-y-3">
+                    <div *ngFor="let addr of property()?.addresses" class="p-4 rounded-lg bg-slate-50">
+                        <div class="font-semibold text-slate-900">{{ addr.street_address }}</div>
+                        <div class="text-sm text-slate-600">{{ addr.city }}, {{ addr.country }}</div>
+                        <div *ngIf="addr.zip_code" class="text-sm text-slate-500">CP: {{ addr.zip_code }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Info -->
+            <div *ngIf="property()?.account_number"
+                class="p-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+                <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    Información Bancaria
+                </h3>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-600">Número de cuenta:</span>
+                        <span class="font-mono font-semibold text-slate-900">{{ property()?.account_number }}</span>
+                    </div>
+                    <div *ngIf="property()?.account_type" class="flex items-center justify-between">
+                        <span class="text-slate-600">Tipo:</span>
+                        <span class="font-semibold text-slate-900">{{ property()?.account_type }}</span>
+                    </div>
+                    <div *ngIf="property()?.account_holder_name" class="flex items-center justify-between">
+                        <span class="text-slate-600">Titular:</span>
+                        <span class="font-semibold text-slate-900">{{ property()?.account_holder_name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Amenities -->
+        <div *ngIf="property()?.amenities && property()?.amenities!.length > 0"
+            class="p-6 mt-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+            <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Amenidades
+            </h3>
+
+            <div class="flex flex-wrap gap-2">
+                <span *ngFor="let amenity of property()?.amenities"
+                    class="px-4 py-2 text-sm font-medium rounded-full bg-blue-50 text-blue-700">
+                    {{ amenity }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Included Items -->
+        <div *ngIf="property()?.included_items && property()?.included_items!.length > 0"
+            class="p-6 mt-6 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
+            <h3 class="flex items-center gap-2 mb-4 text-xl font-bold text-slate-900">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                Artículos Incluidos
+            </h3>
+
+            <div class="flex flex-wrap gap-2">
+                <span *ngFor="let item of property()?.included_items"
+                    class="px-4 py-2 text-sm font-medium rounded-full bg-green-50 text-green-700">
+                    {{ item }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>

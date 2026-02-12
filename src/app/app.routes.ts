@@ -10,6 +10,7 @@ import { ComponentesComponent } from './features/componentes/componentes.compone
 import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register.component';
 import { authGuard } from './core/guards/auth.guard';
+import { PropertyDetailAdminComponent } from './features/propiedades/property-detail-admin.component';
 
 export const routes: Routes = [
   // ==================== AUTH ROUTES ====================
@@ -43,6 +44,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'propiedades', component: PropiedadesComponent },
+      { path: 'propiedades/:id', component: PropertyDetailAdminComponent },
       { path: 'inquilinos', component: InquilinosComponent },
       { path: 'contratos', component: ContratosComponent },
       { path: 'pagos', component: PagosComponent },
