@@ -48,9 +48,21 @@ export class TenantAuthService {
     isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
     constructor() {
-        // Check token validity on init
-        if (this.getToken()) {
-            this.validateToken();
+        // Load user from storage if token exists
+        const token = this.getToken();
+        if (token) {
+            const user = this.loadUserFromStorage();
+            if (user) {
+                this.currentUserSignal.set(user);
+                // CRITICAL: Restore slug in SlugService from user data
+                // This prevents logout on page refresh
+                if (user.tenant_slug) {
+                    this.slugService.setSlug(user.tenant_slug);
+                }
+            }
+            // Validate token silently - if invalid (401), clear storage
+            // This prevents 401 errors and login loops when JWT_SECRET changes
+            this.validateTokenSilently();
         }
     }
 
@@ -97,10 +109,11 @@ export class TenantAuthService {
         this.slugService.clearSlug();
 
         // Navigate to login with slug
+        // Usar replaceUrl para limpiar el historial al cerrar sesión
         if (slug) {
-            this.router.navigate(['/', slug, 'login']);
+            this.router.navigate(['/', slug, 'login'], { replaceUrl: true });
         } else {
-            this.router.navigate(['/login']);
+            this.router.navigate(['/login'], { replaceUrl: true });
         }
     }
 
@@ -136,6 +149,38 @@ export class TenantAuthService {
             })
         ).subscribe(user => {
             if (user) {
+                this.currentUserSignal.set(user);
+                this.saveUserToStorage(user);
+            }
+        });
+    }
+
+    /**
+     * Validate token silently on app init
+     * Clears invalid tokens without redirecting to prevent 401 loops
+     */
+    private validateTokenSilently(): void {
+        const token = this.getToken();
+        if (!token) return;
+
+        this.http.get<TenantUser>(`${environment.apiUrl}auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        }).pipe(
+            catchError((error) => {
+                // Only clear storage if token is invalid (401)
+                // Don't clear on network errors to avoid logout on connection issues
+                if (error.status === 401) {
+                    console.warn('[TenantAuth] Invalid token detected, clearing storage');
+                    localStorage.removeItem(this.TOKEN_KEY);
+                    localStorage.removeItem(this.USER_KEY);
+                    this.currentUserSignal.set(null);
+                    this.slugService.clearSlug();
+                }
+                return of(null);
+            })
+        ).subscribe(user => {
+            if (user) {
+                // Token is valid, update user data in case it changed
                 this.currentUserSignal.set(user);
                 this.saveUserToStorage(user);
             }

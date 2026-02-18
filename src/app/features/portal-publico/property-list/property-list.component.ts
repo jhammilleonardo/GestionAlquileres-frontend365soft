@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -12,6 +12,7 @@ import { MatChipsModule, MatChipSet } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { LucideAngularModule, Heart, MapPin, Search, Settings, Home, Maximize, X } from 'lucide-angular';
 import { PropertyService } from '../../../core/services/property.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtype, SortOption } from '../../../core/models/property.model';
 
 @Component({
@@ -72,6 +73,8 @@ export class PropertyListComponent implements OnInit {
   readonly Maximize = Maximize;
   readonly X = X;
 
+  private slugService = inject(SlugService);
+
   constructor(
     private propertyService: PropertyService,
     private router: Router,
@@ -82,8 +85,38 @@ export class PropertyListComponent implements OnInit {
   ngOnInit(): void {
     // No cargar types desde admin en portal público - requiere autenticación
     // this.loadPropertyTypes();
-    this.loadProperties();
     this.loadFavorites();
+    
+    // Wait for slug to be set before loading properties
+    this.waitForSlugAndLoadProperties();
+  }
+
+  /**
+   * Wait for the slug to be set in SlugService before loading properties
+   * This fixes the race condition where properties are loaded before the slug is available
+   */
+  private waitForSlugAndLoadProperties(): void {
+    const slug = this.slugService.getSlug();
+    
+    if (slug) {
+      // Slug is already set, load properties immediately
+      console.log('PropertyListComponent - Slug ya disponible:', slug);
+      this.loadProperties();
+    } else {
+      // Slug not set yet, get it from the route and set it
+      console.log('PropertyListComponent - Esperando slug de la ruta...');
+      this.route.parent?.paramMap.subscribe(params => {
+        const slugFromRoute = params.get('slug');
+        if (slugFromRoute) {
+          console.log('PropertyListComponent - Slug obtenido de ruta:', slugFromRoute);
+          this.slugService.setSlug(slugFromRoute);
+          // Wait a small amount for the slug to be set in the service
+          setTimeout(() => {
+            this.loadProperties();
+          }, 100);
+        }
+      });
+    }
   }
 
   loadPropertyTypes(): void {

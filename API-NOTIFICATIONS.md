@@ -4,6 +4,23 @@ Esta documentación está diseñada para el equipo de frontend que trabajará en
 
 **Base URL:** `http://localhost:3000`
 
+---
+
+## ⚠️ IMPORTANTE - Actualizaciones de Seguridad
+
+**Última actualización de seguridad**: 14 de Febrero de 2026
+
+Esta documentación contiene información base sobre los endpoints. Para información actualizada sobre:
+- ✅ **Seguridad y Rate Limiting**: Ver `SECURITY_FIXES_COMPLETED.md`
+- ✅ **Estado de Endpoints**: Ver `ENDPOINTS_VERIFICATION.md`
+
+**Cambios importantes aplicados**:
+- JWT_SECRET actualizado (64 chars) - tokens anteriores inválidos
+- Rate Limiting implementado: 100 req/min general
+- Consulta `ENDPOINTS_VERIFICATION.md` para la lista actualizada completa
+
+---
+
 **⚠️ IMPORTANTE - Formato de Rutas:**
 Todas las rutas incluyen el **slug del tenant** como primer parámetro:
 - `/:slug/notifications/*` - Rutas para notificaciones (tanto admin como inquilinos)

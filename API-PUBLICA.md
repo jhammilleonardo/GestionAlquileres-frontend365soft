@@ -6,6 +6,18 @@ Esta documentación está diseñada para el frontend público donde los usuarios
 
 ---
 
+## ⚠️ IMPORTANTE - Actualizaciones de Seguridad
+
+**Última actualización de seguridad**: 14 de Febrero de 2026
+
+Aunque estas endpoints son públicas (sin autenticación), el sistema ahora tiene mejoras de seguridad:
+- ✅ **Rate Limiting**: Protección contra abuso (100 req/min)
+- ✅ **SQL Injection**: Validación con enums en filtros
+- ✅ Ver `SECURITY_FIXES_COMPLETED.md` para detalles completos
+- ✅ Ver `ENDPOINTS_VERIFICATION.md` para estado actual de endpoints
+
+---
+
 ## Índice
 
 1. [Catálogo de Propiedades por Organización](#1-catálogo-de-propiedades-por-organización)

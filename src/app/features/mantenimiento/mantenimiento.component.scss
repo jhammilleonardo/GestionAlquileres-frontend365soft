@@ -117,7 +117,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 3px solid transparent;
   transition: all 0.3s ease;
-  color: white;
+  background: white;
   position: relative;
 
   &.clickable {
@@ -131,26 +131,9 @@
     &:active {
       transform: translateY(-2px);
     }
-
-    &.active {
-      border-color: rgba(255, 255, 255, 0.6);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      transform: translateY(-2px);
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: -3px;
-        left: -3px;
-        right: -3px;
-        bottom: -3px;
-        border-radius: 16px;
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
-        pointer-events: none;
-      }
-    }
   }
 
+  // Ícono inactivo: sin fondo, solo el color
   .stat-icon {
     width: 56px;
     height: 56px;
@@ -158,8 +141,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.25);
-    color: white;
+    background: transparent;
     flex-shrink: 0;
     transition: all 0.3s ease;
 
@@ -167,11 +149,6 @@
       width: 28px;
       height: 28px;
     }
-  }
-
-  &.clickable.active .stat-icon {
-    background: rgba(255, 255, 255, 0.4);
-    transform: scale(1.1);
   }
 
   .stat-content {
@@ -183,32 +160,40 @@
   .stat-value {
     font-size: 40px;
     font-weight: 700;
-    color: white;
     line-height: 1;
     font-variant-numeric: tabular-nums;
   }
 
   .stat-label {
     font-size: 15px;
-    color: rgba(255, 255, 255, 0.95);
     font-weight: 500;
     line-height: 1.2;
   }
 
-  &.total {
-    background: #28589e;
-  }
+  // Inactivo: texto e ícono con el color de cada tipo
+  &.total       { .stat-icon { color: #28589e; } .stat-value { color: #28589e; } .stat-label { color: #28589e; } }
+  &.pending     { .stat-icon { color: #d97706; } .stat-value { color: #d97706; } .stat-label { color: #d97706; } }
+  &.in-progress { .stat-icon { color: #3b82f6; } .stat-value { color: #3b82f6; } .stat-label { color: #3b82f6; } }
+  &.completed   { .stat-icon { color: #10b981; } .stat-value { color: #10b981; } .stat-label { color: #10b981; } }
 
-  &.pending {
-    background: #f59e0b;
-  }
+  // Activo: fondo de color completo, todo blanco
+  &.total.active       { background: #28589e; }
+  &.pending.active     { background: #f59e0b; }
+  &.in-progress.active { background: #3b82f6; }
+  &.completed.active   { background: #10b981; }
 
-  &.in-progress {
-    background: #3b82f6;
-  }
+  &.active {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    transform: translateY(-2px);
 
-  &.completed {
-    background: #10b981;
+    .stat-icon {
+      background: rgba(255, 255, 255, 0.25);
+      color: white;
+      transform: scale(1.1);
+    }
+
+    .stat-value { color: white; }
+    .stat-label { color: rgba(255, 255, 255, 0.95); }
   }
 }
 

@@ -9,7 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Plus, FileText, Search, RefreshCw, X } from 'lucide-angular';
+import { LucideAngularModule, Plus, FileText, Search, RefreshCw, X, CheckCircle2, Pencil, DollarSign, TrendingUp, AlertTriangle } from 'lucide-angular';
 import { AdminContractService } from '../../core/services/admin-contract.service';
 import { SlugService } from '../../core/services/slug.service';
 import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from '../../core/models/contract.model';
@@ -52,7 +52,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
           <div class="dashboard-grid">
             <mat-card class="metric-card total">
               <div class="metric-icon">
-                <mat-icon>description</mat-icon>
+                <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
               </div>
               <div class="metric-content">
                 <div class="metric-value">{{ dashboard()!.total_contracts }}</div>
@@ -62,7 +62,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
             <mat-card class="metric-card active">
               <div class="metric-icon">
-                <mat-icon>check_circle</mat-icon>
+                <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
               </div>
               <div class="metric-content">
                 <div class="metric-value">{{ dashboard()!.active_contracts }}</div>
@@ -72,7 +72,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
             <mat-card class="metric-card draft">
               <div class="metric-icon">
-                <mat-icon>edit</mat-icon>
+                <lucide-icon [img]="Pencil" [size]="24"></lucide-icon>
               </div>
               <div class="metric-content">
                 <div class="metric-value">{{ dashboard()!.draft_contracts }}</div>
@@ -82,20 +82,20 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
             <mat-card class="metric-card revenue">
               <div class="metric-icon">
-                <mat-icon>payments</mat-icon>
+                <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
               </div>
               <div class="metric-content">
-                <div class="metric-value">\${{ formatRevenue(dashboard()!.monthly_revenue) }}</div>
+                <div class="metric-value">Bs {{ formatRevenue(dashboard()!.monthly_revenue) }}</div>
                 <div class="metric-label">Ingresos Mensuales</div>
               </div>
             </mat-card>
 
             <mat-card class="metric-card avg">
               <div class="metric-icon">
-                <mat-icon>trending_up</mat-icon>
+                <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
               </div>
               <div class="metric-content">
-                <div class="metric-value">\${{ dashboard()!.avg_rent }}</div>
+                <div class="metric-value">Bs {{ dashboard()!.avg_rent }}</div>
                 <div class="metric-label">Alquiler Promedio</div>
               </div>
             </mat-card>
@@ -103,7 +103,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
             @if (dashboard()!.contracts_expiring_soon > 0) {
               <mat-card class="metric-card warning">
                 <div class="metric-icon">
-                  <mat-icon>warning</mat-icon>
+                  <lucide-icon [img]="AlertTriangle" [size]="24"></lucide-icon>
                 </div>
                 <div class="metric-content">
                   <div class="metric-value">{{ dashboard()!.contracts_expiring_soon }}</div>
@@ -285,32 +285,40 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     /* Dashboard Metrics */
     .dashboard-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
     }
 
     .metric-card {
-      padding: 20px;
+      padding: 28px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      gap: 20px;
+      border-radius: 16px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
       min-width: 0;
       overflow: hidden;
+      color: white;
+      transition: all 0.3s ease;
+      cursor: default;
     }
 
-    .metric-card.total { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-    .metric-card.active { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; }
-    .metric-card.draft { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-    .metric-card.revenue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; }
-    .metric-card.avg { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; }
-    .metric-card.warning { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
+    .metric-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
+    }
+
+    .metric-card.total   { background: #28589e; }
+    .metric-card.active  { background: #10b981; }
+    .metric-card.draft   { background: #6b7280; }
+    .metric-card.revenue { background: #3b82f6; }
+    .metric-card.avg     { background: #8b5cf6; }
+    .metric-card.warning { background: #f59e0b; }
 
     .metric-icon {
-      width: 48px;
-      height: 48px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       background: rgba(255,255,255,0.25);
       display: flex;
@@ -319,9 +327,10 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       flex-shrink: 0;
     }
 
-    .metric-icon mat-icon {
+    .metric-icon lucide-icon {
       color: white;
-      font-size: 28px;
+      width: 28px;
+      height: 28px;
     }
 
     .metric-content {
@@ -332,16 +341,18 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     }
 
     .metric-value {
-      font-size: 28px;
+      font-size: 40px;
       font-weight: 700;
+      color: white;
       line-height: 1;
-      word-break: break-all;
+      font-variant-numeric: tabular-nums;
     }
 
     .metric-label {
-      font-size: 13px;
-      opacity: 0.95;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.95);
       font-weight: 500;
+      line-height: 1.2;
       white-space: nowrap;
     }
 
@@ -606,7 +617,7 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
 
       .dashboard-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 16px;
       }
 
       .filters-grid {
@@ -667,18 +678,6 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
         gap: 12px;
       }
 
-      .metric-card {
-        padding: 16px;
-      }
-
-      .metric-value {
-        font-size: 24px;
-      }
-
-      .metric-label {
-        font-size: 12px;
-      }
-
       .filters-grid {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -705,6 +704,11 @@ export class ContratosComponent implements OnInit {
   readonly Search = Search;
   readonly RefreshCw = RefreshCw;
   readonly X = X;
+  readonly CheckCircle2 = CheckCircle2;
+  readonly Pencil = Pencil;
+  readonly DollarSign = DollarSign;
+  readonly TrendingUp = TrendingUp;
+  readonly AlertTriangle = AlertTriangle;
   readonly ContractStatus = ContractStatus;
   readonly ContractStatusLabels = ContractStatusLabels;
 

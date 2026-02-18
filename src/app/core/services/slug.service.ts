@@ -23,11 +23,13 @@ export class SlugService {
   private http = inject(HttpClient);
   private router = inject(Router);
 
+  private readonly SLUG_KEY = 'tenant_slug';
+
   // Cache de tenants validados
   private tenantCache = new Map<string, TenantInfo>();
 
   // Signal reactivo del slug actual
-  private currentSlugSignal = signal<string | null>(null);
+  private currentSlugSignal = signal<string | null>(this.loadSlugFromStorage());
   private currentTenantSignal = signal<TenantInfo | null>(null);
   private isLoadingSignal = signal(false);
   private errorSignal = signal<string | null>(null);
@@ -50,9 +52,11 @@ export class SlugService {
     this.errorSignal.set(null);
 
     if (slug) {
+      this.saveSlugToStorage(slug);
       this.validateAndLoadTenant(slug);
     } else {
       this.currentTenantSignal.set(null);
+      this.removeSlugFromStorage();
     }
   }
 
@@ -128,6 +132,7 @@ export class SlugService {
     this.currentSlugSignal.set(null);
     this.currentTenantSignal.set(null);
     this.errorSignal.set(null);
+    this.removeSlugFromStorage();
   }
 
   /**
@@ -204,5 +209,28 @@ export class SlugService {
    */
   clearError(): void {
     this.errorSignal.set(null);
+  }
+
+  /**
+   * Cargar slug desde localStorage o sessionStorage
+   */
+  private loadSlugFromStorage(): string | null {
+    return localStorage.getItem(this.SLUG_KEY) || sessionStorage.getItem(this.SLUG_KEY);
+  }
+
+  /**
+   * Guardar slug en storage (usa localStorage para persistencia)
+   */
+  private saveSlugToStorage(slug: string): void {
+    localStorage.setItem(this.SLUG_KEY, slug);
+    sessionStorage.setItem(this.SLUG_KEY, slug);
+  }
+
+  /**
+   * Eliminar slug del storage
+   */
+  private removeSlugFromStorage(): void {
+    localStorage.removeItem(this.SLUG_KEY);
+    sessionStorage.removeItem(this.SLUG_KEY);
   }
 }

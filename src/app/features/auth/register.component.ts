@@ -794,19 +794,11 @@ export class RegisterComponent {
                 this.isLoading.set(false);
                 this.successMessage.set('Redirigiendo al panel de administración...');
                 setTimeout(() => {
-                    // El backend devuelve el slug en la respuesta
-                    const slug = response.tenant?.slug;
-                    if (slug) {
-                        // Redirigir al login con el slug generado
-                        this.router.navigate(['/', slug, 'login'], {
-                            queryParams: { registered: 'true' }
-                        });
-                    } else {
-                        // Fallback si no hay slug
-                        this.router.navigate(['/login'], {
-                            queryParams: { registered: 'true' }
-                        });
-                    }
+                    // Redirigir al login del ADMIN (sin slug)
+                    // /login es para administradores, /:slug/login es para inquilinos
+                    this.router.navigate(['/login'], {
+                        queryParams: { registered: 'true' }
+                    });
                 }, 2000);
             }),
             catchError(error => {

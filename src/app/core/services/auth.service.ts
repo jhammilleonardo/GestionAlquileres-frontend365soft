@@ -45,9 +45,21 @@ export class AuthService {
         // Clean up old mock data
         this.cleanupOldData();
 
-        // Check token validity on init
-        if (this.getToken()) {
-            this.validateToken();
+        // Load user from storage if token exists
+        const token = this.getToken();
+        if (token) {
+            const user = this.loadUserFromStorage();
+            if (user) {
+                this.currentUserSignal.set(user);
+                // CRITICAL: Restore slug in SlugService from user data
+                // This prevents logout on page refresh
+                if (user.tenant_slug) {
+                    this.slugService.setSlug(user.tenant_slug);
+                }
+            }
+            // Validate token silently - if invalid (401), clear storage
+            // This prevents 401 errors and login loops when JWT_SECRET changes
+            this.validateTokenSilently();
         } else {
             // No token, clear everything
             this.currentUserSignal.set(null);
@@ -149,7 +161,8 @@ export class AuthService {
         this.slugService.clearSlug();
 
         // Redirect to login page
-        this.router.navigate(['/login']);
+        // Usar replaceUrl para limpiar el historial al cerrar sesión
+        this.router.navigate(['/login'], { replaceUrl: true });
     }
 
     /**
@@ -204,6 +217,48 @@ export class AuthService {
                     email: userData.email,
                     role: userData.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff`
+                };
+                this.currentUserSignal.set(user);
+                this.saveUserToStorage(user);
+            }
+        });
+    }
+
+    /**
+     * Validate token silently on app init
+     * Clears invalid tokens without redirecting to prevent 401 loops
+     */
+    private validateTokenSilently(): void {
+        const token = this.getToken();
+        if (!token) return;
+
+        this.http.get<AdminUser>(`${environment.apiUrl}auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        }).pipe(
+            catchError((error) => {
+                // Only clear storage if token is invalid (401)
+                // Don't clear on network errors to avoid logout on connection issues
+                if (error.status === 401) {
+                    console.warn('[AdminAuth] Invalid token detected, clearing storage');
+                    localStorage.removeItem(this.TOKEN_KEY);
+                    localStorage.removeItem(this.USER_KEY);
+                    sessionStorage.removeItem(this.TOKEN_KEY);
+                    sessionStorage.removeItem(this.USER_KEY);
+                    this.currentUserSignal.set(null);
+                    this.slugService.clearSlug();
+                }
+                return of(null);
+            })
+        ).subscribe(userData => {
+            if (userData) {
+                // Token is valid, update user data in case it changed
+                const user: User = {
+                    id: userData.id.toString(),
+                    name: userData.name,
+                    email: userData.email,
+                    role: userData.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff`,
+                    tenant_slug: userData.tenant_slug
                 };
                 this.currentUserSignal.set(user);
                 this.saveUserToStorage(user);

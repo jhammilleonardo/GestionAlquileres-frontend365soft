@@ -12,7 +12,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule, ArrowLeft, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
-import { PaymentType, PaymentMethod, PaymentTypeLabels, PaymentMethodLabels } from '../../../core/models/payment.model';
+import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodLabels, CurrencyLabels, CurrencySymbols } from '../../../core/models/payment.model';
 
 @Component({
     selector: 'app-tenant-create-payment',
@@ -99,6 +100,21 @@ import { PaymentType, PaymentMethod, PaymentTypeLabels, PaymentMethodLabels } fr
                                 }
                             </mat-form-field>
 
+                            <!-- Moneda -->
+                            <mat-form-field appearance="outline">
+                                <mat-label>Moneda</mat-label>
+                                <mat-select formControlName="currency" required>
+                                    @for (curr of currencies; track curr.value) {
+                                        <mat-option [value]="curr.value">
+                                            {{ curr.symbol }} - {{ curr.label }}
+                                        </mat-option>
+                                    }
+                                </mat-select>
+                                @if (paymentForm.get('currency')?.hasError('required') && paymentForm.get('currency')?.touched) {
+                                    <mat-error>La moneda es requerida</mat-error>
+                                }
+                            </mat-form-field>
+
                             <!-- Método de Pago -->
                             <mat-form-field appearance="outline">
                                 <mat-label>Método de Pago</mat-label>
@@ -130,16 +146,99 @@ import { PaymentType, PaymentMethod, PaymentTypeLabels, PaymentMethodLabels } fr
                                 }
                             </mat-form-field>
 
-                            <!-- Número de Referencia -->
-                            <mat-form-field appearance="outline">
-                                <mat-label>Número de Referencia</mat-label>
-                                <input 
-                                    matInput 
-                                    formControlName="reference_number" 
-                                    placeholder="Ej: 123456789"
-                                    maxlength="50">
-                                <mat-hint>Opcional - Número de transacción o cheque</mat-hint>
-                            </mat-form-field>
+                            <!-- Campos específicos por método de pago -->
+
+                            <!-- Tarjeta de Crédito/Débito -->
+                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
+                                 paymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD) {
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Últimos 4 dígitos</mat-label>
+                                    <input matInput formControlName="card_last_4_digits"
+                                           placeholder="1234" maxlength="4" pattern="[0-9]{4}">
+                                    <mat-hint>Últimos 4 dígitos de la tarjeta</mat-hint>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nombre del Titular</mat-label>
+                                    <input matInput formControlName="card_holder_name"
+                                           placeholder="Juan Pérez">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Fecha de Expiración</mat-label>
+                                    <input matInput formControlName="card_expiry"
+                                           placeholder="MM/YY" maxlength="5">
+                                    <mat-hint>Formato: MM/YY</mat-hint>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Código de Autorización (Opcional)</mat-label>
+                                    <input matInput formControlName="reference_number"
+                                           placeholder="Ej: AUTH-123456">
+                                    <mat-hint>Código de autorización</mat-hint>
+                                </mat-form-field>
+                            }
+
+                            <!-- Cheque -->
+                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Número de Cheque</mat-label>
+                                    <input matInput formControlName="check_number"
+                                           placeholder="Ej: CHK-001">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Banco Emisor</mat-label>
+                                    <input matInput formControlName="bank_name"
+                                           placeholder="Banco Nacional">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                                    <input matInput formControlName="bank_account_last_4"
+                                           placeholder="5678" maxlength="4">
+                                </mat-form-field>
+                            }
+
+                            <!-- Transferencia -->
+                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
+                                 paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER) {
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Número de Referencia</mat-label>
+                                    <input matInput formControlName="reference_number"
+                                           placeholder="Ej: TRF-12345">
+                                    <mat-hint>Número de transacción</mat-hint>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Banco de Origen</mat-label>
+                                    <input matInput formControlName="bank_name"
+                                           placeholder="Tu banco">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                                    <input matInput formControlName="bank_account_last_4"
+                                           placeholder="9012" maxlength="4">
+                                </mat-form-field>
+                            }
+
+                            <!-- Efectivo -->
+                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Recibido por</mat-label>
+                                    <input matInput formControlName="received_by"
+                                           placeholder="Nombre de quien recibió">
+                                    <mat-hint>Persona que recibió el pago</mat-hint>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Número de Recibo (Opcional)</mat-label>
+                                    <input matInput formControlName="reference_number"
+                                           placeholder="Ej: REC-001">
+                                    <mat-hint>Número del recibo</mat-hint>
+                                </mat-form-field>
+                            }
 
                             <!-- Notas -->
                             <mat-form-field appearance="outline" class="full-width">
@@ -360,9 +459,13 @@ export class TenantCreatePaymentComponent {
     private fb = inject(FormBuilder);
     private router = inject(Router);
     paymentService = inject(TenantPaymentService);
+    private tenantAuthService = inject(TenantAuthService);
 
     success = signal(false);
     maxDate = new Date();
+
+    // Exponer enum para usar en template
+    PaymentMethod = PaymentMethod;
 
     paymentTypes = Object.keys(PaymentType).map(key => ({
         value: PaymentType[key as keyof typeof PaymentType],
@@ -374,13 +477,29 @@ export class TenantCreatePaymentComponent {
         label: PaymentMethodLabels[PaymentMethod[key as keyof typeof PaymentMethod]]
     }));
 
+    currencies = Object.keys(Currency).map(key => ({
+        value: Currency[key as keyof typeof Currency],
+        label: CurrencyLabels[Currency[key as keyof typeof Currency]],
+        symbol: CurrencySymbols[Currency[key as keyof typeof Currency]]
+    }));
+
     paymentForm = this.fb.group({
         payment_type: [PaymentType.RENT, Validators.required],
         amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
-        payment_method: [PaymentMethod.BANK_TRANSFER, Validators.required],
+        currency: [Currency.USD, Validators.required],
+        payment_method: [PaymentMethod.TRANSFER, Validators.required],
         payment_date: [new Date(), Validators.required],
         reference_number: [''],
-        notes: ['', Validators.maxLength(500)]
+        check_number: [''],
+        notes: ['', Validators.maxLength(500)],
+
+        // Campos específicos por método de pago
+        card_last_4_digits: [''],
+        card_holder_name: [''],
+        card_expiry: [''],
+        bank_name: [''],
+        bank_account_last_4: [''],
+        received_by: ['']
     });
 
     onSubmit(): void {
@@ -393,16 +512,28 @@ export class TenantCreatePaymentComponent {
         this.paymentService.createPayment({
             payment_type: formValue.payment_type!,
             amount: formValue.amount!,
+            currency: formValue.currency ?? Currency.USD,
             payment_method: formValue.payment_method!,
             payment_date: formValue.payment_date!,
             reference_number: formValue.reference_number || undefined,
-            notes: formValue.notes || undefined
+            check_number: formValue.check_number || undefined,
+            notes: formValue.notes || undefined,
+            // Campos específicos por método de pago
+            card_last_4_digits: formValue.card_last_4_digits || undefined,
+            card_holder_name: formValue.card_holder_name || undefined,
+            card_expiry: formValue.card_expiry || undefined,
+            bank_name: formValue.bank_name || undefined,
+            bank_account_last_4: formValue.bank_account_last_4 || undefined,
+            received_by: formValue.received_by || undefined
         }).subscribe({
             next: () => {
                 this.success.set(true);
             },
             error: (error) => {
                 console.error('Error creating payment:', error);
+                console.error('Error message:', error.error);
+                console.error('Error details:', JSON.stringify(error.error, null, 2));
+                alert('ERROR DEL BACKEND: ' + (error.error?.message || JSON.stringify(error.error)));
             }
         });
     }
@@ -410,7 +541,8 @@ export class TenantCreatePaymentComponent {
     resetForm(): void {
         this.paymentForm.reset({
             payment_type: PaymentType.RENT,
-            payment_method: PaymentMethod.BANK_TRANSFER,
+            currency: Currency.USD,
+            payment_method: PaymentMethod.TRANSFER,
             payment_date: new Date()
         });
         this.success.set(false);

@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -80,19 +80,6 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 
                     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
                         <mat-form-field appearance="outline" class="custom-field">
-                            <mat-label>Empresa (slug)</mat-label>
-                            <lucide-icon matIconPrefix [img]="Home" [size]="20"></lucide-icon>
-                            <input
-                                matInput
-                                formControlName="slug"
-                                placeholder="mi-inmobiliaria"
-                                autocomplete="organization">
-                            @if (loginForm.get('slug')?.hasError('required') && loginForm.get('slug')?.touched) {
-                                <mat-error>El slug es requerido</mat-error>
-                            }
-                        </mat-form-field>
-
-                        <mat-form-field appearance="outline" class="custom-field">
                             <mat-label>Correo electronico</mat-label>
                             <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
                             <input
@@ -154,7 +141,9 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
                             <span>Conexión segura SSL</span>
                         </div>
                         <div class="help-links">
-                            <span>¿Eres administrador? <a routerLink="/login">Ir al panel</a></span>
+                            @if (slug) {
+                                <a [routerLink]="['/', slug, 'register']" class="help-link">¿No tienes cuenta? Regístrate</a>
+                            }
                         </div>
                     </div>
                 </div>
@@ -413,16 +402,16 @@ import { TenantAuthService } from '../../../core/services/tenant-auth.service';
         .help-links {
             text-align: center;
             font-size: 0.875rem;
-            color: #64748b;
         }
 
-        .help-links a {
+        .help-link {
             color: #059669;
             text-decoration: none;
             font-weight: 500;
+            cursor: pointer;
         }
 
-        .help-links a:hover {
+        .help-link:hover {
             text-decoration: underline;
         }
 
@@ -487,33 +476,46 @@ export class TenantLoginComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fb = inject(FormBuilder);
+    private location = inject(Location);
 
     showPassword = signal(false);
+    slug: string | null = null;
 
     loginForm = this.fb.group({
-        slug: ['', Validators.required],
         email: ['', [Validators.required, Validators.email]],
         password: ['', Validators.required],
         rememberMe: [false]
     });
+
+    constructor() {
+        // Obtener el slug de la URL
+        this.slug = this.route.snapshot.paramMap.get('slug');
+    }
 
     togglePassword(): void {
         this.showPassword.update(v => !v);
     }
 
     onSubmit(): void {
-        if (this.loginForm.invalid) {
+        if (this.loginForm.invalid || !this.slug) {
             this.loginForm.markAllAsTouched();
             return;
         }
 
-        const { slug, email, password } = this.loginForm.value;
+        const { email, password } = this.loginForm.value;
         this.authService.clearError();
 
-        this.authService.login(slug!, email!, password!).subscribe({
+        this.authService.login(this.slug, email!, password!).subscribe({
             next: () => {
-                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/portal/dashboard';
-                this.router.navigateByUrl(returnUrl);
+                // Obtener la URL de retorno o usar dashboard por defecto
+                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || `/${this.slug}/portal/dashboard`;
+                // Usar replaceUrl para que el login no quede en el historial del navegador
+                this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
+                    // Limpiar cualquier query param de returnUrl del estado del navegador
+                    // Esto asegura que el historial no tenga entradas con ?returnUrl=...
+                    const cleanUrl = returnUrl.split('?')[0]; // Remover query params
+                    this.location.replaceState(cleanUrl);
+                });
             },
             error: () => {
                 // Error is handled by the service

@@ -1,4 +1,662 @@
-<div class="pagos">
-  <h1>Pagos</h1>
-  <p>Controla los pagos y facturación</p>
+<div class="pagos-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>Gestión de Pagos</h1>
+      <p>Administra y aprueba los pagos registrados por los inquilinos</p>
+    </div>
+    <div class="header-actions">
+      <button mat-raised-button (click)="loadData()" [disabled]="paymentService.isLoading()">
+        <lucide-icon [img]="RefreshCw" [size]="20"></lucide-icon>
+        Refrescar
+      </button>
+      <button mat-raised-button color="accent" (click)="openCreateForm()">
+        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+        Registrar Pago
+      </button>
+      <button mat-raised-button color="primary" (click)="showFilters.set(!showFilters())">
+        <lucide-icon [img]="Filter" [size]="20"></lucide-icon>
+        Filtros
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  @if (paymentService.error()) {
+    <div class="error-alert">
+      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+      <span>{{ paymentService.error() }}</span>
+    </div>
+  }
+
+  <!-- Statistics Cards -->
+  @if (paymentService.stats(); as stats) {
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-icon">
+          <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.total_payments }}</div>
+          <div class="stat-label">Total Pagos</div>
+        </div>
+      </div>
+
+      <div class="stat-card pending">
+        <div class="stat-icon">
+          <lucide-icon [img]="AlertCircle" [size]="24"></lucide-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.total_pending }}</div>
+          <div class="stat-label">Pendientes</div>
+          <div class="stat-amount">{{ formatCurrency(stats.total_amount_pending) }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card approved">
+        <div class="stat-icon">
+          <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.total_approved }}</div>
+          <div class="stat-label">Aprobados</div>
+          <div class="stat-amount">{{ formatCurrency(stats.total_amount_approved) }}</div>
+        </div>
+      </div>
+
+      <div class="stat-card rejected">
+        <div class="stat-icon">
+          <lucide-icon [img]="XCircle" [size]="24"></lucide-icon>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">{{ stats.total_rejected }}</div>
+          <div class="stat-label">Rechazados</div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Filters -->
+  @if (showFilters()) {
+    <mat-card class="filters-card">
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
+        <div class="filters-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Estado</mat-label>
+            <mat-select formControlName="status">
+              <mat-option value="">Todos</mat-option>
+              @for (status of paymentStatuses; track status) {
+                <mat-option [value]="status">
+                  {{ getStatusLabel(status) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo</mat-label>
+            <mat-select formControlName="type">
+              <mat-option value="">Todos</mat-option>
+              @for (type of paymentTypes; track type) {
+                <mat-option [value]="type">
+                  {{ getTypeLabel(type) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Método</mat-label>
+            <mat-select formControlName="method">
+              <mat-option value="">Todos</mat-option>
+              @for (method of paymentMethods; track method) {
+                <mat-option [value]="method">
+                  {{ getMethodLabel(method) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Moneda</mat-label>
+            <mat-select formControlName="currency">
+              <mat-option value="">Todas</mat-option>
+              @for (currency of currencies; track currency) {
+                <mat-option [value]="currency">
+                  {{ CurrencySymbols[currency] }} - {{ currency }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Desde</mat-label>
+            <input matInput [matDatepicker]="pickerFrom" formControlName="date_from">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+            <mat-datepicker #pickerFrom></mat-datepicker>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Fecha Hasta</mat-label>
+            <input matInput [matDatepicker]="pickerTo" formControlName="date_to">
+            <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
+            <mat-datepicker #pickerTo></mat-datepicker>
+          </mat-form-field>
+        </div>
+
+        <div class="filters-actions">
+          <button type="button" mat-stroked-button (click)="clearFilters()">
+            Limpiar
+          </button>
+          <button type="submit" mat-raised-button color="primary">
+            Aplicar Filtros
+          </button>
+        </div>
+      </form>
+    </mat-card>
+  }
+
+  <!-- Payments Table -->
+  <mat-card class="table-card">
+    @if (paymentService.isLoading()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando pagos...</p>
+      </div>
+    } @else if (paymentService.payments().length === 0) {
+      <div class="empty-state">
+        <lucide-icon [img]="DollarSign" [size]="48"></lucide-icon>
+        <h3>No hay pagos registrados</h3>
+        <p>Los pagos registrados por inquilinos aparecerán aquí</p>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table mat-table [dataSource]="paymentService.payments()" class="payments-table">
+          <!-- ID Column -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let payment">#{{ payment.id }}</td>
+          </ng-container>
+
+          <!-- Tenant Column -->
+          <ng-container matColumnDef="tenant">
+            <th mat-header-cell *matHeaderCellDef>Inquilino</th>
+            <td mat-cell *matCellDef="let payment">{{ getTenantName(payment) }}</td>
+          </ng-container>
+
+          <!-- Property Column -->
+          <ng-container matColumnDef="property">
+            <th mat-header-cell *matHeaderCellDef>Propiedad</th>
+            <td mat-cell *matCellDef="let payment">{{ getPropertyName(payment) }}</td>
+          </ng-container>
+
+          <!-- Amount Column -->
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Monto</th>
+            <td mat-cell *matCellDef="let payment">
+              <strong>{{ formatCurrency(payment.amount, payment.currency) }}</strong>
+            </td>
+          </ng-container>
+
+          <!-- Currency Column -->
+          <ng-container matColumnDef="currency">
+            <th mat-header-cell *matHeaderCellDef>Moneda</th>
+            <td mat-cell *matCellDef="let payment">
+              {{ payment.currency || 'USD' }}
+            </td>
+          </ng-container>
+
+          <!-- Type Column -->
+          <ng-container matColumnDef="type">
+            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <td mat-cell *matCellDef="let payment">
+              {{ getTypeLabel(payment.payment_type) }}
+            </td>
+          </ng-container>
+
+          <!-- Method Column -->
+          <ng-container matColumnDef="method">
+            <th mat-header-cell *matHeaderCellDef>Método</th>
+            <td mat-cell *matCellDef="let payment">
+              {{ getMethodLabel(payment.payment_method) }}
+            </td>
+          </ng-container>
+
+          <!-- Payment Date Column -->
+          <ng-container matColumnDef="payment_date">
+            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <td mat-cell *matCellDef="let payment">
+              {{ payment.payment_date | date:'dd/MM/yyyy' }}
+            </td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let payment">
+              <mat-chip [style.background-color]="getStatusColor(payment.status)"
+                        style="color: white;">
+                {{ getStatusLabel(payment.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let payment">
+              <div class="action-buttons">
+                @if (payment.status === PaymentStatus.PENDING) {
+                  <button mat-icon-button color="primary"
+                          (click)="approvePayment(payment)"
+                          matTooltip="Aprobar">
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                  </button>
+                  <button mat-icon-button color="warn"
+                          (click)="rejectPayment(payment)"
+                          matTooltip="Rechazar">
+                    <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
+                  </button>
+                }
+                <button mat-icon-button
+                        (click)="viewPaymentDetail(payment)"
+                        matTooltip="Ver Detalle">
+                  <lucide-icon [img]="Eye" [size]="20"></lucide-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <!-- Table Summary -->
+      <div class="table-footer">
+        <p>Total de pagos: <strong>{{ paymentService.payments().length }}</strong></p>
+        <p>Monto total: <strong>{{ formatCurrency(totalAmount()) }}</strong></p>
+      </div>
+    }
+  </mat-card>
+
+  <!-- Payment Detail Modal -->
+  @if (selectedPayment(); as payment) {
+    <div class="modal-overlay" (click)="selectedPayment.set(null)">
+      <mat-card class="detail-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Detalle del Pago #{{ payment.id }}</h2>
+          <button mat-icon-button (click)="selectedPayment.set(null)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="modal-content">
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Inquilino:</label>
+              <p>{{ getTenantName(payment) }}</p>
+            </div>
+
+            <div class="detail-item">
+              <label>Propiedad:</label>
+              <p>{{ getPropertyName(payment) }}</p>
+            </div>
+
+            <div class="detail-item">
+              <label>Monto:</label>
+              <p><strong>{{ formatCurrency(payment.amount, payment.currency) }}</strong></p>
+            </div>
+
+            <div class="detail-item">
+              <label>Moneda:</label>
+              <p>{{ payment.currency || 'USD' }} - {{ getCurrencyLabel(payment.currency || Currency.USD) }}</p>
+            </div>
+
+            <div class="detail-item">
+              <label>Tipo:</label>
+              <p>{{ getTypeLabel(payment.payment_type) }}</p>
+            </div>
+
+            <div class="detail-item">
+              <label>Método:</label>
+              <p>{{ getMethodLabel(payment.payment_method) }}</p>
+            </div>
+
+            <div class="detail-item">
+              <label>Fecha de Pago:</label>
+              <p>{{ payment.payment_date | date:'dd/MM/yyyy' }}</p>
+            </div>
+
+            @if (payment.reference_number) {
+              <div class="detail-item">
+                <label>Número de Referencia:</label>
+                <p>{{ payment.reference_number }}</p>
+              </div>
+            }
+
+            @if (payment.check_number) {
+              <div class="detail-item">
+                <label>Número de Cheque:</label>
+                <p>{{ payment.check_number }}</p>
+              </div>
+            }
+
+            <div class="detail-item">
+              <label>Estado:</label>
+              <p>
+                <mat-chip [style.background-color]="getStatusColor(payment.status)"
+                          style="color: white;">
+                  {{ getStatusLabel(payment.status) }}
+                </mat-chip>
+              </p>
+            </div>
+
+            @if (payment.notes) {
+              <div class="detail-item full-width">
+                <label>Notas del Inquilino:</label>
+                <p>{{ payment.notes }}</p>
+              </div>
+            }
+
+            @if (payment.admin_notes) {
+              <div class="detail-item full-width">
+                <label>Notas del Admin:</label>
+                <p>{{ payment.admin_notes }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          @if (payment.status === PaymentStatus.PENDING) {
+            <button mat-raised-button color="primary" (click)="approvePayment(payment)">
+              <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+              Aprobar
+            </button>
+            <button mat-raised-button color="warn" (click)="rejectPayment(payment)">
+              <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
+              Rechazar
+            </button>
+          }
+          <button mat-stroked-button (click)="selectedPayment.set(null)">
+            Cerrar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+  }
+
+  <!-- Create Payment Modal -->
+  @if (showCreateForm()) {
+    <div class="modal-overlay" (click)="closeCreateForm()">
+      <mat-card class="detail-modal create-payment-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Registrar Nuevo Pago</h2>
+          <button mat-icon-button (click)="closeCreateForm()">
+            <lucide-icon [img]="X" [size]="20"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="modal-content">
+          <form [formGroup]="createPaymentForm" (ngSubmit)="submitCreatePayment()">
+            <div class="form-grid">
+              <!-- Buscar Inquilino (Autocomplete) -->
+              <mat-form-field class="full-width">
+                <mat-label>Buscar Inquilino</mat-label>
+                <lucide-icon matIconPrefix [img]="Search" [size]="20"></lucide-icon>
+                <input
+                  matInput
+                  [formControl]="tenantSearchControl"
+                  [matAutocomplete]="autoTenant"
+                  placeholder="Escribe el nombre o email del inquilino">
+                <mat-autocomplete
+                  #autoTenant="matAutocomplete"
+                  [displayWith]="displayTenantFn"
+                  (optionSelected)="onTenantSelected($event.option.value)">
+                  @for (tenant of filteredTenants$ | async; track tenant.id) {
+                    <mat-option [value]="tenant">
+                      <div class="tenant-option">
+                        <strong>{{ tenant.name }}</strong>
+                        <span class="tenant-email">{{ tenant.email }}</span>
+                      </div>
+                    </mat-option>
+                  }
+                </mat-autocomplete>
+                <mat-hint>Busca por nombre o email</mat-hint>
+              </mat-form-field>
+
+              <!-- Seleccionar Contrato -->
+              @if (selectedTenant()) {
+                <mat-form-field class="full-width">
+                  <mat-label>Seleccionar Contrato</mat-label>
+                  @if (loadingContracts()) {
+                    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                  }
+                  <mat-select
+                    [disabled]="loadingContracts()"
+                    (selectionChange)="onContractSelected($event.value)"
+                    placeholder="Selecciona un contrato">
+                    @for (contract of availableContracts(); track contract.id) {
+                      <mat-option [value]="contract">
+                        <div class="contract-option">
+                          <strong>{{ contract.contract_number }}</strong>
+                          <span>{{ contract.property?.title || 'Propiedad #' + contract.property_id }}</span>
+                          <span class="contract-rent">Bs {{ contract.monthly_rent }}/mes</span>
+                        </div>
+                      </mat-option>
+                    }
+                    @empty {
+                      <mat-option disabled>No hay contratos disponibles</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>
+                    @if (availableContracts().length === 0 && !loadingContracts()) {
+                      Este inquilino no tiene contratos
+                    } @else {
+                      {{ availableContracts().length }} contrato(s) disponible(s)
+                    }
+                  </mat-hint>
+                </mat-form-field>
+              }
+
+              <!-- Propiedad (Auto-llenado) -->
+              @if (selectedContract()) {
+                <mat-form-field class="full-width">
+                  <mat-label>Propiedad</mat-label>
+                  <input
+                    matInput
+                    [value]="selectedContract()?.property?.title || 'Propiedad #' + selectedContract()?.property_id"
+                    readonly
+                    disabled>
+                  <mat-hint>Se llena automáticamente del contrato seleccionado</mat-hint>
+                </mat-form-field>
+              }
+
+              <!-- Amount -->
+              <mat-form-field>
+                <mat-label>Monto</mat-label>
+                <span matTextPrefix>Bs&nbsp;</span>
+                <input matInput type="number" formControlName="amount" placeholder="0.00" required>
+                <mat-hint>Monto del pago</mat-hint>
+              </mat-form-field>
+
+              <!-- Currency -->
+              <mat-form-field>
+                <mat-label>Moneda</mat-label>
+                <mat-select formControlName="currency" required>
+                  @for (curr of currencies; track curr) {
+                    <mat-option [value]="curr">{{ CurrencyLabels[curr] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Payment Type -->
+              <mat-form-field>
+                <mat-label>Tipo de Pago</mat-label>
+                <mat-select formControlName="payment_type" required>
+                  @for (type of paymentTypes; track type) {
+                    <mat-option [value]="type">{{ PaymentTypeLabels[type] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Payment Method -->
+              <mat-form-field>
+                <mat-label>Método de Pago</mat-label>
+                <mat-select formControlName="payment_method" required>
+                  @for (method of paymentMethods; track method) {
+                    <mat-option [value]="method">{{ PaymentMethodLabels[method] }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <!-- Status -->
+              <mat-form-field>
+                <mat-label>Estado</mat-label>
+                <mat-select formControlName="status">
+                  @for (status of paymentStatuses; track status) {
+                    <mat-option [value]="status">{{ PaymentStatusLabels[status] }}</mat-option>
+                  }
+                </mat-select>
+                <mat-hint>Por defecto se crea como Aprobado</mat-hint>
+              </mat-form-field>
+
+              <!-- Payment Date -->
+              <mat-form-field>
+                <mat-label>Fecha de Pago</mat-label>
+                <input matInput [matDatepicker]="paymentDatePicker" formControlName="payment_date" required>
+                <mat-datepicker-toggle matIconSuffix [for]="paymentDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #paymentDatePicker></mat-datepicker>
+              </mat-form-field>
+
+              <!-- Due Date -->
+              <mat-form-field>
+                <mat-label>Fecha de Vencimiento (Opcional)</mat-label>
+                <input matInput [matDatepicker]="dueDatePicker" formControlName="due_date">
+                <mat-datepicker-toggle matIconSuffix [for]="dueDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #dueDatePicker></mat-datepicker>
+              </mat-form-field>
+
+              <!-- Campos específicos por método de pago -->
+
+              <!-- Tarjeta de Crédito/Débito -->
+              @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
+                   createPaymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD) {
+                <mat-form-field>
+                  <mat-label>Últimos 4 dígitos</mat-label>
+                  <input matInput formControlName="card_last_4_digits"
+                         placeholder="1234" maxlength="4" pattern="[0-9]{4}">
+                  <mat-hint>Últimos 4 dígitos de la tarjeta</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Nombre del Titular</mat-label>
+                  <input matInput formControlName="card_holder_name"
+                         placeholder="Juan Pérez">
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Fecha de Expiración</mat-label>
+                  <input matInput formControlName="card_expiry"
+                         placeholder="MM/YY" maxlength="5">
+                  <mat-hint>Formato: MM/YY</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Código de Autorización (Opcional)</mat-label>
+                  <input matInput formControlName="reference_number"
+                         placeholder="Ej: AUTH-123456">
+                  <mat-hint>Código de autorización de la transacción</mat-hint>
+                </mat-form-field>
+              }
+
+              <!-- Cheque -->
+              @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
+                <mat-form-field>
+                  <mat-label>Número de Cheque</mat-label>
+                  <input matInput formControlName="check_number"
+                         placeholder="Ej: CHK-001">
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Banco Emisor</mat-label>
+                  <input matInput formControlName="bank_name"
+                         placeholder="Banco Nacional">
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                  <input matInput formControlName="bank_account_last_4"
+                         placeholder="5678" maxlength="4">
+                </mat-form-field>
+              }
+
+              <!-- Transferencia -->
+              @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
+                   createPaymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER) {
+                <mat-form-field>
+                  <mat-label>Número de Referencia</mat-label>
+                  <input matInput formControlName="reference_number"
+                         placeholder="Ej: TRF-12345">
+                  <mat-hint>Número de transacción o referencia</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Banco de Origen</mat-label>
+                  <input matInput formControlName="bank_name"
+                         placeholder="Banco del cliente">
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                  <input matInput formControlName="bank_account_last_4"
+                         placeholder="9012" maxlength="4">
+                </mat-form-field>
+              }
+
+              <!-- Efectivo -->
+              @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
+                <mat-form-field>
+                  <mat-label>Recibido por</mat-label>
+                  <input matInput formControlName="received_by"
+                         placeholder="Nombre de quien recibió el pago">
+                  <mat-hint>Persona que recibió el efectivo</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field>
+                  <mat-label>Número de Recibo (Opcional)</mat-label>
+                  <input matInput formControlName="reference_number"
+                         placeholder="Ej: REC-001">
+                  <mat-hint>Número del recibo emitido</mat-hint>
+                </mat-form-field>
+              }
+
+              <!-- Notes -->
+              <mat-form-field class="full-width">
+                <mat-label>Notas del Inquilino (Opcional)</mat-label>
+                <textarea matInput formControlName="notes" rows="2" placeholder="Notas adicionales"></textarea>
+              </mat-form-field>
+
+              <!-- Admin Notes -->
+              <mat-form-field class="full-width">
+                <mat-label>Notas del Admin (Opcional)</mat-label>
+                <textarea matInput formControlName="admin_notes" rows="2" placeholder="Notas administrativas"></textarea>
+              </mat-form-field>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-actions">
+          <button mat-raised-button color="primary" (click)="submitCreatePayment()" [disabled]="createPaymentForm.invalid">
+            <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+            Crear Pago
+          </button>
+          <button mat-stroked-button (click)="closeCreateForm()">
+            Cancelar
+          </button>
+        </div>
+      </mat-card>
+    </div>
+  }
 </div>

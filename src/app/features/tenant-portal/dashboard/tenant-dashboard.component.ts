@@ -34,16 +34,16 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                 </div>
             </div>
 
-            <!-- Alerts / Next Payment -->
+            <!-- Alerts - Pagos Pendientes -->
             @if (paymentService.stats(); as stats) {
-                @if (stats.next_payment_date && isPaymentDueSoon(stats.next_payment_date)) {
+                @if (stats.total_pending > 0) {
                     <mat-card class="alert-card">
                         <lucide-icon [img]="AlertCircle" [size]="24"></lucide-icon>
                         <div class="alert-content">
-                            <h3>Pago Próximo a Vencer</h3>
-                            <p>Tu próximo pago de <strong>\${{ stats.next_payment_amount?.toLocaleString() }}</strong> vence el {{ formatDate(stats.next_payment_date) }}</p>
+                            <h3>Tienes Pagos Pendientes</h3>
+                            <p>Tienes <strong>{{ stats.total_pending }}</strong> pago(s) pendiente(s) de aprobación por un total de <strong>{{ formatCurrency(stats.total_amount_pending) }}</strong></p>
                         </div>
-                        <button mat-raised-button color="primary" [routerLink]="pagosNuevoUrl()">Pagar Ahora</button>
+                        <button mat-raised-button color="primary" [routerLink]="pagosListUrl()">Ver Pagos</button>
                     </mat-card>
                 }
             }
@@ -206,7 +206,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                             @for (payment of paymentService.payments().slice(0, 5); track payment.id) {
                                 <div class="payment-item">
                                     <div class="payment-info">
-                                        <span class="date">{{ formatDate(payment.payment_date || payment.due_date) }}</span>
+                                        <span class="date">{{ formatDate(payment.payment_date) }}</span>
                                         <span class="amount">\${{ payment.amount.toLocaleString() }}</span>
                                     </div>
                                     <span class="status-badge" [class]="'status-' + payment.status.toLowerCase()">
@@ -810,8 +810,9 @@ export class TenantDashboardComponent implements OnInit {
         this.maintenanceService.loadStats();
         this.paymentService.loadPayments();
         this.paymentService.loadStats();
-        this.messageService.loadMessages();
-        this.documentService.loadDocuments();
+        // TODO: Implementar endpoints de mensajes y documentos en el backend
+        // this.messageService.loadMessages();
+        // this.documentService.loadDocuments();
     }
 
     getFirstName(): string {
@@ -819,12 +820,23 @@ export class TenantDashboardComponent implements OnInit {
         return name.split(' ')[0] || 'Usuario';
     }
 
-    formatDate(date: Date): string {
-        return date.toLocaleDateString('es-ES', {
+    formatDate(date: Date | string): string {
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        return dateObj.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: 'short',
             year: 'numeric'
         });
+    }
+
+    formatCurrency(amount: number | string): string {
+        // Convert to number if it's a string (Decimal from backend)
+        const numAmount = typeof amount === 'number' ? amount : parseFloat(amount || '0');
+        return `${numAmount.toFixed(2)} BOB`;
+    }
+
+    pagosListUrl(): string {
+        return this.slugService.buildUrl('/portal/pagos');
     }
 
     isPaymentDueSoon(date: Date): boolean {

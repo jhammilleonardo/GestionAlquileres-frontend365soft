@@ -6,6 +6,23 @@ Esta documentación está diseñada para el equipo de frontend que trabajará en
 
 ---
 
+## ⚠️ IMPORTANTE - Actualizaciones de Seguridad
+
+**Última actualización de seguridad**: 14 de Febrero de 2026
+
+Esta documentación contiene información base sobre los endpoints. Para información actualizada sobre:
+- ✅ **Seguridad y Rate Limiting**: Ver `SECURITY_FIXES_COMPLETED.md`
+- ✅ **Estado de Endpoints**: Ver `ENDPOINTS_VERIFICATION.md`
+- ✅ **Credenciales de Prueba**: Ver `TESTING_PAYMENTS.md`
+
+**Cambios importantes aplicados**:
+- JWT_SECRET actualizado (64 chars) - tokens anteriores inválidos
+- Rate Limiting: 5 intentos login/15min
+- Credenciales de prueba: sandy@gmail.com / Sandy123! (slug: jhammil123)
+- Consulta `ENDPOINTS_VERIFICATION.md` para la lista actualizada completa
+
+---
+
 ## Índice
 
 1. [Autenticación y Registro](#1-autenticación-y-registro)

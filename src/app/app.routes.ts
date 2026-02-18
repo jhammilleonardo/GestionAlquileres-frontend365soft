@@ -16,7 +16,8 @@ import { RegisterComponent } from './features/auth/register.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
 import { LandingComponent } from './features/landing/landing.component';
 import { TenantRegisterComponent } from './features/portal-publico/tenant-register/tenant-register.component';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, adminLoginGuard } from './core/guards/auth.guard';
+import { tenantLoginGuard } from './core/guards/tenant-auth.guard';
 
 export const routes: Routes = [
   // ==================== LANDING PAGE (PÚBLICO) ====================
@@ -28,7 +29,8 @@ export const routes: Routes = [
   // ==================== AUTH ADMIN (PÚBLICO - SIN SLUG) ====================
   {
     path: 'login',
-    component: LoginComponent
+    component: LoginComponent,
+    canActivate: [adminLoginGuard]
   },
   {
     path: 'register',
@@ -44,7 +46,11 @@ export const routes: Routes = [
     path: ':slug',
     children: [
       // ==================== AUTH INQUILINO (CON SLUG) ====================
-      { path: 'login', component: LoginComponent },
+      {
+        path: 'login',
+        loadComponent: () => import('./features/tenant-portal/auth/tenant-login.component').then(m => m.TenantLoginComponent),
+        canActivate: [tenantLoginGuard]
+      },
       { path: 'register', component: TenantRegisterComponent },
 
       // ==================== PORTAL PÚBLICO ====================

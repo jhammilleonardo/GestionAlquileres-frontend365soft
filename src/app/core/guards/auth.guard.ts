@@ -15,7 +15,8 @@ export const authGuard: CanActivateFn = (route, state) => {
   if (!slug) {
     // No slug in URL, redirect to login
     router.navigate(['/login'], {
-      queryParams: { returnUrl: state.url }
+      queryParams: { returnUrl: state.url },
+      replaceUrl: true
     });
     return false;
   }
@@ -36,9 +37,40 @@ export const authGuard: CanActivateFn = (route, state) => {
     authService.logout();
   }
 
-  // Redirect to login with slug and return url
-  router.navigate(['/', slug, 'login'], {
-    queryParams: { returnUrl: state.url }
+  // Redirect to ADMIN login (sin slug) con return url
+  // Usar replaceUrl para que la redirección no quede en el historial
+  router.navigate(['/login'], {
+    queryParams: { returnUrl: state.url },
+    replaceUrl: true
   });
   return false;
+};
+
+/**
+ * Guard para prevenir que usuarios autenticados accedan a la página de login
+ * Similar al tenantLoginGuard pero para admin
+ */
+export const adminLoginGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  // Si ya está autenticado, redirigir al dashboard
+  if (authService.isAuth()) {
+    const userJson = localStorage.getItem('admin_user');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        const userSlug = user.tenant_slug;
+        if (userSlug) {
+          // Redirigir al dashboard con replaceUrl para limpiar el historial
+          router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true });
+          return false;
+        }
+      } catch (e) {
+        console.error('Error parsing user data', e);
+      }
+    }
+  }
+
+  return true;
 };

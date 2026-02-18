@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -508,6 +508,7 @@ export class LoginComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private fb = inject(FormBuilder);
+    private location = inject(Location);
 
     showPassword = signal(false);
     isLoading = signal(false);
@@ -540,7 +541,11 @@ export class LoginComponent {
                     const user = JSON.parse(userJson);
                     const userSlug = user.tenant_slug;
                     if (userSlug) {
-                        this.router.navigate(['/', userSlug, 'dashboard']);
+                        // Usar replaceUrl para que el login no quede en el historial
+                        this.router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true }).then(() => {
+                            // Limpiar el estado para asegurar que no haya query params en el historial
+                            this.location.replaceState(`/${userSlug}/dashboard`);
+                        });
                         return;
                     }
                 } catch (e) {
@@ -548,7 +553,7 @@ export class LoginComponent {
                 }
             }
             // Fallback if no slug found
-            this.router.navigate(['/dashboard']);
+            this.router.navigate(['/dashboard'], { replaceUrl: true });
         }
 
         // If we have a slug, don't redirect automatically - let the user login
@@ -592,7 +597,15 @@ export class LoginComponent {
                     const userSlug = response.user.tenant_slug;
 
                     if (userSlug) {
-                        this.router.navigate(['/', userSlug, 'dashboard']);
+                        // Navegar al dashboard con replaceUrl para limpiar el historial
+                        // Esto previene que el usuario vuelva al login al presionar el botón de retroceso
+                        this.router.navigate(['/', userSlug, 'dashboard'], {
+                            replaceUrl: true
+                        }).then(() => {
+                            // Limpiar cualquier query param de returnUrl del estado del navegador
+                            // Esto asegura que el historial no tenga entradas con ?returnUrl=...
+                            this.location.replaceState(`/${userSlug}/dashboard`);
+                        });
                     } else {
                         this.errorMessage.set('No se pudo determinar la organización');
                     }

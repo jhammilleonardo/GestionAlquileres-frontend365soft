@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PropertyService } from '../../../core/services/property.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { Property } from '../../../core/models/property.model';
 import { ApplicationModalComponent } from '../application-modal/application-modal.component';
 import { ContactModalComponent } from '../contact-modal/contact-modal.component';
@@ -29,12 +30,47 @@ export class PropertyDetailComponent implements OnInit {
   showContactModal = false;
   showMapModal = false;
 
+  private slugService = inject(SlugService);
+
   constructor(
     private route: ActivatedRoute,
     private propertyService: PropertyService
   ) { }
 
   ngOnInit(): void {
+    // Wait for slug to be set before loading property details
+    this.waitForSlugAndLoadProperty();
+  }
+
+  /**
+   * Wait for the slug to be set in SlugService before loading property details
+   * This fixes the race condition where property details are loaded before the slug is available
+   */
+  private waitForSlugAndLoadProperty(): void {
+    const slug = this.slugService.getSlug();
+    
+    if (slug) {
+      // Slug is already set, load property immediately
+      console.log('PropertyDetailComponent - Slug ya disponible:', slug);
+      this.loadPropertyById();
+    } else {
+      // Slug not set yet, get it from the route and set it
+      console.log('PropertyDetailComponent - Esperando slug de la ruta...');
+      this.route.parent?.paramMap.subscribe(params => {
+        const slugFromRoute = params.get('slug');
+        if (slugFromRoute) {
+          console.log('PropertyDetailComponent - Slug obtenido de ruta:', slugFromRoute);
+          this.slugService.setSlug(slugFromRoute);
+          // Wait a small amount for the slug to be set in the service
+          setTimeout(() => {
+            this.loadPropertyById();
+          }, 100);
+        }
+      });
+    }
+  }
+
+  private loadPropertyById(): void {
     const propertyIdStr = this.route.snapshot.paramMap.get('id');
     if (propertyIdStr) {
       const propertyId = parseInt(propertyIdStr, 10);

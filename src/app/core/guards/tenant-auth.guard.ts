@@ -28,8 +28,10 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
     }
 
     // Redirect to tenant login with slug
+    // Usar replaceUrl para que la redirección no quede en el historial
     router.navigate(['/', slug, 'login'], {
-        queryParams: { returnUrl: state.url }
+        queryParams: { returnUrl: state.url },
+        replaceUrl: true
     });
     return false;
 };
@@ -49,11 +51,12 @@ export const tenantLoginGuard: CanActivateFn = (route, state) => {
     }
 
     // If already logged in, redirect to dashboard with slug
+    // Usar replaceUrl para que el login no quede en el historial
     if (authService.isAuthenticated()) {
         if (slug) {
-            router.navigate(['/', slug, 'portal', 'dashboard']);
+            router.navigate(['/', slug, 'portal', 'dashboard'], { replaceUrl: true });
         } else {
-            router.navigate(['/portal/dashboard']);
+            router.navigate(['/portal/dashboard'], { replaceUrl: true });
         }
         return false;
     }

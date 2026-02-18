@@ -2,61 +2,65 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Payment, PaymentSchedule, PaymentStats, CreatePaymentDto } from '../models/payment.model';
+import { Payment, PaymentStats, CreatePaymentDto, PaymentStatus } from '../models/payment.model';
+import { SlugService } from './slug.service';
 
 @Injectable({
     providedIn: 'root'
 })
 export class TenantPaymentService {
     private http = inject(HttpClient);
-    
+    private slugService = inject(SlugService);
+
     // Reactive state
     private paymentsSignal = signal<Payment[]>([]);
-    private scheduleSignal = signal<PaymentSchedule[]>([]);
     private statsSignal = signal<PaymentStats | null>(null);
     private isLoadingSignal = signal(false);
     private errorSignal = signal<string | null>(null);
 
     // Public readonly signals
     payments = this.paymentsSignal.asReadonly();
-    schedule = this.scheduleSignal.asReadonly();
     stats = this.statsSignal.asReadonly();
     isLoading = this.isLoadingSignal.asReadonly();
     error = this.errorSignal.asReadonly();
 
     // Computed values
-    pendingPayments = computed(() => 
-        this.paymentsSignal().filter(p => p.status === 'PENDING')
+    pendingPayments = computed(() =>
+        this.paymentsSignal().filter(p => p.status === PaymentStatus.PENDING)
     );
-    
-    completedPayments = computed(() => 
-        this.paymentsSignal().filter(p => p.status === 'COMPLETED')
+
+    approvedPayments = computed(() =>
+        this.paymentsSignal().filter(p => p.status === PaymentStatus.APPROVED)
+    );
+
+    rejectedPayments = computed(() =>
+        this.paymentsSignal().filter(p => p.status === PaymentStatus.REJECTED)
     );
 
     /**
+     * Obtener el endpoint base con slug
+     */
+    private getBaseUrl(): string {
+        const endpoint = this.slugService.buildApiEndpoint('tenant/payments');
+        return `${environment.apiUrl}${endpoint}`;
+    }
+
+    /**
      * Cargar historial de pagos del inquilino
-     * NOTE: Requiere endpoint backend: GET /tenant/payments
+     * GET /:slug/tenant/payments
      */
     loadPayments(): void {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        this.http.get<Payment[]>(`${environment.apiUrl}tenant/payments`)
+        this.http.get<Payment[]>(this.getBaseUrl())
             .pipe(
                 tap(payments => {
-                    // Convertir fechas de string a Date
-                    const parsedPayments = payments.map(p => ({
-                        ...p,
-                        due_date: new Date(p.due_date),
-                        payment_date: p.payment_date ? new Date(p.payment_date) : undefined,
-                        created_at: new Date(p.created_at),
-                        updated_at: new Date(p.updated_at)
-                    }));
-                    this.paymentsSignal.set(parsedPayments);
+                    this.paymentsSignal.set(payments);
                     this.isLoadingSignal.set(false);
                 }),
                 catchError(error => {
-                    this.errorSignal.set('Error al cargar los pagos');
+                    this.errorSignal.set(error.error?.message || 'Error al cargar los pagos');
                     this.isLoadingSignal.set(false);
                     console.error('Error loading payments:', error);
                     return of([]);
@@ -66,39 +70,15 @@ export class TenantPaymentService {
     }
 
     /**
-     * Cargar calendario de pagos programados
-     */
-    loadSchedule(): void {
-        this.http.get<PaymentSchedule[]>(`${environment.apiUrl}/tenant/payment-schedule`)
-            .pipe(
-                tap(schedule => {
-                    const parsedSchedule = schedule.map(s => ({
-                        ...s,
-                        due_date: new Date(s.due_date)
-                    }));
-                    this.scheduleSignal.set(parsedSchedule);
-                }),
-                catchError(error => {
-                    console.error('Error loading payment schedule:', error);
-                    return of([]);
-                })
-            )
-            .subscribe();
-    }
-
-    /**
      * Cargar estadísticas de pagos
-     * NOTE: Requiere endpoint backend: GET /tenant/payment-stats
+     * GET /:slug/tenant/payments/stats
      */
     loadStats(): void {
-        this.http.get<PaymentStats>(`${environment.apiUrl}tenant/payment-stats`)
+        const endpoint = this.slugService.buildApiEndpoint('tenant/payments/stats');
+        this.http.get<PaymentStats>(`${environment.apiUrl}${endpoint}`)
             .pipe(
                 tap(stats => {
-                    const parsedStats = {
-                        ...stats,
-                        next_payment_date: stats.next_payment_date ? new Date(stats.next_payment_date) : undefined
-                    };
-                    this.statsSignal.set(parsedStats);
+                    this.statsSignal.set(stats);
                 }),
                 catchError(error => {
                     console.error('Error loading payment stats:', error);
@@ -110,24 +90,26 @@ export class TenantPaymentService {
 
     /**
      * Registrar un nuevo pago
+     * POST /:slug/tenant/payments
      */
     createPayment(payment: CreatePaymentDto): Observable<Payment> {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
-        return this.http.post<Payment>(`${environment.apiUrl}/tenant/payments`, payment)
+        // Formatear la fecha si es un objeto Date
+        const formattedPayment = {
+            ...payment,
+            payment_date: payment.payment_date instanceof Date
+                ? payment.payment_date.toISOString().split('T')[0]
+                : payment.payment_date
+        };
+
+        return this.http.post<Payment>(this.getBaseUrl(), formattedPayment)
             .pipe(
                 tap(newPayment => {
-                    const parsedPayment = {
-                        ...newPayment,
-                        due_date: new Date(newPayment.due_date),
-                        payment_date: newPayment.payment_date ? new Date(newPayment.payment_date) : undefined,
-                        created_at: new Date(newPayment.created_at),
-                        updated_at: new Date(newPayment.updated_at)
-                    };
-                    this.paymentsSignal.update(payments => [parsedPayment, ...payments]);
+                    this.paymentsSignal.update(payments => [newPayment, ...payments]);
                     this.isLoadingSignal.set(false);
-                    
+
                     // Recargar stats
                     this.loadStats();
                 }),
@@ -141,22 +123,15 @@ export class TenantPaymentService {
 
     /**
      * Obtener un pago específico
+     * GET /:slug/tenant/payments/:id
      */
     getPayment(id: number): Observable<Payment> {
-        return this.http.get<Payment>(`${environment.apiUrl}/tenant/payments/${id}`)
+        return this.http.get<Payment>(`${this.getBaseUrl()}/${id}`)
             .pipe(
                 tap(payment => {
-                    const parsedPayment = {
-                        ...payment,
-                        due_date: new Date(payment.due_date),
-                        payment_date: payment.payment_date ? new Date(payment.payment_date) : undefined,
-                        created_at: new Date(payment.created_at),
-                        updated_at: new Date(payment.updated_at)
-                    };
-                    
                     // Actualizar en la lista si existe
-                    this.paymentsSignal.update(payments => 
-                        payments.map(p => p.id === parsedPayment.id ? parsedPayment : p)
+                    this.paymentsSignal.update(payments =>
+                        payments.map(p => p.id === payment.id ? payment : p)
                     );
                 }),
                 catchError(error => {
@@ -164,15 +139,6 @@ export class TenantPaymentService {
                     throw error;
                 })
             );
-    }
-
-    /**
-     * Descargar recibo de pago
-     */
-    downloadReceipt(paymentId: number): Observable<Blob> {
-        return this.http.get(`${environment.apiUrl}/tenant/payments/${paymentId}/receipt`, {
-            responseType: 'blob'
-        });
     }
 
     /**

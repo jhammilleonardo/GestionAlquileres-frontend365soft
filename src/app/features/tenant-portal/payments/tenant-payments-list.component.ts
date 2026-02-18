@@ -8,10 +8,10 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
-import { LucideAngularModule, CreditCard, Download, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Clock, Plus } from 'lucide-angular';
+import { LucideAngularModule, CreditCard, Download, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Clock, Plus, XCircle } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } from '../../../core/models/payment.model';
+import { Payment, PaymentStatus, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels, PaymentStatusColors, Currency, CurrencyLabels, CurrencySymbols } from '../../../core/models/payment.model';
 
 @Component({
     selector: 'app-tenant-payments-list',
@@ -53,8 +53,8 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
                             <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-value">\${{ stats.total_paid.toLocaleString() }}</div>
-                            <div class="stat-label">Total Pagado</div>
+                            <div class="stat-value">{{ stats.total_payments }}</div>
+                            <div class="stat-label">Total Pagos</div>
                         </div>
                     </mat-card>
 
@@ -63,159 +63,93 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
                             <lucide-icon [img]="Clock" [size]="24"></lucide-icon>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-value">\${{ stats.total_pending.toLocaleString() }}</div>
-                            <div class="stat-label">Pendiente</div>
+                            <div class="stat-value">{{ stats.total_pending }}</div>
+                            <div class="stat-label">Pendientes</div>
+                            <p class="stat-amount">{{ formatCurrency(stats.total_amount_pending, Currency.USD) }}</p>
                         </div>
                     </mat-card>
 
-                    @if (stats.next_payment_date) {
-                        <mat-card class="stat-card next-payment">
-                            <div class="stat-icon upcoming">
-                                <lucide-icon [img]="Calendar" [size]="24"></lucide-icon>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value">\${{ stats.next_payment_amount?.toLocaleString() }}</div>
-                                <div class="stat-label">
-                                    Próximo Pago: {{ formatDate(stats.next_payment_date) }}
-                                </div>
-                            </div>
-                        </mat-card>
-                    }
-
                     <mat-card class="stat-card">
                         <div class="stat-icon success">
-                            <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
+                            <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
                         </div>
                         <div class="stat-content">
-                            <div class="stat-value">{{ stats.on_time_payments }}</div>
-                            <div class="stat-label">Pagos a Tiempo</div>
+                            <div class="stat-value">{{ stats.total_approved }}</div>
+                            <div class="stat-label">Aprobados</div>
+                            <p class="stat-amount">{{ formatCurrency(stats.total_amount_approved, Currency.USD) }}</p>
+                        </div>
+                    </mat-card>
+
+                    <mat-card class="stat-card">
+                        <div class="stat-icon rejected">
+                            <lucide-icon [img]="XCircle" [size]="24"></lucide-icon>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">{{ stats.total_rejected }}</div>
+                            <div class="stat-label">Rechazados</div>
                         </div>
                     </mat-card>
                 </div>
             }
 
-            <!-- Tabs -->
-            <mat-tab-group class="tabs">
-                <mat-tab label="Historial de Pagos">
-                    @if (paymentService.isLoading()) {
-                        <div class="payments-table-container">
-                            <table class="payments-table">
-                                <thead>
+            <!-- Payment List -->
+            @if (paymentService.isLoading()) {
+                <div class="loading">
+                    <mat-spinner diameter="40"></mat-spinner>
+                    <p>Cargando pagos...</p>
+                </div>
+            } @else if (paymentService.payments().length === 0) {
+                <mat-card>
+                    <div class="empty-state">
+                        <lucide-icon [img]="CreditCard" [size]="64"></lucide-icon>
+                        <h2>No hay pagos registrados</h2>
+                        <p>Aún no tienes pagos en tu historial</p>
+                        <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
+                            <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+                            Registrar Primer Pago
+                        </button>
+                    </div>
+                </mat-card>
+            } @else {
+                <mat-card>
+                    <div class="payments-table-container">
+                        <table class="payments-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Método</th>
+                                    <th>Referencia</th>
+                                    <th>Monto</th>
+                                    <th>Moneda</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (payment of paymentService.payments(); track payment.id) {
                                     <tr>
-                                        <th>Fecha</th>
-                                        <th>Tipo</th>
-                                        <th>Método</th>
-                                        <th>Referencia</th>
-                                        <th>Monto</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
+                                        <td>{{ formatPaymentDate(payment.payment_date) }}</td>
+                                        <td>{{ paymentTypeLabels[payment.payment_type] }}</td>
+                                        <td>{{ paymentMethodLabels[payment.payment_method] }}</td>
+                                        <td>
+                                            <span class="reference">{{ payment.reference_number || '-' }}</span>
+                                        </td>
+                                        <td class="amount">{{ formatCurrency(payment.amount, payment.currency) }}</td>
+                                        <td>{{ payment.currency || 'USD' }}</td>
+                                        <td>
+                                            <span class="status-badge"
+                                                  [style.background-color]="getStatusColor(payment.status)"
+                                                  style="color: white;">
+                                                {{ paymentStatusLabels[payment.status] }}
+                                            </span>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @for (i of [1,2,3,4,5]; track i) {
-                                        <tr class="skeleton-row">
-                                            <td><div class="skeleton-line short"></div></td>
-                                            <td><div class="skeleton-line short"></div></td>
-                                            <td><div class="skeleton-line short"></div></td>
-                                            <td><div class="skeleton-line medium"></div></td>
-                                            <td><div class="skeleton-line short"></div></td>
-                                            <td><div class="skeleton-badge"></div></td>
-                                            <td><div class="skeleton-line short"></div></td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    } @else if (paymentService.payments().length === 0) {
-                        <div class="empty-state">
-                            <lucide-icon [img]="CreditCard" [size]="64"></lucide-icon>
-                            <h2>No hay pagos registrados</h2>
-                            <p>Aún no tienes pagos en tu historial</p>
-                        </div>
-                    } @else {
-                        <div class="payments-table-container">
-                            <table class="payments-table">
-                                <thead>
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th>Tipo</th>
-                                        <th>Método</th>
-                                        <th>Referencia</th>
-                                        <th>Monto</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for (payment of paymentService.payments(); track payment.id) {
-                                        <tr>
-                                            <td>{{ formatDate(payment.payment_date || payment.due_date) }}</td>
-                                            <td>{{ paymentTypeLabels[payment.payment_type] }}</td>
-                                            <td>{{ paymentMethodLabels[payment.payment_method] }}</td>
-                                            <td>
-                                                <span class="reference">{{ payment.reference_number || '-' }}</span>
-                                            </td>
-                                            <td class="amount">\${{ payment.amount.toLocaleString() }}</td>
-                                            <td>
-                                                <span class="status-badge" [class]="'status-' + payment.status.toLowerCase()">
-                                                    {{ paymentStatusLabels[payment.status] }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if (payment.status === 'COMPLETED') {
-                                                    <button 
-                                                        mat-icon-button 
-                                                        (click)="downloadReceipt(payment.id)"
-                                                        matTooltip="Descargar Recibo">
-                                                        <lucide-icon [img]="Download" [size]="18"></lucide-icon>
-                                                    </button>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </mat-tab>
-
-                <mat-tab label="Calendario de Pagos">
-                    @if (paymentService.schedule().length === 0) {
-                        <div class="empty-state">
-                            <lucide-icon [img]="Calendar" [size]="64"></lucide-icon>
-                            <h2>No hay pagos programados</h2>
-                            <p>No tienes pagos programados próximamente</p>
-                        </div>
-                    } @else {
-                        <div class="schedule-list">
-                            @for (item of paymentService.schedule(); track item.id) {
-                                <mat-card class="schedule-item" [class.paid]="item.is_paid">
-                                    <div class="schedule-date">
-                                        <div class="date-day">{{ item.due_date.getDate() }}</div>
-                                        <div class="date-month">{{ formatMonth(item.due_date) }}</div>
-                                    </div>
-                                    <div class="schedule-content">
-                                        <h3>{{ paymentTypeLabels[item.payment_type] }}</h3>
-                                        <p class="amount">\${{ item.amount.toLocaleString() }}</p>
-                                    </div>
-                                    <div class="schedule-status">
-                                        @if (item.is_paid) {
-                                            <lucide-icon [img]="CheckCircle2" [size]="24" class="icon-success"></lucide-icon>
-                                            <span class="status-text success">Pagado</span>
-                                        } @else if (isOverdue(item.due_date)) {
-                                            <lucide-icon [img]="AlertCircle" [size]="24" class="icon-danger"></lucide-icon>
-                                            <span class="status-text danger">Vencido</span>
-                                        } @else {
-                                            <lucide-icon [img]="Clock" [size]="24" class="icon-warning"></lucide-icon>
-                                            <span class="status-text warning">Pendiente</span>
-                                        }
-                                    </div>
-                                </mat-card>
-                            }
-                        </div>
-                    }
-                </mat-tab>
-            </mat-tab-group>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </mat-card>
+            }
         </div>
     `,
     styles: [`
@@ -275,10 +209,16 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
             color: white;
         }
 
-        .stat-icon.total { background: var(--mat-sys-primary); }
+        .stat-icon.total { background: #3b82f6; }
         .stat-icon.pending { background: #f59e0b; }
-        .stat-icon.upcoming { background: var(--mat-sys-primary); }
         .stat-icon.success { background: #10b981; }
+        .stat-icon.rejected { background: #ef4444; }
+
+        .stat-amount {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 4px 0 0 0;
+        }
 
         .stat-value {
             font-size: 1.5rem;
@@ -537,7 +477,7 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
             }
 
             .payments-table {
-                min-width: 650px;
+                min-width: 720px;
             }
 
             .payments-table th,
@@ -579,7 +519,7 @@ import { Payment, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels } 
             }
 
             .payments-table {
-                min-width: 600px;
+                min-width: 670px;
             }
 
             .schedule-item {
@@ -632,42 +572,48 @@ export class TenantPaymentsListComponent implements OnInit {
     readonly CheckCircle2 = CheckCircle2;
     readonly Clock = Clock;
     readonly Plus = Plus;
+    readonly XCircle = XCircle;
 
     paymentService = inject(TenantPaymentService);
     private slugService = inject(SlugService);
 
+    PaymentStatus = PaymentStatus;
+    Currency = Currency;
     paymentStatusLabels = PaymentStatusLabels;
     paymentTypeLabels = PaymentTypeLabels;
     paymentMethodLabels = PaymentMethodLabels;
+    paymentStatusColors = PaymentStatusColors;
+    currencyLabels = CurrencyLabels;
+    currencySymbols = CurrencySymbols;
 
     // URL para registrar nuevo pago
     nuevoPagoUrl = computed(() => this.slugService.buildUrl('/portal/pagos/nuevo'));
 
     ngOnInit(): void {
         this.paymentService.loadPayments();
-        this.paymentService.loadSchedule();
         this.paymentService.loadStats();
     }
 
-    downloadReceipt(paymentId: number): void {
-        // SIMULACIÓN: Función deshabilitada temporalmente
-        alert('Función de descarga de recibos no disponible en modo simulación');
-        console.log('Descargar recibo para pago:', paymentId);
-    }
-
-    formatDate(date: Date): string {
-        return date.toLocaleDateString('es-ES', {
+    formatPaymentDate(date: Date | string): string {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        return d.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: 'short',
             year: 'numeric'
         });
     }
 
-    formatMonth(date: Date): string {
-        return date.toLocaleDateString('es-ES', { month: 'short' });
+    formatCurrency(amount: number | string, currency?: Currency): string {
+        const curr = currency || Currency.USD;
+        const symbol = CurrencySymbols[curr];
+        // Convert to number if it's a string (backend sometimes returns strings)
+        const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+        // Handle NaN or invalid values
+        if (isNaN(numAmount)) return `${symbol}0.00`;
+        return `${symbol}${numAmount.toFixed(2)}`;
     }
 
-    isOverdue(date: Date): boolean {
-        return date < new Date();
+    getStatusColor(status: PaymentStatus): string {
+        return PaymentStatusColors[status];
     }
 }
