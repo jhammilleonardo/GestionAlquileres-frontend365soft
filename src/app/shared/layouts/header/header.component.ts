@@ -11,6 +11,7 @@ import { LucideAngularModule, Menu, Bell, Search, User, Settings, LogOut, Check,
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { NotificationService, Notification } from '../../../core/services/notification.service';
+import { SlugService } from '../../../core/services/slug.service';
 
 @Component({
   selector: 'app-header',
@@ -31,6 +32,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private sidebarService = inject(SidebarService);
   private router = inject(Router);
+  private slugService = inject(SlugService);
   notificationService = inject(NotificationService);
 
   currentUser = this.authService.currentUser;
@@ -84,11 +86,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   goToProfile(): void {
-    this.router.navigate(['/perfil']);
+    this.slugService.navigateTo(['perfil']);
   }
 
   goToSettings(): void {
-    this.router.navigate(['/configuracion']);
+    this.slugService.navigateTo(['configuracion']);
   }
 
   logout(): void {

@@ -11,6 +11,8 @@ import { PagosComponent } from './features/pagos/pagos.component';
 import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.component';
 import { ComponentesComponent } from './features/componentes/componentes.component';
 import { NotificationsComponent } from './features/notifications/notifications.component';
+import { AdminPerfilComponent } from './features/perfil/admin-perfil.component';
+import { ConfiguracionComponent } from './features/configuracion/configuracion.component';
 import { LoginComponent } from './features/auth/login.component';
 import { RegisterComponent } from './features/auth/register.component';
 import { ForgotPasswordComponent } from './features/auth/forgot-password.component';
@@ -82,7 +84,9 @@ export const routes: Routes = [
           { path: 'pagos', component: PagosComponent },
           { path: 'mantenimiento', component: MantenimientoComponent },
           { path: 'componentes', component: ComponentesComponent },
-          { path: 'notificaciones', component: NotificationsComponent }
+          { path: 'notificaciones', component: NotificationsComponent },
+          { path: 'perfil', component: AdminPerfilComponent },
+          { path: 'configuracion', component: ConfiguracionComponent }
         ]
       }
     ]

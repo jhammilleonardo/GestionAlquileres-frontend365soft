@@ -3,7 +3,12 @@
   <div class="page-header">
     <div class="header-left">
       <h1 class="page-title">
-        <lucide-icon [img]="Bell" [size]="28"></lucide-icon>
+        <div class="title-icon-wrapper">
+          <lucide-icon [img]="Bell" [size]="22"></lucide-icon>
+          @if (unreadCount() > 0) {
+            <span class="title-badge">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
+          }
+        </div>
         Notificaciones
       </h1>
       <p class="page-subtitle">Mantente al día con todas las actualizaciones</p>
@@ -15,7 +20,7 @@
           class="action-btn secondary"
           (click)="markAllAsRead()"
           mat-button>
-          <lucide-icon [img]="Check" [size]="18"></lucide-icon>
+          <lucide-icon [img]="Check" [size]="16"></lucide-icon>
           <span>Marcar todas como leídas</span>
         </button>
       }
@@ -24,7 +29,7 @@
         class="action-btn"
         (click)="refresh()"
         mat-button>
-        <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
+        <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
         <span>Actualizar</span>
       </button>
     </div>
@@ -62,6 +67,7 @@
   <!-- Error Message -->
   @if (error()) {
     <div class="error-message">
+      <lucide-icon [img]="Bell" [size]="16"></lucide-icon>
       <span>{{ error() }}</span>
       <button (click)="clearError()" mat-icon-button>
         <mat-icon>close</mat-icon>
@@ -77,25 +83,28 @@
     </div>
   }
 
-  <!-- Notifications List -->
+  <!-- Empty State -->
   @if (!isLoading() && notifications().length === 0) {
     <div class="empty-state">
-      <lucide-icon [img]="Bell" [size]="64" class="empty-icon"></lucide-icon>
-      <h2>No tienes notificaciones</h2>
+      <div class="empty-icon-wrapper">
+        <lucide-icon [img]="BellOff" [size]="40"></lucide-icon>
+      </div>
+      <h2>Sin notificaciones</h2>
       <p>
         @if (currentFilter === 'unread') {
-          ¡Excelente! No tienes notificaciones pendientes.
+          ¡Excelente! No tienes notificaciones pendientes por leer.
         } @else {
           No hay notificaciones para mostrar en este momento.
         }
       </p>
       <button class="action-btn" (click)="refresh()" mat-button>
-        <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
+        <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
         <span>Actualizar</span>
       </button>
     </div>
   }
 
+  <!-- Notifications List -->
   @if (!isLoading() && notifications().length > 0) {
     <div class="notifications-list">
       @for (notification of notifications(); track notification.id) {
@@ -106,8 +115,8 @@
 
           <!-- Left: Icon -->
           <div class="notification-icon-wrapper">
-            <div class="notification-icon">
-              {{ getNotificationIcon(notification.event_type) }}
+            <div class="notification-icon" [ngClass]="getNotificationIconClass(notification.event_type)">
+              <lucide-icon [img]="getNotificationIcon(notification.event_type)" [size]="20"></lucide-icon>
             </div>
             @if (!notification.is_read) {
               <div class="unread-indicator"></div>
@@ -117,7 +126,7 @@
           <!-- Center: Content -->
           <div class="notification-content">
             <div class="notification-header-row">
-              <span class="notification-type">
+              <span class="notification-type" [ngClass]="getNotificationTypeBadgeClass(notification.event_type)">
                 {{ getNotificationTypeLabel(notification.event_type) }}
               </span>
               <span class="notification-time">
@@ -132,19 +141,19 @@
               <div class="notification-metadata">
                 @if (notification.metadata.ticket_number) {
                   <span class="metadata-tag">
-                    <mat-icon style="font-size: 14px; height: 14px; width: 14px;">confirmation_number</mat-icon>
+                    <lucide-icon [img]="Hash" [size]="12"></lucide-icon>
                     {{ notification.metadata.ticket_number }}
                   </span>
                 }
                 @if (notification.metadata.property_title) {
                   <span class="metadata-tag">
-                    <mat-icon style="font-size: 14px; height: 14px; width: 14px;">home</mat-icon>
+                    <lucide-icon [img]="MapPin" [size]="12"></lucide-icon>
                     {{ notification.metadata.property_title }}
                   </span>
                 }
                 @if (notification.metadata.category) {
                   <span class="metadata-tag">
-                    <mat-icon style="font-size: 14px; height: 14px; width: 14px;">build</mat-icon>
+                    <lucide-icon [img]="Tag" [size]="12"></lucide-icon>
                     {{ notification.metadata.category }}
                   </span>
                 }
@@ -160,7 +169,7 @@
                 (click)="markAsRead(notification.id, $event)"
                 mat-icon-button
                 matTooltip="Marcar como leída">
-                <lucide-icon [img]="Check" [size]="18"></lucide-icon>
+                <lucide-icon [img]="Check" [size]="16"></lucide-icon>
               </button>
             }
 
@@ -169,8 +178,12 @@
               (click)="deleteNotification(notification.id, $event)"
               mat-icon-button
               matTooltip="Eliminar">
-              <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
+              <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
             </button>
+
+            <div class="nav-arrow">
+              <lucide-icon [img]="ArrowUpRight" [size]="14"></lucide-icon>
+            </div>
           </div>
         </div>
       }

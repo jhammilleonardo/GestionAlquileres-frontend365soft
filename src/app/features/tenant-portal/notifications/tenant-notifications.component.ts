@@ -5,7 +5,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, Bell, Check, Trash2, Filter, RefreshCw } from 'lucide-angular';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import {
+  LucideAngularModule,
+  Bell, Check, Trash2, Filter, RefreshCw,
+  Wrench, Home, FileText, CreditCard,
+  Hash, MapPin, Tag, BellOff, ArrowUpRight
+} from 'lucide-angular';
 import { TenantNotificationService, TenantNotification } from '../../../core/services/tenant-notification.service';
 import { DestroyRef } from '@angular/core';
 
@@ -21,6 +27,7 @@ type NotificationFilter = 'all' | 'unread' | 'read';
     MatIconModule,
     MatChipsModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     LucideAngularModule
   ],
   templateUrl: './tenant-notifications.component.html',
@@ -47,6 +54,15 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
   readonly Trash2 = Trash2;
   readonly Filter = Filter;
   readonly RefreshCw = RefreshCw;
+  readonly Wrench = Wrench;
+  readonly Home = Home;
+  readonly FileText = FileText;
+  readonly CreditCard = CreditCard;
+  readonly Hash = Hash;
+  readonly MapPin = MapPin;
+  readonly Tag = Tag;
+  readonly BellOff = BellOff;
+  readonly ArrowUpRight = ArrowUpRight;
 
   ngOnInit(): void {
     this.loadNotifications();
@@ -124,11 +140,25 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     }
   }
 
-  getNotificationIcon(eventType: string): string {
-    if (eventType.includes('maintenance')) return '🔧';
-    if (eventType.includes('contract')) return '📄';
-    if (eventType.includes('payment')) return '💳';
-    return '🔔';
+  getNotificationIcon(eventType: string): any {
+    if (eventType.includes('maintenance')) return Wrench;
+    if (eventType.includes('contract')) return FileText;
+    if (eventType.includes('payment')) return CreditCard;
+    return Bell;
+  }
+
+  getNotificationIconClass(eventType: string): string {
+    if (eventType.includes('maintenance')) return 'icon-maintenance';
+    if (eventType.includes('contract')) return 'icon-contract';
+    if (eventType.includes('payment')) return 'icon-payment';
+    return 'icon-default';
+  }
+
+  getNotificationTypeBadgeClass(eventType: string): string {
+    if (eventType.includes('maintenance')) return 'type-maintenance';
+    if (eventType.includes('contract')) return 'type-contract';
+    if (eventType.includes('payment')) return 'type-payment';
+    return 'type-default';
   }
 
   getNotificationTypeLabel(eventType: string): string {

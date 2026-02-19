@@ -55,24 +55,25 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
                 <mat-card class="success-card">
                     <lucide-icon [img]="CheckCircle2" [size]="48" class="success-icon"></lucide-icon>
                     <h2>¡Pago Registrado!</h2>
-                    <p>Tu pago ha sido registrado exitosamente</p>
+                    <p>Tu pago ha sido registrado exitosamente y está pendiente de aprobación.</p>
                     <div class="success-actions">
-                        <button mat-raised-button (click)="goBack()">Volver a Pagos</button>
+                        <button mat-raised-button color="primary" (click)="goBack()">Volver a Pagos</button>
                         <button mat-stroked-button (click)="resetForm()">Registrar Otro Pago</button>
                     </div>
                 </mat-card>
             } @else {
                 <mat-card class="form-card">
                     <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
-                        <div class="form-grid">
-                            <!-- Tipo de Pago -->
+
+                        <!-- Sección 1: Información del Pago -->
+                        <div class="form-section">
+                            <h2 class="section-title">Información del Pago</h2>
+
                             <mat-form-field appearance="outline" class="full-width">
-                                <mat-label>Tipo de Pago</mat-label>
+                                <mat-label>Tipo de Pago*</mat-label>
                                 <mat-select formControlName="payment_type" required>
                                     @for (type of paymentTypes; track type.value) {
-                                        <mat-option [value]="type.value">
-                                            {{ type.label }}
-                                        </mat-option>
+                                        <mat-option [value]="type.value">{{ type.label }}</mat-option>
                                     }
                                 </mat-select>
                                 @if (paymentForm.get('payment_type')?.hasError('required') && paymentForm.get('payment_type')?.touched) {
@@ -80,176 +81,181 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
                                 }
                             </mat-form-field>
 
-                            <!-- Monto -->
-                            <mat-form-field appearance="outline">
-                                <mat-label>Monto</mat-label>
-                                <span matTextPrefix>$ &nbsp;</span>
-                                <input 
-                                    matInput 
-                                    type="number" 
-                                    formControlName="amount" 
-                                    placeholder="0.00"
-                                    step="0.01"
-                                    min="0"
-                                    required>
-                                @if (paymentForm.get('amount')?.hasError('required') && paymentForm.get('amount')?.touched) {
-                                    <mat-error>El monto es requerido</mat-error>
-                                }
-                                @if (paymentForm.get('amount')?.hasError('min')) {
-                                    <mat-error>El monto debe ser mayor a 0</mat-error>
-                                }
-                            </mat-form-field>
-
-                            <!-- Moneda -->
-                            <mat-form-field appearance="outline">
-                                <mat-label>Moneda</mat-label>
-                                <mat-select formControlName="currency" required>
-                                    @for (curr of currencies; track curr.value) {
-                                        <mat-option [value]="curr.value">
-                                            {{ curr.symbol }} - {{ curr.label }}
-                                        </mat-option>
+                            <div class="form-row">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Monto*</mat-label>
+                                    <span matTextPrefix>Bs&nbsp;</span>
+                                    <input matInput type="number" formControlName="amount"
+                                           placeholder="0.00" step="0.01" min="0" required>
+                                    @if (paymentForm.get('amount')?.hasError('required') && paymentForm.get('amount')?.touched) {
+                                        <mat-error>El monto es requerido</mat-error>
                                     }
-                                </mat-select>
-                                @if (paymentForm.get('currency')?.hasError('required') && paymentForm.get('currency')?.touched) {
-                                    <mat-error>La moneda es requerida</mat-error>
-                                }
-                            </mat-form-field>
-
-                            <!-- Método de Pago -->
-                            <mat-form-field appearance="outline">
-                                <mat-label>Método de Pago</mat-label>
-                                <mat-select formControlName="payment_method" required>
-                                    @for (method of paymentMethods; track method.value) {
-                                        <mat-option [value]="method.value">
-                                            {{ method.label }}
-                                        </mat-option>
+                                    @if (paymentForm.get('amount')?.hasError('min')) {
+                                        <mat-error>El monto debe ser mayor a 0</mat-error>
                                     }
-                                </mat-select>
-                                @if (paymentForm.get('payment_method')?.hasError('required') && paymentForm.get('payment_method')?.touched) {
-                                    <mat-error>El método de pago es requerido</mat-error>
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Moneda*</mat-label>
+                                    <mat-select formControlName="currency" required>
+                                        @for (curr of currencies; track curr.value) {
+                                            <mat-option [value]="curr.value">
+                                                {{ curr.symbol }} - {{ curr.label }}
+                                            </mat-option>
+                                        }
+                                    </mat-select>
+                                    @if (paymentForm.get('currency')?.hasError('required') && paymentForm.get('currency')?.touched) {
+                                        <mat-error>La moneda es requerida</mat-error>
+                                    }
+                                </mat-form-field>
+                            </div>
+
+                            <div class="form-row">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Método de Pago*</mat-label>
+                                    <mat-select formControlName="payment_method" required>
+                                        @for (method of paymentMethods; track method.value) {
+                                            <mat-option [value]="method.value">{{ method.label }}</mat-option>
+                                        }
+                                    </mat-select>
+                                    @if (paymentForm.get('payment_method')?.hasError('required') && paymentForm.get('payment_method')?.touched) {
+                                        <mat-error>El método de pago es requerido</mat-error>
+                                    }
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Fecha de Pago*</mat-label>
+                                    <input matInput [matDatepicker]="picker" formControlName="payment_date"
+                                           [max]="maxDate" required>
+                                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                                    <mat-datepicker #picker></mat-datepicker>
+                                    @if (paymentForm.get('payment_date')?.hasError('required') && paymentForm.get('payment_date')?.touched) {
+                                        <mat-error>La fecha es requerida</mat-error>
+                                    }
+                                </mat-form-field>
+                            </div>
+                        </div>
+
+                        <!-- Sección 2: Datos del Método (condicional) -->
+                        @if (paymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
+                             paymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD ||
+                             paymentForm.get('payment_method')?.value === PaymentMethod.CHECK ||
+                             paymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
+                             paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER ||
+                             paymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
+                            <div class="form-section">
+                                <h2 class="section-title">Datos del Método</h2>
+
+                                <!-- Tarjeta de Crédito/Débito -->
+                                @if (paymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
+                                     paymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD) {
+                                    <div class="form-row">
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Últimos 4 dígitos</mat-label>
+                                            <input matInput formControlName="card_last_4_digits"
+                                                   placeholder="1234" maxlength="4" pattern="[0-9]{4}">
+                                            <mat-hint>Dígitos de la tarjeta</mat-hint>
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Nombre del Titular</mat-label>
+                                            <input matInput formControlName="card_holder_name"
+                                                   placeholder="Juan Pérez">
+                                        </mat-form-field>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Fecha de Expiración</mat-label>
+                                            <input matInput formControlName="card_expiry"
+                                                   placeholder="MM/YY" maxlength="5">
+                                            <mat-hint>Formato: MM/YY</mat-hint>
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Código de Autorización (Opcional)</mat-label>
+                                            <input matInput formControlName="reference_number"
+                                                   placeholder="Ej: AUTH-123456">
+                                        </mat-form-field>
+                                    </div>
                                 }
-                            </mat-form-field>
 
-                            <!-- Fecha de Pago -->
-                            <mat-form-field appearance="outline">
-                                <mat-label>Fecha de Pago</mat-label>
-                                <input 
-                                    matInput 
-                                    [matDatepicker]="picker"
-                                    formControlName="payment_date"
-                                    [max]="maxDate"
-                                    required>
-                                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                                <mat-datepicker #picker></mat-datepicker>
-                                @if (paymentForm.get('payment_date')?.hasError('required') && paymentForm.get('payment_date')?.touched) {
-                                    <mat-error>La fecha es requerida</mat-error>
+                                <!-- Cheque -->
+                                @if (paymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
+                                    <div class="form-row">
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Número de Cheque</mat-label>
+                                            <input matInput formControlName="check_number"
+                                                   placeholder="Ej: CHK-001">
+                                        </mat-form-field>
+
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Banco Emisor</mat-label>
+                                            <input matInput formControlName="bank_name"
+                                                   placeholder="Banco Nacional">
+                                        </mat-form-field>
+                                    </div>
+
+                                    <mat-form-field appearance="outline" class="full-width">
+                                        <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                                        <input matInput formControlName="bank_account_last_4"
+                                               placeholder="5678" maxlength="4">
+                                    </mat-form-field>
                                 }
-                            </mat-form-field>
 
-                            <!-- Campos específicos por método de pago -->
+                                <!-- Transferencia -->
+                                @if (paymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
+                                     paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER) {
+                                    <mat-form-field appearance="outline" class="full-width">
+                                        <mat-label>Número de Referencia</mat-label>
+                                        <input matInput formControlName="reference_number"
+                                               placeholder="Ej: TRF-12345">
+                                        <mat-hint>Número de transacción bancaria</mat-hint>
+                                    </mat-form-field>
 
-                            <!-- Tarjeta de Crédito/Débito -->
-                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
-                                 paymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD) {
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Últimos 4 dígitos</mat-label>
-                                    <input matInput formControlName="card_last_4_digits"
-                                           placeholder="1234" maxlength="4" pattern="[0-9]{4}">
-                                    <mat-hint>Últimos 4 dígitos de la tarjeta</mat-hint>
-                                </mat-form-field>
+                                    <div class="form-row">
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Banco de Origen</mat-label>
+                                            <input matInput formControlName="bank_name"
+                                                   placeholder="Tu banco">
+                                        </mat-form-field>
 
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Nombre del Titular</mat-label>
-                                    <input matInput formControlName="card_holder_name"
-                                           placeholder="Juan Pérez">
-                                </mat-form-field>
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                                            <input matInput formControlName="bank_account_last_4"
+                                                   placeholder="9012" maxlength="4">
+                                        </mat-form-field>
+                                    </div>
+                                }
 
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Fecha de Expiración</mat-label>
-                                    <input matInput formControlName="card_expiry"
-                                           placeholder="MM/YY" maxlength="5">
-                                    <mat-hint>Formato: MM/YY</mat-hint>
-                                </mat-form-field>
+                                <!-- Efectivo -->
+                                @if (paymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
+                                    <div class="form-row">
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Recibido por</mat-label>
+                                            <input matInput formControlName="received_by"
+                                                   placeholder="Nombre de quien recibió">
+                                            <mat-hint>Persona que recibió el pago</mat-hint>
+                                        </mat-form-field>
 
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Código de Autorización (Opcional)</mat-label>
-                                    <input matInput formControlName="reference_number"
-                                           placeholder="Ej: AUTH-123456">
-                                    <mat-hint>Código de autorización</mat-hint>
-                                </mat-form-field>
-                            }
+                                        <mat-form-field appearance="outline">
+                                            <mat-label>Número de Recibo (Opcional)</mat-label>
+                                            <input matInput formControlName="reference_number"
+                                                   placeholder="Ej: REC-001">
+                                        </mat-form-field>
+                                    </div>
+                                }
+                            </div>
+                        }
 
-                            <!-- Cheque -->
-                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Número de Cheque</mat-label>
-                                    <input matInput formControlName="check_number"
-                                           placeholder="Ej: CHK-001">
-                                </mat-form-field>
+                        <!-- Sección 3: Notas -->
+                        <div class="form-section last">
+                            <h2 class="section-title">Notas Adicionales</h2>
 
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Banco Emisor</mat-label>
-                                    <input matInput formControlName="bank_name"
-                                           placeholder="Banco Nacional">
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Últimos 4 dígitos cuenta</mat-label>
-                                    <input matInput formControlName="bank_account_last_4"
-                                           placeholder="5678" maxlength="4">
-                                </mat-form-field>
-                            }
-
-                            <!-- Transferencia -->
-                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
-                                 paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER) {
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Número de Referencia</mat-label>
-                                    <input matInput formControlName="reference_number"
-                                           placeholder="Ej: TRF-12345">
-                                    <mat-hint>Número de transacción</mat-hint>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Banco de Origen</mat-label>
-                                    <input matInput formControlName="bank_name"
-                                           placeholder="Tu banco">
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Últimos 4 dígitos cuenta</mat-label>
-                                    <input matInput formControlName="bank_account_last_4"
-                                           placeholder="9012" maxlength="4">
-                                </mat-form-field>
-                            }
-
-                            <!-- Efectivo -->
-                            @if (paymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Recibido por</mat-label>
-                                    <input matInput formControlName="received_by"
-                                           placeholder="Nombre de quien recibió">
-                                    <mat-hint>Persona que recibió el pago</mat-hint>
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Número de Recibo (Opcional)</mat-label>
-                                    <input matInput formControlName="reference_number"
-                                           placeholder="Ej: REC-001">
-                                    <mat-hint>Número del recibo</mat-hint>
-                                </mat-form-field>
-                            }
-
-                            <!-- Notas -->
                             <mat-form-field appearance="outline" class="full-width">
-                                <mat-label>Notas Adicionales</mat-label>
-                                <textarea 
-                                    matInput 
-                                    formControlName="notes" 
-                                    rows="3"
-                                    maxlength="500"
-                                    placeholder="Información adicional sobre el pago...">
-                                </textarea>
+                                <mat-label>Notas del Pago (Opcional)</mat-label>
+                                <textarea matInput formControlName="notes" rows="3" maxlength="500"
+                                          placeholder="Información adicional sobre el pago..."></textarea>
                                 <mat-hint align="end">
                                     {{ paymentForm.get('notes')?.value?.length || 0 }} / 500
                                 </mat-hint>
@@ -257,18 +263,8 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
                         </div>
 
                         <div class="form-actions">
-                            <button 
-                                type="button" 
-                                mat-stroked-button 
-                                (click)="goBack()"
-                                [disabled]="paymentService.isLoading()">
-                                Cancelar
-                            </button>
-                            <button 
-                                type="submit" 
-                                mat-raised-button 
-                                color="primary"
-                                [disabled]="paymentForm.invalid || paymentService.isLoading()">
+                            <button type="submit" mat-raised-button color="primary"
+                                    [disabled]="paymentForm.invalid || paymentService.isLoading()">
                                 @if (paymentService.isLoading()) {
                                     <mat-spinner diameter="20"></mat-spinner>
                                     Registrando...
@@ -276,6 +272,10 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
                                     <lucide-icon [img]="CreditCard" [size]="20"></lucide-icon>
                                     Registrar Pago
                                 }
+                            </button>
+                            <button type="button" mat-stroked-button (click)="goBack()"
+                                    [disabled]="paymentService.isLoading()">
+                                Cancelar
                             </button>
                         </div>
                     </form>
@@ -353,33 +353,63 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
             padding: 32px;
         }
 
-        .form-grid {
+        /* Secciones estilo contratos */
+        .form-section {
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--mat-sys-outline-variant, #e2e8f0);
+        }
+
+        .form-section.last {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.0625rem;
+            font-weight: 600;
+            margin: 0 0 16px;
+            color: var(--mat-sys-primary, #1976d2);
+        }
+
+        .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 16px;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
+        }
+
+        .form-row mat-form-field {
+            width: 100%;
         }
 
         .full-width {
-            grid-column: 1 / -1;
+            width: 100%;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .full-width:last-child {
+            margin-bottom: 0;
         }
 
         .form-actions {
             display: flex;
-            justify-content: flex-end;
             gap: 12px;
-            padding-top: 16px;
-            border-top: 1px solid #e2e8f0;
+            justify-content: flex-end;
+            padding-top: 20px;
+            border-top: 1px solid var(--mat-sys-outline-variant, #e2e8f0);
         }
 
-        button[type="submit"] {
+        .form-actions button {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         @media (max-width: 768px) {
-            .form-grid {
+            .form-row {
                 grid-template-columns: 1fr;
             }
 
@@ -389,6 +419,7 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
 
             .form-actions button {
                 width: 100%;
+                justify-content: center;
             }
 
             .page-header h1 {
@@ -443,9 +474,9 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
                 padding: 16px;
             }
 
-            .form-grid {
-                gap: 12px;
+            .form-section {
                 margin-bottom: 20px;
+                padding-bottom: 20px;
             }
         }
     `]

@@ -332,18 +332,49 @@
     .create-payment-modal {
       max-width: 800px;
 
-      .form-grid {
+      // Secciones del formulario (estilo contratos)
+      .form-section {
+        margin-bottom: 28px;
+        padding-bottom: 24px;
+        border-bottom: 1px solid var(--mat-sys-outline-variant, #e2e8f0);
+
+        &.last {
+          border-bottom: none;
+          margin-bottom: 0;
+          padding-bottom: 0;
+        }
+      }
+
+      .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 16px;
+        color: var(--mat-sys-primary, #28589e);
+      }
+
+      .form-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
+        margin-bottom: 16px;
 
         mat-form-field {
           width: 100%;
-
-          &.full-width {
-            grid-column: 1 / -1;
-          }
         }
+      }
+
+      .full-width {
+        width: 100%;
+        display: block;
+        margin-bottom: 16px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+
+      mat-form-field:not(.full-width) {
+        width: 100%;
       }
 
       // Tenant autocomplete option
@@ -455,7 +486,7 @@
       }
 
       .create-payment-modal {
-        .form-grid {
+        .form-row {
           grid-template-columns: 1fr;
         }
       }

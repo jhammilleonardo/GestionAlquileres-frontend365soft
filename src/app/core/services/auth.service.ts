@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from '../models/user.model';
 import { SlugService } from './slug.service';
@@ -313,6 +313,39 @@ export class AuthService {
      */
     private saveUserToStorage(user: User, storage: Storage = localStorage): void {
         storage.setItem(this.USER_KEY, JSON.stringify(user));
+    }
+
+    /**
+     * Update user profile
+     */
+    updateProfile(id: number, data: { name?: string; email?: string; phone?: string }): Observable<User> {
+        const slug = this.slugService.getSlug();
+        return this.http.patch<AdminUser>(`${environment.apiUrl}${slug}/users/${id}`, data).pipe(
+            map(updatedUser => {
+                const user: User = {
+                    id: updatedUser.id.toString(),
+                    name: updatedUser.name,
+                    email: updatedUser.email,
+                    role: updatedUser.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
+                    avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(updatedUser.name)}&background=0D8ABC&color=fff`,
+                    tenant_slug: updatedUser.tenant_slug
+                };
+                this.currentUserSignal.set(user);
+                this.saveUserToStorage(user);
+                return user;
+            })
+        );
+    }
+
+    /**
+     * Change user password
+     */
+    changePassword(id: number, newPassword: string): Observable<void> {
+        const slug = this.slugService.getSlug();
+        return this.http.post<void>(
+            `${environment.apiUrl}${slug}/users/${id}/reset-password`,
+            { password: newPassword }
+        );
     }
 
     /**
