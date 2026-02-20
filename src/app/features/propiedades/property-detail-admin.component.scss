@@ -1,0 +1,37 @@
+// Custom styles for property detail admin component
+// Most styling is handled by Tailwind classes in the template
+
+// Smooth transitions for gallery
+img {
+    transition: opacity 0.3s ease-in-out;
+}
+
+// Custom scrollbar for thumbnails if needed
+.thumbnail-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 0.5) transparent;
+
+    &::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(203, 213, 225, 0.5);
+        border-radius: 3px;
+
+        &:hover {
+            background-color: rgba(148, 163, 184, 0.7);
+        }
+    }
+}
+
+// Backdrop blur fallback for older browsers
+@supports not (backdrop-filter: blur(8px)) {
+    .backdrop-blur-sm {
+        background-color: rgba(255, 255, 255, 0.95) !important;
+    }
+}

@@ -78,7 +78,28 @@ export class PropertyDetailComponent implements OnInit {
       this.checkFavoriteStatus(propertyId);
     }
   }
+  // Helper para obtener imágenes como array seguro
+  getImagesArray(): string[] {
+    if (!this.property?.images) return [];
+    if (Array.isArray(this.property.images)) return this.property.images;
+    return [];
+  }
 
+  // Helper para verificar si tiene múltiples imágenes
+  hasMultipleImages(): boolean {
+    return this.getImagesArray().length > 1;
+  }
+
+  // Helper para obtener imagen actual
+  getCurrentImage(): string {
+    const images = this.getImagesArray();
+    return images[this.currentImageIndex] || '';
+  }
+
+  // Helper para obtener cantidad de imágenes
+  getImagesCount(): number {
+    return this.getImagesArray().length;
+  }
   loadProperty(id: number): void {
     this.isLoading = true;
     this.propertyService.getPropertyById(id).subscribe({
@@ -109,15 +130,16 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   nextImage(): void {
-    if (this.property && this.property.images.length > 0) {
-      this.currentImageIndex = (this.currentImageIndex + 1) % this.property.images.length;
+    const images = this.getImagesArray();
+    if (images.length > 0) {
+      this.currentImageIndex = (this.currentImageIndex + 1) % images.length;
     }
   }
 
   previousImage(): void {
-    if (this.property && this.property.images.length > 0) {
-      this.currentImageIndex =
-        (this.currentImageIndex - 1 + this.property.images.length) % this.property.images.length;
+    const images = this.getImagesArray();
+    if (images.length > 0) {
+      this.currentImageIndex = (this.currentImageIndex - 1 + images.length) % images.length;
     }
   }
 

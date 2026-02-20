@@ -19,6 +19,19 @@ export interface LoginResponse {
     user: AdminUser;
 }
 
+export interface RegisterAdminResponse {
+    message: string;
+    tenant: {
+        id: number;
+        company_name: string;
+        slug: string;
+        currency: string;
+        locale: string;
+    };
+    user: AdminUser;
+    access_token: string;
+}
+
 @Injectable({
     providedIn: 'root'
 })
@@ -353,6 +366,48 @@ export class AuthService {
      */
     clearError(): void {
         this.errorSignal.set(null);
+    }
+
+    /**
+     * Register new admin and tenant
+     */
+    registerAdmin(data: {
+        company_name: string;
+        slug?: string;
+        name: string;
+        email: string;
+        password: string;
+        phone?: string;
+        currency?: string;
+        locale?: string;
+    }): Observable<RegisterAdminResponse> {
+        this.isLoadingSignal.set(true);
+        this.errorSignal.set(null);
+
+        return this.http.post<RegisterAdminResponse>(
+            `${environment.apiUrl}auth/register-admin`,
+            data
+        ).pipe(
+            tap(response => {
+                // Set session after successful registration
+                const loginResponse: LoginResponse = {
+                    access_token: response.access_token,
+                    user: response.user
+                };
+                this.setSession(loginResponse, true); // Remember by default
+                // Set slug from response
+                if (response.tenant.slug) {
+                    this.slugService.setSlug(response.tenant.slug);
+                }
+                this.isLoadingSignal.set(false);
+            }),
+            catchError(error => {
+                this.isLoadingSignal.set(false);
+                const message = error.error?.message || 'Error al registrar';
+                this.errorSignal.set(message);
+                throw error;
+            })
+        );
     }
 }
 

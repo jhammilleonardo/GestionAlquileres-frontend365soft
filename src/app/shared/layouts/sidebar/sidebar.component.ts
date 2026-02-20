@@ -22,6 +22,7 @@ import { MenuOption } from '../../../core/models/user.model';
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss'
 })
+
 export class SidebarComponent implements OnInit, OnDestroy {
   private sidebarService = inject(SidebarService);
   private authService = inject(AuthService);

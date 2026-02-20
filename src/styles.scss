@@ -5,10 +5,8 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
-// Tailwind CSS Directives
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+// Tailwind CSS v4
+@import "tailwindcss";
 
 html {
   height: 100%;

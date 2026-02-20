@@ -5,10 +5,10 @@ import { FooterComponent } from '../footer/footer.component';
 import { SlugService } from '../../../core/services/slug.service';
 
 @Component({
-  selector: 'app-public-layout',
-  standalone: true,
-  imports: [RouterOutlet, NavbarComponent, FooterComponent],
-  template: `
+    selector: 'app-public-layout',
+    standalone: true,
+    imports: [RouterOutlet, NavbarComponent, FooterComponent],
+    template: `
     <div class="public-layout">
       <app-navbar></app-navbar>
       <main class="main-content">
@@ -17,7 +17,7 @@ import { SlugService } from '../../../core/services/slug.service';
       <app-footer></app-footer>
     </div>
   `,
-  styles: [`
+    styles: [`
     .public-layout {
       display: flex;
       flex-direction: column;

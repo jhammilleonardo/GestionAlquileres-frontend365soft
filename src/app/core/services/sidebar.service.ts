@@ -49,36 +49,40 @@ export class SidebarService {
   }
 
   getMenuOptions(): MenuOption[] {
+    // Obtener el slug del tenant desde localStorage
+    const tenantSlug = localStorage.getItem('tenant_slug') || 'soft-prueba';
+    const baseRoute = `/${tenantSlug}/admin`;
+
     return [
       {
         label: 'Dashboard',
         icon: 'LayoutDashboard',
-        route: '/dashboard'
+        route: `${baseRoute}/dashboard`
       },
       {
         label: 'Propiedades',
         icon: 'Building2',
-        route: '/propiedades'
+        route: `${baseRoute}/propiedades`
       },
       {
         label: 'Inquilinos',
         icon: 'Users',
-        route: '/inquilinos'
+        route: `${baseRoute}/inquilinos`
       },
       {
         label: 'Contratos',
         icon: 'FileText',
-        route: '/contratos'
+        route: `${baseRoute}/contratos`
       },
       {
         label: 'Pagos',
         icon: 'CreditCard',
-        route: '/pagos'
+        route: `${baseRoute}/pagos`
       },
       {
         label: 'Mantenimiento',
         icon: 'Wrench',
-        route: '/mantenimiento'
+        route: `${baseRoute}/mantenimiento`
       },
       {
         label: 'Notificaciones',
@@ -88,17 +92,17 @@ export class SidebarService {
       {
         label: 'Componentes UI',
         icon: 'Component',
-        route: '/componentes'
+        route: `${baseRoute}/componentes`
       },
       {
         label: 'Reportes',
         icon: 'BarChart3',
-        route: '/reportes'
+        route: `${baseRoute}/reportes`
       },
       {
         label: 'Configuración',
         icon: 'Settings',
-        route: '/configuracion'
+        route: `${baseRoute}/configuracion`
       }
     ];
   }

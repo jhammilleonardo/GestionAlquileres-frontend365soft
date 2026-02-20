@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './shared/layouts/main-layout/main-layout.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { PropiedadesComponent } from './features/propiedades/propiedades.component';
+import { PropertyDetailAdminComponent } from './features/propiedades/property-detail-admin.component';
 import { InquilinosComponent } from './features/inquilinos/inquilinos.component';
 import { ContratosComponent } from './features/contratos/contratos.component';
 import { ContractCreateComponent } from './features/contratos/contract-create/contract-create.component';
@@ -76,6 +77,7 @@ export const routes: Routes = [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent },
           { path: 'propiedades', component: PropiedadesComponent },
+          { path: 'propiedades/:id', component: PropertyDetailAdminComponent },
           { path: 'inquilinos', component: InquilinosComponent },
           { path: 'contratos', component: ContratosComponent },
           { path: 'contratos/nuevo', component: ContractCreateComponent },
