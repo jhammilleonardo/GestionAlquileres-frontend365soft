@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule, ArrowLeft, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodLabels, CurrencyLabels, CurrencySymbols } from '../../../core/models/payment.model';
 
 @Component({
@@ -489,6 +490,7 @@ export class TenantCreatePaymentComponent {
 
     private fb = inject(FormBuilder);
     private router = inject(Router);
+    private slugService = inject(SlugService);
     paymentService = inject(TenantPaymentService);
     private tenantAuthService = inject(TenantAuthService);
 
@@ -581,6 +583,6 @@ export class TenantCreatePaymentComponent {
     }
 
     goBack(): void {
-        this.router.navigate(['/portal/pagos']);
+        this.slugService.navigateTo(['portal', 'pagos']);
     }
 }

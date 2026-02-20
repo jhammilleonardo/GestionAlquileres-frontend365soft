@@ -204,6 +204,7 @@ export class PagosComponent implements OnInit {
   loadData(): void {
     this.paymentService.loadPayments();
     this.paymentService.loadStats();
+    this.tenantUserService.loadAllUsers();
   }
 
   applyFilters(): void {

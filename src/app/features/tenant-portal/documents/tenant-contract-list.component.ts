@@ -92,11 +92,7 @@ import { SlugService } from '../../../core/services/slug.service';
 
               <div class="contract-body">
                 <h3 class="property-title">
-                  @if (contract.property) {
-                    {{ contract.property.title }}
-                  } @else {
-                    Propiedad no especificada
-                  }
+                  {{ contract.property?.title || 'Propiedad no especificada' }}
                 </h3>
 
                 <div class="contract-dates">

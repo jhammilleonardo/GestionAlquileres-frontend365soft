@@ -263,7 +263,7 @@ export class AuthService {
                 return of(null);
             })
         ).subscribe(userData => {
-            if (userData) {
+            if (userData && userData.id) {
                 // Token is valid, update user data in case it changed
                 const user: User = {
                     id: userData.id.toString(),

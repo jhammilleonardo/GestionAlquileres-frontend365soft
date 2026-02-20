@@ -6,7 +6,7 @@
 @use '@angular/material' as mat;
 
 // Tailwind CSS v4
-@import "tailwindcss";
+@use "tailwindcss";
 
 html {
   height: 100%;

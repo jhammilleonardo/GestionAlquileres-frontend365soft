@@ -72,9 +72,20 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
               <div class="alert-content">
                 <lucide-icon [img]="AlertTriangle" [size]="32"></lucide-icon>
                 <div class="alert-text">
-                  <h3>Contrato pendiente de firma</h3>
-                  <p>Por favor, revisa todos los términos y condiciones antes de firmar. Una vez firmado, el contrato será vinculante.</p>
+                  <h3>Contrato pendiente de tu firma</h3>
+                  <p>Revisa los términos y condiciones en esta página. Cuando estés listo, haz clic en <strong>"Firmar Contrato"</strong> para aceptarlos y activar el contrato.</p>
                 </div>
+              </div>
+              <div class="alert-action">
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="signContract()"
+                  [disabled]="isSigning()"
+                  class="sign-btn-top">
+                  <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
+                  {{ isSigning() ? 'Firmando...' : 'Firmar Contrato' }}
+                </button>
               </div>
             </mat-card>
           }
@@ -100,11 +111,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
             </div>
             <div class="card-content">
               <h2 class="property-title">
-                @if (c.property) {
-                  {{ c.property.title }}
-                } @else {
-                  Propiedad no especificada
-                }
+                {{ c.property?.title || 'Propiedad no especificada' }}
               </h2>
               @if (c.property && c.property.address) {
                 <p class="property-address">
@@ -414,6 +421,23 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
       background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
       border-left: 4px solid #f59e0b;
       box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+
+    .alert-action {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .sign-btn-top {
+      width: 100%;
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .alert-content,

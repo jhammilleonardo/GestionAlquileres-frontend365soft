@@ -265,11 +265,14 @@ export class TenantContractService {
             is_signed: contract.is_signed,
             signed_at: contract.tenant_signature_date ? new Date(contract.tenant_signature_date) : undefined,
             signed_ip: contract.signed_ip,
-            // Mapear datos de la propiedad desde campos planos
+            // Mapear datos de la propiedad (puede venir como objeto anidado o campos planos)
             property: {
-                id: contract.property_id,
-                title: contract.property_title || 'Propiedad',
-                address: contract.street_address || `${contract.city || ''}, ${contract.country || ''}`.trim()
+                id: contract.property?.id || contract.property_id,
+                title: contract.property?.title || contract.property_title || '',
+                address: contract.property?.street_address
+                    || contract.street_address
+                    || [contract.city, contract.country].filter(Boolean).join(', ')
+                    || ''
             },
             // Campos adicionales del contrato
             late_fee_percentage: contract.late_fee_percentage ? parseFloat(contract.late_fee_percentage) : undefined,

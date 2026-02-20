@@ -1,806 +1,507 @@
-<div class="min-h-screen p-6 propiedades-container bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+<div class="propiedades-container">
+
   <!-- Header -->
-  <div class="flex flex-col items-start justify-between gap-4 mb-8 sm:flex-row sm:items-center">
-    <div>
-      <h1 class="text-4xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
-        Propiedades
-      </h1>
-      <p class="flex items-center gap-2 mt-2 text-slate-600">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
+  <div class="page-header">
+    <div class="header-title">
+      <h1>Propiedades</h1>
+      <p>
+        <lucide-icon [img]="Building2" [size]="16"></lucide-icon>
         Gestiona todas las propiedades de tu cartera
       </p>
     </div>
-    <button (click)="openCreateModal()"
-      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      <span class="font-semibold">Nueva Propiedad</span>
+    <button mat-flat-button color="primary" (click)="openCreateModal()">
+      <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+      Nueva Propiedad
     </button>
   </div>
 
   <!-- Filters -->
-  <div class="p-6 mb-8 border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
-    <div class="flex items-center gap-2 mb-4">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
-        viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-      </svg>
-      <h2 class="text-lg font-semibold text-slate-800">Filtros</h2>
-    </div>
-
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-      <div>
-        <label class="flex items-center block gap-1 mb-2 text-sm font-medium text-slate-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          Buscar
-        </label>
-        <input type="text" [(ngModel)]="filters.search" (keyup.enter)="applyFilters()"
-          placeholder="Título, dirección..."
-          class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white/50" />
+  <mat-card class="filters-section">
+    <mat-card-content>
+      <div class="filter-header">
+        <lucide-icon [img]="Filter" [size]="18"></lucide-icon>
+        <span>Filtros</span>
       </div>
 
-      <div>
-        <label class="block mb-2 text-sm font-medium text-slate-700">Estado</label>
-        <select [(ngModel)]="filters.status" (change)="applyFilters()"
-          class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white/50">
-          <option [value]="undefined">Todos los estados</option>
-          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
-        </select>
+      <div class="filter-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar</mat-label>
+          <lucide-icon matIconPrefix [img]="Search" [size]="16"></lucide-icon>
+          <input matInput [(ngModel)]="filters.search" (keyup.enter)="applyFilters()"
+            placeholder="Título, dirección..." />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Estado</mat-label>
+          <mat-select [(ngModel)]="filters.status" (selectionChange)="applyFilters()">
+            <mat-option [value]="undefined">Todos los estados</mat-option>
+            <mat-option *ngFor="let status of statusOptions" [value]="status">{{ status }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo</mat-label>
+          <lucide-icon matIconPrefix [img]="Home" [size]="16"></lucide-icon>
+          <mat-select [(ngModel)]="filters.property_type_id" (selectionChange)="applyFilters()">
+            <mat-option [value]="undefined">Todos los tipos</mat-option>
+            <mat-option *ngFor="let type of propertyTypes()" [value]="type.id">{{ type.name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
 
-      <div>
-        <label class="flex items-center block gap-1 mb-2 text-sm font-medium text-slate-700">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-          Tipo
-        </label>
-        <select [(ngModel)]="filters.property_type_id" (change)="applyFilters()"
-          class="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white/50">
-          <option [value]="undefined">Todos los tipos</option>
-          <option *ngFor="let type of propertyTypes()" [value]="type.id">{{ type.name }}</option>
-        </select>
+      <div class="filter-actions">
+        <button mat-stroked-button (click)="clearFilters()">Limpiar</button>
+        <button mat-flat-button color="primary" (click)="applyFilters()">Aplicar Filtros</button>
       </div>
-
-      <div class="flex items-end gap-2">
-        <button (click)="applyFilters()"
-          class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-xl transition-all font-medium shadow-md hover:shadow-lg">
-          Aplicar
-        </button>
-        <button (click)="clearFilters()"
-          class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl transition-all font-medium">
-          Limpiar
-        </button>
-      </div>
-    </div>
-  </div>
+    </mat-card-content>
+  </mat-card>
 
   <!-- Loading State -->
-  <div *ngIf="isListLoading()" class="py-16 text-center">
-    <div
-      class="inline-flex items-center justify-center w-16 h-16 border-4 border-blue-200 rounded-full border-t-blue-600 animate-spin">
-    </div>
-    <p class="mt-6 font-medium text-slate-600">Cargando propiedades...</p>
+  <div *ngIf="isListLoading()" class="loading-state">
+    <mat-progress-spinner mode="indeterminate" [diameter]="48"></mat-progress-spinner>
+    <p class="loading-text">Cargando propiedades...</p>
   </div>
 
   <!-- Empty State -->
-  <div *ngIf="!isListLoading() && properties().length === 0"
-    class="p-16 text-center border shadow-xl bg-white/80 backdrop-blur-sm rounded-2xl border-slate-200">
-    <div
-      class="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-blue-100 to-purple-100">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor"
-        viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-      </svg>
+  <div *ngIf="!isListLoading() && properties().length === 0" class="empty-state">
+    <div class="empty-icon">
+      <lucide-icon [img]="Building2" [size]="40"></lucide-icon>
     </div>
-    <h3 class="mb-2 text-2xl font-bold text-slate-900">No hay propiedades</h3>
-    <p class="max-w-md mx-auto mb-8 text-slate-600">Comienza agregando tu primera propiedad para empezar a gestionar tu
-      cartera inmobiliaria</p>
-    <button (click)="openCreateModal()"
-      class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
+    <h3>No hay propiedades</h3>
+    <p>Comienza agregando tu primera propiedad para gestionar tu cartera inmobiliaria</p>
+    <button mat-flat-button color="primary" (click)="openCreateModal()">
+      <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
       Agregar Primera Propiedad
     </button>
   </div>
 
   <!-- Properties Grid -->
-  <div *ngIf="!isListLoading() && properties().length > 0" class="space-y-6">
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-      <div *ngFor="let property of properties()"
-        class="overflow-hidden transition-all duration-300 transform border shadow-xl group bg-white/80 backdrop-blur-sm rounded-2xl hover:shadow-2xl border-slate-200 hover:-translate-y-1">
+  <ng-container *ngIf="!isListLoading() && properties().length > 0">
+    <div class="properties-grid">
+      <div *ngFor="let property of properties()" class="property-card">
 
-        <!-- Image - Clickable -->
-        <div class="relative h-48 overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 cursor-pointer"
-          (click)="viewPropertyDetail(property)">
-          <!-- Image -->
+        <!-- Image -->
+        <div class="card-image" (click)="viewPropertyDetail(property)">
           <img *ngIf="getPropertyImage(property)" [src]="getPropertyImage(property)" [alt]="property.title"
-            class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
             (load)="onImageLoad(property)" (error)="onImageError(property, getPropertyImage(property))" />
-
-          <!-- Placeholder SVG - mostrar solo si no hay imagen -->
-          <div *ngIf="!getPropertyImage(property)" class="flex items-center justify-center w-full h-full">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-white/50" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+          <div *ngIf="!getPropertyImage(property)" class="placeholder">
+            <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
           </div>
 
-          <!-- Status Badge -->
-          <div class="absolute top-4 right-4">
-            <span
-              [class]="'px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-lg ' + getStatusBadgeClass(property.status)">
-              {{ property.status || 'N/A' }}
-            </span>
-          </div>
+          <!-- Status badge -->
+          <span [class]="'badge-status ' + getStatusBadgeKey(property.status)">
+            {{ property.status || 'N/A' }}
+          </span>
 
-          <!-- Active Indicator -->
-          <div class="absolute top-4 left-4">
-            <span
-              [class]="'px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-lg flex items-center gap-1 ' + (property.active ? 'bg-green-500/90 text-white' : 'bg-slate-500/90 text-white')">
-              <svg xmlns="http://www.w3.org/2000/svg" *ngIf="property.active" class="w-3 h-3" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg><svg xmlns="http://www.w3.org/2000/svg" *ngIf="!property.active" class="w-3 h-3" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {{ property.active ? 'Activo' : 'Inactivo' }}
-            </span>
-          </div>
+          <!-- Active badge -->
+          <span [class]="'badge-active ' + (property.active ? 'active' : 'inactive')">
+            <lucide-icon *ngIf="property.active" [img]="CheckCircle2" [size]="11"></lucide-icon>
+            <lucide-icon *ngIf="!property.active" [img]="XCircle" [size]="11"></lucide-icon>
+            {{ property.active ? 'Activo' : 'Inactivo' }}
+          </span>
         </div>
 
         <!-- Content -->
-        <div class="p-6">
-          <!-- Title - Clickable -->
-          <h3
-            class="mb-2 text-xl font-bold transition-colors cursor-pointer text-slate-900 line-clamp-2 group-hover:text-blue-600"
-            (click)="viewPropertyDetail(property)">
-            {{ property.title }}
-          </h3>
+        <div class="card-content">
+          <p class="card-title" (click)="viewPropertyDetail(property)">{{ property.title }}</p>
 
-          <!-- Type -->
-          <div class="flex items-center gap-2 mb-4 text-sm text-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-              </path>
-            </svg>
-            <span class="font-medium">{{ property.property_type?.name || property.property_type_name || 'N/A' }}</span>
+          <div class="card-type">
+            <lucide-icon [img]="Home" [size]="14"></lucide-icon>
+            <span>{{ property.property_type?.name || property.property_type_name || 'N/A' }}</span>
             <span class="text-slate-400">•</span>
             <span>{{ property.property_subtype?.name || property.property_subtype_name || 'N/A' }}</span>
           </div>
 
-          <!-- Address -->
-          <div class="flex items-start gap-2 mb-4 text-sm text-slate-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none"
-              stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
+          <div class="card-address">
+            <lucide-icon [img]="MapPin" [size]="14"></lucide-icon>
             <span class="line-clamp-2">{{ getPropertyAddress(property) }}</span>
           </div>
 
-          <!-- Price -->
-          <div class="flex items-center gap-2 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span class="text-2xl font-bold text-slate-900">
-              {{ getPropertyPrice(property) }}
-            </span>
-            <span class="text-sm text-slate-500">/mes</span>
+          <div class="card-price">
+            <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
+            {{ getPropertyPrice(property) }}
+            <span class="per-month">/mes</span>
           </div>
 
-          <!-- Details -->
-          <div class="grid grid-cols-2 gap-3 pb-6 mb-6 border-b border-slate-200">
-            <div class="flex items-center gap-2 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
+          <div class="card-details">
+            <div class="detail-item">
+              <lucide-icon [img]="Maximize2" [size]="14"></lucide-icon>
               <div>
-                <p class="text-xs text-slate-500">Área Total</p>
-                <p class="font-semibold text-slate-700">{{ getPropertyArea(property) }}</p>
+                <div class="detail-label">Área Total</div>
+                <div class="detail-value">{{ getPropertyArea(property) }}</div>
               </div>
             </div>
-            <div class="flex items-center gap-2 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+            <div class="detail-item">
+              <lucide-icon [img]="BedDouble" [size]="14"></lucide-icon>
               <div>
-                <p class="text-xs text-slate-500">Habitaciones</p>
-                <p class="font-semibold text-slate-700">{{ property.bedrooms || 'N/A' }}</p>
+                <div class="detail-label">Habitaciones</div>
+                <div class="detail-value">{{ property.bedrooms || 'N/A' }}</div>
               </div>
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="flex flex-col gap-2">
-            <!-- View Detail Button -->
-            <button (click)="viewPropertyDetail(property)"
-              class="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2.5 rounded-xl transition-all font-medium shadow-md hover:shadow-lg">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
+          <div class="card-actions">
+            <button mat-flat-button color="primary" class="btn-view" (click)="viewPropertyDetail(property)">
+              <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
               Ver Detalle
             </button>
-
-            <!-- Other Actions -->
-            <div class="flex items-center gap-2">
-              <button (click)="openEditModal(property)"
-                class="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2.5 rounded-xl transition-all font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
+            <div class="action-row">
+              <button mat-stroked-button color="primary" class="btn-edit" (click)="openEditModal(property)">
+                <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
                 Editar
               </button>
-              <button (click)="toggleStatus(property)"
-                [class]="'flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl transition-all font-medium ' + (property.active ? 'bg-yellow-50 hover:bg-yellow-100 text-yellow-600' : 'bg-green-50 hover:bg-green-100 text-green-600')"
-                [title]="property.active ? 'Desactivar' : 'Activar'">
-                <svg xmlns="http://www.w3.org/2000/svg" *ngIf="property.active" class="w-4 h-4" fill="none"
-                  stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg><svg xmlns="http://www.w3.org/2000/svg" *ngIf="!property.active" class="w-4 h-4" fill="none"
-                  stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <button mat-icon-button [color]="property.active ? 'warn' : 'primary'"
+                (click)="toggleStatus(property)"
+                [matTooltip]="property.active ? 'Desactivar' : 'Activar'">
+                <lucide-icon *ngIf="property.active" [img]="XCircle" [size]="20"></lucide-icon>
+                <lucide-icon *ngIf="!property.active" [img]="CheckCircle2" [size]="20"></lucide-icon>
               </button>
-              <button (click)="deleteProperty(property)"
-                class="flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2.5 rounded-xl transition-all font-medium"
-                title="Eliminar">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+              <button mat-icon-button color="warn" (click)="deleteProperty(property)" matTooltip="Eliminar">
+                <lucide-icon [img]="Trash2" [size]="20"></lucide-icon>
               </button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
 
-    <!-- Results Summary -->
-    <div class="py-6 text-center">
-      <p class="text-sm font-medium text-slate-600">
-        Mostrando <span class="font-bold text-blue-600">{{ properties().length }}</span> propiedades
-      </p>
+    <div class="results-summary">
+      Mostrando <span>{{ properties().length }}</span> propiedades
+    </div>
+  </ng-container>
+
+</div>
+
+<!-- Confirm Delete Dialog -->
+<div *ngIf="deleteConfirmProperty()" class="modal-overlay animate-fadeIn" (click)="cancelDelete()">
+  <div class="confirm-dialog animate-slideUp" (click)="$event.stopPropagation()">
+    <div class="confirm-icon">
+      <lucide-icon [img]="Trash2" [size]="28"></lucide-icon>
+    </div>
+    <h3>Eliminar Propiedad</h3>
+    <p>¿Estás seguro de que deseas eliminar <strong>"{{ deleteConfirmProperty()?.title }}"</strong>?</p>
+    <p class="confirm-warning">Esta acción no se puede deshacer.</p>
+    <div class="confirm-actions">
+      <button mat-stroked-button (click)="cancelDelete()">Cancelar</button>
+      <button mat-flat-button color="warn" (click)="confirmDelete()">
+        <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+        Eliminar
+      </button>
     </div>
   </div>
 </div>
 
 <!-- Modal -->
-<div *ngIf="showModal()"
-  class="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
-  style="z-index: 9999;" (click)="closeModal()">
-  <div class="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden animate-slideUp"
-    (click)="$event.stopPropagation()">
-    <!-- Modal Header -->
-    <div
-      class="sticky top-0 z-10 flex items-center justify-between px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600">
-      <div class="flex items-center gap-3">
-        <div class="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" fill="none" stroke="currentColor"
-            viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-          </svg>
+<div *ngIf="showModal()" class="modal-overlay animate-fadeIn" (click)="closeModal()">
+  <div class="modal-container animate-slideUp" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-title-icon">
+          <lucide-icon [img]="Building2" [size]="22"></lucide-icon>
         </div>
-        <h2 class="text-2xl font-bold text-white">
-          {{ modalMode === 'create' ? 'Nueva Propiedad' : 'Editar Propiedad' }}
-        </h2>
+        <h2>{{ modalMode === 'create' ? 'Nueva Propiedad' : 'Editar Propiedad' }}</h2>
       </div>
-      <button (click)="closeModal()"
-        class="p-2 transition-all text-white/80 hover:text-white hover:bg-white/20 rounded-xl">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+      <button mat-icon-button class="btn-close" (click)="closeModal()">
+        <lucide-icon [img]="X" [size]="22"></lucide-icon>
       </button>
     </div>
 
-    <!-- Modal Body -->
-    <div class="p-8 overflow-y-auto bg-slate-50"
-      style="max-height: calc(90vh - 180px); scrollbar-width: thin; scrollbar-color: #CBD5E1 #F1F5F9;">
-      <form *ngIf="propertyForm" [formGroup]="propertyForm" class="space-y-6" novalidate>
-        <!-- Basic Info -->
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <div class="flex items-center gap-2 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-              </path>
-            </svg>
-            <h3 class="text-lg font-bold text-slate-900">Información Básica</h3>
+    <!-- Body -->
+    <div class="modal-body">
+
+
+      <form *ngIf="propertyForm" [formGroup]="propertyForm" novalidate>
+
+        <!-- Información Básica -->
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="Home" [size]="18" class="text-blue-600"></lucide-icon>
+            <h3>Información Básica</h3>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <div class="md:col-span-2">
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Título <span
-                  class="text-red-500">*</span></label>
-              <input type="text" formControlName="title"
-                [ngClass]="{'border-red-500': hasError('title'), 'border-slate-300': !hasError('title')}"
-                class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Ej: Apartamento Moderno en Centro" />
-              <p *ngIf="hasError('title')" class="mt-1 text-xs text-red-500">Campo requerido</p>
-              <p *ngIf="!hasError('title')" class="mt-1 text-xs text-slate-500">Un título atractivo que describa la
-                propiedad</p>
+          <div class="form-grid-2">
+            <div class="full-width">
+              <mat-form-field appearance="outline">
+                <mat-label>Título *</mat-label>
+                <input matInput formControlName="title" placeholder="Ej: Apartamento Moderno en Centro" />
+                <mat-error *ngIf="hasError('title')">Campo requerido</mat-error>
+                <mat-hint>Un título atractivo que describa la propiedad</mat-hint>
+              </mat-form-field>
             </div>
 
-            <div class="md:col-span-2">
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Descripción</label>
-              <textarea formControlName="description" rows="4"
-                class="w-full px-4 py-3 transition-all bg-white border resize-none border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Describe la propiedad, sus características, ubicación, etc..."></textarea>
+            <div class="full-width">
+              <mat-form-field appearance="outline">
+                <mat-label>Descripción</mat-label>
+                <textarea matInput formControlName="description" rows="3"
+                  placeholder="Describe la propiedad, sus características, ubicación..."></textarea>
+              </mat-form-field>
             </div>
 
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Tipo de Propiedad <span
-                  class="text-red-500">*</span></label>
-              <select formControlName="property_type_id" (change)="onPropertyTypeChange(+$any($event.target).value)"
-                [ngClass]="{'border-red-500': hasError('property_type_id'), 'border-slate-300': !hasError('property_type_id')}"
-                class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">Seleccione un tipo...</option>
-                <option *ngFor="let type of propertyTypes()" [value]="type.id">{{ type.name }}</option>
-              </select>
-              <p *ngIf="hasError('property_type_id')" class="mt-1 text-xs text-red-500">Campo requerido</p>
-            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de Propiedad *</mat-label>
+              <mat-select formControlName="property_type_id"
+                (selectionChange)="onPropertyTypeChange(+$event.value)">
+                <mat-option value="">Seleccione un tipo...</mat-option>
+                <mat-option *ngFor="let type of propertyTypes()" [value]="type.id">{{ type.name }}</mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasError('property_type_id')">Campo requerido</mat-error>
+            </mat-form-field>
 
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Subtipo <span
-                  class="text-red-500">*</span></label>
-              <select formControlName="property_subtype_id"
-                [ngClass]="{'border-red-500': hasError('property_subtype_id'), 'border-slate-300': !hasError('property_subtype_id')}"
-                class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">Seleccione primero un tipo</option>
-                <option *ngFor="let subtype of filteredSubtypes()" [value]="subtype.id">{{ subtype.name }}</option>
-              </select>
-              <p *ngIf="hasError('property_subtype_id')" class="mt-1 text-xs text-red-500">Campo requerido</p>
-            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Subtipo *</mat-label>
+              <mat-select formControlName="property_subtype_id">
+                <mat-option value="">Seleccione primero un tipo</mat-option>
+                <mat-option *ngFor="let sub of filteredSubtypes()" [value]="sub.id">{{ sub.name }}</mat-option>
+              </mat-select>
+              <mat-error *ngIf="hasError('property_subtype_id')">Campo requerido</mat-error>
+            </mat-form-field>
 
-            <div class="flex items-center pt-8">
-              <input type="checkbox" formControlName="active" id="active"
-                class="w-5 h-5 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500" />
-              <label for="active" class="block ml-3 text-sm font-medium cursor-pointer text-slate-900">
-                Propiedad Activa (visible en catálogo público)
-              </label>
+            <div class="checkbox-simple full-width">
+              <input type="checkbox" formControlName="active" id="active" />
+              <label for="active">Propiedad Activa (visible en catálogo público)</label>
             </div>
           </div>
         </div>
 
-        <!-- Images Section -->
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <div class="flex items-center gap-2 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-pink-600" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <h3 class="text-lg font-bold text-slate-900">Imágenes de la Propiedad <span
-                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h3>
+        <!-- Imágenes -->
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="LucideImage" [size]="18" class="text-pink-600"></lucide-icon>
+            <h3>Imágenes de la Propiedad</h3>
+            <span class="badge-optional">Opcional</span>
           </div>
 
-          <div class="space-y-4">
-            <div>
-              <label class="block mb-3 text-sm font-semibold text-slate-700">
-                Seleccione hasta 10 imágenes (JPG, PNG, GIF, WebP - máx. 5MB cada una)
-              </label>
-              <input type="file" (change)="onImagesSelected($event)"
-                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple
-                class="w-full px-4 py-3 text-sm transition-all bg-white border border-slate-300 rounded-xl file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
+          <p class="hint-text" style="margin-bottom: 12px;">Seleccione hasta 10 imágenes (JPG, PNG, GIF, WebP — máx. 5MB cada una)</p>
+          <input type="file" class="file-input" (change)="onImagesSelected($event)"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple />
 
-            <div *ngIf="selectedImages.length > 0" class="p-4 border border-blue-200 rounded-lg bg-blue-50">
-              <p class="mb-2 text-sm font-semibold text-blue-900">
-                Imágenes seleccionadas: {{ selectedImages.length }}
-              </p>
-              <ul class="space-y-1">
-                <li *ngFor="let image of selectedImages" class="text-xs text-blue-700">
-                  📷 {{ image.name }}
-                </li>
-              </ul>
-            </div>
+          <div *ngIf="selectedImages.length > 0" class="selected-images">
+            <p>Imágenes seleccionadas: {{ selectedImages.length }}</p>
+            <ul>
+              <li *ngFor="let image of selectedImages">{{ image.name }}</li>
+            </ul>
+          </div>
 
-            <p class="text-xs text-slate-500">
-              💡 Las imágenes se subirán al crear la propiedad. Si no selecciona imágenes ahora, podrá agregarlas
-              después.
-            </p>
+          <p class="hint-text" style="margin-top: 10px;">
+            Las imágenes se subirán al crear la propiedad. Puede agregarlas después si lo prefiere.
+          </p>
+        </div>
+
+        <!-- Información Financiera -->
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
+            <h3>Información Financiera</h3>
+            <span class="badge-optional">Opcional</span>
+          </div>
+
+          <div class="form-grid-3">
+            <mat-form-field appearance="outline">
+              <mat-label>Renta Mensual</mat-label>
+              <input matInput type="number" formControlName="monthly_rent" placeholder="2500" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Moneda</mat-label>
+              <mat-select formControlName="currency">
+                <mat-option value="BOB">BOB — Bolivianos</mat-option>
+                <mat-option value="USD">USD — Dólares</mat-option>
+                <mat-option value="EUR">EUR — Euros</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Depósito de Seguridad</mat-label>
+              <input matInput type="number" formControlName="security_deposit_amount" placeholder="3000" />
+            </mat-form-field>
+          </div>
+
+          <div class="subsection-title">
+            <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
+            Cuenta Bancaria
+            <span class="badge-optional">Opcional</span>
+          </div>
+          <div class="form-grid-3">
+            <mat-form-field appearance="outline">
+              <mat-label>Número de Cuenta</mat-label>
+              <input matInput formControlName="account_number" placeholder="123-456-789" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Tipo de Cuenta</mat-label>
+              <input matInput formControlName="account_type" placeholder="savings, checking..." />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Titular de la Cuenta</mat-label>
+              <input matInput formControlName="account_holder_name" placeholder="Nombre del titular" />
+            </mat-form-field>
           </div>
         </div>
 
-        <!-- Financial Info -->
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <div class="flex items-center gap-2 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 class="text-lg font-bold text-slate-900">Información Financiera <span
-                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h3>
+        <!-- Detalles de la Propiedad -->
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="Maximize2" [size]="18" class="text-purple-600"></lucide-icon>
+            <h3>Detalles de la Propiedad</h3>
+            <span class="badge-optional">Opcional</span>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Renta Mensual</label>
-              <input type="number" formControlName="monthly_rent"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="2500" />
+          <div class="form-grid-4">
+            <mat-form-field appearance="outline">
+              <mat-label>Superficie (m²)</mat-label>
+              <input matInput type="number" formControlName="square_meters" placeholder="85" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Dormitorios</mat-label>
+              <input matInput type="number" formControlName="bedrooms" placeholder="3" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Baños</mat-label>
+              <input matInput type="number" step="0.5" formControlName="bathrooms" placeholder="2" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Estacionamientos</mat-label>
+              <input matInput type="number" formControlName="parking_spaces" placeholder="1" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Año de Construcción</mat-label>
+              <input matInput type="number" formControlName="year_built" placeholder="2020" />
+            </mat-form-field>
+            <div class="checkbox-simple">
+              <input type="checkbox" formControlName="is_furnished" id="is_furnished" />
+              <label for="is_furnished">Amoblada</label>
             </div>
-
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Moneda</label>
-              <select formControlName="currency"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="BOB">BOB - Bolivianos</option>
-                <option value="USD">USD - Dólares</option>
-                <option value="EUR">EUR - Euros</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Depósito de Seguridad</label>
-              <input type="number" formControlName="security_deposit_amount"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="3000" />
-            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Latitud</mat-label>
+              <lucide-icon matIconPrefix [img]="Globe" [size]="14"></lucide-icon>
+              <input matInput type="number" step="any" formControlName="latitude" placeholder="-16.5000" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Longitud</mat-label>
+              <lucide-icon matIconPrefix [img]="Globe" [size]="14"></lucide-icon>
+              <input matInput type="number" step="any" formControlName="longitude" placeholder="-68.1500" />
+            </mat-form-field>
           </div>
 
-          <!-- Información de Cuenta Bancaria (Opcional) -->
-          <div class="pt-6 mt-6 border-t border-slate-200">
-            <h4 class="mb-4 text-sm font-semibold text-slate-700">Información de Cuenta Bancaria <span
-                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h4>
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div>
-                <label class="block mb-2 text-sm font-medium text-slate-700">Número de Cuenta</label>
-                <input type="text" formControlName="account_number"
-                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="123-456-789" />
-              </div>
-
-              <div>
-                <label class="block mb-2 text-sm font-medium text-slate-700">Tipo de Cuenta</label>
-                <input type="text" formControlName="account_type"
-                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="savings, checking, etc." />
-              </div>
-
-              <div>
-                <label class="block mb-2 text-sm font-medium text-slate-700">Titular de la Cuenta</label>
-                <input type="text" formControlName="account_holder_name"
-                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Nombre del titular" />
-              </div>
+          <!-- Reglas -->
+          <div class="subsection-title">Reglas y Políticas</div>
+          <div class="form-grid-2">
+            <div [class]="'checkbox-rule ' + (propertyForm.get('pets_allowed')?.value ? 'checked' : '')">
+              <input type="checkbox" formControlName="pets_allowed" id="pets_allowed" />
+              <label for="pets_allowed">
+                <lucide-icon [img]="PawPrint" [size]="18"></lucide-icon>
+                Se permiten mascotas
+              </label>
             </div>
+            <div [class]="'checkbox-rule ' + (propertyForm.get('smoking_allowed')?.value ? 'checked' : '')">
+              <input type="checkbox" formControlName="smoking_allowed" id="smoking_allowed" />
+              <label for="smoking_allowed">
+                <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+                Se permite fumar
+              </label>
+            </div>
+            <mat-form-field appearance="outline">
+              <mat-label>Máximo de Ocupantes</mat-label>
+              <lucide-icon matIconPrefix [img]="Users" [size]="14"></lucide-icon>
+              <input matInput type="number" formControlName="max_occupants" min="1" placeholder="4" />
+              <mat-hint>Número máximo de personas</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Mínimo de Meses de Contrato</mat-label>
+              <lucide-icon matIconPrefix [img]="Calendar" [size]="14"></lucide-icon>
+              <input matInput type="number" formControlName="min_lease_months" min="1" placeholder="6" />
+              <mat-hint>Duración mínima del contrato</mat-hint>
+            </mat-form-field>
           </div>
         </div>
 
-        <!-- Property Details -->
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <div class="flex items-center gap-2 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-            <h3 class="text-lg font-bold text-slate-900">Detalles de la Propiedad <span
-                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h3>
-          </div>
-
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Superficie (m²)</label>
-              <input type="number" formControlName="square_meters"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="85" />
-            </div>
-
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Dormitorios</label>
-              <input type="number" formControlName="bedrooms"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="3" />
-            </div>
-
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Baños</label>
-              <input type="number" step="0.5" formControlName="bathrooms"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="2" />
-            </div>
-
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Estacionamientos</label>
-              <input type="number" formControlName="parking_spaces"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="1" />
-            </div>
-
-            <div>
-              <label class="block mb-2 text-sm font-semibold text-slate-700">Año de Construcción</label>
-              <input type="number" formControlName="year_built"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="2020" />
-            </div>
-
-            <div>
-              <label
-                class="flex items-center gap-2 px-4 py-3 transition-colors cursor-pointer bg-slate-50 rounded-xl hover:bg-slate-100">
-                <input type="checkbox" formControlName="is_furnished"
-                  class="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500">
-                <span class="text-sm font-semibold text-slate-700">Amoblada</span>
-              </label>
-            </div>
-
-            <div>
-              <label class="flex items-center gap-1 mb-2 text-sm font-semibold text-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Latitud
-              </label>
-              <input type="number" step="any" formControlName="latitude"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="-16.5000" />
-            </div>
-
-            <div>
-              <label class="flex items-center gap-1 mb-2 text-sm font-semibold text-slate-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                  viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Longitud
-              </label>
-              <input type="number" step="any" formControlName="longitude"
-                class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="-68.1500" />
-            </div>
-          </div>
-
-          <!-- Property Rules -->
-          <div class="pt-6 mt-6 border-t border-slate-200">
-            <h4 class="mb-4 text-sm font-semibold text-slate-700">Reglas y Políticas de la Propiedad <span
-                class="px-2 py-1 ml-2 text-xs rounded-full text-slate-500 bg-slate-100">Opcional</span></h4>
-
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <!-- Mascotas permitidas -->
-              <div class="flex items-center p-4 transition-all border-2 rounded-xl hover:bg-slate-50"
-                [ngClass]="{'border-blue-500 bg-blue-50': propertyForm.get('pets_allowed')?.value, 'border-slate-200': !propertyForm.get('pets_allowed')?.value}">
-                <input type="checkbox" formControlName="pets_allowed" id="pets_allowed"
-                  class="w-5 h-5 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500" />
-                <label for="pets_allowed" class="flex items-center gap-2 ml-3 cursor-pointer">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span class="text-sm font-medium text-slate-900">Se permiten mascotas</span>
-                </label>
-              </div>
-
-              <!-- Fumar permitido -->
-              <div class="flex items-center p-4 transition-all border-2 rounded-xl hover:bg-slate-50"
-                [ngClass]="{'border-blue-500 bg-blue-50': propertyForm.get('smoking_allowed')?.value, 'border-slate-200': !propertyForm.get('smoking_allowed')?.value}">
-                <input type="checkbox" formControlName="smoking_allowed" id="smoking_allowed"
-                  class="w-5 h-5 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500" />
-                <label for="smoking_allowed" class="flex items-center gap-2 ml-3 cursor-pointer">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-600" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                  </svg>
-                  <span class="text-sm font-medium text-slate-900">Se permite fumar</span>
-                </label>
-              </div>
-
-              <!-- Máximo de ocupantes -->
-              <div>
-                <label class="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Máximo de Ocupantes
-                </label>
-                <input type="number" formControlName="max_occupants" min="1"
-                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: 4" />
-                <p class="mt-1 text-xs text-slate-500">Número máximo de personas permitidas</p>
-              </div>
-
-              <!-- Mínimo de meses de contrato -->
-              <div>
-                <label class="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-700">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  Mínimo de Meses de Contrato
-                </label>
-                <input type="number" formControlName="min_lease_months" min="1"
-                  class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: 6" />
-                <p class="mt-1 text-xs text-slate-500">Duración mínima del contrato de alquiler</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Address -->
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200">
-          <div class="flex items-center gap-2 mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-600" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <h3 class="text-lg font-bold text-slate-900">Dirección</h3>
+        <!-- Dirección -->
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="MapPin" [size]="18" class="text-red-600"></lucide-icon>
+            <h3>Dirección</h3>
           </div>
 
           <div formArrayName="addresses">
             <ng-container *ngFor="let address of addresses.controls; let i = index; trackBy: trackByIndex">
-              <div [formGroupName]="i" class="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
-                <div class="md:col-span-2">
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Dirección Completa <span
-                      class="text-red-500">*</span></label>
-                  <input type="text" formControlName="street_address"
-                    [ngClass]="{'border-red-500': getAddressError(i, 'street_address'), 'border-slate-300': !getAddressError(i, 'street_address')}"
-                    class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Av. Libertador 1234, Piso 5, Depto A" />
-                  <p *ngIf="getAddressError(i, 'street_address')" class="mt-1 text-xs text-red-500">
-                    Este campo es requerido
-                  </p>
+              <div [formGroupName]="i" class="form-grid-2">
+                <div class="full-width">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Dirección Completa *</mat-label>
+                    <input matInput formControlName="street_address"
+                      placeholder="Av. Principal 1234, Piso 5" />
+                    <mat-error *ngIf="getAddressError(i, 'street_address')">Campo requerido</mat-error>
+                  </mat-form-field>
                 </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Ciudad <span
-                      class="text-red-500">*</span></label>
-                  <input type="text" formControlName="city"
-                    [ngClass]="{'border-red-500': getAddressError(i, 'city'), 'border-slate-300': !getAddressError(i, 'city')}"
-                    class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Buenos Aires" />
-                  <p *ngIf="getAddressError(i, 'city')" class="mt-1 text-xs text-red-500">
-                    Este campo es requerido
-                  </p>
-                </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Estado/Provincia</label>
-                  <input type="text" formControlName="state"
-                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Capital Federal" />
-                </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Código Postal</label>
-                  <input type="text" formControlName="zip_code"
-                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="1001" />
-                </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">País <span
-                      class="text-red-500">*</span></label>
-                  <input type="text" formControlName="country"
-                    [ngClass]="{'border-red-500': getAddressError(i, 'country'), 'border-slate-300': !getAddressError(i, 'country')}"
-                    class="w-full px-4 py-3 transition-all bg-white border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Argentina" />
-                  <p *ngIf="getAddressError(i, 'country')" class="mt-1 text-xs text-red-500">
-                    Este campo es requerido
-                  </p>
-                </div>
+                <mat-form-field appearance="outline">
+                  <mat-label>Ciudad *</mat-label>
+                  <input matInput formControlName="city" placeholder="Santa Cruz" />
+                  <mat-error *ngIf="getAddressError(i, 'city')">Campo requerido</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Estado / Provincia</mat-label>
+                  <input matInput formControlName="state" placeholder="Santa Cruz de la Sierra" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Código Postal</mat-label>
+                  <input matInput formControlName="zip_code" placeholder="1001" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>País *</mat-label>
+                  <input matInput formControlName="country" placeholder="Bolivia" />
+                  <mat-error *ngIf="getAddressError(i, 'country')">Campo requerido</mat-error>
+                </mat-form-field>
               </div>
             </ng-container>
           </div>
         </div>
 
-        <!-- Owner -->
-        <div class="p-6 bg-white border shadow-sm rounded-2xl border-slate-200" *ngIf="modalMode === 'create'">
-          <div class="flex items-center justify-between mb-6">
-            <div class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <h3 class="text-lg font-bold text-slate-900">Información del Propietario</h3>
-            </div>
-            <span class="px-3 py-1 text-xs rounded-full text-slate-500 bg-slate-100">Opcional - puede agregar
-              después</span>
+        <!-- Propietario (solo en creación) -->
+        <div class="form-section" *ngIf="modalMode === 'create'">
+          <div class="section-title">
+            <lucide-icon [img]="Users" [size]="18" class="text-indigo-600"></lucide-icon>
+            <h3>Información del Propietario</h3>
+            <span class="badge-optional">Opcional</span>
           </div>
 
           <div formArrayName="new_owners">
             <ng-container *ngFor="let owner of owners.controls; let i = index; trackBy: trackByIndex">
-              <div [formGroupName]="i" class="grid grid-cols-1 gap-6 mb-6 md:grid-cols-2">
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Nombre Completo</label>
-                  <input type="text" formControlName="name"
-                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Carlos González" />
-                </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Email</label>
-                  <input type="email" formControlName="primary_email"
-                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="carlos@example.com" />
-                </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">Teléfono</label>
-                  <input type="tel" formControlName="phone_number"
-                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="+5491112345678" />
-                </div>
-
-                <div>
-                  <label class="block mb-2 text-sm font-semibold text-slate-700">% de Propiedad</label>
-                  <input type="number" formControlName="ownership_percentage" min="0" max="100"
-                    class="w-full px-4 py-3 transition-all bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="100" />
-                </div>
+              <div [formGroupName]="i" class="form-grid-2">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre Completo</mat-label>
+                  <input matInput formControlName="name" placeholder="Carlos González" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Email</mat-label>
+                  <input matInput type="email" formControlName="primary_email" placeholder="carlos@example.com" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Teléfono</mat-label>
+                  <input matInput type="tel" formControlName="phone_number" placeholder="+5912345678" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>% de Propiedad</mat-label>
+                  <input matInput type="number" formControlName="ownership_percentage" min="0" max="100" placeholder="100" />
+                </mat-form-field>
               </div>
             </ng-container>
           </div>
         </div>
+
       </form>
     </div>
 
-    <!-- Modal Footer -->
-    <div
-      class="sticky bottom-0 flex justify-end gap-3 px-8 py-5 border-t bg-gradient-to-r from-slate-50 to-white border-slate-200">
-      <button type="button" (click)="closeModal()"
-        class="px-6 py-3 font-semibold transition-all border-2 border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-400">
-        Cancelar
-      </button>
-      <button type="button" (click)="saveProperty()" [disabled]="isSubmitting()"
-        class="flex items-center gap-2 px-8 py-3 font-semibold text-white transition-all shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl">
-        <svg xmlns="http://www.w3.org/2000/svg" *ngIf="!isSubmitting()" class="w-5 h-5" fill="none"
-          stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <span [textContent]="getButtonText()"></span>
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button mat-stroked-button type="button" (click)="closeModal()">Cancelar</button>
+      <button mat-flat-button color="primary" type="button" (click)="saveProperty()" [disabled]="isSubmitting()">
+        <mat-progress-spinner *ngIf="isSubmitting()" mode="indeterminate" [diameter]="16"></mat-progress-spinner>
+        <lucide-icon *ngIf="!isSubmitting()" [img]="CheckCircle2" [size]="16"></lucide-icon>
+        {{ getButtonText() }}
       </button>
     </div>
+
   </div>
 </div>

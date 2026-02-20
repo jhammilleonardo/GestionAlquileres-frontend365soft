@@ -205,8 +205,17 @@ export class PropertyService {
       property.updated_at = new Date(property.updated_at);
     }
 
-    // Normalizar images: convertir objeto {0: "path", 1: "path"} a array ["path", "path"]
-    if (property.images && typeof property.images === 'object' && !Array.isArray(property.images)) {
+    // Normalizar images según el formato que venga del backend
+    if (typeof property.images === 'string') {
+      // Puede venir como JSON string: '["url1","url2"]' o comma-separated: 'url1,url2'
+      try {
+        const parsed = JSON.parse(property.images);
+        property.images = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        property.images = property.images ? property.images.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+      }
+    } else if (property.images && typeof property.images === 'object' && !Array.isArray(property.images)) {
+      // Objeto {0: "path", 1: "path"}
       const imagesObj = property.images as Record<string, string>;
       property.images = Object.keys(imagesObj).sort().map(key => imagesObj[key]);
     }
@@ -340,16 +349,17 @@ export class PropertyService {
   }
 
   /**
-   * Crear nueva propiedad con imágenes (admin) - multipart/form-data
+   * Subir una imagen para una propiedad (admin) - multipart/form-data
    */
-  createPropertyWithImages(formData: FormData): Observable<Property> {
-    const endpoint = this.slugService.buildApiEndpoint('admin/properties/with-images');
+  uploadPropertyImage(propertyId: number, file: File): Observable<any> {
+    const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${propertyId}/images`);
+    const formData = new FormData();
+    formData.append('file', file);
 
-    return this.apiHttp.post<Property>(endpoint, formData).pipe(
-      map(property => this.transformProperty(property)),
-      tap(() => console.log('Property with images created successfully')),
+    return this.apiHttp.post<any>(endpoint, formData).pipe(
+      tap(() => console.log(`Image uploaded for property ${propertyId}`)),
       catchError(error => {
-        console.error('Error creating property with images:', error);
+        console.error(`Error uploading image for property ${propertyId}:`, error);
         throw error;
       })
     );

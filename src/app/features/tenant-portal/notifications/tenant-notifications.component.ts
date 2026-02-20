@@ -13,6 +13,7 @@ import {
   Hash, MapPin, Tag, BellOff, ArrowUpRight
 } from 'lucide-angular';
 import { TenantNotificationService, TenantNotification } from '../../../core/services/tenant-notification.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
 
 type NotificationFilter = 'all' | 'unread' | 'read';
@@ -36,6 +37,7 @@ type NotificationFilter = 'all' | 'unread' | 'read';
 export class TenantNotificationsComponent implements OnInit, OnDestroy {
   private notificationService = inject(TenantNotificationService);
   private router = inject(Router);
+  private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
 
   // Signals
@@ -132,11 +134,11 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     const eventType = notification.event_type;
 
     if (eventType.includes('maintenance')) {
-      this.router.navigate(['/portal/mantenimiento']);
+      this.slugService.navigateTo(['portal', 'mantenimiento']);
     } else if (eventType.includes('contract')) {
-      this.router.navigate(['/portal/documentos']);
+      this.slugService.navigateTo(['portal', 'documentos']);
     } else if (eventType.includes('payment')) {
-      this.router.navigate(['/portal/pagos']);
+      this.slugService.navigateTo(['portal', 'pagos']);
     }
   }
 

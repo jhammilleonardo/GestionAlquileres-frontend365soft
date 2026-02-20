@@ -81,14 +81,6 @@ export class NotificationService {
         return this.slugService.getSlug() || '';
     }
 
-    private get headers(): HttpHeaders {
-        const token = this.authService.getToken();
-        return new HttpHeaders({
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        });
-    }
-
     /**
      * Cargar notificaciones con filtros opcionales
      */
@@ -119,7 +111,7 @@ export class NotificationService {
 
         this.http.get<Notification[]>(
             `${environment.apiUrl}${this.slug}/notifications`,
-            { headers: this.headers, params }
+            { params }
         ).pipe(
             tap(notifications => {
                 const processedNotifications = notifications.map(n => ({
@@ -146,7 +138,7 @@ export class NotificationService {
 
         this.http.get<NotificationStats>(
             `${environment.apiUrl}${this.slug}/notifications/stats`,
-            { headers: this.headers }
+            {}
         ).pipe(
             tap(stats => {
                 this.statsSignal.set(stats);
@@ -164,7 +156,7 @@ export class NotificationService {
     getNotification(id: number): Observable<Notification> {
         return this.http.get<Notification>(
             `${environment.apiUrl}${this.slug}/notifications/${id}`,
-            { headers: this.headers }
+            {}
         ).pipe(
             tap(notification => {
                 const processedNotification = {
@@ -187,7 +179,7 @@ export class NotificationService {
         return this.http.patch<void>(
             `${environment.apiUrl}${this.slug}/notifications/${id}/read`,
             {},
-            { headers: this.headers }
+            {}
         ).pipe(
             tap(() => {
                 // Actualizar en la lista
@@ -214,7 +206,7 @@ export class NotificationService {
         return this.http.patch<void>(
             `${environment.apiUrl}${this.slug}/notifications/read-all`,
             {},
-            { headers: this.headers }
+            {}
         ).pipe(
             tap(() => {
                 // Actualizar todas en la lista
@@ -239,7 +231,7 @@ export class NotificationService {
     deleteNotification(id: number): Observable<void> {
         return this.http.delete<void>(
             `${environment.apiUrl}${this.slug}/notifications/${id}`,
-            { headers: this.headers }
+            {}
         ).pipe(
             tap(() => {
                 // Remover de la lista

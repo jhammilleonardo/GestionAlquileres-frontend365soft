@@ -48,6 +48,7 @@ export class SlugService {
    * Establecer el slug actual (llamado desde el router o componentes)
    */
   setSlug(slug: string | null): void {
+    console.log('SlugService.setSlug(): Estableciendo slug:', slug);
     this.currentSlugSignal.set(slug);
     this.errorSignal.set(null);
 
@@ -64,7 +65,9 @@ export class SlugService {
    * Obtener el slug actual
    */
   getSlug(): string | null {
-    return this.currentSlugSignal();
+    const slug = this.currentSlugSignal();
+    console.log('SlugService.getSlug(): Retornando slug:', slug);
+    return slug;
   }
 
   /**

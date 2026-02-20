@@ -481,7 +481,7 @@ export class ContractCreateComponent implements OnInit {
         this.contractService.createContract(contractData).subscribe({
             next: (contract) => {
                 this.isSubmitting.set(false);
-                // Navegar al detalle del contrato
+                // El contrato queda en BORRADOR para que el inquilino lo revise y firme
                 const contractUrl = this.slugService.buildUrl(`/contratos/${contract.id}`);
                 this.router.navigateByUrl(contractUrl);
             },

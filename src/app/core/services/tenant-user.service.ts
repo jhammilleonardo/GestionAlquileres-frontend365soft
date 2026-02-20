@@ -48,16 +48,20 @@ export class TenantUserService {
     }
 
     constructor() {
-        this.loadAllUsers();
-        this.loadStats();
+        // Do NOT load users in constructor - wait until slug is available from route
     }
 
     /**
      * Load all users for the current tenant
      */
     loadAllUsers(): void {
+        const slug = this.getTenantSlug();
+        if (!slug) {
+            console.warn('TenantUserService: No slug available, skipping loadAllUsers');
+            return;
+        }
         this.isLoadingSignal.set(true);
-        this.apiService.get<AdminTenantUser[]>(`/users`)
+        this.apiService.get<AdminTenantUser[]>(`${slug}/users`)
             .pipe(
                 tap(() => this.isLoadingSignal.set(false))
             )
@@ -92,15 +96,16 @@ export class TenantUserService {
      * Get users with filters
      */
     getFilteredUsers(filters: TenantUserFilters): Observable<AdminTenantUser[]> {
+        const slug = this.getTenantSlug();
         const params: any = {};
-        
+
         if (filters.role) params.role = filters.role;
         if (filters.status) params.status = filters.status;
         if (filters.search) params.search = filters.search;
         if (filters.date_from) params.date_from = filters.date_from;
         if (filters.date_to) params.date_to = filters.date_to;
 
-        return this.apiService.get<AdminTenantUser[]>(`/users`, params)
+        return this.apiService.get<AdminTenantUser[]>(`${slug}/users`, params)
             .pipe(
                 tap(users => this.usersSignal.set(users))
             );
@@ -110,14 +115,16 @@ export class TenantUserService {
      * Get user by ID
      */
     getUserById(id: number): Observable<AdminTenantUser> {
-        return this.apiService.get<AdminTenantUser>(`/users/${id}`);
+        const slug = this.getTenantSlug();
+        return this.apiService.get<AdminTenantUser>(`${slug}/users/${id}`);
     }
 
     /**
      * Create new user
      */
     createUser(userData: CreateTenantUserDto): Observable<TenantUser> {
-        return this.apiService.post<TenantUser>(`/users`, userData)
+        const slug = this.getTenantSlug();
+        return this.apiService.post<TenantUser>(`${slug}/users`, userData)
             .pipe(
                 tap(() => {
                     // Reload users after creating
@@ -131,7 +138,8 @@ export class TenantUserService {
      * Update user
      */
     updateUser(id: number, userData: UpdateTenantUserDto): Observable<TenantUser> {
-        return this.apiService.patch<TenantUser>(`/users/${id}`, userData)
+        const slug = this.getTenantSlug();
+        return this.apiService.patch<TenantUser>(`${slug}/users/${id}`, userData)
             .pipe(
                 tap(() => {
                     // Reload users after updating
@@ -144,7 +152,8 @@ export class TenantUserService {
      * Delete user
      */
     deleteUser(id: number): Observable<void> {
-        return this.apiService.delete<void>(`/users/${id}`)
+        const slug = this.getTenantSlug();
+        return this.apiService.delete<void>(`${slug}/users/${id}`)
             .pipe(
                 tap(() => {
                     // Remove from local state
@@ -166,21 +175,24 @@ export class TenantUserService {
      * Reset user password (admin action)
      */
     resetUserPassword(id: number, newPassword: string): Observable<void> {
-        return this.apiService.post<void>(`/users/${id}/reset-password`, { password: newPassword });
+        const slug = this.getTenantSlug();
+        return this.apiService.post<void>(`${slug}/users/${id}/reset-password`, { password: newPassword });
     }
 
     /**
      * Get user contracts
      */
     getUserContracts(userId: number): Observable<any[]> {
-        return this.apiService.get<any[]>(`/users/${userId}/contracts`);
+        const slug = this.getTenantSlug();
+        return this.apiService.get<any[]>(`${slug}/users/${userId}/contracts`);
     }
 
     /**
      * Get user payments
      */
     getUserPayments(userId: number): Observable<any[]> {
-        return this.apiService.get<any[]>(`/users/${userId}/payments`);
+        const slug = this.getTenantSlug();
+        return this.apiService.get<any[]>(`${slug}/users/${userId}/payments`);
     }
 
     /**

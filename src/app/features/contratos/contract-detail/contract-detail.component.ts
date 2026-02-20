@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { LucideAngularModule, ArrowLeft, FileText, Download, Edit, RefreshCw, XCircle, Check } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, FileText, Download, Edit, RefreshCw, XCircle, Check, CheckCircle2 } from 'lucide-angular';
 import { AdminContractService } from '../../../core/services/admin-contract.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { Contract, ContractStatus, ContractStatusLabels } from '../../../core/models/contract.model';
@@ -203,6 +203,17 @@ import { Contract, ContractStatus, ContractStatusLabels } from '../../../core/mo
                             <div class="card-header">
                                 <h3>Acciones</h3>
                             </div>
+
+                            <!-- Banner: pendiente de firma del inquilino -->
+                            @if (canActivate()) {
+                                <div class="pending-sign-banner">
+                                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                                    <div>
+                                        <strong>Pendiente de firma</strong>
+                                        <p>El inquilino debe iniciar sesión en su portal para revisar y firmar este contrato.</p>
+                                    </div>
+                                </div>
+                            }
 
                             <div class="actions-list">
                                 <button mat-raised-button color="primary" class="action-button" (click)="downloadPDF()">
@@ -587,6 +598,38 @@ import { Contract, ContractStatus, ContractStatusLabels } from '../../../core/mo
             color: #f44;
         }
 
+        .pending-sign-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .pending-sign-banner lucide-icon {
+            color: #d97706;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .pending-sign-banner strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 4px;
+        }
+
+        .pending-sign-banner p {
+            margin: 0;
+            font-size: 12px;
+            color: #b45309;
+            line-height: 1.4;
+        }
+
         .term-section {
             margin-bottom: 16px;
         }
@@ -687,6 +730,7 @@ export class ContractDetailComponent implements OnInit {
     readonly RefreshCw = RefreshCw;
     readonly XCircle = XCircle;
     readonly Check = Check;
+    readonly CheckCircle2 = CheckCircle2;
     readonly ContractStatus = ContractStatus;
     readonly ContractStatusLabels = ContractStatusLabels;
 
@@ -709,7 +753,7 @@ export class ContractDetailComponent implements OnInit {
         }
     }
 
-    private loadContract(id: number): void {
+    loadContract(id: number): void {
         this.contractService.getContract(id).subscribe({
             next: (contract) => {
                 this.currentContract.set(contract);
@@ -721,6 +765,11 @@ export class ContractDetailComponent implements OnInit {
                 this.goBack();
             }
         });
+    }
+
+    canActivate(): boolean {
+        const contract = this.currentContract();
+        return contract?.status === ContractStatus.BORRADOR || false;
     }
 
     canEdit(): boolean {

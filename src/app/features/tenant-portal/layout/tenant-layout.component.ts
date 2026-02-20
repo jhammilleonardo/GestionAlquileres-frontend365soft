@@ -809,12 +809,12 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
         if (eventType.includes('maintenance')) {
             const requestId = notification.metadata?.['maintenance_request_id'];
             if (requestId) {
-                this.router.navigate(['/portal/mantenimiento']);
+                this.slugService.navigateTo(['portal', 'mantenimiento']);
             }
         } else if (eventType.includes('contract')) {
-            this.router.navigate(['/portal/documentos']);
+            this.slugService.navigateTo(['portal', 'documentos']);
         } else if (eventType.includes('payment')) {
-            this.router.navigate(['/portal/pagos']);
+            this.slugService.navigateTo(['portal', 'pagos']);
         }
 
         this.closeNotificationsDropdown();

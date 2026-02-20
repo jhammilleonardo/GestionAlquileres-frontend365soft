@@ -54,11 +54,10 @@ export class TenantAuthService {
             const user = this.loadUserFromStorage();
             if (user) {
                 this.currentUserSignal.set(user);
-                // CRITICAL: Restore slug in SlugService from user data
-                // This prevents logout on page refresh
-                if (user.tenant_slug) {
-                    this.slugService.setSlug(user.tenant_slug);
-                }
+                // NOTE: Do NOT call slugService.setSlug() here.
+                // The slug is set by tenantAuthGuard from the URL route param.
+                // Setting it here can override the admin slug when both sessions
+                // are stored in localStorage simultaneously.
             }
             // Validate token silently - if invalid (401), clear storage
             // This prevents 401 errors and login loops when JWT_SECRET changes

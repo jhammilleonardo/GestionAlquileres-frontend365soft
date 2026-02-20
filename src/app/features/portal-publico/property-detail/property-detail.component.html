@@ -24,8 +24,8 @@
   <!-- Image Gallery -->
   <div class="image-gallery">
     <div class="main-image-container">
-      <ng-container *ngIf="property.images && property.images.length > 0; else noImage">
-        <img [src]="property.images[currentImageIndex]" [alt]="property.title" class="main-image" />
+      <ng-container *ngIf="getImagesCount() > 0; else noImage">
+        <img [src]="getCurrentImage()" [alt]="property.title" class="main-image" />
       </ng-container>
       <ng-template #noImage>
         <div class="no-image-placeholder">
@@ -34,20 +34,20 @@
         </div>
       </ng-template>
 
-      <button class="nav-btn prev-btn" (click)="previousImage()" *ngIf="property.images && property.images.length > 1">
+      <button class="nav-btn prev-btn" (click)="previousImage()" *ngIf="hasMultipleImages()">
         ‹
       </button>
-      <button class="nav-btn next-btn" (click)="nextImage()" *ngIf="property.images && property.images.length > 1">
+      <button class="nav-btn next-btn" (click)="nextImage()" *ngIf="hasMultipleImages()">
         ›
       </button>
 
-      <div class="image-counter" *ngIf="property.images && property.images.length > 0">
-        {{ currentImageIndex + 1 }} / {{ property.images.length }}
+      <div class="image-counter" *ngIf="getImagesCount() > 0">
+        {{ currentImageIndex + 1 }} / {{ getImagesCount() }}
       </div>
     </div>
 
-    <div class="thumbnail-gallery" *ngIf="property.images && property.images.length > 1">
-      <img *ngFor="let image of property.images; let i = index" [src]="image" [alt]="'Imagen ' + (i + 1)"
+    <div class="thumbnail-gallery" *ngIf="hasMultipleImages()">
+      <img *ngFor="let image of getImagesArray(); let i = index" [src]="image" [alt]="'Imagen ' + (i + 1)"
         [class.active]="i === currentImageIndex" (click)="selectImage(i)" class="thumbnail" />
     </div>
   </div>

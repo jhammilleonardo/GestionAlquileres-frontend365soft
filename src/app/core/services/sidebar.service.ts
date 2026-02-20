@@ -49,40 +49,38 @@ export class SidebarService {
   }
 
   getMenuOptions(): MenuOption[] {
-    // Obtener el slug del tenant desde localStorage
-    const tenantSlug = localStorage.getItem('tenant_slug') || 'soft-prueba';
-    const baseRoute = `/${tenantSlug}/admin`;
-
+    // Retornar rutas SIN el slug - el sidebar.component.ts agregará el slug dinámicamente
+    // Las rutas coinciden con app.routes.ts: :slug/dashboard, :slug/propiedades, etc.
     return [
       {
         label: 'Dashboard',
         icon: 'LayoutDashboard',
-        route: `${baseRoute}/dashboard`
+        route: '/dashboard'
       },
       {
         label: 'Propiedades',
         icon: 'Building2',
-        route: `${baseRoute}/propiedades`
+        route: '/propiedades'
       },
       {
         label: 'Inquilinos',
         icon: 'Users',
-        route: `${baseRoute}/inquilinos`
+        route: '/inquilinos'
       },
       {
         label: 'Contratos',
         icon: 'FileText',
-        route: `${baseRoute}/contratos`
+        route: '/contratos'
       },
       {
         label: 'Pagos',
         icon: 'CreditCard',
-        route: `${baseRoute}/pagos`
+        route: '/pagos'
       },
       {
         label: 'Mantenimiento',
         icon: 'Wrench',
-        route: `${baseRoute}/mantenimiento`
+        route: '/mantenimiento'
       },
       {
         label: 'Notificaciones',
@@ -92,17 +90,17 @@ export class SidebarService {
       {
         label: 'Componentes UI',
         icon: 'Component',
-        route: `${baseRoute}/componentes`
+        route: '/componentes'
       },
       {
-        label: 'Reportes',
-        icon: 'BarChart3',
-        route: `${baseRoute}/reportes`
+        label: 'Perfil',
+        icon: 'User',
+        route: '/perfil'
       },
       {
         label: 'Configuración',
         icon: 'Settings',
-        route: `${baseRoute}/configuracion`
+        route: '/configuracion'
       }
     ];
   }

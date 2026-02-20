@@ -9,20 +9,31 @@ import { TenantAuthService } from '../services/tenant-auth.service';
 
 /**
  * Authentication Interceptor
- * Adds JWT token to all outgoing HTTP requests
- * Handles both admin and tenant tokens
+ * Adds JWT token to all outgoing HTTP requests.
+ *
+ * Priority rules:
+ * 1. If the request already has an Authorization header (set explicitly by a service), respect it.
+ * 2. If the URL contains "/tenant/", use the tenant token.
+ * 3. Otherwise (admin routes, public), use the admin token.
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ) => {
+  // If the service already set an Authorization header explicitly, don't overwrite it
+  if (req.headers.has('Authorization')) {
+    return next(req);
+  }
+
   const authService = inject(AuthService);
   const tenantAuthService = inject(TenantAuthService);
 
-  // Try to get admin token first, then tenant token
-  const token = authService.getToken() || tenantAuthService.getToken();
+  // Choose token based on route type
+  const isTenantRoute = req.url.includes('/tenant/');
+  const token = isTenantRoute
+    ? (tenantAuthService.getToken() || authService.getToken())
+    : (authService.getToken() || tenantAuthService.getToken());
 
-  // Clone the request and add the Authorization header if token exists
   if (token) {
     const authReq = req.clone({
       setHeaders: {
