@@ -118,8 +118,11 @@ export class ApiHttpService {
             headers = headers.set('Content-Type', 'application/json');
         }
 
-        // Add JWT token if available
-        const token = localStorage.getItem('access_token');
+        // Add JWT token if available (admin or tenant)
+        const token = localStorage.getItem('admin_access_token')
+            || sessionStorage.getItem('admin_access_token')
+            || localStorage.getItem('tenant_access_token')
+            || sessionStorage.getItem('tenant_access_token');
         if (token) {
             headers = headers.set('Authorization', `Bearer ${token}`);
         }

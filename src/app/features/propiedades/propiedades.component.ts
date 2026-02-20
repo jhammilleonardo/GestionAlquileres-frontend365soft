@@ -102,6 +102,7 @@ export class PropiedadesComponent implements OnInit {
   propertyTypes = signal<PropertyType[]>([]);
   propertySubtypes = signal<PropertySubtype[]>([]);
   filteredSubtypes = signal<PropertySubtype[]>([]);
+  propertyImageMap = new Map<number, string>();
 
   isLoading = signal(false); // Deprecated, split into isListLoading and isSubmitting
   isListLoading = signal(false);
@@ -225,21 +226,12 @@ export class PropiedadesComponent implements OnInit {
 
   loadProperties(): void {
     this.isListLoading.set(true);
-    console.log('🔍 Loading properties with filters:', this.filters);
     this.propertyService.getAdminProperties(this.filters).subscribe({
       next: (data) => {
-        console.log('✅ Properties loaded successfully:', data);
-        // Log detallado de cada propiedad para debug
-        data.forEach((prop, index) => {
-          const imagesLength = Array.isArray(prop.images) ? prop.images.length : (prop.images ? Object.keys(prop.images).length : 0);
-          console.log(`Property ${index + 1} [ID:${prop.id}]:`, {
-            title: prop.title,
-            first_image: prop.first_image,
-            images_length: imagesLength,
-            images: prop.images
-          });
-        });
         this.properties.set(data);
+        // Pre-computar URLs de imágenes para evitar cálculos en cada ciclo de change detection
+        this.propertyImageMap.clear();
+        data.forEach(prop => this.propertyImageMap.set(prop.id, this.buildImageUrl(prop)));
         this.isListLoading.set(false);
       },
       error: (error) => {
@@ -253,7 +245,6 @@ export class PropiedadesComponent implements OnInit {
   loadPropertyTypes(): void {
     this.propertyService.getPropertyTypes().subscribe({
       next: (types) => {
-        console.log('✅ Property types loaded:', types);
         this.propertyTypes.set(types);
       },
       error: (error) => console.error('❌ Error loading property types:', error)
@@ -263,7 +254,6 @@ export class PropiedadesComponent implements OnInit {
   loadPropertySubtypes(): void {
     this.propertyService.getPropertySubtypes().subscribe({
       next: (subtypes) => {
-        console.log('✅ Property subtypes loaded:', subtypes);
         this.propertySubtypes.set(subtypes);
       },
       error: (error) => console.error('❌ Error loading property subtypes:', error)
@@ -648,38 +638,28 @@ export class PropiedadesComponent implements OnInit {
     return 'Sin dirección';
   }
 
-  getPropertyImage(property: Property): string {
+  /** Construye la URL de imagen de una propiedad (uso interno, llamar solo al cargar datos) */
+  private buildImageUrl(property: Property): string {
     let imagePath: string | null = null;
 
-    // Intentar obtener first_image del listado (prioridad)
     if (property.first_image) {
       imagePath = property.first_image;
-      console.log('📸 Using first_image:', imagePath);
-    }
-    // Si no, intentar con images array
-    else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
       imagePath = property.images[0];
-      console.log('📸 Using images[0]:', imagePath);
     }
 
     if (imagePath) {
-      // Si la imagen ya tiene la URL completa, usarla directamente
-      if (imagePath.startsWith('http')) {
-        return imagePath;
-      }
-
-      // Construir URL completa
-      // El path viene como: /storage/properties/tenant/id/filename.jpg
-      // Y necesitamos: http://localhost:3000/storage/properties/tenant/id/filename.jpg
+      if (imagePath.startsWith('http')) return imagePath;
       const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-      const fullUrl = `http://localhost:3000${normalizedPath}`;
-
-      console.log('📸 Full URL:', fullUrl);
-      return fullUrl;
+      return `http://localhost:3000${normalizedPath}`;
     }
 
-    console.log('⚠️ No image found for property:', property.id, property.title);
     return '';
+  }
+
+  /** Retorna la URL de imagen pre-computada (seguro llamar desde template) */
+  getPropertyImage(property: Property): string {
+    return this.propertyImageMap.get(property.id) ?? '';
   }
 
   getPropertyPrice(property: Property): string {
