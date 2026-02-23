@@ -92,4 +92,17 @@ export class ContractService {
     const propertyName = contract.property?.title || `Propiedad #${contract.property_id}`;
     return `${contract.contract_number} - ${propertyName} (Bs ${contract.monthly_rent}/mes)`;
   }
+
+  /**
+   * Verificar si el inquilino actual tiene contratos (incluyendo BORRADOR)
+   * Útil para redirigir al dashboard cuando el admin aprueba una solicitud
+   */
+  hasAnyContracts(tenantId: number): Observable<Contract[]> {
+    // Obtenemos contratos en cualquier estado (BORRADOR, ACTIVO, etc.)
+    const endpoint = this.slugService.buildApiEndpoint(`admin/contracts`);
+    let params = new HttpParams();
+    params = params.set('tenant_id', tenantId.toString());
+
+    return this.http.get<Contract[]>(`${environment.apiUrl}${endpoint}`, { params });
+  }
 }

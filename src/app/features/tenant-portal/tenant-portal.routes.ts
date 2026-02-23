@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { tenantAuthGuard, tenantLoginGuard } from '../../core/guards/tenant-auth.guard';
+import { tenantAuthGuard, tenantLoginGuard, tenantPreContractGuard, tenantWithContractGuard } from '../../core/guards/tenant-auth.guard';
 
 export const TENANT_PORTAL_ROUTES: Routes = [
     {
@@ -12,12 +12,37 @@ export const TENANT_PORTAL_ROUTES: Routes = [
         canActivate: [tenantAuthGuard],
         loadComponent: () => import('./layout/tenant-layout.component').then(m => m.TenantLayoutComponent),
         children: [
+            // ==================== RUTAS PRE-CONTRATO ====================
+            {
+                path: 'home',
+                canActivate: [tenantPreContractGuard],
+                loadComponent: () => import('./home-pre-contract/home-pre-contract.component').then(m => m.HomePreContractComponent)
+            },
+            {
+                path: 'new-application',
+                canActivate: [tenantPreContractGuard],
+                loadComponent: () => import('./new-application/new-application.component').then(m => m.NewApplicationComponent)
+            },
+            {
+                path: 'application-wizard/:propertyId',
+                canActivate: [tenantPreContractGuard],
+                loadComponent: () => import('./application-wizard/application-wizard.component').then(m => m.ApplicationWizardComponent)
+            },
+            {
+                path: 'my-applications',
+                canActivate: [tenantPreContractGuard],
+                loadComponent: () => import('./my-applications/my-applications.component').then(m => m.MyApplicationsComponent)
+            },
+
+            // ==================== RUTAS CON CONTRATO ====================
             {
                 path: 'dashboard',
+                canActivate: [tenantWithContractGuard],
                 loadComponent: () => import('./dashboard/tenant-dashboard.component').then(m => m.TenantDashboardComponent)
             },
             {
                 path: 'mantenimiento',
+                canActivate: [tenantWithContractGuard],
                 children: [
                     {
                         path: '',
@@ -35,6 +60,7 @@ export const TENANT_PORTAL_ROUTES: Routes = [
             },
             {
                 path: 'pagos',
+                canActivate: [tenantWithContractGuard],
                 children: [
                     {
                         path: '',
@@ -48,6 +74,7 @@ export const TENANT_PORTAL_ROUTES: Routes = [
             },
             {
                 path: 'documentos',
+                canActivate: [tenantWithContractGuard],
                 children: [
                     {
                         path: '',
@@ -65,19 +92,25 @@ export const TENANT_PORTAL_ROUTES: Routes = [
             },
             {
                 path: 'mensajes',
+                canActivate: [tenantWithContractGuard],
                 loadComponent: () => import('./messages/tenant-messages.component').then(m => m.TenantMessagesComponent)
             },
             {
                 path: 'notificaciones',
+                canActivate: [tenantWithContractGuard],
                 loadComponent: () => import('./notifications/tenant-notifications.component').then(m => m.TenantNotificationsComponent)
             },
             {
                 path: 'perfil',
+                canActivate: [tenantWithContractGuard],
                 loadComponent: () => import('./profile/tenant-profile.component').then(m => m.TenantProfileComponent)
             },
+
+            // ==================== REDIRECCIÓN POR DEFECTO ====================
+            // NOTA: Esta redirección se maneja en tenant-layout.component mediante ContractService
             {
                 path: '',
-                redirectTo: 'dashboard',
+                redirectTo: 'home',
                 pathMatch: 'full'
             }
         ]

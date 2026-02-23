@@ -8,6 +8,10 @@ import { ContratosComponent } from './features/contratos/contratos.component';
 import { ContractCreateComponent } from './features/contratos/contract-create/contract-create.component';
 import { ContractDetailComponent } from './features/contratos/contract-detail/contract-detail.component';
 import { ContractEditComponent } from './features/contratos/contract-edit/contract-edit.component';
+import { SolicitudesComponent } from './features/solicitudes/solicitudes.component';
+import { ApplicationDetailComponent } from './features/solicitudes/components/application-detail/application-detail.component';
+import { ApproveDialogComponent } from './features/solicitudes/components/approve-dialog/approve-dialog.component';
+import { RejectDialogComponent } from './features/solicitudes/components/reject-dialog/reject-dialog.component';
 import { PagosComponent } from './features/pagos/pagos.component';
 import { MantenimientoComponent } from './features/mantenimiento/mantenimiento.component';
 import { ComponentesComponent } from './features/componentes/componentes.component';
@@ -83,6 +87,10 @@ export const routes: Routes = [
           { path: 'contratos/nuevo', component: ContractCreateComponent },
           { path: 'contratos/:id', component: ContractDetailComponent },
           { path: 'contratos/:id/editar', component: ContractEditComponent },
+          { path: 'solicitudes', component: SolicitudesComponent },
+          { path: 'solicitudes/:id', component: ApplicationDetailComponent },
+          { path: 'solicitudes/:id/aprobar', component: ApproveDialogComponent },
+          { path: 'solicitudes/:id/rechazar', component: RejectDialogComponent },
           { path: 'pagos', component: PagosComponent },
           { path: 'mantenimiento', component: MantenimientoComponent },
           { path: 'componentes', component: ComponentesComponent },

@@ -2,7 +2,7 @@ import { Component, inject, computed, DestroyRef, OnInit, OnDestroy } from '@ang
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Building2, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings, Bell } from 'lucide-angular';
+import { LucideAngularModule, Building2, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings, Bell, FileCheck } from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -47,6 +47,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   readonly LayoutDashboard = LayoutDashboard;
   readonly Users = Users;
   readonly FileText = FileText;
+  readonly FileCheck = FileCheck;
   readonly CreditCard = CreditCard;
   readonly Wrench = Wrench;
   readonly ComponentIcon = ComponentIcon;
@@ -60,6 +61,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
       'Building2': Building2,
       'Users': Users,
       'FileText': FileText,
+      'FileCheck': FileCheck,
       'CreditCard': CreditCard,
       'Wrench': Wrench,
       'Component': ComponentIcon,

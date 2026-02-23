@@ -1,0 +1,100 @@
+<div class="reject-dialog-container">
+  <!-- Success State -->
+  <div *ngIf="success" class="success-state">
+    <div class="success-icon">✅</div>
+    <h2>Solicitud Rechazada</h2>
+    <p>La solicitud ha sido rechazada y se ha notificado al inquilino.</p>
+    <div class="redirect-notice">
+      <p>⏱️ Redirigiendo...</p>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="!success" class="form-container">
+    <div class="form-header">
+      <div class="header-icon">❌</div>
+      <h1>Rechazar Solicitud</h1>
+      <p class="form-subtitle">Proporciona una razón para el rechazo de esta solicitud</p>
+    </div>
+
+    <div class="form-content">
+      <!-- Error Message -->
+      <div *ngIf="error" class="error-alert">
+        <span class="error-icon">⚠️</span>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Warning -->
+      <div class="warning-box">
+        <span class="warning-icon">⚠️</span>
+        <div class="warning-content">
+          <strong>Atención:</strong> Esta acción notificará al inquilino que su solicitud ha sido rechazada.
+          El mensaje que escribas será visible para el inquilino.
+        </div>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" class="reject-form">
+        <!-- Common Reasons -->
+        <div class="form-section">
+          <label class="section-label">Razones Comunes (opcional - haz clic para seleccionar)</label>
+          <div class="reasons-grid">
+            <button
+              type="button"
+              class="reason-btn"
+              *ngFor="let reason of commonReasons"
+              (click)="selectReason(reason)"
+              [class.active]="formData.admin_feedback === reason"
+            >
+              {{ reason }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Feedback -->
+        <div class="form-section">
+          <label for="admin_feedback" class="section-label">
+            Mensaje de Rechazo <span class="required">*</span>
+          </label>
+          <textarea
+            id="admin_feedback"
+            class="form-control"
+            [(ngModel)]="formData.admin_feedback"
+            name="admin_feedback"
+            rows="6"
+            placeholder="Explica al inquilino por qué su solicitud ha sido rechazada. Sé claro y específico..."
+            required
+          ></textarea>
+          <small class="form-hint">
+            Este mensaje será enviado al inquilino junto con la notificación de rechazo.
+          </small>
+        </div>
+
+        <!-- Tips -->
+        <div class="tips-box">
+          <h4>💡 Consejos para un buen rechazo:</h4>
+          <ul>
+            <li>Sé específico sobre el motivo del rechazo</li>
+            <li>Sé profesional y respetuoso</li>
+            <li>Si es posible, ofrece sugerencias para mejorar</li>
+            <li>Evita lenguaje ofensivo o discriminatorio</li>
+          </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-danger"
+            [disabled]="submitting || !formData.admin_feedback.trim()"
+          >
+            <span *ngIf="submitting">Procesando...</span>
+            <span *ngIf="!submitting">❌ Rechazar Solicitud</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

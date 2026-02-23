@@ -1,8 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { PropertyService } from '../../../core/services/property.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { ApplicationIntentionService } from '../../../core/services/application-intention.service';
+import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { Property } from '../../../core/models/property.model';
 import { ApplicationModalComponent } from '../application-modal/application-modal.component';
 import { ContactModalComponent } from '../contact-modal/contact-modal.component';
@@ -31,6 +33,9 @@ export class PropertyDetailComponent implements OnInit {
   showMapModal = false;
 
   private slugService = inject(SlugService);
+  private router = inject(Router);
+  private intentionService = inject(ApplicationIntentionService);
+  private authService = inject(TenantAuthService);
 
   constructor(
     private route: ActivatedRoute,
@@ -148,7 +153,32 @@ export class PropertyDetailComponent implements OnInit {
   }
 
   openApplicationModal(): void {
-    this.showApplicationModal = true;
+    console.log('🔘 Botón "Quiero Aplicar" clickeado');
+    console.log('Property:', this.property);
+
+    if (this.property) {
+      const slug = this.slugService.getSlug();
+
+      // Verificar si el usuario está autenticado como inquilino
+      const isTenantAuthenticated = this.authService.isAuthenticated();
+
+      if (isTenantAuthenticated) {
+        // Usuario autenticado -> Ir directamente al formulario
+        console.log('✅ Usuario autenticado, navegando al formulario');
+        this.intentionService.setIntention(this.property.id, this.property.title);
+        if (slug) {
+          this.intentionService.navigateToApplication(slug);
+        }
+      } else {
+        // Usuario NO autenticado -> Guardar intención y ir a login
+        console.log('🔐 Usuario no autenticado, navegando al login con intención');
+        if (slug) {
+          this.intentionService.navigateToLoginWithIntention(slug, this.property.id, this.property.title);
+        }
+      }
+    } else {
+      console.warn('⚠️ No hay property cargada');
+    }
   }
 
   closeApplicationModal(): void {

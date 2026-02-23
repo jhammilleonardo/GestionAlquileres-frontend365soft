@@ -1,0 +1,151 @@
+<div class="solicitudes-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Solicitudes de Alquiler</h1>
+      <p class="page-subtitle">Gestiona las solicitudes de los inquilinos</p>
+    </div>
+  </div>
+
+  <!-- Métricas -->
+  <div class="metrics-grid" *ngIf="metrics$ | async as metrics">
+    <div class="metric-card metric-total">
+      <div class="metric-icon">📋</div>
+      <div class="metric-content">
+        <p class="metric-label">Total</p>
+        <p class="metric-value">{{ metrics.total }}</p>
+      </div>
+    </div>
+
+    <div class="metric-card metric-pending">
+      <div class="metric-icon">⏳</div>
+      <div class="metric-content">
+        <p class="metric-label">Pendientes</p>
+        <p class="metric-value">{{ metrics.pendientes }}</p>
+      </div>
+    </div>
+
+    <div class="metric-card metric-approved">
+      <div class="metric-icon">✅</div>
+      <div class="metric-content">
+        <p class="metric-label">Aprobadas</p>
+        <p class="metric-value">{{ metrics.aprobadas }}</p>
+      </div>
+    </div>
+
+    <div class="metric-card metric-rejected">
+      <div class="metric-icon">❌</div>
+      <div class="metric-content">
+        <p class="metric-label">Rechazadas</p>
+        <p class="metric-value">{{ metrics.rechazadas }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filters-bar">
+    <div class="filter-group">
+      <label for="status-filter">Estado:</label>
+      <select
+        id="status-filter"
+        class="filter-select"
+        [(ngModel)]="selectedStatus"
+        (ngModelChange)="onStatusChange()"
+      >
+        <option *ngFor="let status of statuses" [value]="status.value">
+          {{ status.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="search-group">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por nombre, email o propiedad..."
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearch()"
+      />
+      <button
+        class="search-clear"
+        *ngIf="searchTerm"
+        (click)="clearSearch()"
+        title="Limpiar búsqueda"
+      >
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de Solicitudes -->
+  <div class="table-container">
+    <table class="applications-table" *ngIf="filteredApplications$ | async as applications">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Solicitante</th>
+          <th>Propiedad</th>
+          <th>Ingreso Mensual</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="applications.length === 0">
+          <td colspan="7" class="no-data">
+            <div class="no-data-content">
+              <p>🔍 No se encontraron solicitudes</p>
+              <small>Intenta cambiar los filtros de búsqueda</small>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let app of applications" class="table-row">
+          <td class="id-cell">#{{ app.id }}</td>
+          <td class="applicant-cell">
+            <div class="applicant-info">
+              <strong>{{ app.personal_data.full_name }}</strong>
+              <small>{{ app.applicant_email }}</small>
+            </div>
+          </td>
+          <td class="property-cell">
+            <div class="property-info">
+              <span class="property-title">{{ app.property_title }}</span>
+              <small>ID: {{ app.property_id }}</small>
+            </div>
+          </td>
+          <td class="income-cell">
+            <span class="income-amount">
+              ${{ app.employment_data.monthly_income | number }}
+            </span>
+          </td>
+          <td class="date-cell">
+            {{ app.created_at | date:'shortDate' }}
+          </td>
+          <td class="status-cell">
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(app.status)">
+              {{ getStatusIcon(app.status) }} {{ app.status }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <a
+              [routerLink]="['../solicitudes', app.id]"
+              class="action-btn action-view"
+              title="Ver detalles"
+            >
+              👁️ Ver
+            </a>
+            <button
+              *ngIf="app.status === 'PENDIENTE'"
+              class="action-btn action-approve"
+              [routerLink]="['../solicitudes', app.id]"
+              title="Aprobar solicitud"
+            >
+              ✅ Aprobar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

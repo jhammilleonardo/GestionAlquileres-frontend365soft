@@ -1,0 +1,124 @@
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Observable, switchMap } from 'rxjs';
+import { ApplicationService } from '../../../../core/services/application.service';
+import { Application, ApproveApplicationDto, ApplicationStatus, ApproveApplicationResponse } from '../../../../core/models/application.model';
+
+@Component({
+  selector: 'app-approve-dialog',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './approve-dialog.component.html',
+  styleUrls: ['./approve-dialog.component.css']
+})
+export class ApproveDialogComponent implements OnInit {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private applicationService = inject(ApplicationService);
+
+  application$?: Observable<Application>;
+
+  loading = false;
+  submitting = false;
+  error: string | null = null;
+  success = false;
+  contractGenerated: ApproveApplicationResponse['contract_generated'] | null = null;
+
+  // Form data
+  formData: ApproveApplicationDto = {
+    monthly_rent: 0,
+    currency: 'BOB',
+    payment_day: 5,
+    auto_renew: false,
+    renewal_notice_days: 30,
+    auto_increase_percentage: 0,
+    late_fee_percentage: 0,
+    grace_days: 0
+  };
+
+  // Services checklist
+  availableServices = [
+    'Internet',
+    'Cable TV',
+    'Expensas',
+    'Agua',
+    'Luz',
+    'Gas',
+    'Limpieza',
+    'Seguridad'
+  ];
+
+  employmentTypes = ['tiempo_completo', 'medio_tiempo', 'freelance', 'autonomo', 'empresario'];
+
+  ngOnInit(): void {
+    this.application$ = this.route.paramMap.pipe(
+      switchMap(params => {
+        const id = Number(params.get('id'));
+        if (!id) {
+          this.error = 'ID de solicitud no válido';
+          throw new Error('Invalid application ID');
+        }
+        return this.applicationService.getApplicationById(id);
+      })
+    );
+
+    this.application$.subscribe({
+      next: (app: Application) => {
+        // Pre-fill with default salary info
+        this.formData.monthly_rent = app.employment_data.monthly_income;
+      },
+      error: (err: any) => {
+        this.error = err.error?.message || 'Error al cargar la solicitud';
+      }
+    });
+  }
+
+  onSubmit(): void {
+    if (this.submitting) return;
+
+    this.submitting = true;
+    this.error = null;
+
+    const applicationId = Number(this.route.snapshot.paramMap.get('id'));
+
+    this.applicationService.approveApplication(applicationId, this.formData).subscribe({
+      next: (response: ApproveApplicationResponse) => {
+        this.success = true;
+        this.contractGenerated = response.contract_generated;
+        this.submitting = false;
+
+        // Auto-redirect after 3 seconds
+        setTimeout(() => {
+          this.router.navigate(['../../'], { relativeTo: this.route });
+        }, 3000);
+      },
+      error: (err: any) => {
+        this.error = err.error?.message || 'Error al aprobar la solicitud';
+        this.submitting = false;
+      }
+    });
+  }
+
+  toggleService(service: string): void {
+    if (!this.formData.included_services) {
+      this.formData.included_services = [];
+    }
+
+    const index = this.formData.included_services.indexOf(service);
+    if (index > -1) {
+      this.formData.included_services.splice(index, 1);
+    } else {
+      this.formData.included_services.push(service);
+    }
+  }
+
+  isServiceSelected(service: string): boolean {
+    return this.formData.included_services?.includes(service) || false;
+  }
+
+  cancel(): void {
+    this.router.navigate(['../'], { relativeTo: this.route });
+  }
+}

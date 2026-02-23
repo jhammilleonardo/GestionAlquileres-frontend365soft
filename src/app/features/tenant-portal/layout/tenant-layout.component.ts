@@ -9,11 +9,12 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatBadgeModule } from '@angular/material/badge';
-import { LucideAngularModule, Home, Wrench, MessageSquare, User, LogOut, Menu, Bell, FileText, Settings, CreditCard, Check, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Home, Wrench, MessageSquare, User, LogOut, Menu, Bell, FileText, Settings, CreditCard, Check, Trash2, Plus, FileEdit } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { TenantMessageService } from '../../../core/services/tenant-message.service';
 import { TenantNotificationService, TenantNotification } from '../../../core/services/tenant-notification.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { ContractService } from '../../../core/services/contract.service';
 
 interface NavItem {
     label: string;
@@ -711,10 +712,13 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
     readonly CreditCard = CreditCard;
     readonly Check = Check;
     readonly Trash2 = Trash2;
+    readonly Plus = Plus;
+    readonly FileEdit = FileEdit;
 
     authService = inject(TenantAuthService);
     messageService = inject(TenantMessageService);
     notificationService = inject(TenantNotificationService);
+    contractService = inject(ContractService);
     private router = inject(Router);
     private slugService = inject(SlugService);
 
@@ -726,14 +730,29 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
     unreadCount = this.notificationService.unreadCount;
 
     // Computed para generar rutas con slug dinámico
-    navItems = computed<NavItem[]>(() => [
-        { label: 'Inicio', route: this.slugService.buildUrl('/portal/dashboard'), icon: this.Home },
-        { label: 'Mantenimiento', route: this.slugService.buildUrl('/portal/mantenimiento'), icon: this.Wrench },
-        { label: 'Pagos', route: this.slugService.buildUrl('/portal/pagos'), icon: this.CreditCard },
-        { label: 'Documentos', route: this.slugService.buildUrl('/portal/documentos'), icon: this.FileText },
-        { label: 'Notificaciones', route: this.slugService.buildUrl('/portal/notificaciones'), icon: this.Bell },
-        { label: 'Mensajes', route: this.slugService.buildUrl('/portal/mensajes'), icon: this.MessageSquare },
-    ]);
+    // El sidebar es dinámico según el estado del contrato
+    navItems = computed<NavItem[]>(() => {
+        const hasContract = !!this.authService.currentUser()?.contract;
+
+        if (!hasContract) {
+            // SIDEBAR PRE-CONTRATO (simplificado)
+            return [
+                { label: 'Inicio', route: this.slugService.buildUrl('/portal/home'), icon: this.Home },
+                { label: 'Nueva Solicitud', route: this.slugService.buildUrl('/portal/new-application'), icon: this.Plus },
+                { label: 'Mis Solicitudes', route: this.slugService.buildUrl('/portal/my-applications'), icon: this.FileEdit },
+            ];
+        }
+
+        // SIDEBAR COMPLETO (con contrato)
+        return [
+            { label: 'Inicio', route: this.slugService.buildUrl('/portal/dashboard'), icon: this.Home },
+            { label: 'Mantenimiento', route: this.slugService.buildUrl('/portal/mantenimiento'), icon: this.Wrench },
+            { label: 'Pagos', route: this.slugService.buildUrl('/portal/pagos'), icon: this.CreditCard },
+            { label: 'Documentos', route: this.slugService.buildUrl('/portal/documentos'), icon: this.FileText },
+            { label: 'Notificaciones', route: this.slugService.buildUrl('/portal/notificaciones'), icon: this.Bell },
+            { label: 'Mensajes', route: this.slugService.buildUrl('/portal/mensajes'), icon: this.MessageSquare },
+        ];
+    });
 
     // Computed para URLs con slug
     mensajesUrl = computed(() => this.slugService.buildUrl('/portal/mensajes'));
@@ -742,9 +761,37 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
     configuracionUrl = computed(() => this.slugService.buildUrl('/portal/configuracion'));
 
     ngOnInit(): void {
+        console.log('[TenantLayout] ===== ngOnInit START =====');
+        console.log('[TenantLayout] Current URL:', this.router.url);
+
         // Initialize sidebar state based on screen size
         if (typeof window !== 'undefined') {
             this.sidebarCollapsed = window.innerWidth <= 768;
+        }
+
+        // Check if user has contracts by querying the contract service directly
+        const currentUser = this.authService.currentUser();
+        console.log('[TenantLayout] Current user:', currentUser);
+        console.log('[TenantLayout] Has contract in user object?', !!currentUser?.contract);
+
+        if (currentUser) {
+            console.log('[TenantLayout] Checking contracts via ContractService...');
+            this.contractService.hasAnyContracts(currentUser.id).subscribe({
+                next: (contracts) => {
+                    console.log('[TenantLayout] ContractService returned:', contracts);
+                    console.log('[TenantLayout] Contracts length:', contracts?.length || 0);
+                    if (contracts && contracts.length > 0) {
+                        // User now has contract, redirect to dashboard
+                        console.log('[TenantLayout] User has contracts, redirecting to dashboard');
+                        this.slugService.navigateTo(['portal', 'dashboard']);
+                    } else {
+                        console.log('[TenantLayout] No contracts found, staying on current page');
+                    }
+                },
+                error: (err) => {
+                    console.error('[TenantLayout] Error checking contracts:', err);
+                }
+            });
         }
 
         // Load notifications and stats
@@ -753,6 +800,7 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
 
         // Start polling (1 minute)
         this.notificationService.startPolling(60000);
+        console.log('[TenantLayout] ===== ngOnInit END =====');
     }
 
     ngOnDestroy(): void {

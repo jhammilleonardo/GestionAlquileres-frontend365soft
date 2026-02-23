@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { MenuOption } from '../models/user.model';
-import { Bell } from 'lucide-angular';
+import { Bell, FileCheck } from 'lucide-angular';
 
 @Injectable({
   providedIn: 'root'
@@ -71,6 +71,11 @@ export class SidebarService {
         label: 'Contratos',
         icon: 'FileText',
         route: '/contratos'
+      },
+      {
+        label: 'Solicitudes',
+        icon: 'FileCheck',
+        route: '/solicitudes'
       },
       {
         label: 'Pagos',

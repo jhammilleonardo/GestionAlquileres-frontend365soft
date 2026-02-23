@@ -7,11 +7,13 @@ import { SlugService } from './slug.service';
 
 export interface TenantUser {
     id: number;
+    userId?: number; // El backend a veces devuelve userId en lugar de id
     name: string;
     email: string;
     phone?: string;
-    role: 'TENANT';
+    role: 'TENANT' | 'INQUILINO';
     tenant_slug: string;
+    tenantSlug?: string; // El backend a veces devuelve tenantSlug en camelCase
     contract?: {
         id: number;
         contract_number: string;
@@ -80,10 +82,34 @@ export class TenantAuthService {
             { email, password }
         ).pipe(
             tap(response => {
-                this.setSession(response);
-                this.isLoadingSignal.set(false);
-                // Navigate to tenant portal dashboard with slug
-                this.slugService.navigateTo(['portal', 'dashboard']);
+                console.log('[TenantAuthService] Login response received:', response);
+                // First, set the session with the login response
+                localStorage.setItem(this.TOKEN_KEY, response.access_token);
+                const normalizedUser = this.normalizeUserData(response.user);
+                this.currentUserSignal.set(normalizedUser);
+                this.saveUserToStorage(normalizedUser);
+
+                // Now fetch complete user data from /auth/me (includes contract info)
+                this.refreshUserData().subscribe({
+                    next: (updatedUser) => {
+                        console.log('[TenantAuthService] User data refreshed after login');
+                        this.isLoadingSignal.set(false);
+                        // Navigate to appropriate page based on contract status
+                        if (updatedUser?.contract) {
+                            console.log('[TenantAuthService] User has contract, navigating to dashboard');
+                            this.slugService.navigateTo(['portal', 'dashboard']);
+                        } else {
+                            console.log('[TenantAuthService] No contract, navigating to home');
+                            this.slugService.navigateTo(['portal', 'home']);
+                        }
+                    },
+                    error: (err) => {
+                        console.error('[TenantAuthService] Error refreshing user data after login:', err);
+                        this.isLoadingSignal.set(false);
+                        // On error, default to home
+                        this.slugService.navigateTo(['portal', 'home']);
+                    }
+                });
             }),
             catchError(error => {
                 this.isLoadingSignal.set(false);
@@ -155,6 +181,37 @@ export class TenantAuthService {
     }
 
     /**
+     * Refresh user data from backend
+     * Call this when you need to update user info (e.g., after contract creation)
+     */
+    refreshUserData(): Observable<TenantUser | null> {
+        const token = this.getToken();
+        if (!token) {
+            console.log('[TenantAuthService] No token found');
+            return of(null);
+        }
+
+        console.log('[TenantAuthService] Refreshing user data from auth/me');
+        return this.http.get<any>(`${environment.apiUrl}auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        }).pipe(
+            tap(user => {
+                console.log('[TenantAuthService] User data received:', user);
+                if (user) {
+                    const normalizedUser = this.normalizeUserData(user);
+                    console.log('[TenantAuthService] Normalized user data:', normalizedUser);
+                    this.currentUserSignal.set(normalizedUser);
+                    this.saveUserToStorage(normalizedUser);
+                }
+            }),
+            catchError((error) => {
+                console.error('[TenantAuthService] Error refreshing user data:', error);
+                return of(null);
+            })
+        );
+    }
+
+    /**
      * Validate token silently on app init
      * Clears invalid tokens without redirecting to prevent 401 loops
      */
@@ -162,9 +219,16 @@ export class TenantAuthService {
         const token = this.getToken();
         if (!token) return;
 
-        this.http.get<TenantUser>(`${environment.apiUrl}auth/me`, {
+        this.http.get<any>(`${environment.apiUrl}auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
         }).pipe(
+            tap(user => {
+                if (user) {
+                    const normalizedUser = this.normalizeUserData(user);
+                    this.currentUserSignal.set(normalizedUser);
+                    this.saveUserToStorage(normalizedUser);
+                }
+            }),
             catchError((error) => {
                 // Only clear storage if token is invalid (401)
                 // Don't clear on network errors to avoid logout on connection issues
@@ -187,12 +251,39 @@ export class TenantAuthService {
     }
 
     /**
+     * Normalize user data from backend to match TenantUser interface
+     * Backend returns userId but we expect id, tenantSlug vs tenant_slug, etc.
+     */
+    private normalizeUserData(user: any): TenantUser {
+        console.log('[TenantAuthService] normalizeUserData - Input:', user);
+        const normalized = {
+            id: user.userId || user.id,
+            userId: user.userId || user.id, // Keep both for compatibility
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            tenant_slug: user.tenantSlug || user.tenant_slug,
+            tenantSlug: user.tenantSlug || user.tenant_slug, // Keep both
+            contract: user.contract
+        };
+        console.log('[TenantAuthService] normalizeUserData - Output:', normalized);
+        console.log('[TenantAuthService] Has contract?', !!normalized.contract);
+        return normalized;
+    }
+
+    /**
      * Set session after successful login
      */
     private setSession(response: LoginResponse): void {
+        console.log('[TenantAuthService] setSession - Response user:', response.user);
         localStorage.setItem(this.TOKEN_KEY, response.access_token);
-        this.saveUserToStorage(response.user);
-        this.currentUserSignal.set(response.user);
+        const normalizedUser = this.normalizeUserData(response.user);
+        console.log('[TenantAuthService] setSession - Normalized user:', normalizedUser);
+        console.log('[TenantAuthService] setSession - Has contract?', !!normalizedUser.contract);
+        this.saveUserToStorage(normalizedUser);
+        this.currentUserSignal.set(normalizedUser);
+        console.log('[TenantAuthService] setSession - currentUserSignal set to:', this.currentUserSignal());
     }
 
     /**
@@ -202,7 +293,9 @@ export class TenantAuthService {
         const userJson = localStorage.getItem(this.USER_KEY);
         if (!userJson) return null;
         try {
-            return JSON.parse(userJson);
+            const user = JSON.parse(userJson);
+            // Normalize the user data to handle both old and new formats
+            return this.normalizeUserData(user);
         } catch {
             return null;
         }

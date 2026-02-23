@@ -1,0 +1,656 @@
+<div class="application-form-container">
+  <!-- Success State -->
+  <div *ngIf="submitSuccess" class="success-state">
+    <div class="success-icon">🎉</div>
+    <h1>¡Solicitud Enviada!</h1>
+    <p>Tu solicitud de alquiler ha sido enviada correctamente.</p>
+    <p>Te estamos redirigiendo para completar tu registro...</p>
+  </div>
+
+  <!-- Form -->
+  <div *ngIf="!submitSuccess" class="form-wrapper">
+    <!-- Header -->
+    <div class="form-header">
+      <h1>📝 Solicitud de Alquiler</h1>
+      <p class="form-subtitle">Completa todos los campos para aplicar a esta propiedad</p>
+    </div>
+
+    <!-- Error Alert -->
+    <div *ngIf="error" class="error-alert">
+      <span class="error-icon">⚠️</span>
+      <span>{{ error }}</span>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="application-form">
+      <!-- SECTION 1: Personal Data -->
+      <div class="form-section">
+        <h2>👤 Información Personal</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="full_name">Nombre Completo *</label>
+            <input
+              type="text"
+              id="full_name"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.full_name"
+              name="full_name"
+              required
+              placeholder="Ej: Juan Pérez"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="national_id">Cédula de Identidad *</label>
+            <input
+              type="text"
+              id="national_id"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.national_id"
+              name="national_id"
+              required
+              placeholder="Ej: 12345678"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input
+              type="email"
+              id="email"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.email"
+              name="email"
+              required
+              placeholder="ejemplo@email.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Teléfono *</label>
+            <input
+              type="tel"
+              id="phone"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.phone"
+              name="phone"
+              required
+              placeholder="+591 71234567"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="birth_date">Fecha de Nacimiento *</label>
+            <input
+              type="date"
+              id="birth_date"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.birth_date"
+              name="birth_date"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="marital_status">Estado Civil</label>
+            <select
+              id="marital_status"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.marital_status"
+              name="marital_status"
+            >
+              <option *ngFor="let status of maritalStatuses" [value]="status">
+                {{ status | titlecase }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="number_of_dependents">Número de Dependientes</label>
+          <input
+            type="number"
+            id="number_of_dependents"
+            class="form-control"
+            [(ngModel)]="formData.personal_data.number_of_dependents"
+            name="number_of_dependents"
+            min="0"
+            value="0"
+          />
+          <small class="form-hint">Personas que dependen económicamente de ti</small>
+        </div>
+      </div>
+
+      <!-- SECTION 2: Employment Data -->
+      <div class="form-section">
+        <h2>💼 Información Laboral</h2>
+        <p class="section-hint">Tu empleo actual</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="company">Empresa *</label>
+            <input
+              type="text"
+              id="company"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.company"
+              name="company"
+              required
+              placeholder="Nombre de la empresa"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="position">Puesto/Cargo *</label>
+            <input
+              type="text"
+              id="position"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.position"
+              name="position"
+              required
+              placeholder="Tu puesto de trabajo"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="salary">Salario Mensual *</label>
+            <input
+              type="number"
+              id="salary"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.salary"
+              name="salary"
+              required
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="currency">Moneda</label>
+            <select
+              id="currency"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.currency"
+              name="currency"
+            >
+              <option value="BOB">BOB - Boliviano</option>
+              <option value="USD">USD - Dólar</option>
+              <option value="EUR">EUR - Euro</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="start_date">Fecha de Inicio *</label>
+            <input
+              type="date"
+              id="start_date"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.start_date"
+              name="start_date"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="employment_type">Tipo de Empleo</label>
+            <select
+              id="employment_type"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.employment_type"
+              name="employment_type"
+            >
+              <option *ngFor="let type of employmentTypes" [value]="type">
+                {{ type | titlecase }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="supervisor_name">Nombre del Supervisor *</label>
+            <input
+              type="text"
+              id="supervisor_name"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.supervisor_name"
+              name="supervisor_name"
+              required
+              placeholder="Nombre de tu jefe inmediato"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="supervisor_phone">Teléfono del Supervisor *</label>
+            <input
+              type="tel"
+              id="supervisor_phone"
+              class="form-control"
+              [(ngModel)]="formData.employment_data.current_job.supervisor_phone"
+              name="supervisor_phone"
+              required
+              placeholder="+591..."
+            />
+          </div>
+        </div>
+
+        <!-- Previous Job (Optional) -->
+        <div class="subsection">
+          <h3>Empleo Anterior (Opcional)</h3>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prev_company">Empresa</label>
+              <input
+                type="text"
+                id="prev_company"
+                class="form-control"
+                [(ngModel)]="previousJob.company"
+                name="prev_company"
+                placeholder="Empresa anterior"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="prev_position">Puesto</label>
+              <input
+                type="text"
+                id="prev_position"
+                class="form-control"
+                [(ngModel)]="previousJob.position"
+                name="prev_position"
+                placeholder="Tu puesto anterior"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prev_salary">Salario</label>
+              <input
+                type="number"
+                id="prev_salary"
+                class="form-control"
+                [(ngModel)]="previousJob.salary"
+                name="prev_salary"
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="prev_end_date">Fecha Finalización</label>
+              <input
+                type="date"
+                id="prev_end_date"
+                class="form-control"
+                [(ngModel)]="previousJob.end_date"
+                name="prev_end_date"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: Rental History (Optional) -->
+      <div class="form-section">
+        <h2>🏠 Historial de Alquiler (Opcional)</h2>
+        <p class="section-hint">Lugares donde has vivido anteriormente</p>
+
+        <div *ngIf="formData.rental_history.length === 0" class="empty-state">
+          <p>🏠 No has agregado lugares de residencia anteriores</p>
+          <button type="button" class="btn btn-secondary" (click)="addRentalHistory()">
+            + Agregar Residencia Anterior
+          </button>
+        </div>
+
+        <div *ngFor="let history of formData.rental_history; let i = index" class="history-card">
+          <div class="card-header">
+            <h4>Residencia #{{ i + 1 }}</h4>
+            <button
+              type="button"
+              class="btn-remove"
+              (click)="removeRentalHistory(i)"
+              title="Eliminar"
+            >
+              🗑️ Eliminar
+            </button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Dirección de la Propiedad *</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="history.property_address"
+                name="address_{{ i }}"
+                required
+                placeholder="Calle, número, ciudad"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nombre del Propietario *</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="history.landlord_name"
+                name="landlord_{{ i }}"
+                required
+                placeholder="Nombre completo"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Teléfono del Propietario *</label>
+              <input
+                type="tel"
+                class="form-control"
+                [(ngModel)]="history.landlord_phone"
+                name="landlord_phone_{{ i }}"
+                required
+                placeholder="+591..."
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Alquiler Mensual *</label>
+              <input
+                type="number"
+                class="form-control"
+                [(ngModel)]="history.monthly_rent"
+                name="rent_{{ i }}"
+                required
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Fecha de Inicio *</label>
+              <input
+                type="date"
+                class="form-control"
+                [(ngModel)]="history.start_date"
+                name="start_date_{{ i }}"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fecha de Finalización</label>
+              <input
+                type="date"
+                class="form-control"
+                [(ngModel)]="history.end_date"
+                name="end_date_{{ i }}"
+              />
+              <small class="form-hint">Déjalo vacío si vives allí actualmente</small>
+            </div>
+
+            <div class="form-group">
+              <label>Motivo de Salida</label>
+              <input
+                type="text"
+                class="form-control"
+                [(ngModel)]="history.reason_for_leaving"
+                name="reason_{{ i }}"
+                placeholder="Ej: Cambio de ciudad, mejor vivienda, etc."
+              />
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-secondary btn-full"
+          (click)="addRentalHistory()"
+        >
+          + Agregar Otra Residencia
+        </button>
+      </div>
+
+      <!-- SECTION 4: References -->
+      <div class="form-section">
+        <h2>📞 Referencias</h2>
+        <p class="section-hint">Mínimo una referencia personal o profesional</p>
+
+        <!-- Personal References -->
+        <div class="subsection">
+          <h3>Referencias Personales</h3>
+          <p class="section-hint">Amigos, familiares o personas que te conocen</p>
+
+          <div *ngFor="let ref of formData.references.personal; let i = index" class="reference-card">
+            <div class="card-header">
+              <h4>Referencia Personal #{{ i + 1 }}</h4>
+              <button
+                type="button"
+                class="btn-remove"
+                (click)="removePersonalReference(i)"
+                title="Eliminar"
+              >
+                🗑️
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre Completo *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="ref.name"
+                  name="pers_name_{{ i }}"
+                  required
+                  placeholder="Nombre completo"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Relación *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="ref.relationship"
+                  name="pers_rel_{{ i }}"
+                  required
+                  placeholder="Ej: Amigo, Familiar, Vecino"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Teléfono *</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  [(ngModel)]="ref.phone"
+                  name="pers_phone_{{ i }}"
+                  required
+                  placeholder="+591..."
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  [(ngModel)]="ref.email"
+                  name="pers_email_{{ i }}"
+                  placeholder="email@ejemplo.com"
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-secondary btn-full"
+            (click)="addPersonalReference()"
+          >
+            + Agregar Referencia Personal
+          </button>
+        </div>
+
+        <!-- Professional References -->
+        <div class="subsection">
+          <h3>Referencias Profesionales</h3>
+          <p class="section-hint">Compañeros de trabajo o supervisores</p>
+
+          <div *ngFor="let ref of formData.references.professional; let i = index" class="reference-card">
+            <div class="card-header">
+              <h4>Referencia Profesional #{{ i + 1 }}</h4>
+              <button
+                type="button"
+                class="btn-remove"
+                (click)="removeProfessionalReference(i)"
+                title="Eliminar"
+              >
+                🗑️
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Nombre Completo *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="ref.name"
+                  name="prof_name_{{ i }}"
+                  required
+                  placeholder="Nombre completo"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Empresa *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="ref.company"
+                  name="prof_company_{{ i }}"
+                  required
+                  placeholder="Nombre de la empresa"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Puesto *</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="ref.position"
+                  name="prof_position_{{ i }}"
+                  required
+                  placeholder="Puesto en la empresa"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Teléfono *</label>
+                <input
+                  type="tel"
+                  class="form-control"
+                  [(ngModel)]="ref.phone"
+                  name="prof_phone_{{ i }}"
+                  required
+                  placeholder="+591..."
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                class="form-control"
+                [(ngModel)]="ref.email"
+                name="prof_email_{{ i }}"
+                placeholder="email@ejemplo.com"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-secondary btn-full"
+            (click)="addProfessionalReference()"
+          >
+            + Agregar Referencia Profesional
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 5: Additional Notes -->
+      <div class="form-section">
+        <h2>📝 Notas Adicionales</h2>
+        <p class="section-hint">Cualquier información extra que quieras compartir</p>
+
+        <div class="form-group">
+          <textarea
+            class="form-control"
+            [(ngModel)]="formData.additional_notes"
+            name="additional_notes"
+            rows="5"
+            placeholder="Ej: Tengo mascotas pequeñas, trabajo desde casa, fumaría solo en el balcón, etc."
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Info Box -->
+      <div class="info-box">
+        <p>⚠️ Antes de enviar tu solicitud:</p>
+        <ul>
+          <li>Verifica que todos los datos marcados con * estén completos</li>
+          <li>Debes agregar al menos una referencia (personal o profesional)</li>
+          <li>Después de enviar, te pediremos que te registres o inicies sesión</li>
+          <li>Podrás ver el estado de tu solicitud desde tu portal personal</li>
+        </ul>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="cancel()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn btn-success"
+          [disabled]="submitting"
+        >
+          <span *ngIf="submitting">Enviando...</span>
+          <span *ngIf="!submitting">✅ Enviar Solicitud</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

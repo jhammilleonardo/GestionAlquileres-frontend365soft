@@ -1,0 +1,199 @@
+<div class="application-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando solicitud...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <h2>Error al cargar la solicitud</h2>
+    <p>{{ error }}</p>
+    <button class="btn-back" (click)="goBack()">Volver</button>
+  </div>
+
+  <!-- Application Detail -->
+  <ng-container *ngIf="!loading && !error">
+    <div *ngIf="application as app; else noData">
+      <!-- Header -->
+      <div class="detail-header">
+        <button class="btn-back" (click)="goBack()">← Volver</button>
+        <div class="header-info">
+          <div class="header-title">
+            <h1>Solicitud #{{ app.id }}</h1>
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(app.status)">
+              {{ getStatusIcon(app.status) }} {{ app.status }}
+            </span>
+          </div>
+          <p class="property-name">🏠 {{ app.property_title }}</p>
+        </div>
+      </div>
+
+    <!-- Main Content -->
+    <div class="detail-content">
+      <!-- Applicant Info Section -->
+      <section class="info-section">
+        <h2 class="section-title">👤 Información Personal</h2>
+        <div class="info-grid">
+          <div class="info-card">
+            <label>Nombre Completo</label>
+            <p>{{ app.personal_data.full_name }}</p>
+          </div>
+          <div class="info-card">
+            <label>Email</label>
+            <p>{{ app.applicant_email }}</p>
+          </div>
+          <div class="info-card">
+            <label>Teléfono</label>
+            <p>{{ app.personal_data.phone }}</p>
+          </div>
+          <div class="info-card">
+            <label>Dirección Actual</label>
+            <p>{{ app.personal_data.current_address || 'No especificada' }}</p>
+          </div>
+          <div class="info-card">
+            <label>Cédula de Identidad</label>
+            <p>{{ app.personal_data.identity_document }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Employment Info Section -->
+      <section class="info-section">
+        <h2 class="section-title">💼 Información Laboral</h2>
+        <div class="info-grid">
+          <div class="info-card">
+            <label>Empresa</label>
+            <p>{{ app.employment_data.employer_name }}</p>
+          </div>
+          <div class="info-card">
+            <label>Puesto</label>
+            <p>{{ app.employment_data.position }}</p>
+          </div>
+          <div class="info-card">
+            <label>Salario Mensual</label>
+            <p class="salary-amount">${{ app.employment_data.monthly_income | number }}</p>
+          </div>
+          <div class="info-card">
+            <label>Tiempo en el empleo</label>
+            <p>{{ app.employment_data.employment_duration | date:'longDate' }}</p>
+          </div>
+          <div class="info-card">
+            <label>Teléfono Empleador</label>
+            <p>{{ app.employment_data.employer_phone }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rental History Section -->
+      <section class="info-section" *ngIf="app.rental_history && app.rental_history.length > 0">
+        <h2 class="section-title">🏠 Historial de Alquiler</h2>
+        <div class="history-list">
+          <div class="history-item" *ngFor="let history of app.rental_history">
+            <div class="history-header">
+              <h4>{{ history.previous_address }}</h4>
+              <span class="history-rent">${{ history.previous_rent_amount | number }}/mes</span>
+            </div>
+            <div class="history-details">
+              <p><strong>Propietario:</strong> {{ history.previous_landlord_name }} ({{ history.previous_landlord_phone }})</p>
+              <p *ngIf="history.reason_for_leaving">
+                <strong>Motivo de salida:</strong> {{ history.reason_for_leaving | titlecase }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- References Section -->
+      <section class="info-section" *ngIf="app.references && app.references.length > 0">
+        <h2 class="section-title">📞 Referencias</h2>
+        <div class="references-grid">
+          <div class="references-section">
+            <h3>Referencias</h3>
+            <div class="reference-list">
+              <div class="reference-item" *ngFor="let ref of app.references">
+                <div class="reference-name">{{ ref.name }}</div>
+                <div class="reference-relation">{{ ref.relationship | titlecase }}</div>
+                <div class="reference-contact">
+                  <a href="tel:{{ ref.phone }}">{{ ref.phone }}</a>
+                  <a *ngIf="ref.email" href="mailto:{{ ref.email }}">{{ ref.email }}</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Documents Section -->
+      <section class="info-section" *ngIf="app.documents && app.documents.length > 0">
+        <h2 class="section-title">📎 Documentos</h2>
+        <div class="documents-list">
+          <a class="document-item" href="{{ doc.url }}" target="_blank" *ngFor="let doc of app.documents">
+            <span class="doc-icon">📄</span>
+            <span class="doc-type">{{ doc.type | titlecase }}</span>
+            <span class="doc-date" *ngIf="doc.uploaded_date">
+              {{ doc.uploaded_date | date:'shortDate' }}
+            </span>
+            <span class="doc-link">Ver documento →</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Additional Notes -->
+      <section class="info-section" *ngIf="app.additional_notes">
+        <h2 class="section-title">📝 Notas Adicionales</h2>
+        <div class="notes-box">
+          <p>{{ app.additional_notes }}</p>
+        </div>
+      </section>
+
+      <!-- Admin Feedback (if rejected/approved) -->
+      <section class="info-section" *ngIf="app.admin_feedback">
+        <h2 class="section-title">💬 Feedback del Administrador</h2>
+        <div class="feedback-box" [ngClass]="app.status === 'RECHAZADA' ? 'feedback-rejected' : 'feedback-approved'">
+          <p>{{ app.admin_feedback }}</p>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="actions-section" *ngIf="canBeApproved(app.status) || canBeRejected(app.status)">
+        <h2 class="section-title">⚡ Acciones</h2>
+        <div class="actions-buttons">
+          <button
+            *ngIf="canBeApproved(app.status)"
+            class="btn btn-approve"
+            [routerLink]="['.', 'aprobar']"
+          >
+            ✅ Aprobar Solicitud
+          </button>
+          <button
+            *ngIf="canBeRejected(app.status)"
+            class="btn btn-reject"
+            [routerLink]="['.', 'rechazar']"
+          >
+            ❌ Rechazar Solicitud
+          </button>
+        </div>
+      </section>
+
+      <!-- Metadata -->
+      <div class="metadata">
+        <small>Solicitud creada: {{ app.created_at | date:'full' }}</small>
+        <small *ngIf="app.updated_at !== app.created_at">
+          Última actualización: {{ app.updated_at | date:'full' }}
+        </small>
+      </div>
+    </div>
+  </div>
+
+    <ng-template #noData>
+      <div class="error-state">
+        <div class="error-icon">📋</div>
+        <h2>Solicitud no encontrada</h2>
+        <p>No se pudo cargar la información de la solicitud.</p>
+        <button class="btn-back" (click)="goBack()">Volver</button>
+      </div>
+    </ng-template>
+  </ng-container>
+</div>

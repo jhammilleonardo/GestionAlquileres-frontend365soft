@@ -48,3 +48,4 @@ claude_code_zai_env.sh
 CLAUDE.md
 /docs
 .claude/
+.agents

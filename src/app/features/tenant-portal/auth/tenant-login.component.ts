@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LucideAngularModule, Home, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Shield, CalendarDays, FileText, MessageSquare } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import { ApplicationIntentionService } from '../../../core/services/application-intention.service';
 
 @Component({
     selector: 'app-tenant-login',
@@ -477,6 +478,7 @@ export class TenantLoginComponent {
     private route = inject(ActivatedRoute);
     private fb = inject(FormBuilder);
     private location = inject(Location);
+    private intentionService = inject(ApplicationIntentionService);
 
     showPassword = signal(false);
     slug: string | null = null;
@@ -507,15 +509,21 @@ export class TenantLoginComponent {
 
         this.authService.login(this.slug, email!, password!).subscribe({
             next: () => {
-                // Obtener la URL de retorno o usar dashboard por defecto
-                const returnUrl = this.route.snapshot.queryParams['returnUrl'] || `/${this.slug}/portal/dashboard`;
-                // Usar replaceUrl para que el login no quede en el historial del navegador
-                this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
-                    // Limpiar cualquier query param de returnUrl del estado del navegador
-                    // Esto asegura que el historial no tenga entradas con ?returnUrl=...
-                    const cleanUrl = returnUrl.split('?')[0]; // Remover query params
-                    this.location.replaceState(cleanUrl);
-                });
+                // Verificar si hay una intención de aplicación guardada
+                if (this.intentionService.hasIntention()) {
+                    // Hay intención -> Redirigir al formulario de aplicación
+                    this.intentionService.navigateToApplication(this.slug!);
+                } else {
+                    // No hay intención -> Usar returnUrl o dashboard por defecto
+                    const returnUrl = this.route.snapshot.queryParams['returnUrl'] || `/${this.slug}/portal/home`;
+                    // Usar replaceUrl para que el login no quede en el historial del navegador
+                    this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
+                        // Limpiar cualquier query param de returnUrl del estado del navegador
+                        // Esto asegura que el historial no tenga entradas con ?returnUrl=...
+                        const cleanUrl = returnUrl.split('?')[0]; // Remover query params
+                        this.location.replaceState(cleanUrl);
+                    });
+                }
             },
             error: () => {
                 // Error is handled by the service

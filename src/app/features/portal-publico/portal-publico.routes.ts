@@ -6,6 +6,7 @@ import { PropertyDetailComponent } from './property-detail/property-detail.compo
 import { AboutComponent } from './about/about.component';
 import { ContactComponent } from './contact/contact.component';
 import { FaqComponent } from './faq/faq.component';
+import { ApplicationFormComponent } from './application-form/application-form.component';
 
 export const PORTAL_PUBLICO_ROUTES: Routes = [
   {
@@ -16,6 +17,7 @@ export const PORTAL_PUBLICO_ROUTES: Routes = [
       { path: 'inicio', component: HomeComponent },
       { path: 'propiedades', component: PropertyListComponent },
       { path: 'propiedades/:id', component: PropertyDetailComponent },
+      { path: 'solicitud/:propertyId', component: ApplicationFormComponent },
       { path: 'nosotros', component: AboutComponent },
       { path: 'contacto', component: ContactComponent },
       { path: 'faq', component: FaqComponent }

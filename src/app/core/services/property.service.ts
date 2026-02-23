@@ -204,6 +204,9 @@ export class PropertyService {
     if (typeof property.updated_at === 'string') {
       property.updated_at = new Date(property.updated_at);
     }
+    if (property.availability_date && typeof property.availability_date === 'string') {
+      property.availability_date = new Date(property.availability_date);
+    }
 
     // Normalizar images según el formato que venga del backend
     if (typeof property.images === 'string') {
@@ -221,34 +224,88 @@ export class PropertyService {
     }
 
     // Asegurar que arrays existan
-    if (!property.images) property.images = [];
-    if (!property.amenities) property.amenities = [];
-    if (!property.included_items) property.included_items = [];
-    if (!property.addresses || property.addresses.length === 0) {
-      property.addresses = [];
-      console.warn('Propiedad sin direcciones:', property.id, property.title);
+    if (!property.images || !Array.isArray(property.images)) property.images = [];
+    if (!property.amenities || !Array.isArray(property.amenities)) property.amenities = [];
+    if (!property.included_items || !Array.isArray(property.included_items)) property.included_items = [];
+
+    // Asegurar addresses - agregar una dirección por defecto si no existe
+    if (!property.addresses || !Array.isArray(property.addresses) || property.addresses.length === 0) {
+      property.addresses = [{
+        address_type: 'primary',
+        street_address: 'Dirección no disponible',
+        city: 'N/A',
+        state: '',
+        zip_code: '',
+        country: ''
+      }];
+      console.warn('Propiedad sin direcciones, usando dirección por defecto:', property.id, property.title);
+    }
+
+    // Asegurar owners - agregar un owner por defecto si no existe
+    if (!property.owners || !Array.isArray(property.owners) || property.owners.length === 0) {
+      property.owners = [{
+        id: 0,
+        name: 'No disponible',
+        company_name: '',
+        is_company: false,
+        primary_email: '',
+        phone_number: '',
+        secondary_email: '',
+        secondary_phone: '',
+        notes: '',
+        ownership_percentage: 100,
+        is_primary: true,
+        created_at: new Date()
+      }];
+      console.warn('Propiedad sin owners, usando owner por defecto:', property.id, property.title);
     }
 
     // Si la respuesta tiene property_type_name/code en lugar del objeto, construirlo
-    if (property.property_type_name && !property.property_type) {
-      property.property_type = {
-        id: property.property_type_id,
-        name: property.property_type_name,
-        description: property.property_type_code
-      };
+    if (!property.property_type || !property.property_type.name) {
+      if (property.property_type_name) {
+        property.property_type = {
+          id: property.property_type_id,
+          name: property.property_type_name,
+          description: property.property_type_code || ''
+        };
+      } else {
+        // Crear objeto por defecto
+        property.property_type = {
+          id: property.property_type_id || 0,
+          name: 'Tipo no especificado',
+          description: ''
+        };
+      }
     }
 
-    if (property.property_subtype_name && !property.property_subtype) {
-      property.property_subtype = {
-        id: property.property_subtype_id,
-        name: property.property_subtype_name,
-        description: property.property_subtype_code
-      };
+    // Si la respuesta tiene property_subtype_name/code en lugar del objeto, construirlo
+    if (!property.property_subtype || !property.property_subtype.name) {
+      if (property.property_subtype_name) {
+        property.property_subtype = {
+          id: property.property_subtype_id,
+          name: property.property_subtype_name,
+          description: property.property_subtype_code || '',
+          property_type_id: property.property_type_id
+        };
+      } else {
+        // Crear objeto por defecto
+        property.property_subtype = {
+          id: property.property_subtype_id || 0,
+          name: 'Subtipo no especificado',
+          description: '',
+          property_type_id: property.property_type_id
+        };
+      }
     }
 
     // Asegurar que active tenga un valor
     if (property.active === undefined) {
       property.active = property.status === 'DISPONIBLE';
+    }
+
+    // Asegurar description tenga un valor
+    if (!property.description) {
+      property.description = 'Sin descripción disponible';
     }
 
     return property as Property;
