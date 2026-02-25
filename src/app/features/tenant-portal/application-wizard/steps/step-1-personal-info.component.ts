@@ -7,7 +7,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { LucideAngularModule, User, Mail, Phone, Calendar, CreditCard, Heart, Users, MapPin } from 'lucide-angular';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatStepperModule } from '@angular/material/stepper';
+import { LucideAngularModule, User, Mail, Phone, Calendar, CreditCard, Heart, Users, MapPin, ArrowRight } from 'lucide-angular';
 
 @Component({
   selector: 'app-step-1-personal-info',
@@ -21,6 +24,9 @@ import { LucideAngularModule, User, Mail, Phone, Calendar, CreditCard, Heart, Us
     MatButtonModule,
     MatCardModule,
     MatIconModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatStepperModule,
     LucideAngularModule
   ],
   template: `
@@ -99,9 +105,12 @@ import { LucideAngularModule, User, Mail, Phone, Calendar, CreditCard, Heart, Us
             <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
             <input
               matInput
-              type="date"
+              [matDatepicker]="birthDatePicker"
               [formControl]="getControl('birth_date')"
-              [max]="maxDateValue">
+              [max]="maxDate"
+              placeholder="DD/MM/YYYY">
+            <mat-datepicker-toggle matSuffix [for]="birthDatePicker"></mat-datepicker-toggle>
+            <mat-datepicker #birthDatePicker startView="multi-year" [startAt]="startAtDate"></mat-datepicker>
             @if (form.get('birth_date')?.hasError('required') && form.get('birth_date')?.touched) {
               <mat-error>La fecha de nacimiento es requerida</mat-error>
             }
@@ -183,6 +192,20 @@ import { LucideAngularModule, User, Mail, Phone, Calendar, CreditCard, Heart, Us
             Estos datos serán verificados durante el proceso de aprobación.
           </p>
         </mat-card>
+      </div>
+
+      <!-- Navigation -->
+      <div class="step-nav">
+        <span></span>
+        <button
+          mat-raised-button
+          color="primary"
+          matStepperNext
+          class="nav-btn"
+          [disabled]="form.invalid">
+          <span>Siguiente</span>
+          <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+        </button>
       </div>
     </div>
   `,
@@ -289,6 +312,26 @@ import { LucideAngularModule, User, Mail, Phone, Calendar, CreditCard, Heart, Us
       margin-top: 32px;
     }
 
+    .step-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--mat-sys-outline-variant);
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 44px;
+      padding: 0 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
     .info-card {
       background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
       border: 1px solid color-mix(in srgb, var(--mat-sys-primary) 20%, transparent);
@@ -323,6 +366,7 @@ export class Step1PersonalInfoComponent implements OnInit {
   readonly Heart = Heart;
   readonly Users = Users;
   readonly MapPin = MapPin;
+  readonly ArrowRight = ArrowRight;
 
   formGroup = input.required<FormGroup>();
   isValid = output<boolean>();
@@ -337,14 +381,15 @@ export class Step1PersonalInfoComponent implements OnInit {
     return this.form.get(path) as FormControl;
   }
 
-  // Calculated property for max date (18 years ago)
-  maxDateValue = '';
+  // Max selectable date: must be at least 18 years old
+  maxDate: Date;
+  // Picker opens around the year 1990 — a sensible default for adults
+  startAtDate: Date;
 
   constructor() {
     const today = new Date();
-    const minAge = 18;
-    const maxDate = new Date(today.getFullYear() - minAge, today.getMonth(), today.getDate());
-    this.maxDateValue = maxDate.toISOString().split('T')[0];
+    this.maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    this.startAtDate = new Date(1990, 0, 1);
   }
 
   ngOnInit(): void {

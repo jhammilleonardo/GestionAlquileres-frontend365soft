@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, ArrowLeft, Wrench, Clock, Home, MessageSquare, Send, AlertCircle, CheckCircle2, FileText, User } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, Wrench, Clock, Home, MessageSquare, Send, AlertCircle, CheckCircle2, FileText, User, Link } from 'lucide-angular';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
@@ -38,216 +38,251 @@ import {
     ],
     template: `
         <div class="detail-container">
-            <!-- Header -->
+
+            <!-- ── PAGE HEADER ── -->
             <div class="page-header">
                 <button mat-icon-button [routerLink]="mantenimientoUrl()" class="back-btn">
-                    <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
+                    <lucide-icon [img]="ArrowLeft" [size]="22"></lucide-icon>
                 </button>
-                <div>
+                <div class="page-header-text">
                     <h1>Detalle de Solicitud</h1>
                     @if (request()) {
-                        <p>{{ request()?.ticket_number }}</p>
+                        <span class="ticket-chip">{{ request()?.ticket_number }}</span>
                     }
                 </div>
             </div>
 
+            <!-- ── LOADING ── -->
             @if (isLoading()) {
                 <div class="detail-grid">
-                    <mat-card class="skeleton-main-card">
-                        <div class="skeleton-header">
-                            <div class="skeleton-badge"></div>
-                            <div class="skeleton-badge"></div>
+                    <div class="skeleton-main">
+                        <div class="sk-banner"></div>
+                        <div class="sk-body">
+                            <div class="sk-line w60"></div>
+                            <div class="sk-line w40"></div>
+                            <div class="sk-line w100"></div>
+                            <div class="sk-line w80"></div>
                         </div>
-                        <div class="skeleton-line title"></div>
-                        <div class="skeleton-line medium"></div>
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line short"></div>
-                        <mat-divider></mat-divider>
-                        <div class="skeleton-meta-grid">
-                            <div class="skeleton-meta-item">
-                                <div class="skeleton-icon"></div>
-                                <div>
-                                    <div class="skeleton-line short"></div>
-                                    <div class="skeleton-line medium"></div>
-                                </div>
-                            </div>
-                            <div class="skeleton-meta-item">
-                                <div class="skeleton-icon"></div>
-                                <div>
-                                    <div class="skeleton-line short"></div>
-                                    <div class="skeleton-line medium"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </mat-card>
-
-                    <mat-card class="skeleton-messages-card">
-                        <div class="skeleton-line title"></div>
-                        @for (i of [1,2]; track i) {
-                            <div class="skeleton-message">
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-line medium"></div>
-                            </div>
+                    </div>
+                    <div class="skeleton-conv">
+                        <div class="sk-line w40"></div>
+                        @for (i of [1,2,3]; track i) {
+                            <div class="sk-msg"></div>
                         }
-                    </mat-card>
+                    </div>
                 </div>
+
+            <!-- ── CONTENT ── -->
             } @else if (request()) {
                 <div class="detail-grid">
-                    <!-- Main Info -->
-                    <mat-card class="main-card">
-                        <div class="card-header">
-                            <div class="status-row">
-                                <span class="status-badge" [class]="'status-' + request()!.status.toLowerCase()">
+
+                    <!-- ════ LEFT ════ -->
+                    <div class="rd-left">
+
+                        <!-- Status Banner -->
+                        <div class="status-banner" [class]="'banner-' + request()!.status.toLowerCase()">
+                            <div class="banner-body">
+                                <div class="banner-icon">
+                                    <lucide-icon [img]="Wrench" [size]="22"></lucide-icon>
+                                </div>
+                                <div class="banner-text">
+                                    <span class="banner-type">
+                                        {{ request()!.request_type === 'MAINTENANCE' ? 'Mantenimiento' : 'Consulta General' }}
+                                    </span>
+                                    <span class="banner-title">{{ request()!.title }}</span>
+                                </div>
+                            </div>
+                            <div class="banner-badges">
+                                <span class="b-status" [ngClass]="getStatusColor(request()!.status)">
                                     {{ statusLabels[request()!.status] }}
                                 </span>
-                                <span class="priority-badge" [class]="'priority-' + request()!.priority.toLowerCase()">
+                                <span class="b-priority" [ngClass]="getPriorityColor(request()!.priority)">
                                     {{ priorityLabels[request()!.priority] }}
                                 </span>
                             </div>
-                            <span class="request-type">
-                                {{ request()!.request_type === 'MAINTENANCE' ? 'Mantenimiento' : 'Consulta General' }}
-                            </span>
                         </div>
 
-                        <h2>{{ request()!.title }}</h2>
+                        <!-- Content Card -->
+                        <div class="content-card">
 
-                        @if (request()!.category) {
-                            <div class="category-tag">
-                                <lucide-icon [img]="Wrench" [size]="16"></lucide-icon>
-                                {{ categoryLabels[request()!.category!] }}
-                            </div>
-                        }
-
-                        <p class="description">{{ request()!.description }}</p>
-
-                        <mat-divider></mat-divider>
-
-                        <!-- Meta Info -->
-                        <div class="meta-grid">
-                            @if (request()!.property) {
-                                <div class="meta-item">
-                                    <lucide-icon [img]="Home" [size]="18"></lucide-icon>
-                                    <div>
-                                        <span class="meta-label">Propiedad</span>
-                                        <span class="meta-value">{{ request()!.property!.title }}</span>
-                                    </div>
+                            <!-- Category chip -->
+                            @if (request()!.category) {
+                                <div class="cc-row">
+                                    <span class="cat-chip">
+                                        <lucide-icon [img]="Link" [size]="13"></lucide-icon>
+                                        {{ categoryLabels[request()!.category!] }}
+                                    </span>
                                 </div>
                             }
-                            @if (request()!.contract) {
-                                <div class="meta-item">
-                                    <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
-                                    <div>
-                                        <span class="meta-label">Contrato</span>
-                                        <span class="meta-value">{{ request()!.contract!.contract_number }}</span>
+
+                            <!-- Description -->
+                            <div class="cc-section">
+                                <div class="cc-label">Descripción</div>
+                                <div class="cc-desc">{{ request()!.description }}</div>
+                            </div>
+
+                            <!-- Information meta-cards -->
+                            <div class="cc-section">
+                                <div class="cc-label">Información</div>
+                                <div class="meta-grid">
+                                    @if (request()!.property) {
+                                        <div class="meta-card">
+                                            <div class="meta-icon home">
+                                                <lucide-icon [img]="Home" [size]="16"></lucide-icon>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-lbl">Propiedad</span>
+                                                <span class="meta-val">{{ request()!.property!.title }}</span>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (request()!.contract) {
+                                        <div class="meta-card">
+                                            <div class="meta-icon contract">
+                                                <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-lbl">Contrato</span>
+                                                <span class="meta-val">{{ request()!.contract!.contract_number }}</span>
+                                            </div>
+                                        </div>
+                                    }
+                                    <div class="meta-card">
+                                        <div class="meta-icon created">
+                                            <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
+                                        </div>
+                                        <div class="meta-text">
+                                            <span class="meta-lbl">Creado el</span>
+                                            <span class="meta-val">{{ formatDate(request()!.created_at) }}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            }
-                            <div class="meta-item">
-                                <lucide-icon [img]="Clock" [size]="18"></lucide-icon>
-                                <div>
-                                    <span class="meta-label">Creado</span>
-                                    <span class="meta-value">{{ formatDate(request()!.created_at) }}</span>
+                                    @if (request()!.due_date) {
+                                        <div class="meta-card">
+                                            <div class="meta-icon updated">
+                                                <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-lbl">Fecha Límite</span>
+                                                <span class="meta-val">{{ formatDate(request()!.due_date!) }}</span>
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
                             </div>
-                            @if (request()!.due_date) {
-                                <div class="meta-item">
-                                    <lucide-icon [img]="Clock" [size]="18"></lucide-icon>
-                                    <div>
-                                        <span class="meta-label">Fecha Limite</span>
-                                        <span class="meta-value">{{ formatDate(request()!.due_date!) }}</span>
+
+                            <!-- Access row -->
+                            @if (request()!.request_type === 'MAINTENANCE') {
+                                <div class="cc-section access-section">
+                                    <div class="cc-label">Acceso</div>
+                                    <div class="access-row">
+                                        <span class="access-key">Permiso de entrada</span>
+                                        <span class="access-val">{{ permissionLabels[request()!.permission_to_enter] }}</span>
                                     </div>
+                                    @if (request()!.has_pets) {
+                                        <div class="pets-warning">
+                                            <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                                            Hay mascotas en la propiedad
+                                        </div>
+                                    }
+                                    @if (request()!.entry_notes) {
+                                        <div class="access-row">
+                                            <span class="access-key">Notas</span>
+                                            <span class="access-val">{{ request()!.entry_notes }}</span>
+                                        </div>
+                                    }
                                 </div>
+                            }
+
+                        </div>
+                    </div><!-- /rd-left -->
+
+                    <!-- ════ RIGHT — CONVERSATION ════ -->
+                    <div class="conv-panel">
+
+                        <!-- Header -->
+                        <div class="conv-header">
+                            <div class="conv-header-icon">
+                                <lucide-icon [img]="MessageSquare" [size]="16"></lucide-icon>
+                            </div>
+                            <span class="conv-title">Conversación</span>
+                            @if (messages().length > 0) {
+                                <span class="conv-badge">{{ messages().length }}</span>
                             }
                         </div>
 
-                        <!-- Entry Permission (for maintenance) -->
-                        @if (request()!.request_type === 'MAINTENANCE') {
-                            <mat-divider></mat-divider>
-                            <div class="entry-info">
-                                <h4>Informacion de Acceso</h4>
-                                <p><strong>Permiso de entrada:</strong> {{ permissionLabels[request()!.permission_to_enter] }}</p>
-                                @if (request()!.has_pets) {
-                                    <p class="pets-warning">
-                                        <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
-                                        Hay mascotas en la propiedad
-                                    </p>
-                                }
-                                @if (request()!.entry_notes) {
-                                    <p><strong>Notas:</strong> {{ request()!.entry_notes }}</p>
-                                }
-                            </div>
-                        }
-                    </mat-card>
-
-                    <!-- Messages Section -->
-                    <mat-card class="messages-card">
-                        <div class="messages-header">
-                            <lucide-icon [img]="MessageSquare" [size]="20"></lucide-icon>
-                            <h3>Conversacion</h3>
-                        </div>
-
+                        <!-- Loading -->
                         @if (isLoadingMessages()) {
-                            <div class="loading-messages">
-                                <mat-spinner diameter="24"></mat-spinner>
+                            <div class="conv-loading">
+                                <div class="sk-msg-item right"></div>
+                                <div class="sk-msg-item left"></div>
+                                <div class="sk-msg-item right"></div>
+                                <div class="sk-msg-item left"></div>
                             </div>
                         } @else {
-                            <div class="messages-list">
+
+                            <!-- Messages list -->
+                            <div class="conv-messages" #msgContainer>
                                 @if (messages().length === 0) {
-                                    <div class="no-messages">
-                                        <p>No hay mensajes aun</p>
+                                    <div class="conv-empty">
+                                        <div class="conv-empty-icon">
+                                            <lucide-icon [img]="MessageSquare" [size]="28"></lucide-icon>
+                                        </div>
+                                        <p class="conv-empty-title">Sin mensajes aún</p>
+                                        <p class="conv-empty-sub">Inicia la conversación con el equipo de administración</p>
                                     </div>
                                 } @else {
                                     @for (message of messages(); track message.id) {
-                                        <div class="message" [class.mine]="isMyMessage(message)">
-                                            <div class="message-header">
-                                                <span class="message-author">
-                                                    {{ isMyMessage(message) ? 'Tu' : 'Administracion' }}
+                                        <div class="msg-row" [class.msg-mine]="isMyMessage(message)">
+                                            @if (!isMyMessage(message)) {
+                                                <div class="msg-avatar admin-avatar">A</div>
+                                            }
+                                            <div class="msg-group">
+                                                <span class="msg-sender" [class.msg-sender-mine]="isMyMessage(message)">
+                                                    {{ isMyMessage(message) ? 'Tú' : 'Administración' }}
                                                 </span>
-                                                <span class="message-date">{{ formatMessageDate(message.created_at) }}</span>
-                                            </div>
-                                            <div class="message-content">{{ message.message }}</div>
-                                            @if (message.attachments && message.attachments.length > 0) {
-                                                <div class="message-attachments">
-                                                    @for (att of message.attachments; track att.id) {
-                                                        <a [href]="att.file_url" target="_blank" class="attachment">
-                                                            {{ att.file_name }}
-                                                        </a>
-                                                    }
+                                                <div class="msg-bubble" [class.bubble-mine]="isMyMessage(message)">
+                                                    {{ message.message }}
                                                 </div>
+                                                <span class="msg-time">{{ formatMessageDate(message.created_at) }}</span>
+                                            </div>
+                                            @if (isMyMessage(message)) {
+                                                <div class="msg-avatar tenant-avatar">Tú</div>
                                             }
                                         </div>
                                     }
                                 }
                             </div>
 
-                            <!-- Send Message Form -->
+                            <!-- Input -->
                             @if (canSendMessage()) {
-                                <div class="send-message">
-                                    <mat-form-field appearance="outline" class="message-input">
-                                        <mat-label>Escribe un mensaje...</mat-label>
-                                        <textarea matInput [(ngModel)]="newMessage" rows="2"
-                                            placeholder="Escribe tu mensaje aqui..."></textarea>
-                                    </mat-form-field>
-                                    <button mat-raised-button color="primary"
+                                <div class="conv-input-area">
+                                    <textarea class="conv-textarea"
+                                        [(ngModel)]="newMessage"
+                                        rows="1"
+                                        placeholder="Escribe tu mensaje..."
+                                        (keydown.enter)="$event.preventDefault(); sendMessage()"></textarea>
+                                    <button class="send-btn"
                                             (click)="sendMessage()"
                                             [disabled]="!newMessage.trim() || isSending()">
                                         @if (isSending()) {
-                                            <mat-spinner diameter="18"></mat-spinner>
+                                            <mat-spinner diameter="16"></mat-spinner>
                                         } @else {
-                                            <lucide-icon [img]="Send" [size]="18"></lucide-icon>
+                                            <lucide-icon [img]="Send" [size]="16"></lucide-icon>
                                         }
-                                        Enviar
                                     </button>
                                 </div>
                             } @else {
-                                <div class="messages-closed">
-                                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                                    <p>Esta solicitud esta cerrada. No puedes enviar mas mensajes.</p>
+                                <div class="conv-closed">
+                                    <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
+                                    <p>Esta solicitud está cerrada</p>
                                 </div>
                             }
                         }
-                    </mat-card>
+                    </div><!-- /conv-panel -->
+
                 </div>
+
+            <!-- ── NOT FOUND ── -->
             } @else {
                 <div class="not-found">
                     <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
@@ -258,351 +293,465 @@ import {
                     </button>
                 </div>
             }
+
         </div>
     `,
     styles: [`
+        /* ── Container ── */
         .detail-container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 0 auto;
+            padding: 0 4px;
         }
 
+        /* ── Page Header ── */
         .page-header {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             margin-bottom: 24px;
         }
-
-        .back-btn {
-            color: #64748b;
-        }
-
-        .page-header h1 {
-            font-size: 1.5rem;
+        .back-btn { color: #64748b; }
+        .page-header-text h1 {
+            font-size: 1.45rem;
             font-weight: 700;
             color: #1e293b;
-            margin: 0 0 4px;
+            margin: 0 0 2px;
         }
-
-        .page-header p {
-            color: var(--mat-sys-primary);
+        .ticket-chip {
+            display: inline-block;
+            font-size: 12px;
             font-family: monospace;
-            margin: 0;
+            color: var(--mat-sys-primary);
+            background: #eff6ff;
+            padding: 2px 8px;
+            border-radius: 6px;
         }
 
-        .loading, .not-found {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 60px;
-            color: #64748b;
-            text-align: center;
-        }
-
-        .loading p, .not-found p {
-            margin-top: 16px;
-        }
-
-        .not-found h2 {
-            color: #1e293b;
-            margin: 16px 0 8px;
-        }
-
+        /* ── Grid ── */
         .detail-grid {
             display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 24px;
+            grid-template-columns: 1fr 360px;
+            gap: 20px;
+            align-items: start;
         }
-
         @media (max-width: 900px) {
-            .detail-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .messages-card {
-                order: 2;
-            }
+            .detail-grid { grid-template-columns: 1fr; }
         }
 
-        @media (max-width: 600px) {
-            .main-card, .messages-card {
-                padding: 20px;
-            }
+        /* ── Left column ── */
+        .rd-left { display: flex; flex-direction: column; gap: 0; }
 
-            .page-header h1 {
-                font-size: 1.35rem;
-            }
-
-            .card-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .status-row {
-                flex-wrap: wrap;
-            }
-
-            .meta-grid {
-                grid-template-columns: 1fr;
-                gap: 12px;
-            }
-
-            .send-message {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .send-message button {
-                width: 100%;
-                height: 48px;
-            }
-
-            .message-input {
-                width: 100%;
-            }
-        }
-
-        @media (max-width: 420px) {
-            .main-card, .messages-card {
-                padding: 16px;
-            }
-
-            .main-card h2 {
-                font-size: 1.1rem;
-            }
-
-            .page-header {
-                gap: 8px;
-            }
-
-            .messages-list {
-                max-height: 300px;
-            }
-        }
-
-        .main-card, .messages-card {
-            padding: 24px;
-        }
-
-        .card-header {
+        /* ── Status Banner ── */
+        .status-banner {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            padding: 18px 22px;
+            border-radius: 14px 14px 0 0;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: #fff;
+            gap: 12px;
+            flex-wrap: wrap;
         }
+        .status-banner.banner-new        { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .status-banner.banner-in_progress { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .status-banner.banner-completed   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .status-banner.banner-deferred    { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .status-banner.banner-closed      { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 
-        .status-row {
+        .banner-body {
             display: flex;
-            gap: 8px;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+            min-width: 0;
         }
-
-        .status-badge, .priority-badge {
+        .banner-icon {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.2);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .banner-text { display: flex; flex-direction: column; min-width: 0; }
+        .banner-type {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            opacity: .85;
+        }
+        .banner-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .banner-badges { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+        .b-status, .b-priority {
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 500;
-        }
-
-        .status-badge.status-new { background: #dbeafe; color: #1d4ed8; }
-        .status-badge.status-in_progress { background: #fef3c7; color: #b45309; }
-        .status-badge.status-completed { background: #d1fae5; color: #047857; }
-        .status-badge.status-deferred { background: #fed7aa; color: #c2410c; }
-        .status-badge.status-closed { background: #e2e8f0; color: #475569; }
-
-        .priority-badge.priority-low { background: #d1fae5; color: #047857; }
-        .priority-badge.priority-normal { background: #fef3c7; color: #b45309; }
-        .priority-badge.priority-high { background: #fee2e2; color: #dc2626; }
-
-        .request-type {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .main-card h2 {
-            font-size: 1.25rem;
             font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 12px;
+            background: rgba(255,255,255,.2);
+            color: #fff;
+        }
+        /* coloured overrides */
+        .b-status.status-new         { background: #dbeafe; color: #1d4ed8; }
+        .b-status.status-in_progress { background: #fef3c7; color: #b45309; }
+        .b-status.status-completed   { background: #d1fae5; color: #047857; }
+        .b-status.status-deferred    { background: #fed7aa; color: #c2410c; }
+        .b-status.status-closed      { background: #e2e8f0; color: #475569; }
+        .b-priority.priority-low      { background: #d1fae5; color: #047857; }
+        .b-priority.priority-normal   { background: #fef3c7; color: #b45309; }
+        .b-priority.priority-high     { background: #fee2e2; color: #dc2626; }
+
+        /* ── Content card ── */
+        .content-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 14px 14px;
+            padding: 20px 22px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
         }
 
-        .category-tag {
+        /* Category chip */
+        .cc-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .cat-chip {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             padding: 4px 12px;
-            background: var(--mat-sys-primary-container);
-            color: var(--mat-sys-primary);
+            background: #eff6ff;
+            color: var(--mat-sys-primary, #2563eb);
             border-radius: 20px;
             font-size: 13px;
-            margin-bottom: 16px;
+            font-weight: 500;
+            border: 1px solid #bfdbfe;
         }
 
-        .description {
+        /* Section labels */
+        .cc-section { display: flex; flex-direction: column; gap: 8px; }
+        .cc-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            color: #94a3b8;
+        }
+        .cc-desc {
             color: #475569;
-            line-height: 1.6;
-            margin: 0 0 20px;
+            font-size: 14px;
+            line-height: 1.65;
+            padding-left: 12px;
+            border-left: 3px solid #e2e8f0;
         }
 
-        mat-divider {
-            margin: 20px 0;
-        }
-
+        /* Info Meta grid */
         .meta-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
+            gap: 10px;
         }
-
-        .meta-item {
+        @media (max-width: 600px) { .meta-grid { grid-template-columns: 1fr; } }
+        .meta-card {
             display: flex;
+            align-items: center;
             gap: 12px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
         }
-
-        .meta-item lucide-icon {
-            color: #64748b;
+        .meta-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
+        .meta-icon.home     { background: #eff6ff; color: #3b82f6; }
+        .meta-icon.contract { background: #f5f3ff; color: #7c3aed; }
+        .meta-icon.created  { background: #ecfdf5; color: #10b981; }
+        .meta-icon.updated  { background: #fff7ed; color: #f59e0b; }
+        .meta-text { display: flex; flex-direction: column; min-width: 0; }
+        .meta-lbl { font-size: 11px; color: #94a3b8; font-weight: 500; }
+        .meta-val { font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .meta-label {
-            display: block;
-            font-size: 12px;
-            color: #64748b;
+        /* Access section */
+        .access-section { gap: 8px; }
+        .access-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
         }
-
-        .meta-value {
-            display: block;
-            font-weight: 500;
-            color: #1e293b;
-        }
-
-        .entry-info h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 12px;
-        }
-
-        .entry-info p {
-            margin: 8px 0;
-            color: #475569;
-        }
-
+        .access-key { font-size: 13px; color: #64748b; }
+        .access-val { font-size: 13px; font-weight: 600; color: #1e293b; }
         .pets-warning {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #f59e0b !important;
-        }
-
-        /* Messages */
-        .messages-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .messages-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0;
-        }
-
-        .loading-messages {
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .messages-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 16px;
-        }
-
-        .no-messages {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-
-        .message {
-            padding: 12px;
-            margin-bottom: 12px;
-            background: #f8fafc;
-            border-radius: 8px;
-        }
-
-        .message.mine {
-            background: #eef2ff;
-        }
-
-        .message-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .message-author {
-            font-weight: 600;
+            gap: 6px;
             font-size: 13px;
-            color: #1e293b;
-        }
-
-        .message-date {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .message-content {
-            color: #475569;
-            line-height: 1.5;
-        }
-
-        .message-attachments {
-            margin-top: 8px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .attachment {
-            font-size: 12px;
-            color: var(--mat-sys-primary);
-            text-decoration: none;
-        }
-
-        .send-message {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-
-        .message-input {
-            flex: 1;
-        }
-
-        .send-message button {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            height: 56px;
-        }
-
-        .messages-closed {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 16px;
-            background: #f1f5f9;
+            color: #f59e0b;
+            padding: 8px 12px;
+            background: #fffbeb;
             border-radius: 8px;
-            color: #64748b;
+            border: 1px solid #fde68a;
         }
 
-        .messages-closed p {
-            margin: 0;
+        /* ════ CONVERSATION PANEL ════ */
+        .conv-panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            height: 640px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,.06);
         }
+
+        /* Header */
+        .conv-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+            background: #fff;
+        }
+        .conv-header-icon {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #3b82f6;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .conv-title { font-size: 14px; font-weight: 700; color: #1e293b; flex: 1; }
+        .conv-badge {
+            background: #3b82f6;
+            color: #fff;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            min-width: 22px;
+            text-align: center;
+        }
+
+        /* Loading skeletons */
+        .conv-loading {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #f8fafc;
+        }
+        .sk-msg-item {
+            height: 48px;
+            width: 65%;
+            border-radius: 14px;
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+        .sk-msg-item.right { align-self: flex-end; }
+        .sk-msg-item.left  { align-self: flex-start; }
+
+        /* Messages area */
+        .conv-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            background: #f8fafc;
+        }
+        .conv-messages::-webkit-scrollbar { width: 4px; }
+        .conv-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* Empty state */
+        .conv-empty {
+            flex: 1;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 8px; padding: 40px; text-align: center;
+        }
+        .conv-empty-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: #eff6ff;
+            color: #93c5fd;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 4px;
+        }
+        .conv-empty-title { font-size: 14px; font-weight: 600; color: #475569; margin: 0; }
+        .conv-empty-sub   { font-size: 12px; color: #94a3b8; margin: 0; max-width: 200px; }
+
+        /* Message rows */
+        .msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            max-width: 85%;
+            align-self: flex-start;
+        }
+        .msg-row.msg-mine {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        .msg-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .admin-avatar  { background: #e0e7ff; color: #4338ca; }
+        .tenant-avatar { background: #dbeafe; color: #1d4ed8; font-size: 9px; }
+
+        .msg-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+        .msg-sender {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            padding: 0 4px;
+        }
+        .msg-sender.msg-sender-mine { text-align: right; }
+
+        .msg-bubble {
+            padding: 10px 14px;
+            border-radius: 4px 14px 14px 14px;
+            font-size: 13px;
+            line-height: 1.55;
+            color: #1e293b;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+            word-break: break-word;
+            max-width: 100%;
+        }
+        .bubble-mine {
+            background: #3b82f6;
+            color: #fff;
+            border-radius: 14px 4px 14px 14px;
+            box-shadow: 0 2px 8px rgba(59,130,246,.35);
+        }
+        .msg-time {
+            font-size: 10px;
+            color: #94a3b8;
+            padding: 0 4px;
+        }
+        .msg-sender.msg-sender-mine ~ * { align-self: flex-end; }
+
+        /* Input area */
+        .conv-input-area {
+            display: flex;
+            gap: 0;
+            align-items: center;
+            padding: 10px 12px;
+            border-top: 1px solid #e2e8f0;
+            background: #fff;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+        .conv-textarea {
+            flex: 1;
+            resize: none;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 22px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-family: inherit;
+            color: #1e293b;
+            outline: none;
+            transition: border-color .18s, box-shadow .18s;
+            background: #f8fafc;
+            min-height: 40px;
+            max-height: 100px;
+            line-height: 1.4;
+        }
+        .conv-textarea:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+        }
+        .conv-textarea::placeholder { color: #94a3b8; }
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background .15s, transform .1s;
+            box-shadow: 0 2px 8px rgba(59,130,246,.35);
+        }
+        .send-btn:hover:not(:disabled) { background: #2563eb; transform: scale(1.06); }
+        .send-btn:disabled { background: #cbd5e1; box-shadow: none; cursor: not-allowed; }
+
+        .conv-closed {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 13px;
+            color: #64748b;
+            background: #f8fafc;
+            flex-shrink: 0;
+        }
+        .conv-closed p { margin: 0; }
+
+        /* Skeletons */
+        .skeleton-main, .skeleton-conv {
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .sk-banner { height: 80px; background: #dbeafe; }
+        .sk-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .sk-line {
+            height: 12px; border-radius: 6px;
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+        }
+        .sk-line.w100 { width: 100%; }
+        .sk-line.w80  { width: 80%; }
+        .sk-line.w60  { width: 60%; }
+        .sk-line.w40  { width: 40%; }
+        .sk-msg { height: 40px; border-radius: 10px; background: #f1f5f9; margin: 8px 16px; }
+        @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Not found */
+        .not-found {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 60px; color: #64748b; text-align: center; gap: 8px;
+        }
+        .not-found h2 { color: #1e293b; margin: 8px 0 4px; }
     `]
 })
 export class TenantRequestDetailComponent implements OnInit {
@@ -616,6 +765,7 @@ export class TenantRequestDetailComponent implements OnInit {
     readonly CheckCircle2 = CheckCircle2;
     readonly FileText = FileText;
     readonly User = User;
+    readonly Link = Link;
 
     private route = inject(ActivatedRoute);
     private maintenanceService = inject(TenantMaintenanceService);
@@ -695,6 +845,26 @@ export class TenantRequestDetailComponent implements OnInit {
         const req = this.request();
         if (!req) return false;
         return ![MaintenanceStatus.COMPLETED, MaintenanceStatus.CLOSED].includes(req.status);
+    }
+
+    getStatusColor(status: MaintenanceStatus): string {
+        const map: Record<string, string> = {
+            NEW: 'status-new',
+            IN_PROGRESS: 'status-in_progress',
+            COMPLETED: 'status-completed',
+            DEFERRED: 'status-deferred',
+            CLOSED: 'status-closed'
+        };
+        return map[status] ?? '';
+    }
+
+    getPriorityColor(priority: string): string {
+        const map: Record<string, string> = {
+            LOW: 'priority-low',
+            NORMAL: 'priority-normal',
+            HIGH: 'priority-high'
+        };
+        return map[priority] ?? '';
     }
 
     isMyMessage(message: MaintenanceMessage): boolean {

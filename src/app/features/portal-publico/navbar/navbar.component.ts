@@ -1,7 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { LucideAngularModule, Home } from 'lucide-angular';
+import { SlugService } from '../../../core/services/slug.service';
 
 @Component({
   selector: 'app-navbar',
@@ -14,11 +15,15 @@ export class NavbarComponent {
   readonly Home = Home;
   isMenuOpen = false;
   isScrolled = false;
-  slug: string | null = null;
   currentPath: string = '';
 
-  private route = inject(ActivatedRoute);
+  private slugService = inject(SlugService);
   private router = inject(Router);
+
+  // Obtiene el slug desde SlugService (ya es establecido por PublicLayoutComponent)
+  get slug(): string | null {
+    return this.slugService.getSlug();
+  }
 
   ngOnInit() {
     if (typeof window !== 'undefined') {
@@ -27,10 +32,6 @@ export class NavbarComponent {
       });
     }
 
-    // Get slug from URL
-    this.slug = this.route.snapshot.paramMap.get('slug');
-    
-    // Track current path for active link highlighting
     this.router.events.subscribe(() => {
       this.currentPath = this.router.url;
     });
@@ -40,12 +41,12 @@ export class NavbarComponent {
     this.isMenuOpen = !this.isMenuOpen;
   }
 
-  getLoginPath(): string {
-    return this.slug ? `/${this.slug}/login` : '/login';
+  getLoginPath(): string[] {
+    return this.slug ? ['/', this.slug, 'login'] : ['/login'];
   }
 
-  getRegisterPath(): string {
-    return this.slug ? `/${this.slug}/register` : '/register';
+  getRegisterPath(): string[] {
+    return this.slug ? ['/', this.slug, 'register'] : ['/register'];
   }
 
   getPublicPath(path: string): string {

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -354,6 +354,7 @@ export class ContractCreateComponent implements OnInit {
 
     private fb = inject(FormBuilder);
     private router = inject(Router);
+    private route = inject(ActivatedRoute);
     private contractService = inject(AdminContractService);
     private userService = inject(AdminUserService);
     private propertyService = inject(PropertyService);
@@ -396,6 +397,17 @@ export class ContractCreateComponent implements OnInit {
     ngOnInit(): void {
         this.loadTenants();
         this.loadProperties();
+
+        // Pre-fill from query params (coming from an approved application)
+        const qp = this.route.snapshot.queryParamMap;
+        const tenantId = qp.get('tenant_id');
+        const propertyId = qp.get('property_id');
+        if (tenantId || propertyId) {
+            this.contractForm.patchValue({
+                ...(tenantId   ? { tenant_id:   Number(tenantId)   } : {}),
+                ...(propertyId ? { property_id: Number(propertyId) } : {})
+            });
+        }
     }
 
     private loadTenants(): void {

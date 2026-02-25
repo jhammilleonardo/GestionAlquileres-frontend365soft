@@ -2,16 +2,38 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import {
+  LucideAngularModule,
+  ArrowLeft, XCircle, CheckCircle2, AlertCircle, MessageSquare, Lightbulb, Timer
+} from 'lucide-angular';
 import { ApplicationService } from '../../../../core/services/application.service';
 
 @Component({
   selector: 'app-reject-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, FormsModule,
+    MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+    MatProgressSpinnerModule, LucideAngularModule
+  ],
   templateUrl: './reject-dialog.component.html',
   styleUrls: ['./reject-dialog.component.css']
 })
 export class RejectDialogComponent {
+  // Icons
+  readonly ArrowLeft = ArrowLeft;
+  readonly XCircle = XCircle;
+  readonly CheckCircle2 = CheckCircle2;
+  readonly AlertCircle = AlertCircle;
+  readonly MessageSquare = MessageSquare;
+  readonly Lightbulb = Lightbulb;
+  readonly Timer = Timer;
+
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private applicationService = inject(ApplicationService);
@@ -51,8 +73,6 @@ export class RejectDialogComponent {
       next: () => {
         this.success = true;
         this.submitting = false;
-
-        // Auto-redirect after 2 seconds
         setTimeout(() => {
           this.router.navigate(['../../'], { relativeTo: this.route });
         }, 2000);

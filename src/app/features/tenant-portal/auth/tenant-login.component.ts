@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -460,7 +460,7 @@ import { ApplicationIntentionService } from '../../../core/services/application-
         }
     `]
 })
-export class TenantLoginComponent {
+export class TenantLoginComponent implements OnInit {
     readonly Home = Home;
     readonly Mail = Mail;
     readonly Lock = Lock;
@@ -489,9 +489,33 @@ export class TenantLoginComponent {
         rememberMe: [false]
     });
 
-    constructor() {
-        // Obtener el slug de la URL
+    ngOnInit(): void {
+        // Obtener el slug de la URL — leerlo en ngOnInit (no en constructor)
+        // para asegurar que los params heredados estén disponibles
+        // con paramsInheritanceStrategy: 'always'
         this.slug = this.route.snapshot.paramMap.get('slug');
+
+        // Fallback: extraer slug directamente de la URL del router si paramMap retorna null
+        // Esto cubre el caso donde el componente está lazy-loaded en rutas profundamente anidadas
+        // Formato de URL esperado: /:slug/login  o  /:slug/portal/login
+        if (!this.slug) {
+            const urlSegments = this.router.url.split('?')[0].split('/').filter(Boolean);
+            if (urlSegments.length >= 1) {
+                const potentialSlug = urlSegments[0];
+                const reservedPaths = ['login', 'register', 'forgot-password', 'portal', 'dashboard', 'admin', 'publico'];
+                if (!reservedPaths.includes(potentialSlug)) {
+                    this.slug = potentialSlug;
+                }
+            }
+        }
+
+        // Suscribirse a cambios de params para manejar reactivación del componente
+        this.route.paramMap.subscribe(params => {
+            const routeSlug = params.get('slug');
+            if (routeSlug) {
+                this.slug = routeSlug;
+            }
+        });
     }
 
     togglePassword(): void {

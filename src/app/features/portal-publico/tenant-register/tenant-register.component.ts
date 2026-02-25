@@ -581,12 +581,25 @@ export class TenantRegisterComponent implements OnInit {
     }, { validators: this.passwordMatchValidator });
   }
 
+  // Palabras reservadas por el sistema de rutas que nunca pueden ser un slug de inquilino
+  private readonly RESERVED_SLUGS = ['login', 'register', 'dashboard', 'portal', 'publico', 'admin', 'api', 'forgot-password'];
+
   ngOnInit(): void {
-    // Get slug from URL
+    // Get slug from URL — read in ngOnInit to ensure inherited params are available
     this.slug = this.route.snapshot.paramMap.get('slug');
 
     if (!this.slug) {
       this.errorMessage.set('No se pudo identificar la organización. Por favor, use un enlace válido.');
+      return;
+    }
+
+    // Validate that the slug is not a reserved system route segment
+    if (this.RESERVED_SLUGS.includes(this.slug.toLowerCase())) {
+      this.errorMessage.set(
+        `La URL no es válida. El segmento "${this.slug}" es una ruta reservada del sistema. ` +
+        'Por favor, solicita el enlace de registro correcto a tu administrador.'
+      );
+      this.slug = null; // Prevent form submission with wrong slug
       return;
     }
   }

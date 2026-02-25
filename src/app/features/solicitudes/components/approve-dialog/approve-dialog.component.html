@@ -1,470 +1,437 @@
-<div class="approve-dialog-container">
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="spinner"></div>
+<div class="approve-container">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="state-box">
+    <mat-spinner diameter="48" color="primary"></mat-spinner>
     <p>Cargando solicitud...</p>
   </div>
 
-  <!-- Success State -->
-  <div *ngIf="success && contractGenerated" class="success-state">
-    <div class="success-icon">🎉</div>
-    <h2>¡Solicitud Aprobada!</h2>
-    <p>La solicitud ha sido aprobada exitosamente y el contrato ha sido generado.</p>
-
-    <div class="contract-info">
-      <h3>Contrato Generado</h3>
-      <div class="contract-details">
-        <div class="detail-item">
-          <label>Número de Contrato:</label>
-          <span>{{ contractGenerated.number }}</span>
-        </div>
-        <div class="detail-item">
-          <label>Estado:</label>
-          <span class="status-badge">{{ contractGenerated.status }}</span>
-        </div>
-        <div class="detail-item">
-          <label>Alquiler Mensual:</label>
-          <span>${{ contractGenerated.monthly_rent | number }} {{ contractGenerated.currency }}</span>
-        </div>
-        <div class="detail-item">
-          <label>Depósito:</label>
-          <span>${{ contractGenerated.deposit_amount | number }} {{ contractGenerated.currency }}</span>
-        </div>
-      </div>
-      <p class="contract-message">{{ contractGenerated.message }}</p>
+  <!-- Error -->
+  <div *ngIf="error && !loading && !success" class="state-box error-box">
+    <div class="state-icon-wrapper error">
+      <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
     </div>
-
-    <div class="redirect-notice">
-      <p>⏱️ Redirigiendo a la lista de solicitudes...</p>
-    </div>
-  </div>
-
-  <!-- Error State -->
-  <div *ngIf="error" class="error-state">
-    <div class="error-icon">⚠️</div>
     <h2>Error</h2>
     <p>{{ error }}</p>
-    <button class="btn btn-secondary" (click)="cancel()">Volver</button>
+    <button mat-stroked-button color="primary" (click)="cancel()">
+      <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
+      Volver
+    </button>
+  </div>
+
+  <!-- Success -->
+  <div *ngIf="success && contractGenerated" class="state-box success-box">
+    <div class="state-icon-wrapper success">
+      <lucide-icon [img]="CheckCircle2" [size]="64"></lucide-icon>
+    </div>
+    <h2>¡Solicitud Aprobada!</h2>
+    <p>La solicitud fue aprobada y el contrato fue generado exitosamente.</p>
+
+    <mat-card class="contract-card">
+      <mat-card-content>
+        <div class="contract-header">
+          <div class="contract-icon-wrapper">
+            <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
+          </div>
+          <h3>Detalles del Contrato</h3>
+        </div>
+        <div class="contract-details">
+          <div class="contract-detail-item">
+            <span class="detail-label">Número de Contrato</span>
+            <span class="detail-value highlight">{{ contractGenerated.number }}</span>
+          </div>
+          <div class="contract-detail-item">
+            <span class="detail-label">Estado</span>
+            <span class="contract-status">{{ contractGenerated.status }}</span>
+          </div>
+          <div class="contract-detail-item">
+            <span class="detail-label">Alquiler Mensual</span>
+            <span class="contract-amount">${{ contractGenerated.monthly_rent | number }} {{ contractGenerated.currency }}</span>
+          </div>
+          <div class="contract-detail-item">
+            <span class="detail-label">Depósito</span>
+            <span class="detail-value">${{ contractGenerated.deposit_amount | number }} {{ contractGenerated.currency }}</span>
+          </div>
+        </div>
+        <div class="contract-message" *ngIf="contractGenerated.message">
+          <lucide-icon [img]="MessageSquare" [size]="16"></lucide-icon>
+          <p>{{ contractGenerated.message }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="redirect-notice">
+      <mat-spinner diameter="16" color="primary"></mat-spinner>
+      <span>Redirigiendo a la lista de solicitudes...</span>
+    </div>
   </div>
 
   <!-- Form -->
-  <div *ngIf="!loading && !success && !error" class="form-container">
-    <div class="form-header">
-      <h1>✅ Aprobar Solicitud de Alquiler</h1>
-      <p class="form-subtitle">Complete los términos del contrato para aprobar esta solicitud</p>
+  <ng-container *ngIf="!loading && !success && !error">
+
+    <!-- Back Button -->
+    <button mat-button class="back-btn" (click)="cancel()">
+      <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
+      Volver a Detalles
+    </button>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-icon-wrap">
+        <lucide-icon [img]="CheckCircle2" [size]="32"></lucide-icon>
+      </div>
+      <div class="header-text">
+        <h1>Aprobar Solicitud de Alquiler</h1>
+        <p>Complete los términos del contrato para aprobar esta solicitud</p>
+      </div>
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="approve-form">
-      <!-- Basic Contract Terms -->
-      <div class="form-section">
-        <h2 class="section-title">💰 Términos Económicos</h2>
+    <form (ngSubmit)="onSubmit()" class="approval-form">
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="monthly_rent">Alquiler Mensual *</label>
-            <input
-              type="number"
-              id="monthly_rent"
-              class="form-control"
-              [(ngModel)]="formData.monthly_rent"
-              name="monthly_rent"
-              required
-              min="0"
-              step="0.01"
-            />
+      <!-- Términos Económicos -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper green">
+              <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
+            </div>
+            <h2>Términos Económicos</h2>
           </div>
 
-          <div class="form-group">
-            <label for="currency">Moneda</label>
-            <select
-              id="currency"
-              class="form-control"
-              [(ngModel)]="formData.currency"
-              name="currency"
-            >
-              <option value="BOB">BOB - Boliviano</option>
-              <option value="USD">USD - Dólar</option>
-              <option value="EUR">EUR - Euro</option>
-            </select>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Alquiler Mensual *</mat-label>
+              <lucide-icon matPrefix [img]="DollarSign" [size]="18" class="field-icon"></lucide-icon>
+              <input matInput type="number" [(ngModel)]="formData.monthly_rent"
+                     name="monthly_rent" required min="0" step="0.01">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Moneda</mat-label>
+              <mat-select [(ngModel)]="formData.currency" name="currency">
+                <mat-option value="BOB">BOB - Boliviano</mat-option>
+                <mat-option value="USD">USD - Dólar</mat-option>
+                <mat-option value="EUR">EUR - Euro</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Depósito</mat-label>
+              <lucide-icon matPrefix [img]="DollarSign" [size]="18" class="field-icon"></lucide-icon>
+              <input matInput type="number" [(ngModel)]="formData.deposit_amount"
+                     name="deposit_amount" min="0" step="0.01"
+                     placeholder="Por defecto: igual al alquiler">
+              <mat-hint>Si se deja vacío, será igual a un mes de alquiler</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Día de Pago</mat-label>
+              <lucide-icon matPrefix [img]="Calendar" [size]="18" class="field-icon"></lucide-icon>
+              <input matInput type="number" [(ngModel)]="formData.payment_day"
+                     name="payment_day" min="1" max="31">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Método de Pago</mat-label>
+              <lucide-icon matPrefix [img]="Building2" [size]="18" class="field-icon"></lucide-icon>
+              <input matInput [(ngModel)]="formData.payment_method"
+                     name="payment_method"
+                     placeholder="Ej: Transferencia bancaria, Efectivo...">
+            </mat-form-field>
           </div>
-        </div>
+        </mat-card-content>
+      </mat-card>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="deposit_amount">Depósito</label>
-            <input
-              type="number"
-              id="deposit_amount"
-              class="form-control"
-              [(ngModel)]="formData.deposit_amount"
-              name="deposit_amount"
-              min="0"
-              step="0.01"
-              placeholder="Igual al alquiler si se deja vacío"
-            />
-            <small class="form-text">Si no se especifica, será igual a un mes de alquiler</small>
-          </div>
-
-          <div class="form-group">
-            <label for="payment_day">Día de Pago</label>
-            <input
-              type="number"
-              id="payment_day"
-              class="form-control"
-              [(ngModel)]="formData.payment_day"
-              name="payment_day"
-              min="1"
-              max="31"
-            />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="payment_method">Método de Pago</label>
-          <input
-            type="text"
-            id="payment_method"
-            class="form-control"
-            [(ngModel)]="formData.payment_method"
-            name="payment_method"
-            placeholder="Ej: Transferencia bancaria, Efectivo, etc."
-          />
-        </div>
-      </div>
-
-      <!-- Late Fees -->
-      <div class="form-section">
-        <h2 class="section-title">⏰ Recargos y Días de Gracia</h2>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="late_fee_percentage">% Recargo por Mora</label>
-            <input
-              type="number"
-              id="late_fee_percentage"
-              class="form-control"
-              [(ngModel)]="formData.late_fee_percentage"
-              name="late_fee_percentage"
-              min="0"
-              max="100"
-              step="0.1"
-              placeholder="0"
-            />
+      <!-- Recargos -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper amber">
+              <lucide-icon [img]="Clock" [size]="24"></lucide-icon>
+            </div>
+            <h2>Recargos y Días de Gracia</h2>
           </div>
 
-          <div class="form-group">
-            <label for="grace_days">Días de Gracia</label>
-            <input
-              type="number"
-              id="grace_days"
-              class="form-control"
-              [(ngModel)]="formData.grace_days"
-              name="grace_days"
-              min="0"
-              max="30"
-              placeholder="0"
-            />
-            <small class="form-text">Días antes de aplicar recargo</small>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>% Recargo por Mora</mat-label>
+              <input matInput type="number" [(ngModel)]="formData.late_fee_percentage"
+                     name="late_fee_percentage" min="0" max="100" step="0.1" placeholder="0">
+              <span matSuffix>%</span>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Días de Gracia</mat-label>
+              <input matInput type="number" [(ngModel)]="formData.grace_days"
+                     name="grace_days" min="0" max="30" placeholder="0">
+              <mat-hint>Días antes de aplicar recargo</mat-hint>
+            </mat-form-field>
           </div>
-        </div>
-      </div>
+        </mat-card-content>
+      </mat-card>
 
-      <!-- Dates -->
-      <div class="form-section">
-        <h2 class="section-title">📅 Fechas del Contrato</h2>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="start_date">Fecha de Inicio</label>
-            <input
-              type="date"
-              id="start_date"
-              class="form-control"
-              [(ngModel)]="formData.start_date"
-              name="start_date"
-            />
-            <small class="form-text">Por defecto: hoy</small>
+      <!-- Fechas -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper blue">
+              <lucide-icon [img]="Calendar" [size]="24"></lucide-icon>
+            </div>
+            <h2>Fechas del Contrato</h2>
           </div>
 
-          <div class="form-group">
-            <label for="end_date">Fecha de Finalización</label>
-            <input
-              type="date"
-              id="end_date"
-              class="form-control"
-              [(ngModel)]="formData.end_date"
-              name="end_date"
-            />
-            <small class="form-text">Por defecto: 1 año desde inicio</small>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Fecha de Inicio</mat-label>
+              <input matInput [matDatepicker]="pickerStart"
+                     [(ngModel)]="formData.start_date" name="start_date">
+              <mat-datepicker-toggle matIconSuffix [for]="pickerStart"></mat-datepicker-toggle>
+              <mat-datepicker #pickerStart></mat-datepicker>
+              <mat-hint>Por defecto: hoy</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Fecha de Finalización</mat-label>
+              <input matInput [matDatepicker]="pickerEnd"
+                     [(ngModel)]="formData.end_date" name="end_date">
+              <mat-datepicker-toggle matIconSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+              <mat-datepicker #pickerEnd></mat-datepicker>
+              <mat-hint>Por defecto: 1 año desde inicio</mat-hint>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Fecha de Entrega de Llaves</mat-label>
+              <input matInput [matDatepicker]="pickerKeys"
+                     [(ngModel)]="formData.key_delivery_date" name="key_delivery_date">
+              <mat-datepicker-toggle matIconSuffix [for]="pickerKeys"></mat-datepicker-toggle>
+              <mat-datepicker #pickerKeys></mat-datepicker>
+            </mat-form-field>
           </div>
-        </div>
+        </mat-card-content>
+      </mat-card>
 
-        <div class="form-group">
-          <label for="key_delivery_date">Fecha de Entrega de Llaves</label>
-          <input
-            type="date"
-            id="key_delivery_date"
-            class="form-control"
-            [(ngModel)]="formData.key_delivery_date"
-            name="key_delivery_date"
-          />
-        </div>
-      </div>
-
-      <!-- Services -->
-      <div class="form-section">
-        <h2 class="section-title">🛠️ Servicios Incluidos</h2>
-        <div class="services-grid">
-          <label
-            class="service-checkbox"
-            *ngFor="let service of availableServices"
-          >
-            <input
-              type="checkbox"
-              [checked]="isServiceSelected(service)"
-              (change)="toggleService(service)"
-            />
-            <span>{{ service }}</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Auto-Renewal -->
-      <div class="form-section">
-        <h2 class="section-title">🔄 Renovación Automática</h2>
-
-        <div class="form-group checkbox-group">
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              [(ngModel)]="formData.auto_renew"
-              name="auto_renew"
-            />
-            <span>Habilitar renovación automática</span>
-          </label>
-        </div>
-
-        <div class="form-row" *ngIf="formData.auto_renew">
-          <div class="form-group">
-            <label for="renewal_notice_days">Días de Aviso para No Renovar</label>
-            <input
-              type="number"
-              id="renewal_notice_days"
-              class="form-control"
-              [(ngModel)]="formData.renewal_notice_days"
-              name="renewal_notice_days"
-              min="1"
-              max="90"
-            />
+      <!-- Servicios -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper purple">
+              <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
+            </div>
+            <h2>Servicios Incluidos</h2>
           </div>
 
-          <div class="form-group">
-            <label for="auto_increase_percentage">% Aumento Anual Automático</label>
-            <input
-              type="number"
-              id="auto_increase_percentage"
-              class="form-control"
-              [(ngModel)]="formData.auto_increase_percentage"
-              name="auto_increase_percentage"
-              min="0"
-              max="100"
-              step="0.1"
-              placeholder="0"
-            />
+          <div class="services-grid">
+            <label class="service-item" *ngFor="let service of availableServices"
+                   [class.selected]="isServiceSelected(service)">
+              <mat-checkbox
+                [checked]="isServiceSelected(service)"
+                (change)="toggleService(service)"
+                color="primary">
+                {{ service }}
+              </mat-checkbox>
+            </label>
           </div>
-        </div>
-      </div>
+        </mat-card-content>
+      </mat-card>
 
-      <!-- Responsibilities -->
-      <div class="form-section">
-        <h2 class="section-title">📋 Responsabilidades</h2>
-
-        <div class="form-group">
-          <label for="tenant_responsibilities">Responsabilidades del Inquilino</label>
-          <textarea
-            id="tenant_responsibilities"
-            class="form-control"
-            [(ngModel)]="formData.tenant_responsibilities"
-            name="tenant_responsibilities"
-            rows="3"
-            placeholder="Ej: Mantener la propiedad en buen estado, pagar servicios a su cargo..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="owner_responsibilities">Responsabilidades del Propietario</label>
-          <textarea
-            id="owner_responsibilities"
-            class="form-control"
-            [(ngModel)]="formData.owner_responsibilities"
-            name="owner_responsibilities"
-            rows="3"
-            placeholder="Ej: Realizar reparaciones necesarias, mantener la propiedad habitable..."
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- Rules -->
-      <div class="form-section">
-        <h2 class="section-title">📜 Reglas del Contrato</h2>
-
-        <div class="form-group">
-          <label for="prohibitions">Prohibiciones</label>
-          <textarea
-            id="prohibitions"
-            class="form-control"
-            [(ngModel)]="formData.prohibitions"
-            name="prohibitions"
-            rows="2"
-            placeholder="Ej: No se permiten mascotas, no fumadores..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="coexistence_rules">Reglas de Convivencia</label>
-          <textarea
-            id="coexistence_rules"
-            class="form-control"
-            [(ngModel)]="formData.coexistence_rules"
-            name="coexistence_rules"
-            rows="2"
-            placeholder="Ej: Respetar horarios de descanso, no hacer ruido después de las 22hs..."
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- Additional Terms -->
-      <div class="form-section">
-        <h2 class="section-title">📝 Términos Adicionales</h2>
-
-        <div class="form-group">
-          <label for="renewal_terms">Términos de Renovación</label>
-          <textarea
-            id="renewal_terms"
-            class="form-control"
-            [(ngModel)]="formData.renewal_terms"
-            name="renewal_terms"
-            rows="2"
-            placeholder="Ej: El contrato se renueva automáticamente si ninguna de las partes avisa con 30 días de antelación..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="termination_terms">Términos de Rescisión</label>
-          <textarea
-            id="termination_terms"
-            class="form-control"
-            [(ngModel)]="formData.termination_terms"
-            name="termination_terms"
-            rows="2"
-            placeholder="Ej: Cualquiera de las partes puede rescindir con 60 días de preaviso..."
-          ></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="jurisdiction">Jurisdicción</label>
-          <input
-            type="text"
-            id="jurisdiction"
-            class="form-control"
-            [(ngModel)]="formData.jurisdiction"
-            name="jurisdiction"
-            placeholder="Ej: Bolivia, Argentina, etc."
-          />
-        </div>
-      </div>
-
-      <!-- Bank Info -->
-      <div class="form-section">
-        <h2 class="section-title">🏦 Datos Bancarios</h2>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="bank_name">Banco</label>
-            <input
-              type="text"
-              id="bank_name"
-              class="form-control"
-              [(ngModel)]="formData.bank_name"
-              name="bank_name"
-              placeholder="Ej: Banco Nacional de Bolivia"
-            />
+      <!-- Renovación Automática -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper blue">
+              <lucide-icon [img]="RefreshCw" [size]="24"></lucide-icon>
+            </div>
+            <h2>Renovación Automática</h2>
           </div>
 
-          <div class="form-group">
-            <label for="bank_account_type">Tipo de Cuenta</label>
-            <select
-              id="bank_account_type"
-              class="form-control"
-              [(ngModel)]="formData.bank_account_type"
-              name="bank_account_type"
-            >
-              <option value="">Seleccionar...</option>
-              <option value="Ahorros">Ahorros</option>
-              <option value="Corriente">Corriente</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="bank_account_number">Número de Cuenta</label>
-            <input
-              type="text"
-              id="bank_account_number"
-              class="form-control"
-              [(ngModel)]="formData.bank_account_number"
-              name="bank_account_number"
-              placeholder="Ej: 123-456-789"
-            />
+          <div class="toggle-container">
+            <mat-slide-toggle [(ngModel)]="formData.auto_renew" name="auto_renew" color="primary">
+              Habilitar renovación automática
+            </mat-slide-toggle>
           </div>
 
-          <div class="form-group">
-            <label for="bank_account_holder">Titular de la Cuenta</label>
-            <input
-              type="text"
-              id="bank_account_holder"
-              class="form-control"
-              [(ngModel)]="formData.bank_account_holder"
-              name="bank_account_holder"
-              placeholder="Nombre del titular"
-            />
+          <div class="form-grid conditional-fields" *ngIf="formData.auto_renew">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Días de Aviso para No Renovar</mat-label>
+              <input matInput type="number" [(ngModel)]="formData.renewal_notice_days"
+                     name="renewal_notice_days" min="1" max="90">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>% Aumento Anual Automático</mat-label>
+              <input matInput type="number" [(ngModel)]="formData.auto_increase_percentage"
+                     name="auto_increase_percentage" min="0" max="100" step="0.1" placeholder="0">
+              <span matSuffix>%</span>
+            </mat-form-field>
           </div>
-        </div>
-      </div>
+        </mat-card-content>
+      </mat-card>
 
-      <!-- Admin Feedback -->
-      <div class="form-section">
-        <h2 class="section-title">💬 Feedback para el Inquilino</h2>
+      <!-- Responsabilidades -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper amber">
+              <lucide-icon [img]="ClipboardList" [size]="24"></lucide-icon>
+            </div>
+            <h2>Responsabilidades</h2>
+          </div>
 
-        <div class="form-group">
-          <label for="admin_feedback">Mensaje de Aprobación</label>
-          <textarea
-            id="admin_feedback"
-            class="form-control"
-            [(ngModel)]="formData.admin_feedback"
-            name="admin_feedback"
-            rows="3"
-            placeholder="Ej: Aprobado. Excelente perfil. Bienvenido!"
-          ></textarea>
-          <small class="form-text">Este mensaje será visible para el inquilino</small>
-        </div>
-      </div>
+          <div class="form-stack">
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Responsabilidades del Inquilino</mat-label>
+              <textarea matInput [(ngModel)]="formData.tenant_responsibilities"
+                        name="tenant_responsibilities" rows="3"
+                        placeholder="Ej: Mantener la propiedad en buen estado, pagar servicios a su cargo..."></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Responsabilidades del Propietario</mat-label>
+              <textarea matInput [(ngModel)]="formData.owner_responsibilities"
+                        name="owner_responsibilities" rows="3"
+                        placeholder="Ej: Realizar reparaciones necesarias, mantener la propiedad habitable..."></textarea>
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Reglas -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper red">
+              <lucide-icon [img]="ScrollText" [size]="24"></lucide-icon>
+            </div>
+            <h2>Reglas del Contrato</h2>
+          </div>
+
+          <div class="form-stack">
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Prohibiciones</mat-label>
+              <textarea matInput [(ngModel)]="formData.prohibitions"
+                        name="prohibitions" rows="2"
+                        placeholder="Ej: No se permiten mascotas, no fumadores..."></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Reglas de Convivencia</mat-label>
+              <textarea matInput [(ngModel)]="formData.coexistence_rules"
+                        name="coexistence_rules" rows="2"
+                        placeholder="Ej: Respetar horarios de descanso, no hacer ruido después de las 22hs..."></textarea>
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Términos Adicionales -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper blue">
+              <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
+            </div>
+            <h2>Términos Adicionales</h2>
+          </div>
+
+          <div class="form-stack">
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Términos de Renovación</mat-label>
+              <textarea matInput [(ngModel)]="formData.renewal_terms"
+                        name="renewal_terms" rows="2"
+                        placeholder="Ej: El contrato se renueva automáticamente si ninguna de las partes avisa con 30 días..."></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width form-field">
+              <mat-label>Términos de Rescisión</mat-label>
+              <textarea matInput [(ngModel)]="formData.termination_terms"
+                        name="termination_terms" rows="2"
+                        placeholder="Ej: Cualquiera de las partes puede rescindir con 60 días de preaviso..."></textarea>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Jurisdicción</mat-label>
+              <input matInput [(ngModel)]="formData.jurisdiction"
+                     name="jurisdiction" placeholder="Ej: Bolivia, Argentina...">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Datos Bancarios -->
+      <mat-card class="section-card">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper green">
+              <lucide-icon [img]="Building2" [size]="24"></lucide-icon>
+            </div>
+            <h2>Datos Bancarios</h2>
+          </div>
+
+          <div class="form-grid">
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Banco</mat-label>
+              <input matInput [(ngModel)]="formData.bank_name"
+                     name="bank_name" placeholder="Ej: Banco Nacional de Bolivia">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Tipo de Cuenta</mat-label>
+              <mat-select [(ngModel)]="formData.bank_account_type" name="bank_account_type">
+                <mat-option value="">Seleccionar...</mat-option>
+                <mat-option value="Ahorros">Ahorros</mat-option>
+                <mat-option value="Corriente">Corriente</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Número de Cuenta</mat-label>
+              <input matInput [(ngModel)]="formData.bank_account_number"
+                     name="bank_account_number" placeholder="Ej: 123-456-789">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Titular de la Cuenta</mat-label>
+              <input matInput [(ngModel)]="formData.bank_account_holder"
+                     name="bank_account_holder" placeholder="Nombre del titular">
+            </mat-form-field>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Feedback -->
+      <mat-card class="section-card feedback-section">
+        <mat-card-content>
+          <div class="section-header">
+            <div class="section-icon-wrapper purple">
+              <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
+            </div>
+            <h2>Mensaje para el Inquilino</h2>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width form-field">
+            <mat-label>Mensaje de Aprobación</mat-label>
+            <textarea matInput [(ngModel)]="formData.admin_feedback"
+                      name="admin_feedback" rows="3"
+                      placeholder="Ej: Aprobado. Excelente perfil. Bienvenido!"></textarea>
+            <mat-hint>Este mensaje será visible para el inquilino en su portal</mat-hint>
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
 
       <!-- Actions -->
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="cancel()">
+        <button type="button" mat-stroked-button class="cancel-btn" (click)="cancel()">
           Cancelar
         </button>
-        <button
-          type="submit"
-          class="btn btn-primary"
-          [disabled]="submitting || !formData.monthly_rent"
-        >
-          <span *ngIf="submitting">Procesando...</span>
-          <span *ngIf="!submitting">✅ Aprobar y Generar Contrato</span>
+        <button type="submit" mat-flat-button color="primary" class="submit-btn"
+                [disabled]="submitting || !formData.monthly_rent">
+          <mat-spinner *ngIf="submitting" diameter="20" color="accent"></mat-spinner>
+          <lucide-icon *ngIf="!submitting" [img]="CheckCircle2" [size]="20" class="btn-icon"></lucide-icon>
+          <span>{{ submitting ? 'Procesando...' : 'Aprobar y Generar Contrato' }}</span>
         </button>
       </div>
+
     </form>
-  </div>
+  </ng-container>
+
 </div>

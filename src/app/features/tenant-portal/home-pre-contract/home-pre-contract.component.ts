@@ -110,11 +110,9 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                   <div class="application-item" [class]="'status-' + app.status.toLowerCase()">
                     <div class="application-header">
                       <h4 class="property-title">{{ app.property_title }}</h4>
-                      <mat-chip
-                        [color]="getStatusColor(app.status)"
-                        [class]="'status-chip status-' + app.status.toLowerCase()">
+                      <span [class]="'status-chip status-' + app.status.toLowerCase()">
                         {{ getStatusLabel(app.status) }}
-                      </mat-chip>
+                      </span>
                     </div>
 
                     <div class="application-details">
@@ -356,27 +354,34 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
     }
 
     .status-chip {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 24px;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.0892857143em;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      white-space: nowrap;
+      border: none;
+      line-height: 1;
     }
 
     .status-chip.status-pendiente {
-      background: #fff3cd;
-      color: #856404;
+      background: #1d4ed8;
+      color: #ffffff;
     }
 
     .status-chip.status-aprobada {
-      background: #d1e7dd;
-      color: #0f5132;
+      background: #10b981;
+      color: #ffffff;
     }
 
     .status-chip.status-rechazada {
-      background: #f8d7da;
-      color: #842029;
+      background: #b91c1c;
+      color: #ffffff;
     }
 
     .application-details {
@@ -394,7 +399,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
     }
 
     .detail-item.pending {
-      color: #856404;
+      color: #2563eb;
     }
 
     .detail-item.approved {
@@ -506,11 +511,11 @@ export class HomePreContractComponent implements OnInit {
       case ApplicationStatus.PENDIENTE:
         return 'warn';
       case ApplicationStatus.APROBADA:
-        return 'primary';
+        return '';
       case ApplicationStatus.RECHAZADA:
         return 'accent';
       default:
-        return 'primary';
+        return '';
     }
   }
 

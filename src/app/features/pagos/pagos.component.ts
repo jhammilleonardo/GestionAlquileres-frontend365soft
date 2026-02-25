@@ -231,17 +231,19 @@ export class PagosComponent implements OnInit {
   }
 
   approvePayment(payment: Payment): void {
-    if (confirm(`¿Aprobar el pago de ${payment.amount} BOB?`)) {
+    const tenantName = this.getTenantName(payment);
+    if (confirm(`¿Aprobar el pago de ${this.formatCurrency(payment.amount, payment.currency)} de ${tenantName}?`)) {
       this.paymentService.updatePaymentStatus(payment.id, {
         status: PaymentStatus.APPROVED,
-        admin_notes: 'Pago aprobado'
+        admin_notes: 'Pago aprobado por administrador'
       }).subscribe({
         next: () => {
           console.log('Pago aprobado exitosamente');
+          this.loadData();
         },
         error: (error) => {
           console.error('Error al aprobar pago:', error);
-          alert('Error al aprobar el pago');
+          alert(`Error al aprobar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`);
         }
       });
     }
@@ -252,14 +254,16 @@ export class PagosComponent implements OnInit {
     if (reason !== null) {
       this.paymentService.updatePaymentStatus(payment.id, {
         status: PaymentStatus.REJECTED,
-        admin_notes: reason || 'Pago rechazado'
+        admin_notes: reason || 'Pago rechazado',
+        rejection_reason: reason || 'Rechazado por administrador'
       }).subscribe({
         next: () => {
           console.log('Pago rechazado');
+          this.loadData();
         },
         error: (error) => {
           console.error('Error al rechazar pago:', error);
-          alert('Error al rechazar el pago');
+          alert(`Error al rechazar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`);
         }
       });
     }
@@ -417,9 +421,13 @@ export class PagosComponent implements OnInit {
 
   getTenantName(payment: Payment): string {
     if (payment.tenant) {
-      return `${payment.tenant.first_name} ${payment.tenant.last_name}`;
+      // El backend puede devolver 'name' (campo único) o 'first_name'/'last_name'
+      const t = payment.tenant as any;
+      if (t.name) return t.name;
+      const full = `${t.first_name || ''} ${t.last_name || ''}`.trim();
+      if (full) return full;
     }
-    return `ID ${payment.tenant_id}`;
+    return `Inquilino #${payment.tenant_id}`;
   }
 
   getPropertyName(payment: Payment): string {

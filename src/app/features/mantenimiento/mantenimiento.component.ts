@@ -126,8 +126,8 @@ export class MantenimientoComponent implements OnInit {
       requests = requests.filter(req => req.category === this.selectedCategory());
     }
 
-    // Sort by date (newest first)
-    return requests.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+    // Sort by date (newest first) - spread to avoid mutating the original signal array
+    return [...requests].sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
   });
 
   // Actions
@@ -149,8 +149,10 @@ export class MantenimientoComponent implements OnInit {
 
   viewRequestDetails(request: MaintenanceRequest): void {
     const dialogRef = this.dialog.open(RequestDetailComponent, {
-      width: '800px',
-      maxWidth: '95vw',
+      width: '1200px',
+      maxWidth: '96vw',
+      height: '90vh',
+      maxHeight: '90vh',
       data: { request },
       panelClass: 'request-detail-dialog-panel'
     });

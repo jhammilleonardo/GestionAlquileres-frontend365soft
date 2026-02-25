@@ -71,6 +71,8 @@ export class MaintenanceService {
                     created_at: new Date(req.created_at),
                     updated_at: new Date(req.updated_at),
                     due_date: req.due_date ? new Date(req.due_date) : null,
+                    messages: req.messages ?? [],
+                    attachments: req.attachments ?? [],
                 }));
                 this.requestsSignal.set(processedRequests);
             },

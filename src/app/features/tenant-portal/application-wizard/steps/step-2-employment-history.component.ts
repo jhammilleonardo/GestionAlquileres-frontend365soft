@@ -7,7 +7,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, MapPin, Plus, Trash2 } from 'lucide-angular';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, MapPin, Plus, Trash2, ArrowLeft, ArrowRight, Calendar } from 'lucide-angular';
 
 @Component({
   selector: 'app-step-2-employment-history',
@@ -21,6 +24,9 @@ import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, Map
     MatButtonModule,
     MatCardModule,
     MatDividerModule,
+    MatStepperModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
     LucideAngularModule
   ],
   template: `
@@ -111,10 +117,15 @@ import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, Map
             <div class="form-field">
               <mat-form-field appearance="outline" class="custom-field">
                 <mat-label>Fecha de Inicio</mat-label>
+                <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
                 <input
                   matInput
-                  type="date"
-                  [formControl]="getControl('current_job.start_date')">
+                  [matDatepicker]="startDatePicker"
+                  [formControl]="getControl('current_job.start_date')"
+                  [max]="today"
+                  placeholder="DD/MM/YYYY">
+                <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #startDatePicker startView="multi-year" [startAt]="startAtDate"></mat-datepicker>
                 @if (form.get('current_job.start_date')?.hasError('required') && form.get('current_job.start_date')?.touched) {
                   <mat-error>La fecha es requerida</mat-error>
                 }
@@ -197,10 +208,15 @@ import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, Map
             <div class="form-field">
               <mat-form-field appearance="outline" class="custom-field">
                 <mat-label>Fecha de Finalización</mat-label>
+                <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
                 <input
                   matInput
-                  type="date"
-                  [formControl]="getControl('previous_job.end_date')">
+                  [matDatepicker]="endDatePicker"
+                  [formControl]="getControl('previous_job.end_date')"
+                  [max]="today"
+                  placeholder="DD/MM/YYYY">
+                <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
+                <mat-datepicker #endDatePicker startView="multi-year" [startAt]="startAtDate"></mat-datepicker>
               </mat-form-field>
             </div>
           </div>
@@ -289,10 +305,15 @@ import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, Map
                   <div class="form-field">
                     <mat-form-field appearance="outline" class="custom-field">
                       <mat-label>Fecha de Inicio</mat-label>
+                      <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
                       <input
                         matInput
-                        type="date"
-                        [formControl]="getHistoryControl(history, 'start_date')">
+                        [matDatepicker]="rentStartPicker"
+                        [formControl]="getHistoryControl(history, 'start_date')"
+                        [max]="today"
+                        placeholder="DD/MM/YYYY">
+                      <mat-datepicker-toggle matSuffix [for]="rentStartPicker"></mat-datepicker-toggle>
+                      <mat-datepicker #rentStartPicker startView="multi-year" [startAt]="startAtDate"></mat-datepicker>
                       @if (history.get('start_date')?.hasError('required') && history.get('start_date')?.touched) {
                         <mat-error>La fecha es requerida</mat-error>
                       }
@@ -323,6 +344,26 @@ import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, Map
           </button>
         </mat-card-content>
       </mat-card>
+
+      <!-- Navigation -->
+      <div class="step-nav">
+        <button
+          mat-stroked-button
+          matStepperPrevious
+          class="nav-btn">
+          <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+          <span>Anterior</span>
+        </button>
+        <button
+          mat-raised-button
+          color="primary"
+          matStepperNext
+          class="nav-btn"
+          [disabled]="form.invalid">
+          <span>Siguiente</span>
+          <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+        </button>
+      </div>
     </div>
   `,
   styles: [`
@@ -425,6 +466,26 @@ import { LucideAngularModule, Building2, Briefcase, DollarSign, Phone, User, Map
       border-radius: 8px;
     }
 
+    .step-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--mat-sys-outline-variant);
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 44px;
+      padding: 0 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
     @media (max-width: 768px) {
       .form-grid {
         grid-template-columns: 1fr;
@@ -449,6 +510,13 @@ export class Step2EmploymentHistoryComponent implements OnInit {
   readonly MapPin = MapPin;
   readonly Plus = Plus;
   readonly Trash2 = Trash2;
+  readonly ArrowLeft = ArrowLeft;
+  readonly ArrowRight = ArrowRight;
+  readonly Calendar = Calendar;
+
+  // Datepicker constraints
+  today = new Date();
+  startAtDate = new Date(2015, 0, 1);
 
   formGroup = input.required<FormGroup>();
   isValid = output<boolean>();

@@ -52,23 +52,32 @@ export const authGuard: CanActivateFn = (route, state) => {
  */
 export const adminLoginGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
+  const slugService = inject(SlugService);
   const router = inject(Router);
 
   // Si ya está autenticado, redirigir al dashboard
   if (authService.isAuth()) {
+    // Try to get the slug from the stored user first, then fall back to SlugService
+    let userSlug: string | null = null;
+
     const userJson = localStorage.getItem('admin_user');
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
-        const userSlug = user.tenant_slug;
-        if (userSlug) {
-          // Redirigir al dashboard con replaceUrl para limpiar el historial
-          router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true });
-          return false;
-        }
+        userSlug = user.tenant_slug || null;
       } catch (e) {
         console.error('Error parsing user data', e);
       }
+    }
+
+    // Fallback to SlugService (loaded from localStorage)
+    if (!userSlug) {
+      userSlug = slugService.getSlug();
+    }
+
+    if (userSlug) {
+      router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true });
+      return false;
     }
   }
 

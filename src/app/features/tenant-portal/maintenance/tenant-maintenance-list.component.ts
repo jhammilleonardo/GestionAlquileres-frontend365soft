@@ -46,6 +46,10 @@ import {
                         <p>Gestiona tus solicitudes de mantenimiento</p>
                     </div>
                 </div>
+                <button mat-raised-button color="primary" [routerLink]="crearSolicitudUrl()" class="new-btn">
+                    <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+                    Nueva Solicitud
+                </button>
             </div>
 
             <!-- Stats -->
@@ -177,6 +181,16 @@ import {
             display: flex;
             align-items: center;
             gap: 16px;
+        }
+
+        .new-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            padding: 0 20px;
+            height: 42px;
         }
 
         .header-content h1 {

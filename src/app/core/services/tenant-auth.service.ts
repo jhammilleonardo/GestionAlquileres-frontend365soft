@@ -1,7 +1,7 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SlugService } from './slug.service';
 
@@ -70,7 +70,7 @@ export class TenantAuthService {
     /**
      * Login with email and password
      */
-    login(slug: string, email: string, password: string): Observable<LoginResponse> {
+    login(slug: string, email: string, password: string): Observable<TenantUser | null> {
         this.isLoadingSignal.set(true);
         this.errorSignal.set(null);
 
@@ -83,33 +83,18 @@ export class TenantAuthService {
         ).pipe(
             tap(response => {
                 console.log('[TenantAuthService] Login response received:', response);
-                // First, set the session with the login response
+                // Store token and initial user data immediately
                 localStorage.setItem(this.TOKEN_KEY, response.access_token);
                 const normalizedUser = this.normalizeUserData(response.user);
                 this.currentUserSignal.set(normalizedUser);
                 this.saveUserToStorage(normalizedUser);
-
-                // Now fetch complete user data from /auth/me (includes contract info)
-                this.refreshUserData().subscribe({
-                    next: (updatedUser) => {
-                        console.log('[TenantAuthService] User data refreshed after login');
-                        this.isLoadingSignal.set(false);
-                        // Navigate to appropriate page based on contract status
-                        if (updatedUser?.contract) {
-                            console.log('[TenantAuthService] User has contract, navigating to dashboard');
-                            this.slugService.navigateTo(['portal', 'dashboard']);
-                        } else {
-                            console.log('[TenantAuthService] No contract, navigating to home');
-                            this.slugService.navigateTo(['portal', 'home']);
-                        }
-                    },
-                    error: (err) => {
-                        console.error('[TenantAuthService] Error refreshing user data after login:', err);
-                        this.isLoadingSignal.set(false);
-                        // On error, default to home
-                        this.slugService.navigateTo(['portal', 'home']);
-                    }
-                });
+            }),
+            // Chain with refreshUserData so the observable emits ONCE with full user data
+            // This prevents double navigation (caller navigates only after user data is complete)
+            switchMap(() => this.refreshUserData()),
+            tap(() => {
+                console.log('[TenantAuthService] User data refreshed after login');
+                this.isLoadingSignal.set(false);
             }),
             catchError(error => {
                 this.isLoadingSignal.set(false);
@@ -222,13 +207,6 @@ export class TenantAuthService {
         this.http.get<any>(`${environment.apiUrl}auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
         }).pipe(
-            tap(user => {
-                if (user) {
-                    const normalizedUser = this.normalizeUserData(user);
-                    this.currentUserSignal.set(normalizedUser);
-                    this.saveUserToStorage(normalizedUser);
-                }
-            }),
             catchError((error) => {
                 // Only clear storage if token is invalid (401)
                 // Don't clear on network errors to avoid logout on connection issues
@@ -243,9 +221,10 @@ export class TenantAuthService {
             })
         ).subscribe(user => {
             if (user) {
-                // Token is valid, update user data in case it changed
-                this.currentUserSignal.set(user);
-                this.saveUserToStorage(user);
+                // Token is valid — normalize and update user data
+                const normalizedUser = this.normalizeUserData(user);
+                this.currentUserSignal.set(normalizedUser);
+                this.saveUserToStorage(normalizedUser);
             }
         });
     }
@@ -306,6 +285,23 @@ export class TenantAuthService {
      */
     private saveUserToStorage(user: TenantUser): void {
         localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    }
+
+    /**
+     * Set session from external auth (e.g., after registration)
+     * Updates the signal so guards see the user as authenticated immediately.
+     */
+    setSessionFromToken(token: string, userData: any, slug?: string): void {
+        localStorage.setItem(this.TOKEN_KEY, token);
+        if (slug) {
+            this.slugService.setSlug(slug);
+        }
+        const normalized = this.normalizeUserData({
+            ...userData,
+            tenant_slug: userData.tenant_slug || userData.tenantSlug || slug || ''
+        });
+        this.currentUserSignal.set(normalized);
+        this.saveUserToStorage(normalized);
     }
 
     /**

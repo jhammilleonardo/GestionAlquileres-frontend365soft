@@ -84,11 +84,9 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                             <h3 class="property-title">{{ app.property_title }}</h3>
                             <div class="application-id">Solicitud #{{ app.id }}</div>
                           </div>
-                          <mat-chip
-                            [color]="getStatusColor(app.status)"
-                            [class]="'status-chip status-' + app.status.toLowerCase()">
+                          <span [class]="'status-chip status-' + app.status.toLowerCase()">
                             {{ getStatusLabel(app.status) }}
-                          </mat-chip>
+                          </span>
                         </div>
 
                         <mat-card-content>
@@ -179,9 +177,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                             <h3 class="property-title">{{ app.property_title }}</h3>
                             <div class="application-id">Solicitud #{{ app.id }}</div>
                           </div>
-                          <mat-chip color="warn" class="status-chip status-pendiente">
-                            Pendiente
-                          </mat-chip>
+                          <span class="status-chip status-pendiente">Pendiente</span>
                         </div>
 
                         <mat-card-content>
@@ -232,9 +228,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                             <h3 class="property-title">{{ app.property_title }}</h3>
                             <div class="application-id">Solicitud #{{ app.id }}</div>
                           </div>
-                          <mat-chip color="primary" class="status-chip status-aprobada">
-                            Aprobada
-                          </mat-chip>
+                          <span class="status-chip status-aprobada">Aprobada</span>
                         </div>
 
                         <mat-card-content>
@@ -285,9 +279,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                             <h3 class="property-title">{{ app.property_title }}</h3>
                             <div class="application-id">Solicitud #{{ app.id }}</div>
                           </div>
-                          <mat-chip color="accent" class="status-chip status-rechazada">
-                            Rechazada
-                          </mat-chip>
+                          <span class="status-chip status-rechazada">Rechazada</span>
                         </div>
 
                         <mat-card-content>
@@ -485,28 +477,35 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
     }
 
     .status-chip {
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 4px 12px;
-      border-radius: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      padding: 0 24px;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.0892857143em;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      white-space: nowrap;
+      border: none;
+      line-height: 1;
       flex-shrink: 0;
     }
 
     .status-chip.status-pendiente {
-      background: #fef3c7;
-      color: #92400e;
+      background: #1d4ed8;
+      color: #ffffff;
     }
 
     .status-chip.status-aprobada {
-      background: #d1fae5;
-      color: #065f46;
+      background: #10b981;
+      color: #ffffff;
     }
 
     .status-chip.status-rechazada {
-      background: #fee2e2;
-      color: #991b1b;
+      background: #b91c1c;
+      color: #ffffff;
     }
 
     mat-card-content {

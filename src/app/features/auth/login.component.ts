@@ -12,6 +12,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { LucideAngularModule, Building2, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Shield, BarChart3, Users, FileText } from 'lucide-angular';
 import { AuthService } from '../../core/services/auth.service';
 import { TenantAuthService } from '../../core/services/tenant-auth.service';
+import { SlugService } from '../../core/services/slug.service';
 
 @Component({
     selector: 'app-login',
@@ -509,6 +510,7 @@ export class LoginComponent {
     private route = inject(ActivatedRoute);
     private fb = inject(FormBuilder);
     private location = inject(Location);
+    private slugService = inject(SlugService);
 
     showPassword = signal(false);
     isLoading = signal(false);
@@ -552,8 +554,12 @@ export class LoginComponent {
                     console.error('Error parsing user data', e);
                 }
             }
-            // Fallback if no slug found
-            this.router.navigate(['/dashboard'], { replaceUrl: true });
+            // Fallback: try to get slug from SlugService (loaded from localStorage)
+            const storedSlug = this.slugService.getSlug();
+            if (storedSlug) {
+                this.router.navigate(['/', storedSlug, 'dashboard'], { replaceUrl: true });
+            }
+            // If no slug is available anywhere, stay on login page
         }
 
         // If we have a slug, don't redirect automatically - let the user login

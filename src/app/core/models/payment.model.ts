@@ -161,8 +161,9 @@ export interface PropertyReference {
 
 export interface TenantReference {
     id: number;
-    first_name: string;
-    last_name: string;
+    name?: string;          // el backend puede devolver el nombre como campo único
+    first_name?: string;
+    last_name?: string;
     email: string;
 }
 

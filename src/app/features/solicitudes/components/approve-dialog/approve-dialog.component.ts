@@ -2,23 +2,58 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Observable, switchMap } from 'rxjs';
+import { switchMap } from 'rxjs';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import {
+  LucideAngularModule,
+  ArrowLeft, CheckCircle2, AlertCircle, DollarSign, Clock,
+  Calendar, Wrench, RefreshCw, ClipboardList, ScrollText,
+  FileText, Building2, MessageSquare, Timer
+} from 'lucide-angular';
 import { ApplicationService } from '../../../../core/services/application.service';
-import { Application, ApproveApplicationDto, ApplicationStatus, ApproveApplicationResponse } from '../../../../core/models/application.model';
+import { Application, ApproveApplicationDto, ApproveApplicationResponse } from '../../../../core/models/application.model';
 
 @Component({
   selector: 'app-approve-dialog',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule, FormsModule,
+    MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+    MatSelectModule, MatCheckboxModule, MatProgressSpinnerModule,
+    MatDatepickerModule, MatNativeDateModule,
+    LucideAngularModule
+  ],
   templateUrl: './approve-dialog.component.html',
   styleUrls: ['./approve-dialog.component.css']
 })
 export class ApproveDialogComponent implements OnInit {
+  // Icons
+  readonly ArrowLeft = ArrowLeft;
+  readonly CheckCircle2 = CheckCircle2;
+  readonly AlertCircle = AlertCircle;
+  readonly DollarSign = DollarSign;
+  readonly Clock = Clock;
+  readonly Calendar = Calendar;
+  readonly Wrench = Wrench;
+  readonly RefreshCw = RefreshCw;
+  readonly ClipboardList = ClipboardList;
+  readonly ScrollText = ScrollText;
+  readonly FileText = FileText;
+  readonly Building2 = Building2;
+  readonly MessageSquare = MessageSquare;
+  readonly Timer = Timer;
+
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private applicationService = inject(ApplicationService);
-
-  application$?: Observable<Application>;
 
   loading = false;
   submitting = false;
@@ -26,7 +61,6 @@ export class ApproveDialogComponent implements OnInit {
   success = false;
   contractGenerated: ApproveApplicationResponse['contract_generated'] | null = null;
 
-  // Form data
   formData: ApproveApplicationDto = {
     monthly_rent: 0,
     currency: 'BOB',
@@ -38,35 +72,25 @@ export class ApproveDialogComponent implements OnInit {
     grace_days: 0
   };
 
-  // Services checklist
   availableServices = [
-    'Internet',
-    'Cable TV',
-    'Expensas',
-    'Agua',
-    'Luz',
-    'Gas',
-    'Limpieza',
-    'Seguridad'
+    'Internet', 'Cable TV', 'Expensas', 'Agua',
+    'Luz', 'Gas', 'Limpieza', 'Seguridad'
   ];
 
-  employmentTypes = ['tiempo_completo', 'medio_tiempo', 'freelance', 'autonomo', 'empresario'];
-
   ngOnInit(): void {
-    this.application$ = this.route.paramMap.pipe(
+    const app$ = this.route.paramMap.pipe(
       switchMap(params => {
         const id = Number(params.get('id'));
         if (!id) {
           this.error = 'ID de solicitud no válido';
-          throw new Error('Invalid application ID');
+          throw new Error('Invalid ID');
         }
         return this.applicationService.getApplicationById(id);
       })
     );
 
-    this.application$.subscribe({
+    app$.subscribe({
       next: (app: Application) => {
-        // Pre-fill with default salary info
         this.formData.monthly_rent = app.employment_data.monthly_income;
       },
       error: (err: any) => {
@@ -77,7 +101,6 @@ export class ApproveDialogComponent implements OnInit {
 
   onSubmit(): void {
     if (this.submitting) return;
-
     this.submitting = true;
     this.error = null;
 
@@ -88,8 +111,6 @@ export class ApproveDialogComponent implements OnInit {
         this.success = true;
         this.contractGenerated = response.contract_generated;
         this.submitting = false;
-
-        // Auto-redirect after 3 seconds
         setTimeout(() => {
           this.router.navigate(['../../'], { relativeTo: this.route });
         }, 3000);
@@ -105,7 +126,6 @@ export class ApproveDialogComponent implements OnInit {
     if (!this.formData.included_services) {
       this.formData.included_services = [];
     }
-
     const index = this.formData.included_services.indexOf(service);
     if (index > -1) {
       this.formData.included_services.splice(index, 1);

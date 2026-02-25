@@ -112,6 +112,33 @@ lucide-icon {
   }
 }
 
+/* ── Maintenance Request Detail Dialog ── */
+.request-detail-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .mdc-dialog__surface {
+    padding: 0 !important;
+    border-radius: 14px !important;
+    overflow: hidden;
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  mat-dialog-content, .mat-mdc-dialog-content {
+    flex: 1;
+    max-height: unset !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+}
+
 /* Material Icons Styles */
 .mat-icon {
   display: inline-block;

@@ -66,6 +66,15 @@ export interface PropertyReference {
     id: number;
     title: string;
     status?: string;
+    address?: string;
+}
+
+// Tenant reference model
+export interface TenantReference {
+    id: number;
+    name: string;
+    email: string;
+    phone?: string;
 }
 
 // Main maintenance request model matching backend
@@ -90,6 +99,7 @@ export interface MaintenanceRequest {
     // Related data
     property?: PropertyReference;
     contract?: ContractReference;
+    tenant?: TenantReference;
 
     messages: MaintenanceMessage[];
     attachments: MaintenanceAttachment[];
@@ -137,7 +147,7 @@ export interface UpdateMaintenanceDto {
     status?: MaintenanceStatus;
     priority?: MaintenancePriority;
     due_date?: string; // YYYY-MM-DD format
-    assigned_to?: number;
+    assigned_to?: number | null;
 }
 
 export interface CreateMessageDto {

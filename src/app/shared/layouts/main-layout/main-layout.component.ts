@@ -26,21 +26,18 @@ export class MainLayoutComponent implements OnInit {
   isSidebarMobileOpen = this.sidebarService.mobileOpen;
 
   ngOnInit(): void {
-    // Asegurar que el slug esté establecido desde la ruta
-    // El slug está en la ruta padre, no en la ruta actual
-    const slug = this.route.snapshot.parent?.paramMap.get('slug') || 
-                 this.route.parent?.snapshot.paramMap.get('slug');
-    if (slug) {
-      console.log('MainLayout: Estableciendo slug desde ruta padre:', slug);
-      this.slugService.setSlug(slug);
-    } else {
-      console.warn('MainLayout: No se encontró slug en la ruta padre');
-      // Intentar cargar desde localStorage como fallback
-      const storedSlug = this.slugService.getSlug();
-      if (storedSlug) {
-        console.log('MainLayout: Usando slug desde localStorage:', storedSlug);
-      }
+    // Read slug from the route parent (e.g. /:slug → path: ':slug')
+    const routeSlug = this.route.snapshot.parent?.paramMap.get('slug') ||
+                      this.route.parent?.snapshot.paramMap.get('slug');
+
+    const currentSlug = this.slugService.getSlug();
+
+    if (routeSlug && routeSlug !== currentSlug) {
+      // Only update if the route gives us something different (e.g. after page refresh)
+      console.log('MainLayout: Actualizando slug desde ruta:', routeSlug);
+      this.slugService.setSlug(routeSlug);
     }
+    // If both match, or no route slug found, keep what the authGuard already set
   }
 
   closeSidebarMobile(): void {

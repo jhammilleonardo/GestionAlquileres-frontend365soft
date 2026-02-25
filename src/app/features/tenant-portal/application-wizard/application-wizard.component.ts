@@ -7,7 +7,8 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule, ArrowLeft, CheckCircle2 } from 'lucide-angular';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
+import { merge, debounceTime } from 'rxjs';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { ApplicationService } from '../../../core/services/application.service';
 import { PropertyService } from '../../../core/services/property.service';
@@ -234,9 +235,19 @@ export class ApplicationWizardComponent implements OnInit {
   personalInfoForm!: FormGroup;
   employmentHistoryForm!: FormGroup;
 
+  // Draft persistence
+  private readonly DRAFT_PREFIX = 'wizard_draft_';
+
+  private get draftKey(): string {
+    const propertyId = this.route.snapshot.paramMap.get('propertyId') || 'unknown';
+    return `${this.DRAFT_PREFIX}${propertyId}`;
+  }
+
   ngOnInit(): void {
     this.initializeForms();
-    this.loadProperty();
+    this.restoreDraft();
+    this.loadProperty(); // prefillUserData() runs here and overwrites readonly fields
+    this.setupAutosave();
   }
 
   private initializeForms(): void {
@@ -327,6 +338,83 @@ export class ApplicationWizardComponent implements OnInit {
     this.slugService.navigateTo(['portal', 'new-application']);
   }
 
+  // ─── Draft persistence ───────────────────────────────────────────────────
+
+  private setupAutosave(): void {
+    merge(
+      this.personalInfoForm.valueChanges,
+      this.employmentHistoryForm.valueChanges
+    ).pipe(
+      debounceTime(400),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.saveDraft());
+  }
+
+  private saveDraft(): void {
+    const draft = {
+      personalInfo: this.personalInfoForm.getRawValue(),
+      employmentHistory: this.employmentHistoryForm.getRawValue()
+    };
+    sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
+  }
+
+  private restoreDraft(): void {
+    const saved = sessionStorage.getItem(this.draftKey);
+    if (!saved) return;
+
+    try {
+      const draft = JSON.parse(saved);
+
+      if (draft.personalInfo) {
+        const pi = draft.personalInfo;
+        this.personalInfoForm.patchValue({
+          ...pi,
+          birth_date: pi.birth_date ? new Date(pi.birth_date) : null
+        });
+      }
+
+      if (draft.employmentHistory) {
+        const emp = draft.employmentHistory;
+
+        this.employmentHistoryForm.patchValue({
+          current_job: {
+            ...(emp.current_job || {}),
+            start_date: emp.current_job?.start_date ? new Date(emp.current_job.start_date) : null
+          },
+          previous_job: {
+            ...(emp.previous_job || {}),
+            end_date: emp.previous_job?.end_date ? new Date(emp.previous_job.end_date) : null
+          }
+        });
+
+        // Restore rental_history FormArray
+        if (emp.rental_history?.length) {
+          const rentalArray = this.employmentHistoryForm.get('rental_history') as FormArray;
+          rentalArray.clear();
+          emp.rental_history.forEach((item: any) => {
+            rentalArray.push(this.fb.group({
+              property_address: [item.property_address || '', Validators.required],
+              landlord_name:    [item.landlord_name    || '', Validators.required],
+              landlord_phone:   [item.landlord_phone   || '', [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)]],
+              monthly_rent:     [item.monthly_rent     || '', [Validators.required, Validators.min(0)]],
+              start_date:       [item.start_date ? new Date(item.start_date) : '', Validators.required],
+              end_date:         [item.end_date   ? new Date(item.end_date)   : ''],
+              reason_for_leaving: [item.reason_for_leaving || '']
+            }));
+          });
+        }
+      }
+    } catch {
+      sessionStorage.removeItem(this.draftKey);
+    }
+  }
+
+  private clearDraft(): void {
+    sessionStorage.removeItem(this.draftKey);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+
   submitApplication(): void {
     if (!this.property()) return;
 
@@ -394,9 +482,8 @@ export class ApplicationWizardComponent implements OnInit {
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);
-          // Limpiar intención de aplicación
           this.intentionService.clearIntention();
-          // Redirigir al home pre-contrato
+          this.clearDraft();
           this.slugService.navigateTo(['portal', 'home']);
         },
         error: (error) => {

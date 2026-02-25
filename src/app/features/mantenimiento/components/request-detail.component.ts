@@ -10,7 +10,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, X, User, Home, Calendar, Clock, DollarSign, MessageSquare, Wrench, AlertCircle, Send, Lock } from 'lucide-angular';
+import { LucideAngularModule, X, ArrowLeft, User, Home, Calendar, Clock, DollarSign, MessageSquare, Wrench, AlertCircle, Send, Lock, Settings, FileText } from 'lucide-angular';
 import {
     MaintenanceRequest,
     MaintenanceStatus,
@@ -58,6 +58,9 @@ export class RequestDetailComponent implements OnInit {
     readonly AlertCircle = AlertCircle;
     readonly Send = Send;
     readonly Lock = Lock;
+    readonly ArrowLeft = ArrowLeft;
+    readonly Settings = Settings;
+    readonly FileText = FileText;
 
     // Enums
     MaintenanceStatus = MaintenanceStatus;
@@ -87,6 +90,26 @@ export class RequestDetailComponent implements OnInit {
         { id: 4, name: 'Control Plagas Pro' },
         { id: 5, name: 'Ana Plomera' }
     ];
+
+    // Getter/setter for the date input (HTML date inputs require YYYY-MM-DD strings)
+    get dueDateString(): string {
+        if (!this.request.due_date) return '';
+        const d = new Date(this.request.due_date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    set dueDateString(value: string) {
+        if (!value) {
+            this.request.due_date = null;
+        } else {
+            // Parse as local date components to avoid UTC timezone shifting
+            const [year, month, day] = value.split('-').map(Number);
+            this.request.due_date = new Date(year, month - 1, day);
+        }
+    }
 
     constructor(
         public dialogRef: MatDialogRef<RequestDetailComponent>,
@@ -123,7 +146,7 @@ export class RequestDetailComponent implements OnInit {
         this.maintenanceService.updateRequest(this.request.id, {
             status: this.request.status,
             priority: this.request.priority,
-            assigned_to: this.request.assigned_to || undefined,
+            assigned_to: this.request.assigned_to,
             due_date: this.request.due_date ? this.formatDateForBackend(this.request.due_date) : undefined
         }).subscribe({
             next: (updated) => {
@@ -178,6 +201,11 @@ export class RequestDetailComponent implements OnInit {
                 this.isSendingMessage.set(false);
             }
         });
+    }
+
+    getStaffName(staffId: number): string {
+        const staff = this.staffMembers.find(s => s.id === staffId);
+        return staff ? staff.name : `Staff #${staffId}`;
     }
 
     onStaffAssignment(staffId: number | null): void {
@@ -244,6 +272,17 @@ export class RequestDetailComponent implements OnInit {
 
     isMessageInternal(message: MaintenanceMessage): boolean {
         return !message.send_to_resident;
+    }
+
+    isFromTenant(message: MaintenanceMessage): boolean {
+        return message.user_id === this.request.tenant_id;
+    }
+
+    getSenderName(message: MaintenanceMessage): string {
+        if (this.isFromTenant(message)) {
+            return this.request.tenant?.name ?? `Inquilino #${this.request.tenant_id}`;
+        }
+        return 'Tú (Admin)';
     }
 
     getMessageIcon(message: MaintenanceMessage): any {

@@ -1,95 +1,147 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Observable, combineLatest, map } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTableModule } from '@angular/material/table';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import {
+  LucideAngularModule,
+  Search, FileText, Eye, CheckCircle2, XCircle, Clock, X
+} from 'lucide-angular';
 import { ApplicationService } from '../../core/services/application.service';
 import { ApplicationListItem, ApplicationStatus } from '../../core/models/application.model';
 
 @Component({
   selector: 'app-solicitudes',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    CommonModule, RouterModule, FormsModule,
+    MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule,
+    MatSelectModule, MatCardModule, MatTooltipModule, MatChipsModule,
+    MatTableModule, MatProgressSpinnerModule, LucideAngularModule
+  ],
   templateUrl: './solicitudes.component.html',
   styleUrls: ['./solicitudes.component.css']
 })
-export class SolicitudesComponent implements OnInit {
+export class SolicitudesComponent implements OnInit, OnDestroy {
+  // Icons
+  readonly Search = Search;
+  readonly FileText = FileText;
+  readonly Eye = Eye;
+  readonly CheckCircle2 = CheckCircle2;
+  readonly XCircle = XCircle;
+  readonly Clock = Clock;
+  readonly X = X;
+
   private applicationService = inject(ApplicationService);
+  private destroy$ = new Subject<void>();
+  private cdr = inject(ChangeDetectorRef);
 
-  applications$?: Observable<ApplicationListItem[]>;
-  filteredApplications$?: Observable<ApplicationListItem[]>;
+  // Estado
+  loading = false;
+  error: string | null = null;
 
-  selectedStatus: string = '';
-  searchTerm: string = '';
+  // Datos crudos (una sola llamada HTTP)
+  private allApplications: ApplicationListItem[] = [];
+
+  // Filtros
+  selectedStatus = '';
+  searchTerm = '';
+
+  displayedColumns = ['id', 'applicant', 'property', 'income', 'date', 'status', 'actions'];
 
   statuses = [
-    { value: '', label: 'Todos' },
+    { value: '',          label: 'Todos'      },
     { value: 'PENDIENTE', label: 'Pendientes' },
-    { value: 'APROBADA', label: 'Aprobadas' },
+    { value: 'APROBADA',  label: 'Aprobadas'  },
     { value: 'RECHAZADA', label: 'Rechazadas' }
   ];
 
-  metrics$?: Observable<Metrics>;
+  // ── Getters computados (sin llamadas HTTP extra) ──────────────────────────────
+
+  get filteredApplications(): ApplicationListItem[] {
+    let result = this.allApplications;
+
+    if (this.selectedStatus) {
+      result = result.filter(a => a.status === this.selectedStatus);
+    }
+
+    if (this.searchTerm) {
+      const q = this.searchTerm.toLowerCase();
+      result = result.filter(a =>
+        a.personal_data.full_name.toLowerCase().includes(q) ||
+        a.applicant_email.toLowerCase().includes(q) ||
+        a.property_title.toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }
+
+  get metrics() {
+    return {
+      total:      this.allApplications.length,
+      pendientes: this.allApplications.filter(a => a.status === 'PENDIENTE').length,
+      aprobadas:  this.allApplications.filter(a => a.status === 'APROBADA').length,
+      rechazadas: this.allApplications.filter(a => a.status === 'RECHAZADA').length,
+    };
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.loadApplications();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Data loading (UNA sola petición HTTP) ─────────────────────────────────────
+
   loadApplications(): void {
-    this.applications$ = this.applicationService.getAllApplications(
-      this.selectedStatus ? { status: this.selectedStatus as ApplicationStatus } : undefined
-    );
+    this.loading = true;
+    this.error = null;
 
-    this.filteredApplications$ = combineLatest([this.applications$]).pipe(
-      map(([applications]) => {
-        if (!this.searchTerm) return applications;
-        const search = this.searchTerm.toLowerCase();
-        return applications.filter(app =>
-          app.personal_data.full_name.toLowerCase().includes(search) ||
-          app.applicant_email.toLowerCase().includes(search) ||
-          app.property_title.toLowerCase().includes(search)
-        );
-      })
-    );
-
-    this.metrics$ = this.applications$.pipe(
-      map(applications => this.calculateMetrics(applications))
-    );
+    this.applicationService.getAllApplications()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (apps) => {
+          this.allApplications = apps;
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.error = err?.message ?? 'Error al cargar las solicitudes';
+          this.loading = false;
+          this.cdr.markForCheck();
+        }
+      });
   }
 
-  onStatusChange(): void {
-    this.loadApplications();
-  }
+  // ── Handlers (solo filtran en memoria, sin nueva petición) ────────────────────
 
-  onSearch(): void {
-    // El filtering se hace en el cliente con combineLatest
-  }
+  onStatusChange(): void { /* el getter filteredApplications recalcula automáticamente */ }
+  onSearch(): void { /* ídem */ }
+  clearSearch(): void { this.searchTerm = ''; }
 
-  clearSearch(): void {
-    this.searchTerm = '';
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'PENDIENTE': return 'Pendiente';
+      case 'APROBADA':  return 'Aprobada';
+      case 'RECHAZADA': return 'Rechazada';
+      default:          return status;
+    }
   }
-
-  getStatusBadgeClass(status: string): string {
-    return this.applicationService.getStatusBadgeClass(status);
-  }
-
-  getStatusIcon(status: string): string {
-    return this.applicationService.getStatusIcon(status);
-  }
-
-  private calculateMetrics(applications: ApplicationListItem[]): Metrics {
-    return {
-      total: applications.length,
-      pendientes: applications.filter(a => a.status === 'PENDIENTE').length,
-      aprobadas: applications.filter(a => a.status === 'APROBADA').length,
-      rechazadas: applications.filter(a => a.status === 'RECHAZADA').length
-    };
-  }
-}
-
-interface Metrics {
-  total: number;
-  pendientes: number;
-  aprobadas: number;
-  rechazadas: number;
 }
