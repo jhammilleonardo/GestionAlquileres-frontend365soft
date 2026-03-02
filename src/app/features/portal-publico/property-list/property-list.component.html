@@ -10,11 +10,7 @@
         <div class="search-bar">
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
             <lucide-icon [img]="Search" matIconPrefix></lucide-icon>
-            <input
-              matInput
-              type="text"
-              [(ngModel)]="filters.search"
-              (keyup.enter)="applyFilters()"
+            <input matInput type="text" [(ngModel)]="filters.search" (keyup.enter)="applyFilters()"
               placeholder="Buscar por ubicación, código postal o palabra clave..." />
           </mat-form-field>
           <button mat-raised-button (click)="applyFilters()" class="search-btn">
@@ -52,13 +48,15 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>Ciudad</mat-label>
           <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
-          <input matInput type="text" [(ngModel)]="filters.city" (change)="applyFilters()" placeholder="Ej: Lima, Buenos Aires" />
+          <input matInput type="text" [(ngModel)]="filters.city" (change)="applyFilters()"
+            placeholder="Ej: Lima, Buenos Aires" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>País</mat-label>
           <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
-          <input matInput type="text" [(ngModel)]="filters.country" (change)="applyFilters()" placeholder="Ej: Perú, Argentina" />
+          <input matInput type="text" [(ngModel)]="filters.country" (change)="applyFilters()"
+            placeholder="Ej: Perú, Argentina" />
         </mat-form-field>
       </div>
 
@@ -104,53 +102,78 @@
     </div>
 
     <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
-      <mat-card *ngFor="let property of filteredProperties" class="property-card">
-        <div class="property-image-container" (click)="viewProperty(property.id)">
-          <img [src]="property.images?.[0] || 'assets/placeholder.jpg'" [alt]="property.title" class="property-image" />
-
-          <div class="property-badges">
-            <span class="badge-status">{{ property.active ? 'Disponible' : 'No Disponible' }}</span>
-          </div>
-
-          <button mat-icon-button class="favorite-btn" [class.active]="isFavorite(property.id)"
-            (click)="toggleFavorite(property.id, $event)">
-            <lucide-icon [img]="Heart" [class.filled]="isFavorite(property.id)"></lucide-icon>
+      <div class="glass-card" *ngFor="let property of filteredProperties">
+        
+        <!-- Top Image Section -->
+        <div class="card-image-section" (click)="viewProperty(property.id)">
+          <img
+            [src]="getPropertyImageUrl(property)"
+            [alt]="property.title"
+            class="card-bg-img"
+            (error)="$any($event.target).src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22260%22%3E%3Crect width=%22400%22 height=%22260%22 fill=%22%23dbeafe%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2215%22 fill=%22%2393c5fd%22%3ESin imagen%3C/text%3E%3C/svg%3E'"
+          />
+          <div class="image-fade"></div>
+          
+          <!-- Bookmark / Fav button top right -->
+          <button
+            class="btn-bookmark"
+            [class.is-fav]="isFavorite(property.id)"
+            (click)="toggleFavorite(property.id, $event)"
+            title="Guardar en favoritos"
+          >
+            <lucide-icon [img]="Heart"></lucide-icon>
           </button>
-
-          <div class="property-price-badge" *ngIf="property.monthly_rent_amount">
-            ${{ property.monthly_rent_amount }}/mes
-          </div>
         </div>
 
-        <mat-card-content>
-          <h3 class="property-title">{{ property.title }}</h3>
+        <!-- Content Section -->
+        <div class="card-content">
 
-          <div class="property-location">
-            <lucide-icon [img]="MapPin" class="location-icon"></lucide-icon>
-            {{ getPropertyAddress(property) }}
+          <!-- Title and Subtitle -->
+          <div class="info-section">
+            <div class="main-info" (click)="viewProperty(property.id)">
+              <h3 class="title">{{ property.title }}</h3>
+              <p class="subtitle" *ngIf="getPropertyAddress(property)">{{ getPropertyAddress(property) }}</p>
+            </div>
+            
+            <!-- Tools/Tags -->
+            <div class="tags-pill" *ngIf="property.property_type">
+              <div class="tag-icons">
+                <div class="t-icon-circle bg-blue"><lucide-icon [img]="Home" class="t-icon"></lucide-icon></div>
+                <div class="t-icon-circle bg-orange" *ngIf="property.property_subtype"><lucide-icon [img]="MapPin" class="t-icon"></lucide-icon></div>
+              </div>
+              <span>{{ property.property_type.name }}</span>
+            </div>
           </div>
 
-          <div class="property-features">
-            <div class="feature" *ngIf="property.total_area">
-              <lucide-icon [img]="Maximize" class="feature-icon"></lucide-icon>
-              <span>{{ property.total_area }}m²</span>
+          <!-- Bottom Stats & Action -->
+          <div class="bottom-section">
+            <div class="stats-container">
+              <div class="stat-block" *ngIf="property.square_meters">
+                <span class="stat-value"><lucide-icon [img]="Maximize" class="inline-icon"></lucide-icon> {{ property.square_meters }}</span>
+                <span class="stat-label">m² área</span>
+              </div>
+              
+              <div class="stat-divider" *ngIf="property.square_meters && property.bedrooms"></div>
+              
+              <div class="stat-block" *ngIf="property.bedrooms">
+                <span class="stat-value"><lucide-icon [img]="Home" class="inline-icon"></lucide-icon> {{ property.bedrooms }}</span>
+                <span class="stat-label">habs.</span>
+              </div>
+
+              <div class="stat-divider" *ngIf="(property.square_meters || property.bedrooms) && property.monthly_rent"></div>
+              
+              <div class="stat-block" *ngIf="property.monthly_rent">
+                <span class="stat-value">{{ property.currency || 'BOB' }} {{ property.monthly_rent | number:'1.0-0' }}</span>
+                <span class="stat-label">precio/mes</span>
+              </div>
             </div>
-            <div class="feature" *ngIf="property.built_area">
-              <lucide-icon [img]="Home" class="feature-icon"></lucide-icon>
-              <span>{{ property.built_area }}m²</span>
-            </div>
+
+            <button class="btn-action" (click)="viewProperty(property.id)">
+              Ver Detalles
+            </button>
           </div>
-
-          <mat-chip-set class="property-tags">
-            <mat-chip *ngIf="property.property_type">{{ property.property_type.name }}</mat-chip>
-            <mat-chip *ngIf="property.property_subtype">{{ property.property_subtype.name }}</mat-chip>
-          </mat-chip-set>
-
-          <button mat-stroked-button color="primary" class="btn-details" (click)="viewProperty(property.id)">
-            Ver Detalles
-          </button>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </div>
     </div>
   </div>
 </div>

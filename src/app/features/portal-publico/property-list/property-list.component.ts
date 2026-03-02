@@ -86,7 +86,7 @@ export class PropertyListComponent implements OnInit {
     // No cargar types desde admin en portal público - requiere autenticación
     // this.loadPropertyTypes();
     this.loadFavorites();
-    
+
     // Wait for slug to be set before loading properties
     this.waitForSlugAndLoadProperties();
   }
@@ -97,7 +97,7 @@ export class PropertyListComponent implements OnInit {
    */
   private waitForSlugAndLoadProperties(): void {
     const slug = this.slugService.getSlug();
-    
+
     if (slug) {
       // Slug is already set, load properties immediately
       console.log('PropertyListComponent - Slug ya disponible:', slug);
@@ -187,7 +187,12 @@ export class PropertyListComponent implements OnInit {
   }
 
   viewProperty(propertyId: number): void {
-    this.router.navigate([propertyId], { relativeTo: this.route });
+    const slug = this.slugService.getSlug();
+    if (slug) {
+      this.router.navigate(['/', slug, 'publico', 'propiedades', propertyId]);
+    } else {
+      this.router.navigate([propertyId], { relativeTo: this.route });
+    }
   }
 
   getPropertyLocation(property: Property): string {
@@ -202,6 +207,29 @@ export class PropertyListComponent implements OnInit {
     if (property.addresses && property.addresses.length > 0) {
       return property.addresses[0].street_address;
     }
+    return '';
+  }
+
+  /**
+   * Construye la URL completa de imagen de una propiedad.
+   * Las imágenes vienen del backend como rutas relativas (e.g. /uploads/...).
+   * Se agrega el host del backend para que el browser pueda cargarlas.
+   */
+  getPropertyImageUrl(property: Property): string {
+    let imagePath: string | null = null;
+
+    if (property.first_image) {
+      imagePath = property.first_image;
+    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+      imagePath = property.images[0] as string;
+    }
+
+    if (imagePath) {
+      if (imagePath.startsWith('http')) return imagePath;
+      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      return `http://localhost:3000${normalizedPath}`;
+    }
+
     return '';
   }
 }

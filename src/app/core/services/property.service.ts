@@ -241,8 +241,19 @@ export class PropertyService {
       console.warn('Propiedad sin direcciones, usando dirección por defecto:', property.id, property.title);
     }
 
-    // Asegurar owners - agregar un owner por defecto si no existe
-    if (!property.owners || !Array.isArray(property.owners) || property.owners.length === 0) {
+    // Asegurar owners - normalizar estructura y agregar un owner por defecto si no existe
+    if (property.owners && Array.isArray(property.owners) && property.owners.length > 0) {
+      // Flatten: si el owner tiene rental_owner anidado, traer sus campos al nivel superior
+      property.owners = property.owners.map((owner: any) => {
+        const ro = owner.rental_owner;
+        return {
+          ...owner,
+          name: owner.name || (ro && ro.name) || 'No disponible',
+          primary_email: owner.primary_email || (ro && ro.primary_email) || '',
+          phone_number: owner.phone_number || (ro && ro.phone_number) || '',
+        };
+      });
+    } else {
       property.owners = [{
         id: 0,
         name: 'No disponible',

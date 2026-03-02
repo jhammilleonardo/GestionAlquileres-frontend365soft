@@ -1,6 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { Subscription, of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { LucideAngularModule, MapPin, Home, Heart, Share2, Maximize, Bed, Bath, Car, User, Mail, Phone, MessageSquare, PhoneCall } from 'lucide-angular';
 import { PropertyService } from '../../../core/services/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationIntentionService } from '../../../core/services/application-intention.service';
@@ -16,6 +19,7 @@ import { MapModalComponent } from '../map-modal/map-modal.component';
   imports: [
     CommonModule,
     RouterModule,
+    LucideAngularModule,
     ApplicationModalComponent,
     ContactModalComponent,
     MapModalComponent
@@ -23,10 +27,25 @@ import { MapModalComponent } from '../map-modal/map-modal.component';
   templateUrl: './property-detail.component.html',
   styleUrls: ['./property-detail.component.css']
 })
-export class PropertyDetailComponent implements OnInit {
+export class PropertyDetailComponent implements OnInit, OnDestroy {
+  readonly MapPin = MapPin;
+  readonly Home = Home;
+  readonly Heart = Heart;
+  readonly Share2 = Share2;
+  readonly Maximize = Maximize;
+  readonly Bed = Bed;
+  readonly Bath = Bath;
+  readonly Car = Car;
+  readonly User = User;
+  readonly Mail = Mail;
+  readonly Phone = Phone;
+  readonly MessageSquare = MessageSquare;
+  readonly PhoneCall = PhoneCall;
+
   property: Property | null = null;
   currentImageIndex = 0;
   isLoading = true;
+  hasError = false;
   isFavorite = false;
   showApplicationModal = false;
   showContactModal = false;
@@ -36,6 +55,8 @@ export class PropertyDetailComponent implements OnInit {
   private router = inject(Router);
   private intentionService = inject(ApplicationIntentionService);
   private authService = inject(TenantAuthService);
+  private cdr = inject(ChangeDetectorRef);
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -43,51 +64,89 @@ export class PropertyDetailComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Wait for slug to be set before loading property details
-    this.waitForSlugAndLoadProperty();
+    this.loadPropertyFromRoute();
   }
 
-  /**
-   * Wait for the slug to be set in SlugService before loading property details
-   * This fixes the race condition where property details are loaded before the slug is available
-   */
-  private waitForSlugAndLoadProperty(): void {
-    const slug = this.slugService.getSlug();
-    
-    if (slug) {
-      // Slug is already set, load property immediately
-      console.log('PropertyDetailComponent - Slug ya disponible:', slug);
-      this.loadPropertyById();
-    } else {
-      // Slug not set yet, get it from the route and set it
-      console.log('PropertyDetailComponent - Esperando slug de la ruta...');
-      this.route.parent?.paramMap.subscribe(params => {
-        const slugFromRoute = params.get('slug');
-        if (slugFromRoute) {
-          console.log('PropertyDetailComponent - Slug obtenido de ruta:', slugFromRoute);
-          this.slugService.setSlug(slugFromRoute);
-          // Wait a small amount for the slug to be set in the service
-          setTimeout(() => {
-            this.loadPropertyById();
-          }, 100);
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  private loadPropertyFromRoute(): void {
+    // With paramsInheritanceStrategy: 'always' (set in app.config.ts),
+    // the slug from the parent ':slug' route is accessible here directly.
+    const sub = this.route.paramMap.pipe(
+      switchMap(params => {
+        this.isLoading = true;
+        this.hasError = false;
+        this.property = null;
+        this.cdr.detectChanges();
+
+        // Get slug from inherited params (paramsInheritanceStrategy: 'always')
+        let slug = params.get('slug');
+
+        // Fallback 1: traverse parent routes
+        if (!slug) {
+          let current: ActivatedRoute | null = this.route;
+          while (current) {
+            const s = current.snapshot.paramMap.get('slug');
+            if (s) { slug = s; break; }
+            current = current.parent;
+          }
         }
-      });
-    }
+
+        // Fallback 2: parse from router URL directly
+        if (!slug) {
+          const urlParts = this.router.url.split('/').filter(Boolean);
+          if (urlParts.length > 0) slug = urlParts[0];
+        }
+
+        // Set slug in service if found
+        if (slug) {
+          this.slugService.setSlug(slug);
+        }
+
+        const idStr = params.get('id');
+        const propertyId = idStr ? parseInt(idStr, 10) : NaN;
+
+        if (isNaN(propertyId)) {
+          this.isLoading = false;
+          this.hasError = true;
+          this.cdr.detectChanges();
+          return of(undefined);
+        }
+
+        this.checkFavoriteStatus(propertyId);
+        return this.propertyService.getPropertyById(propertyId);
+      })
+    ).subscribe({
+      next: (property) => {
+        this.property = property || null;
+        this.isLoading = false;
+        this.hasError = !this.property;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.property = null;
+        this.isLoading = false;
+        this.hasError = true;
+        this.cdr.detectChanges();
+      }
+    });
+
+    this.subscriptions.push(sub);
+  }
+  checkFavoriteStatus(propertyId: number): void {
+    this.propertyService.isFavorite(propertyId).subscribe(isFav => {
+      this.isFavorite = isFav;
+      this.cdr.detectChanges();
+    });
   }
 
-  private loadPropertyById(): void {
-    const propertyIdStr = this.route.snapshot.paramMap.get('id');
-    if (propertyIdStr) {
-      const propertyId = parseInt(propertyIdStr, 10);
-      this.loadProperty(propertyId);
-      this.checkFavoriteStatus(propertyId);
-    }
-  }
-  // Helper para obtener imágenes como array seguro
+  // Helper para obtener imágenes como array seguro (con URL completa)
   getImagesArray(): string[] {
     if (!this.property?.images) return [];
-    if (Array.isArray(this.property.images)) return this.property.images;
-    return [];
+    const raw = Array.isArray(this.property.images) ? this.property.images : [];
+    return raw.map(img => this.buildImageUrl(img));
   }
 
   // Helper para verificar si tiene múltiples imágenes
@@ -95,7 +154,7 @@ export class PropertyDetailComponent implements OnInit {
     return this.getImagesArray().length > 1;
   }
 
-  // Helper para obtener imagen actual
+  // Helper para obtener imagen actual (con URL completa)
   getCurrentImage(): string {
     const images = this.getImagesArray();
     return images[this.currentImageIndex] || '';
@@ -105,26 +164,13 @@ export class PropertyDetailComponent implements OnInit {
   getImagesCount(): number {
     return this.getImagesArray().length;
   }
-  loadProperty(id: number): void {
-    this.isLoading = true;
-    this.propertyService.getPropertyById(id).subscribe({
-      next: (property) => {
-        console.log('Property loaded:', property);
-        this.property = property || null;
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error loading property:', error);
-        this.property = null;
-        this.isLoading = false;
-      }
-    });
-  }
 
-  checkFavoriteStatus(propertyId: number): void {
-    this.propertyService.isFavorite(propertyId).subscribe(isFav => {
-      this.isFavorite = isFav;
-    });
+  /** Construye la URL completa de una imagen del backend */
+  private buildImageUrl(imagePath: string): string {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    const normalized = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `http://localhost:3000${normalized}`;
   }
 
   toggleFavorite(): void {

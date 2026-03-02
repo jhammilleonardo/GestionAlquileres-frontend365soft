@@ -7,7 +7,7 @@
         <div>
           <h2 class="modal-title">Ubicación de la Propiedad</h2>
           <p class="map-address">
-            {{ location.address }}, {{ location.city }}, {{ location.state }}
+            {{ location.address }}
           </p>
         </div>
         <button class="btn-external" (click)="openInNewTab()">
@@ -34,15 +34,15 @@
           </div>
         </div>
 
-        <div class="info-item">
+        <div class="info-item" *ngIf="location.city">
           <span class="info-icon">🏙️</span>
           <div>
             <div class="info-label">Ciudad</div>
-            <div class="info-value">{{ location.city }}, {{ location.state }}</div>
+            <div class="info-value">{{ location.city }}{{ location.state ? ', ' + location.state : '' }}</div>
           </div>
         </div>
 
-        <div class="info-item">
+        <div class="info-item" *ngIf="location.zipCode">
           <span class="info-icon">📮</span>
           <div>
             <div class="info-label">Código Postal</div>

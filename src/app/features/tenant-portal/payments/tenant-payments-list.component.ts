@@ -8,10 +8,23 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
-import { LucideAngularModule, CreditCard, Download, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Clock, Plus, XCircle } from 'lucide-angular';
+import { LucideAngularModule, CreditCard, Download, Calendar, DollarSign, TrendingUp, AlertCircle, CheckCircle2, Clock, Plus, XCircle, CalendarDays, ChevronDown, ChevronUp, CheckCheck, TriangleAlert } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { Payment, PaymentStatus, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels, PaymentStatusColors, Currency, CurrencyLabels, CurrencySymbols } from '../../../core/models/payment.model';
+import { TenantContractService, Contract } from '../../../core/services/tenant-contract.service';
+import { Payment, PaymentStatus, PaymentType, PaymentStatusLabels, PaymentTypeLabels, PaymentMethodLabels, PaymentStatusColors, Currency, CurrencyLabels, CurrencySymbols } from '../../../core/models/payment.model';
+import { MatDividerModule } from '@angular/material/divider';
+
+interface PaymentScheduleItem {
+    label: string;
+    year: number;
+    month: number;
+    dueDate: Date;
+    amount: number;
+    currency: string;
+    status: 'paid' | 'overdue' | 'current' | 'upcoming';
+    statusLabel: string;
+}
 
 @Component({
     selector: 'app-tenant-payments-list',
@@ -26,6 +39,7 @@ import { Payment, PaymentStatus, PaymentStatusLabels, PaymentTypeLabels, Payment
         MatProgressSpinnerModule,
         MatChipsModule,
         MatTabsModule,
+        MatDividerModule,
         LucideAngularModule
     ],
     template: `
@@ -90,6 +104,72 @@ import { Payment, PaymentStatus, PaymentStatusLabels, PaymentTypeLabels, Payment
                         </div>
                     </mat-card>
                 </div>
+            }
+
+            <!-- Payment List -->
+            <!-- ============ Calendario de Pagos ============ -->
+            @if (contractService.isLoading()) {
+                <mat-card class="calendar-card loading-cal">
+                    <mat-spinner diameter="28"></mat-spinner>
+                    <span>Cargando calendario...</span>
+                </mat-card>
+            } @else if (paymentSchedule().length > 0) {
+                <mat-card class="calendar-card">
+                    <div class="calendar-header" (click)="calendarExpanded.set(!calendarExpanded())">
+                        <div class="calendar-title">
+                            <lucide-icon [img]="CalendarDays" [size]="20" class="cal-icon"></lucide-icon>
+                            <h2>Calendario de Pagos</h2>
+                            <span class="cal-badge">{{ paymentSchedule().length }} cuotas</span>
+                        </div>
+                        <button mat-icon-button type="button" class="cal-toggle-btn">
+                            @if (calendarExpanded()) {
+                                <lucide-icon [img]="ChevronUp" [size]="20"></lucide-icon>
+                            } @else {
+                                <lucide-icon [img]="ChevronDown" [size]="20"></lucide-icon>
+                            }
+                        </button>
+                    </div>
+
+                    @if (calendarExpanded()) {
+                        <mat-divider></mat-divider>
+
+                        <div class="cal-legend">
+                            <span class="legend-item paid"><span class="legend-dot"></span>Pagado</span>
+                            <span class="legend-item current"><span class="legend-dot"></span>Este mes</span>
+                            <span class="legend-item overdue"><span class="legend-dot"></span>Pendiente</span>
+                            <span class="legend-item upcoming"><span class="legend-dot"></span>Próximo</span>
+                        </div>
+
+                        <div class="cal-scroll-container">
+                            <div class="cal-track">
+                                @for (item of paymentSchedule(); track item.label) {
+                                    <div class="cal-item cal-{{ item.status }}">
+                                        <div class="cal-month">{{ item.label }}</div>
+                                        <div class="cal-due">Vence día {{ item.dueDate.getDate() }}</div>
+                                        <div class="cal-amount">{{ item.currency }}&nbsp;{{ item.amount | number:'1.2-2' }}</div>
+                                        <div class="cal-status-row">
+                                            @switch (item.status) {
+                                                @case ('paid') {
+                                                    <lucide-icon [img]="CheckCheck" [size]="13"></lucide-icon>
+                                                }
+                                                @case ('current') {
+                                                    <lucide-icon [img]="CreditCard" [size]="13"></lucide-icon>
+                                                }
+                                                @case ('overdue') {
+                                                    <lucide-icon [img]="TriangleAlert" [size]="13"></lucide-icon>
+                                                }
+                                                @case ('upcoming') {
+                                                    <lucide-icon [img]="Clock" [size]="13"></lucide-icon>
+                                                }
+                                            }
+                                            <span class="cal-status-badge">{{ item.statusLabel }}</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </mat-card>
             }
 
             <!-- Payment List -->
@@ -434,6 +514,126 @@ import { Payment, PaymentStatus, PaymentStatusLabels, PaymentTypeLabels, Payment
             animation: shimmer 2s infinite;
         }
 
+        /* ---- Calendario de Pagos ---- */
+        .calendar-card {
+            margin-bottom: 24px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .loading-cal {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 20px !important;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .calendar-header:hover { background: #f8fafc; }
+
+        .calendar-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calendar-title h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .cal-icon { color: var(--mat-sys-primary, #1976d2); }
+
+        .cal-badge {
+            font-size: 0.75rem;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .cal-toggle-btn { width: 36px; height: 36px; }
+
+        .cal-legend {
+            display: flex;
+            gap: 16px;
+            padding: 10px 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .legend-item.paid    .legend-dot { background: #10b981; }
+        .legend-item.current .legend-dot { background: #2563eb; }
+        .legend-item.overdue .legend-dot { background: #ef4444; }
+        .legend-item.upcoming .legend-dot { background: #94a3b8; }
+
+        .cal-scroll-container {
+            overflow-x: auto;
+            padding: 16px 20px 20px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .cal-track {
+            display: flex;
+            gap: 10px;
+            min-width: max-content;
+        }
+
+        .cal-item {
+            min-width: 110px;
+            max-width: 110px;
+            border-radius: 10px;
+            padding: 12px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 2px solid transparent;
+            transition: transform 0.15s;
+        }
+
+        .cal-item:hover { transform: translateY(-2px); }
+
+        .cal-month { font-size: 0.8rem; font-weight: 700; text-transform: capitalize; }
+        .cal-due   { font-size: 0.72rem; opacity: 0.75; }
+        .cal-amount { font-size: 0.85rem; font-weight: 700; margin-top: 4px; }
+
+        .cal-status-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .cal-status-badge { font-size: 0.7rem; font-weight: 600; }
+
+        .cal-paid    { background: #f0fdf4; border-color: #86efac; color: #166534; }
+        .cal-current { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; box-shadow: 0 0 0 3px #bfdbfe44; }
+        .cal-overdue { background: #fff1f2; border-color: #fca5a5; color: #991b1b; }
+        .cal-upcoming { background: #f8fafc; border-color: #e2e8f0; color: #475569; }
+
         @media (max-width: 1024px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -573,9 +773,19 @@ export class TenantPaymentsListComponent implements OnInit {
     readonly Clock = Clock;
     readonly Plus = Plus;
     readonly XCircle = XCircle;
+    readonly CalendarDays = CalendarDays;
+    readonly ChevronDown = ChevronDown;
+    readonly ChevronUp = ChevronUp;
+    readonly CheckCheck = CheckCheck;
+    readonly TriangleAlert = TriangleAlert;
 
     paymentService = inject(TenantPaymentService);
+    contractService = inject(TenantContractService);
     private slugService = inject(SlugService);
+
+    calendarExpanded = signal(true);
+    private paymentScheduleSignal = signal<PaymentScheduleItem[]>([]);
+    paymentSchedule = this.paymentScheduleSignal.asReadonly();
 
     PaymentStatus = PaymentStatus;
     Currency = Currency;
@@ -592,6 +802,71 @@ export class TenantPaymentsListComponent implements OnInit {
     ngOnInit(): void {
         this.paymentService.loadPayments();
         this.paymentService.loadStats();
+
+        if (!this.contractService.currentContract()) {
+            this.contractService.loadCurrentContract();
+        }
+        const tryBuildCalendar = () => {
+            const contract = this.contractService.currentContract();
+            if (contract) {
+                setTimeout(() => this.buildPaymentSchedule(contract), 200);
+            } else if (this.contractService.isLoading()) {
+                setTimeout(tryBuildCalendar, 300);
+            }
+        };
+        setTimeout(tryBuildCalendar, 150);
+    }
+
+    private buildPaymentSchedule(contract: Contract): void {
+        const start  = new Date(contract.start_date as unknown as string);
+        const end    = new Date(contract.end_date   as unknown as string);
+        const payDay = contract.payment_day || 1;
+        const now    = new Date();
+        const existing = this.paymentService.payments();
+
+        const items: PaymentScheduleItem[] = [];
+        let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+        const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+        while (cursor <= endMonth) {
+            const year  = cursor.getFullYear();
+            const month = cursor.getMonth();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const dueDate = new Date(year, month, Math.min(payDay, lastDay));
+
+            const isPaid = existing.some(p => {
+                const pd = new Date(p.payment_date as string);
+                return pd.getFullYear() === year && pd.getMonth() === month &&
+                       p.payment_type === PaymentType.RENT &&
+                       (p.status === PaymentStatus.APPROVED ||
+                        p.status === PaymentStatus.PENDING  ||
+                        p.status === PaymentStatus.PROCESSING);
+            });
+
+            const isCurrent = now.getFullYear() === year && now.getMonth() === month;
+            const isPastDue = dueDate < now && !isCurrent;
+
+            let status: PaymentScheduleItem['status'];
+            let statusLabel: string;
+
+            if (isPaid)          { status = 'paid';     statusLabel = 'Pagado'; }
+            else if (isCurrent)  { status = 'current';  statusLabel = 'Este mes'; }
+            else if (isPastDue)  { status = 'overdue';  statusLabel = 'Pendiente'; }
+            else                 { status = 'upcoming'; statusLabel = 'Próximo'; }
+
+            const raw = cursor.toLocaleDateString('es', { month: 'short', year: 'numeric' });
+            items.push({
+                label: raw.charAt(0).toUpperCase() + raw.slice(1),
+                year, month, dueDate,
+                amount: typeof contract.monthly_rent === 'number'
+                    ? contract.monthly_rent
+                    : parseFloat(contract.monthly_rent as unknown as string) || 0,
+                currency: contract.currency || 'USD',
+                status, statusLabel
+            });
+            cursor = new Date(year, month + 1, 1);
+        }
+        this.paymentScheduleSignal.set(items);
     }
 
     formatPaymentDate(date: Date | string): string {

@@ -1,37 +1,509 @@
-// Custom styles for property detail admin component
-// Most styling is handled by Tailwind classes in the template
+// ═══════════════════════════════════════════════════════════════
+// Property Detail Admin - Component Styles
+// ═══════════════════════════════════════════════════════════════
 
-// Smooth transitions for gallery
-img {
+// ── Container ──────────────────────────────────────────────────
+.pd-container {
+    min-height: 100vh;
+    padding: 24px;
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #f8fafc 100%);
+}
+
+// ── Loading ────────────────────────────────────────────────────
+.pd-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+}
+
+// ── Content ────────────────────────────────────────────────────
+.pd-content {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+// ── Card Base ──────────────────────────────────────────────────
+.pd-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+// ── Header ─────────────────────────────────────────────────────
+.pd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.pd-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pd-edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 10px !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 6px 20px !important;
+    height: 38px !important;
+}
+
+// ── Title Card ─────────────────────────────────────────────────
+.pd-title-card {
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.pd-title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.pd-title-info {
+    flex: 1;
+}
+
+.pd-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+}
+
+.pd-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+// ── Badges ─────────────────────────────────────────────────────
+.pd-badges {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pd-badge {
+    padding: 6px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 12px;
+}
+
+.status-disponible {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.status-ocupado {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.status-mantenimiento {
+    background-color: #fef9c3;
+    color: #854d0e;
+}
+
+.status-reservado {
+    background-color: #f3e8ff;
+    color: #6b21a8;
+}
+
+.status-inactivo,
+.status-default {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+// ── Grid Layout ────────────────────────────────────────────────
+.pd-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+.pd-col-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.pd-col-side {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.pd-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 24px;
+
+    @media (min-width: 1024px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.pd-fullwidth {
+    margin-top: 24px;
+}
+
+// ── Gallery ────────────────────────────────────────────────────
+.pd-gallery {
+    overflow: hidden;
+}
+
+.pd-gallery-main {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+}
+
+.pd-gallery-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     transition: opacity 0.3s ease-in-out;
 }
 
-// Custom scrollbar for thumbnails if needed
-.thumbnail-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(203, 213, 225, 0.5) transparent;
+.pd-gallery-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
 
-    &::-webkit-scrollbar {
-        height: 6px;
+.pd-placeholder-icon {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.pd-gallery-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: background 0.2s;
+
+    &:hover {
+        background: white !important;
     }
 
-    &::-webkit-scrollbar-track {
-        background: transparent;
+    &--prev {
+        left: 16px;
     }
 
-    &::-webkit-scrollbar-thumb {
-        background-color: rgba(203, 213, 225, 0.5);
-        border-radius: 3px;
-
-        &:hover {
-            background-color: rgba(148, 163, 184, 0.7);
-        }
+    &--next {
+        right: 16px;
     }
 }
 
-// Backdrop blur fallback for older browsers
+.pd-gallery-counter {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    border-radius: 12px;
+}
+
+// ── Thumbnails ─────────────────────────────────────────────────
+.pd-thumbnails {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    padding: 16px;
+}
+
+.pd-thumbnail {
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    aspect-ratio: 16 / 9;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    background: none;
+
+    &:hover {
+        border-color: #94a3b8;
+    }
+
+    &--active {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+// ── Section ────────────────────────────────────────────────────
+.pd-section {
+    padding: 24px;
+}
+
+.pd-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 16px 0;
+}
+
+.pd-section-icon {
+    color: #3b82f6;
+}
+
+// ── Description ────────────────────────────────────────────────
+.pd-description-text {
+    color: #475569;
+    line-height: 1.7;
+    margin: 0;
+}
+
+// ── Price Card ─────────────────────────────────────────────────
+.pd-price-card {
+    padding: 24px;
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5) !important;
+    border-color: #bbf7d0;
+}
+
+.pd-price-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #15803d;
+    margin-bottom: 8px;
+}
+
+.pd-price-amount {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #14532d;
+}
+
+.pd-price-deposit {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #15803d;
+}
+
+// ── Features Grid ──────────────────────────────────────────────
+.pd-features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.pd-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.pd-feature-icon {
+    color: #64748b;
+}
+
+.pd-feature-label {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.pd-feature-value {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+
+// ── Rules ──────────────────────────────────────────────────────
+.pd-rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pd-rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.pd-rule-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    color: #475569;
+}
+
+.pd-rule-icon {
+    color: #64748b;
+}
+
+.pd-rule-allowed {
+    font-weight: 600;
+    color: #16a34a;
+}
+
+.pd-rule-denied {
+    font-weight: 600;
+    color: #dc2626;
+}
+
+.pd-rule-value {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+// ── Type List ──────────────────────────────────────────────────
+.pd-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pd-type-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pd-type-label {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.pd-type-value {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.pd-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+// ── Addresses ──────────────────────────────────────────────────
+.pd-addresses {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pd-address-item {
+    padding: 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.pd-address-street {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.pd-address-city {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.pd-address-zip {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+// ── Chips ──────────────────────────────────────────────────────
+.pd-chips {
+    ::ng-deep .mat-mdc-chip {
+        font-weight: 500;
+    }
+}
+
+.pd-chip-green {
+    ::ng-deep .mdc-evolution-chip__cell--primary {
+        color: #15803d !important;
+    }
+}
+
+// ── Responsive ─────────────────────────────────────────────────
+@media (max-width: 768px) {
+    .pd-container {
+        padding: 16px;
+    }
+
+    .pd-title {
+        font-size: 1.5rem;
+    }
+
+    .pd-price-amount {
+        font-size: 1.5rem;
+    }
+
+    .pd-features-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pd-thumbnails {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .pd-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .pd-title-row {
+        flex-direction: column;
+    }
+
+    .pd-badges {
+        justify-content: flex-start;
+    }
+}
+
+// ── Backdrop blur fallback ─────────────────────────────────────
 @supports not (backdrop-filter: blur(8px)) {
-    .backdrop-blur-sm {
+    .pd-card {
         background-color: rgba(255, 255, 255, 0.95) !important;
     }
 }

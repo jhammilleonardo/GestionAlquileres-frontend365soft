@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
+import { map, catchError, of } from 'rxjs';
 import { TenantAuthService } from '../services/tenant-auth.service';
 import { SlugService } from '../services/slug.service';
 import { ContractService } from '../services/contract.service';
@@ -90,7 +91,7 @@ export const tenantLoginGuard: CanActivateFn = (route, state) => {
 
 /**
  * Guard para rutas de inquilinos PRE-CONTRATO
- * Solo permite acceso si el usuario NO tiene un contrato activo
+ * Solo permite acceso si el usuario NO tiene contratos (ni BORRADOR ni ACTIVO)
  */
 export const tenantPreContractGuard: CanActivateFn = (route, state) => {
     const authService = inject(TenantAuthService);
@@ -100,14 +101,9 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
 
     const currentUser = authService.currentUser();
     const slug = route.paramMap.get('slug');
-    console.log('[tenantPreContractGuard] ===== START =====');
-    console.log('[tenantPreContractGuard] Current user:', currentUser);
-    console.log('[tenantPreContractGuard] Attempting to access route:', state.url);
-    console.log('[tenantPreContractGuard] Slug:', slug);
 
     // Si no está autenticado, redirigir al login
     if (!currentUser) {
-        console.log('[tenantPreContractGuard] No current user, redirecting to login');
         if (slug) {
             router.navigate(['/', slug, 'portal', 'login'], {
                 queryParams: { returnUrl: state.url }
@@ -116,37 +112,29 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
         return false;
     }
 
-    // Verificar también si currentUser ya tiene contrato (por si acaso)
+    // Fast path: ya tiene contrato ACTIVO en el JWT
     if (currentUser.contract) {
-        console.log('[tenantPreContractGuard] Already has contract in currentUser, redirecting to dashboard');
         slugService.navigateTo(['portal', 'dashboard']);
         return false;
     }
 
-    // Verificar si el usuario tiene contratos directamente del servicio de contratos
-    // NOTA: userId en la respuesta de /auth/me es el mismo que tenant_id
-    console.log('[tenantPreContractGuard] Checking for contracts via ContractService...');
-    contractService.hasAnyContracts(currentUser.id).subscribe({
-        next: (contracts) => {
-            console.log('[tenantPreContractGuard] ContractService returned contracts:', contracts);
-            console.log('[tenantPreContractGuard] Contracts length:', contracts?.length || 0);
+    // Verificar vía API (puede haber contratos BORRADOR no incluidos en el JWT)
+    return contractService.hasAnyContracts().pipe(
+        map((contracts) => {
             if (contracts && contracts.length > 0) {
-                // El usuario tiene contrato(s), redirigir al dashboard
-                console.log('[tenantPreContractGuard] User has contracts, redirecting to dashboard');
-                slugService.navigateTo(['portal', 'dashboard']);
-            } else {
-                console.log('[tenantPreContractGuard] No contracts found, allowing access to pre-contract route');
+                const hasActive = contracts.some(c => c.status === 'ACTIVO');
+                if (hasActive) {
+                    slugService.navigateTo(['portal', 'dashboard']);
+                } else {
+                    // Tiene contrato BORRADOR pendiente de firma
+                    slugService.navigateTo(['portal', 'documentos', 'contratos']);
+                }
+                return false;
             }
-        },
-        error: (err) => {
-            console.error('[tenantPreContractGuard] Error checking contracts:', err);
-        }
-    });
-
-    // No tiene contrato, permitir acceso a rutas pre-contrato
-    console.log('[tenantPreContractGuard] Allowing immediate access (will redirect async if contracts found)');
-    console.log('[tenantPreContractGuard] ===== END =====');
-    return true;
+            return true;
+        }),
+        catchError(() => of(true))
+    );
 };
 
 /**

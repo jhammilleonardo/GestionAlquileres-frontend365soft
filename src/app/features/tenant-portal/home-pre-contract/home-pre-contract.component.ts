@@ -5,10 +5,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { LucideAngularModule, Home, Plus, FileEdit, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-angular';
+import { LucideAngularModule, Home, Plus, FileEdit, Clock, CheckCircle2, XCircle, AlertCircle, FileSignature } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationService } from '../../../core/services/application.service';
+import { ContractService, Contract } from '../../../core/services/contract.service';
 import { Application, ApplicationListItem, ApplicationStatus } from '../../../core/models/application.model';
 
 @Component({
@@ -47,6 +48,34 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
 
       <!-- Content -->
       <div class="content-grid">
+
+        <!-- Banner: Contrato pendiente de firma -->
+        @if (pendingContract()) {
+          <mat-card class="pending-contract-card">
+            <div class="pending-contract-content">
+              <div class="pending-icon">
+                <lucide-icon [img]="FileSignature" [size]="40"></lucide-icon>
+              </div>
+              <div class="pending-info">
+                <h2>¡Tu solicitud fue aprobada!</h2>
+                <p>Tienes un contrato listo para firmar.</p>
+                <div class="contract-meta">
+                  <span><strong>Contrato:</strong> {{ pendingContract()!.contract_number }}</span>
+                  <span><strong>Renta:</strong> {{ pendingContract()!.monthly_rent | number }} {{ pendingContract()!.currency }}</span>
+                </div>
+              </div>
+              <button
+                mat-raised-button
+                color="primary"
+                class="sign-btn"
+                (click)="goToContracts()">
+                <lucide-icon [img]="FileSignature" [size]="18"></lucide-icon>
+                Ver y Firmar Contrato
+              </button>
+            </div>
+          </mat-card>
+        }
+
         <!-- Welcome Card -->
         <mat-card class="welcome-card">
           <div class="welcome-content">
@@ -318,6 +347,57 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
       max-width: 400px;
     }
 
+    .pending-contract-card {
+      background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+      border: 2px solid #16a34a;
+    }
+
+    .pending-contract-content {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .pending-icon {
+      color: #16a34a;
+      flex-shrink: 0;
+    }
+
+    .pending-info {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .pending-info h2 {
+      margin: 0 0 4px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #14532d;
+    }
+
+    .pending-info p {
+      margin: 0 0 8px;
+      font-size: 0.9375rem;
+      color: #166534;
+    }
+
+    .contract-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.875rem;
+      color: #15803d;
+      flex-wrap: wrap;
+    }
+
+    .sign-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
     .applications-list {
       display: flex;
       flex-direction: column;
@@ -451,25 +531,35 @@ export class HomePreContractComponent implements OnInit {
   readonly CheckCircle2 = CheckCircle2;
   readonly XCircle = XCircle;
   readonly AlertCircle = AlertCircle;
+  readonly FileSignature = FileSignature;
   readonly ApplicationStatus = ApplicationStatus;
 
   private router = inject(Router);
   private slugService = inject(SlugService);
   private authService = inject(TenantAuthService);
   private applicationService = inject(ApplicationService);
+  private contractService = inject(ContractService);
 
-  // Signals - Managing state locally
   isLoading = signal(false);
   applications = signal<ApplicationListItem[]>([]);
+  pendingContract = signal<Contract | null>(null);
   userName = computed(() => this.authService.currentUser()?.name || 'Usuario');
 
   ngOnInit(): void {
-    console.log('[HomePreContract] ===== ngOnInit START =====');
-    console.log('[HomePreContract] Component loaded');
-    console.log('[HomePreContract] Current URL:', this.router.url);
-    console.log('[HomePreContract] Current user:', this.authService.currentUser());
-    console.log('[HomePreContract] ===== ngOnInit END =====');
     this.loadApplications();
+    this.checkPendingContract();
+  }
+
+  checkPendingContract(): void {
+    this.contractService.hasAnyContracts().subscribe({
+      next: (contracts) => {
+        const borrador = contracts.find(c => c.status === 'BORRADOR');
+        if (borrador) {
+          this.pendingContract.set(borrador);
+        }
+      },
+      error: () => {}
+    });
   }
 
   loadApplications(): void {
@@ -491,6 +581,10 @@ export class HomePreContractComponent implements OnInit {
 
   viewAllApplications(): void {
     this.slugService.navigateTo(['portal', 'my-applications']);
+  }
+
+  goToContracts(): void {
+    this.slugService.navigateTo(['portal', 'documentos', 'contratos']);
   }
 
   getStatusLabel(status: ApplicationStatus): string {

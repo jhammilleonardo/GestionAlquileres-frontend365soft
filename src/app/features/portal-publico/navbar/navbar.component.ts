@@ -20,10 +20,8 @@ export class NavbarComponent {
   private slugService = inject(SlugService);
   private router = inject(Router);
 
-  // Obtiene el slug desde SlugService (ya es establecido por PublicLayoutComponent)
-  get slug(): string | null {
-    return this.slugService.getSlug();
-  }
+  // Signal reactivo del slug — Angular lo lee eficientemente sin re-computar en cada ciclo
+  readonly slug = this.slugService.currentSlug;
 
   ngOnInit() {
     if (typeof window !== 'undefined') {
@@ -42,15 +40,18 @@ export class NavbarComponent {
   }
 
   getLoginPath(): string[] {
-    return this.slug ? ['/', this.slug, 'login'] : ['/login'];
+    const s = this.slug();
+    return s ? ['/', s, 'login'] : ['/login'];
   }
 
   getRegisterPath(): string[] {
-    return this.slug ? ['/', this.slug, 'register'] : ['/register'];
+    const s = this.slug();
+    return s ? ['/', s, 'register'] : ['/register'];
   }
 
   getPublicPath(path: string): string {
-    return this.slug ? `/${this.slug}/publico/${path}` : `/publico/${path}`;
+    const s = this.slug();
+    return s ? `/${s}/publico/${path}` : `/publico/${path}`;
   }
 
   isActive(path: string): boolean {

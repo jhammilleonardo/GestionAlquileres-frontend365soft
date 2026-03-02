@@ -18,6 +18,7 @@ export interface Contract {
   start_date: string;
   end_date: string;
   monthly_rent: number;
+  currency: string;
   status: string;
   property?: {
     id: number;
@@ -95,14 +96,10 @@ export class ContractService {
 
   /**
    * Verificar si el inquilino actual tiene contratos (incluyendo BORRADOR)
-   * Útil para redirigir al dashboard cuando el admin aprueba una solicitud
+   * Usa el endpoint de tenant (no requiere permisos de admin)
    */
-  hasAnyContracts(tenantId: number): Observable<Contract[]> {
-    // Obtenemos contratos en cualquier estado (BORRADOR, ACTIVO, etc.)
-    const endpoint = this.slugService.buildApiEndpoint(`admin/contracts`);
-    let params = new HttpParams();
-    params = params.set('tenant_id', tenantId.toString());
-
-    return this.http.get<Contract[]>(`${environment.apiUrl}${endpoint}`, { params });
+  hasAnyContracts(): Observable<Contract[]> {
+    const endpoint = this.slugService.buildApiEndpoint(`tenant/contracts`);
+    return this.http.get<Contract[]>(`${environment.apiUrl}${endpoint}`);
   }
 }

@@ -5,18 +5,18 @@
 </div>
 
 <!-- Error State -->
-<div class="error-container" *ngIf="!isLoading && !property">
+<div class="error-container" *ngIf="!isLoading && hasError">
   <div class="error-icon">⚠️</div>
   <h2>No se pudo cargar la propiedad</h2>
-  <p>La propiedad que buscas no existe o no está disponible.</p>
+  <p>La propiedad que buscas no existe o no está disponible en este momento.</p>
   <a routerLink="../" class="btn-back">← Volver al listado</a>
 </div>
 
 <!-- Property Detail -->
-<div class="property-detail-container" *ngIf="!isLoading && property">
+<div class="property-detail-container" *ngIf="!isLoading && !hasError && property">
   <!-- Back Button -->
   <div class="back-navigation">
-    <a routerLink="/properties" class="back-btn">
+    <a routerLink="../" class="back-btn">
       ← Volver a Propiedades
     </a>
   </div>
@@ -53,35 +53,39 @@
   </div>
 
   <!-- Property Header -->
-  <div class="property-header">
-    <div class="header-content">
-      <div class="title-section">
-        <h1 class="property-title">{{ property.title }}</h1>
-        <div class="property-location">
-          <span class="icon">📍</span>
+  <div class="property-header-new">
+    <div class="header-main-info">
+      <div class="title-area">
+        <h1 class="prop-title">{{ property.title }}</h1>
+        <div class="prop-location">
+          <lucide-icon [img]="MapPin" class="loc-icon-small"></lucide-icon>
           {{ getPropertyAddress() }}
         </div>
       </div>
 
-      <div class="header-actions">
-        <div class="price-tag" *ngIf="property.monthly_rent_amount">
-          <span class="price">${{ property.monthly_rent_amount }}</span>
-          <span class="period">/mes</span>
+      <div class="tags-pill-detail" *ngIf="getPropertyTypeName()">
+        <div class="tag-icons-detail">
+          <div class="t-icon-circle-detail bg-blue"><lucide-icon [img]="Home" class="t-icon-detail"></lucide-icon></div>
+          <div class="t-icon-circle-detail bg-orange" *ngIf="getPropertySubtypeName()"><lucide-icon [img]="MapPin" class="t-icon-detail"></lucide-icon></div>
         </div>
-
-        <div class="action-buttons">
-          <button class="icon-btn" (click)="toggleFavorite()" [class.active]="isFavorite">
-            {{ isFavorite ? '❤️' : '🤍' }}
-          </button>
-          <button class="icon-btn" (click)="shareProperty()">📤</button>
-          <button class="icon-btn" (click)="printProperty()">🖨️</button>
-        </div>
+        <span>{{ getPropertyTypeName() }}</span>
       </div>
     </div>
 
-    <div class="status-badges">
-      <span class="badge badge-status">{{ property.status === 'DISPONIBLE' ? 'Disponible' : 'No Disponible' }}</span>
-      <span class="badge badge-type">{{ getPropertyTypeName() }}</span>
+    <div class="header-side-info">
+      <div class="price-section-new" *ngIf="property.monthly_rent || property.monthly_rent_amount">
+        <span class="price-value">{{ property.currency || 'BOB' }} {{ (property.monthly_rent || property.monthly_rent_amount) | number:'1.0-0' }}</span>
+        <span class="price-label">/mes</span>
+      </div>
+
+      <div class="header-actions-new">
+        <button class="action-btn-new" (click)="toggleFavorite()" [class.active]="isFavorite">
+          <lucide-icon [img]="Heart" class="btn-icon-detail" [style.fill]="isFavorite ? '#ef4444' : 'none'"></lucide-icon>
+        </button>
+        <button class="action-btn-new" (click)="shareProperty()">
+          <lucide-icon [img]="Share2" class="btn-icon-detail"></lucide-icon>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -89,21 +93,37 @@
   <div class="content-layout">
     <!-- Left Column -->
     <div class="main-content">
-      <!-- Quick Stats -->
-      <div class="quick-stats">
-        <div class="stat-item" *ngIf="property.total_area">
-          <div class="stat-icon">📐</div>
-          <div class="stat-content">
-            <div class="stat-value">{{ property.total_area }}m²</div>
-            <div class="stat-label">Área Total</div>
+      <!-- Quick Stats New -->
+      <div class="quick-stats-grid">
+        <div class="stat-card-new" *ngIf="property.square_meters || property.total_area">
+          <div class="stat-icon-wrap"><lucide-icon [img]="Maximize"></lucide-icon></div>
+          <div class="stat-info-new">
+            <span class="stat-val-new">{{ property.square_meters || property.total_area }}m²</span>
+            <span class="stat-lab-new">Área Total</span>
           </div>
         </div>
 
-        <div class="stat-item" *ngIf="property.built_area">
-          <div class="stat-icon">🏗️</div>
-          <div class="stat-content">
-            <div class="stat-value">{{ property.built_area }}m²</div>
-            <div class="stat-label">Área Construida</div>
+        <div class="stat-card-new" *ngIf="property.bedrooms">
+          <div class="stat-icon-wrap"><lucide-icon [img]="Bed"></lucide-icon></div>
+          <div class="stat-info-new">
+            <span class="stat-val-new">{{ property.bedrooms }}</span>
+            <span class="stat-lab-new">Habitaciones</span>
+          </div>
+        </div>
+
+        <div class="stat-card-new" *ngIf="property.bathrooms">
+          <div class="stat-icon-wrap"><lucide-icon [img]="Bath"></lucide-icon></div>
+          <div class="stat-info-new">
+            <span class="stat-val-new">{{ property.bathrooms }}</span>
+            <span class="stat-lab-new">Baños</span>
+          </div>
+        </div>
+
+        <div class="stat-card-new" *ngIf="property.parking_spaces">
+          <div class="stat-icon-wrap"><lucide-icon [img]="Car"></lucide-icon></div>
+          <div class="stat-info-new">
+            <span class="stat-val-new">{{ property.parking_spaces }}</span>
+            <span class="stat-lab-new">Parqueos</span>
           </div>
         </div>
       </div>
@@ -137,13 +157,23 @@
             <span class="detail-label">Subtipo</span>
             <span class="detail-value">{{ getPropertySubtypeName() }}</span>
           </div>
-          <div class="detail-row" *ngIf="property.monthly_rent_amount">
+          <div class="detail-row" *ngIf="property.monthly_rent || property.monthly_rent_amount">
             <span class="detail-label">Renta Mensual</span>
-            <span class="detail-value">${{ property.monthly_rent_amount }}</span>
+            <span class="detail-value">{{ property.currency || 'BOB' }} {{ (property.monthly_rent ||
+              property.monthly_rent_amount) | number:'1.0-0' }}</span>
           </div>
           <div class="detail-row" *ngIf="property.security_deposit_amount">
             <span class="detail-label">Depósito de Seguridad</span>
-            <span class="detail-value">${{ property.security_deposit_amount }}</span>
+            <span class="detail-value">{{ property.currency || 'BOB' }} {{ property.security_deposit_amount |
+              number:'1.0-0' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="property.year_built">
+            <span class="detail-label">Año de Construcción</span>
+            <span class="detail-value">{{ property.year_built }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Amueblado</span>
+            <span class="detail-value">{{ property.is_furnished ? 'Sí' : 'No' }}</span>
           </div>
           <div class="detail-row" *ngIf="property.availability_date">
             <span class="detail-label">Disponible desde</span>
@@ -153,68 +183,73 @@
       </div>
 
       <!-- Map Section -->
-      <div class="section-card">
-        <h2 class="section-title">Ubicación</h2>
-        <div class="map-placeholder">
-          <div class="map-info">
-            <p class="map-address">
-              <strong>{{ getPropertyAddress() }}</strong>
-            </p>
-            <button class="btn-view-map" (click)="openMapModal()">
-              🗺️ Ver en Mapa
-            </button>
+      <div class="section-card-map">
+        <h2 class="section-title-new">Ubicación</h2>
+        <div class="map-placeholder-new">
+          <div class="map-overlay-new">
+            <div class="map-info-new">
+              <lucide-icon [img]="MapPin" class="map-icon-big"></lucide-icon>
+              <p class="map-address-new">{{ getPropertyAddress() }}</p>
+              <button class="btn-view-map-new" (click)="openMapModal()">
+                Ver en Google Maps
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Right Column - Contact Card -->
-    <div class="sidebar">
-      <div class="contact-card sticky">
-        <h3 class="contact-title">¿Interesado en esta propiedad?</h3>
+    <div class="sidebar-new">
+      <div class="contact-card-premium sticky-sidebar">
+        <h3 class="contact-title-new">¿Te interesa esta propiedad?</h3>
+        <p class="contact-subtitle-new">Nuestro equipo está listo para ayudarte con el proceso de alquiler.</p>
 
-        <div class="contact-info">
-          <div class="contact-item" *ngIf="getOwnerName()">
-            <span class="contact-icon">👤</span>
-            <div>
-              <div class="contact-label">Propietario</div>
-              <div class="contact-value">{{ getOwnerName() }}</div>
+        <div class="contact-info-list">
+          <div class="contact-item-new" *ngIf="getOwnerName()">
+            <div class="contact-icon-new blue-bg"><lucide-icon [img]="User"></lucide-icon></div>
+            <div class="contact-text-new">
+              <span class="contact-label-new">Propietario</span>
+              <span class="contact-value-new">{{ getOwnerName() }}</span>
             </div>
           </div>
 
-          <div class="contact-item" *ngIf="getOwnerEmail()">
-            <span class="contact-icon">📧</span>
-            <div>
-              <div class="contact-label">Email</div>
-              <div class="contact-value">{{ getOwnerEmail() }}</div>
+          <div class="contact-item-new" *ngIf="getOwnerEmail()">
+            <div class="contact-icon-new green-bg"><lucide-icon [img]="Mail"></lucide-icon></div>
+            <div class="contact-text-new">
+              <span class="contact-label-new">Email</span>
+              <span class="contact-value-new">{{ getOwnerEmail() }}</span>
             </div>
           </div>
 
-          <div class="contact-item" *ngIf="getOwnerPhone()">
-            <span class="contact-icon">📞</span>
-            <div>
-              <div class="contact-label">Teléfono</div>
-              <div class="contact-value">{{ getOwnerPhone() }}</div>
+          <div class="contact-item-new" *ngIf="getOwnerPhone()">
+            <div class="contact-icon-new orange-bg"><lucide-icon [img]="Phone"></lucide-icon></div>
+            <div class="contact-text-new">
+              <span class="contact-label-new">Teléfono</span>
+              <span class="contact-value-new">{{ getOwnerPhone() }}</span>
             </div>
           </div>
         </div>
 
-        <div class="cta-buttons">
-          <button class="btn-primary" (click)="openApplicationModal()">
-            📝 Solicitar Alquiler
+        <div class="cta-actions-new">
+          <button class="btn-apply-now" (click)="openApplicationModal()">
+            Solicitar Alquiler
           </button>
-          <button class="btn-secondary" (click)="openContactModal()">
-            💬 Enviar Mensaje
+          <button class="btn-message-now" (click)="openContactModal()">
+            <lucide-icon [img]="MessageSquare" class="btn-icon-small"></lucide-icon>
+            Enviar Mensaje
           </button>
-          <button class="btn-secondary">
-            📞 Llamar Ahora
+          <button class="btn-call-now">
+            <lucide-icon [img]="PhoneCall" class="btn-icon-small"></lucide-icon>
+            Llamar Ahora
           </button>
         </div>
 
-        <div class="schedule-tour">
-          <p class="tour-text">¿Quieres agendar una visita?</p>
-          <button class="btn-tour">
-            📅 Agendar Visita
+        <div class="schedule-section-new">
+          <div class="divider-new"></div>
+          <p class="schedule-text-new">¿Quieres agendar una visita?</p>
+          <button class="btn-schedule-new">
+            Agendar Visita Presencial
           </button>
         </div>
       </div>

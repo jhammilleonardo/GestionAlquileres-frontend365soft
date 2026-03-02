@@ -74,12 +74,13 @@ export const TENANT_PORTAL_ROUTES: Routes = [
             },
             {
                 path: 'documentos',
-                canActivate: [tenantWithContractGuard],
                 children: [
                     {
                         path: '',
+                        canActivate: [tenantWithContractGuard],
                         loadComponent: () => import('./documents/tenant-documents.component').then(m => m.TenantDocumentsComponent)
                     },
+                    // Contratos accesibles con BORRADOR o ACTIVO (para firma y visualización)
                     {
                         path: 'contratos',
                         loadComponent: () => import('./documents/tenant-contract-list.component').then(m => m.TenantContractListComponent)

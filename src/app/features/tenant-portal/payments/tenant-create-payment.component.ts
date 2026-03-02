@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,10 +10,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, ArrowLeft, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-angular';
+import { MatDividerModule } from '@angular/material/divider';
+import { LucideAngularModule, ArrowLeft, CreditCard, AlertCircle, CheckCircle2, FileText, Home, Calendar, Landmark, Info } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant-payment.service';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { TenantContractService, Contract } from '../../../core/services/tenant-contract.service';
 import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodLabels, CurrencyLabels, CurrencySymbols } from '../../../core/models/payment.model';
 
 @Component({
@@ -31,6 +33,7 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
         MatDatepickerModule,
         MatNativeDateModule,
         MatProgressSpinnerModule,
+        MatDividerModule,
         LucideAngularModule
     ],
     template: `
@@ -44,6 +47,100 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
                     <p>Completa la información de tu pago</p>
                 </div>
             </div>
+
+            <!-- Resumen del Contrato -->
+            @if (contractService.isLoading()) {
+                <mat-card class="contract-summary-card loading">
+                    <mat-spinner diameter="32"></mat-spinner>
+                    <span>Cargando datos del contrato...</span>
+                </mat-card>
+            } @else if (contractService.currentContract(); as c) {
+                <mat-card class="contract-summary-card">
+                    <div class="summary-header">
+                        <lucide-icon [img]="FileText" [size]="20" class="summary-icon"></lucide-icon>
+                        <h2>Lo que debes pagar según tu contrato</h2>
+                        <span class="contract-number">{{ c.contract_number }}</span>
+                    </div>
+                    <mat-divider></mat-divider>
+                    <div class="summary-grid">
+                        <!-- Propiedad -->
+                        <div class="summary-item">
+                            <lucide-icon [img]="Home" [size]="18"></lucide-icon>
+                            <div>
+                                <span class="summary-label">Propiedad</span>
+                                <span class="summary-value">{{ c.property?.title || 'Propiedad' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Renta mensual -->
+                        <div class="summary-item highlight">
+                            <lucide-icon [img]="CreditCard" [size]="18"></lucide-icon>
+                            <div>
+                                <span class="summary-label">Renta mensual</span>
+                                <span class="summary-value amount">
+                                    {{ c.currency || 'USD' }} {{ c.monthly_rent | number:'1.2-2' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Día de pago -->
+                        @if (c.payment_day) {
+                            <div class="summary-item">
+                                <lucide-icon [img]="Calendar" [size]="18"></lucide-icon>
+                                <div>
+                                    <span class="summary-label">Día de pago</span>
+                                    <span class="summary-value">Día {{ c.payment_day }} de cada mes</span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Método de pago pactado -->
+                        @if (c.payment_method) {
+                            <div class="summary-item">
+                                <lucide-icon [img]="Info" [size]="18"></lucide-icon>
+                                <div>
+                                    <span class="summary-label">Método pactado</span>
+                                    <span class="summary-value">{{ c.payment_method }}</span>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Datos bancarios del propietario -->
+                        @if (c.bank_name) {
+                            <div class="summary-item bank-info">
+                                <lucide-icon [img]="Landmark" [size]="18"></lucide-icon>
+                                <div>
+                                    <span class="summary-label">Banco destino (propietario)</span>
+                                    <span class="summary-value">{{ c.bank_name }}</span>
+                                    @if (c.bank_account_holder) {
+                                        <span class="summary-sub">Titular: {{ c.bank_account_holder }}</span>
+                                    }
+                                    @if (c.bank_account_number) {
+                                        <span class="summary-sub">Cuenta: {{ c.bank_account_number }}</span>
+                                    }
+                                    @if (c.bank_account_type) {
+                                        <span class="summary-sub">Tipo: {{ c.bank_account_type }}</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Días de gracia / mora -->
+                        @if (c.grace_days || c.late_fee_percentage) {
+                            <div class="summary-item warning">
+                                <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
+                                <div>
+                                    <span class="summary-label">Penalidad por mora</span>
+                                    <span class="summary-value">
+                                        @if (c.grace_days) { {{ c.grace_days }} días de gracia · }
+                                        @if (c.late_fee_percentage) { {{ c.late_fee_percentage }}% de recargo }
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </mat-card>
+            }
 
             @if (paymentService.error()) {
                 <div class="error-alert">
@@ -290,6 +387,126 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
             margin: 0 auto;
         }
 
+        /* ---- Resumen del contrato ---- */
+        .contract-summary-card {
+            margin-bottom: 24px;
+            padding: 20px 24px;
+            border-left: 4px solid var(--mat-sys-primary, #1976d2);
+        }
+
+        .contract-summary-card.loading {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .summary-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .summary-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .summary-icon {
+            color: var(--mat-sys-primary, #1976d2);
+            flex-shrink: 0;
+        }
+
+        .contract-number {
+            margin-left: auto;
+            font-size: 0.78rem;
+            color: #94a3b8;
+            font-weight: 500;
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .summary-item lucide-icon {
+            color: #64748b;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .summary-item.highlight {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+        }
+
+        .summary-item.highlight lucide-icon {
+            color: #2563eb;
+        }
+
+        .summary-item.bank-info {
+            grid-column: 1 / -1;
+        }
+
+        .summary-item.warning {
+            background: #fefce8;
+            border: 1px solid #fde68a;
+        }
+
+        .summary-item.warning lucide-icon {
+            color: #d97706;
+        }
+
+        .summary-label {
+            display: block;
+            font-size: 0.73rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .summary-value {
+            display: block;
+            font-size: 0.92rem;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .summary-value.amount {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+
+        .summary-sub {
+            display: block;
+            font-size: 0.82rem;
+            color: #475569;
+            margin-top: 2px;
+        }
+
+        /* ---- Resto del form ---- */
         .page-header {
             display: flex;
             align-items: center;
@@ -482,16 +699,22 @@ import { PaymentType, PaymentMethod, Currency, PaymentTypeLabels, PaymentMethodL
         }
     `]
 })
-export class TenantCreatePaymentComponent {
+export class TenantCreatePaymentComponent implements OnInit {
     readonly ArrowLeft = ArrowLeft;
     readonly CreditCard = CreditCard;
     readonly AlertCircle = AlertCircle;
     readonly CheckCircle2 = CheckCircle2;
+    readonly FileText = FileText;
+    readonly Home = Home;
+    readonly Calendar = Calendar;
+    readonly Landmark = Landmark;
+    readonly Info = Info;
 
     private fb = inject(FormBuilder);
     private router = inject(Router);
     private slugService = inject(SlugService);
     paymentService = inject(TenantPaymentService);
+    contractService = inject(TenantContractService);
     private tenantAuthService = inject(TenantAuthService);
 
     success = signal(false);
@@ -534,6 +757,50 @@ export class TenantCreatePaymentComponent {
         bank_account_last_4: [''],
         received_by: ['']
     });
+
+    ngOnInit(): void {
+        // Cargar el contrato activo y pre-llenar el formulario
+        if (!this.contractService.currentContract()) {
+            this.contractService.loadCurrentContract();
+        }
+
+        // Cuando el contrato está disponible, pre-rellenar monto y moneda
+        const tryPrefill = () => {
+            const contract = this.contractService.currentContract();
+            if (contract) {
+                const currencyValue = this.normalizeCurrency(contract.currency);
+                const methodValue = this.normalizePaymentMethod(contract.payment_method);
+
+                this.paymentForm.patchValue({
+                    amount: typeof contract.monthly_rent === 'number'
+                        ? contract.monthly_rent
+                        : parseFloat(contract.monthly_rent as unknown as string) || null,
+                    currency: currencyValue ?? Currency.USD,
+                    payment_method: methodValue ?? PaymentMethod.TRANSFER
+                });
+            } else {
+                // Reintentar al siguiente frame si aún está cargando
+                setTimeout(tryPrefill, 300);
+            }
+        };
+        setTimeout(tryPrefill, 100);
+    }
+
+    private normalizeCurrency(value?: string): Currency | null {
+        if (!value) return null;
+        const upper = value.toUpperCase();
+        return Object.values(Currency).includes(upper as Currency)
+            ? (upper as Currency)
+            : null;
+    }
+
+    private normalizePaymentMethod(value?: string): PaymentMethod | null {
+        if (!value) return null;
+        const upper = value.toUpperCase();
+        return Object.values(PaymentMethod).includes(upper as PaymentMethod)
+            ? (upper as PaymentMethod)
+            : null;
+    }
 
     onSubmit(): void {
         if (this.paymentForm.invalid) {

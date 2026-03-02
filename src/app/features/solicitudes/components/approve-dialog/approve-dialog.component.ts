@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -27,7 +28,7 @@ import { Application, ApproveApplicationDto, ApproveApplicationResponse } from '
   imports: [
     CommonModule, FormsModule,
     MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatCheckboxModule, MatProgressSpinnerModule,
+    MatSelectModule, MatCheckboxModule, MatSlideToggleModule, MatProgressSpinnerModule,
     MatDatepickerModule, MatNativeDateModule,
     LucideAngularModule
   ],
@@ -54,6 +55,7 @@ export class ApproveDialogComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private applicationService = inject(ApplicationService);
+  private cdr = inject(ChangeDetectorRef);
 
   loading = false;
   submitting = false;
@@ -92,6 +94,7 @@ export class ApproveDialogComponent implements OnInit {
     app$.subscribe({
       next: (app: Application) => {
         this.formData.monthly_rent = app.employment_data.monthly_income;
+        this.cdr.detectChanges();
       },
       error: (err: any) => {
         this.error = err.error?.message || 'Error al cargar la solicitud';

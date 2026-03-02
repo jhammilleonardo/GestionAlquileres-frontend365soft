@@ -776,7 +776,7 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
 
         if (currentUser) {
             console.log('[TenantLayout] Checking contracts via ContractService...');
-            this.contractService.hasAnyContracts(currentUser.id).subscribe({
+            this.contractService.hasAnyContracts().subscribe({
                 next: (contracts) => {
                     console.log('[TenantLayout] ContractService returned:', contracts);
                     console.log('[TenantLayout] Contracts length:', contracts?.length || 0);

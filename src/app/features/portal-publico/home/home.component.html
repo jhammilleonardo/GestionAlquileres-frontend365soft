@@ -52,6 +52,99 @@
     </div>
   </section>
 
+  <!-- Featured Properties Section -->
+  <section class="featured-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Propiedades Destacadas</h2>
+        <p class="section-subtitle">Descubre las propiedades más recientes disponibles para alquilar</p>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div *ngIf="isLoadingProperties" class="properties-grid">
+        <div class="property-skeleton" *ngFor="let i of [1,2,3]">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-body">
+            <div class="skeleton-line long"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-line short"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Properties Grid -->
+      <div *ngIf="!isLoadingProperties && featuredProperties.length > 0" class="properties-grid">
+        <div class="property-card" *ngFor="let property of featuredProperties" (click)="viewProperty(property.id)">
+          <!-- Image -->
+          <div class="property-img-wrapper">
+            <img
+              [src]="getPropertyImageUrl(property) || 'assets/placeholder.jpg'"
+              [alt]="property.title"
+              class="property-img"
+              (error)="$any($event.target).src='assets/placeholder.jpg'"
+            />
+            <span class="badge-status">Disponible</span>
+            <div class="price-badge" *ngIf="property.monthly_rent">
+              {{ property.currency || 'BOB' }} {{ property.monthly_rent | number:'1.0-0' }}/mes
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="property-content">
+            <h3 class="property-name">{{ property.title }}</h3>
+
+            <div class="property-location">
+              <lucide-icon [img]="MapPin" class="loc-icon"></lucide-icon>
+              <span>{{ getPropertyAddress(property) }}</span>
+            </div>
+
+            <!-- Stats -->
+            <div class="property-stats">
+              <div class="stat" *ngIf="property.square_meters">
+                <lucide-icon [img]="Maximize" class="stat-icon"></lucide-icon>
+                <span>{{ property.square_meters }}m²</span>
+              </div>
+              <div class="stat" *ngIf="property.bedrooms">
+                <lucide-icon [img]="BedDouble" class="stat-icon"></lucide-icon>
+                <span>{{ property.bedrooms }} hab.</span>
+              </div>
+              <div class="stat" *ngIf="property.bathrooms">
+                <lucide-icon [img]="Bath" class="stat-icon"></lucide-icon>
+                <span>{{ property.bathrooms }} baños</span>
+              </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="property-tags">
+              <span class="tag" *ngIf="property.property_type">{{ property.property_type.name }}</span>
+              <span class="tag tag-secondary" *ngIf="property.property_subtype">{{ property.property_subtype.name }}</span>
+            </div>
+
+            <!-- CTA -->
+            <button class="btn-details" (click)="viewProperty(property.id); $event.stopPropagation()">
+              Ver Detalles
+              <lucide-icon [img]="ArrowRight" class="btn-icon"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!isLoadingProperties && featuredProperties.length === 0" class="no-properties">
+        <lucide-icon [img]="Home" class="no-props-icon"></lucide-icon>
+        <p>No hay propiedades disponibles en este momento.</p>
+      </div>
+
+      <!-- Ver más -->
+      <div class="view-all-wrapper" *ngIf="featuredProperties.length > 0">
+        <button mat-stroked-button color="primary" (click)="navigateToProperties()" class="btn-view-all">
+          Ver Todas las Propiedades
+          <lucide-icon [img]="ArrowRight"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- CTA Section -->
   <section class="cta-section">
     <div class="container">
