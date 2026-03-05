@@ -1,4 +1,6 @@
-import { Component, Inject, signal, OnInit } from '@angular/core';
+import { Component, Inject, signal, OnInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
+import { environment } from '../../../../environments/environment';
+import { interval, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -10,7 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, X, ArrowLeft, User, Home, Calendar, Clock, DollarSign, MessageSquare, Wrench, AlertCircle, Send, Lock, Settings, FileText } from 'lucide-angular';
+import { LucideAngularModule, X, ArrowLeft, User, Home, Calendar, Clock, DollarSign, MessageSquare, Wrench, AlertCircle, Send, Lock, Settings, FileText, Paperclip, Image } from 'lucide-angular';
 import {
     MaintenanceRequest,
     MaintenanceStatus,
@@ -45,9 +47,14 @@ import { MaintenanceService } from '../../../core/services/maintenance.service';
     templateUrl: './request-detail.component.html',
     styleUrl: './request-detail.component.scss'
 })
-export class RequestDetailComponent implements OnInit {
+export class RequestDetailComponent implements OnInit, OnDestroy {
+    @ViewChild('msgContainer') msgContainer!: ElementRef;
+    @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
+
     // Icons
     readonly X = X;
+    readonly Paperclip = Paperclip;
+    readonly Image = Image;
     readonly User = User;
     readonly Home = Home;
     readonly Calendar = Calendar;
@@ -81,6 +88,17 @@ export class RequestDetailComponent implements OnInit {
     isLoadingMessages = signal(false);
     isSendingMessage = signal(false);
     isUpdating = signal(false);
+    selectedFiles = signal<File[]>([]);
+
+    // Unread tracking
+    firstUnreadMessageId = 0;
+    unreadCountFromHere = 0;
+
+    // Polling
+    private pollingSub: Subscription | null = null;
+    private lastMessageId = 0;
+    newMessagesCount = signal(0);
+    pollingNewFromId = signal(0);
 
     // Staff members (TODO: should come from API)
     staffMembers = [
@@ -123,12 +141,105 @@ export class RequestDetailComponent implements OnInit {
         this.loadMessages();
     }
 
+    private scrollToBottom(): void {
+        setTimeout(() => {
+            const el = this.msgContainer?.nativeElement;
+            if (el) el.scrollTop = el.scrollHeight;
+        }, 100);
+    }
+
+    private isNearBottom(): boolean {
+        const el = this.msgContainer?.nativeElement;
+        if (!el) return true;
+        return (el.scrollHeight - el.scrollTop - el.clientHeight) < 80;
+    }
+
+    private startPolling(): void {
+        this.pollingSub?.unsubscribe();
+        const requestId = this.request.id;
+        this.pollingSub = interval(5000).subscribe(() => {
+            if (document.hidden) return;
+            this.maintenanceService.getMessages(requestId).subscribe({
+                next: (messages) => {
+                    const newLastId = messages.length > 0 ? messages[messages.length - 1].id : 0;
+                    if (newLastId !== this.lastMessageId) {
+                        const oldLastId = this.lastMessageId;
+                        const incoming = messages.length - this.messages().length;
+                        this.lastMessageId = newLastId;
+                        const atBottom = this.isNearBottom();
+                        const firstNew = messages.find(m => m.id > oldLastId);
+                        if (firstNew) this.pollingNewFromId.set(firstNew.id);
+                        this.messages.set(messages);
+                        if (atBottom) {
+                            this.scrollToBottom();
+                            this.newMessagesCount.set(0);
+                            setTimeout(() => this.pollingNewFromId.set(0), 2000);
+                        } else {
+                            this.newMessagesCount.update(c => c + (incoming > 0 ? incoming : 1));
+                        }
+                    }
+                },
+                error: () => {}
+            });
+        });
+    }
+
+    isFirstPollingNew(msg: MaintenanceMessage): boolean {
+        return this.pollingNewFromId() > 0 && msg.id === this.pollingNewFromId();
+    }
+
+    scrollToNewMessages(): void {
+        this.newMessagesCount.set(0);
+        this.scrollToBottom();
+        setTimeout(() => this.pollingNewFromId.set(0), 2500);
+    }
+
+    onMessagesScroll(event: Event): void {
+        const el = event.target as HTMLElement;
+        if ((el.scrollHeight - el.scrollTop - el.clientHeight) < 80) {
+            this.newMessagesCount.set(0);
+            this.pollingNewFromId.set(0);
+        }
+    }
+
+    ngOnDestroy(): void {
+        this.pollingSub?.unsubscribe();
+    }
+
+    private getLastReadId(): number {
+        return parseInt(localStorage.getItem(`admin_mnt_lastread_${this.request.id}`) ?? '0', 10);
+    }
+
+    private computeUnread(messages: MaintenanceMessage[], lastReadId: number): void {
+        if (lastReadId === 0) { this.firstUnreadMessageId = 0; this.unreadCountFromHere = 0; return; }
+        const unread = messages.filter(m => this.isFromTenant(m) && m.id > lastReadId);
+        this.unreadCountFromHere = unread.length;
+        this.firstUnreadMessageId = unread.length > 0 ? unread[0].id : 0;
+    }
+
+    private markAllAsRead(messages: MaintenanceMessage[]): void {
+        if (messages.length > 0) {
+            const lastId = Math.max(...messages.map(m => m.id));
+            localStorage.setItem(`admin_mnt_lastread_${this.request.id}`, String(lastId));
+        }
+    }
+
+    isFirstUnread(msg: MaintenanceMessage): boolean {
+        return this.firstUnreadMessageId > 0 && msg.id === this.firstUnreadMessageId;
+    }
+
     loadMessages(): void {
+        const lastReadId = this.getLastReadId();
         this.isLoadingMessages.set(true);
         this.maintenanceService.getMessages(this.request.id).subscribe({
             next: (messages) => {
+                this.computeUnread(messages, lastReadId);
+                this.lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : 0;
                 this.messages.set(messages);
                 this.isLoadingMessages.set(false);
+                this.markAllAsRead(messages);
+                this.scrollToBottom();
+                this.startPolling();
             },
             error: (error) => {
                 console.error('Error loading messages:', error);
@@ -176,31 +287,67 @@ export class RequestDetailComponent implements OnInit {
         }
     }
 
+    onFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files) return;
+        const newFiles = Array.from(input.files);
+        const remaining = 3 - this.selectedFiles().length;
+        this.selectedFiles.update(files => [...files, ...newFiles.slice(0, remaining)]);
+        input.value = '';
+    }
+
+    removeFile(index: number): void {
+        this.selectedFiles.update(files => files.filter((_, i) => i !== index));
+    }
+
+    getFileUrl(url: string): string {
+        return environment.apiUrl.replace(/\/$/, '') + url;
+    }
+
+    isImageAttachment(fileType: string): boolean {
+        return fileType === 'image';
+    }
+
     addMessage(): void {
         const messageText = this.newMessage().trim();
         if (!messageText) return;
 
         this.isSendingMessage.set(true);
 
-        const dto: CreateMessageDto = {
-            message: messageText,
-            send_to_resident: !this.isInternalNote()
+        const send = (fileUrls: string[]) => {
+            const dto: CreateMessageDto = {
+                message: messageText,
+                send_to_resident: !this.isInternalNote(),
+                ...(fileUrls.length > 0 && { files: fileUrls })
+            };
+            this.maintenanceService.addMessage(this.request.id, dto).subscribe({
+                next: (message) => {
+                    this.messages.update(msgs => [...msgs, message]);
+                    this.lastMessageId = message.id;
+                    this.newMessage.set('');
+                    this.isInternalNote.set(false);
+                    this.selectedFiles.set([]);
+                    this.isSendingMessage.set(false);
+                    this.scrollToBottom();
+                },
+                error: () => {
+                    alert('Error al enviar el mensaje');
+                    this.isSendingMessage.set(false);
+                }
+            });
         };
 
-        this.maintenanceService.addMessage(this.request.id, dto).subscribe({
-            next: (message) => {
-                // Add message to local list
-                this.messages.update(msgs => [...msgs, message]);
-                this.newMessage.set('');
-                this.isInternalNote.set(false);
-                this.isSendingMessage.set(false);
-            },
-            error: (error) => {
-                console.error('Error adding message:', error);
-                alert('Error al enviar el mensaje');
-                this.isSendingMessage.set(false);
-            }
-        });
+        if (this.selectedFiles().length > 0) {
+            this.maintenanceService.uploadFiles(this.request.id, this.selectedFiles()).subscribe({
+                next: (attachments) => send(attachments.map(a => a.file_url)),
+                error: () => {
+                    alert('Error al subir los archivos');
+                    this.isSendingMessage.set(false);
+                }
+            });
+        } else {
+            send([]);
+        }
     }
 
     getStaffName(staffId: number): string {

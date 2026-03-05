@@ -7,6 +7,7 @@ import { SlugService } from './slug.service';
 import {
     MaintenanceRequest,
     MaintenanceMessage,
+    MaintenanceAttachment,
     MaintenanceCategory,
     MaintenanceRequestType,
     PermissionToEnter
@@ -47,12 +48,14 @@ export class TenantMaintenanceService {
     private statsSignal = signal<TenantMaintenanceStats | null>(null);
     private isLoadingSignal = signal(false);
     private errorSignal = signal<string | null>(null);
+    private messageCountsSignal = signal<Record<number, number>>({});
 
     // Public computed values
     requests = this.requestsSignal.asReadonly();
     stats = this.statsSignal.asReadonly();
     isLoading = this.isLoadingSignal.asReadonly();
     error = this.errorSignal.asReadonly();
+    messageCounts = this.messageCountsSignal.asReadonly();
 
     private get slug(): string {
         return this.slugService.getSlug() || '';
@@ -88,6 +91,7 @@ export class TenantMaintenanceService {
         ).subscribe(requests => {
             this.requestsSignal.set(requests);
             this.isLoadingSignal.set(false);
+            this.loadMessageCounts();
         });
     }
 
@@ -107,6 +111,23 @@ export class TenantMaintenanceService {
             })
         ).subscribe(stats => {
             this.statsSignal.set(stats);
+        });
+    }
+
+    /**
+     * Load admin message counts (only messages NOT sent by the tenant)
+     */
+    loadMessageCounts(): void {
+        const requests = this.requestsSignal();
+        const currentUserId = this.authService.currentUser()?.id;
+        requests.forEach(req => {
+            this.getMessages(req.id).subscribe(messages => {
+                // Solo mensajes del admin visibles al inquilino (no los del propio inquilino)
+                const adminCount = messages.filter(m =>
+                    m.send_to_resident && m.user_id !== currentUserId
+                ).length;
+                this.messageCountsSignal.update(counts => ({ ...counts, [req.id]: adminCount }));
+            });
         });
     }
 
@@ -176,6 +197,21 @@ export class TenantMaintenanceService {
                 ...msg,
                 created_at: new Date(msg.created_at)
             }))
+        );
+    }
+
+    /**
+     * Upload files to a maintenance request (max 3, 10MB each)
+     */
+    uploadFiles(requestId: number, files: File[]): Observable<MaintenanceAttachment[]> {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        const token = this.authService.getToken();
+        const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+        return this.http.post<MaintenanceAttachment[]>(
+            `${environment.apiUrl}${this.slug}/tenant/maintenance/${requestId}/upload`,
+            formData,
+            { headers }
         );
     }
 

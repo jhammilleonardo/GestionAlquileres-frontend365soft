@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
@@ -13,6 +13,7 @@ import {
   Hash, MapPin, Tag, BellOff, ArrowUpRight
 } from 'lucide-angular';
 import { NotificationService, Notification } from '../../core/services/notification.service';
+import { SlugService } from '../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
 
 type NotificationFilter = 'all' | 'unread' | 'read';
@@ -33,10 +34,14 @@ type NotificationFilter = 'all' | 'unread' | 'read';
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss'
 })
-export class NotificationsComponent implements OnInit, OnDestroy {
+export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy {
   private notificationService = inject(NotificationService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
+
+  @ViewChildren('notifCard') notifCards!: QueryList<ElementRef>;
 
   // Signals
   notifications = this.notificationService.notifications;
@@ -47,6 +52,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   // State
   currentFilter: NotificationFilter = 'all';
+  highlightedId: number | null = null;
 
   // Lucide icons
   readonly Bell = Bell;
@@ -66,11 +72,38 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   readonly ArrowUpRight = ArrowUpRight;
 
   ngOnInit(): void {
+    // Leer highlight param antes de cargar
+    const highlightParam = this.route.snapshot.queryParamMap.get('highlight');
+    if (highlightParam) {
+      this.highlightedId = Number(highlightParam);
+    }
+
     this.loadNotifications();
     this.loadStats();
-
-    // Start polling (1 minute)
     this.notificationService.startPolling(60000);
+  }
+
+  ngAfterViewInit(): void {
+    if (this.highlightedId) {
+      // Esperar que Angular renderice las tarjetas
+      this.notifCards.changes.subscribe(() => {
+        this.scrollToHighlighted();
+      });
+      // Intentar inmediatamente también (por si ya estaban renderizadas)
+      setTimeout(() => this.scrollToHighlighted(), 300);
+    }
+  }
+
+  private scrollToHighlighted(): void {
+    if (!this.highlightedId) return;
+    const card = this.notifCards.find(
+      el => el.nativeElement.getAttribute('data-id') === String(this.highlightedId)
+    );
+    if (card) {
+      card.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Quitar el highlight después de 3 segundos
+      setTimeout(() => { this.highlightedId = null; }, 3000);
+    }
   }
 
   ngOnDestroy(): void {
@@ -131,26 +164,35 @@ export class NotificationsComponent implements OnInit, OnDestroy {
 
   navigateToRelatedPage(notification: Notification): void {
     const eventType = notification.event_type;
+    const slug = this.slugService.getSlug();
+    if (!slug) return;
 
     if (eventType.includes('maintenance')) {
       const requestId = notification.metadata?.['maintenance_request_id'];
-      if (requestId) {
-        this.router.navigate(['/mantenimiento', requestId]);
-      }
+      this.router.navigate(['/', slug, 'mantenimiento'], {
+        queryParams: requestId ? { open: requestId } : {}
+      });
     } else if (eventType.includes('property')) {
       const propertyId = notification.metadata?.['property_id'];
       if (propertyId) {
-        this.router.navigate(['/propiedades', propertyId]);
+        this.router.navigate(['/', slug, 'propiedades', propertyId]);
       }
     } else if (eventType.includes('user')) {
       const userId = notification.metadata?.['user_id'];
       if (userId) {
-        this.router.navigate(['/inquilinos', userId]);
+        this.router.navigate(['/', slug, 'inquilinos', userId]);
       }
     } else if (eventType.includes('contract')) {
       const contractId = notification.metadata?.['contract_id'];
       if (contractId) {
-        this.router.navigate(['/contratos', contractId]);
+        this.router.navigate(['/', slug, 'contratos', contractId]);
+      }
+    } else if (eventType.includes('payment')) {
+      const paymentId = notification.metadata?.['payment_id'];
+      if (paymentId) {
+        this.router.navigate(['/', slug, 'pagos'], { queryParams: { id: paymentId } });
+      } else {
+        this.router.navigate(['/', slug, 'pagos']);
       }
     }
   }
@@ -192,7 +234,13 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       'property.status.changed': 'Propiedad Actualizada',
       'property.available': 'Propiedad Disponible',
       'user.registered': 'Nuevo Usuario',
-      'user.password.changed': 'Contraseña Cambiada'
+      'user.password.changed': 'Contraseña Cambiada',
+      'payment.created': 'Nuevo Pago',
+      'payment.approved': 'Pago Aprobado',
+      'payment.rejected': 'Pago Rechazado',
+      'contract.created': 'Contrato Creado',
+      'contract.signed': 'Contrato Firmado',
+      'contract.expiring': 'Contrato por Vencer',
     };
     return types[eventType] || 'Notificación';
   }

@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { interval, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +9,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, ArrowLeft, Wrench, Clock, Home, MessageSquare, Send, AlertCircle, CheckCircle2, FileText, User, Link } from 'lucide-angular';
+import { MatChipsModule } from '@angular/material/chips';
+import { LucideAngularModule, ArrowLeft, Wrench, Clock, Home, MessageSquare, Send, AlertCircle, CheckCircle2, FileText, User, Link, Paperclip, X, Image } from 'lucide-angular';
+import { environment } from '../../../../environments/environment';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
@@ -34,6 +37,7 @@ import {
         MatInputModule,
         MatProgressSpinnerModule,
         MatDividerModule,
+        MatChipsModule,
         LucideAngularModule
     ],
     template: `
@@ -93,12 +97,22 @@ import {
                                 </div>
                             </div>
                             <div class="banner-badges">
-                                <span class="b-status" [ngClass]="getStatusColor(request()!.status)">
-                                    {{ statusLabels[request()!.status] }}
-                                </span>
-                                <span class="b-priority" [ngClass]="getPriorityColor(request()!.priority)">
-                                    {{ priorityLabels[request()!.priority] }}
-                                </span>
+                                <mat-chip-set>
+                                    <mat-chip
+                                        [style.background]="getStatusBgColor(request()!.status)"
+                                        [style.color]="getStatusTextColor(request()!.status)"
+                                        [style.font-weight]="'700'"
+                                        [style.font-size]="'12px'">
+                                        {{ statusLabels[request()!.status] }}
+                                    </mat-chip>
+                                    <mat-chip
+                                        [style.background]="getPriorityBgColor(request()!.priority)"
+                                        [style.color]="getPriorityTextColor(request()!.priority)"
+                                        [style.font-weight]="'700'"
+                                        [style.font-size]="'12px'">
+                                        {{ priorityLabels[request()!.priority] }}
+                                    </mat-chip>
+                                </mat-chip-set>
                             </div>
                         </div>
 
@@ -108,10 +122,12 @@ import {
                             <!-- Category chip -->
                             @if (request()!.category) {
                                 <div class="cc-row">
-                                    <span class="cat-chip">
-                                        <lucide-icon [img]="Link" [size]="13"></lucide-icon>
-                                        {{ categoryLabels[request()!.category!] }}
-                                    </span>
+                                    <mat-chip-set>
+                                        <mat-chip>
+                                            <lucide-icon matChipAvatar [img]="Link" [size]="13"></lucide-icon>
+                                            {{ categoryLabels[request()!.category!] }}
+                                        </mat-chip>
+                                    </mat-chip-set>
                                 </div>
                             }
 
@@ -221,7 +237,8 @@ import {
                         } @else {
 
                             <!-- Messages list -->
-                            <div class="conv-messages" #msgContainer>
+                            <div class="conv-messages-wrap">
+                            <div class="conv-messages" #msgContainer (scroll)="onMessagesScroll($event)">
                                 @if (messages().length === 0) {
                                     <div class="conv-empty">
                                         <div class="conv-empty-icon">
@@ -232,6 +249,20 @@ import {
                                     </div>
                                 } @else {
                                     @for (message of messages(); track message.id) {
+                                        @if (isFirstPollingNew(message)) {
+                                            <div class="new-polling-divider">
+                                                <div class="new-polling-line"></div>
+                                                <span class="new-polling-label">↓ mensajes nuevos</span>
+                                                <div class="new-polling-line"></div>
+                                            </div>
+                                        }
+                                        @if (isFirstUnread(message)) {
+                                            <div class="unread-divider">
+                                                <div class="unread-line"></div>
+                                                <span class="unread-label">{{ unreadCountFromHere }} mensaje{{ unreadCountFromHere !== 1 ? 's' : '' }} no leído{{ unreadCountFromHere !== 1 ? 's' : '' }}</span>
+                                                <div class="unread-line"></div>
+                                            </div>
+                                        }
                                         <div class="msg-row" [class.msg-mine]="isMyMessage(message)">
                                             @if (!isMyMessage(message)) {
                                                 <div class="msg-avatar admin-avatar">A</div>
@@ -243,6 +274,16 @@ import {
                                                 <div class="msg-bubble" [class.bubble-mine]="isMyMessage(message)">
                                                     {{ message.message }}
                                                 </div>
+                                                @if (message.attachments && message.attachments.length > 0) {
+                                                    <div class="msg-attachments" [class.msg-attachments-mine]="isMyMessage(message)">
+                                                        @for (att of message.attachments; track att.id) {
+                                                            <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip" [class.att-chip-mine]="isMyMessage(message)">
+                                                                <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                                                                <span>{{ att.file_name }}</span>
+                                                            </a>
+                                                        }
+                                                    </div>
+                                                }
                                                 <span class="msg-time">{{ formatMessageDate(message.created_at) }}</span>
                                             </div>
                                             @if (isMyMessage(message)) {
@@ -252,24 +293,66 @@ import {
                                     }
                                 }
                             </div>
+                            </div><!-- /conv-messages-wrap -->
+
+                            @if (newMessagesCount() > 0) {
+                                <div class="new-msg-bar">
+                                    <button class="new-msg-btn" (click)="scrollToNewMessages()">
+                                        ↓ {{ newMessagesCount() }} mensaje{{ newMessagesCount() !== 1 ? 's' : '' }} nuevo{{ newMessagesCount() !== 1 ? 's' : '' }}
+                                    </button>
+                                </div>
+                            }
 
                             <!-- Input -->
                             @if (canSendMessage()) {
-                                <div class="conv-input-area">
-                                    <textarea class="conv-textarea"
-                                        [(ngModel)]="newMessage"
-                                        rows="1"
-                                        placeholder="Escribe tu mensaje..."
-                                        (keydown.enter)="$event.preventDefault(); sendMessage()"></textarea>
-                                    <button class="send-btn"
-                                            (click)="sendMessage()"
-                                            [disabled]="!newMessage.trim() || isSending()">
-                                        @if (isSending()) {
-                                            <mat-spinner diameter="16"></mat-spinner>
-                                        } @else {
-                                            <lucide-icon [img]="Send" [size]="16"></lucide-icon>
-                                        }
-                                    </button>
+                                <div class="conv-input-wrapper">
+                                    <!-- Input oculto para archivos -->
+                                    <input #fileInputRef type="file" multiple
+                                           accept="image/jpeg,image/png,image/webp,application/pdf"
+                                           style="display:none"
+                                           (change)="onFileSelected($event)">
+
+                                    <!-- Preview de archivos seleccionados -->
+                                    @if (selectedFiles().length > 0) {
+                                        <div class="file-preview">
+                                            @for (file of selectedFiles(); track $index; let i = $index) {
+                                                <div class="file-chip">
+                                                    <lucide-icon [img]="Paperclip" [size]="11"></lucide-icon>
+                                                    <span>{{ file.name }}</span>
+                                                    <button class="file-remove" (click)="removeFile(i)">
+                                                        <lucide-icon [img]="X" [size]="10"></lucide-icon>
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <div class="conv-input-area">
+                                        <button class="attach-btn"
+                                                type="button"
+                                                (click)="fileInputRef.click()"
+                                                [disabled]="selectedFiles().length >= 3"
+                                                title="Adjuntar archivo (máx. 3)">
+                                            <lucide-icon [img]="Paperclip" [size]="15"></lucide-icon>
+                                            @if (selectedFiles().length > 0) {
+                                                <span class="attach-count">{{ selectedFiles().length }}/3</span>
+                                            }
+                                        </button>
+                                        <textarea class="conv-textarea"
+                                            [(ngModel)]="newMessage"
+                                            rows="1"
+                                            placeholder="Escribe tu mensaje..."
+                                            (keydown.enter)="$event.preventDefault(); sendMessage()"></textarea>
+                                        <button class="send-btn"
+                                                (click)="sendMessage()"
+                                                [disabled]="!newMessage.trim() || isSending()">
+                                            @if (isSending()) {
+                                                <mat-spinner diameter="16"></mat-spinner>
+                                            } @else {
+                                                <lucide-icon [img]="Send" [size]="16"></lucide-icon>
+                                            }
+                                        </button>
+                                    </div>
                                 </div>
                             } @else {
                                 <div class="conv-closed">
@@ -515,7 +598,7 @@ import {
             display: flex;
             flex-direction: column;
             height: 640px;
-            overflow: hidden;
+            overflow: hidden; /* clips rounded corners */
             box-shadow: 0 2px 12px rgba(0,0,0,.06);
         }
 
@@ -570,8 +653,14 @@ import {
         .sk-msg-item.left  { align-self: flex-start; }
 
         /* Messages area */
-        .conv-messages {
+        .conv-messages-wrap {
             flex: 1;
+            min-height: 0;
+            position: relative;
+        }
+        .conv-messages {
+            position: absolute;
+            inset: 0;
             overflow-y: auto;
             padding: 16px 14px;
             display: flex;
@@ -581,6 +670,31 @@ import {
         }
         .conv-messages::-webkit-scrollbar { width: 4px; }
         .conv-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        .new-msg-bar {
+            display: flex;
+            justify-content: center;
+            padding: 6px 12px;
+            flex-shrink: 0;
+        }
+        .new-msg-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 7px 18px;
+            font-size: 12.5px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(59,130,246,.45);
+            white-space: nowrap;
+            animation: slideDown 0.2s ease;
+        }
+        .new-msg-btn:hover { background: #2563eb; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
         /* Empty state */
         .conv-empty {
@@ -659,6 +773,56 @@ import {
             padding: 0 4px;
         }
         .msg-sender.msg-sender-mine ~ * { align-self: flex-end; }
+
+        /* Polling new messages divider */
+        .new-polling-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0;
+            width: 100%;
+        }
+        .new-polling-line {
+            flex: 1;
+            height: 1px;
+            background: #3b82f6;
+            opacity: 0.5;
+        }
+        .new-polling-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #1d4ed8;
+            white-space: nowrap;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 20px;
+            padding: 3px 12px;
+        }
+
+        /* Unread divider */
+        .unread-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0;
+            width: 100%;
+        }
+        .unread-line {
+            flex: 1;
+            height: 1px;
+            background: #f59e0b;
+            opacity: 0.5;
+        }
+        .unread-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #b45309;
+            white-space: nowrap;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 20px;
+            padding: 3px 12px;
+        }
 
         /* Input area */
         .conv-input-area {
@@ -752,9 +916,98 @@ import {
             padding: 60px; color: #64748b; text-align: center; gap: 8px;
         }
         .not-found h2 { color: #1e293b; margin: 8px 0 4px; }
+
+        /* ── File Upload ── */
+        .conv-input-wrapper {
+            border-top: 1px solid #e2e8f0;
+            background: #fff;
+            flex-shrink: 0;
+        }
+        .file-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 8px 12px 0;
+        }
+        .file-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #1d4ed8;
+            max-width: 160px;
+        }
+        .file-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-remove {
+            display: flex; align-items: center; justify-content: center;
+            width: 14px; height: 14px;
+            border: none; background: none; cursor: pointer;
+            color: #93c5fd; padding: 0; flex-shrink: 0;
+        }
+        .file-remove:hover { color: #1d4ed8; }
+        .attach-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1.5px solid #e2e8f0;
+            background: #f8fafc;
+            color: #64748b;
+            cursor: pointer;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: border-color .15s, color .15s, background .15s;
+            position: relative;
+        }
+        .attach-btn:hover:not(:disabled) { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; }
+        .attach-btn:disabled { opacity: .5; cursor: not-allowed; }
+        .attach-count {
+            position: absolute;
+            top: -4px; right: -4px;
+            font-size: 9px; font-weight: 700;
+            background: #3b82f6; color: #fff;
+            border-radius: 10px; padding: 1px 4px;
+        }
+        .conv-input-area { border-top: none; }
+
+        /* Adjuntos en burbujas */
+        .msg-attachments {
+            display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;
+        }
+        .msg-attachments-mine { justify-content: flex-end; }
+        .att-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #475569;
+            text-decoration: none;
+            transition: background .15s;
+        }
+        .att-chip:hover { background: #e2e8f0; color: #1e293b; }
+        .att-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
+        .att-chip.att-chip-mine {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+            color: #1e293b;
+        }
+        .att-chip.att-chip-mine:hover { background: #cbd5e1; color: #0f172a; }
     `]
 })
-export class TenantRequestDetailComponent implements OnInit {
+export class TenantRequestDetailComponent implements OnInit, OnDestroy, AfterViewChecked {
+    @ViewChild('msgContainer') private msgContainer!: ElementRef;
+    @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
+
     readonly ArrowLeft = ArrowLeft;
     readonly Wrench = Wrench;
     readonly Clock = Clock;
@@ -766,6 +1019,9 @@ export class TenantRequestDetailComponent implements OnInit {
     readonly FileText = FileText;
     readonly User = User;
     readonly Link = Link;
+    readonly Paperclip = Paperclip;
+    readonly X = X;
+    readonly Image = Image;
 
     private route = inject(ActivatedRoute);
     private maintenanceService = inject(TenantMaintenanceService);
@@ -785,15 +1041,99 @@ export class TenantRequestDetailComponent implements OnInit {
     isLoadingMessages = signal(false);
     isSending = signal(false);
     newMessage = '';
+    selectedFiles = signal<File[]>([]);
 
     // Store current user ID for message comparison
     private currentUserId: number | null = null;
 
-    ngOnInit(): void {
-        const id = this.route.snapshot.paramMap.get('id');
-        if (id) {
-            this.loadRequest(+id);
+    // Unread tracking
+    firstUnreadMessageId = 0;
+    unreadCountFromHere = 0;
+
+    // Polling
+    private pollingSub: Subscription | null = null;
+    private lastMessageId = 0;
+    newMessagesCount = signal(0);
+    pollingNewFromId = signal(0);  // ID del primer mensaje nuevo por polling
+
+    ngAfterViewChecked(): void {}  // kept to satisfy implements, scroll is now direct
+
+    ngOnDestroy(): void {
+        this.pollingSub?.unsubscribe();
+    }
+
+    private doScroll(delay = 100): void {
+        setTimeout(() => {
+            const el = this.msgContainer?.nativeElement;
+            if (el) el.scrollTop = el.scrollHeight;
+        }, delay);
+    }
+
+    private isNearBottom(): boolean {
+        const el = this.msgContainer?.nativeElement;
+        if (!el) return true;
+        return (el.scrollHeight - el.scrollTop - el.clientHeight) < 80;
+    }
+
+    private startPolling(requestId: number): void {
+        this.pollingSub?.unsubscribe();
+        this.pollingSub = interval(5000).subscribe(() => {
+            if (document.hidden) return;
+            this.maintenanceService.getMessages(requestId).subscribe({
+                next: (messages) => {
+                    const newLastId = messages.length > 0 ? messages[messages.length - 1].id : 0;
+                    if (newLastId !== this.lastMessageId) {
+                        const oldLastId = this.lastMessageId;
+                        const incoming = messages.length - this.messages().length;
+                        this.lastMessageId = newLastId;
+                        const atBottom = this.isNearBottom();
+                        // Marca el primer mensaje nuevo para el separador visual
+                        const firstNew = messages.find(m => m.id > oldLastId);
+                        if (firstNew) this.pollingNewFromId.set(firstNew.id);
+                        this.messages.set(messages);
+                        if (atBottom) {
+                            this.doScroll(100);
+                            this.newMessagesCount.set(0);
+                            setTimeout(() => this.pollingNewFromId.set(0), 2000);
+                        } else {
+                            this.newMessagesCount.update(c => c + (incoming > 0 ? incoming : 1));
+                        }
+                    }
+                },
+                error: () => {}
+            });
+        });
+    }
+
+    isFirstPollingNew(message: MaintenanceMessage): boolean {
+        return this.pollingNewFromId() > 0 && message.id === this.pollingNewFromId();
+    }
+
+    scrollToNewMessages(): void {
+        this.newMessagesCount.set(0);
+        this.doScroll(50);
+        setTimeout(() => this.pollingNewFromId.set(0), 2500);
+    }
+
+    onMessagesScroll(event: Event): void {
+        const el = event.target as HTMLElement;
+        if ((el.scrollHeight - el.scrollTop - el.clientHeight) < 80) {
+            this.newMessagesCount.set(0);
+            this.pollingNewFromId.set(0);
         }
+    }
+
+    ngOnInit(): void {
+        this.route.paramMap.subscribe(params => {
+            const id = params.get('id');
+            if (id) {
+                // Limpiar estado anterior antes de cargar la nueva solicitud
+                this.request.set(null);
+                this.messages.set([]);
+                this.newMessage = '';
+                this.loadRequest(+id);
+            }
+        });
     }
 
     loadRequest(id: number): void {
@@ -811,12 +1151,43 @@ export class TenantRequestDetailComponent implements OnInit {
         });
     }
 
+    private getLastReadId(requestId: number): number {
+        return parseInt(localStorage.getItem(`mnt_lastread_${requestId}`) ?? '0', 10);
+    }
+
+    private computeUnread(messages: MaintenanceMessage[], lastReadId: number): void {
+        if (lastReadId === 0) { this.firstUnreadMessageId = 0; this.unreadCountFromHere = 0; return; }
+        const unread = messages.filter(m => !this.isMyMessage(m) && m.id > lastReadId);
+        this.unreadCountFromHere = unread.length;
+        this.firstUnreadMessageId = unread.length > 0 ? unread[0].id : 0;
+    }
+
+    private markMessagesRead(messages: MaintenanceMessage[], requestId: number): void {
+        if (messages.length > 0) {
+            const lastId = Math.max(...messages.map(m => m.id));
+            localStorage.setItem(`mnt_lastread_${requestId}`, String(lastId));
+        }
+        const adminCount = messages.filter(m => !this.isMyMessage(m)).length;
+        localStorage.setItem(`mnt_read_${requestId}`, String(adminCount));
+    }
+
+    isFirstUnread(message: MaintenanceMessage): boolean {
+        return this.firstUnreadMessageId > 0 && message.id === this.firstUnreadMessageId;
+    }
+
     loadMessages(requestId: number): void {
+        const lastReadId = this.getLastReadId(requestId);
         this.isLoadingMessages.set(true);
+        this.messages.set([]);
         this.maintenanceService.getMessages(requestId).subscribe({
             next: (messages) => {
+                this.computeUnread(messages, lastReadId);
+                this.lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : 0;
                 this.messages.set(messages);
                 this.isLoadingMessages.set(false);
+                this.doScroll(150);
+                this.markMessagesRead(messages, requestId);
+                this.startPolling(requestId);
             },
             error: () => {
                 this.isLoadingMessages.set(false);
@@ -824,21 +1195,63 @@ export class TenantRequestDetailComponent implements OnInit {
         });
     }
 
+    onFileSelected(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files) return;
+        const newFiles = Array.from(input.files);
+        const remaining = 3 - this.selectedFiles().length;
+        this.selectedFiles.update(files => [...files, ...newFiles.slice(0, remaining)]);
+        input.value = '';
+    }
+
+    removeFile(index: number): void {
+        this.selectedFiles.update(files => files.filter((_, i) => i !== index));
+    }
+
+    getFileUrl(url: string): string {
+        return environment.apiUrl.replace(/\/$/, '') + url;
+    }
+
+    isImageAttachment(fileType: string): boolean {
+        return fileType === 'image';
+    }
+
     sendMessage(): void {
         const message = this.newMessage.trim();
         if (!message || !this.request()) return;
 
         this.isSending.set(true);
-        this.maintenanceService.sendMessage(this.request()!.id, { message }).subscribe({
-            next: (msg) => {
-                this.messages.update(msgs => [...msgs, msg]);
-                this.newMessage = '';
-                this.isSending.set(false);
-            },
-            error: () => {
-                this.isSending.set(false);
-            }
-        });
+
+        const send = (fileUrls: string[]) => {
+            const dto = {
+                message,
+                ...(fileUrls.length > 0 && { files: fileUrls })
+            };
+            this.maintenanceService.sendMessage(this.request()!.id, dto).subscribe({
+                next: (msg) => {
+                    this.messages.update(msgs => [...msgs, msg]);
+                    this.lastMessageId = msg.id;
+                    this.newMessage = '';
+                    this.selectedFiles.set([]);
+                    this.isSending.set(false);
+                    this.doScroll(50);
+                },
+                error: () => {
+                    this.isSending.set(false);
+                }
+            });
+        };
+
+        if (this.selectedFiles().length > 0) {
+            this.maintenanceService.uploadFiles(this.request()!.id, this.selectedFiles()).subscribe({
+                next: (attachments) => send(attachments.map(a => a.file_url)),
+                error: () => {
+                    this.isSending.set(false);
+                }
+            });
+        } else {
+            send([]);
+        }
     }
 
     canSendMessage(): boolean {
@@ -849,22 +1262,47 @@ export class TenantRequestDetailComponent implements OnInit {
 
     getStatusColor(status: MaintenanceStatus): string {
         const map: Record<string, string> = {
-            NEW: 'status-new',
-            IN_PROGRESS: 'status-in_progress',
-            COMPLETED: 'status-completed',
-            DEFERRED: 'status-deferred',
-            CLOSED: 'status-closed'
+            NEW: 'status-new', IN_PROGRESS: 'status-in_progress',
+            COMPLETED: 'status-completed', DEFERRED: 'status-deferred', CLOSED: 'status-closed'
         };
         return map[status] ?? '';
     }
 
     getPriorityColor(priority: string): string {
         const map: Record<string, string> = {
-            LOW: 'priority-low',
-            NORMAL: 'priority-normal',
-            HIGH: 'priority-high'
+            LOW: 'priority-low', NORMAL: 'priority-normal', HIGH: 'priority-high'
         };
         return map[priority] ?? '';
+    }
+
+    getStatusBgColor(status: string): string {
+        const map: Record<string, string> = {
+            NEW: '#dbeafe', IN_PROGRESS: '#fef3c7',
+            COMPLETED: '#d1fae5', DEFERRED: '#fed7aa', CLOSED: '#e2e8f0'
+        };
+        return map[status] ?? '#e2e8f0';
+    }
+
+    getStatusTextColor(status: string): string {
+        const map: Record<string, string> = {
+            NEW: '#1d4ed8', IN_PROGRESS: '#b45309',
+            COMPLETED: '#047857', DEFERRED: '#c2410c', CLOSED: '#475569'
+        };
+        return map[status] ?? '#475569';
+    }
+
+    getPriorityBgColor(priority: string): string {
+        const map: Record<string, string> = {
+            LOW: '#d1fae5', NORMAL: '#fef3c7', HIGH: '#fee2e2'
+        };
+        return map[priority] ?? '#f1f5f9';
+    }
+
+    getPriorityTextColor(priority: string): string {
+        const map: Record<string, string> = {
+            LOW: '#047857', NORMAL: '#b45309', HIGH: '#dc2626'
+        };
+        return map[priority] ?? '#475569';
     }
 
     isMyMessage(message: MaintenanceMessage): boolean {

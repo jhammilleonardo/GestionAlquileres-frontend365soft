@@ -69,6 +69,14 @@ export const TENANT_PORTAL_ROUTES: Routes = [
                     {
                         path: 'nuevo',
                         loadComponent: () => import('./payments/tenant-create-payment.component').then(m => m.TenantCreatePaymentComponent)
+                    },
+                    {
+                        path: 'qr',
+                        loadComponent: () => import('./payments/tenant-qr-payments-list.component').then(m => m.TenantQrPaymentsListComponent)
+                    },
+                    {
+                        path: 'qr/nuevo',
+                        loadComponent: () => import('./payments/tenant-qr-generate.component').then(m => m.TenantQrGenerateComponent)
                     }
                 ]
             },

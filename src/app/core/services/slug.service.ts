@@ -220,9 +220,30 @@ export class SlugService {
   }
 
   /**
-   * Cargar slug desde localStorage o sessionStorage
+   * Cargar slug desde los datos del usuario autenticado (fuente de verdad).
+   * Si no hay usuario autenticado, cae en el valor guardado en storage como fallback.
    */
   private loadSlugFromStorage(): string | null {
+    // Prioridad 1: slug del usuario admin autenticado
+    try {
+      const adminUserJson = localStorage.getItem('admin_user');
+      if (adminUserJson) {
+        const adminUser = JSON.parse(adminUserJson);
+        if (adminUser?.tenant_slug) return adminUser.tenant_slug;
+      }
+    } catch (e) { /* ignore */ }
+
+    // Prioridad 2: slug del usuario tenant autenticado
+    try {
+      const tenantUserJson = localStorage.getItem('tenant_user');
+      if (tenantUserJson) {
+        const tenantUser = JSON.parse(tenantUserJson);
+        const slug = tenantUser?.tenant_slug || tenantUser?.tenantSlug;
+        if (slug) return slug;
+      }
+    } catch (e) { /* ignore */ }
+
+    // Fallback: valor en storage (solo si no hay usuario autenticado)
     return localStorage.getItem(this.SLUG_KEY) || sessionStorage.getItem(this.SLUG_KEY);
   }
 

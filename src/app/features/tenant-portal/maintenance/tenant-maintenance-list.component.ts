@@ -2,18 +2,16 @@ import { Component, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule, MatChipListboxChange } from '@angular/material/chips';
-import { LucideAngularModule, Plus, Search, Wrench, Clock, Home, MessageSquare, AlertCircle, CheckCircle2, XCircle } from 'lucide-angular';
+import { LucideAngularModule, Plus, Search, Wrench, Clock, MessageSquare, AlertCircle, CheckCircle2, XCircle, FileText, ChevronRight, Droplet, Zap, Wind, KeyRound, Lightbulb, Hammer, Leaf, Home } from 'lucide-angular';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
-    MaintenanceStatus,
     MaintenanceStatusLabels,
     MaintenancePriorityLabels,
     MaintenanceCategoryLabels
@@ -26,432 +24,197 @@ import {
         CommonModule,
         RouterModule,
         FormsModule,
-        MatCardModule,
+        MatProgressSpinnerModule,
         MatButtonModule,
+        MatCardModule,
+        MatChipsModule,
         MatFormFieldModule,
         MatInputModule,
-        MatSelectModule,
-        MatProgressSpinnerModule,
-        MatChipsModule,
         LucideAngularModule
     ],
     template: `
-        <div class="maintenance-container">
-            <!-- Header -->
-            <div class="page-header">
-                <div class="header-content">
-                    <lucide-icon [img]="Wrench" [size]="32"></lucide-icon>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+            
+            <!-- Encabezado Moderno -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                <div class="flex items-start gap-4">
+                    <div class="p-3 bg-primary-50 rounded-2xl shadow-sm border border-primary-100">
+                        <lucide-icon [img]="Wrench" class="text-primary-600" [size]="28"></lucide-icon>
+                    </div>
                     <div>
-                        <h1>Mis Solicitudes</h1>
-                        <p>Gestiona tus solicitudes de mantenimiento</p>
+                        <h1 class="text-3xl font-bold text-slate-800 tracking-tight mb-1">Mis Solicitudes</h1>
+                        <p class="text-slate-500 text-sm md:text-base">Administra y haz seguimiento a tus reportes de mantenimiento.</p>
                     </div>
                 </div>
-                <button mat-raised-button color="primary" [routerLink]="crearSolicitudUrl()" class="new-btn">
+                
+                <button mat-raised-button
+                    [routerLink]="crearSolicitudUrl()"
+                    style="background-color: #2563eb; color: white; border-radius: 12px; padding: 10px 24px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
                     <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
                     Nueva Solicitud
                 </button>
             </div>
 
-            <!-- Stats -->
-            <div class="stats-row">
-                <mat-chip-listbox [value]="selectedStatus" (change)="onStatusChange($event)">
-                    <mat-chip-option value="all" [selected]="selectedStatus === 'all'">
-                        Todas ({{ maintenanceService.stats()?.total || 0 }})
-                    </mat-chip-option>
-                    <mat-chip-option value="NEW">
-                        Nuevas
-                    </mat-chip-option>
-                    <mat-chip-option value="IN_PROGRESS">
-                        En Proceso ({{ maintenanceService.stats()?.active || 0 }})
-                    </mat-chip-option>
-                    <mat-chip-option value="COMPLETED">
-                        Completadas ({{ maintenanceService.stats()?.completed || 0 }})
-                    </mat-chip-option>
-                </mat-chip-listbox>
-            </div>
+            <!-- Panel de Controles (Buscador y Filtros) -->
+            <mat-card class="mb-8" style="padding: 12px 20px; border: none; box-shadow: none;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
 
-            <!-- Search -->
-            <mat-form-field appearance="outline" class="search-field">
-                <lucide-icon matIconPrefix [img]="Search" [size]="20"></lucide-icon>
-                <mat-label>Buscar solicitudes...</mat-label>
-                <input matInput [(ngModel)]="searchQuery" (ngModelChange)="onSearch()">
-            </mat-form-field>
+                    <!-- Filtros con mat-chip-listbox -->
+                    <mat-chip-listbox [value]="selectedStatus" (change)="filterByStatus($event.value)" style="flex-shrink:0;">
+                        <mat-chip-option value="all">
+                            Todas <strong style="margin-left:4px;">{{ maintenanceService.stats()?.total || 0 }}</strong>
+                        </mat-chip-option>
+                        <mat-chip-option value="NEW">Nuevas</mat-chip-option>
+                        <mat-chip-option value="IN_PROGRESS">
+                            En Proceso <strong style="margin-left:4px;">{{ maintenanceService.stats()?.active || 0 }}</strong>
+                        </mat-chip-option>
+                        <mat-chip-option value="COMPLETED">
+                            Completadas <strong style="margin-left:4px;">{{ maintenanceService.stats()?.completed || 0 }}</strong>
+                        </mat-chip-option>
+                    </mat-chip-listbox>
 
-            <!-- Loading -->
+                    <!-- Buscador con mat-form-field -->
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic" style="flex:1; min-width:200px;">
+                        <lucide-icon matPrefix [img]="Search" [size]="16" style="margin-right:6px; opacity:0.5;"></lucide-icon>
+                        <input matInput [(ngModel)]="searchQuery" placeholder="Buscar por título, ID o descripción...">
+                    </mat-form-field>
+
+                </div>
+            </mat-card>
+
+            <!-- Contenido Principal -->
             @if (maintenanceService.isLoading()) {
-                <div class="requests-grid">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @for (i of [1,2,3,4,5,6]; track i) {
-                        <mat-card class="skeleton-card">
-                            <div class="skeleton-header">
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-badge"></div>
+                        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm animate-pulse">
+                            <div class="flex justify-between items-center mb-4">
+                                <div class="h-4 bg-slate-200 rounded w-1/4"></div>
+                                <div class="h-6 bg-slate-200 rounded-full w-1/3"></div>
                             </div>
-                            <div class="skeleton-line title"></div>
-                            <div class="skeleton-line medium"></div>
-                            <div class="skeleton-line"></div>
-                            <div class="skeleton-footer">
-                                <div class="skeleton-line short"></div>
-                                <div class="skeleton-line short"></div>
+                            <div class="h-5 bg-slate-200 rounded w-3/4 mb-3"></div>
+                            <div class="h-4 bg-slate-200 rounded w-1/2 mb-6"></div>
+                            <div class="h-16 bg-slate-100 rounded-xl mb-4"></div>
+                            <div class="flex gap-4 pt-4 border-t border-slate-100">
+                                <div class="h-4 bg-slate-200 rounded w-1/4"></div>
+                                <div class="h-4 bg-slate-200 rounded w-1/4"></div>
                             </div>
-                        </mat-card>
+                        </div>
                     }
                 </div>
-            }
-
-            <!-- Empty State -->
-            @else if (filteredRequests.length === 0) {
-                <div class="empty-state">
-                    <lucide-icon [img]="Wrench" [size]="64"></lucide-icon>
-                    <h2>No hay solicitudes</h2>
+            } @else if (filteredRequests.length === 0) {
+                <div class="flex flex-col items-center justify-center py-20 px-4 text-center bg-white rounded-3xl border border-slate-100 border-dashed shadow-sm">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                        <lucide-icon [img]="FileText" class="text-slate-300" [size]="40"></lucide-icon>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">
+                        {{ searchQuery || selectedStatus !== 'all' ? 'No se encontraron resultados' : 'No hay solicitudes' }}
+                    </h3>
+                    <p class="text-slate-500 max-w-sm mx-auto mb-8">
+                        {{ searchQuery || selectedStatus !== 'all' 
+                            ? 'Intenta ajustando los filtros o el término de búsqueda para encontrar lo que necesitas.' 
+                            : 'Aún no has creado ninguna solicitud de mantenimiento para tu propiedad.' }}
+                    </p>
                     @if (searchQuery || selectedStatus !== 'all') {
-                        <p>No se encontraron solicitudes con los filtros aplicados</p>
-                        <button mat-stroked-button (click)="clearFilters()">Limpiar Filtros</button>
+                        <button (click)="clearFilters()" class="text-primary-600 font-medium hover:text-primary-700 bg-primary-50 px-6 py-2.5 rounded-xl transition-colors">
+                            Limpiar Filtros
+                        </button>
                     } @else {
-                        <p>Aun no has creado ninguna solicitud de mantenimiento</p>
-                        <button mat-raised-button color="primary" [routerLink]="crearSolicitudUrl()">
-                            Crear Primera Solicitud
+                        <button [routerLink]="crearSolicitudUrl()" class="text-white font-medium bg-primary-600 hover:bg-primary-700 px-6 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md">
+                            Crear mi primera solicitud
                         </button>
                     }
                 </div>
-            }
-
-            <!-- Requests List -->
-            @else {
-                <div class="requests-grid">
+            } @else {
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     @for (request of filteredRequests; track request.id) {
-                        <mat-card class="request-card" [routerLink]="buildRequestDetailUrl(request.id)">
-                            <div class="card-header">
-                                <span class="ticket">{{ request.ticket_number }}</span>
-                                <span class="status-badge" [class]="'status-' + request.status.toLowerCase()">
+                        <div
+                            [routerLink]="buildRequestDetailUrl(request.id)"
+                            class="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer p-6 flex flex-col">
+
+                            <!-- Top: ticket + status + mensajes -->
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-mono text-slate-400">{{ request.ticket_number }}</span>
+                                    @if (getUnreadCount(request.id, maintenanceService.messageCounts()[request.id] ?? 0) > 0) {
+                                        <div class="relative inline-flex">
+                                            <lucide-icon [img]="MessageSquare" [size]="20" class="text-blue-500">
+                                            </lucide-icon>
+                                            <span class="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+                                                {{ getUnreadCount(request.id, maintenanceService.messageCounts()[request.id] ?? 0) }}
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white"
+                                    [ngClass]="{
+                                        'bg-blue-500':    request.status === 'NEW',
+                                        'bg-amber-500':   request.status === 'IN_PROGRESS',
+                                        'bg-emerald-500': request.status === 'COMPLETED' || request.status === 'CLOSED',
+                                        'bg-orange-500':  request.status === 'DEFERRED'
+                                    }">
                                     {{ statusLabels[request.status] }}
                                 </span>
                             </div>
 
-                            <h3 class="request-title">{{ request.title }}</h3>
+                            <!-- Title -->
+                            <h3 class="text-lg font-bold text-slate-900 line-clamp-2 mb-3 flex-1">
+                                {{ request.title }}
+                            </h3>
 
-                            @if (request.category) {
-                                <div class="category">
-                                    <lucide-icon [img]="Wrench" [size]="14"></lucide-icon>
-                                    {{ categoryLabels[request.category] }}
-                                </div>
-                            }
+                            <!-- Description -->
+                            <p class="text-sm text-slate-500 line-clamp-2 mb-4">
+                                {{ request.description }}
+                            </p>
 
-                            <p class="description">{{ request.description | slice:0:100 }}{{ request.description.length > 100 ? '...' : '' }}</p>
+                            <!-- Footer: category + priority -->
+                            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
 
-                            <div class="card-footer">
-                                <div class="meta">
-                                    <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                                    {{ formatDate(request.created_at) }}
-                                </div>
-                                @if (request.messages && request.messages.length > 0) {
-                                    <div class="meta">
-                                        <lucide-icon [img]="MessageSquare" [size]="14"></lucide-icon>
-                                        {{ request.messages.length }}
+                                @if (request.category) {
+                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 cursor-default"
+                                        [style.border-color]="hoveredCat[request.id] ? getCategoryColor(request.category) : '#cbd5e1'"
+                                        [style.color]="hoveredCat[request.id] ? getCategoryColor(request.category) : '#64748b'"
+                                        (mouseenter)="hoveredCat[request.id] = true"
+                                        (mouseleave)="hoveredCat[request.id] = false">
+                                        <lucide-icon [img]="getCategoryIcon(request.category)" [size]="14"
+                                            [style.color]="hoveredCat[request.id] ? getCategoryColor(request.category) : '#64748b'">
+                                        </lucide-icon>
+                                        <span class="text-xs font-medium">{{ categoryLabels[request.category] }}</span>
                                     </div>
                                 }
-                                <div class="priority" [class]="'priority-' + request.priority.toLowerCase()">
-                                    @if (request.priority === 'HIGH') {
-                                        <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-                                    }
+
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white"
+                                    [ngClass]="{
+                                        'bg-emerald-500': request.priority === 'LOW',
+                                        'bg-orange-500':  request.priority === 'NORMAL',
+                                        'bg-red-500':     request.priority === 'HIGH'
+                                    }">
                                     {{ priorityLabels[request.priority] }}
-                                </div>
+                                </span>
                             </div>
-                        </mat-card>
+                        </div>
                     }
                 </div>
             }
         </div>
     `,
     styles: [`
-        .maintenance-container {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* Utilidades para ocultar barra de scroll en los filtros */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 16px;
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        
+        /* Animaciones suaves */
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
         }
-
-        .new-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 10px;
-            font-weight: 600;
-            padding: 0 20px;
-            height: 42px;
-        }
-
-        .header-content h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin: 0 0 4px;
-        }
-
-        .header-content p {
-            color: #64748b;
-            margin: 0;
-        }
-
-        .stats-row {
-            margin-bottom: 16px;
-        }
-
-        .search-field {
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 24px;
-        }
-
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 60px;
-            color: #64748b;
-        }
-
-        .loading p {
-            margin-top: 16px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #64748b;
-        }
-
-        .empty-state lucide-icon {
-            opacity: 0.5;
-            margin-bottom: 16px;
-        }
-
-        .empty-state h2 {
-            color: #1e293b;
-            margin: 0 0 8px;
-        }
-
-        .empty-state p {
-            margin: 0 0 24px;
-        }
-
-        .requests-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 16px;
-        }
-
-        .request-card {
-            padding: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .request-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .ticket {
-            font-family: monospace;
-            font-size: 12px;
-            color: var(--mat-sys-primary);
-        }
-
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .status-badge.status-new { background: #dbeafe; color: #1d4ed8; }
-        .status-badge.status-in_progress { background: #fef3c7; color: #b45309; }
-        .status-badge.status-completed { background: #d1fae5; color: #047857; }
-        .status-badge.status-deferred { background: #fed7aa; color: #c2410c; }
-        .status-badge.status-closed { background: #e2e8f0; color: #475569; }
-
-        .request-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 8px;
-        }
-
-        .category {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            color: var(--mat-sys-primary);
-            margin-bottom: 8px;
-        }
-
-        .description {
-            color: #64748b;
-            font-size: 14px;
-            line-height: 1.5;
-            margin: 0 0 16px;
-        }
-
-        .card-footer {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding-top: 12px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .meta {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .priority {
-            margin-left: auto;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .priority-low { color: #10b981; }
-        .priority-normal { color: #f59e0b; }
-        .priority-high { color: #ef4444; }
-
-        /* Skeleton Loaders */
-        @keyframes shimmer {
-            0% { background-position: -1000px 0; }
-            100% { background-position: 1000px 0; }
-        }
-
-        .skeleton-card {
-            padding: 20px;
-        }
-
-        .skeleton-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .skeleton-badge {
-            width: 80px;
-            height: 24px;
-            border-radius: 20px;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-        }
-
-        .skeleton-line {
-            height: 16px;
-            border-radius: 4px;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 1000px 100%;
-            animation: shimmer 2s infinite;
-            margin-bottom: 12px;
-        }
-
-        .skeleton-line.title {
-            height: 24px;
-            width: 70%;
-        }
-
-        .skeleton-line.short {
-            width: 30%;
-        }
-
-        .skeleton-line.medium {
-            width: 60%;
-        }
-
-        .skeleton-footer {
-            display: flex;
-            gap: 16px;
-            margin-top: 16px;
-            padding-top: 12px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .header-content {
-                width: 100%;
-            }
-
-            .stats-row {
-                overflow-x: auto;
-            }
-
-            .requests-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .search-field {
-                max-width: 100%;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .header-content lucide-icon {
-                display: none;
-            }
-
-            .header-content h1 {
-                font-size: 1.35rem;
-            }
-
-            .card-footer {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-
-            .meta {
-                font-size: 11px;
-            }
-
-            .request-card {
-                padding: 16px;
-            }
-
-            .request-title {
-                font-size: 1rem;
-            }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     `]
 })
@@ -460,11 +223,74 @@ export class TenantMaintenanceListComponent implements OnInit {
     readonly Search = Search;
     readonly Wrench = Wrench;
     readonly Clock = Clock;
-    readonly Home = Home;
     readonly MessageSquare = MessageSquare;
     readonly AlertCircle = AlertCircle;
     readonly CheckCircle2 = CheckCircle2;
     readonly XCircle = XCircle;
+    readonly FileText = FileText;
+    readonly ChevronRight = ChevronRight;
+    readonly Droplet = Droplet;
+    readonly Zap = Zap;
+    readonly Wind = Wind;
+    readonly KeyRound = KeyRound;
+    readonly Lightbulb = Lightbulb;
+    readonly Hammer = Hammer;
+    readonly Leaf = Leaf;
+    readonly Home = Home;
+
+    private categoryIconMap: Record<string, any> = {
+        PLOMERIA:        Droplet,
+        ELECTRICO:       Zap,
+        CLIMATIZACION:   Wind,
+        LLAVE_CERRADURA: KeyRound,
+        ILUMINACION:     Lightbulb,
+        ACCESORIOS:      Hammer,
+        AFUERA:          Leaf,
+        GENERAL:         Home,
+    };
+
+    private categoryBgMap: Record<string, string> = {
+        PLOMERIA:        '#dbeafe',
+        ELECTRICO:       '#fef9c3',
+        CLIMATIZACION:   '#cffafe',
+        LLAVE_CERRADURA: '#ffedd5',
+        ILUMINACION:     '#fefce8',
+        ACCESORIOS:      '#f1f5f9',
+        AFUERA:          '#dcfce7',
+        GENERAL:         '#eff6ff',
+    };
+
+    private categoryColorMap: Record<string, string> = {
+        PLOMERIA:        '#1d4ed8',
+        ELECTRICO:       '#a16207',
+        CLIMATIZACION:   '#0e7490',
+        LLAVE_CERRADURA: '#c2410c',
+        ILUMINACION:     '#854d0e',
+        ACCESORIOS:      '#475569',
+        AFUERA:          '#15803d',
+        GENERAL:         '#1d4ed8',
+    };
+
+    getCategoryIcon(category: string): any {
+        return this.categoryIconMap[category] ?? Wrench;
+    }
+
+    getVisibleMessages(request: any): any[] {
+        return (request.messages || []).filter((m: any) => m.send_to_resident === true);
+    }
+
+    getUnreadCount(requestId: number, totalVisible: number): number {
+        const read = parseInt(localStorage.getItem(`mnt_read_${requestId}`) ?? '0', 10);
+        return Math.max(0, totalVisible - read);
+    }
+
+    getCategoryBg(category: string): string {
+        return this.categoryBgMap[category] ?? '#f1f5f9';
+    }
+
+    getCategoryColor(category: string): string {
+        return this.categoryColorMap[category] ?? '#475569';
+    }
 
     maintenanceService = inject(TenantMaintenanceService);
     private slugService = inject(SlugService);
@@ -475,19 +301,23 @@ export class TenantMaintenanceListComponent implements OnInit {
 
     searchQuery = '';
     selectedStatus: string = 'all';
+    hoveredCat: Record<number, boolean> = {};
 
-    // URL para crear nueva solicitud
     crearSolicitudUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento/nueva'));
 
     get filteredRequests() {
-        let requests = this.maintenanceService.requests();
+        let requests = this.maintenanceService.requests() || [];
 
-        // Filter by status
+        // Asegurarse de que las fechas sean objetos Date para evitar errores en formatDate
+        requests = requests.map(r => ({
+            ...r,
+            created_at: typeof r.created_at === 'string' ? new Date(r.created_at) : r.created_at
+        }));
+
         if (this.selectedStatus !== 'all') {
             requests = requests.filter(r => r.status === this.selectedStatus);
         }
 
-        // Filter by search
         if (this.searchQuery) {
             const query = this.searchQuery.toLowerCase();
             requests = requests.filter(r =>
@@ -505,16 +335,8 @@ export class TenantMaintenanceListComponent implements OnInit {
         this.maintenanceService.loadStats();
     }
 
-    onStatusChange(event: MatChipListboxChange): void {
-        this.selectedStatus = event.value;
-    }
-
     filterByStatus(status: string): void {
         this.selectedStatus = status || 'all';
-    }
-
-    onSearch(): void {
-        // Filtering is done reactively via the getter
     }
 
     clearFilters(): void {
@@ -522,16 +344,20 @@ export class TenantMaintenanceListComponent implements OnInit {
         this.selectedStatus = 'all';
     }
 
-    formatDate(date: Date): string {
+    formatDate(date: any): string {
+        if (!date) return '';
+        const dateObj = typeof date === 'string' ? new Date(date) : date;
+        if (isNaN(dateObj.getTime())) return '';
+        
         const now = new Date();
-        const diffMs = now.getTime() - date.getTime();
+        const diffMs = now.getTime() - dateObj.getTime();
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
         if (diffDays === 0) return 'Hoy';
         if (diffDays === 1) return 'Ayer';
-        if (diffDays < 7) return `Hace ${diffDays} dias`;
+        if (diffDays < 7) return `Hace ${diffDays} días`;
 
-        return date.toLocaleDateString('es-ES', {
+        return dateObj.toLocaleDateString('es-ES', {
             day: '2-digit',
             month: 'short'
         });

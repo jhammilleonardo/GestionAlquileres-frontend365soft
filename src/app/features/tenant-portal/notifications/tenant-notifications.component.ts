@@ -142,6 +142,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     }
   }
 
+
   getNotificationIcon(eventType: string): any {
     if (eventType.includes('maintenance')) return Wrench;
     if (eventType.includes('contract')) return FileText;
@@ -165,13 +166,17 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
 
   getNotificationTypeLabel(eventType: string): string {
     const types: { [key: string]: string } = {
+      'maintenance.request.created': 'Nueva Solicitud',
       'maintenance.status.changed': 'Estado Actualizado',
       'maintenance.message.received': 'Nuevo Mensaje',
+      'maintenance.assigned': 'Asignado',
       'maintenance.completed': 'Completado',
       'contract.created': 'Nuevo Contrato',
+      'contract.signed': 'Contrato Firmado',
       'contract.expiring': 'Contrato por Vencer',
-      'payment.due': 'Pago Pendiente',
-      'payment.completed': 'Pago Completado'
+      'payment.created': 'Pago Registrado',
+      'payment.approved': 'Pago Aprobado',
+      'payment.rejected': 'Pago Rechazado',
     };
     return types[eventType] || 'Notificación';
   }

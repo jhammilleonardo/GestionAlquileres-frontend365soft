@@ -22,12 +22,25 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
         return false;
     }
 
-    // Set slug in SlugService
-    slugService.setSlug(slug);
-
     if (authService.isAuthenticated()) {
+        // Validate URL slug against the authenticated user's tenant_slug
+        const currentUser = authService.currentUser();
+        const userSlug = currentUser?.tenant_slug || currentUser?.tenantSlug || null;
+
+        if (userSlug && slug !== userSlug) {
+            // URL slug doesn't match user's tenant — redirect to correct URL
+            const correctUrl = state.url.replace(`/${slug}/`, `/${userSlug}/`);
+            router.navigate([correctUrl], { replaceUrl: true });
+            return false;
+        }
+
+        // Set verified slug
+        slugService.setSlug(userSlug || slug);
         return true;
     }
+
+    // Set slug from URL as fallback (for unauthenticated redirects)
+    slugService.setSlug(slug);
 
     // Redirect to tenant login with slug
     // Usar replaceUrl para que la redirección no quede en el historial
@@ -158,14 +171,6 @@ export const tenantWithContractGuard: CanActivateFn = (route, state) => {
         }
         return false;
     }
-
-    // Refrescar datos del usuario para verificar si ahora tiene contrato
-    authService.refreshUserData().subscribe(updatedUser => {
-        if (!updatedUser?.contract) {
-            // El usuario NO tiene contrato, redirigir al home pre-contrato
-            slugService.navigateTo(['portal', 'home']);
-        }
-    });
 
     // Si NO tiene contrato, bloquear acceso inmediatamente
     if (!currentUser.contract) {

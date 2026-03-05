@@ -1,6 +1,7 @@
 import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -84,12 +85,35 @@ export class MantenimientoComponent implements OnInit {
   // Services
   private maintenanceService = inject(MaintenanceService);
   private dialog = inject(MatDialog);
+  private route = inject(ActivatedRoute);
 
   ngOnInit(): void {
     // Load data when component initializes
     // This ensures the slug is already set by the authGuard
     this.maintenanceService.loadAllRequests();
     this.maintenanceService.loadStats();
+
+    // Check for query param 'open' to auto-open a request detail
+    this.route.queryParams.subscribe(params => {
+      if (params['open']) {
+        const id = parseInt(params['open'], 10);
+        if (!isNaN(id)) {
+          this.maintenanceService.getRequestById(id).subscribe({
+            next: (request) => {
+              this.dialog.open(RequestDetailComponent, {
+                width: '1200px',
+                maxWidth: '96vw',
+                height: '90vh',
+                maxHeight: '90vh',
+                data: { request },
+                panelClass: 'request-detail-dialog-panel'
+              });
+            },
+            error: () => { /* Silently ignore if not found */ }
+          });
+        }
+      }
+    });
   }
 
   // Computed data

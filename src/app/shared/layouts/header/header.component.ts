@@ -6,7 +6,11 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
-import { LucideAngularModule, Menu, Bell, Search, User, Settings, LogOut, Check, Trash2 } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Menu, Bell, Search, User, Settings, LogOut, Check, Trash2,
+  Wrench, Home, FileText, CreditCard, CheckCheck, X, ChevronRight
+} from 'lucide-angular';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
@@ -38,12 +42,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   currentUser = this.authService.currentUser;
   sidebarExpanded = this.sidebarService.expanded;
 
-  // Notification state
   notifications = this.notificationService.notifications;
   unreadCount = this.notificationService.unreadCount;
   isNotificationsDropdownOpen = false;
 
-  // Lucide icons
   readonly Menu = Menu;
   readonly Bell = Bell;
   readonly Search = Search;
@@ -52,23 +54,25 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly LogOut = LogOut;
   readonly Check = Check;
   readonly Trash2 = Trash2;
+  readonly Wrench = Wrench;
+  readonly Home = Home;
+  readonly FileText = FileText;
+  readonly CreditCard = CreditCard;
+  readonly CheckCheck = CheckCheck;
+  readonly X = X;
+  readonly ChevronRight = ChevronRight;
 
   ngOnInit(): void {
-    // Load notifications and stats
     this.notificationService.loadNotifications({ is_read: false, limit: 5 });
     this.notificationService.loadStats();
-
-    // Start polling (1 minute)
     this.notificationService.startPolling(60000);
   }
 
   ngOnDestroy(): void {
-    // Stop polling when component is destroyed
     this.notificationService.stopPolling();
   }
 
   toggleSidebar(): void {
-    // En móvil, abrir el sidebar como overlay
     if (this.sidebarService.isMobile()) {
       this.sidebarService.toggleMobile();
     } else {
@@ -128,63 +132,55 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   handleNotificationClick(notification: Notification): void {
-    // Mark as read
     if (!notification.is_read) {
       this.markNotificationRead(notification.id);
     }
-
-    // Navigate based on event type
     this.navigateToRelatedPage(notification);
   }
 
-  navigateToRelatedPage(notification: Notification): void {
-    const eventType = notification.event_type;
+  private getSlugFromCurrentUrl(): string | null {
+    const url = this.router.url;
+    const segments = url.split('/').filter(s => s.length > 0);
+    return segments.length > 0 ? segments[0] : null;
+  }
 
-    if (eventType.includes('maintenance')) {
-      const requestId = notification.metadata?.['maintenance_request_id'];
-      if (requestId) {
-        this.router.navigate(['/mantenimiento', requestId]);
-      }
-    } else if (eventType.includes('property')) {
-      const propertyId = notification.metadata?.['property_id'];
-      if (propertyId) {
-        this.router.navigate(['/propiedades', propertyId]);
-      }
-    } else if (eventType.includes('user')) {
-      const userId = notification.metadata?.['user_id'];
-      if (userId) {
-        this.router.navigate(['/inquilinos', userId]);
-      }
-    } else if (eventType.includes('contract')) {
-      const contractId = notification.metadata?.['contract_id'];
-      if (contractId) {
-        this.router.navigate(['/contratos', contractId]);
-      }
+  private navigateToSlugPath(path: string): void {
+    const slug = this.getSlugFromCurrentUrl() || this.slugService.getSlug();
+    if (slug) {
+      this.router.navigateByUrl(`/${slug}/${path}`);
     }
+    this.closeNotificationsDropdown();
+  }
 
+  navigateToRelatedPage(notification: Notification): void {
+    const slug = this.getSlugFromCurrentUrl() || this.slugService.getSlug();
+    if (slug) {
+      this.router.navigate(['/', slug, 'notificaciones'], {
+        queryParams: { highlight: notification.id }
+      });
+    }
     this.closeNotificationsDropdown();
   }
 
   goToNotifications(): void {
-    this.router.navigate(['/notificaciones']);
-    this.closeNotificationsDropdown();
+    this.navigateToSlugPath('notificaciones');
   }
 
-  getNotificationIcon(eventType: string): string {
-    if (eventType.includes('maintenance')) return '🔧';
-    if (eventType.includes('property')) return '🏠';
-    if (eventType.includes('user')) return '👤';
-    if (eventType.includes('contract')) return '📄';
-    if (eventType.includes('payment')) return '💳';
-    return '🔔';
+  getNotificationIcon(eventType: string): any {
+    if (eventType.includes('maintenance')) return this.Wrench;
+    if (eventType.includes('property')) return this.Home;
+    if (eventType.includes('contract')) return this.FileText;
+    if (eventType.includes('payment')) return this.CreditCard;
+    if (eventType.includes('user')) return this.User;
+    return this.Bell;
   }
 
   getNotificationIconColor(eventType: string): string {
-    if (eventType.includes('maintenance')) return 'text-blue-600';
-    if (eventType.includes('property')) return 'text-green-600';
-    if (eventType.includes('user')) return 'text-purple-600';
-    if (eventType.includes('contract')) return 'text-orange-600';
-    if (eventType.includes('payment')) return 'text-red-600';
-    return 'text-gray-600';
+    if (eventType.includes('maintenance')) return 'icon-blue';
+    if (eventType.includes('property')) return 'icon-green';
+    if (eventType.includes('user')) return 'icon-purple';
+    if (eventType.includes('contract')) return 'icon-orange';
+    if (eventType.includes('payment')) return 'icon-red';
+    return 'icon-gray';
   }
 }

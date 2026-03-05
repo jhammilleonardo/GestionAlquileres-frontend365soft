@@ -17,7 +17,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { LucideAngularModule, DollarSign, TrendingUp, AlertCircle, CheckCircle2, XCircle, Filter, Eye, RefreshCw, Plus, X, Search } from 'lucide-angular';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { LucideAngularModule, DollarSign, TrendingUp, AlertCircle, CheckCircle2, XCircle, Filter, Eye, RefreshCw, Plus, X, Search, Download, Trash2, ExternalLink } from 'lucide-angular';
 import { startWith, debounceTime, switchMap, map } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
 import { PaymentService } from '../../core/services/payment.service';
@@ -37,7 +38,8 @@ import {
   PaymentStatusColors,
   PaymentFilters,
   CreatePaymentAsAdminDto,
-  PaymentProcessor
+  PaymentProcessor,
+  BulkPaymentActionDto
 } from '../../core/models/payment.model';
 
 @Component({
@@ -61,6 +63,7 @@ import {
     MatTooltipModule,
     MatAutocompleteModule,
     MatProgressBarModule,
+    MatCheckboxModule,
     LucideAngularModule
   ],
   templateUrl: './pagos.component.html',
@@ -79,6 +82,9 @@ export class PagosComponent implements OnInit {
   readonly Plus = Plus;
   readonly X = X;
   readonly Search = Search;
+  readonly Download = Download;
+  readonly Trash2 = Trash2;
+  readonly ExternalLink = ExternalLink;
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -91,6 +97,16 @@ export class PagosComponent implements OnInit {
   showFilters = signal(false);
   showCreateForm = signal(false);
   selectedPayment = signal<Payment | null>(null);
+
+  // Bulk selection
+  selectedIds = signal<number[]>([]);
+  activeFilters = signal<PaymentFilters>({});
+
+  pendingPaymentIds = computed(() =>
+    this.paymentService.payments()
+      .filter(p => p.status === PaymentStatus.PENDING)
+      .map(p => p.id)
+  );
 
   // Create payment state
   tenantSearchControl = new FormControl('');
@@ -113,7 +129,7 @@ export class PagosComponent implements OnInit {
   PaymentStatusColors = PaymentStatusColors;
 
   // Table columns
-  displayedColumns: string[] = ['id', 'tenant', 'property', 'amount', 'currency', 'type', 'method', 'payment_date', 'status', 'actions'];
+  displayedColumns: string[] = ['select', 'id', 'tenant', 'property', 'amount', 'currency', 'type', 'method', 'payment_date', 'status', 'actions'];
 
   // Filter form
   filterForm = this.fb.group({
@@ -218,12 +234,132 @@ export class PagosComponent implements OnInit {
     if (formValue.date_from) filters.date_from = this.formatDate(formValue.date_from);
     if (formValue.date_to) filters.date_to = this.formatDate(formValue.date_to);
 
+    this.activeFilters.set(filters);
+    this.selectedIds.set([]);
     this.paymentService.loadPayments(filters);
   }
 
   clearFilters(): void {
     this.filterForm.reset();
+    this.activeFilters.set({});
+    this.selectedIds.set([]);
     this.paymentService.loadPayments();
+  }
+
+  // =====================
+  // Bulk Selection
+  // =====================
+
+  isSelected(id: number): boolean {
+    return this.selectedIds().includes(id);
+  }
+
+  toggleSelection(payment: Payment): void {
+    if (payment.status !== PaymentStatus.PENDING) return;
+    const current = this.selectedIds();
+    if (current.includes(payment.id)) {
+      this.selectedIds.set(current.filter(i => i !== payment.id));
+    } else {
+      this.selectedIds.set([...current, payment.id]);
+    }
+  }
+
+  selectAll(): void {
+    this.selectedIds.set(this.pendingPaymentIds());
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set([]);
+  }
+
+  get hasPendingPayments(): boolean {
+    return this.paymentService.payments().some(p => p.status === PaymentStatus.PENDING);
+  }
+
+  executeBulkAction(action: 'approve' | 'reject' | 'delete'): void {
+    const ids = this.selectedIds();
+    if (ids.length === 0) return;
+
+    const labels: Record<string, string> = {
+      approve: 'aprobar',
+      reject: 'rechazar',
+      delete: 'eliminar'
+    };
+
+    if (!confirm(`¿${labels[action].charAt(0).toUpperCase() + labels[action].slice(1)} ${ids.length} pago(s) seleccionado(s)?`)) {
+      return;
+    }
+
+    let adminNotes: string | undefined;
+    if (action === 'reject') {
+      const reason = prompt('Motivo de rechazo (opcional):');
+      if (reason === null) return; // Cancelled
+      adminNotes = reason || 'Rechazado en acción masiva';
+    }
+
+    const payload: BulkPaymentActionDto = { ids, action, admin_notes: adminNotes };
+    this.paymentService.bulkAction(payload).subscribe({
+      next: (result) => {
+        this.selectedIds.set([]);
+        alert(`Acción completada: ${result.processed} procesados, ${result.errors} errores`);
+      },
+      error: (error) => {
+        console.error('Error en acción masiva:', error);
+        alert(`Error: ${error?.error?.message || 'Error del servidor'}`);
+      }
+    });
+  }
+
+  // =====================
+  // Export CSV
+  // =====================
+
+  exportCsv(): void {
+    const filters = this.activeFilters();
+    this.paymentService.exportCsv(filters).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pagos_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: async (error) => {
+        console.error('Error exportando CSV:', error);
+        // Leer el mensaje del blob de error si existe
+        let msg = `Error ${error.status || ''}: `;
+        if (error.error instanceof Blob) {
+          try {
+            const text = await error.error.text();
+            const json = JSON.parse(text);
+            msg += json.message || text;
+          } catch {
+            msg += 'Error del servidor';
+          }
+        } else {
+          msg += error.error?.message || error.message || 'Error desconocido';
+        }
+        alert('Error al exportar el CSV\n' + msg);
+      }
+    });
+  }
+
+  // =====================
+  // Proof File
+  // =====================
+
+  getProofUrl(payment: Payment): string | null {
+    return this.paymentService.getProofUrl(payment);
+  }
+
+  openProof(payment: Payment): void {
+    const url = this.getProofUrl(payment);
+    if (url) {
+      window.open(url, '_blank');
+    }
   }
 
   viewPaymentDetail(payment: Payment): void {

@@ -8,8 +8,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Plus, FileText, Search, RefreshCw, X, CheckCircle2, Pencil, DollarSign, TrendingUp, AlertTriangle } from 'lucide-angular';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
+import { LucideAngularModule, Plus, FileText, Search, RefreshCw, X, CheckCircle2, Pencil, DollarSign, TrendingUp, AlertTriangle, Eye, Download, RotateCcw, Home, Calendar, ArrowRight, User } from 'lucide-angular';
 import { AdminContractService } from '../../core/services/admin-contract.service';
 import { SlugService } from '../../core/services/slug.service';
 import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from '../../core/models/contract.model';
@@ -28,106 +31,139 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
+    MatTooltipModule,
+    MatDividerModule,
+    MatChipsModule,
     LucideAngularModule
   ],
   template: `
     <div class="contracts-container">
-      <!-- Header -->
+
+      <!-- ── Page Header ── -->
       <div class="page-header">
-        <h1>Contratos</h1>
+        <div class="page-title-wrap">
+          <div class="page-title-icon">
+            <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
+          </div>
+          <div>
+            <h1>Contratos</h1>
+            <p class="page-subtitle">Gestión de contratos de arrendamiento</p>
+          </div>
+        </div>
         <button mat-raised-button color="primary" class="create-button" (click)="createContract()">
-          <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+          <lucide-icon [img]="Plus" [size]="17"></lucide-icon>
           Nuevo Contrato
         </button>
       </div>
 
       @if (isLoading() && contracts().length === 0) {
         <div class="loading-container">
-          <mat-spinner diameter="50"></mat-spinner>
+          <mat-spinner diameter="44"></mat-spinner>
           <p>Cargando contratos...</p>
         </div>
       } @else {
-        <!-- Dashboard de Métricas -->
+
+        <!-- ── Métricas ── -->
         @if (dashboard()) {
           <div class="dashboard-grid">
-            <mat-card class="metric-card total">
-              <div class="metric-icon">
-                <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
-              </div>
-              <div class="metric-content">
-                <div class="metric-value">{{ dashboard()!.total_contracts }}</div>
-                <div class="metric-label">Total Contratos</div>
-              </div>
+
+            <mat-card class="metric-card total" appearance="outlined">
+              <mat-card-content class="metric-content">
+                <div class="metric-icon-wrap">
+                  <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-value">{{ dashboard()!.total_contracts }}</span>
+                  <span class="metric-label">Total Contratos</span>
+                </div>
+              </mat-card-content>
             </mat-card>
 
-            <mat-card class="metric-card active">
-              <div class="metric-icon">
-                <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
-              </div>
-              <div class="metric-content">
-                <div class="metric-value">{{ dashboard()!.active_contracts }}</div>
-                <div class="metric-label">Activos</div>
-              </div>
+            <mat-card class="metric-card active" appearance="outlined">
+              <mat-card-content class="metric-content">
+                <div class="metric-icon-wrap">
+                  <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-value">{{ dashboard()!.active_contracts }}</span>
+                  <span class="metric-label">Activos</span>
+                </div>
+              </mat-card-content>
             </mat-card>
 
-            <mat-card class="metric-card draft">
-              <div class="metric-icon">
-                <lucide-icon [img]="Pencil" [size]="24"></lucide-icon>
-              </div>
-              <div class="metric-content">
-                <div class="metric-value">{{ dashboard()!.draft_contracts }}</div>
-                <div class="metric-label">Borradores</div>
-              </div>
+            <mat-card class="metric-card draft" appearance="outlined">
+              <mat-card-content class="metric-content">
+                <div class="metric-icon-wrap">
+                  <lucide-icon [img]="Pencil" [size]="20"></lucide-icon>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-value">{{ dashboard()!.draft_contracts }}</span>
+                  <span class="metric-label">Borradores</span>
+                </div>
+              </mat-card-content>
             </mat-card>
 
-            <mat-card class="metric-card revenue">
-              <div class="metric-icon">
-                <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
-              </div>
-              <div class="metric-content">
-                <div class="metric-value">Bs {{ formatRevenue(dashboard()!.monthly_revenue) }}</div>
-                <div class="metric-label">Ingresos Mensuales</div>
-              </div>
+            <mat-card class="metric-card revenue" appearance="outlined">
+              <mat-card-content class="metric-content">
+                <div class="metric-icon-wrap">
+                  <lucide-icon [img]="DollarSign" [size]="20"></lucide-icon>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-value">Bs {{ formatRevenue(dashboard()!.monthly_revenue) }}</span>
+                  <span class="metric-label">Ingresos Mensuales</span>
+                </div>
+              </mat-card-content>
             </mat-card>
 
-            <mat-card class="metric-card avg">
-              <div class="metric-icon">
-                <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
-              </div>
-              <div class="metric-content">
-                <div class="metric-value">Bs {{ dashboard()!.avg_rent }}</div>
-                <div class="metric-label">Alquiler Promedio</div>
-              </div>
+            <mat-card class="metric-card avg" appearance="outlined">
+              <mat-card-content class="metric-content">
+                <div class="metric-icon-wrap">
+                  <lucide-icon [img]="TrendingUp" [size]="20"></lucide-icon>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-value">Bs {{ dashboard()!.avg_rent }}</span>
+                  <span class="metric-label">Alquiler Promedio</span>
+                </div>
+              </mat-card-content>
             </mat-card>
 
             @if (dashboard()!.contracts_expiring_soon > 0) {
-              <mat-card class="metric-card warning">
-                <div class="metric-icon">
-                  <lucide-icon [img]="AlertTriangle" [size]="24"></lucide-icon>
-                </div>
-                <div class="metric-content">
-                  <div class="metric-value">{{ dashboard()!.contracts_expiring_soon }}</div>
-                  <div class="metric-label">Por Vencer (30 días)</div>
-                </div>
+              <mat-card class="metric-card warning" appearance="outlined">
+                <mat-card-content class="metric-content">
+                  <div class="metric-icon-wrap">
+                    <lucide-icon [img]="AlertTriangle" [size]="20"></lucide-icon>
+                  </div>
+                  <div class="metric-body">
+                    <span class="metric-value">{{ dashboard()!.contracts_expiring_soon }}</span>
+                    <span class="metric-label">Por Vencer (30 días)</span>
+                  </div>
+                </mat-card-content>
               </mat-card>
             }
+
           </div>
         }
 
-        <!-- Filtros -->
-        <mat-card class="filters-card">
-          <div class="filters-header">
-            <h3>Filtros</h3>
-            @if (hasActiveFilters()) {
-              <button mat-button class="clear-filters" (click)="clearFilters()">
-                <lucide-icon [img]="X" [size]="16"></lucide-icon>
-                Limpiar
-              </button>
-            }
-          </div>
+        <!-- ── Filtros ── -->
+        <mat-card appearance="outlined" class="filters-card">
+          <mat-card-content class="filters-content">
 
-          <div class="filters-grid">
-            <mat-form-field appearance="outline">
+            <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+              <mat-label>Buscar</mat-label>
+              <lucide-icon matIconPrefix [img]="Search" [size]="16" class="field-prefix-icon"></lucide-icon>
+              <input matInput
+                     type="text"
+                     placeholder="Inquilino, propiedad o N° contrato..."
+                     (input)="onSearchChange($event)"
+                     [value]="searchTerm">
+              @if (searchTerm) {
+                <button matIconSuffix mat-icon-button (click)="searchTerm=''">
+                  <lucide-icon [img]="X" [size]="14"></lucide-icon>
+                </button>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="status-field" subscriptSizing="dynamic">
               <mat-label>Estado</mat-label>
               <mat-select (selectionChange)="onFilterChange()" [(ngModel)]="filters.status">
                 <mat-option value="">Todos los estados</mat-option>
@@ -137,371 +173,482 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
               </mat-select>
             </mat-form-field>
 
-            <div class="search-box">
-              <mat-icon>search</mat-icon>
-              <input
-                type="text"
-                placeholder="Buscar por inquilino o propiedad..."
-                (input)="onSearchChange($event)"
-                [value]="searchTerm">
-            </div>
-          </div>
-        </mat-card>
-
-        <!-- Lista de Contratos -->
-        <mat-card class="contracts-card">
-          <div class="contracts-header">
-            <h3>
-              Lista de Contratos
-              <span class="count">({{ filteredContracts().length }})</span>
-            </h3>
-            <button mat-icon-button (click)="loadContracts()">
-              <mat-icon>refresh</mat-icon>
-            </button>
-          </div>
-
-          @if (isLoading() && contracts().length === 0) {
-            <div class="loading-container">
-              <mat-spinner diameter="40"></mat-spinner>
-            </div>
-          } @else if (filteredContracts().length === 0) {
-            <div class="empty-state">
-              <mat-icon>description</mat-icon>
-              <p>No se encontraron contratos</p>
-              <button mat-raised-button color="primary" (click)="createContract()">
-                <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
-                Crear Primer Contrato
+            @if (hasActiveFilters()) {
+              <button mat-stroked-button (click)="clearFilters()" class="clear-btn">
+                <lucide-icon [img]="X" [size]="14"></lucide-icon>
+                Limpiar
               </button>
-            </div>
-          } @else {
-            <div class="contracts-table">
-              <!-- Header -->
-              <div class="table-header">
-                <div class="cell contract-number">N° Contrato</div>
-                <div class="cell tenant">Inquilino</div>
-                <div class="cell property">Propiedad</div>
-                <div class="cell dates">Fechas</div>
-                <div class="cell rent">Alquiler</div>
-                <div class="cell status">Estado</div>
-                <div class="cell actions">Acciones</div>
-              </div>
+            }
 
-              <!-- Body -->
-              @for (contract of filteredContracts(); track contract.id) {
-                <div class="table-row">
-                  <div class="cell contract-number">
-                    <span class="contract-badge">{{ contract.contract_number }}</span>
-                  </div>
-                  <div class="cell tenant">
-                    <div class="tenant-info">
-                      <span class="name">{{ contract.tenant?.name || contract.tenant_name || 'N/A' }}</span>
-                      <span class="email">{{ contract.tenant?.email || contract.tenant_email || '' }}</span>
-                    </div>
-                  </div>
-                  <div class="cell property">
-                    <span class="property-title">{{ contract.property?.title || contract.property_title || 'N/A' }}</span>
-                  </div>
-                  <div class="cell dates">
-                    <div class="date-range">
-                      <span>{{ formatDate(contract.start_date) }}</span>
-                      <mat-icon class="arrow-icon">arrow_forward</mat-icon>
-                      <span>{{ formatDate(contract.end_date) }}</span>
-                    </div>
-                  </div>
-                  <div class="cell rent">
-                    <span class="rent-amount">Bs {{ formatRent(contract.monthly_rent) }}</span>
-                  </div>
-                  <div class="cell status">
-                    <span class="status-badge" [class]="getStatusClass(contract.status)">
-                      {{ ContractStatusLabels[contract.status] }}
-                    </span>
-                  </div>
-                  <div class="cell actions">
-                    <button mat-icon-button [routerLink]="buildContractDetailUrl(contract.id)" matTooltip="Ver detalle">
-                      <mat-icon>visibility</mat-icon>
-                    </button>
-                    @if (contract.status === ContractStatus.BORRADOR) {
-                      <button mat-icon-button [routerLink]="buildContractEditUrl(contract.id)" matTooltip="Editar">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                    }
-                    <button mat-icon-button (click)="downloadPDF(contract.id)" matTooltip="Ver PDF">
-                      <mat-icon>download</mat-icon>
-                    </button>
-                    @if (contract.status === ContractStatus.ACTIVO) {
-                      <button mat-icon-button (click)="renewContract(contract.id)" matTooltip="Renovar">
-                        <mat-icon>autorenew</mat-icon>
-                      </button>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-          }
+            <span class="filters-spacer"></span>
+
+            <button mat-icon-button (click)="loadContracts()" matTooltip="Actualizar lista">
+              <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
+            </button>
+
+          </mat-card-content>
         </mat-card>
+
+        <!-- ── Tabla de Contratos ── -->
+        <mat-card appearance="outlined" class="contracts-card">
+
+          <mat-card-header class="contracts-card-header">
+            <div class="ch-title">
+              <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+              <span>Lista de Contratos</span>
+            </div>
+            <mat-chip-set>
+              <mat-chip>{{ filteredContracts().length }} contrato{{ filteredContracts().length !== 1 ? 's' : '' }}</mat-chip>
+            </mat-chip-set>
+          </mat-card-header>
+
+          <mat-divider></mat-divider>
+
+          <mat-card-content class="p0">
+
+            @if (isLoading() && contracts().length === 0) {
+              <div class="loading-container">
+                <mat-spinner diameter="36"></mat-spinner>
+              </div>
+            } @else if (filteredContracts().length === 0) {
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <lucide-icon [img]="FileText" [size]="30"></lucide-icon>
+                </div>
+                <p class="empty-title">No se encontraron contratos</p>
+                <span class="empty-sub">Crea el primer contrato para comenzar</span>
+                <button mat-raised-button color="primary" (click)="createContract()" class="create-button">
+                  <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+                  Crear Primer Contrato
+                </button>
+              </div>
+            } @else {
+              <div class="table-scroll-wrap">
+              <div class="contracts-table">
+
+                <!-- Header -->
+                <div class="table-header">
+                  <div class="cell col-contract">N° Contrato</div>
+                  <div class="cell col-tenant">Inquilino</div>
+                  <div class="cell col-property">Propiedad</div>
+                  <div class="cell col-dates">Fechas</div>
+                  <div class="cell col-rent">Alquiler / mes</div>
+                  <div class="cell col-status">Estado</div>
+                  <div class="cell col-actions">Acciones</div>
+                </div>
+
+                <!-- Rows -->
+                @for (contract of filteredContracts(); track contract.id) {
+                  <div class="table-row">
+
+                    <div class="cell col-contract">
+                      <span class="contract-num">{{ contract.contract_number }}</span>
+                    </div>
+
+                    <div class="cell col-tenant">
+                      <div class="tenant-row">
+                        <div class="tenant-avatar">
+                          {{ (contract.tenant?.name || contract.tenant_name || 'I').charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="tenant-info">
+                          <span class="tenant-name">{{ contract.tenant?.name || contract.tenant_name || 'N/A' }}</span>
+                          <span class="tenant-email">{{ contract.tenant?.email || contract.tenant_email || '' }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="cell col-property">
+                      <div class="property-row">
+                        <lucide-icon [img]="Home" [size]="13" class="prop-icon"></lucide-icon>
+                        <span class="property-title">{{ contract.property?.title || contract.property_title || 'N/A' }}</span>
+                      </div>
+                    </div>
+
+                    <div class="cell col-dates">
+                      <div class="date-stack">
+                        <span class="date-from">{{ formatDate(contract.start_date) }}</span>
+                        <span class="date-to">{{ formatDate(contract.end_date) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="cell col-rent">
+                      <span class="rent-currency">Bs</span>
+                      <span class="rent-amount">{{ formatRent(contract.monthly_rent) }}</span>
+                    </div>
+
+                    <div class="cell col-status">
+                      <span class="status-pill" [class]="getStatusClass(contract.status)">
+                        <span class="status-dot"></span>
+                        {{ ContractStatusLabels[contract.status] }}
+                      </span>
+                    </div>
+
+                    <div class="cell col-actions">
+                      <div class="action-group">
+                        <button mat-icon-button class="action-btn view-btn"
+                                [routerLink]="buildContractDetailUrl(contract.id)"
+                                matTooltip="Ver detalle">
+                          <lucide-icon [img]="Eye" [size]="15"></lucide-icon>
+                        </button>
+                        @if (contract.status === ContractStatus.BORRADOR) {
+                          <button mat-icon-button class="action-btn edit-btn"
+                                  [routerLink]="buildContractEditUrl(contract.id)"
+                                  matTooltip="Editar">
+                            <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+                          </button>
+                        }
+                        <button mat-icon-button class="action-btn download-btn"
+                                (click)="downloadPDF(contract.id)"
+                                matTooltip="Descargar PDF">
+                          <lucide-icon [img]="Download" [size]="15"></lucide-icon>
+                        </button>
+                        @if (contract.status === ContractStatus.ACTIVO) {
+                          <button mat-icon-button class="action-btn renew-btn"
+                                  (click)="renewContract(contract.id)"
+                                  matTooltip="Renovar contrato">
+                            <lucide-icon [img]="RotateCcw" [size]="15"></lucide-icon>
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                  </div>
+                }
+              </div><!-- /contracts-table -->
+              </div><!-- /table-scroll-wrap -->
+            }
+
+          </mat-card-content>
+        </mat-card>
+
       }
     </div>
   `,
   styles: [`
+    /* ════════════════════════════
+       CONTAINER
+    ════════════════════════════ */
     .contracts-container {
       max-width: 1400px;
       width: 100%;
       margin: 0 auto;
-      padding: 24px;
+      padding: 28px 24px;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
     }
 
+    /* ════════════════════════════
+       HEADER
+    ════════════════════════════ */
     .page-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
       gap: 16px;
       flex-wrap: wrap;
     }
 
-    .page-header h1 {
+    .page-header-left { display: flex; align-items: center; gap: 12px; }
+
+    .page-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .page-title-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+    }
+
+    .page-title-wrap h1 {
+      margin: 0 0 2px;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1.2;
+    }
+
+    .page-subtitle {
       margin: 0;
-      font-size: 1.75rem;
-      font-weight: 600;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 400;
     }
 
     .create-button {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      white-space: nowrap;
+      gap: 7px;
+      font-weight: 600;
+      border-radius: 10px !important;
+      padding: 0 20px !important;
+      height: 40px;
     }
 
+    /* ════════════════════════════
+       LOADING
+    ════════════════════════════ */
     .loading-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       padding: 60px;
+      gap: 14px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    /* ════════════════════════════
+       DASHBOARD METRICS
+    ════════════════════════════ */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
     }
 
-    /* Dashboard Metrics */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
     .metric-card {
-      padding: 28px;
+      border-radius: 14px;
+      padding: 20px 22px;
       display: flex;
       align-items: center;
-      gap: 20px;
-      border-radius: 16px !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-      min-width: 0;
-      overflow: hidden;
+      gap: 16px;
       color: white;
-      transition: all 0.3s ease;
       cursor: default;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 55%);
+        pointer-events: none;
+      }
+
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+      }
     }
 
-    .metric-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.12) !important;
-    }
+    .metric-card.total   { background: linear-gradient(135deg, #28589e, #1e3f72); }
+    .metric-card.active  { background: linear-gradient(135deg, #10b981, #059669); }
+    .metric-card.draft   { background: linear-gradient(135deg, #64748b, #475569); }
+    .metric-card.revenue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .metric-card.avg     { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .metric-card.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
-    .metric-card.total   { background: #28589e; }
-    .metric-card.active  { background: #10b981; }
-    .metric-card.draft   { background: #6b7280; }
-    .metric-card.revenue { background: #3b82f6; }
-    .metric-card.avg     { background: #8b5cf6; }
-    .metric-card.warning { background: #f59e0b; }
-
-    .metric-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.25);
+    .metric-icon-wrap {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.2);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(4px);
     }
 
-    .metric-icon lucide-icon {
-      color: white;
-      width: 28px;
-      height: 28px;
-    }
-
-    .metric-content {
+    .metric-body {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
       min-width: 0;
     }
 
     .metric-value {
-      font-size: 40px;
-      font-weight: 700;
+      font-size: 1.75rem;
+      font-weight: 800;
       color: white;
-      line-height: 1;
+      line-height: 1.1;
       font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .metric-label {
-      font-size: 15px;
-      color: rgba(255, 255, 255, 0.95);
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.85);
       font-weight: 500;
-      line-height: 1.2;
       white-space: nowrap;
     }
 
-    /* Filters Card */
+    /* ════════════════════════════
+       FILTERS CARD
+    ════════════════════════════ */
     .filters-card {
-      padding: 20px;
-      margin-bottom: 24px;
+      border-radius: 12px !important;
+
+      ::ng-deep .mat-mdc-card-content { padding: 0 !important; }
     }
 
-    .filters-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      gap: 8px;
-    }
-
-    .filters-header h3 {
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .clear-filters {
+    .filters-content {
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 13px;
-    }
-
-    .filters-grid {
-      display: grid;
-      grid-template-columns: minmax(180px, 1fr) 1fr;
-      gap: 16px;
-    }
-
-    .search-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 16px;
-      background: var(--mat-sys-surface-container-low);
-      border-radius: 8px;
-      min-width: 0;
-    }
-
-    .search-box mat-icon {
-      color: var(--mat-sys-on-surface-variant);
-      flex-shrink: 0;
-    }
-
-    .search-box input {
-      border: none;
-      background: transparent;
-      flex: 1;
-      min-width: 0;
-      padding: 12px 0;
-      font-size: 14px;
-      outline: none;
-    }
-
-    /* Contracts Card */
-    .contracts-card {
-      padding: 20px;
-      overflow: hidden;
-    }
-
-    .contracts-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 8px;
-    }
-
-    .contracts-header h3 {
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      gap: 12px;
+      padding: 14px 18px !important;
       flex-wrap: wrap;
     }
 
-    .contracts-header .count {
-      color: var(--mat-sys-on-surface-variant);
-      font-weight: 400;
-      font-size: 1rem;
+    .search-field {
+      flex: 1;
+      min-width: 220px;
     }
 
+    .field-prefix-icon {
+      color: #94a3b8;
+      margin-right: 4px;
+    }
+
+    .status-field {
+      width: 180px;
+      flex-shrink: 0;
+    }
+
+    .clear-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 8px !important;
+      white-space: nowrap;
+      height: 40px;
+    }
+
+    .filters-spacer { flex: 1; }
+
+    /* ════════════════════════════
+       CONTRACTS CARD
+    ════════════════════════════ */
+    .contracts-card {
+      border-radius: 12px !important;
+      /* sin overflow:hidden para no cortar el scroll horizontal */
+
+      ::ng-deep .mat-mdc-card-content.p0 { padding: 0 !important; }
+    }
+
+    .contracts-card-header {
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px !important;
+      background: #f8fafc;
+      gap: 12px;
+
+      ::ng-deep .mat-mdc-card-header-text { display: none; }
+    }
+
+    .ch-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+
+      lucide-icon { color: #3b82f6; }
+    }
+
+    /* ── Empty State ── */
     .empty-state {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px 20px;
-      gap: 16px;
+      padding: 64px 20px;
+      gap: 10px;
     }
 
-    .empty-state mat-icon {
-      font-size: 64px;
-      color: var(--mat-sys-outline);
-      opacity: 0.5;
+    .empty-icon {
+      width: 64px;
+      height: 64px;
+      background: #f1f5f9;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #cbd5e1;
+      margin-bottom: 4px;
     }
 
-    .empty-state p {
+    .empty-title {
       margin: 0;
-      color: var(--mat-sys-on-surface-variant);
-      font-size: 1.1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #64748b;
     }
 
-    /* Contracts Table */
+    .empty-sub {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    /* ════════════════════════════
+       TABLE
+    ════════════════════════════ */
+
+    /* Wrapper que habilita scroll horizontal sin cortar nada */
+    .table-scroll-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .contracts-table {
       display: flex;
       flex-direction: column;
-      overflow-x: auto;
-      overflow-y: visible;
+      min-width: 780px; /* ancho mínimo antes de hacer scroll */
     }
 
     .table-header,
     .table-row {
       display: grid;
-      grid-template-columns: 90px minmax(160px, 1fr) minmax(130px, 1.2fr) 120px 100px minmax(90px, 1fr) 120px;
+      /* N°Contrato | Inquilino | Propiedad | Fechas | Alquiler | Estado | Acciones */
+      grid-template-columns: 140px minmax(0,1.4fr) minmax(0,1.1fr) 90px 120px 110px 120px;
       gap: 12px;
-      padding: 12px;
+      padding: 0 20px;
       align-items: center;
-      min-width: max-content;
     }
 
     .table-header {
-      background: var(--mat-sys-surface-container-low);
-      border-radius: 8px 8px 0 0;
-      font-weight: 600;
-      font-size: 13px;
-      color: var(--mat-sys-on-surface-variant);
+      padding-top: 11px;
+      padding-bottom: 11px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #94a3b8;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     .table-row {
-      border-bottom: 1px solid var(--mat-sys-outline-variant);
-      transition: background 0.2s;
-    }
+      padding-top: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.15s;
 
-    .table-row:hover {
-      background: var(--mat-sys-surface-container-low);
-    }
-
-    .table-row:last-child {
-      border-bottom: none;
+      &:hover { background: #f8fafc; }
+      &:last-child { border-bottom: none; }
     }
 
     .cell {
@@ -511,190 +658,217 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
       min-width: 0;
     }
 
-    .contract-badge {
+    /* Contract number */
+    .contract-num {
       font-family: monospace;
-      font-size: 12px;
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-weight: 600;
+      font-size: 11.5px;
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 4px 9px;
+      border-radius: 6px;
+      white-space: nowrap;
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .tenant-info {
+    /* Tenant */
+    .tenant-row {
       display: flex;
-      flex-direction: column;
-      gap: 2px;
+      align-items: center;
+      gap: 10px;
       min-width: 0;
     }
 
-    .tenant-info .name {
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tenant-info .email {
-      font-size: 12px;
-      color: var(--mat-sys-on-surface-variant);
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .property-title {
-      font-weight: 500;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .date-range {
+    .tenant-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #3b82f6;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
       display: flex;
       align-items: center;
-      gap: 4px;
-      font-size: 13px;
-    }
-
-    .arrow-icon {
-      font-size: 14px;
-      color: var(--mat-sys-on-surface-variant);
+      justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(59,130,246,0.3);
     }
 
-    .rent-amount {
+    .tenant-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+    .tenant-name {
+      font-size: 13.5px;
       font-weight: 600;
-      display: block;
+      color: #1e293b;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .currency {
-      font-size: 12px;
-      color: var(--mat-sys-on-surface-variant);
+    .tenant-email {
+      font-size: 11.5px;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .status-badge {
-      padding: 4px 12px;
-      border-radius: 20px;
+    /* Property */
+    .property-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .prop-icon { color: #10b981; flex-shrink: 0; }
+
+    .property-title {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #334155;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Dates — apiladas verticalmente para ahorrar espacio */
+    .date-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .date-from {
       font-size: 12px;
       font-weight: 600;
-      display: inline-block;
+      color: #334155;
       white-space: nowrap;
     }
 
-    .status-badge.status-borrador {
-      background: #fff3cd;
-      color: #856404;
+    .date-to {
+      font-size: 11.5px;
+      color: #94a3b8;
+      white-space: nowrap;
     }
 
-    .status-badge.status-activo {
+    /* Rent */
+    .col-rent {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .rent-currency {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .rent-amount {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    /* Status pill */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-pill.status-borrador {
+      background: #fef3c7;
+      color: #92400e;
+      .status-dot { background: #f59e0b; }
+    }
+
+    .status-pill.status-activo {
       background: #d1fae5;
       color: #065f46;
+      .status-dot { background: #10b981; }
     }
 
-    .status-badge.status-finalizado {
-      background: #e5e7eb;
-      color: #374151;
+    .status-pill.status-finalizado {
+      background: #f1f5f9;
+      color: #475569;
+      .status-dot { background: #94a3b8; }
     }
 
-    .cell.actions {
-      display: flex;
-      gap: 4px;
+    /* Actions */
+    .col-actions {
+      display: flex !important;
       justify-content: flex-end;
     }
 
-    /* Tablet */
+    .action-group {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .action-btn {
+      width: 32px !important;
+      height: 32px !important;
+      border-radius: 8px !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .view-btn     { color: #3b82f6 !important; &:hover { background: #eff6ff !important; } }
+    .edit-btn     { color: #f59e0b !important; &:hover { background: #fffbeb !important; } }
+    .download-btn { color: #10b981 !important; &:hover { background: #d1fae5 !important; } }
+    .renew-btn    { color: #8b5cf6 !important; &:hover { background: #ede9fe !important; } }
+
+    /* ════════════════════════════
+       RESPONSIVE
+    ════════════════════════════ */
     @media (max-width: 1200px) {
       .table-header,
       .table-row {
-        grid-template-columns: 80px minmax(140px, 1fr) minmax(120px, 1.2fr) 110px 90px minmax(80px, 1fr) 110px;
+        grid-template-columns: 130px minmax(0,1.3fr) minmax(0,1fr) 90px 110px 100px 110px;
         gap: 10px;
-        padding: 10px;
       }
     }
 
     @media (max-width: 1024px) {
-      .contracts-container {
-        padding: 16px;
-      }
-
-      .dashboard-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-      }
-
-      .filters-grid {
-        grid-template-columns: 1fr;
-      }
-
+      .contracts-container { padding: 16px; }
+      .dashboard-grid { grid-template-columns: repeat(3,1fr); }
+      .contracts-table { min-width: 700px; }
       .table-header,
       .table-row {
-        grid-template-columns: 80px 1fr 100px 80px;
+        grid-template-columns: 120px minmax(0,1.3fr) minmax(0,1fr) 86px 100px 95px 105px;
         gap: 8px;
-        padding: 12px;
-      }
-
-      .table-header {
-        display: none;
-      }
-
-      .table-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 12px 8px;
-      }
-
-      .cell {
-        flex: 0 0 45%;
-        min-width: 0;
-        padding: 4px 0;
-      }
-
-      .cell.actions {
-        justify-content: center;
+        padding: 0 14px;
       }
     }
 
     @media (max-width: 768px) {
-      .contracts-container {
-        padding: 12px;
-      }
-
-      .page-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-      }
-
-      .page-header h1 {
-        font-size: 1.5rem;
-      }
-
-      .create-button {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .dashboard-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
-      .filters-grid {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
-      .contracts-header h3 {
-        font-size: 1rem;
-      }
-
-      .table-header,
-      .table-row {
-        padding: 10px 8px;
-      }
-
-      .cell.actions {
-        justify-content: center;
-      }
+      .contracts-container { padding: 12px; gap: 16px; }
+      .page-header { flex-direction: column; align-items: stretch; }
+      .create-button { width: 100%; justify-content: center; }
+      .dashboard-grid { grid-template-columns: repeat(2,1fr); gap: 12px; }
+      .filters-content { flex-direction: column; align-items: stretch !important; }
+      .search-field, .status-field { width: 100% !important; flex: 1; min-width: 0; }
+      .filters-spacer { display: none; }
+      /* En mobile la tabla hace scroll */
+      .contracts-table { min-width: 680px; }
     }
   `]
 })
@@ -709,6 +883,13 @@ export class ContratosComponent implements OnInit {
   readonly DollarSign = DollarSign;
   readonly TrendingUp = TrendingUp;
   readonly AlertTriangle = AlertTriangle;
+  readonly Eye = Eye;
+  readonly Download = Download;
+  readonly RotateCcw = RotateCcw;
+  readonly Home = Home;
+  readonly Calendar = Calendar;
+  readonly ArrowRight = ArrowRight;
+  readonly User = User;
   readonly ContractStatus = ContractStatus;
   readonly ContractStatusLabels = ContractStatusLabels;
 

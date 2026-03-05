@@ -28,11 +28,12 @@ export const authInterceptor: HttpInterceptorFn = (
   const authService = inject(AuthService);
   const tenantAuthService = inject(TenantAuthService);
 
-  // Choose token based on route type
+  // Seleccionar el token según el tipo de ruta, sin fallback entre roles.
+  // Un token de admin nunca debe usarse en rutas de tenant y viceversa.
   const isTenantRoute = req.url.includes('/tenant/');
   const token = isTenantRoute
-    ? (tenantAuthService.getToken() || authService.getToken())
-    : (authService.getToken() || tenantAuthService.getToken());
+    ? tenantAuthService.getToken()
+    : authService.getToken();
 
   if (token) {
     const authReq = req.clone({

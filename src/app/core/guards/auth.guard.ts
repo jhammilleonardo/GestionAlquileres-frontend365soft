@@ -21,16 +21,35 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  // Set slug in SlugService
-  slugService.setSlug(slug);
-
   // Check if user is authenticated and has a valid token
   const isAuthenticated = authService.isAuth();
   const hasToken = authService.getToken();
 
   if (isAuthenticated && hasToken) {
+    // Validate URL slug matches the authenticated user's tenant slug
+    let userSlug: string | null = null;
+    const userJson = localStorage.getItem('admin_user');
+    if (userJson) {
+      try {
+        const user = JSON.parse(userJson);
+        userSlug = user.tenant_slug || null;
+      } catch (e) { /* ignore */ }
+    }
+
+    if (userSlug && slug !== userSlug) {
+      // URL slug doesn't match user's tenant — redirect to correct URL
+      const correctUrl = state.url.replace(`/${slug}/`, `/${userSlug}/`);
+      router.navigate([correctUrl], { replaceUrl: true });
+      return false;
+    }
+
+    // Set slug in SlugService only with verified slug
+    slugService.setSlug(userSlug || slug);
     return true;
   }
+
+  // Set slug from URL as fallback (for unauthenticated redirects)
+  slugService.setSlug(slug);
 
   // Clear any invalid session
   if (!hasToken && isAuthenticated) {

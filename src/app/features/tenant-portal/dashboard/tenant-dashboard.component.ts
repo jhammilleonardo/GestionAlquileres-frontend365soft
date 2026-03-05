@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
 import { LucideAngularModule, Wrench, CheckCircle2, Clock, Plus, ArrowRight, Home, FileText, CreditCard, MessageSquare, DollarSign, AlertCircle } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { TenantMaintenanceService } from '../../../core/services/tenant-maintenance.service';
@@ -12,6 +13,7 @@ import { TenantMessageService } from '../../../core/services/tenant-message.serv
 import { TenantDocumentService } from '../../../core/services/tenant-document.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../core/models/maintenance-request.model';
+import { PaymentStatusLabels } from '../../../core/models/payment.model';
 
 @Component({
     selector: 'app-tenant-dashboard',
@@ -22,6 +24,7 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
         MatCardModule,
         MatButtonModule,
         MatProgressSpinnerModule,
+        MatChipsModule,
         LucideAngularModule
     ],
     template: `
@@ -34,19 +37,6 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                 </div>
             </div>
 
-            <!-- Alerts - Pagos Pendientes -->
-            @if (paymentService.stats(); as stats) {
-                @if (stats.total_pending > 0) {
-                    <mat-card class="alert-card">
-                        <lucide-icon [img]="AlertCircle" [size]="24"></lucide-icon>
-                        <div class="alert-content">
-                            <h3>Tienes Pagos Pendientes</h3>
-                            <p>Tienes <strong>{{ stats.total_pending }}</strong> pago(s) pendiente(s) de aprobación por un total de <strong>{{ formatCurrency(stats.total_amount_pending) }}</strong></p>
-                        </div>
-                        <button mat-raised-button color="primary" [routerLink]="pagosListUrl()">Ver Pagos</button>
-                    </mat-card>
-                }
-            }
 
             <!-- Property Card -->
             @if (authService.currentUser()?.contract) {
@@ -209,9 +199,15 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
                                         <span class="date">{{ formatDate(payment.payment_date) }}</span>
                                         <span class="amount">\${{ payment.amount.toLocaleString() }}</span>
                                     </div>
-                                    <span class="status-badge" [class]="'status-' + payment.status.toLowerCase()">
-                                        {{ payment.status }}
-                                    </span>
+                                    <mat-chip-set>
+                                        <mat-chip
+                                            [style.background]="getPaymentChipBg(payment.status)"
+                                            [style.color]="getPaymentChipColor(payment.status)"
+                                            [style.font-weight]="'700'"
+                                            [style.font-size]="'11px'">
+                                            {{ paymentStatusLabels[payment.status] ?? payment.status }}
+                                        </mat-chip>
+                                    </mat-chip-set>
                                 </div>
                             }
                         </div>
@@ -509,16 +505,19 @@ import { MaintenanceStatusLabels, MaintenancePriorityLabels } from '../../../cor
         }
 
         .status-badge {
+            display: inline-flex;
+            align-items: center;
             padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 700;
         }
 
-        .status-badge.status-new { background: #dbeafe; color: #1d4ed8; }
-        .status-badge.status-in_progress { background: #fef3c7; color: #b45309; }
-        .status-badge.status-completed { background: #d1fae5; color: #047857; }
-        .status-badge.status-pending { background: #fef3c7; color: #b45309; }
+        .status-badge.status-new         { background: #dbeafe; color: #1e40af; }
+        .status-badge.status-in_progress { background: #bfdbfe; color: #1d4ed8; }
+        .status-badge.status-completed   { background: #1d4ed8; color: #fff;    }
+        .status-badge.status-deferred    { background: #e0e7ff; color: #3730a3; }
+        .status-badge.status-closed      { background: #f1f5f9; color: #475569; }
 
         .payments-list {
             display: flex;
@@ -792,6 +791,7 @@ export class TenantDashboardComponent implements OnInit {
 
     statusLabels = MaintenanceStatusLabels;
     priorityLabels = MaintenancePriorityLabels;
+    paymentStatusLabels = PaymentStatusLabels;
 
     // URLs computadas con slug
     pagosNuevoUrl = computed(() => this.slugService.buildUrl('/portal/pagos/nuevo'));
@@ -803,6 +803,34 @@ export class TenantDashboardComponent implements OnInit {
 
     buildRequestDetailUrl(requestId: number): string {
         return this.slugService.buildUrl(`/portal/mantenimiento/${requestId}`);
+    }
+
+    getPaymentChipBg(status: string): string {
+        const map: Record<string, string> = {
+            PENDING:    '#fef3c7',
+            PROCESSING: '#dbeafe',
+            APPROVED:   '#d1fae5',
+            REJECTED:   '#fee2e2',
+            FAILED:     '#fee2e2',
+            REFUNDED:   '#e0e7ff',
+            REVERSED:   '#f1f5f9',
+            DISPUTED:   '#fde68a',
+        };
+        return map[status] ?? '#f1f5f9';
+    }
+
+    getPaymentChipColor(status: string): string {
+        const map: Record<string, string> = {
+            PENDING:    '#92400e',
+            PROCESSING: '#1e40af',
+            APPROVED:   '#065f46',
+            REJECTED:   '#991b1b',
+            FAILED:     '#991b1b',
+            REFUNDED:   '#3730a3',
+            REVERSED:   '#475569',
+            DISPUTED:   '#78350f',
+        };
+        return map[status] ?? '#475569';
     }
 
     ngOnInit(): void {

@@ -53,10 +53,12 @@ interface PaymentScheduleItem {
                         <p>Gestiona tus pagos y consulta tu historial</p>
                     </div>
                 </div>
-                <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
-                    <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-                    Registrar Pago
-                </button>
+                <div class="header-actions">
+                    <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
+                        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+                        Registrar Pago
+                    </button>
+                </div>
             </div>
 
             <!-- Stats Cards -->
@@ -245,6 +247,18 @@ interface PaymentScheduleItem {
             margin-bottom: 24px;
             flex-wrap: wrap;
             gap: 16px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .header-actions button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .header-content {

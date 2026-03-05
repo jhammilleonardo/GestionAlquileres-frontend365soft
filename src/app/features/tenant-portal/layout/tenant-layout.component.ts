@@ -775,23 +775,23 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
         console.log('[TenantLayout] Has contract in user object?', !!currentUser?.contract);
 
         if (currentUser) {
-            console.log('[TenantLayout] Checking contracts via ContractService...');
-            this.contractService.hasAnyContracts().subscribe({
-                next: (contracts) => {
-                    console.log('[TenantLayout] ContractService returned:', contracts);
-                    console.log('[TenantLayout] Contracts length:', contracts?.length || 0);
-                    if (contracts && contracts.length > 0) {
-                        // User now has contract, redirect to dashboard
-                        console.log('[TenantLayout] User has contracts, redirecting to dashboard');
-                        this.slugService.navigateTo(['portal', 'dashboard']);
-                    } else {
-                        console.log('[TenantLayout] No contracts found, staying on current page');
+            // Solo redirigir al dashboard desde la página pre-contrato (/portal/home).
+            // En cualquier otra ruta del portal el usuario ya tiene acceso válido.
+            const isOnPreContractHome = /\/portal\/home(\/|$|\?)/.test(this.router.url);
+            if (isOnPreContractHome) {
+                console.log('[TenantLayout] On pre-contract home, checking contracts...');
+                this.contractService.hasAnyContracts().subscribe({
+                    next: (contracts) => {
+                        if (contracts && contracts.length > 0) {
+                            console.log('[TenantLayout] User has contracts, redirecting to dashboard');
+                            this.slugService.navigateTo(['portal', 'dashboard']);
+                        }
+                    },
+                    error: (err) => {
+                        console.error('[TenantLayout] Error checking contracts:', err);
                     }
-                },
-                error: (err) => {
-                    console.error('[TenantLayout] Error checking contracts:', err);
-                }
-            });
+                });
+            }
         }
 
         // Load notifications and stats

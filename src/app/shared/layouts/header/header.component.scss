@@ -1,344 +1,219 @@
 @use '../../../../styles' as *;
 
+// ─── Variables ───────────────────────────────────────────────────────────────
+$blue-600:    #2563eb;
+$blue-500:    #3b82f6;
+$blue-100:    #dbeafe;
+$blue-50:     #eff6ff;
+$white:       #ffffff;
+$gray-50:     #f9fafb;
+$gray-100:    #f3f4f6;
+$gray-200:    #e5e7eb;
+$gray-400:    #9ca3af;
+$gray-600:    #4b5563;
+$gray-900:    #111827;
+
+// ─── Header ──────────────────────────────────────────────────────────────────
 .header {
   position: fixed;
   top: 0;
   left: 150px;
   right: 0;
   height: 64px;
-  background: var(--mat-sys-surface);
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  background: $white;
+  border-bottom: 1px solid $gray-200;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
   z-index: 99;
-  overflow: hidden;
   box-sizing: border-box;
   width: auto;
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &.sidebar-collapsed {
-    left: 40px;
-  }
+  &.sidebar-collapsed { left: 40px; }
 
-  // Tablet: sidebar se oculta
-  @media (max-width: 1024px) {
-    left: 0 !important;
-  }
-
-  // Mobile: header ocupa todo el ancho
-  @media (max-width: 767px) {
-    left: 0 !important;
-    padding: 0 1rem;
-  }
+  @media (max-width: 1024px) { left: 0 !important; }
+  @media (max-width: 767px)  { left: 0 !important; padding: 0 1rem; }
 }
 
-.menu-btn {
-  margin-right: 1rem;
-  flex-shrink: 0;
-}
+.menu-btn { margin-right: 1rem; flex-shrink: 0; }
 
 .header-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--mat-sys-on-surface);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: $gray-900;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 1;
   min-width: 0;
 
-  // Mobile: reducir tamaño de fuente
-  @media (max-width: 767px) {
-    font-size: 1rem;
-  }
+  @media (max-width: 767px) { font-size: 1rem; }
 }
 
-.spacer {
-  flex: 1;
-  min-width: 1rem;
-}
+.spacer { flex: 1; min-width: 1rem; }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 4px;
   flex-shrink: 0;
-}
-
-.notification-btn {
-  color: var(--mat-sys-on-surface-variant);
 }
 
 .divider {
   width: 1px;
   height: 24px;
-  background: var(--mat-sys-outline-variant);
-  margin: 0 0.5rem;
+  background: $gray-200;
+  margin: 0 8px;
 }
 
-.user-menu-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-  flex-shrink: 0;
-  max-width: 250px;
+// ─── Action Buttons ───────────────────────────────────────────────────────────
+.action-btn {
+  color: $gray-600;
+  border-radius: 8px !important;
+  transition: background 0.15s, color 0.15s;
 
   &:hover {
-    background: var(--mat-sys-surface-container-low);
-  }
-
-  // Mobile: ocultar nombre de usuario
-  @media (max-width: 767px) {
-    padding: 0.5rem;
-    max-width: none;
-
-    .user-name {
-      display: none;
-    }
+    background: $blue-50 !important;
+    color: $blue-600 !important;
   }
 }
 
-.user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--mat-sys-primary);
-  color: var(--mat-sys-on-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--mat-sys-on-surface);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
-}
-
-// Notification Menu Styles
-::ng-deep .notification-menu {
-  max-width: 400px;
-  width: 90vw;
-}
-
-.notification-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-  font-weight: 600;
-  color: var(--mat-sys-on-surface);
-}
-
-.notification-loading {
-  padding: 40px;
-  text-align: center;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.notification-empty {
-  padding: 40px;
-  text-align: center;
-  color: var(--mat-sys-on-surface-variant);
-
-  lucide-icon {
-    opacity: 0.5;
-    margin-bottom: 12px;
-  }
-
-  p {
-    margin: 0;
-    font-size: 14px;
-  }
-}
-
-.notification-item {
-  padding: 4px 0;
-  max-width: 350px;
-}
-
-.notification-message {
-  font-size: 14px;
-  color: var(--mat-sys-on-surface);
-  margin-bottom: 4px;
-  white-space: normal;
-  line-height: 1.4;
-}
-
-.notification-time {
-  font-size: 12px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-// User Menu Styles
-::ng-deep .mat-mdc-menu-panel {
-  min-width: 280px !important;
-}
-
-.user-menu-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--mat-sys-surface-container-low);
-}
-
-.menu-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--mat-sys-primary);
-  color: var(--mat-sys-on-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.menu-user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.menu-user-name {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--mat-sys-on-surface);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.menu-user-email {
-  font-size: 0.8125rem;
-  color: var(--mat-sys-on-surface-variant);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-::ng-deep .mat-mdc-menu-item {
-  display: flex !important;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px !important;
-
-  lucide-icon {
-    color: var(--mat-sys-on-surface-variant);
-  }
-
-  &:hover lucide-icon {
-    color: var(--mat-sys-primary);
-  }
-}
-
-::ng-deep .logout-item {
-  color: var(--mat-sys-error) !important;
-
-  lucide-icon {
-    color: var(--mat-sys-error) !important;
-  }
-}
-
-// Notifications Dropdown Styles
-.notification-container {
+// ─── Bell + Badge ─────────────────────────────────────────────────────────────
+.bell-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.notifications-dropdown {
+.badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: $blue-600;
+  color: $white;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 2px solid $white;
+}
+
+// ─── Notification Container ───────────────────────────────────────────────────
+.notification-container { position: relative; }
+
+.dropdown-overlay {
   position: fixed;
-  top: 72px; // 64px (header height) + 8px gap
-  right: 1.5rem; // Igual al padding del header
+  inset: 0;
+  z-index: 1000;
+}
+
+// ─── Notification Panel ───────────────────────────────────────────────────────
+.notif-panel {
+  position: fixed;
+  top: 72px;
+  right: 1.5rem;
   width: 380px;
-  max-width: calc(100vw - 3rem); // Dejar espacio a ambos lados
-  background: var(--mat-sys-surface);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--mat-sys-outline-variant);
-  z-index: 1100; // Mayor que el sidebar (1000) y header (99)
-  max-height: 500px;
+  max-width: calc(100vw - 2rem);
+  background: $white;
+  border-radius: 12px;
+  border: 1px solid $gray-200;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 1100;
   display: flex;
   flex-direction: column;
-  animation: slideDown 0.2s ease;
+  overflow: hidden;
+  animation: slideDown 0.18s ease;
 
-  // Mobile: dropdown más ancho
   @media (max-width: 767px) {
-    width: calc(100vw - 2rem);
-    max-width: calc(100vw - 2rem);
     right: 1rem;
     left: 1rem;
+    width: auto;
   }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.dropdown-header {
+// Header del panel
+.notif-panel__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
-
-  h3 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--mat-sys-on-surface);
-  }
-
-  .header-actions-btns {
-    display: flex;
-    gap: 8px;
-  }
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: $blue-600;
+  color: $white;
 }
 
-.mark-all-btn {
-  padding: 6px 12px;
+.notif-panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.notif-count {
+  background: $white;
+  color: $blue-600;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+
+.btn-mark-all {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
   font-size: 0.75rem;
-  background: var(--mat-sys-primary);
-  color: var(--mat-sys-on-primary);
-  border: none;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.2);
+  color: $white;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  transition: background 0.15s;
 
-  &:hover {
-    background: color-mix(in srgb, var(--mat-sys-primary) 90%, black);
-  }
+  &:hover { background: rgba(255, 255, 255, 0.32); }
 }
 
-.no-notifications {
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--mat-sys-on-surface-variant);
+// Body del panel
+.notif-panel__body {
+  max-height: 360px;
+  overflow-y: auto;
 
-  .empty-icon {
-    opacity: 0.3;
-    margin-bottom: 12px;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: $gray-200; border-radius: 2px; }
+}
+
+// Empty state
+.notif-empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: $gray-400;
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    background: $blue-50;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    color: $blue-500;
   }
 
   p {
@@ -347,75 +222,57 @@
   }
 }
 
-.notifications-list {
-  list-style: none;
-  margin: 0;
-  padding: 8px;
-  max-height: 350px;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--mat-sys-outline-variant);
-    border-radius: 3px;
-  }
-}
-
-.notification-item {
+// Item de notificación
+.notif-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.2s;
-  position: relative;
+  border-bottom: 1px solid $gray-100;
+  transition: background 0.15s;
 
-  &:hover {
-    background: var(--mat-sys-surface-container-low);
-  }
+  &:last-child { border-bottom: none; }
 
-  &.unread {
-    background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
-  }
+  &:hover { background: $blue-50; }
+
+  &--unread { background: #f0f7ff; }
 }
 
-.notification-icon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+.notif-item__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--mat-sys-surface-container-low);
-  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.icon-blue   { background: $blue-100;          color: $blue-600; }
+  &.icon-green  { background: #dcfce7;             color: #16a34a; }
+  &.icon-purple { background: #ede9fe;             color: #7c3aed; }
+  &.icon-orange { background: #ffedd5;             color: #ea580c; }
+  &.icon-red    { background: #fee2e2;             color: #dc2626; }
+  &.icon-gray   { background: $gray-100;           color: $gray-600; }
 }
 
-.notification-content {
-  flex: 1;
-  min-width: 0;
-}
+.notif-item__content { flex: 1; min-width: 0; }
 
-.notification-title {
-  margin: 0 0 4px 0;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--mat-sys-on-surface);
-  line-height: 1.3;
-}
-
-.notification-message {
-  margin: 0 0 6px 0;
+.notif-item__title {
+  margin: 0 0 3px;
   font-size: 0.8125rem;
-  color: var(--mat-sys-on-surface-variant);
+  font-weight: 600;
+  color: $gray-900;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-item__message {
+  margin: 0 0 5px;
+  font-size: 0.75rem;
+  color: $gray-600;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -423,50 +280,148 @@
   overflow: hidden;
 }
 
-.notification-time {
-  font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
-  opacity: 0.7;
+.notif-item__time {
+  font-size: 0.6875rem;
+  color: $gray-400;
+  font-weight: 500;
 }
 
-.unread-dot {
+.notif-item__dot {
   width: 8px;
   height: 8px;
-  background: var(--mat-sys-primary);
+  background: $blue-600;
   border-radius: 50%;
   flex-shrink: 0;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
-.dropdown-footer {
-  padding: 12px 16px;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+// Footer del panel
+.notif-panel__footer {
+  padding: 10px 16px;
+  border-top: 1px solid $gray-100;
+  background: $gray-50;
 }
 
-.view-all-btn {
+.btn-view-all {
   width: 100%;
-  padding: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  background: var(--mat-sys-surface-container-low);
-  color: var(--mat-sys-on-surface);
-  border: none;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: $blue-600;
+  background: $white;
+  border: 1px solid $blue-100;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.15s, border-color 0.15s;
 
   &:hover {
-    background: var(--mat-sys-surface-container);
+    background: $blue-50;
+    border-color: $blue-500;
   }
 }
 
-.dropdown-overlay {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  // El overlay ahora cubre todo el ancho en todos los casos
-  // Esto es más consistente y funciona mejor en responsive
+// ─── User Menu ────────────────────────────────────────────────────────────────
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  max-width: 220px;
+
+  &:hover { background: $blue-50 !important; }
+
+  @media (max-width: 767px) {
+    padding: 6px;
+    .user-name { display: none; }
+  }
+}
+
+.user-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: $blue-600;
+  color: $white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $gray-900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+::ng-deep .mat-mdc-menu-panel { min-width: 260px !important; }
+
+.user-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: $blue-50;
+  border-bottom: 1px solid $blue-100;
+}
+
+.menu-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: $blue-600;
+  color: $white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.menu-user-info { flex: 1; min-width: 0; }
+
+.menu-user-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: $gray-900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-user-email {
+  font-size: 0.8125rem;
+  color: $gray-600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+::ng-deep .mat-mdc-menu-item {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px !important;
+
+  lucide-icon { color: $gray-600; }
+  &:hover lucide-icon { color: $blue-600; }
+}
+
+::ng-deep .logout-item {
+  color: #dc2626 !important;
+  lucide-icon { color: #dc2626 !important; }
 }

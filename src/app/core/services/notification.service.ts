@@ -72,7 +72,9 @@ export class NotificationService {
     error = this.errorSignal.asReadonly();
 
     // Computed values
-    unreadCount = computed(() => this.statsSignal()?.unread || 0);
+    unreadCount = computed(() =>
+        this.statsSignal()?.unread ?? this.notificationsSignal().filter(n => !n.is_read).length
+    );
     unreadNotifications = computed(() =>
         this.notificationsSignal().filter(n => !n.is_read)
     );

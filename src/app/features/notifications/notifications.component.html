@@ -109,8 +109,11 @@
     <div class="notifications-list">
       @for (notification of notifications(); track notification.id) {
         <div
+          #notifCard
           class="notification-card"
           [class.unread]="!notification.is_read"
+          [class.highlighted]="highlightedId === notification.id"
+          [attr.data-id]="notification.id"
           (click)="handleNotificationClick(notification)">
 
           <!-- Left: Icon -->

@@ -9,6 +9,7 @@ import {
     UpdateMaintenanceDto,
     CreateMessageDto,
     MaintenanceMessage,
+    MaintenanceAttachment,
     MaintenanceRequestType,
     PermissionToEnter
 } from '../models/maintenance-request.model';
@@ -200,6 +201,16 @@ export class MaintenanceService {
     addMessage(requestId: number, dto: CreateMessageDto): Observable<MaintenanceMessage> {
         const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/messages`);
         return this.apiService.post<MaintenanceMessage>(endpoint, dto);
+    }
+
+    /**
+     * Upload files to a maintenance request (max 3, 10MB each)
+     */
+    uploadFiles(requestId: number, files: File[]): Observable<MaintenanceAttachment[]> {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/upload`);
+        return this.apiService.post<MaintenanceAttachment[]>(endpoint, formData);
     }
 
     // ==================== Filtering ====================

@@ -2,7 +2,7 @@ import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Payment, PaymentStats, PaymentFilters, UpdatePaymentStatusDto, PaymentStatus, CreatePaymentAsAdminDto } from '../models/payment.model';
+import { Payment, PaymentStats, PaymentFilters, UpdatePaymentStatusDto, PaymentStatus, CreatePaymentAsAdminDto, BulkPaymentActionDto } from '../models/payment.model';
 import { SlugService } from './slug.service';
 
 @Injectable({
@@ -241,6 +241,56 @@ export class PaymentService {
                     throw error;
                 })
             );
+    }
+
+    /**
+     * Acción masiva: aprobar, rechazar o eliminar varios pagos
+     * POST /:slug/admin/payments/bulk-action
+     */
+    bulkAction(data: BulkPaymentActionDto): Observable<{ processed: number; errors: number }> {
+        this.isLoadingSignal.set(true);
+        const endpoint = this.slugService.buildApiEndpoint('admin/payments/bulk-action');
+        return this.http.post<{ processed: number; errors: number }>(`${environment.apiUrl}${endpoint}`, data)
+            .pipe(
+                tap(() => {
+                    this.isLoadingSignal.set(false);
+                    this.loadPayments();
+                    this.loadStats();
+                }),
+                catchError(error => {
+                    this.errorSignal.set(error.error?.message || 'Error en acción masiva');
+                    this.isLoadingSignal.set(false);
+                    throw error;
+                })
+            );
+    }
+
+    /**
+     * Exportar pagos como CSV
+     * GET /:slug/admin/payments/export
+     */
+    exportCsv(filters?: PaymentFilters): Observable<Blob> {
+        const endpoint = this.slugService.buildApiEndpoint('admin/payments/export');
+        let params = new HttpParams();
+        if (filters) {
+            if (filters.status) params = params.set('status', filters.status);
+            if (filters.type) params = params.set('type', filters.type);
+            if (filters.method) params = params.set('method', filters.method);
+            if (filters.date_from) params = params.set('date_from', filters.date_from);
+            if (filters.date_to) params = params.set('date_to', filters.date_to);
+        }
+        return this.http.get(`${environment.apiUrl}${endpoint}`, {
+            params,
+            responseType: 'blob'
+        });
+    }
+
+    /**
+     * Construir URL completa para ver el comprobante de pago
+     */
+    getProofUrl(payment: Payment): string | null {
+        if (!payment.proof_file) return null;
+        return `${environment.apiUrl}/storage/${payment.proof_file}`;
     }
 
     /**

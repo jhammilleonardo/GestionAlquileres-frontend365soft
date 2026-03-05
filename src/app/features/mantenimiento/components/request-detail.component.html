@@ -8,13 +8,20 @@
       </button>
       <div>
         <h1>Detalle de Solicitud</h1>
-        <span class="rd-ticket">{{ request.ticket_number }}</span>
+        <span class="rd-ticket">
+          <lucide-icon [img]="FileText" [size]="11"></lucide-icon>
+          {{ request.ticket_number }}
+        </span>
       </div>
     </div>
     <div class="rd-header-actions">
-      <button mat-button color="warn" (click)="delete()">Eliminar</button>
-      <button mat-raised-button color="primary" (click)="save()" [disabled]="isUpdating()">
+      <button mat-stroked-button color="warn" (click)="delete()" class="btn-delete">
+        <lucide-icon [img]="X" [size]="15"></lucide-icon>
+        Eliminar
+      </button>
+      <button mat-raised-button color="primary" (click)="save()" [disabled]="isUpdating()" class="btn-save">
         @if (isUpdating()) { <mat-spinner diameter="14"></mat-spinner> }
+        @else { <lucide-icon [img]="Settings" [size]="15"></lucide-icon> }
         Guardar Cambios
       </button>
     </div>
@@ -26,26 +33,18 @@
     <!-- ════ LEFT ════ -->
     <div class="rd-left">
 
-      <!-- Status Banner -->
-      <div class="status-banner" [class]="'banner-' + request.status.toLowerCase()">
-        <div class="banner-body">
-          <div class="banner-icon">
-            <lucide-icon [img]="Wrench" [size]="22"></lucide-icon>
-          </div>
-          <div class="banner-text">
-            <span class="banner-type">
-              {{ request.request_type === 'MAINTENANCE' ? 'Mantenimiento' : 'Consulta General' }}
-            </span>
-            <span class="banner-title">{{ request.title }}</span>
-          </div>
+      <!-- Hero Banner -->
+      <div class="hero-banner" [class]="'banner-' + request.status.toLowerCase()">
+        <div class="hero-icon-wrap">
+          <lucide-icon [img]="request.request_type === 'MAINTENANCE' ? Wrench : MessageSquare" [size]="22"></lucide-icon>
         </div>
-        <div class="banner-badges">
-          <span class="b-status" [ngClass]="getStatusColor(request.status)">
-            {{ statusLabels[request.status] }}
-          </span>
-          <span class="b-priority" [ngClass]="getPriorityColor(request.priority)">
-            {{ priorityLabels[request.priority] }}
-          </span>
+        <div class="hero-text">
+          <span class="hero-type">{{ request.request_type === 'MAINTENANCE' ? 'Mantenimiento' : 'Consulta General' }}</span>
+          <span class="hero-title">{{ request.title }}</span>
+        </div>
+        <div class="hero-badges">
+          <span class="badge badge-status" [ngClass]="getStatusColor(request.status)">{{ statusLabels[request.status] }}</span>
+          <span class="badge badge-priority" [ngClass]="getPriorityColor(request.priority)">{{ priorityLabels[request.priority] }}</span>
         </div>
       </div>
 
@@ -55,51 +54,65 @@
         <!-- Solicitante -->
         <div class="tenant-card" [class.tenant-card--fallback]="!request.tenant">
           <div class="tenant-avatar">
-            <lucide-icon [img]="User" [size]="22"></lucide-icon>
+            {{ (request.tenant?.name ?? 'I').charAt(0).toUpperCase() }}
           </div>
           <div class="tenant-info">
             @if (request.tenant) {
               <span class="tenant-name">{{ request.tenant.name }}</span>
-              <span class="tenant-detail">{{ request.tenant.email }}</span>
+              <span class="tenant-detail">
+                <lucide-icon [img]="MessageSquare" [size]="11"></lucide-icon>
+                {{ request.tenant.email }}
+              </span>
               @if (request.tenant.phone) {
-                <span class="tenant-detail">{{ request.tenant.phone }}</span>
+                <span class="tenant-detail">
+                  <lucide-icon [img]="Clock" [size]="11"></lucide-icon>
+                  {{ request.tenant.phone }}
+                </span>
               }
             } @else {
               <span class="tenant-name">Inquilino #{{ request.tenant_id }}</span>
               <span class="tenant-detail">Datos no disponibles</span>
             }
           </div>
-          <div class="tenant-badge">
+          <span class="tenant-badge">
             <lucide-icon [img]="User" [size]="11"></lucide-icon>
             Solicitante
-          </div>
+          </span>
         </div>
 
-        <!-- Category -->
-        @if (request.category) {
-          <div class="cc-row">
-            <span class="cat-chip">
-              <lucide-icon [img]="Wrench" [size]="13"></lucide-icon>
-              {{ categoryLabels[request.category] }}
-            </span>
-          </div>
-        }
+        <mat-divider></mat-divider>
 
         <!-- Description -->
         <div class="cc-section">
-          <div class="cc-label">Descripción</div>
+          <div class="section-header">
+            <div class="section-icon-wrap desc-icon">
+              <lucide-icon [img]="FileText" [size]="13"></lucide-icon>
+            </div>
+            <span class="cc-label">Descripción</span>
+            @if (request.category) {
+              <span class="cat-chip">
+                <lucide-icon [img]="Wrench" [size]="12"></lucide-icon>
+                {{ categoryLabels[request.category] }}
+              </span>
+            }
+          </div>
           <div class="cc-desc">{{ request.description }}</div>
         </div>
 
-        <!-- Information meta-cards -->
+        <mat-divider></mat-divider>
+
+        <!-- Information -->
         <div class="cc-section">
-          <div class="cc-label">Información</div>
+          <div class="section-header">
+            <div class="section-icon-wrap info-icon">
+              <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
+            </div>
+            <span class="cc-label">Información</span>
+          </div>
           <div class="meta-grid">
             @if (request.property) {
               <div class="meta-card">
-                <div class="meta-icon home">
-                  <lucide-icon [img]="Home" [size]="16"></lucide-icon>
-                </div>
+                <div class="meta-icon home"><lucide-icon [img]="Home" [size]="15"></lucide-icon></div>
                 <div class="meta-text">
                   <span class="meta-lbl">Propiedad</span>
                   <span class="meta-val">{{ request.property.title }}</span>
@@ -111,9 +124,7 @@
             }
             @if (request.contract) {
               <div class="meta-card">
-                <div class="meta-icon contract">
-                  <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
-                </div>
+                <div class="meta-icon contract"><lucide-icon [img]="FileText" [size]="15"></lucide-icon></div>
                 <div class="meta-text">
                   <span class="meta-lbl">Contrato</span>
                   <span class="meta-val">{{ request.contract.contract_number }}</span>
@@ -121,18 +132,14 @@
               </div>
             }
             <div class="meta-card">
-              <div class="meta-icon created">
-                <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-              </div>
+              <div class="meta-icon created"><lucide-icon [img]="Clock" [size]="15"></lucide-icon></div>
               <div class="meta-text">
                 <span class="meta-lbl">Creado el</span>
                 <span class="meta-val">{{ formatDate(request.created_at) }}</span>
               </div>
             </div>
             <div class="meta-card">
-              <div class="meta-icon updated">
-                <lucide-icon [img]="Settings" [size]="16"></lucide-icon>
-              </div>
+              <div class="meta-icon updated"><lucide-icon [img]="Settings" [size]="15"></lucide-icon></div>
               <div class="meta-text">
                 <span class="meta-lbl">Última actualización</span>
                 <span class="meta-val">{{ formatDate(request.updated_at) }}</span>
@@ -140,9 +147,7 @@
             </div>
             @if (request.due_date) {
               <div class="meta-card">
-                <div class="meta-icon due">
-                  <lucide-icon [img]="Calendar" [size]="16"></lucide-icon>
-                </div>
+                <div class="meta-icon due"><lucide-icon [img]="Calendar" [size]="15"></lucide-icon></div>
                 <div class="meta-text">
                   <span class="meta-lbl">Fecha Límite</span>
                   <span class="meta-val">{{ formatDate(request.due_date) }}</span>
@@ -151,9 +156,7 @@
             }
             @if (request.assigned_to) {
               <div class="meta-card">
-                <div class="meta-icon assigned">
-                  <lucide-icon [img]="User" [size]="16"></lucide-icon>
-                </div>
+                <div class="meta-icon assigned"><lucide-icon [img]="User" [size]="15"></lucide-icon></div>
                 <div class="meta-text">
                   <span class="meta-lbl">Asignado a</span>
                   <span class="meta-val">{{ getStaffName(request.assigned_to) }}</span>
@@ -163,9 +166,16 @@
           </div>
         </div>
 
+        <mat-divider></mat-divider>
+
         <!-- Management -->
         <div class="cc-section">
-          <div class="cc-label">Gestión</div>
+          <div class="section-header">
+            <div class="section-icon-wrap mgmt-icon">
+              <lucide-icon [img]="Settings" [size]="13"></lucide-icon>
+            </div>
+            <span class="cc-label">Gestión</span>
+          </div>
           <div class="mgmt-grid">
             <mat-form-field appearance="outline" class="mf">
               <mat-label>Estado</mat-label>
@@ -201,23 +211,29 @@
 
         <!-- Access -->
         @if (request.request_type === 'MAINTENANCE') {
+          <mat-divider></mat-divider>
           <div class="cc-section last">
-            <div class="cc-label">Acceso</div>
+            <div class="section-header">
+              <div class="section-icon-wrap access-icon">
+                <lucide-icon [img]="Home" [size]="13"></lucide-icon>
+              </div>
+              <span class="cc-label">Acceso</span>
+            </div>
             <div class="access-table">
               <div class="access-row">
-                <span>Permiso de entrada</span>
-                <strong>{{ permissionLabels[request.permission_to_enter] }}</strong>
+                <span class="access-key">Permiso de entrada</span>
+                <strong class="access-val">{{ permissionLabels[request.permission_to_enter] }}</strong>
               </div>
               @if (request.has_pets) {
                 <div class="access-alert">
-                  <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
+                  <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
                   Hay mascotas en la propiedad
                 </div>
               }
               @if (request.entry_notes) {
                 <div class="access-row">
-                  <span>Notas</span>
-                  <strong>{{ request.entry_notes }}</strong>
+                  <span class="access-key">Notas</span>
+                  <strong class="access-val">{{ request.entry_notes }}</strong>
                 </div>
               }
             </div>
@@ -232,74 +248,168 @@
 
       <div class="conv-header">
         <div class="conv-title">
-          <lucide-icon [img]="MessageSquare" [size]="18"></lucide-icon>
+          <lucide-icon [img]="MessageSquare" [size]="17"></lucide-icon>
           <span>Conversación</span>
         </div>
-        <span class="conv-count">{{ messages().length }}</span>
-      </div>
-
-      <div class="conv-messages">
-        @if (isLoadingMessages()) {
-          <div class="conv-center">
-            <mat-spinner diameter="26"></mat-spinner>
-          </div>
-        } @else if (messages().length === 0) {
-          <div class="conv-center empty">
-            <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
-            <p>Sin mensajes aún</p>
-          </div>
-        } @else {
-          @for (msg of messages(); track msg.id) {
-            <!-- Internal note -->
-            @if (isMessageInternal(msg)) {
-              <div class="bubble-row left">
-                <div class="bubble internal-bubble">
-                  <div class="bubble-sender">
-                    <lucide-icon [img]="Lock" [size]="11"></lucide-icon>
-                    Nota interna · Admin
-                  </div>
-                  <p class="bubble-text">{{ msg.message }}</p>
-                  <span class="bubble-time">{{ formatDate(msg.created_at) }}</span>
-                </div>
-              </div>
-            } @else if (isFromTenant(msg)) {
-              <!-- Tenant message (left, gray) -->
-              <div class="bubble-row left">
-                <div class="bubble-sender-name">{{ request.tenant?.name ?? 'Inquilino' }}</div>
-                <div class="bubble their-bubble">
-                  <p class="bubble-text">{{ msg.message }}</p>
-                  <span class="bubble-time">{{ formatDate(msg.created_at) }}</span>
-                </div>
-              </div>
-            } @else {
-              <!-- Admin message (right, blue) -->
-              <div class="bubble-row right">
-                <div class="bubble-sender-name" style="text-align:right">Tú (Admin)</div>
-                <div class="bubble mine-bubble">
-                  <p class="bubble-text">{{ msg.message }}</p>
-                  <span class="bubble-time">{{ formatDate(msg.created_at) }}</span>
-                </div>
-              </div>
-            }
-          }
+        @if (messages().length > 0) {
+          <span class="conv-count">{{ messages().length }}</span>
         }
       </div>
 
+      <div class="conv-messages-wrap">
+        <div class="conv-messages" #msgContainer (scroll)="onMessagesScroll($event)">
+          @if (isLoadingMessages()) {
+            <div class="conv-center">
+              <mat-spinner diameter="26"></mat-spinner>
+            </div>
+          } @else if (messages().length === 0) {
+            <div class="conv-center empty">
+              <div class="empty-icon-wrap">
+                <lucide-icon [img]="MessageSquare" [size]="28"></lucide-icon>
+              </div>
+              <p>Sin mensajes aún</p>
+              <span>Escribe el primer mensaje abajo</span>
+            </div>
+          } @else {
+            @for (msg of messages(); track msg.id) {
+              @if (isFirstPollingNew(msg)) {
+                <div class="new-polling-divider">
+                  <div class="new-polling-line"></div>
+                  <span class="new-polling-label">↓ mensajes nuevos</span>
+                  <div class="new-polling-line"></div>
+                </div>
+              }
+              @if (isFirstUnread(msg)) {
+                <div class="unread-divider">
+                  <div class="unread-line"></div>
+                  <span class="unread-label">{{ unreadCountFromHere }} mensaje{{ unreadCountFromHere !== 1 ? 's' : '' }} no leído{{ unreadCountFromHere !== 1 ? 's' : '' }}</span>
+                  <div class="unread-line"></div>
+                </div>
+              }
+              @if (isMessageInternal(msg)) {
+                <!-- Internal note -->
+                <div class="internal-note">
+                  <div class="internal-note-header">
+                    <lucide-icon [img]="Lock" [size]="11"></lucide-icon>
+                    Nota interna · Admin
+                  </div>
+                  <p class="internal-note-text">{{ msg.message }}</p>
+                  @if (msg.attachments && msg.attachments.length > 0) {
+                    <div class="msg-attachments">
+                      @for (att of msg.attachments; track att.id) {
+                        <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip">
+                          <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                          <span>{{ att.file_name }}</span>
+                        </a>
+                      }
+                    </div>
+                  }
+                  <span class="msg-time">{{ formatDate(msg.created_at) }}</span>
+                </div>
+              } @else if (isFromTenant(msg)) {
+                <!-- Tenant message (left) -->
+                <div class="msg-row">
+                  <div class="msg-avatar tenant-msg-avatar">
+                    {{ (request.tenant?.name ?? 'I').charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="msg-group">
+                    <span class="msg-sender">{{ request.tenant?.name ?? 'Inquilino' }}</span>
+                    <div class="msg-bubble">{{ msg.message }}</div>
+                    @if (msg.attachments && msg.attachments.length > 0) {
+                      <div class="msg-attachments">
+                        @for (att of msg.attachments; track att.id) {
+                          <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip">
+                            <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                            <span>{{ att.file_name }}</span>
+                          </a>
+                        }
+                      </div>
+                    }
+                    <span class="msg-time">{{ formatDate(msg.created_at) }}</span>
+                  </div>
+                </div>
+              } @else {
+                <!-- Admin message (right, blue) -->
+                <div class="msg-row msg-mine">
+                  <div class="msg-group">
+                    <span class="msg-sender msg-sender-mine">Tú (Admin)</span>
+                    <div class="msg-bubble bubble-mine">{{ msg.message }}</div>
+                    @if (msg.attachments && msg.attachments.length > 0) {
+                      <div class="msg-attachments msg-attachments-mine">
+                        @for (att of msg.attachments; track att.id) {
+                          <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip att-chip-mine">
+                            <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                            <span>{{ att.file_name }}</span>
+                          </a>
+                        }
+                      </div>
+                    }
+                    <span class="msg-time">{{ formatDate(msg.created_at) }}</span>
+                  </div>
+                  <div class="msg-avatar admin-msg-avatar">A</div>
+                </div>
+              }
+            }
+          }
+        </div>
+      </div><!-- /conv-messages-wrap -->
+
+      @if (newMessagesCount() > 0) {
+        <div class="new-msg-bar">
+          <button class="new-msg-btn" (click)="scrollToNewMessages()">
+            ↓ {{ newMessagesCount() }} mensaje{{ newMessagesCount() !== 1 ? 's' : '' }} nuevo{{ newMessagesCount() !== 1 ? 's' : '' }}
+          </button>
+        </div>
+      }
+
       <div class="conv-send">
+        <input #fileInputRef type="file" multiple
+               accept="image/jpeg,image/png,image/webp,application/pdf"
+               style="display:none"
+               (change)="onFileSelected($event)">
+
+        @if (selectedFiles().length > 0) {
+          <div class="file-preview">
+            @for (file of selectedFiles(); track $index; let i = $index) {
+              <div class="file-chip">
+                <lucide-icon [img]="Paperclip" [size]="11"></lucide-icon>
+                <span>{{ file.name }}</span>
+                <button class="file-remove" (click)="removeFile(i)">
+                  <lucide-icon [img]="X" [size]="10"></lucide-icon>
+                </button>
+              </div>
+            }
+          </div>
+        }
+
         <div class="send-input-wrap">
           <textarea class="send-textarea"
                     [ngModel]="newMessage()"
                     (ngModelChange)="newMessage.set($event)"
                     placeholder="Escribe tu mensaje..."
-                    rows="2"></textarea>
+                    rows="2"
+                    (keydown.enter)="$event.preventDefault(); addMessage()"></textarea>
         </div>
+
         <div class="send-row">
-          <mat-checkbox [ngModel]="isInternalNote()" (ngModelChange)="isInternalNote.set($event)">
-            <span class="check-lbl">
-              <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
-              Solo staff (nota interna)
-            </span>
-          </mat-checkbox>
+          <div class="send-row-left">
+            <mat-checkbox [ngModel]="isInternalNote()" (ngModelChange)="isInternalNote.set($event)">
+              <span class="check-lbl">
+                <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
+                Solo staff
+              </span>
+            </mat-checkbox>
+            <button class="attach-btn"
+                    type="button"
+                    (click)="fileInputRef.click()"
+                    [disabled]="selectedFiles().length >= 3"
+                    title="Adjuntar archivo (máx. 3)">
+              <lucide-icon [img]="Paperclip" [size]="14"></lucide-icon>
+              @if (selectedFiles().length > 0) {
+                <span class="attach-count">{{ selectedFiles().length }}/3</span>
+              }
+            </button>
+          </div>
           <button class="send-btn"
                   (click)="addMessage()"
                   [disabled]="!newMessage() || isSendingMessage()">

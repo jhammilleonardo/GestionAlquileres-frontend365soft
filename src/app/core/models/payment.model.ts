@@ -36,7 +36,9 @@ export enum PaymentMethod {
     CASH = 'CASH',
     MONEY_ORDER = 'MONEY_ORDER',
     CHECK = 'CHECK',
-    OTHER = 'OTHER'
+    OTHER = 'OTHER',
+    // Bolivia QR
+    QR_MC4 = 'QR_MC4'
 }
 
 export enum PaymentType {
@@ -75,8 +77,69 @@ export enum PaymentProcessor {
     PLAID = 'plaid',
     DWOLLA = 'dwolla',
     MERCADO_PAGO = 'mercado_pago',
-    MANUAL = 'manual'
+    MANUAL = 'manual',
+    MC4_QR = 'MC4_QR'
 }
+
+// =====================================================
+// QR PAYMENT
+// =====================================================
+
+export enum QrPaymentStatus {
+    PENDIENTE  = 'PENDIENTE',
+    PAGADO     = 'PAGADO',
+    EXPIRADO   = 'VENCIDO',    // El backend usa 'VENCIDO'
+    CANCELADO  = 'CANCELADO'
+}
+
+export interface QrPayment {
+    id: number;
+    tenant_id: number;
+    contract_id?: number;
+    property_id?: number;
+    amount: number;
+    currency: string;
+    payment_type: PaymentType;
+    status: QrPaymentStatus;
+    qr_image: string;          // base64 o URL
+    qr_code?: string;          // código raw
+    transaction_id?: string;
+    reference_number?: string;
+    notes?: string;
+    expires_at?: string;
+    paid_at?: string;
+    payment_id?: number;       // id del pago registrado en payments cuando status=PAGADO
+    metadata?: Record<string, any>;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface GenerateQrPaymentDto {
+    amount: number;
+    currency?: string;
+    payment_type?: PaymentType;
+    notes?: string;
+    contract_id?: number;
+}
+
+export interface VerifyQrDto {
+    qr_id?: number;
+    transaction_id?: string;
+}
+
+export const QrPaymentStatusLabels: Record<QrPaymentStatus, string> = {
+    [QrPaymentStatus.PENDIENTE]: 'Pendiente de pago',
+    [QrPaymentStatus.PAGADO]:    'Pagado',
+    [QrPaymentStatus.EXPIRADO]:  'Expirado',
+    [QrPaymentStatus.CANCELADO]: 'Cancelado'
+};
+
+export const QrPaymentStatusColors: Record<QrPaymentStatus, string> = {
+    [QrPaymentStatus.PENDIENTE]: '#f59e0b',
+    [QrPaymentStatus.PAGADO]:    '#10b981',
+    [QrPaymentStatus.EXPIRADO]:  '#64748b',
+    [QrPaymentStatus.CANCELADO]: '#ef4444'
+};
 
 // =====================================================
 // INTERFACES
@@ -243,6 +306,13 @@ export interface UpdatePaymentStatusDto {
     rejection_reason?: string;
 }
 
+export interface BulkPaymentActionDto {
+    ids: number[];
+    action: 'approve' | 'reject' | 'cancel' | string;
+    admin_notes?: string;
+    rejection_reason?: string;
+}
+
 export interface PaymentFilters {
     status?: PaymentStatus;
     type?: PaymentType;
@@ -285,7 +355,8 @@ export const PaymentMethodLabels: Record<PaymentMethod, string> = {
     [PaymentMethod.CASH]: 'Efectivo',
     [PaymentMethod.MONEY_ORDER]: 'Giro Postal',
     [PaymentMethod.CHECK]: 'Cheque',
-    [PaymentMethod.OTHER]: 'Otro'
+    [PaymentMethod.OTHER]: 'Otro',
+    [PaymentMethod.QR_MC4]: 'QR MC4 (Bolivia)'
 };
 
 export const PaymentTypeLabels: Record<PaymentType, string> = {
