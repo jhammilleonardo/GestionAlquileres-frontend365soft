@@ -6,7 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
-import { LucideAngularModule, FileEdit, Clock, CheckCircle2, XCircle, AlertCircle, Plus, Eye, Filter } from 'lucide-angular';
+import { LucideAngularModule, FileEdit, Clock, CheckCircle2, XCircle, AlertCircle, Plus, Eye, Filter, FileSignature } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationService } from '../../../core/services/application.service';
@@ -150,6 +150,16 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                               Nueva Solicitud
                             </button>
                           }
+
+                          @if (app.status === ApplicationStatus.APROBADA) {
+                            <button
+                              mat-flat-button
+                              color="primary"
+                              (click)="goToContracts()">
+                              <lucide-icon [img]="FileSignature" [size]="16"></lucide-icon>
+                              Ver y Firmar Contrato
+                            </button>
+                          }
                         </mat-card-actions>
                       </mat-card>
                     }
@@ -251,6 +261,13 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                             (click)="viewDetails(app.id)">
                             <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
                             Ver Detalles
+                          </button>
+                          <button
+                            mat-flat-button
+                            color="primary"
+                            (click)="goToContracts()">
+                            <lucide-icon [img]="FileSignature" [size]="16"></lucide-icon>
+                            Ver y Firmar Contrato
                           </button>
                         </mat-card-actions>
                       </mat-card>
@@ -637,6 +654,7 @@ export class MyApplicationsComponent implements OnInit {
   readonly AlertCircle = AlertCircle;
   readonly Plus = Plus;
   readonly Eye = Eye;
+  readonly FileSignature = FileSignature;
   readonly ApplicationStatus = ApplicationStatus;
 
   private router = inject(Router);
@@ -685,6 +703,10 @@ export class MyApplicationsComponent implements OnInit {
 
   goToNewApplication(): void {
     this.slugService.navigateTo(['portal', 'new-application']);
+  }
+
+  goToContracts(): void {
+    this.slugService.navigateTo(['portal', 'documentos', 'contratos']);
   }
 
   viewDetails(applicationId: number): void {

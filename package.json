@@ -43,6 +43,7 @@
     "@angular/cli": "^21.1.1",
     "@angular/compiler-cli": "^21.1.0",
     "@angular/material": "^21.1.1",
+    "@spartan-ng/cli": "^0.0.1-alpha.646",
     "@tailwindcss/postcss": "^4.1.18",
     "autoprefixer": "^10.4.24",
     "eslint": "^9.39.2",

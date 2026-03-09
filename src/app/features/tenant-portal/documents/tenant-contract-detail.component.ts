@@ -8,6 +8,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { LucideAngularModule, FileText, Download, ArrowLeft, Edit, CheckCircle2, AlertTriangle, Home, Calendar, DollarSign, FileCheck, Info, X } from 'lucide-angular';
 import { TenantContractService, Contract, ContractStatus, ContractStatusLabels } from '../../../core/services/tenant-contract.service';
+import { TenantAuthService } from '../../../core/services/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ContractSigningDialogComponent } from '../dialogs/contract-signing-dialog.component';
@@ -763,6 +764,7 @@ export class TenantContractDetailComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private contractService = inject(TenantContractService);
+  private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
   private dialog = inject(MatDialog);
@@ -834,10 +836,18 @@ export class TenantContractDetailComponent implements OnInit {
           this.contract.set(response);
 
           // Mostrar diálogo de éxito
-          this.dialog.open(SigningSuccessDialogComponent, {
+          const successRef = this.dialog.open(SigningSuccessDialogComponent, {
             width: '450px',
             maxWidth: '90vw',
-            data: { contract: response }
+            data: { contract: response },
+            disableClose: true
+          });
+
+          // Cuando cierra el diálogo: refrescar sesión y navegar al dashboard
+          successRef.afterClosed().subscribe(() => {
+            this.authService.refreshUserData().subscribe(() => {
+              this.slugService.navigateTo(['portal', 'dashboard']);
+            });
           });
         },
         error: (err) => {
