@@ -25,27 +25,28 @@ import { LandingComponent } from './features/landing/landing.component';
 import { TenantRegisterComponent } from './features/portal-publico/tenant-register/tenant-register.component';
 import { authGuard, adminLoginGuard } from './core/guards/auth.guard';
 import { tenantLoginGuard } from './core/guards/tenant-auth.guard';
+import { setupCompleteGuard, wizardGuard } from './core/guards/setup-complete.guard';
 
 export const routes: Routes = [
   // ==================== LANDING PAGE (PÚBLICO) ====================
   {
     path: '',
-    component: LandingComponent
+    component: LandingComponent,
   },
 
   // ==================== AUTH ADMIN (PÚBLICO - SIN SLUG) ====================
   {
     path: 'login',
     component: LoginComponent,
-    canActivate: [adminLoginGuard]
+    canActivate: [adminLoginGuard],
   },
   {
     path: 'register',
-    component: RegisterComponent
+    component: RegisterComponent,
   },
   {
     path: 'forgot-password',
-    component: ForgotPasswordComponent
+    component: ForgotPasswordComponent,
   },
 
   // ==================== RUTAS CON SLUG ====================
@@ -55,28 +56,47 @@ export const routes: Routes = [
       // ==================== AUTH INQUILINO (CON SLUG) ====================
       {
         path: 'login',
-        loadComponent: () => import('./features/tenant-portal/auth/tenant-login.component').then(m => m.TenantLoginComponent),
-        canActivate: [tenantLoginGuard]
+        loadComponent: () =>
+          import('./features/tenant-portal/auth/tenant-login.component').then(
+            (m) => m.TenantLoginComponent,
+          ),
+        canActivate: [tenantLoginGuard],
       },
       { path: 'register', component: TenantRegisterComponent },
 
       // ==================== PORTAL PÚBLICO ====================
       {
         path: 'publico',
-        loadChildren: () => import('./features/portal-publico/portal-publico.routes').then(m => m.PORTAL_PUBLICO_ROUTES)
+        loadChildren: () =>
+          import('./features/portal-publico/portal-publico.routes').then(
+            (m) => m.PORTAL_PUBLICO_ROUTES,
+          ),
       },
 
       // ==================== TENANT PORTAL (INQUILINOS) ====================
       {
         path: 'portal',
-        loadChildren: () => import('./features/tenant-portal/tenant-portal.routes').then(m => m.TENANT_PORTAL_ROUTES)
+        loadChildren: () =>
+          import('./features/tenant-portal/tenant-portal.routes').then(
+            (m) => m.TENANT_PORTAL_ROUTES,
+          ),
+      },
+
+      // ==================== SETUP WIZARD (una vez, sin layout) ====================
+      {
+        path: 'configuracion/inicio',
+        loadComponent: () =>
+          import('./features/configuracion/wizard-setup/wizard-setup.component').then(
+            (m) => m.WizardSetupComponent,
+          ),
+        canActivate: [wizardGuard],
       },
 
       // ==================== ADMIN PANEL ====================
       {
         path: '',
         component: MainLayoutComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, setupCompleteGuard],
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent },
@@ -96,15 +116,15 @@ export const routes: Routes = [
           { path: 'componentes', component: ComponentesComponent },
           { path: 'notificaciones', component: NotificationsComponent },
           { path: 'perfil', component: AdminPerfilComponent },
-          { path: 'configuracion', component: ConfiguracionComponent }
-        ]
-      }
-    ]
+          { path: 'configuracion', component: ConfiguracionComponent },
+        ],
+      },
+    ],
   },
 
   // ==================== FALLBACK ====================
   {
     path: '**',
-    redirectTo: '/'
-  }
+    redirectTo: '/',
+  },
 ];
