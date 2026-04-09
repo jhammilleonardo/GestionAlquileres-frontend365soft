@@ -7,7 +7,21 @@
     "build": "ng build",
     "serve:pwa": "http-server dist/GestionAlquileres_365Soft/browser -p 4200 -c-1",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:cov": "ng test --coverage",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint:check": "eslint \"src/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.{html,scss}": [
+      "prettier --write"
+    ]
   },
   "prettier": {
     "printWidth": 100,
@@ -24,6 +38,7 @@
   "private": true,
   "packageManager": "npm@11.6.2",
   "dependencies": {
+    "@sentry/browser": "^8.54.0",
     "@angular/animations": "^21.1.1",
     "@angular/cdk": "~21.1.1",
     "@angular/common": "^21.1.0",
@@ -53,6 +68,11 @@
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.54.0",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "@vitest/coverage-v8": "^4.0.8",
+    "@eslint/js": "^9.39.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.5.3"
   }
 }
