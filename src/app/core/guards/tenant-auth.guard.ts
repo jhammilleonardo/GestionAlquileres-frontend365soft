@@ -16,7 +16,7 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
   // Check if slug exists in URL
   if (!slug) {
     // No slug in URL, redirect to main login
-    router.navigate(['/login'], {
+    void router.navigate(['/login'], {
       queryParams: { returnUrl: state.url },
     });
     return false;
@@ -30,7 +30,7 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
     if (userSlug && slug !== userSlug) {
       // URL slug doesn't match user's tenant — redirect to correct URL
       const correctUrl = state.url.replace(`/${slug}/`, `/${userSlug}/`);
-      router.navigate([correctUrl], { replaceUrl: true });
+      void router.navigate([correctUrl], { replaceUrl: true });
       return false;
     }
 
@@ -44,7 +44,7 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
 
   // Redirect to tenant login with slug
   // Usar replaceUrl para que la redirección no quede en el historial
-  router.navigate(['/', slug, 'login'], {
+  void router.navigate(['/', slug, 'login'], {
     queryParams: { returnUrl: state.url },
     replaceUrl: true,
   });
@@ -80,7 +80,7 @@ export const tenantLoginGuard: CanActivateFn = (route, state) => {
       // Check if user has contract in the current user object (fast path)
       if (currentUser.contract) {
         console.log('[tenantLoginGuard] User has contract, redirecting to dashboard');
-        router.navigate(['/', slug, 'portal', 'dashboard'], { replaceUrl: true });
+        void router.navigate(['/', slug, 'portal', 'dashboard'], { replaceUrl: true });
         return false;
       }
 
@@ -88,11 +88,11 @@ export const tenantLoginGuard: CanActivateFn = (route, state) => {
       // The tenant-layout component will do a more thorough check via ContractService
       // and redirect if contracts are found
       console.log('[tenantLoginGuard] No contract in user object, redirecting to home');
-      router.navigate(['/', slug, 'portal', 'home'], { replaceUrl: true });
+      void router.navigate(['/', slug, 'portal', 'home'], { replaceUrl: true });
       return false;
     } else if (!slug) {
       console.log('[tenantLoginGuard] No slug, redirecting to default dashboard');
-      router.navigate(['/portal/dashboard'], { replaceUrl: true });
+      void router.navigate(['/portal/dashboard'], { replaceUrl: true });
       return false;
     }
   }
@@ -118,7 +118,7 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
   // Si no está autenticado, redirigir al login
   if (!currentUser) {
     if (slug) {
-      router.navigate(['/', slug, 'portal', 'login'], {
+      void router.navigate(['/', slug, 'portal', 'login'], {
         queryParams: { returnUrl: state.url },
       });
     }
@@ -165,7 +165,7 @@ export const tenantWithContractGuard: CanActivateFn = (route, state) => {
   if (!currentUser) {
     const slug = route.paramMap.get('slug');
     if (slug) {
-      router.navigate(['/', slug, 'portal', 'login'], {
+      void router.navigate(['/', slug, 'portal', 'login'], {
         queryParams: { returnUrl: state.url },
       });
     }

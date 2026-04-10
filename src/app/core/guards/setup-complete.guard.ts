@@ -25,7 +25,7 @@ export const setupCompleteGuard: CanActivateFn = (route, _state) => {
       if (config.setup_completed) {
         return true;
       }
-      router.navigate(['/', slug, 'configuracion', 'inicio'], { replaceUrl: true });
+      void router.navigate(['/', slug, 'configuracion', 'inicio'], { replaceUrl: true });
       return false;
     }),
     catchError(() => {
@@ -55,12 +55,12 @@ export const wizardGuard: CanActivateFn = (route, _state) => {
       if (!config.setup_completed) {
         return true;
       }
-      router.navigate(['/', slug, 'dashboard'], { replaceUrl: true });
+      void router.navigate(['/', slug, 'dashboard'], { replaceUrl: true });
       return false;
     }),
     catchError((err: HttpErrorResponse) => {
       if (err.status === 401) {
-        router.navigate(['/login'], { replaceUrl: true });
+        void router.navigate(['/login'], { replaceUrl: true });
         return of(false);
       }
       return of(true);
