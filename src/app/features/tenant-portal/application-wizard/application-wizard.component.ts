@@ -9,14 +9,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule, ArrowLeft, CheckCircle2 } from 'lucide-angular';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { merge, debounceTime } from 'rxjs';
-import { TenantAuthService } from '../../../core/services/tenant-auth.service';
-import { ApplicationService } from '../../../core/services/application.service';
-import { PropertyService } from '../../../core/services/property.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+import { ApplicationService } from '../../../core/services/admin/application.service';
+import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { ApplicationIntentionService } from '../../../core/services/application-intention.service';
-import {
-  CreateApplicationDto
-} from '../../../core/models/application.model';
+import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
 import { Property } from '../../../core/models/property.model';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -39,16 +36,13 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
     LucideAngularModule,
     Step1PersonalInfoComponent,
     Step2EmploymentHistoryComponent,
-    Step3PreviewSubmitComponent
+    Step3PreviewSubmitComponent,
   ],
   template: `
     <div class="application-wizard">
       <!-- Header -->
       <div class="page-header">
-        <button
-          mat-button
-          class="back-btn"
-          (click)="goBack()">
+        <button mat-button class="back-btn" (click)="goBack()">
           <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
           <span>Volver</span>
         </button>
@@ -81,14 +75,15 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
             [linear]="true"
             [selectedIndex]="currentStep()"
             (selectionChange)="onStepChange($event)"
-            class="application-stepper">
-
+            class="application-stepper"
+          >
             <!-- Step 1: Información Personal -->
             <mat-step [stepControl]="personalInfoForm">
               <ng-template matStepLabel>Datos Personales</ng-template>
               <app-step-1-personal-info
                 [formGroup]="personalInfoForm"
-                (isValid)="personalInfoValid.set($event)">
+                (isValid)="personalInfoValid.set($event)"
+              >
               </app-step-1-personal-info>
             </mat-step>
 
@@ -97,7 +92,8 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
               <ng-template matStepLabel>Información Laboral</ng-template>
               <app-step-2-employment-history
                 [formGroup]="employmentHistoryForm"
-                (isValid)="employmentHistoryValid.set($event)">
+                (isValid)="employmentHistoryValid.set($event)"
+              >
               </app-step-2-employment-history>
             </mat-step>
 
@@ -111,7 +107,8 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
                 [rentalHistory]="employmentHistoryForm.get('rental_history')?.value || []"
                 [isSubmitting]="isSubmitting()"
                 (submit)="submitApplication()"
-                (editStep)="goToStep($event)">
+                (editStep)="goToStep($event)"
+              >
               </app-step-3-preview-submit>
             </mat-step>
           </mat-stepper>
@@ -119,93 +116,95 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
       }
     </div>
   `,
-  styles: [`
-    .application-wizard {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .page-header {
-      margin-bottom: 32px;
-    }
-
-    .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      color: var(--mat-sys-on-surface-variant);
-      font-weight: 500;
-    }
-
-    .back-btn:hover {
-      background: var(--mat-sys-surface-container-low);
-    }
-
-    .header-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .header-icon {
-      width: 56px;
-      height: 56px;
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .header-text h1 {
-      margin: 0;
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .subtitle {
-      margin: 4px 0 0;
-      font-size: 1rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 64px 24px;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .wizard-card {
-      border: 1px solid var(--mat-sys-outline-variant);
-      overflow: hidden;
-    }
-
-    .application-stepper {
-      padding: 24px;
-    }
-
-    @media (max-width: 768px) {
+  styles: [
+    `
       .application-wizard {
-        padding: 16px;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        color: var(--mat-sys-on-surface-variant);
+        font-weight: 500;
+      }
+
+      .back-btn:hover {
+        background: var(--mat-sys-surface-container-low);
       }
 
       .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .header-text h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        font-size: 1rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .loading-state {
+        display: flex;
         flex-direction: column;
-        text-align: center;
+        align-items: center;
+        gap: 16px;
+        padding: 64px 24px;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .wizard-card {
+        border: 1px solid var(--mat-sys-outline-variant);
+        overflow: hidden;
       }
 
       .application-stepper {
-        padding: 16px;
+        padding: 24px;
       }
-    }
-  `]
+
+      @media (max-width: 768px) {
+        .application-wizard {
+          padding: 16px;
+        }
+
+        .header-content {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .application-stepper {
+          padding: 16px;
+        }
+      }
+    `,
+  ],
 })
 export class ApplicationWizardComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
@@ -260,7 +259,7 @@ export class ApplicationWizardComponent implements OnInit {
       national_id: ['', [Validators.required, Validators.minLength(8)]],
       current_address: [''], // Campo opcional para dirección actual
       marital_status: ['soltero', [Validators.required]],
-      number_of_dependents: [0, [Validators.required, Validators.min(0)]]
+      number_of_dependents: [0, [Validators.required, Validators.min(0)]],
     });
 
     // Employment History Form
@@ -273,17 +272,17 @@ export class ApplicationWizardComponent implements OnInit {
         start_date: ['', [Validators.required]],
         employment_type: ['tiempo_completo', [Validators.required]],
         supervisor_name: ['', [Validators.required]],
-        supervisor_phone: ['', [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)]]
+        supervisor_phone: ['', [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)]],
       }),
       previous_job: this.fb.group({
         company: [''],
         position: [''],
         salary: [0],
-        end_date: ['']
+        end_date: [''],
       }),
       rental_history: this.fb.array([]),
       personal_references: this.fb.array([]),
-      professional_references: this.fb.array([])
+      professional_references: this.fb.array([]),
     });
   }
 
@@ -297,7 +296,8 @@ export class ApplicationWizardComponent implements OnInit {
 
     this.isLoadingProperty.set(true);
 
-    this.propertyService.getPropertyById(+propertyId)
+    this.propertyService
+      .getPropertyById(+propertyId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (property) => {
@@ -310,7 +310,7 @@ export class ApplicationWizardComponent implements OnInit {
         error: () => {
           this.isLoadingProperty.set(false);
           this.slugService.navigateTo(['portal', 'new-application']);
-        }
+        },
       });
   }
 
@@ -321,7 +321,7 @@ export class ApplicationWizardComponent implements OnInit {
       this.personalInfoForm.patchValue({
         full_name: currentUser.name || '',
         email: currentUser.email || '',
-        phone: currentUser.phone || ''
+        phone: currentUser.phone || '',
       });
     }
   }
@@ -341,19 +341,15 @@ export class ApplicationWizardComponent implements OnInit {
   // ─── Draft persistence ───────────────────────────────────────────────────
 
   private setupAutosave(): void {
-    merge(
-      this.personalInfoForm.valueChanges,
-      this.employmentHistoryForm.valueChanges
-    ).pipe(
-      debounceTime(400),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => this.saveDraft());
+    merge(this.personalInfoForm.valueChanges, this.employmentHistoryForm.valueChanges)
+      .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.saveDraft());
   }
 
   private saveDraft(): void {
     const draft = {
       personalInfo: this.personalInfoForm.getRawValue(),
-      employmentHistory: this.employmentHistoryForm.getRawValue()
+      employmentHistory: this.employmentHistoryForm.getRawValue(),
     };
     sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
   }
@@ -369,7 +365,7 @@ export class ApplicationWizardComponent implements OnInit {
         const pi = draft.personalInfo;
         this.personalInfoForm.patchValue({
           ...pi,
-          birth_date: pi.birth_date ? new Date(pi.birth_date) : null
+          birth_date: pi.birth_date ? new Date(pi.birth_date) : null,
         });
       }
 
@@ -379,12 +375,12 @@ export class ApplicationWizardComponent implements OnInit {
         this.employmentHistoryForm.patchValue({
           current_job: {
             ...(emp.current_job || {}),
-            start_date: emp.current_job?.start_date ? new Date(emp.current_job.start_date) : null
+            start_date: emp.current_job?.start_date ? new Date(emp.current_job.start_date) : null,
           },
           previous_job: {
             ...(emp.previous_job || {}),
-            end_date: emp.previous_job?.end_date ? new Date(emp.previous_job.end_date) : null
-          }
+            end_date: emp.previous_job?.end_date ? new Date(emp.previous_job.end_date) : null,
+          },
         });
 
         // Restore rental_history FormArray
@@ -392,15 +388,20 @@ export class ApplicationWizardComponent implements OnInit {
           const rentalArray = this.employmentHistoryForm.get('rental_history') as FormArray;
           rentalArray.clear();
           emp.rental_history.forEach((item: any) => {
-            rentalArray.push(this.fb.group({
-              property_address: [item.property_address || '', Validators.required],
-              landlord_name:    [item.landlord_name    || '', Validators.required],
-              landlord_phone:   [item.landlord_phone   || '', [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)]],
-              monthly_rent:     [item.monthly_rent     || '', [Validators.required, Validators.min(0)]],
-              start_date:       [item.start_date ? new Date(item.start_date) : '', Validators.required],
-              end_date:         [item.end_date   ? new Date(item.end_date)   : ''],
-              reason_for_leaving: [item.reason_for_leaving || '']
-            }));
+            rentalArray.push(
+              this.fb.group({
+                property_address: [item.property_address || '', Validators.required],
+                landlord_name: [item.landlord_name || '', Validators.required],
+                landlord_phone: [
+                  item.landlord_phone || '',
+                  [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)],
+                ],
+                monthly_rent: [item.monthly_rent || '', [Validators.required, Validators.min(0)]],
+                start_date: [item.start_date ? new Date(item.start_date) : '', Validators.required],
+                end_date: [item.end_date ? new Date(item.end_date) : ''],
+                reason_for_leaving: [item.reason_for_leaving || ''],
+              }),
+            );
           });
         }
       }
@@ -437,7 +438,7 @@ export class ApplicationWizardComponent implements OnInit {
       name: ref.name || '',
       relationship: ref.relationship || '',
       phone: ref.phone || '',
-      email: ref.email || undefined
+      email: ref.email || undefined,
     }));
 
     // Datos en el formato que REALMENTE espera el backend
@@ -452,7 +453,7 @@ export class ApplicationWizardComponent implements OnInit {
         // porque el backend dice que "should not exist" en personal_data.property
         // El backend obtiene estos datos del token JWT
         identity_document: personalInfo.national_id || '',
-        current_address: personalInfo.current_address || ''
+        current_address: personalInfo.current_address || '',
       },
       // Datos laborales - campos planos según el backend
       employment_data: {
@@ -460,7 +461,7 @@ export class ApplicationWizardComponent implements OnInit {
         position: currentJob?.position || '',
         monthly_income: Number(currentJob?.salary) || 0,
         employment_duration: currentJob?.start_date || '',
-        employer_phone: currentJob?.supervisor_phone || ''
+        employer_phone: currentJob?.supervisor_phone || '',
         // NOTA: No enviamos current_job porque el backend dice "should not exist"
       },
       // Historial de alquiler - mapeado a los nombres que espera el backend
@@ -469,15 +470,16 @@ export class ApplicationWizardComponent implements OnInit {
         previous_landlord_name: history.landlord_name || '',
         previous_landlord_phone: history.landlord_phone || '',
         previous_rent_amount: Number(history.monthly_rent) || 0,
-        reason_for_leaving: history.reason_for_leaving || ''
+        reason_for_leaving: history.reason_for_leaving || '',
         // NOTA: No enviamos property_address, landlord_name, etc.
         // porque el backend dice "should not exist"
       })),
       // Referencias - debe ser un array según el backend
-      references: personalReferences.length > 0 ? personalReferences : []
+      references: personalReferences.length > 0 ? personalReferences : [],
     };
 
-    this.applicationService.createApplication(applicationData)
+    this.applicationService
+      .createApplication(applicationData)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -489,7 +491,7 @@ export class ApplicationWizardComponent implements OnInit {
         error: (error) => {
           this.isSubmitting.set(false);
           console.error('Error submitting application:', error);
-        }
+        },
       });
   }
 }

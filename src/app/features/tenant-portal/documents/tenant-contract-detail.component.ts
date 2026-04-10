@@ -6,9 +6,28 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { LucideAngularModule, FileText, Download, ArrowLeft, Edit, CheckCircle2, AlertTriangle, Home, Calendar, DollarSign, FileCheck, Info, X } from 'lucide-angular';
-import { TenantContractService, Contract, ContractStatus, ContractStatusLabels } from '../../../core/services/tenant-contract.service';
-import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import {
+  LucideAngularModule,
+  FileText,
+  Download,
+  ArrowLeft,
+  Edit,
+  CheckCircle2,
+  AlertTriangle,
+  Home,
+  Calendar,
+  DollarSign,
+  FileCheck,
+  Info,
+  X,
+} from 'lucide-angular';
+import {
+  TenantContractService,
+  Contract,
+  ContractStatus,
+  ContractStatusLabels,
+} from '../../../core/services/tenant/tenant-contract.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ContractSigningDialogComponent } from '../dialogs/contract-signing-dialog.component';
@@ -24,7 +43,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
     MatProgressSpinnerModule,
     MatDividerModule,
     MatDialogModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   template: `
     <div class="contract-detail-container">
@@ -74,7 +93,10 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                 <lucide-icon [img]="AlertTriangle" [size]="32"></lucide-icon>
                 <div class="alert-text">
                   <h3>Contrato pendiente de tu firma</h3>
-                  <p>Revisa los términos y condiciones en esta página. Cuando estés listo, haz clic en <strong>"Firmar Contrato"</strong> para aceptarlos y activar el contrato.</p>
+                  <p>
+                    Revisa los términos y condiciones en esta página. Cuando estés listo, haz clic
+                    en <strong>"Firmar Contrato"</strong> para aceptarlos y activar el contrato.
+                  </p>
                 </div>
               </div>
               <div class="alert-action">
@@ -83,7 +105,8 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                   color="primary"
                   (click)="signContract()"
                   [disabled]="isSigning()"
-                  class="sign-btn-top">
+                  class="sign-btn-top"
+                >
                   <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
                   {{ isSigning() ? 'Firmando...' : 'Firmar Contrato' }}
                 </button>
@@ -208,7 +231,10 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                     <p><strong>Titular:</strong> {{ c.bank_account_holder }}</p>
                   }
                   @if (c.bank_account_type && c.bank_account_number) {
-                    <p><strong>Cuenta:</strong> {{ c.bank_account_type }} - {{ c.bank_account_number }}</p>
+                    <p>
+                      <strong>Cuenta:</strong> {{ c.bank_account_type }} -
+                      {{ c.bank_account_number }}
+                    </p>
                   }
                 </div>
               }
@@ -293,10 +319,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
 
           <!-- Actions Footer -->
           <div class="actions-footer">
-            <button
-              mat-stroked-button
-              (click)="viewPDF()"
-              class="action-btn download-btn">
+            <button mat-stroked-button (click)="viewPDF()" class="action-btn download-btn">
               <lucide-icon [img]="Download" [size]="18"></lucide-icon>
               Ver PDF
             </button>
@@ -307,7 +330,8 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                 color="primary"
                 (click)="signContract()"
                 [disabled]="isSigning()"
-                class="action-btn sign-btn">
+                class="action-btn sign-btn"
+              >
                 <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
                 @if (isSigning()) {
                   Firmando...
@@ -321,429 +345,431 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
       }
     </div>
   `,
-  styles: [`
-    .contract-detail-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 0;
-    }
-
-    .detail-header {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-
-    .back-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .header-info {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .header-info h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0;
-    }
-
-    .status-badge {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .status-badge.status-borrador {
-      background: #fef3c7;
-      color: #b45309;
-    }
-
-    .status-badge.status-activo {
-      background: #d1fae5;
-      color: #047857;
-    }
-
-    .status-badge.status-finalizado {
-      background: #e5e7eb;
-      color: #374151;
-    }
-
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 80px 20px;
-      gap: 16px;
-      color: #64748b;
-    }
-
-    .error-card {
-      margin: 40px 0;
-    }
-
-    .error-content {
-      text-align: center;
-      padding: 40px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .error-content lucide-icon {
-      color: #dc2626;
-    }
-
-    .error-content h2 {
-      margin: 0;
-      color: #1e293b;
-    }
-
-    .contract-content {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .pending-signature-alert {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      border-left: 4px solid #f59e0b;
-      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-    }
-
-    .alert-action {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .sign-btn-top {
-      width: 100%;
-      padding: 12px 24px;
-      font-size: 15px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .alert-content,
-    .confirmation-content {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-
-    .alert-content lucide-icon {
-      color: #f59e0b;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .alert-content h3,
-    .confirmation-content h3 {
-      margin: 0 0 8px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .alert-content p,
-    .confirmation-content p {
-      margin: 0;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    .signed-confirmation {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-      border-left: 4px solid #10b981;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-    }
-
-    .confirmation-content lucide-icon {
-      color: #10b981;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .info-card {
-      padding: 24px;
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #e2e8f0;
-    }
-
-    .card-header lucide-icon {
-      color: var(--mat-sys-primary);
-    }
-
-    .card-header h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1e293b;
-      margin: 0;
-    }
-
-    .card-content {
-      color: #475569;
-    }
-
-    .property-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin: 0 0 8px;
-    }
-
-    .property-address {
-      margin: 0;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    .dates-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-    }
-
-    .date-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-    }
-
-    .date-item.signed {
-      background: #d1fae5;
-    }
-
-    .date-item .label {
-      font-size: 12px;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .date-item .value {
-      font-size: 15px;
-      color: #1e293b;
-      font-weight: 600;
-    }
-
-    .economic-terms {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .term-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 8px;
-    }
-
-    .term-item .label {
-      font-size: 14px;
-      color: #64748b;
-    }
-
-    .term-item .value {
-      font-size: 16px;
-      color: #1e293b;
-      font-weight: 600;
-    }
-
-    .term-item .value.amount {
-      font-size: 18px;
-      color: var(--mat-sys-primary);
-    }
-
-    .bank-info {
-      margin-top: 16px;
-      padding: 16px;
-      background: #f8fafc;
-      border-radius: 8px;
-    }
-
-    .bank-info h4 {
-      margin: 0 0 12px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .bank-info p {
-      margin: 0 0 8px;
-      font-size: 14px;
-      color: #475569;
-    }
-
-    .bank-info p:last-child {
-      margin-bottom: 0;
-    }
-
-    .services-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .service-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      background: #f8fafc;
-      border-radius: 6px;
-    }
-
-    .service-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      background: #d1fae5;
-      color: #047857;
-      border-radius: 50%;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .service-name {
-      font-size: 14px;
-      color: #1e293b;
-    }
-
-    .terms-text {
-      margin: 0;
-      line-height: 1.7;
-      color: #475569;
-    }
-
-    .info-card.prohibitions {
-      border-left: 4px solid #f59e0b;
-      background: #fffbeb;
-    }
-
-    .additional-term {
-      margin-bottom: 16px;
-    }
-
-    .additional-term:last-child {
-      margin-bottom: 0;
-    }
-
-    .additional-term h4 {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e293b;
-      margin: 0 0 8px;
-    }
-
-    .additional-term p {
-      margin: 0;
-      line-height: 1.6;
-      color: #475569;
-    }
-
-    .actions-footer {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-      padding: 20px;
-      background: var(--mat-sys-surface);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .action-btn {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 14px 24px;
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .sign-btn {
-      min-width: 200px;
-    }
-
-    @media (max-width: 768px) {
+  styles: [
+    `
       .contract-detail-container {
-        padding: 16px 0;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 24px 0;
       }
 
       .detail-header {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+
+      .back-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
 
       .header-info {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .header-info h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+      }
+
+      .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-block;
+      }
+
+      .status-badge.status-borrador {
+        background: #fef3c7;
+        color: #b45309;
+      }
+
+      .status-badge.status-activo {
+        background: #d1fae5;
+        color: #047857;
+      }
+
+      .status-badge.status-finalizado {
+        background: #e5e7eb;
+        color: #374151;
+      }
+
+      .loading-container {
+        display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 20px;
+        gap: 16px;
+        color: #64748b;
+      }
+
+      .error-card {
+        margin: 40px 0;
+      }
+
+      .error-content {
+        text-align: center;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .error-content lucide-icon {
+        color: #dc2626;
+      }
+
+      .error-content h2 {
+        margin: 0;
+        color: #1e293b;
+      }
+
+      .contract-content {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .pending-signature-alert {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-left: 4px solid #f59e0b;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+      }
+
+      .alert-action {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(245, 158, 11, 0.3);
+      }
+
+      .sign-btn-top {
+        width: 100%;
+        padding: 12px 24px;
+        font-size: 15px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .alert-content,
+      .confirmation-content {
+        display: flex;
+        gap: 16px;
         align-items: flex-start;
       }
 
-      .dates-grid {
-        grid-template-columns: 1fr;
+      .alert-content lucide-icon {
+        color: #f59e0b;
+        flex-shrink: 0;
+        margin-top: 2px;
       }
 
-      .actions-footer {
-        flex-direction: column;
+      .alert-content h3,
+      .confirmation-content h3 {
+        margin: 0 0 8px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e293b;
       }
 
-      .action-btn {
-        width: 100%;
+      .alert-content p,
+      .confirmation-content p {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.5;
       }
-    }
 
-    @media (max-width: 480px) {
+      .signed-confirmation {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        border-left: 4px solid #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+      }
+
+      .confirmation-content lucide-icon {
+        color: #10b981;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
       .info-card {
-        padding: 20px;
+        padding: 24px;
       }
 
-      .property-title {
-        font-size: 1.25rem;
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e2e8f0;
+      }
+
+      .card-header lucide-icon {
+        color: var(--mat-sys-primary);
       }
 
       .card-header h3 {
-        font-size: 1.1rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0;
       }
-    }
 
-    .my-4 {
-      margin: 16px 0;
-    }
-  `]
+      .card-content {
+        color: #475569;
+      }
+
+      .property-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 8px;
+      }
+
+      .property-address {
+        margin: 0;
+        color: #64748b;
+        line-height: 1.5;
+      }
+
+      .dates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+      }
+
+      .date-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+
+      .date-item.signed {
+        background: #d1fae5;
+      }
+
+      .date-item .label {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+      }
+
+      .date-item .value {
+        font-size: 15px;
+        color: #1e293b;
+        font-weight: 600;
+      }
+
+      .economic-terms {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .term-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+
+      .term-item .label {
+        font-size: 14px;
+        color: #64748b;
+      }
+
+      .term-item .value {
+        font-size: 16px;
+        color: #1e293b;
+        font-weight: 600;
+      }
+
+      .term-item .value.amount {
+        font-size: 18px;
+        color: var(--mat-sys-primary);
+      }
+
+      .bank-info {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8fafc;
+        border-radius: 8px;
+      }
+
+      .bank-info h4 {
+        margin: 0 0 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .bank-info p {
+        margin: 0 0 8px;
+        font-size: 14px;
+        color: #475569;
+      }
+
+      .bank-info p:last-child {
+        margin-bottom: 0;
+      }
+
+      .services-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .service-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-radius: 6px;
+      }
+
+      .service-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: #d1fae5;
+        color: #047857;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 14px;
+      }
+
+      .service-name {
+        font-size: 14px;
+        color: #1e293b;
+      }
+
+      .terms-text {
+        margin: 0;
+        line-height: 1.7;
+        color: #475569;
+      }
+
+      .info-card.prohibitions {
+        border-left: 4px solid #f59e0b;
+        background: #fffbeb;
+      }
+
+      .additional-term {
+        margin-bottom: 16px;
+      }
+
+      .additional-term:last-child {
+        margin-bottom: 0;
+      }
+
+      .additional-term h4 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 0 0 8px;
+      }
+
+      .additional-term p {
+        margin: 0;
+        line-height: 1.6;
+        color: #475569;
+      }
+
+      .actions-footer {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        padding: 20px;
+        background: var(--mat-sys-surface);
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      .action-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 14px 24px;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .sign-btn {
+        min-width: 200px;
+      }
+
+      @media (max-width: 768px) {
+        .contract-detail-container {
+          padding: 16px 0;
+        }
+
+        .detail-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .header-info {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .dates-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .actions-footer {
+          flex-direction: column;
+        }
+
+        .action-btn {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .info-card {
+          padding: 20px;
+        }
+
+        .property-title {
+          font-size: 1.25rem;
+        }
+
+        .card-header h3 {
+          font-size: 1.1rem;
+        }
+      }
+
+      .my-4 {
+        margin: 16px 0;
+      }
+    `,
+  ],
 })
 export class TenantContractDetailComponent implements OnInit {
   readonly ArrowLeft = ArrowLeft;
@@ -785,7 +811,8 @@ export class TenantContractDetailComponent implements OnInit {
   }
 
   loadContract(id: number): void {
-    this.contractService.getContract(id)
+    this.contractService
+      .getContract(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (contract) => {
@@ -794,9 +821,11 @@ export class TenantContractDetailComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error loading contract:', err);
-          this.error.set('No se pudo cargar el contrato. Es posible que no tengas permiso para verlo.');
+          this.error.set(
+            'No se pudo cargar el contrato. Es posible que no tengas permiso para verlo.',
+          );
           this.isLoading.set(false);
-        }
+        },
       });
   }
 
@@ -815,7 +844,7 @@ export class TenantContractDetailComponent implements OnInit {
       maxWidth: '95vw',
       data: { contract },
       disableClose: true,
-      autoFocus: false
+      autoFocus: false,
     });
 
     dialogRef.afterClosed().subscribe((confirmed) => {
@@ -828,7 +857,8 @@ export class TenantContractDetailComponent implements OnInit {
   private performSigning(contractId: number): void {
     this.isSigning.set(true);
 
-    this.contractService.signContract(contractId)
+    this.contractService
+      .signContract(contractId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
@@ -840,7 +870,7 @@ export class TenantContractDetailComponent implements OnInit {
             width: '450px',
             maxWidth: '90vw',
             data: { contract: response },
-            disableClose: true
+            disableClose: true,
           });
 
           // Cuando cierra el diálogo: refrescar sesión y navegar al dashboard
@@ -853,8 +883,10 @@ export class TenantContractDetailComponent implements OnInit {
         error: (err) => {
           this.isSigning.set(false);
           console.error('Error signing contract:', err);
-          alert(err.error?.message || 'Error al firmar el contrato. Por favor, intenta nuevamente.');
-        }
+          alert(
+            err.error?.message || 'Error al firmar el contrato. Por favor, intenta nuevamente.',
+          );
+        },
       });
   }
 
@@ -862,7 +894,8 @@ export class TenantContractDetailComponent implements OnInit {
     const contract = this.contract();
     if (!contract) return;
 
-    this.contractService.downloadContractPDF(contract.id)
+    this.contractService
+      .downloadContractPDF(contract.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (blob) => {
@@ -875,7 +908,7 @@ export class TenantContractDetailComponent implements OnInit {
         error: (err) => {
           console.error('Error viewing PDF:', err);
           alert('Error al visualizar el PDF. Por favor, intenta nuevamente.');
-        }
+        },
       });
   }
 
@@ -883,7 +916,8 @@ export class TenantContractDetailComponent implements OnInit {
     const contract = this.contract();
     if (!contract) return;
 
-    this.contractService.downloadContractPDF(contract.id)
+    this.contractService
+      .downloadContractPDF(contract.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (blob) => {
@@ -896,7 +930,7 @@ export class TenantContractDetailComponent implements OnInit {
         error: (err) => {
           console.error('Error viewing PDF:', err);
           alert('Error al visualizar el PDF. Por favor, intenta nuevamente.');
-        }
+        },
       });
   }
 
@@ -907,14 +941,14 @@ export class TenantContractDetailComponent implements OnInit {
       month: 'long',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   }
 
   formatRent(rent: number): string {
     return rent.toLocaleString('es-BO', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   }
 }

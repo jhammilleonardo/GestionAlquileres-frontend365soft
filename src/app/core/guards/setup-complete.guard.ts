@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { Router, type CanActivateFn } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TenantConfigService } from '../services/tenant-config.service';
+import { TenantConfigService } from '../services/admin/tenant-config.service';
 
 /**
  * Guard for admin panel routes that require setup to be completed.

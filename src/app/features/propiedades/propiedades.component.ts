@@ -1,6 +1,19 @@
-import { Component, OnInit, signal, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  FormArray,
+} from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -14,15 +27,41 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   LucideAngularModule,
-  Building2, Plus, Search, Filter, Eye, Pencil, Trash2, MapPin,
-  DollarSign, Maximize2, BedDouble, CheckCircle2, XCircle, X,
-  Image as LucideImage, CreditCard, Globe, PawPrint, Users, Calendar, Home, Power, RefreshCw,
-  AlertTriangle
+  Building2,
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Pencil,
+  Trash2,
+  MapPin,
+  DollarSign,
+  Maximize2,
+  BedDouble,
+  CheckCircle2,
+  XCircle,
+  X,
+  Image as LucideImage,
+  CreditCard,
+  Globe,
+  PawPrint,
+  Users,
+  Calendar,
+  Home,
+  Power,
+  RefreshCw,
+  AlertTriangle,
 } from 'lucide-angular';
-import { PropertyService } from '../../core/services/property.service';
+import { PropertyService } from '../../core/services/admin/property.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SlugService } from '../../core/services/slug.service';
-import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtype } from '../../core/models/property.model';
+import {
+  Property,
+  PropertyFilters,
+  PropertyStatus,
+  PropertyType,
+  PropertySubtype,
+} from '../../core/models/property.model';
 
 @Component({
   selector: 'app-propiedades',
@@ -40,11 +79,11 @@ import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtyp
     MatTooltipModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './propiedades.component.html',
   styleUrl: './propiedades.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropiedadesComponent implements OnInit {
   // Icons
@@ -121,7 +160,7 @@ export class PropiedadesComponent implements OnInit {
     sort_by: 'created_at' as any,
     sort_order: 'DESC',
     page: 1,
-    limit: 50
+    limit: 50,
   };
 
   propertyForm: FormGroup;
@@ -136,7 +175,7 @@ export class PropiedadesComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private router: Router,
     private route: ActivatedRoute,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
   ) {
     this.propertyForm = this.createForm();
   }
@@ -147,7 +186,7 @@ export class PropiedadesComponent implements OnInit {
     this.loadPropertySubtypes();
 
     // Handle edit query param from property detail page
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       const editId = params['edit'];
       if (editId) {
         const id = parseInt(editId, 10);
@@ -156,7 +195,7 @@ export class PropiedadesComponent implements OnInit {
             if (property) {
               this.openEditModal(property);
             }
-          }
+          },
         });
         // Clean up the query param
         this.router.navigate([], { relativeTo: this.route, queryParams: {} });
@@ -197,7 +236,7 @@ export class PropiedadesComponent implements OnInit {
       longitude: [null],
       // Relations
       addresses: this.fb.array([this.createAddressGroup()]),
-      new_owners: this.fb.array([this.createOwnerGroup()])
+      new_owners: this.fb.array([this.createOwnerGroup()]),
     });
   }
 
@@ -208,7 +247,7 @@ export class PropiedadesComponent implements OnInit {
       city: ['', Validators.required],
       state: [''],
       zip_code: [''],
-      country: ['', Validators.required]
+      country: ['', Validators.required],
     });
   }
 
@@ -220,7 +259,7 @@ export class PropiedadesComponent implements OnInit {
       primary_email: ['', [Validators.email]],
       phone_number: [''],
       ownership_percentage: [100, [Validators.min(0), Validators.max(100)]],
-      is_primary: [true]
+      is_primary: [true],
     });
   }
 
@@ -250,7 +289,7 @@ export class PropiedadesComponent implements OnInit {
         this.properties.set(data);
         // Pre-computar URLs de imágenes para evitar cálculos en cada ciclo de change detection
         this.propertyImageMap.clear();
-        data.forEach(prop => this.propertyImageMap.set(prop.id, this.buildImageUrl(prop)));
+        data.forEach((prop) => this.propertyImageMap.set(prop.id, this.buildImageUrl(prop)));
         this.isListLoading.set(false);
         this.cdr.markForCheck();
       },
@@ -258,7 +297,7 @@ export class PropiedadesComponent implements OnInit {
         console.error('❌ Error loading properties:', error);
         this.isListLoading.set(false);
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -267,7 +306,7 @@ export class PropiedadesComponent implements OnInit {
       next: (types) => {
         this.propertyTypes.set(types);
       },
-      error: (error) => console.error('❌ Error loading property types:', error)
+      error: (error) => console.error('❌ Error loading property types:', error),
     });
   }
 
@@ -276,7 +315,7 @@ export class PropiedadesComponent implements OnInit {
       next: (subtypes) => {
         this.propertySubtypes.set(subtypes);
       },
-      error: (error) => console.error('❌ Error loading property subtypes:', error)
+      error: (error) => console.error('❌ Error loading property subtypes:', error),
     });
   }
 
@@ -286,7 +325,7 @@ export class PropiedadesComponent implements OnInit {
       this.propertyForm.patchValue({ property_subtype_id: '' });
       return;
     }
-    const filtered = this.propertySubtypes().filter(st => st.property_type_id === +typeId);
+    const filtered = this.propertySubtypes().filter((st) => st.property_type_id === +typeId);
     this.filteredSubtypes.set(filtered);
     if (!keepSubtype) {
       this.propertyForm.patchValue({ property_subtype_id: '' });
@@ -305,7 +344,7 @@ export class PropiedadesComponent implements OnInit {
       sort_by: 'created_at' as any,
       sort_order: 'DESC',
       page: 1,
-      limit: 50
+      limit: 50,
     };
     this.loadProperties();
   }
@@ -322,7 +361,12 @@ export class PropiedadesComponent implements OnInit {
     // Recrear el formulario completamente para evitar problemas con FormArrays
     this.propertyForm = this.createForm();
 
-    console.log('✅ Form recreated - Addresses:', this.addresses?.length, 'Owners:', this.owners?.length);
+    console.log(
+      '✅ Form recreated - Addresses:',
+      this.addresses?.length,
+      'Owners:',
+      this.owners?.length,
+    );
 
     // Pequeño delay para asegurar que el DOM esté listo
     setTimeout(() => {
@@ -351,7 +395,7 @@ export class PropiedadesComponent implements OnInit {
         // Si falla, usar los datos del listado
         this.populateEditForm(property);
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -390,17 +434,19 @@ export class PropiedadesComponent implements OnInit {
       // Relations
       addresses: this.fb.array(
         p.addresses && p.addresses.length > 0
-          ? p.addresses.map(addr => this.fb.group({
-            address_type: [addr.address_type || 'address_1'],
-            street_address: [addr.street_address, Validators.required],
-            city: [addr.city, Validators.required],
-            state: [addr.state || ''],
-            zip_code: [addr.zip_code || ''],
-            country: [addr.country, Validators.required]
-          }))
-          : [this.createAddressGroup()]
+          ? p.addresses.map((addr) =>
+              this.fb.group({
+                address_type: [addr.address_type || 'address_1'],
+                street_address: [addr.street_address, Validators.required],
+                city: [addr.city, Validators.required],
+                state: [addr.state || ''],
+                zip_code: [addr.zip_code || ''],
+                country: [addr.country, Validators.required],
+              }),
+            )
+          : [this.createAddressGroup()],
       ),
-      new_owners: this.fb.array([this.createOwnerGroup()])
+      new_owners: this.fb.array([this.createOwnerGroup()]),
     });
 
     // Cargar subtipos sin resetear el subtipo ya seleccionado
@@ -432,15 +478,19 @@ export class PropiedadesComponent implements OnInit {
         this.selectedImages = filesArray;
       }
 
-      const invalidFiles = this.selectedImages.filter(file => {
+      const invalidFiles = this.selectedImages.filter((file) => {
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
         const maxSize = 5 * 1024 * 1024;
         return !validTypes.includes(file.type) || file.size > maxSize;
       });
 
       if (invalidFiles.length > 0) {
-        this.snackBar.open('Solo se permiten imágenes JPG, PNG, GIF, WebP menores a 5MB', 'Cerrar', { duration: 5000 });
-        this.selectedImages = this.selectedImages.filter(file => !invalidFiles.includes(file));
+        this.snackBar.open(
+          'Solo se permiten imágenes JPG, PNG, GIF, WebP menores a 5MB',
+          'Cerrar',
+          { duration: 5000 },
+        );
+        this.selectedImages = this.selectedImages.filter((file) => !invalidFiles.includes(file));
       }
 
       console.log('✅ Images selected:', this.selectedImages.length);
@@ -449,7 +499,7 @@ export class PropiedadesComponent implements OnInit {
 
   saveProperty(): void {
     console.log('🔵 saveProperty() ejecutado');
-    
+
     // Marcar todos los campos como touched para mostrar errores
     this.markFormGroupTouched(this.propertyForm);
 
@@ -460,7 +510,7 @@ export class PropiedadesComponent implements OnInit {
     if (this.propertyForm.invalid) {
       const errorKeys: string[] = [];
 
-      Object.keys(this.propertyForm.controls).forEach(key => {
+      Object.keys(this.propertyForm.controls).forEach((key) => {
         const control = this.propertyForm.get(key);
         if (control && control.invalid && !(control instanceof FormArray)) {
           errorKeys.push(key);
@@ -472,7 +522,7 @@ export class PropiedadesComponent implements OnInit {
         errorKeys.push('addresses');
       } else {
         addressesArray.controls.forEach((addr, index) => {
-          Object.keys((addr as FormGroup).controls).forEach(field => {
+          Object.keys((addr as FormGroup).controls).forEach((field) => {
             const fc = addr.get(field);
             if (fc && fc.invalid) {
               errorKeys.push(`addresses[${index}].${field}`);
@@ -481,7 +531,7 @@ export class PropiedadesComponent implements OnInit {
         });
       }
 
-      const readableErrors = errorKeys.map(k => this.translateFieldKey(k));
+      const readableErrors = errorKeys.map((k) => this.translateFieldKey(k));
       this.validationErrors.set(readableErrors);
       this.scrollToValidationErrors();
       return;
@@ -496,7 +546,9 @@ export class PropiedadesComponent implements OnInit {
 
     // Convertir valores a tipos correctos
     const property_type_id = formValue.property_type_id ? +formValue.property_type_id : null;
-    const property_subtype_id = formValue.property_subtype_id ? +formValue.property_subtype_id : null;
+    const property_subtype_id = formValue.property_subtype_id
+      ? +formValue.property_subtype_id
+      : null;
 
     // Validar campos requeridos
     if (!formValue.title || !property_type_id || !property_subtype_id) {
@@ -535,10 +587,12 @@ export class PropiedadesComponent implements OnInit {
     };
 
     if (formValue.description) createDto.description = formValue.description;
-    if (formValue.security_deposit_amount) createDto.security_deposit_amount = +formValue.security_deposit_amount;
+    if (formValue.security_deposit_amount)
+      createDto.security_deposit_amount = +formValue.security_deposit_amount;
     if (formValue.account_number) createDto.account_number = formValue.account_number;
     if (formValue.account_type) createDto.account_type = formValue.account_type;
-    if (formValue.account_holder_name) createDto.account_holder_name = formValue.account_holder_name;
+    if (formValue.account_holder_name)
+      createDto.account_holder_name = formValue.account_holder_name;
 
     // Financial fields
     if (formValue.monthly_rent) createDto.monthly_rent = +formValue.monthly_rent;
@@ -563,14 +617,17 @@ export class PropiedadesComponent implements OnInit {
     // Property rules
     const propertyRules: any = {};
     if (formValue.pets_allowed !== undefined) propertyRules.pets_allowed = formValue.pets_allowed;
-    if (formValue.smoking_allowed !== undefined) propertyRules.smoking_allowed = formValue.smoking_allowed;
+    if (formValue.smoking_allowed !== undefined)
+      propertyRules.smoking_allowed = formValue.smoking_allowed;
     if (formValue.max_occupants) propertyRules.max_occupants = +formValue.max_occupants;
     if (formValue.min_lease_months) propertyRules.min_lease_months = +formValue.min_lease_months;
     if (Object.keys(propertyRules).length > 0) createDto.property_rules = propertyRules;
 
     // Owners - solo si tienen datos completos
     if (formValue.new_owners && formValue.new_owners.length > 0) {
-      const validOwners = formValue.new_owners.filter((o: any) => o.name && o.primary_email && o.phone_number);
+      const validOwners = formValue.new_owners.filter(
+        (o: any) => o.name && o.primary_email && o.phone_number,
+      );
       if (validOwners.length > 0) createDto.new_owners = validOwners;
     }
 
@@ -578,29 +635,35 @@ export class PropiedadesComponent implements OnInit {
     console.log('🚀 Enviando request...');
 
     // Para edición, copiar createDto sin campos exclusivos de create
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { new_owners, existing_owners, ...updateDto } = createDto;
 
-    const operation = this.modalMode === 'create'
-      ? this.propertyService.createProperty(createDto)
-      : this.propertyService.updateProperty(this.selectedProperty!.id, updateDto);
+    const operation =
+      this.modalMode === 'create'
+        ? this.propertyService.createProperty(createDto)
+        : this.propertyService.updateProperty(this.selectedProperty!.id, updateDto);
 
     operation.subscribe({
       next: (savedProperty) => {
         // Si hay imágenes seleccionadas, subirlas después (tanto en crear como en editar)
         if (this.selectedImages.length > 0) {
-          const uploads = this.selectedImages.map(img =>
-            this.propertyService.uploadPropertyImage(savedProperty.id, img)
+          const uploads = this.selectedImages.map((img) =>
+            this.propertyService.uploadPropertyImage(savedProperty.id, img),
           );
           forkJoin(uploads).subscribe({
             next: () => this.finishSave(this.modalMode),
             error: () => {
               this.isSubmitting.set(false);
               const action = this.modalMode === 'create' ? 'creada' : 'actualizada';
-              this.snackBar.open(`Propiedad ${action}, pero algunas imágenes no se pudieron subir`, 'Cerrar', { duration: 6000 });
+              this.snackBar.open(
+                `Propiedad ${action}, pero algunas imágenes no se pudieron subir`,
+                'Cerrar',
+                { duration: 6000 },
+              );
               this.loadProperties();
               this.closeModal();
               this.cdr.markForCheck();
-            }
+            },
           });
         } else {
           this.finishSave(this.modalMode);
@@ -610,9 +673,12 @@ export class PropiedadesComponent implements OnInit {
         this.isSubmitting.set(false);
         const errorMessage = error.message || 'Error desconocido';
         const action = this.modalMode === 'create' ? 'crear' : 'actualizar';
-        this.snackBar.open(`Error al ${action} propiedad: ${errorMessage}`, 'Cerrar', { duration: 6000, panelClass: 'snack-error' });
+        this.snackBar.open(`Error al ${action} propiedad: ${errorMessage}`, 'Cerrar', {
+          duration: 6000,
+          panelClass: 'snack-error',
+        });
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -633,11 +699,17 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.deleteProperty(property.id).subscribe({
       next: () => {
         this.loadProperties();
-        this.snackBar.open('Propiedad eliminada exitosamente', 'Cerrar', { duration: 4000, panelClass: 'snack-success' });
+        this.snackBar.open('Propiedad eliminada exitosamente', 'Cerrar', {
+          duration: 4000,
+          panelClass: 'snack-success',
+        });
       },
       error: (error) => {
-        this.snackBar.open(`Error al eliminar: ${error.message}`, 'Cerrar', { duration: 5000, panelClass: 'snack-error' });
-      }
+        this.snackBar.open(`Error al eliminar: ${error.message}`, 'Cerrar', {
+          duration: 5000,
+          panelClass: 'snack-error',
+        });
+      },
     });
   }
 
@@ -649,7 +721,8 @@ export class PropiedadesComponent implements OnInit {
     this.loadProperties();
     this.closeModal();
     this.isSubmitting.set(false);
-    const msg = mode === 'create' ? 'Propiedad creada exitosamente' : 'Propiedad actualizada exitosamente';
+    const msg =
+      mode === 'create' ? 'Propiedad creada exitosamente' : 'Propiedad actualizada exitosamente';
     this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: 'snack-success' });
   }
 
@@ -664,13 +737,16 @@ export class PropiedadesComponent implements OnInit {
         this.snackBar.open(msg, 'Cerrar', { duration: 3000, panelClass: 'snack-success' });
       },
       error: (error) => {
-        this.snackBar.open(`Error al actualizar estado: ${error.message}`, 'Cerrar', { duration: 5000, panelClass: 'snack-error' });
-      }
+        this.snackBar.open(`Error al actualizar estado: ${error.message}`, 'Cerrar', {
+          duration: 5000,
+          panelClass: 'snack-error',
+        });
+      },
     });
   }
 
   private markFormGroupTouched(formGroup: FormGroup | FormArray): void {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
 
@@ -748,7 +824,7 @@ export class PropiedadesComponent implements OnInit {
       [PropertyStatus.OCUPADO]: 'bg-blue-100 text-blue-800',
       [PropertyStatus.MANTENIMIENTO]: 'bg-yellow-100 text-yellow-800',
       [PropertyStatus.RESERVADO]: 'bg-purple-100 text-purple-800',
-      [PropertyStatus.INACTIVO]: 'bg-gray-100 text-gray-800'
+      [PropertyStatus.INACTIVO]: 'bg-gray-100 text-gray-800',
     };
     return classes[status] || 'bg-gray-100 text-gray-800';
   }
@@ -760,7 +836,7 @@ export class PropiedadesComponent implements OnInit {
       [PropertyStatus.OCUPADO]: 'ocupado',
       [PropertyStatus.MANTENIMIENTO]: 'mantenimiento',
       [PropertyStatus.RESERVADO]: 'reservado',
-      [PropertyStatus.INACTIVO]: 'inactivo'
+      [PropertyStatus.INACTIVO]: 'inactivo',
     };
     return map[status] || 'default';
   }

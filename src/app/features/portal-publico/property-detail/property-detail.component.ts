@@ -3,11 +3,26 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { Subscription, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { LucideAngularModule, MapPin, Home, Heart, Share2, Maximize, Bed, Bath, Car, User, Mail, Phone, MessageSquare, PhoneCall } from 'lucide-angular';
-import { PropertyService } from '../../../core/services/property.service';
+import {
+  LucideAngularModule,
+  MapPin,
+  Home,
+  Heart,
+  Share2,
+  Maximize,
+  Bed,
+  Bath,
+  Car,
+  User,
+  Mail,
+  Phone,
+  MessageSquare,
+  PhoneCall,
+} from 'lucide-angular';
+import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { ApplicationIntentionService } from '../../../core/services/application-intention.service';
-import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { Property } from '../../../core/models/property.model';
 import { ApplicationModalComponent } from '../application-modal/application-modal.component';
 import { ContactModalComponent } from '../contact-modal/contact-modal.component';
@@ -22,10 +37,10 @@ import { MapModalComponent } from '../map-modal/map-modal.component';
     LucideAngularModule,
     ApplicationModalComponent,
     ContactModalComponent,
-    MapModalComponent
+    MapModalComponent,
   ],
   templateUrl: './property-detail.component.html',
-  styleUrls: ['./property-detail.component.css']
+  styleUrls: ['./property-detail.component.css'],
 })
 export class PropertyDetailComponent implements OnInit, OnDestroy {
   readonly MapPin = MapPin;
@@ -60,83 +75,88 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private propertyService: PropertyService
-  ) { }
+    private propertyService: PropertyService,
+  ) {}
 
   ngOnInit(): void {
     this.loadPropertyFromRoute();
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
   }
 
   private loadPropertyFromRoute(): void {
     // With paramsInheritanceStrategy: 'always' (set in app.config.ts),
     // the slug from the parent ':slug' route is accessible here directly.
-    const sub = this.route.paramMap.pipe(
-      switchMap(params => {
-        this.isLoading = true;
-        this.hasError = false;
-        this.property = null;
-        this.cdr.detectChanges();
+    const sub = this.route.paramMap
+      .pipe(
+        switchMap((params) => {
+          this.isLoading = true;
+          this.hasError = false;
+          this.property = null;
+          this.cdr.detectChanges();
 
-        // Get slug from inherited params (paramsInheritanceStrategy: 'always')
-        let slug = params.get('slug');
+          // Get slug from inherited params (paramsInheritanceStrategy: 'always')
+          let slug = params.get('slug');
 
-        // Fallback 1: traverse parent routes
-        if (!slug) {
-          let current: ActivatedRoute | null = this.route;
-          while (current) {
-            const s = current.snapshot.paramMap.get('slug');
-            if (s) { slug = s; break; }
-            current = current.parent;
+          // Fallback 1: traverse parent routes
+          if (!slug) {
+            let current: ActivatedRoute | null = this.route;
+            while (current) {
+              const s = current.snapshot.paramMap.get('slug');
+              if (s) {
+                slug = s;
+                break;
+              }
+              current = current.parent;
+            }
           }
-        }
 
-        // Fallback 2: parse from router URL directly
-        if (!slug) {
-          const urlParts = this.router.url.split('/').filter(Boolean);
-          if (urlParts.length > 0) slug = urlParts[0];
-        }
+          // Fallback 2: parse from router URL directly
+          if (!slug) {
+            const urlParts = this.router.url.split('/').filter(Boolean);
+            if (urlParts.length > 0) slug = urlParts[0];
+          }
 
-        // Set slug in service if found
-        if (slug) {
-          this.slugService.setSlug(slug);
-        }
+          // Set slug in service if found
+          if (slug) {
+            this.slugService.setSlug(slug);
+          }
 
-        const idStr = params.get('id');
-        const propertyId = idStr ? parseInt(idStr, 10) : NaN;
+          const idStr = params.get('id');
+          const propertyId = idStr ? parseInt(idStr, 10) : NaN;
 
-        if (isNaN(propertyId)) {
+          if (isNaN(propertyId)) {
+            this.isLoading = false;
+            this.hasError = true;
+            this.cdr.detectChanges();
+            return of(undefined);
+          }
+
+          this.checkFavoriteStatus(propertyId);
+          return this.propertyService.getPropertyById(propertyId);
+        }),
+      )
+      .subscribe({
+        next: (property) => {
+          this.property = property || null;
+          this.isLoading = false;
+          this.hasError = !this.property;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.property = null;
           this.isLoading = false;
           this.hasError = true;
           this.cdr.detectChanges();
-          return of(undefined);
-        }
-
-        this.checkFavoriteStatus(propertyId);
-        return this.propertyService.getPropertyById(propertyId);
-      })
-    ).subscribe({
-      next: (property) => {
-        this.property = property || null;
-        this.isLoading = false;
-        this.hasError = !this.property;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.property = null;
-        this.isLoading = false;
-        this.hasError = true;
-        this.cdr.detectChanges();
-      }
-    });
+        },
+      });
 
     this.subscriptions.push(sub);
   }
   checkFavoriteStatus(propertyId: number): void {
-    this.propertyService.isFavorite(propertyId).subscribe(isFav => {
+    this.propertyService.isFavorite(propertyId).subscribe((isFav) => {
       this.isFavorite = isFav;
       this.cdr.detectChanges();
     });
@@ -146,7 +166,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   getImagesArray(): string[] {
     if (!this.property?.images) return [];
     const raw = Array.isArray(this.property.images) ? this.property.images : [];
-    return raw.map(img => this.buildImageUrl(img));
+    return raw.map((img) => this.buildImageUrl(img));
   }
 
   // Helper para verificar si tiene múltiples imágenes
@@ -219,7 +239,11 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
         // Usuario NO autenticado -> Guardar intención y ir a login
         console.log('🔐 Usuario no autenticado, navegando al login con intención');
         if (slug) {
-          this.intentionService.navigateToLoginWithIntention(slug, this.property.id, this.property.title);
+          this.intentionService.navigateToLoginWithIntention(
+            slug,
+            this.property.id,
+            this.property.title,
+          );
         }
       }
     } else {
@@ -249,11 +273,13 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
   shareProperty(): void {
     if (navigator.share && this.property) {
-      navigator.share({
-        title: this.property.title,
-        text: `Mira esta propiedad: ${this.property.title}`,
-        url: window.location.href
-      }).catch(err => console.log('Error sharing:', err));
+      navigator
+        .share({
+          title: this.property.title,
+          text: `Mira esta propiedad: ${this.property.title}`,
+          url: window.location.href,
+        })
+        .catch((err) => console.log('Error sharing:', err));
     } else {
       // Fallback: copiar al portapapeles
       navigator.clipboard.writeText(window.location.href);
@@ -279,9 +305,9 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
       return {
         coordinates: {
           lat: this.property.latitude,
-          lng: this.property.longitude
+          lng: this.property.longitude,
         },
-        address: this.getPropertyAddress()
+        address: this.getPropertyAddress(),
       };
     }
     return null;

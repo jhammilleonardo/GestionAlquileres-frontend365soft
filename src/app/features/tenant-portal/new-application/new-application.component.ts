@@ -8,8 +8,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { LucideAngularModule, Home, Search, MapPin, DollarSign, Users, Bed, Bath, Maximize, ArrowRight, SlidersHorizontal } from 'lucide-angular';
-import { PropertyService } from '../../../core/services/property.service';
+import {
+  LucideAngularModule,
+  Home,
+  Search,
+  MapPin,
+  DollarSign,
+  Users,
+  Bed,
+  Bath,
+  Maximize,
+  ArrowRight,
+  SlidersHorizontal,
+} from 'lucide-angular';
+import { PropertyService } from '../../../core/services/admin/property.service';
 import { Property, PropertyStatus, PropertyFilters } from '../../../core/models/property.model';
 import { SlugService } from '../../../core/services/slug.service';
 
@@ -26,7 +38,7 @@ import { SlugService } from '../../../core/services/slug.service';
     MatSelectModule,
     MatProgressSpinnerModule,
     MatPaginatorModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   template: `
     <div class="new-application">
@@ -53,7 +65,8 @@ import { SlugService } from '../../../core/services/slug.service';
               placeholder="Buscar por título, ciudad o dirección..."
               [value]="filters().search"
               (input)="updateFilter('search', $any($event.target).value)"
-              class="search-input">
+              class="search-input"
+            />
           </div>
 
           <div class="filter-group">
@@ -61,7 +74,8 @@ import { SlugService } from '../../../core/services/slug.service';
               placeholder="Tipo de propiedad"
               [value]="filters().property_type_id"
               (selectionChange)="updateFilter('property_type_id', $event.value)"
-              class="filter-select">
+              class="filter-select"
+            >
               <mat-option [value]="null">Todos los tipos</mat-option>
               @for (type of propertyTypes(); track type) {
                 <mat-option [value]="type">{{ type }}</mat-option>
@@ -74,7 +88,8 @@ import { SlugService } from '../../../core/services/slug.service';
               placeholder="Ordenar por"
               [value]="filters().sort_by"
               (selectionChange)="updateFilter('sort_by', $event.value)"
-              class="filter-select">
+              class="filter-select"
+            >
               <mat-option value="created_at">Más recientes</mat-option>
               <mat-option value="price_asc">Precio: Menor a Mayor</mat-option>
               <mat-option value="price_desc">Precio: Mayor a Menor</mat-option>
@@ -95,10 +110,7 @@ import { SlugService } from '../../../core/services/slug.service';
           <lucide-icon [img]="Home" [size]="64" class="empty-icon"></lucide-icon>
           <h3>No se encontraron propiedades</h3>
           <p>Intenta ajustar los filtros de búsqueda</p>
-          <button
-            mat-raised-button
-            color="primary"
-            (click)="clearFilters()">
+          <button mat-raised-button color="primary" (click)="clearFilters()">
             Limpiar Filtros
           </button>
         </div>
@@ -108,7 +120,7 @@ import { SlugService } from '../../../core/services/slug.service';
             <mat-card class="property-card" (click)="selectProperty(property)">
               <div class="property-image">
                 @if (property.first_image) {
-                  <img [src]="property.first_image" [alt]="property.title">
+                  <img [src]="property.first_image" [alt]="property.title" />
                 } @else {
                   <div class="image-placeholder">
                     <lucide-icon [img]="Home" [size]="48"></lucide-icon>
@@ -125,20 +137,29 @@ import { SlugService } from '../../../core/services/slug.service';
 
                 <div class="property-location">
                   <lucide-icon [img]="MapPin" [size]="16"></lucide-icon>
-                  <span>{{ property.addresses?.[0]?.city }}, {{ property.addresses?.[0]?.country }}</span>
+                  <span
+                    >{{ property.addresses?.[0]?.city }},
+                    {{ property.addresses?.[0]?.country }}</span
+                  >
                 </div>
 
                 <div class="property-features">
                   @if (property.bedrooms) {
                     <div class="feature">
                       <lucide-icon [img]="Bed" [size]="16"></lucide-icon>
-                      <span>{{ property.bedrooms }} {{ property.bedrooms === 1 ? 'Dorm' : 'Dorms' }}</span>
+                      <span
+                        >{{ property.bedrooms }}
+                        {{ property.bedrooms === 1 ? 'Dorm' : 'Dorms' }}</span
+                      >
                     </div>
                   }
                   @if (property.bathrooms) {
                     <div class="feature">
                       <lucide-icon [img]="Bath" [size]="16"></lucide-icon>
-                      <span>{{ property.bathrooms }} {{ property.bathrooms === 1 ? 'Baño' : 'Baños' }}</span>
+                      <span
+                        >{{ property.bathrooms }}
+                        {{ property.bathrooms === 1 ? 'Baño' : 'Baños' }}</span
+                      >
                     </div>
                   }
                   @if (property.square_meters) {
@@ -159,7 +180,8 @@ import { SlugService } from '../../../core/services/slug.service';
                   mat-flat-button
                   color="primary"
                   class="apply-btn"
-                  (click)="$event.stopPropagation(); selectProperty(property)">
+                  (click)="$event.stopPropagation(); selectProperty(property)"
+                >
                   Aplicar
                   <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
                 </button>
@@ -177,300 +199,303 @@ import { SlugService } from '../../../core/services/slug.service';
               [pageIndex]="currentPage()"
               [showFirstLastButtons]="true"
               (page)="onPageChange($event)"
-              label="Propiedades">
+              label="Propiedades"
+            >
             </mat-paginator>
           </div>
         }
       }
     </div>
   `,
-  styles: [`
-    .new-application {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .page-header {
-      margin-bottom: 32px;
-    }
-
-    .header-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .header-icon {
-      width: 56px;
-      height: 56px;
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .header-text h1 {
-      margin: 0;
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .subtitle {
-      margin: 4px 0 0;
-      font-size: 1rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .filters-section {
-      background: var(--mat-sys-surface-container-low);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 32px;
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-
-    .filter-row {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .filter-group {
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .search-group {
-      flex: 2;
-      min-width: 280px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      background: var(--mat-sys-surface);
-      border-radius: 8px;
-      border: 1px solid var(--mat-sys-outline);
-      padding: 0 16px;
-    }
-
-    .search-group lucide-icon {
-      color: var(--mat-sys-on-surface-variant);
-      flex-shrink: 0;
-    }
-
-    .search-input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 12px 8px;
-      font-size: 0.9375rem;
-      color: var(--mat-sys-on-surface);
-      outline: none;
-    }
-
-    .search-input::placeholder {
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .filter-select {
-      width: 100%;
-    }
-
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 64px 24px;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 64px 24px;
-      text-align: center;
-    }
-
-    .empty-icon {
-      color: var(--mat-sys-outline-variant);
-      opacity: 0.3;
-    }
-
-    .empty-state h3 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .empty-state p {
-      margin: 0;
-      font-size: 0.9375rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .properties-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 24px;
-      margin-bottom: 32px;
-    }
-
-    .property-card {
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1px solid var(--mat-sys-outline-variant);
-      overflow: hidden;
-    }
-
-    .property-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-      border-color: var(--mat-sys-primary);
-    }
-
-    .property-image {
-      position: relative;
-      width: 100%;
-      height: 200px;
-      overflow: hidden;
-      background: var(--mat-sys-surface-container-low);
-    }
-
-    .property-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .image-placeholder {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--mat-sys-outline-variant);
-    }
-
-    .property-price {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      padding: 8px 12px;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      backdrop-filter: blur(10px);
-    }
-
-    .price-amount {
-      font-size: 1.125rem;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    .price-period {
-      font-size: 0.75rem;
-      opacity: 0.8;
-    }
-
-    .property-content {
-      padding: 16px;
-    }
-
-    .property-title {
-      margin: 0 0 8px;
-      font-size: 1.0625rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    .property-location {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.875rem;
-      color: var(--mat-sys-on-surface-variant);
-      margin-bottom: 12px;
-    }
-
-    .property-location lucide-icon {
-      flex-shrink: 0;
-    }
-
-    .property-features {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .feature {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 0.8125rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .feature lucide-icon {
-      flex-shrink: 0;
-    }
-
-    .apply-btn {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      height: 40px;
-      font-weight: 600;
-      border-radius: 8px;
-    }
-
-    .pagination-section {
-      display: flex;
-      justify-content: center;
-      padding: 24px 0;
-    }
-
-    @media (max-width: 768px) {
+  styles: [
+    `
       .new-application {
-        padding: 16px;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .header-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .header-text h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        font-size: 1rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .filters-section {
+        background: var(--mat-sys-surface-container-low);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 32px;
+        border: 1px solid var(--mat-sys-outline-variant);
       }
 
       .filter-row {
-        flex-direction: column;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
       }
 
       .filter-group {
-        min-width: 100%;
+        flex: 1;
+        min-width: 200px;
       }
 
       .search-group {
-        min-width: 100%;
+        flex: 2;
+        min-width: 280px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--mat-sys-surface);
+        border-radius: 8px;
+        border: 1px solid var(--mat-sys-outline);
+        padding: 0 16px;
+      }
+
+      .search-group lucide-icon {
+        color: var(--mat-sys-on-surface-variant);
+        flex-shrink: 0;
+      }
+
+      .search-input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        padding: 12px 8px;
+        font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface);
+        outline: none;
+      }
+
+      .search-input::placeholder {
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .filter-select {
+        width: 100%;
+      }
+
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 64px 24px;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 64px 24px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        color: var(--mat-sys-outline-variant);
+        opacity: 0.3;
+      }
+
+      .empty-state h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .empty-state p {
+        margin: 0;
+        font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface-variant);
       }
 
       .properties-grid {
-        grid-template-columns: 1fr;
-        gap: 16px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
       }
-    }
-  `]
+
+      .property-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid var(--mat-sys-outline-variant);
+        overflow: hidden;
+      }
+
+      .property-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border-color: var(--mat-sys-primary);
+      }
+
+      .property-image {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        background: var(--mat-sys-surface-container-low);
+      }
+
+      .property-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .image-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--mat-sys-outline-variant);
+      }
+
+      .property-price {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        backdrop-filter: blur(10px);
+      }
+
+      .price-amount {
+        font-size: 1.125rem;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .price-period {
+        font-size: 0.75rem;
+        opacity: 0.8;
+      }
+
+      .property-content {
+        padding: 16px;
+      }
+
+      .property-title {
+        margin: 0 0 8px;
+        font-size: 1.0625rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .property-location {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.875rem;
+        color: var(--mat-sys-on-surface-variant);
+        margin-bottom: 12px;
+      }
+
+      .property-location lucide-icon {
+        flex-shrink: 0;
+      }
+
+      .property-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .feature {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.8125rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .feature lucide-icon {
+        flex-shrink: 0;
+      }
+
+      .apply-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 40px;
+        font-weight: 600;
+        border-radius: 8px;
+      }
+
+      .pagination-section {
+        display: flex;
+        justify-content: center;
+        padding: 24px 0;
+      }
+
+      @media (max-width: 768px) {
+        .new-application {
+          padding: 16px;
+        }
+
+        .filter-row {
+          flex-direction: column;
+        }
+
+        .filter-group {
+          min-width: 100%;
+        }
+
+        .search-group {
+          min-width: 100%;
+        }
+
+        .properties-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+      }
+    `,
+  ],
 })
 export class NewApplicationComponent implements OnInit {
   readonly Home = Home;
@@ -498,7 +523,7 @@ export class NewApplicationComponent implements OnInit {
     search: '',
     property_type_id: undefined,
     sort_by: 'created_at' as any,
-    sort_order: 'DESC' as 'ASC' | 'DESC'
+    sort_order: 'DESC' as 'ASC' | 'DESC',
   });
 
   // Pagination
@@ -512,10 +537,11 @@ export class NewApplicationComponent implements OnInit {
 
     if (!search) return props;
 
-    return props.filter((p: Property) =>
-      p.title.toLowerCase().includes(search) ||
-      p.addresses?.[0]?.city.toLowerCase().includes(search) ||
-      p.addresses?.[0]?.street_address.toLowerCase().includes(search)
+    return props.filter(
+      (p: Property) =>
+        p.title.toLowerCase().includes(search) ||
+        p.addresses?.[0]?.city.toLowerCase().includes(search) ||
+        p.addresses?.[0]?.street_address.toLowerCase().includes(search),
     );
   });
 
@@ -542,12 +568,12 @@ export class NewApplicationComponent implements OnInit {
       },
       error: () => {
         this.isLoading.set(false);
-      }
+      },
     });
   }
 
   updateFilter(key: keyof PropertyFilters, value: any): void {
-    this.filters.update(f => ({ ...f, [key]: value }));
+    this.filters.update((f) => ({ ...f, [key]: value }));
     this.currentPage.set(0);
     this.loadProperties();
   }
@@ -558,7 +584,7 @@ export class NewApplicationComponent implements OnInit {
       search: '',
       property_type_id: undefined,
       sort_by: 'created_at' as any,
-      sort_order: 'DESC' as 'ASC' | 'DESC'
+      sort_order: 'DESC' as 'ASC' | 'DESC',
     });
     this.currentPage.set(0);
     this.loadProperties();

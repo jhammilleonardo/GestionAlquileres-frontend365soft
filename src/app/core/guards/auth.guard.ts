@@ -14,9 +14,9 @@ export const authGuard: CanActivateFn = (route, state) => {
   // Check if slug exists in URL
   if (!slug) {
     // No slug in URL, redirect to login
-    router.navigate(['/login'], {
+    void router.navigate(['/login'], {
       queryParams: { returnUrl: state.url },
-      replaceUrl: true
+      replaceUrl: true,
     });
     return false;
   }
@@ -31,15 +31,17 @@ export const authGuard: CanActivateFn = (route, state) => {
     const userJson = localStorage.getItem('admin_user');
     if (userJson) {
       try {
-        const user = JSON.parse(userJson);
-        userSlug = user.tenant_slug || null;
-      } catch (e) { /* ignore */ }
+        const user = JSON.parse(userJson) as { tenant_slug?: string };
+        userSlug = user.tenant_slug ?? null;
+      } catch {
+        /* ignore */
+      }
     }
 
     if (userSlug && slug !== userSlug) {
       // URL slug doesn't match user's tenant — redirect to correct URL
       const correctUrl = state.url.replace(`/${slug}/`, `/${userSlug}/`);
-      router.navigate([correctUrl], { replaceUrl: true });
+      void router.navigate([correctUrl], { replaceUrl: true });
       return false;
     }
 
@@ -58,9 +60,9 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   // Redirect to ADMIN login (sin slug) con return url
   // Usar replaceUrl para que la redirección no quede en el historial
-  router.navigate(['/login'], {
+  void router.navigate(['/login'], {
     queryParams: { returnUrl: state.url },
-    replaceUrl: true
+    replaceUrl: true,
   });
   return false;
 };
@@ -69,7 +71,7 @@ export const authGuard: CanActivateFn = (route, state) => {
  * Guard para prevenir que usuarios autenticados accedan a la página de login
  * Similar al tenantLoginGuard pero para admin
  */
-export const adminLoginGuard: CanActivateFn = (route, state) => {
+export const adminLoginGuard: CanActivateFn = (_route, _state) => {
   const authService = inject(AuthService);
   const slugService = inject(SlugService);
   const router = inject(Router);
@@ -82,8 +84,8 @@ export const adminLoginGuard: CanActivateFn = (route, state) => {
     const userJson = localStorage.getItem('admin_user');
     if (userJson) {
       try {
-        const user = JSON.parse(userJson);
-        userSlug = user.tenant_slug || null;
+        const user = JSON.parse(userJson) as { tenant_slug?: string };
+        userSlug = user.tenant_slug ?? null;
       } catch (e) {
         console.error('Error parsing user data', e);
       }
@@ -95,7 +97,7 @@ export const adminLoginGuard: CanActivateFn = (route, state) => {
     }
 
     if (userSlug) {
-      router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true });
+      void router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true });
       return false;
     }
   }

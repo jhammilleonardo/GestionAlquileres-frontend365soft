@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, computed } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -12,10 +12,34 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, Plus, FileText, Search, RefreshCw, X, CheckCircle2, Pencil, DollarSign, TrendingUp, AlertTriangle, Eye, Download, RotateCcw, Home, Calendar, ArrowRight, User } from 'lucide-angular';
-import { AdminContractService } from '../../core/services/admin-contract.service';
+import {
+  LucideAngularModule,
+  Plus,
+  FileText,
+  Search,
+  RefreshCw,
+  X,
+  CheckCircle2,
+  Pencil,
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
+  Eye,
+  Download,
+  RotateCcw,
+  Home,
+  Calendar,
+  ArrowRight,
+  User,
+} from 'lucide-angular';
+import { AdminContractService } from '../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../core/services/slug.service';
-import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from '../../core/models/contract.model';
+import {
+  Contract,
+  ContractStatus,
+  ContractStatusLabels,
+  ContractFilters,
+} from '../../core/models/contract.model';
 
 @Component({
   selector: 'app-contratos',
@@ -34,11 +58,10 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
     MatTooltipModule,
     MatDividerModule,
     MatChipsModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   template: `
     <div class="contracts-container">
-
       <!-- ── Page Header ── -->
       <div class="page-header">
         <div class="page-title-wrap">
@@ -62,11 +85,9 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
           <p>Cargando contratos...</p>
         </div>
       } @else {
-
         <!-- ── Métricas ── -->
         @if (dashboard()) {
           <div class="dashboard-grid">
-
             <mat-card class="metric-card total" appearance="outlined">
               <mat-card-content class="metric-content">
                 <div class="metric-icon-wrap">
@@ -109,7 +130,9 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
                   <lucide-icon [img]="DollarSign" [size]="20"></lucide-icon>
                 </div>
                 <div class="metric-body">
-                  <span class="metric-value">Bs {{ formatRevenue(dashboard()!.monthly_revenue) }}</span>
+                  <span class="metric-value"
+                    >Bs {{ formatRevenue(dashboard()!.monthly_revenue) }}</span
+                  >
                   <span class="metric-label">Ingresos Mensuales</span>
                 </div>
               </mat-card-content>
@@ -140,24 +163,29 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
                 </mat-card-content>
               </mat-card>
             }
-
           </div>
         }
 
         <!-- ── Filtros ── -->
         <mat-card appearance="outlined" class="filters-card">
           <mat-card-content class="filters-content">
-
             <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
               <mat-label>Buscar</mat-label>
-              <lucide-icon matIconPrefix [img]="Search" [size]="16" class="field-prefix-icon"></lucide-icon>
-              <input matInput
-                     type="text"
-                     placeholder="Inquilino, propiedad o N° contrato..."
-                     (input)="onSearchChange($event)"
-                     [value]="searchTerm">
+              <lucide-icon
+                matIconPrefix
+                [img]="Search"
+                [size]="16"
+                class="field-prefix-icon"
+              ></lucide-icon>
+              <input
+                matInput
+                type="text"
+                placeholder="Inquilino, propiedad o N° contrato..."
+                (input)="onSearchChange($event)"
+                [value]="searchTerm"
+              />
               @if (searchTerm) {
-                <button matIconSuffix mat-icon-button (click)="searchTerm=''">
+                <button matIconSuffix mat-icon-button (click)="searchTerm = ''">
                   <lucide-icon [img]="X" [size]="14"></lucide-icon>
                 </button>
               }
@@ -185,27 +213,28 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
             <button mat-icon-button (click)="loadContracts()" matTooltip="Actualizar lista">
               <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
             </button>
-
           </mat-card-content>
         </mat-card>
 
         <!-- ── Tabla de Contratos ── -->
         <mat-card appearance="outlined" class="contracts-card">
-
           <mat-card-header class="contracts-card-header">
             <div class="ch-title">
               <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
               <span>Lista de Contratos</span>
             </div>
             <mat-chip-set>
-              <mat-chip>{{ filteredContracts().length }} contrato{{ filteredContracts().length !== 1 ? 's' : '' }}</mat-chip>
+              <mat-chip
+                >{{ filteredContracts().length }} contrato{{
+                  filteredContracts().length !== 1 ? 's' : ''
+                }}</mat-chip
+              >
             </mat-chip-set>
           </mat-card-header>
 
           <mat-divider></mat-divider>
 
           <mat-card-content class="p0">
-
             @if (isLoading() && contracts().length === 0) {
               <div class="loading-container">
                 <mat-spinner diameter="36"></mat-spinner>
@@ -217,660 +246,784 @@ import { Contract, ContractStatus, ContractStatusLabels, ContractFilters } from 
                 </div>
                 <p class="empty-title">No se encontraron contratos</p>
                 <span class="empty-sub">Crea el primer contrato para comenzar</span>
-                <button mat-raised-button color="primary" (click)="createContract()" class="create-button">
+                <button
+                  mat-raised-button
+                  color="primary"
+                  (click)="createContract()"
+                  class="create-button"
+                >
                   <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
                   Crear Primer Contrato
                 </button>
               </div>
             } @else {
               <div class="table-scroll-wrap">
-              <div class="contracts-table">
-
-                <!-- Header -->
-                <div class="table-header">
-                  <div class="cell col-contract">N° Contrato</div>
-                  <div class="cell col-tenant">Inquilino</div>
-                  <div class="cell col-property">Propiedad</div>
-                  <div class="cell col-dates">Fechas</div>
-                  <div class="cell col-rent">Alquiler / mes</div>
-                  <div class="cell col-status">Estado</div>
-                  <div class="cell col-actions">Acciones</div>
-                </div>
-
-                <!-- Rows -->
-                @for (contract of filteredContracts(); track contract.id) {
-                  <div class="table-row">
-
-                    <div class="cell col-contract">
-                      <span class="contract-num">{{ contract.contract_number }}</span>
-                    </div>
-
-                    <div class="cell col-tenant">
-                      <div class="tenant-row">
-                        <div class="tenant-avatar">
-                          {{ (contract.tenant?.name || contract.tenant_name || 'I').charAt(0).toUpperCase() }}
-                        </div>
-                        <div class="tenant-info">
-                          <span class="tenant-name">{{ contract.tenant?.name || contract.tenant_name || 'N/A' }}</span>
-                          <span class="tenant-email">{{ contract.tenant?.email || contract.tenant_email || '' }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="cell col-property">
-                      <div class="property-row">
-                        <lucide-icon [img]="Home" [size]="13" class="prop-icon"></lucide-icon>
-                        <span class="property-title">{{ contract.property?.title || contract.property_title || 'N/A' }}</span>
-                      </div>
-                    </div>
-
-                    <div class="cell col-dates">
-                      <div class="date-stack">
-                        <span class="date-from">{{ formatDate(contract.start_date) }}</span>
-                        <span class="date-to">{{ formatDate(contract.end_date) }}</span>
-                      </div>
-                    </div>
-
-                    <div class="cell col-rent">
-                      <span class="rent-currency">Bs</span>
-                      <span class="rent-amount">{{ formatRent(contract.monthly_rent) }}</span>
-                    </div>
-
-                    <div class="cell col-status">
-                      <span class="status-pill" [class]="getStatusClass(contract.status)">
-                        <span class="status-dot"></span>
-                        {{ ContractStatusLabels[contract.status] }}
-                      </span>
-                    </div>
-
-                    <div class="cell col-actions">
-                      <div class="action-group">
-                        <button mat-icon-button class="action-btn view-btn"
-                                [routerLink]="buildContractDetailUrl(contract.id)"
-                                matTooltip="Ver detalle">
-                          <lucide-icon [img]="Eye" [size]="15"></lucide-icon>
-                        </button>
-                        @if (contract.status === ContractStatus.BORRADOR) {
-                          <button mat-icon-button class="action-btn edit-btn"
-                                  [routerLink]="buildContractEditUrl(contract.id)"
-                                  matTooltip="Editar">
-                            <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
-                          </button>
-                        }
-                        <button mat-icon-button class="action-btn download-btn"
-                                (click)="downloadPDF(contract.id)"
-                                matTooltip="Descargar PDF">
-                          <lucide-icon [img]="Download" [size]="15"></lucide-icon>
-                        </button>
-                        @if (contract.status === ContractStatus.ACTIVO) {
-                          <button mat-icon-button class="action-btn renew-btn"
-                                  (click)="renewContract(contract.id)"
-                                  matTooltip="Renovar contrato">
-                            <lucide-icon [img]="RotateCcw" [size]="15"></lucide-icon>
-                          </button>
-                        }
-                      </div>
-                    </div>
-
+                <div class="contracts-table">
+                  <!-- Header -->
+                  <div class="table-header">
+                    <div class="cell col-contract">N° Contrato</div>
+                    <div class="cell col-tenant">Inquilino</div>
+                    <div class="cell col-property">Propiedad</div>
+                    <div class="cell col-dates">Fechas</div>
+                    <div class="cell col-rent">Alquiler / mes</div>
+                    <div class="cell col-status">Estado</div>
+                    <div class="cell col-actions">Acciones</div>
                   </div>
-                }
-              </div><!-- /contracts-table -->
-              </div><!-- /table-scroll-wrap -->
-            }
 
+                  <!-- Rows -->
+                  @for (contract of filteredContracts(); track contract.id) {
+                    <div class="table-row">
+                      <div class="cell col-contract">
+                        <span class="contract-num">{{ contract.contract_number }}</span>
+                      </div>
+
+                      <div class="cell col-tenant">
+                        <div class="tenant-row">
+                          <div class="tenant-avatar">
+                            {{
+                              (contract.tenant?.name || contract.tenant_name || 'I')
+                                .charAt(0)
+                                .toUpperCase()
+                            }}
+                          </div>
+                          <div class="tenant-info">
+                            <span class="tenant-name">{{
+                              contract.tenant?.name || contract.tenant_name || 'N/A'
+                            }}</span>
+                            <span class="tenant-email">{{
+                              contract.tenant?.email || contract.tenant_email || ''
+                            }}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="cell col-property">
+                        <div class="property-row">
+                          <lucide-icon [img]="Home" [size]="13" class="prop-icon"></lucide-icon>
+                          <span class="property-title">{{
+                            contract.property?.title || contract.property_title || 'N/A'
+                          }}</span>
+                        </div>
+                      </div>
+
+                      <div class="cell col-dates">
+                        <div class="date-stack">
+                          <span class="date-from">{{ formatDate(contract.start_date) }}</span>
+                          <span class="date-to">{{ formatDate(contract.end_date) }}</span>
+                        </div>
+                      </div>
+
+                      <div class="cell col-rent">
+                        <span class="rent-currency">Bs</span>
+                        <span class="rent-amount">{{ formatRent(contract.monthly_rent) }}</span>
+                      </div>
+
+                      <div class="cell col-status">
+                        <span class="status-pill" [class]="getStatusClass(contract.status)">
+                          <span class="status-dot"></span>
+                          {{ ContractStatusLabels[contract.status] }}
+                        </span>
+                      </div>
+
+                      <div class="cell col-actions">
+                        <div class="action-group">
+                          <button
+                            mat-icon-button
+                            class="action-btn view-btn"
+                            [routerLink]="buildContractDetailUrl(contract.id)"
+                            matTooltip="Ver detalle"
+                          >
+                            <lucide-icon [img]="Eye" [size]="15"></lucide-icon>
+                          </button>
+                          @if (contract.status === ContractStatus.BORRADOR) {
+                            <button
+                              mat-icon-button
+                              class="action-btn edit-btn"
+                              [routerLink]="buildContractEditUrl(contract.id)"
+                              matTooltip="Editar"
+                            >
+                              <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+                            </button>
+                          }
+                          <button
+                            mat-icon-button
+                            class="action-btn download-btn"
+                            (click)="downloadPDF(contract.id)"
+                            matTooltip="Descargar PDF"
+                          >
+                            <lucide-icon [img]="Download" [size]="15"></lucide-icon>
+                          </button>
+                          @if (contract.status === ContractStatus.ACTIVO) {
+                            <button
+                              mat-icon-button
+                              class="action-btn renew-btn"
+                              (click)="renewContract(contract.id)"
+                              matTooltip="Renovar contrato"
+                            >
+                              <lucide-icon [img]="RotateCcw" [size]="15"></lucide-icon>
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+                <!-- /contracts-table -->
+              </div>
+              <!-- /table-scroll-wrap -->
+            }
           </mat-card-content>
         </mat-card>
-
       }
     </div>
   `,
-  styles: [`
-    /* ════════════════════════════
+  styles: [
+    `
+      /* ════════════════════════════
        CONTAINER
     ════════════════════════════ */
-    .contracts-container {
-      max-width: 1400px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 28px 24px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
-    }
+      .contracts-container {
+        max-width: 1400px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 28px 24px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        HEADER
     ════════════════════════════ */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
 
-    .page-header-left { display: flex; align-items: center; gap: 12px; }
+      .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
 
-    .page-title-wrap {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
+      .page-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
 
-    .page-title-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(59,130,246,0.3);
-    }
+      .page-title-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
 
-    .page-title-wrap h1 {
-      margin: 0 0 2px;
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: #1e293b;
-      line-height: 1.2;
-    }
+      .page-title-wrap h1 {
+        margin: 0 0 2px;
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1.2;
+      }
 
-    .page-subtitle {
-      margin: 0;
-      font-size: 13px;
-      color: #94a3b8;
-      font-weight: 400;
-    }
+      .page-subtitle {
+        margin: 0;
+        font-size: 13px;
+        color: #94a3b8;
+        font-weight: 400;
+      }
 
-    .create-button {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-weight: 600;
-      border-radius: 10px !important;
-      padding: 0 20px !important;
-      height: 40px;
-    }
+      .create-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 600;
+        border-radius: 10px !important;
+        padding: 0 20px !important;
+        height: 40px;
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        LOADING
     ════════════════════════════ */
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 60px;
-      gap: 14px;
-      color: #94a3b8;
-      font-size: 14px;
-    }
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        gap: 14px;
+        color: #94a3b8;
+        font-size: 14px;
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        DASHBOARD METRICS
     ════════════════════════════ */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-    }
-
-    .metric-card {
-      border-radius: 14px;
-      padding: 20px 22px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      color: white;
-      cursor: default;
-      transition: transform 0.2s, box-shadow 0.2s;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-
-      &::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 55%);
-        pointer-events: none;
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
       }
 
-      &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+      .metric-card {
+        border-radius: 14px;
+        padding: 20px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: white;
+        cursor: default;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+        &::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, transparent 55%);
+          pointer-events: none;
+        }
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+        }
       }
-    }
 
-    .metric-card.total   { background: linear-gradient(135deg, #28589e, #1e3f72); }
-    .metric-card.active  { background: linear-gradient(135deg, #10b981, #059669); }
-    .metric-card.draft   { background: linear-gradient(135deg, #64748b, #475569); }
-    .metric-card.revenue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-    .metric-card.avg     { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-    .metric-card.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+      .metric-card.total {
+        background: linear-gradient(135deg, #28589e, #1e3f72);
+      }
+      .metric-card.active {
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+      .metric-card.draft {
+        background: linear-gradient(135deg, #64748b, #475569);
+      }
+      .metric-card.revenue {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+      }
+      .metric-card.avg {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      }
+      .metric-card.warning {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
 
-    .metric-icon-wrap {
-      width: 46px;
-      height: 46px;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      border: 1px solid rgba(255,255,255,0.22);
-      backdrop-filter: blur(4px);
-    }
+      .metric-icon-wrap {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(4px);
+      }
 
-    .metric-body {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
+      .metric-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
 
-    .metric-value {
-      font-size: 1.75rem;
-      font-weight: 800;
-      color: white;
-      line-height: 1.1;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .metric-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .metric-label {
-      font-size: 12.5px;
-      color: rgba(255,255,255,0.85);
-      font-weight: 500;
-      white-space: nowrap;
-    }
+      .metric-label {
+        font-size: 12.5px;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 500;
+        white-space: nowrap;
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        FILTERS CARD
     ════════════════════════════ */
-    .filters-card {
-      border-radius: 12px !important;
+      .filters-card {
+        border-radius: 12px !important;
 
-      ::ng-deep .mat-mdc-card-content { padding: 0 !important; }
-    }
+        ::ng-deep .mat-mdc-card-content {
+          padding: 0 !important;
+        }
+      }
 
-    .filters-content {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px !important;
-      flex-wrap: wrap;
-    }
+      .filters-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px !important;
+        flex-wrap: wrap;
+      }
 
-    .search-field {
-      flex: 1;
-      min-width: 220px;
-    }
+      .search-field {
+        flex: 1;
+        min-width: 220px;
+      }
 
-    .field-prefix-icon {
-      color: #94a3b8;
-      margin-right: 4px;
-    }
+      .field-prefix-icon {
+        color: #94a3b8;
+        margin-right: 4px;
+      }
 
-    .status-field {
-      width: 180px;
-      flex-shrink: 0;
-    }
+      .status-field {
+        width: 180px;
+        flex-shrink: 0;
+      }
 
-    .clear-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: 8px !important;
-      white-space: nowrap;
-      height: 40px;
-    }
+      .clear-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 8px !important;
+        white-space: nowrap;
+        height: 40px;
+      }
 
-    .filters-spacer { flex: 1; }
+      .filters-spacer {
+        flex: 1;
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        CONTRACTS CARD
     ════════════════════════════ */
-    .contracts-card {
-      border-radius: 12px !important;
-      /* sin overflow:hidden para no cortar el scroll horizontal */
+      .contracts-card {
+        border-radius: 12px !important;
+        /* sin overflow:hidden para no cortar el scroll horizontal */
 
-      ::ng-deep .mat-mdc-card-content.p0 { padding: 0 !important; }
-    }
+        ::ng-deep .mat-mdc-card-content.p0 {
+          padding: 0 !important;
+        }
+      }
 
-    .contracts-card-header {
-      display: flex !important;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px !important;
-      background: #f8fafc;
-      gap: 12px;
+      .contracts-card-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px !important;
+        background: #f8fafc;
+        gap: 12px;
 
-      ::ng-deep .mat-mdc-card-header-text { display: none; }
-    }
+        ::ng-deep .mat-mdc-card-header-text {
+          display: none;
+        }
+      }
 
-    .ch-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: #1e293b;
+      .ch-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1e293b;
 
-      lucide-icon { color: #3b82f6; }
-    }
+        lucide-icon {
+          color: #3b82f6;
+        }
+      }
 
-    /* ── Empty State ── */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 64px 20px;
-      gap: 10px;
-    }
+      /* ── Empty State ── */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 20px;
+        gap: 10px;
+      }
 
-    .empty-icon {
-      width: 64px;
-      height: 64px;
-      background: #f1f5f9;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #cbd5e1;
-      margin-bottom: 4px;
-    }
+      .empty-icon {
+        width: 64px;
+        height: 64px;
+        background: #f1f5f9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #cbd5e1;
+        margin-bottom: 4px;
+      }
 
-    .empty-title {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 700;
-      color: #64748b;
-    }
+      .empty-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #64748b;
+      }
 
-    .empty-sub {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 8px;
-    }
+      .empty-sub {
+        font-size: 13px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        TABLE
     ════════════════════════════ */
 
-    /* Wrapper que habilita scroll horizontal sin cortar nada */
-    .table-scroll-wrap {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
+      /* Wrapper que habilita scroll horizontal sin cortar nada */
+      .table-scroll-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
 
-    .contracts-table {
-      display: flex;
-      flex-direction: column;
-      min-width: 780px; /* ancho mínimo antes de hacer scroll */
-    }
+      .contracts-table {
+        display: flex;
+        flex-direction: column;
+        min-width: 780px; /* ancho mínimo antes de hacer scroll */
+      }
 
-    .table-header,
-    .table-row {
-      display: grid;
-      /* N°Contrato | Inquilino | Propiedad | Fechas | Alquiler | Estado | Acciones */
-      grid-template-columns: 140px minmax(0,1.4fr) minmax(0,1.1fr) 90px 120px 110px 120px;
-      gap: 12px;
-      padding: 0 20px;
-      align-items: center;
-    }
+      .table-header,
+      .table-row {
+        display: grid;
+        /* N°Contrato | Inquilino | Propiedad | Fechas | Alquiler | Estado | Acciones */
+        grid-template-columns: 140px minmax(0, 1.4fr) minmax(0, 1.1fr) 90px 120px 110px 120px;
+        gap: 12px;
+        padding: 0 20px;
+        align-items: center;
+      }
 
-    .table-header {
-      padding-top: 11px;
-      padding-bottom: 11px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      color: #94a3b8;
-      background: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
-    }
+      .table-header {
+        padding-top: 11px;
+        padding-bottom: 11px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: #94a3b8;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+      }
 
-    .table-row {
-      padding-top: 12px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #f1f5f9;
-      transition: background 0.15s;
+      .table-row {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background 0.15s;
 
-      &:hover { background: #f8fafc; }
-      &:last-child { border-bottom: none; }
-    }
+        &:hover {
+          background: #f8fafc;
+        }
+        &:last-child {
+          border-bottom: none;
+        }
+      }
 
-    .cell {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      min-width: 0;
-    }
+      .cell {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        min-width: 0;
+      }
 
-    /* Contract number */
-    .contract-num {
-      font-family: monospace;
-      font-size: 11.5px;
-      font-weight: 700;
-      background: #eff6ff;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-      padding: 4px 9px;
-      border-radius: 6px;
-      white-space: nowrap;
-      display: inline-block;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      /* Contract number */
+      .contract-num {
+        font-family: monospace;
+        font-size: 11.5px;
+        font-weight: 700;
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+        padding: 4px 9px;
+        border-radius: 6px;
+        white-space: nowrap;
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    /* Tenant */
-    .tenant-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-    }
+      /* Tenant */
+      .tenant-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
 
-    .tenant-avatar {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: #3b82f6;
-      color: white;
-      font-size: 13px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 1px 4px rgba(59,130,246,0.3);
-    }
+      .tenant-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #3b82f6;
+        color: white;
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 1px 4px rgba(59, 130, 246, 0.3);
+      }
 
-    .tenant-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+      .tenant-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+      }
 
-    .tenant-name {
-      font-size: 13.5px;
-      font-weight: 600;
-      color: #1e293b;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .tenant-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #1e293b;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .tenant-email {
-      font-size: 11.5px;
-      color: #94a3b8;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .tenant-email {
+        font-size: 11.5px;
+        color: #94a3b8;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    /* Property */
-    .property-row {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      min-width: 0;
-    }
+      /* Property */
+      .property-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+      }
 
-    .prop-icon { color: #10b981; flex-shrink: 0; }
+      .prop-icon {
+        color: #10b981;
+        flex-shrink: 0;
+      }
 
-    .property-title {
-      font-size: 13.5px;
-      font-weight: 500;
-      color: #334155;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .property-title {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #334155;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    /* Dates — apiladas verticalmente para ahorrar espacio */
-    .date-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
+      /* Dates — apiladas verticalmente para ahorrar espacio */
+      .date-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
 
-    .date-from {
-      font-size: 12px;
-      font-weight: 600;
-      color: #334155;
-      white-space: nowrap;
-    }
+      .date-from {
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        white-space: nowrap;
+      }
 
-    .date-to {
-      font-size: 11.5px;
-      color: #94a3b8;
-      white-space: nowrap;
-    }
+      .date-to {
+        font-size: 11.5px;
+        color: #94a3b8;
+        white-space: nowrap;
+      }
 
-    /* Rent */
-    .col-rent {
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
-    }
+      /* Rent */
+      .col-rent {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+      }
 
-    .rent-currency {
-      font-size: 11px;
-      font-weight: 600;
-      color: #64748b;
-    }
+      .rent-currency {
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+      }
 
-    .rent-amount {
-      font-size: 14px;
-      font-weight: 700;
-      color: #1e293b;
-    }
+      .rent-amount {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e293b;
+      }
 
-    /* Status pill */
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 11px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
+      /* Status pill */
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
 
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
 
-    .status-pill.status-borrador {
-      background: #fef3c7;
-      color: #92400e;
-      .status-dot { background: #f59e0b; }
-    }
+      .status-pill.status-borrador {
+        background: #fef3c7;
+        color: #92400e;
+        .status-dot {
+          background: #f59e0b;
+        }
+      }
 
-    .status-pill.status-activo {
-      background: #d1fae5;
-      color: #065f46;
-      .status-dot { background: #10b981; }
-    }
+      .status-pill.status-activo {
+        background: #d1fae5;
+        color: #065f46;
+        .status-dot {
+          background: #10b981;
+        }
+      }
 
-    .status-pill.status-finalizado {
-      background: #f1f5f9;
-      color: #475569;
-      .status-dot { background: #94a3b8; }
-    }
+      .status-pill.status-finalizado {
+        background: #f1f5f9;
+        color: #475569;
+        .status-dot {
+          background: #94a3b8;
+        }
+      }
 
-    /* Actions */
-    .col-actions {
-      display: flex !important;
-      justify-content: flex-end;
-    }
+      /* Actions */
+      .col-actions {
+        display: flex !important;
+        justify-content: flex-end;
+      }
 
-    .action-group {
-      display: flex;
-      gap: 2px;
-      align-items: center;
-    }
+      .action-group {
+        display: flex;
+        gap: 2px;
+        align-items: center;
+      }
 
-    .action-btn {
-      width: 32px !important;
-      height: 32px !important;
-      border-radius: 8px !important;
-      display: flex !important;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s, color 0.15s;
-    }
+      .action-btn {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
 
-    .view-btn     { color: #3b82f6 !important; &:hover { background: #eff6ff !important; } }
-    .edit-btn     { color: #f59e0b !important; &:hover { background: #fffbeb !important; } }
-    .download-btn { color: #10b981 !important; &:hover { background: #d1fae5 !important; } }
-    .renew-btn    { color: #8b5cf6 !important; &:hover { background: #ede9fe !important; } }
+      .view-btn {
+        color: #3b82f6 !important;
+        &:hover {
+          background: #eff6ff !important;
+        }
+      }
+      .edit-btn {
+        color: #f59e0b !important;
+        &:hover {
+          background: #fffbeb !important;
+        }
+      }
+      .download-btn {
+        color: #10b981 !important;
+        &:hover {
+          background: #d1fae5 !important;
+        }
+      }
+      .renew-btn {
+        color: #8b5cf6 !important;
+        &:hover {
+          background: #ede9fe !important;
+        }
+      }
 
-    /* ════════════════════════════
+      /* ════════════════════════════
        RESPONSIVE
     ════════════════════════════ */
-    @media (max-width: 1200px) {
-      .table-header,
-      .table-row {
-        grid-template-columns: 130px minmax(0,1.3fr) minmax(0,1fr) 90px 110px 100px 110px;
-        gap: 10px;
+      @media (max-width: 1200px) {
+        .table-header,
+        .table-row {
+          grid-template-columns: 130px minmax(0, 1.3fr) minmax(0, 1fr) 90px 110px 100px 110px;
+          gap: 10px;
+        }
       }
-    }
 
-    @media (max-width: 1024px) {
-      .contracts-container { padding: 16px; }
-      .dashboard-grid { grid-template-columns: repeat(3,1fr); }
-      .contracts-table { min-width: 700px; }
-      .table-header,
-      .table-row {
-        grid-template-columns: 120px minmax(0,1.3fr) minmax(0,1fr) 86px 100px 95px 105px;
-        gap: 8px;
-        padding: 0 14px;
+      @media (max-width: 1024px) {
+        .contracts-container {
+          padding: 16px;
+        }
+        .dashboard-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .contracts-table {
+          min-width: 700px;
+        }
+        .table-header,
+        .table-row {
+          grid-template-columns: 120px minmax(0, 1.3fr) minmax(0, 1fr) 86px 100px 95px 105px;
+          gap: 8px;
+          padding: 0 14px;
+        }
       }
-    }
 
-    @media (max-width: 768px) {
-      .contracts-container { padding: 12px; gap: 16px; }
-      .page-header { flex-direction: column; align-items: stretch; }
-      .create-button { width: 100%; justify-content: center; }
-      .dashboard-grid { grid-template-columns: repeat(2,1fr); gap: 12px; }
-      .filters-content { flex-direction: column; align-items: stretch !important; }
-      .search-field, .status-field { width: 100% !important; flex: 1; min-width: 0; }
-      .filters-spacer { display: none; }
-      /* En mobile la tabla hace scroll */
-      .contracts-table { min-width: 680px; }
-    }
-  `]
+      @media (max-width: 768px) {
+        .contracts-container {
+          padding: 12px;
+          gap: 16px;
+        }
+        .page-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .create-button {
+          width: 100%;
+          justify-content: center;
+        }
+        .dashboard-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        .filters-content {
+          flex-direction: column;
+          align-items: stretch !important;
+        }
+        .search-field,
+        .status-field {
+          width: 100% !important;
+          flex: 1;
+          min-width: 0;
+        }
+        .filters-spacer {
+          display: none;
+        }
+        /* En mobile la tabla hace scroll */
+        .contracts-table {
+          min-width: 680px;
+        }
+      }
+    `,
+  ],
 })
 export class ContratosComponent implements OnInit {
   readonly Plus = Plus;
@@ -944,11 +1097,12 @@ export class ContratosComponent implements OnInit {
     // Filtrar por término de búsqueda
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter((c: Contract) =>
-        c.tenant?.name?.toLowerCase().includes(term) ||
-        c.tenant?.email?.toLowerCase().includes(term) ||
-        c.property?.title?.toLowerCase().includes(term) ||
-        c.contract_number?.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        (c: Contract) =>
+          c.tenant?.name?.toLowerCase().includes(term) ||
+          c.tenant?.email?.toLowerCase().includes(term) ||
+          c.property?.title?.toLowerCase().includes(term) ||
+          c.contract_number?.toLowerCase().includes(term),
       );
     }
 
@@ -973,7 +1127,9 @@ export class ContratosComponent implements OnInit {
   }
 
   renewContract(id: number): void {
-    if (!confirm('¿Deseas renovar este contrato? Se creará un nuevo contrato basado en el actual.')) {
+    if (
+      !confirm('¿Deseas renovar este contrato? Se creará un nuevo contrato basado en el actual.')
+    ) {
       return;
     }
 
@@ -985,7 +1141,7 @@ export class ContratosComponent implements OnInit {
       },
       error: () => {
         alert('Error al renovar el contrato');
-      }
+      },
     });
   }
 
@@ -997,7 +1153,7 @@ export class ContratosComponent implements OnInit {
     const rentNumber = typeof rent === 'string' ? parseFloat(rent) : rent;
     return rentNumber.toLocaleString('es-BO', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   }
 
@@ -1010,7 +1166,7 @@ export class ContratosComponent implements OnInit {
     return date.toLocaleDateString('es-ES', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
 
@@ -1018,4 +1174,3 @@ export class ContratosComponent implements OnInit {
     return `status-${status.toLowerCase()}`;
   }
 }
-

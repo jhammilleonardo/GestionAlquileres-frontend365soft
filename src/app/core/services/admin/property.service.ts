@@ -9,13 +9,13 @@ import {
   PropertyFilters,
   RentalApplication,
   TenantInfo,
-  PaginatedResponse
-} from '../models/property.model';
-import { ApiHttpService } from './api-http.service';
-import { SlugService } from './slug.service';
+  PaginatedResponse,
+} from '../../models/property.model';
+import { ApiHttpService } from '../api-http.service';
+import { SlugService } from '../slug.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class PropertyService {
   private favoritesSubject = new BehaviorSubject<Set<number>>(new Set());
@@ -79,15 +79,15 @@ export class PropertyService {
     console.log('  Filtros:', params);
 
     return this.apiHttp.get<PaginatedResponse<Property>>(endpoint, params).pipe(
-      tap(response => {
+      tap((response) => {
         console.log('PropertyService - Respuesta recibida:', response);
         console.log('PropertyService - Total de propiedades:', response.total);
       }),
-      map(response => response.items.map(p => this.transformProperty(p))),
-      catchError(error => {
+      map((response) => response.items.map((p) => this.transformProperty(p))),
+      catchError((error) => {
         console.error('PropertyService - Error loading properties:', error);
         return of([]);
-      })
+      }),
     );
   }
 
@@ -105,11 +105,11 @@ export class PropertyService {
     const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${id}`);
 
     return this.apiHttp.get<Property>(endpoint).pipe(
-      map(property => this.transformProperty(property)),
-      catchError(error => {
+      map((property) => this.transformProperty(property)),
+      catchError((error) => {
         console.error(`Error loading property ${id}:`, error);
         return of(undefined);
-      })
+      }),
     );
   }
 
@@ -119,10 +119,10 @@ export class PropertyService {
   getPropertyTypes(): Observable<PropertyType[]> {
     const endpoint = this.slugService.buildApiEndpoint('admin/property-types');
     return this.apiHttp.get<PropertyType[]>(endpoint).pipe(
-      catchError(error => {
+      catchError((error) => {
         console.error('Error loading property types:', error);
         return of([]);
-      })
+      }),
     );
   }
 
@@ -133,33 +133,35 @@ export class PropertyService {
     const params = typeId ? { typeId } : {};
     const endpoint = this.slugService.buildApiEndpoint('admin/property-subtypes');
     return this.apiHttp.get<PropertySubtype[]>(endpoint, params).pipe(
-      catchError(error => {
+      catchError((error) => {
         console.error('Error loading property subtypes:', error);
         return of([]);
-      })
+      }),
     );
   }
 
   /**
    * Enviar solicitud de alquiler
    */
-  submitApplication(application: RentalApplication): Observable<{ success: boolean; message: string }> {
+  submitApplication(
+    application: RentalApplication,
+  ): Observable<{ success: boolean; message: string }> {
     // TODO: Implementar endpoint para enviar solicitudes
     // Por ahora retornamos un Observable simulado
     console.log('Application submitted:', application);
 
     return of({
       success: true,
-      message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.'
+      message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.',
     }).pipe(
-      map(response => response),
-      catchError(error => {
+      map((response) => response),
+      catchError((error) => {
         console.error('Error submitting application:', error);
         return of({
           success: false,
-          message: 'Error al enviar la solicitud. Por favor intente nuevamente.'
+          message: 'Error al enviar la solicitud. Por favor intente nuevamente.',
         });
-      })
+      }),
     );
   }
 
@@ -181,9 +183,7 @@ export class PropertyService {
    * Verificar si una propiedad es favorita
    */
   isFavorite(propertyId: number): Observable<boolean> {
-    return this.favorites$.pipe(
-      map(favorites => favorites.has(propertyId))
-    );
+    return this.favorites$.pipe(map((favorites) => favorites.has(propertyId)));
   }
 
   /**
@@ -215,30 +215,52 @@ export class PropertyService {
         const parsed = JSON.parse(property.images);
         property.images = Array.isArray(parsed) ? parsed : [];
       } catch {
-        property.images = property.images ? property.images.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+        property.images = property.images
+          ? property.images
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean)
+          : [];
       }
-    } else if (property.images && typeof property.images === 'object' && !Array.isArray(property.images)) {
+    } else if (
+      property.images &&
+      typeof property.images === 'object' &&
+      !Array.isArray(property.images)
+    ) {
       // Objeto {0: "path", 1: "path"}
       const imagesObj = property.images as Record<string, string>;
-      property.images = Object.keys(imagesObj).sort().map(key => imagesObj[key]);
+      property.images = Object.keys(imagesObj)
+        .sort()
+        .map((key) => imagesObj[key]);
     }
 
     // Asegurar que arrays existan
     if (!property.images || !Array.isArray(property.images)) property.images = [];
     if (!property.amenities || !Array.isArray(property.amenities)) property.amenities = [];
-    if (!property.included_items || !Array.isArray(property.included_items)) property.included_items = [];
+    if (!property.included_items || !Array.isArray(property.included_items))
+      property.included_items = [];
 
     // Asegurar addresses - agregar una dirección por defecto si no existe
-    if (!property.addresses || !Array.isArray(property.addresses) || property.addresses.length === 0) {
-      property.addresses = [{
-        address_type: 'primary',
-        street_address: 'Dirección no disponible',
-        city: 'N/A',
-        state: '',
-        zip_code: '',
-        country: ''
-      }];
-      console.warn('Propiedad sin direcciones, usando dirección por defecto:', property.id, property.title);
+    if (
+      !property.addresses ||
+      !Array.isArray(property.addresses) ||
+      property.addresses.length === 0
+    ) {
+      property.addresses = [
+        {
+          address_type: 'primary',
+          street_address: 'Dirección no disponible',
+          city: 'N/A',
+          state: '',
+          zip_code: '',
+          country: '',
+        },
+      ];
+      console.warn(
+        'Propiedad sin direcciones, usando dirección por defecto:',
+        property.id,
+        property.title,
+      );
     }
 
     // Asegurar owners - normalizar estructura y agregar un owner por defecto si no existe
@@ -254,20 +276,22 @@ export class PropertyService {
         };
       });
     } else {
-      property.owners = [{
-        id: 0,
-        name: 'No disponible',
-        company_name: '',
-        is_company: false,
-        primary_email: '',
-        phone_number: '',
-        secondary_email: '',
-        secondary_phone: '',
-        notes: '',
-        ownership_percentage: 100,
-        is_primary: true,
-        created_at: new Date()
-      }];
+      property.owners = [
+        {
+          id: 0,
+          name: 'No disponible',
+          company_name: '',
+          is_company: false,
+          primary_email: '',
+          phone_number: '',
+          secondary_email: '',
+          secondary_phone: '',
+          notes: '',
+          ownership_percentage: 100,
+          is_primary: true,
+          created_at: new Date(),
+        },
+      ];
       console.warn('Propiedad sin owners, usando owner por defecto:', property.id, property.title);
     }
 
@@ -277,14 +301,14 @@ export class PropertyService {
         property.property_type = {
           id: property.property_type_id,
           name: property.property_type_name,
-          description: property.property_type_code || ''
+          description: property.property_type_code || '',
         };
       } else {
         // Crear objeto por defecto
         property.property_type = {
           id: property.property_type_id || 0,
           name: 'Tipo no especificado',
-          description: ''
+          description: '',
         };
       }
     }
@@ -296,7 +320,7 @@ export class PropertyService {
           id: property.property_subtype_id,
           name: property.property_subtype_name,
           description: property.property_subtype_code || '',
-          property_type_id: property.property_type_id
+          property_type_id: property.property_type_id,
         };
       } else {
         // Crear objeto por defecto
@@ -304,7 +328,7 @@ export class PropertyService {
           id: property.property_subtype_id || 0,
           name: 'Subtipo no especificado',
           description: '',
-          property_type_id: property.property_type_id
+          property_type_id: property.property_type_id,
         };
       }
     }
@@ -376,13 +400,21 @@ export class PropertyService {
     const endpoint = this.slugService.buildApiEndpoint('admin/properties');
 
     // El backend devuelve {items: [], total, page, limit, pages}
-    return this.apiHttp.get<{ items: Property[], total: number, page: number, limit: number, pages: number }>(endpoint, params).pipe(
-      map(response => response.items.map(p => this.transformProperty(p))),
-      catchError(error => {
-        console.error('Error loading admin properties:', error);
-        return of([]);
-      })
-    );
+    return this.apiHttp
+      .get<{
+        items: Property[];
+        total: number;
+        page: number;
+        limit: number;
+        pages: number;
+      }>(endpoint, params)
+      .pipe(
+        map((response) => response.items.map((p) => this.transformProperty(p))),
+        catchError((error) => {
+          console.error('Error loading admin properties:', error);
+          return of([]);
+        }),
+      );
   }
 
   /**
@@ -392,11 +424,11 @@ export class PropertyService {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${id}`);
 
     return this.apiHttp.get<Property>(endpoint).pipe(
-      map(property => this.transformProperty(property)),
-      catchError(error => {
+      map((property) => this.transformProperty(property)),
+      catchError((error) => {
         console.error(`Error loading admin property ${id}:`, error);
         return of(undefined);
-      })
+      }),
     );
   }
 
@@ -407,12 +439,12 @@ export class PropertyService {
     const endpoint = this.slugService.buildApiEndpoint('admin/properties');
 
     return this.apiHttp.post<Property>(endpoint, propertyData).pipe(
-      map(property => this.transformProperty(property)),
+      map((property) => this.transformProperty(property)),
       tap(() => console.log('Property created successfully')),
-      catchError(error => {
+      catchError((error) => {
         console.error('Error creating property:', error);
         throw error;
-      })
+      }),
     );
   }
 
@@ -426,10 +458,10 @@ export class PropertyService {
 
     return this.apiHttp.post<any>(endpoint, formData).pipe(
       tap(() => console.log(`Image uploaded for property ${propertyId}`)),
-      catchError(error => {
+      catchError((error) => {
         console.error(`Error uploading image for property ${propertyId}:`, error);
         throw error;
-      })
+      }),
     );
   }
 
@@ -440,12 +472,12 @@ export class PropertyService {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${id}`);
 
     return this.apiHttp.patch<Property>(endpoint, propertyData).pipe(
-      map(property => this.transformProperty(property)),
+      map((property) => this.transformProperty(property)),
       tap(() => console.log(`Property ${id} updated successfully`)),
-      catchError(error => {
+      catchError((error) => {
         console.error(`Error updating property ${id}:`, error);
         throw error;
-      })
+      }),
     );
   }
 
@@ -457,10 +489,10 @@ export class PropertyService {
 
     return this.apiHttp.delete<void>(endpoint).pipe(
       tap(() => console.log(`Property ${id} deleted successfully`)),
-      catchError(error => {
+      catchError((error) => {
         console.error(`Error deleting property ${id}:`, error);
         throw error;
-      })
+      }),
     );
   }
 
@@ -471,4 +503,3 @@ export class PropertyService {
     return this.updateProperty(id, { status, active });
   }
 }
-

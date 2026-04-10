@@ -15,25 +15,48 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import {
   LucideAngularModule,
-  ArrowLeft, CheckCircle2, AlertCircle, DollarSign, Clock,
-  Calendar, Wrench, RefreshCw, ClipboardList, ScrollText,
-  FileText, Building2, MessageSquare, Timer
+  ArrowLeft,
+  CheckCircle2,
+  AlertCircle,
+  DollarSign,
+  Clock,
+  Calendar,
+  Wrench,
+  RefreshCw,
+  ClipboardList,
+  ScrollText,
+  FileText,
+  Building2,
+  MessageSquare,
+  Timer,
 } from 'lucide-angular';
-import { ApplicationService } from '../../../../core/services/application.service';
-import { Application, ApproveApplicationDto, ApproveApplicationResponse } from '../../../../core/models/application.model';
+import { ApplicationService } from '../../../../core/services/admin/application.service';
+import {
+  Application,
+  ApproveApplicationDto,
+  ApproveApplicationResponse,
+} from '../../../../core/models/application.model';
 
 @Component({
   selector: 'app-approve-dialog',
   standalone: true,
   imports: [
-    CommonModule, FormsModule,
-    MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatCheckboxModule, MatSlideToggleModule, MatProgressSpinnerModule,
-    MatDatepickerModule, MatNativeDateModule,
-    LucideAngularModule
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatSlideToggleModule,
+    MatProgressSpinnerModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    LucideAngularModule,
   ],
   templateUrl: './approve-dialog.component.html',
-  styleUrls: ['./approve-dialog.component.css']
+  styleUrls: ['./approve-dialog.component.css'],
 })
 export class ApproveDialogComponent implements OnInit {
   // Icons
@@ -71,24 +94,30 @@ export class ApproveDialogComponent implements OnInit {
     renewal_notice_days: 30,
     auto_increase_percentage: 0,
     late_fee_percentage: 0,
-    grace_days: 0
+    grace_days: 0,
   };
 
   availableServices = [
-    'Internet', 'Cable TV', 'Expensas', 'Agua',
-    'Luz', 'Gas', 'Limpieza', 'Seguridad'
+    'Internet',
+    'Cable TV',
+    'Expensas',
+    'Agua',
+    'Luz',
+    'Gas',
+    'Limpieza',
+    'Seguridad',
   ];
 
   ngOnInit(): void {
     const app$ = this.route.paramMap.pipe(
-      switchMap(params => {
+      switchMap((params) => {
         const id = Number(params.get('id'));
         if (!id) {
           this.error = 'ID de solicitud no válido';
           throw new Error('Invalid ID');
         }
         return this.applicationService.getApplicationById(id);
-      })
+      }),
     );
 
     app$.subscribe({
@@ -98,7 +127,7 @@ export class ApproveDialogComponent implements OnInit {
       },
       error: (err: any) => {
         this.error = err.error?.message || 'Error al cargar la solicitud';
-      }
+      },
     });
   }
 
@@ -121,7 +150,7 @@ export class ApproveDialogComponent implements OnInit {
       error: (err: any) => {
         this.error = err.error?.message || 'Error al aprobar la solicitud';
         this.submitting = false;
-      }
+      },
     });
   }
 

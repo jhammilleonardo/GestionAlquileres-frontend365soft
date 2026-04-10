@@ -8,12 +8,28 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule, MatChipSet } from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
-import { LucideAngularModule, Heart, MapPin, Search, Settings, Home, Maximize, X } from 'lucide-angular';
-import { PropertyService } from '../../../core/services/property.service';
+import {
+  LucideAngularModule,
+  Heart,
+  MapPin,
+  Search,
+  Settings,
+  Home,
+  Maximize,
+  X,
+} from 'lucide-angular';
+import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtype, SortOption } from '../../../core/models/property.model';
+import {
+  Property,
+  PropertyFilters,
+  PropertyStatus,
+  PropertyType,
+  PropertySubtype,
+  SortOption,
+} from '../../../core/models/property.model';
 
 @Component({
   selector: 'app-property-list',
@@ -30,10 +46,10 @@ import { Property, PropertyFilters, PropertyStatus, PropertyType, PropertySubtyp
     MatProgressSpinnerModule,
     MatChipsModule,
     MatIconModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './property-list.component.html',
-  styleUrls: ['./property-list.component.css']
+  styleUrls: ['./property-list.component.css'],
 })
 export class PropertyListComponent implements OnInit {
   properties: Property[] = [];
@@ -54,12 +70,12 @@ export class PropertyListComponent implements OnInit {
     sort_by: SortOption.CREATED_AT,
     sort_order: 'DESC',
     page: 1,
-    limit: 20
+    limit: 20,
   };
 
   sortOptions = [
     { value: SortOption.CREATED_AT, label: 'Más Recientes' },
-    { value: SortOption.TITLE, label: 'Título A-Z' }
+    { value: SortOption.TITLE, label: 'Título A-Z' },
   ];
 
   showFilters = false;
@@ -79,8 +95,8 @@ export class PropertyListComponent implements OnInit {
     private propertyService: PropertyService,
     private router: Router,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
-  ) { }
+    private cdr: ChangeDetectorRef,
+  ) {}
 
   ngOnInit(): void {
     // No cargar types desde admin en portal público - requiere autenticación
@@ -105,7 +121,7 @@ export class PropertyListComponent implements OnInit {
     } else {
       // Slug not set yet, get it from the route and set it
       console.log('PropertyListComponent - Esperando slug de la ruta...');
-      this.route.parent?.paramMap.subscribe(params => {
+      this.route.parent?.paramMap.subscribe((params) => {
         const slugFromRoute = params.get('slug');
         if (slugFromRoute) {
           console.log('PropertyListComponent - Slug obtenido de ruta:', slugFromRoute);
@@ -126,7 +142,7 @@ export class PropertyListComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading property types:', error);
-      }
+      },
     });
   }
 
@@ -143,12 +159,12 @@ export class PropertyListComponent implements OnInit {
         console.error('Error loading properties:', error);
         this.isLoading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
   loadFavorites(): void {
-    this.propertyService.favorites$.subscribe(favorites => {
+    this.propertyService.favorites$.subscribe((favorites) => {
       this.favorites = favorites;
     });
   }
@@ -168,7 +184,7 @@ export class PropertyListComponent implements OnInit {
       sort_by: SortOption.CREATED_AT,
       sort_order: 'DESC',
       page: 1,
-      limit: 20
+      limit: 20,
     };
     this.loadProperties();
   }
@@ -221,7 +237,7 @@ export class PropertyListComponent implements OnInit {
     if (property.first_image) {
       imagePath = property.first_image;
     } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      imagePath = property.images[0] as string;
+      imagePath = property.images[0];
     }
 
     if (imagePath) {

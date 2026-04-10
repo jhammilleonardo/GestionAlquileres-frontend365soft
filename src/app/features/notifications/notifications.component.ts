@@ -1,4 +1,13 @@
-import { Component, inject, OnInit, OnDestroy, signal, AfterViewInit, ElementRef, ViewChildren, QueryList } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ElementRef,
+  ViewChildren,
+  QueryList,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,11 +17,23 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   LucideAngularModule,
-  Bell, Check, Trash2, Filter, RefreshCw,
-  Wrench, Home, User, FileText, CreditCard,
-  Hash, MapPin, Tag, BellOff, ArrowUpRight
+  Bell,
+  Check,
+  Trash2,
+  Filter,
+  RefreshCw,
+  Wrench,
+  Home,
+  User,
+  FileText,
+  CreditCard,
+  Hash,
+  MapPin,
+  Tag,
+  BellOff,
+  ArrowUpRight,
 } from 'lucide-angular';
-import { NotificationService, Notification } from '../../core/services/notification.service';
+import { NotificationService, Notification } from '../../core/services/admin/notification.service';
 import { SlugService } from '../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
 
@@ -29,10 +50,10 @@ type NotificationFilter = 'all' | 'unread' | 'read';
     MatChipsModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './notifications.component.html',
-  styleUrl: './notifications.component.scss'
+  styleUrl: './notifications.component.scss',
 })
 export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy {
   private notificationService = inject(NotificationService);
@@ -97,12 +118,14 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
   private scrollToHighlighted(): void {
     if (!this.highlightedId) return;
     const card = this.notifCards.find(
-      el => el.nativeElement.getAttribute('data-id') === String(this.highlightedId)
+      (el) => el.nativeElement.getAttribute('data-id') === String(this.highlightedId),
     );
     if (card) {
       card.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       // Quitar el highlight después de 3 segundos
-      setTimeout(() => { this.highlightedId = null; }, 3000);
+      setTimeout(() => {
+        this.highlightedId = null;
+      }, 3000);
     }
   }
 
@@ -111,7 +134,7 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   loadNotifications(): void {
-    let options: { is_read?: boolean; limit?: number } = { limit: 50 };
+    const options: { is_read?: boolean; limit?: number } = { limit: 50 };
 
     if (this.currentFilter === 'unread') {
       options.is_read = false;
@@ -170,7 +193,7 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
     if (eventType.includes('maintenance')) {
       const requestId = notification.metadata?.['maintenance_request_id'];
       this.router.navigate(['/', slug, 'mantenimiento'], {
-        queryParams: requestId ? { open: requestId } : {}
+        queryParams: requestId ? { open: requestId } : {},
       });
     } else if (eventType.includes('property')) {
       const propertyId = notification.metadata?.['property_id'];
@@ -260,7 +283,7 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
     return new Date(date).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
-      year: new Date(date).getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      year: new Date(date).getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   }
 

@@ -2,7 +2,20 @@ import { Component, inject, computed, DestroyRef, OnInit, OnDestroy } from '@ang
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Building2, LayoutDashboard, Users, FileText, CreditCard, Wrench, Component as ComponentIcon, BarChart3, Settings, Bell, FileCheck } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Building2,
+  LayoutDashboard,
+  Users,
+  FileText,
+  CreditCard,
+  Wrench,
+  Component as ComponentIcon,
+  BarChart3,
+  Settings,
+  Bell,
+  FileCheck,
+} from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,17 +25,10 @@ import { MenuOption } from '../../../core/models/user.model';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    RouterLinkActive,
-    MatButtonModule,
-    LucideAngularModule
-  ],
+  imports: [CommonModule, RouterLink, RouterLinkActive, MatButtonModule, LucideAngularModule],
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.scss'
+  styleUrl: './sidebar.component.scss',
 })
-
 export class SidebarComponent implements OnInit, OnDestroy {
   private sidebarService = inject(SidebarService);
   private authService = inject(AuthService);
@@ -33,14 +39,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
   expanded = this.sidebarService.expanded;
   isMobileOpen = this.sidebarService.mobileOpen;
 
-  // Computed para generar opciones de menú con rutas dinámicas que incluyen el slug
-  menuOptions = computed<MenuOption[]>(() => {
-    const baseOptions = this.sidebarService.getMenuOptions();
-    return baseOptions.map(option => ({
+  // Items filtrados por permisos + slug prefijado en la ruta
+  menuOptions = computed<MenuOption[]>(() =>
+    this.sidebarService.menuItems().map((option) => ({
       ...option,
-      route: this.slugService.buildUrl(option.route)
-    }));
-  });
+      route: this.slugService.buildUrl(option.route),
+    })),
+  );
 
   // Lucide icons
   readonly Building2 = Building2;
@@ -57,17 +62,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   getIconComponent(iconName: string) {
     const iconMap: Record<string, any> = {
-      'LayoutDashboard': LayoutDashboard,
-      'Building2': Building2,
-      'Users': Users,
-      'FileText': FileText,
-      'FileCheck': FileCheck,
-      'CreditCard': CreditCard,
-      'Wrench': Wrench,
-      'Component': ComponentIcon,
-      'BarChart3': BarChart3,
-      'Settings': Settings,
-      'Bell': Bell
+      LayoutDashboard: LayoutDashboard,
+      Building2: Building2,
+      Users: Users,
+      FileText: FileText,
+      FileCheck: FileCheck,
+      CreditCard: CreditCard,
+      Wrench: Wrench,
+      Component: ComponentIcon,
+      BarChart3: BarChart3,
+      Settings: Settings,
+      Bell: Bell,
     };
     return iconMap[iconName] || Settings;
   }

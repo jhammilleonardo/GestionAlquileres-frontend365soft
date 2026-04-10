@@ -7,13 +7,13 @@ import {
   ApproveApplicationDto,
   ApproveApplicationResponse,
   ChangeStatusDto,
-  ApplicationFilters
-} from '../models/application.model';
-import { ApiHttpService } from './api-http.service';
-import { SlugService } from './slug.service';
+  ApplicationFilters,
+} from '../../models/application.model';
+import { ApiHttpService } from '../api-http.service';
+import { SlugService } from '../slug.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ApplicationService {
   private apiHttp = inject(ApiHttpService);
@@ -49,7 +49,10 @@ export class ApplicationService {
    * Aprobar solicitud y generar contrato (Admin)
    * PATCH /:slug/applications/:id/approve
    */
-  approveApplication(id: number, data: ApproveApplicationDto): Observable<ApproveApplicationResponse> {
+  approveApplication(
+    id: number,
+    data: ApproveApplicationDto,
+  ): Observable<ApproveApplicationResponse> {
     const endpoint = this.slugService.buildApiEndpoint(`applications/${id}/approve`);
     return this.apiHttp.patch<ApproveApplicationResponse>(endpoint, data);
   }
@@ -69,7 +72,7 @@ export class ApplicationService {
   rejectApplication(id: number, feedback: string): Observable<Application> {
     return this.changeApplicationStatus(id, {
       status: 'RECHAZADA' as any,
-      admin_feedback: feedback
+      admin_feedback: feedback,
     });
   }
 
@@ -110,9 +113,9 @@ export class ApplicationService {
    */
   getStatusBadgeClass(status: string): string {
     const statusMap: { [key: string]: string } = {
-      'PENDIENTE': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      'APROBADA': 'bg-green-100 text-green-800 border-green-200',
-      'RECHAZADA': 'bg-red-100 text-red-800 border-red-200'
+      PENDIENTE: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      APROBADA: 'bg-green-100 text-green-800 border-green-200',
+      RECHAZADA: 'bg-red-100 text-red-800 border-red-200',
     };
     return statusMap[status] || 'bg-gray-100 text-gray-800 border-gray-200';
   }
@@ -122,9 +125,9 @@ export class ApplicationService {
    */
   getStatusIcon(status: string): string {
     const iconMap: { [key: string]: string } = {
-      'PENDIENTE': '⏳',
-      'APROBADA': '✅',
-      'RECHAZADA': '❌'
+      PENDIENTE: '⏳',
+      APROBADA: '✅',
+      RECHAZADA: '❌',
     };
     return iconMap[status] || '📋';
   }
@@ -141,7 +144,11 @@ export class ApplicationService {
    * Verificar si el solicitante cumple el requisito de ingresos
    * Generalmente se requiere una ratio de al menos 3:1
    */
-  meetsIncomeRequirement(monthlyIncome: number, monthlyRent: number, requiredRatio: number = 3): boolean {
+  meetsIncomeRequirement(
+    monthlyIncome: number,
+    monthlyRent: number,
+    requiredRatio: number = 3,
+  ): boolean {
     return this.calculateIncomeRatio(monthlyIncome, monthlyRent) >= requiredRatio;
   }
 }

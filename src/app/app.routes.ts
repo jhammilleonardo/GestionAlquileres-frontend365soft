@@ -26,6 +26,7 @@ import { TenantRegisterComponent } from './features/portal-publico/tenant-regist
 import { authGuard, adminLoginGuard } from './core/guards/auth.guard';
 import { tenantLoginGuard } from './core/guards/tenant-auth.guard';
 import { setupCompleteGuard, wizardGuard } from './core/guards/setup-complete.guard';
+import { moduleGuard } from './core/guards/module.guard';
 
 export const routes: Routes = [
   // ==================== LANDING PAGE (PÚBLICO) ====================
@@ -100,23 +101,97 @@ export const routes: Routes = [
         children: [
           { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
           { path: 'dashboard', component: DashboardComponent },
-          { path: 'propiedades', component: PropiedadesComponent },
-          { path: 'propiedades/:id', component: PropertyDetailAdminComponent },
-          { path: 'inquilinos', component: InquilinosComponent },
-          { path: 'contratos', component: ContratosComponent },
-          { path: 'contratos/nuevo', component: ContractCreateComponent },
-          { path: 'contratos/:id', component: ContractDetailComponent },
-          { path: 'contratos/:id/editar', component: ContractEditComponent },
-          { path: 'solicitudes', component: SolicitudesComponent },
-          { path: 'solicitudes/:id', component: ApplicationDetailComponent },
-          { path: 'solicitudes/:id/aprobar', component: ApproveDialogComponent },
-          { path: 'solicitudes/:id/rechazar', component: RejectDialogComponent },
-          { path: 'pagos', component: PagosComponent },
-          { path: 'mantenimiento', component: MantenimientoComponent },
+
+          // Módulos protegidos por permisos
+          {
+            path: 'propiedades',
+            component: PropiedadesComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'properties' },
+          },
+          {
+            path: 'propiedades/:id',
+            component: PropertyDetailAdminComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'properties' },
+          },
+          {
+            path: 'inquilinos',
+            component: InquilinosComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'users' },
+          },
+          {
+            path: 'contratos',
+            component: ContratosComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'contracts' },
+          },
+          {
+            path: 'contratos/nuevo',
+            component: ContractCreateComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'contracts' },
+          },
+          {
+            path: 'contratos/:id',
+            component: ContractDetailComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'contracts' },
+          },
+          {
+            path: 'contratos/:id/editar',
+            component: ContractEditComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'contracts' },
+          },
+          {
+            path: 'solicitudes',
+            component: SolicitudesComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'applications' },
+          },
+          {
+            path: 'solicitudes/:id',
+            component: ApplicationDetailComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'applications' },
+          },
+          {
+            path: 'solicitudes/:id/aprobar',
+            component: ApproveDialogComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'applications' },
+          },
+          {
+            path: 'solicitudes/:id/rechazar',
+            component: RejectDialogComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'applications' },
+          },
+          {
+            path: 'pagos',
+            component: PagosComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'payments' },
+          },
+          {
+            path: 'mantenimiento',
+            component: MantenimientoComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'maintenance' },
+          },
+          {
+            path: 'configuracion',
+            component: ConfiguracionComponent,
+            canActivate: [moduleGuard],
+            data: { module: 'config' },
+          },
+
+          // Sin restricción de módulo
           { path: 'componentes', component: ComponentesComponent },
           { path: 'notificaciones', component: NotificationsComponent },
           { path: 'perfil', component: AdminPerfilComponent },
-          { path: 'configuracion', component: ConfiguracionComponent },
         ],
       },
     ],

@@ -8,13 +8,29 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Router } from '@angular/router';
 import {
   LucideAngularModule,
-  Menu, Bell, Search, User, Settings, LogOut, Check, Trash2,
-  Wrench, Home, FileText, CreditCard, CheckCheck, X, ChevronRight
+  Menu,
+  Bell,
+  Search,
+  User,
+  Settings,
+  LogOut,
+  Check,
+  Trash2,
+  Wrench,
+  Home,
+  FileText,
+  CreditCard,
+  CheckCheck,
+  X,
+  ChevronRight,
 } from 'lucide-angular';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
-import { NotificationService, Notification } from '../../../core/services/notification.service';
+import {
+  NotificationService,
+  Notification,
+} from '../../../core/services/admin/notification.service';
 import { SlugService } from '../../../core/services/slug.service';
 
 @Component({
@@ -27,10 +43,10 @@ import { SlugService } from '../../../core/services/slug.service';
     MatMenuModule,
     MatBadgeModule,
     MatDividerModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.scss'
+  styleUrl: './header.component.scss',
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
@@ -140,7 +156,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   private getSlugFromCurrentUrl(): string | null {
     const url = this.router.url;
-    const segments = url.split('/').filter(s => s.length > 0);
+    const segments = url.split('/').filter((s) => s.length > 0);
     return segments.length > 0 ? segments[0] : null;
   }
 
@@ -156,7 +172,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     const slug = this.getSlugFromCurrentUrl() || this.slugService.getSlug();
     if (slug) {
       this.router.navigate(['/', slug, 'notificaciones'], {
-        queryParams: { highlight: notification.id }
+        queryParams: { highlight: notification.id },
       });
     }
     this.closeNotificationsDropdown();

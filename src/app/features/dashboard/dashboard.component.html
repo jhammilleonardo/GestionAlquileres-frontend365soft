@@ -1,4 +1,11 @@
 <div class="dashboard">
+  @if (accessDenied()) {
+    <div class="access-denied-banner" role="alert">
+      <span>⚠️</span>
+      <span>No tienes permiso para acceder a esa sección. Contacta al administrador.</span>
+    </div>
+  }
+
   <h1>Dashboard</h1>
   <p>Bienvenido al sistema de gestión de alquileres</p>
 

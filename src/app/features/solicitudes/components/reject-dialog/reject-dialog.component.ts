@@ -9,20 +9,31 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   LucideAngularModule,
-  ArrowLeft, XCircle, CheckCircle2, AlertCircle, MessageSquare, Lightbulb, Timer
+  ArrowLeft,
+  XCircle,
+  CheckCircle2,
+  AlertCircle,
+  MessageSquare,
+  Lightbulb,
+  Timer,
 } from 'lucide-angular';
-import { ApplicationService } from '../../../../core/services/application.service';
+import { ApplicationService } from '../../../../core/services/admin/application.service';
 
 @Component({
   selector: 'app-reject-dialog',
   standalone: true,
   imports: [
-    CommonModule, FormsModule,
-    MatCardModule, MatButtonModule, MatFormFieldModule, MatInputModule,
-    MatProgressSpinnerModule, LucideAngularModule
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
   ],
   templateUrl: './reject-dialog.component.html',
-  styleUrls: ['./reject-dialog.component.css']
+  styleUrls: ['./reject-dialog.component.css'],
 })
 export class RejectDialogComponent {
   // Icons
@@ -44,7 +55,7 @@ export class RejectDialogComponent {
 
   formData = {
     admin_feedback: '',
-    status: 'RECHAZADA'
+    status: 'RECHAZADA',
   };
 
   commonReasons = [
@@ -53,7 +64,7 @@ export class RejectDialogComponent {
     'Historial de alquiler desfavorable',
     'La propiedad ya no está disponible',
     'Documentación incompleta',
-    'No se pudo contactar a las referencias proporcionadas'
+    'No se pudo contactar a las referencias proporcionadas',
   ];
 
   onSubmit(): void {
@@ -69,19 +80,21 @@ export class RejectDialogComponent {
 
     const applicationId = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.applicationService.rejectApplication(applicationId, this.formData.admin_feedback).subscribe({
-      next: () => {
-        this.success = true;
-        this.submitting = false;
-        setTimeout(() => {
-          this.router.navigate(['../../'], { relativeTo: this.route });
-        }, 2000);
-      },
-      error: (err: any) => {
-        this.error = err.error?.message || 'Error al rechazar la solicitud';
-        this.submitting = false;
-      }
-    });
+    this.applicationService
+      .rejectApplication(applicationId, this.formData.admin_feedback)
+      .subscribe({
+        next: () => {
+          this.success = true;
+          this.submitting = false;
+          setTimeout(() => {
+            this.router.navigate(['../../'], { relativeTo: this.route });
+          }, 2000);
+        },
+        error: (err: any) => {
+          this.error = err.error?.message || 'Error al rechazar la solicitud';
+          this.submitting = false;
+        },
+      });
   }
 
   selectReason(reason: string): void {

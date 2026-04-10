@@ -8,23 +8,38 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   LucideAngularModule,
-  ArrowLeft, User, Briefcase, Home, Phone, CheckCircle2,
-  XCircle, AlertCircle, FileText, Calendar, MessageSquare, Zap, Mail
+  ArrowLeft,
+  User,
+  Briefcase,
+  Home,
+  Phone,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  FileText,
+  Calendar,
+  MessageSquare,
+  Zap,
+  Mail,
 } from 'lucide-angular';
-import { ApplicationService } from '../../../../core/services/application.service';
+import { ApplicationService } from '../../../../core/services/admin/application.service';
 import { Application, ApplicationStatus } from '../../../../core/models/application.model';
 
 @Component({
   selector: 'app-application-detail',
   standalone: true,
   imports: [
-    CommonModule, RouterModule,
-    MatCardModule, MatButtonModule, MatChipsModule,
-    MatProgressSpinnerModule, MatTooltipModule,
-    LucideAngularModule
+    CommonModule,
+    RouterModule,
+    MatCardModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    LucideAngularModule,
   ],
   templateUrl: './application-detail.component.html',
-  styleUrls: ['./application-detail.component.css']
+  styleUrls: ['./application-detail.component.css'],
 })
 export class ApplicationDetailComponent implements OnInit {
   // Icons
@@ -52,7 +67,7 @@ export class ApplicationDetailComponent implements OnInit {
   application: Application | null = null;
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       if (!id) {
         this.error = 'ID de solicitud no válido';
@@ -72,35 +87,43 @@ export class ApplicationDetailComponent implements OnInit {
           this.loading = false;
           this.error = err.error?.message || err.message || 'Error al cargar la solicitud';
           this.cdr.markForCheck();
-        }
+        },
       });
     });
   }
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'PENDIENTE': return '#f59e0b';
-      case 'APROBADA':  return '#10b981';
-      case 'RECHAZADA': return '#ef4444';
-      default:          return '#64748b';
+      case 'PENDIENTE':
+        return '#f59e0b';
+      case 'APROBADA':
+        return '#10b981';
+      case 'RECHAZADA':
+        return '#ef4444';
+      default:
+        return '#64748b';
     }
   }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'PENDIENTE': return 'Pendiente';
-      case 'APROBADA':  return 'Aprobada';
-      case 'RECHAZADA': return 'Rechazada';
-      default:          return status;
+      case 'PENDIENTE':
+        return 'Pendiente';
+      case 'APROBADA':
+        return 'Aprobada';
+      case 'RECHAZADA':
+        return 'Rechazada';
+      default:
+        return status;
     }
   }
 
   canBeApproved(status: ApplicationStatus): boolean {
-    return status === 'PENDIENTE';
+    return status === ApplicationStatus.PENDIENTE;
   }
 
   canBeRejected(status: ApplicationStatus): boolean {
-    return status === 'PENDIENTE';
+    return status === ApplicationStatus.PENDIENTE;
   }
 
   createContract(app: Application): void {
@@ -108,8 +131,8 @@ export class ApplicationDetailComponent implements OnInit {
       relativeTo: this.route,
       queryParams: {
         tenant_id: app.applicant_id,
-        property_id: app.property_id
-      }
+        property_id: app.property_id,
+      },
     });
   }
 
