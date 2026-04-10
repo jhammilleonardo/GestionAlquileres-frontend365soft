@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { SlugService } from './slug.service';
+import { SlugService } from '../slug.service';
 
 /**
  * Servicio para gestionar la intención de aplicar a una propiedad
@@ -8,7 +8,7 @@ import { SlugService } from './slug.service';
  * y recuperarla después de que el usuario se autentique
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ApplicationIntentionService {
   private readonly INTENTION_KEY = 'application_intention';
@@ -20,7 +20,7 @@ export class ApplicationIntentionService {
 
   constructor(
     private router: Router,
-    private slugService: SlugService
+    private slugService: SlugService,
   ) {
     // Cargar intención guardada al iniciar
     this.loadIntention();
@@ -33,7 +33,7 @@ export class ApplicationIntentionService {
     const intention = {
       propertyId,
       propertyTitle,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     // Guardar en localStorage
@@ -72,12 +72,16 @@ export class ApplicationIntentionService {
   /**
    * Redirigir al formulario de aplicación con la intención guardada
    */
-  navigateToApplication(slug: string): void {
+  navigateToApplication(_slug: string): void {
     const intention = this.getIntention();
 
     if (intention) {
       // Redirigir al wizard de aplicación con la propiedad
-      this.slugService.navigateTo(['portal', 'application-wizard', intention.propertyId.toString()]);
+      this.slugService.navigateTo([
+        'portal',
+        'application-wizard',
+        intention.propertyId.toString(),
+      ]);
     } else {
       // Si no hay intención, redirigir al catálogo de nuevas aplicaciones
       this.slugService.navigateTo(['portal', 'new-application']);

@@ -8,11 +8,25 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import {
   LucideAngularModule,
-  Bell, Check, Trash2, Filter, RefreshCw,
-  Wrench, Home, FileText, CreditCard,
-  Hash, MapPin, Tag, BellOff, ArrowUpRight
+  Bell,
+  Check,
+  Trash2,
+  Filter,
+  RefreshCw,
+  Wrench,
+  Home,
+  FileText,
+  CreditCard,
+  Hash,
+  MapPin,
+  Tag,
+  BellOff,
+  ArrowUpRight,
 } from 'lucide-angular';
-import { TenantNotificationService, TenantNotification } from '../../../core/services/tenant-notification.service';
+import {
+  TenantNotificationService,
+  TenantNotification,
+} from '../../../core/services/tenant/tenant-notification.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
 
@@ -29,10 +43,10 @@ type NotificationFilter = 'all' | 'unread' | 'read';
     MatChipsModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './tenant-notifications.component.html',
-  styleUrl: './tenant-notifications.component.scss'
+  styleUrl: './tenant-notifications.component.scss',
 })
 export class TenantNotificationsComponent implements OnInit, OnDestroy {
   private notificationService = inject(TenantNotificationService);
@@ -79,7 +93,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
   }
 
   loadNotifications(): void {
-    let options: { is_read?: boolean; limit?: number } = { limit: 50 };
+    const options: { is_read?: boolean; limit?: number } = { limit: 50 };
 
     if (this.currentFilter === 'unread') {
       options.is_read = false;
@@ -142,7 +156,6 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     }
   }
 
-
   getNotificationIcon(eventType: string): any {
     if (eventType.includes('maintenance')) return Wrench;
     if (eventType.includes('contract')) return FileText;
@@ -196,7 +209,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     return new Date(date).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
-      year: new Date(date).getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+      year: new Date(date).getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   }
 

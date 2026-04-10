@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of, catchError, tap, map } from 'rxjs';
+import { Observable, of, catchError, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface TenantInfo {
@@ -17,7 +17,7 @@ export interface TenantInfo {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SlugService {
   private http = inject(HttpClient);
@@ -92,10 +92,10 @@ export class SlugService {
           this.currentTenantSignal.set(null);
           this.isLoadingSignal.set(false);
           this.errorSignal.set(`La organización "${slug}" no existe`);
-        }
+        },
       }),
       map(() => true),
-      catchError(() => of(false))
+      catchError(() => of(false)),
     );
   }
 
@@ -114,7 +114,7 @@ export class SlugService {
         this.tenantCache.set(slug, tenant);
       }),
       map(() => true),
-      catchError(() => of(false))
+      catchError(() => of(false)),
     );
   }
 
@@ -231,7 +231,9 @@ export class SlugService {
         const adminUser = JSON.parse(adminUserJson);
         if (adminUser?.tenant_slug) return adminUser.tenant_slug;
       }
-    } catch (e) { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     // Prioridad 2: slug del usuario tenant autenticado
     try {
@@ -241,7 +243,9 @@ export class SlugService {
         const slug = tenantUser?.tenant_slug || tenantUser?.tenantSlug;
         if (slug) return slug;
       }
-    } catch (e) { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
     // Fallback: valor en storage (solo si no hay usuario autenticado)
     return localStorage.getItem(this.SLUG_KEY) || sessionStorage.getItem(this.SLUG_KEY);

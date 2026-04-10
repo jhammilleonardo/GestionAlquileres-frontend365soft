@@ -3,14 +3,15 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { User } from '../models/user.model';
+import { User, UserRole } from '../models/user.model';
 import { SlugService } from './slug.service';
+import { PermissionsService } from './permissions.service';
 
 export interface AdminUser {
   id: number;
   name: string;
   email: string;
-  role: 'ADMIN' | 'USER' | 'INQUILINO';
+  role: UserRole;
   tenant_slug?: string;
 }
 
@@ -39,6 +40,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private slugService = inject(SlugService);
+  private permissionsService = inject(PermissionsService);
 
   private readonly TOKEN_KEY = 'admin_access_token';
   private readonly USER_KEY = 'admin_user';
@@ -177,11 +179,11 @@ export class AuthService {
     sessionStorage.removeItem(this.USER_KEY);
     this.currentUserSignal.set(null);
 
-    // Clear slug from SlugService
+    // Limpiar slug y permisos en caché
     this.slugService.clearSlug();
+    this.permissionsService.clear();
 
     // Redirect to login page
-    // Usar replaceUrl para limpiar el historial al cerrar sesión
     this.router.navigate(['/login'], { replaceUrl: true });
   }
 
@@ -238,7 +240,7 @@ export class AuthService {
             id: userData.id.toString(),
             name: userData.name,
             email: userData.email,
-            role: userData.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
+            role: userData.role,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff`,
           };
           this.currentUserSignal.set(user);
@@ -282,7 +284,7 @@ export class AuthService {
             id: userData.id.toString(),
             name: userData.name,
             email: userData.email,
-            role: userData.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
+            role: userData.role,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=0D8ABC&color=fff`,
             tenant_slug: userData.tenant_slug,
           };
@@ -302,7 +304,7 @@ export class AuthService {
       id: response.user.id.toString(),
       name: response.user.name,
       email: response.user.email,
-      role: response.user.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
+      role: response.user.role,
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(response.user.name)}&background=0D8ABC&color=fff`,
       tenant_slug: response.user.tenant_slug,
     };
@@ -355,7 +357,7 @@ export class AuthService {
           id: updatedUser.id.toString(),
           name: updatedUser.name,
           email: updatedUser.email,
-          role: updatedUser.role.toLowerCase() as 'admin' | 'manager' | 'tenant' | 'owner',
+          role: updatedUser.role,
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(updatedUser.name)}&background=0D8ABC&color=fff`,
           tenant_slug: updatedUser.tenant_slug,
         };

@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { SlugService } from './slug.service';
+import { environment } from '../../../../environments/environment';
+import { SlugService } from '../slug.service';
 
 /**
  * Contract Service
@@ -34,7 +34,7 @@ export interface Contract {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ContractService {
   private http = inject(HttpClient);
@@ -74,7 +74,7 @@ export class ContractService {
   getActiveContractsByTenantId(tenantId: number): Observable<Contract[]> {
     return this.getContracts({
       tenant_id: tenantId,
-      status: 'ACTIVO'
+      status: 'ACTIVO',
     });
   }
 

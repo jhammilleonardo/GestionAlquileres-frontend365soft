@@ -4,9 +4,26 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, User, Mail, Phone, Calendar, Building2, Briefcase, DollarSign, MapPin, CheckCircle2, Edit2, ArrowLeft } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Building2,
+  Briefcase,
+  DollarSign,
+  MapPin,
+  CheckCircle2,
+  Edit2,
+  ArrowLeft,
+} from 'lucide-angular';
 import { Property } from '../../../../core/models/property.model';
-import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHistory } from '../../../../core/models/application.model';
+import {
+  PersonalData,
+  EmploymentData,
+  RentalHistory,
+} from '../../../../core/models/application.model';
 
 @Component({
   selector: 'app-step-3-preview-submit',
@@ -17,7 +34,7 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
     MatCardModule,
     MatChipsModule,
     MatProgressSpinnerModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   template: `
     <div class="step-content">
@@ -37,7 +54,10 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
             <div class="property-details">
               <div class="detail-item">
                 <lucide-icon [img]="MapPin" [size]="16"></lucide-icon>
-                <span>{{ property().addresses?.[0]?.city || '-' }}, {{ property().addresses?.[0]?.country || '-' }}</span>
+                <span
+                  >{{ property().addresses?.[0]?.city || '-' }},
+                  {{ property().addresses?.[0]?.country || '-' }}</span
+                >
               </div>
               <div class="detail-item">
                 <lucide-icon [img]="DollarSign" [size]="16"></lucide-icon>
@@ -52,11 +72,7 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
       <mat-card class="summary-card">
         <div class="card-header-with-action">
           <mat-card-title>Información Personal</mat-card-title>
-          <button
-            mat-icon-button
-            color="primary"
-            (click)="editStep.emit(0)"
-            class="edit-btn">
+          <button mat-icon-button color="primary" (click)="editStep.emit(0)" class="edit-btn">
             <lucide-icon [img]="Edit2" [size]="18"></lucide-icon>
           </button>
         </div>
@@ -84,7 +100,9 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
             </div>
             <div class="info-item">
               <div class="info-label">Estado Civil</div>
-              <div class="info-value">{{ getMaritalStatusLabel(personalInfo()?.marital_status) }}</div>
+              <div class="info-value">
+                {{ getMaritalStatusLabel(personalInfo()?.marital_status) }}
+              </div>
             </div>
             <div class="info-item">
               <div class="info-label">Dependientes</div>
@@ -98,11 +116,7 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
       <mat-card class="summary-card">
         <div class="card-header-with-action">
           <mat-card-title>Información Laboral</mat-card-title>
-          <button
-            mat-icon-button
-            color="primary"
-            (click)="editStep.emit(1)"
-            class="edit-btn">
+          <button mat-icon-button color="primary" (click)="editStep.emit(1)" class="edit-btn">
             <lucide-icon [img]="Edit2" [size]="18"></lucide-icon>
           </button>
         </div>
@@ -119,23 +133,34 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
             </div>
             <div class="info-item">
               <div class="info-label">Tipo de Empleo</div>
-              <div class="info-value">{{ getEmploymentTypeLabel(employmentHistory()?.current_job?.employment_type) }}</div>
+              <div class="info-value">
+                {{ getEmploymentTypeLabel(employmentHistory()?.current_job?.employment_type) }}
+              </div>
             </div>
             <div class="info-item">
               <div class="info-label">Salario Mensual</div>
-              <div class="info-value">\${{ employmentHistory()?.current_job?.salary || 0 }} {{ employmentHistory()?.current_job?.currency || 'USD' }}</div>
+              <div class="info-value">
+                \${{ employmentHistory()?.current_job?.salary || 0 }}
+                {{ employmentHistory()?.current_job?.currency || 'USD' }}
+              </div>
             </div>
             <div class="info-item">
               <div class="info-label">Fecha de Inicio</div>
-              <div class="info-value">{{ formatDate(employmentHistory()?.current_job?.start_date) }}</div>
+              <div class="info-value">
+                {{ formatDate(employmentHistory()?.current_job?.start_date) }}
+              </div>
             </div>
             <div class="info-item">
               <div class="info-label">Supervisor</div>
-              <div class="info-value">{{ employmentHistory()?.current_job?.supervisor_name || '-' }}</div>
+              <div class="info-value">
+                {{ employmentHistory()?.current_job?.supervisor_name || '-' }}
+              </div>
             </div>
             <div class="info-item">
               <div class="info-label">Teléfono Supervisor</div>
-              <div class="info-value">{{ employmentHistory()?.current_job?.supervisor_phone || '-' }}</div>
+              <div class="info-value">
+                {{ employmentHistory()?.current_job?.supervisor_phone || '-' }}
+              </div>
             </div>
           </div>
 
@@ -188,7 +213,8 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
             mat-stroked-button
             color="primary"
             class="back-action-btn"
-            (click)="editStep.emit(0)">
+            (click)="editStep.emit(0)"
+          >
             <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
             Volver al Paso 1
           </button>
@@ -198,7 +224,8 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
             color="primary"
             class="submit-btn"
             (click)="onSubmit()"
-            [disabled]="isSubmitting()">
+            [disabled]="isSubmitting()"
+          >
             @if (isSubmitting()) {
               <mat-spinner diameter="20" color="accent"></mat-spinner>
               <span>Enviando...</span>
@@ -211,226 +238,228 @@ import { PersonalData, EmploymentData, MaritalStatus, EmploymentType, RentalHist
       </div>
     </div>
   `,
-  styles: [`
-    .step-content {
-      padding: 24px 0;
-    }
-
-    .step-header {
-      margin-bottom: 32px;
-      text-align: center;
-    }
-
-    .step-header h2 {
-      margin: 0 0 8px;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .step-header p {
-      margin: 0;
-      font-size: 1rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .summary-card {
-      margin-bottom: 24px;
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-
-    .summary-card mat-card-header {
-      padding: 16px 24px;
-      background: var(--mat-sys-surface-container-low);
-    }
-
-    .summary-card mat-card-title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .summary-card mat-card-content {
-      padding: 24px;
-    }
-
-    .card-header-with-action {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    }
-
-    .edit-btn {
-      width: 36px;
-      height: 36px;
-    }
-
-    .property-summary h3 {
-      margin: 0 0 12px;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .property-details {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .detail-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.9375rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .section-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--mat-sys-primary);
-      margin: 16px 0 12px;
-    }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-
-    .info-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .info-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface-variant);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .info-value {
-      font-size: 0.9375rem;
-      color: var(--mat-sys-on-surface);
-      font-weight: 500;
-    }
-
-    .rental-history-summary {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    .history-summary-item {
-      padding: 12px;
-      background: var(--mat-sys-surface-container-low);
-      border-radius: 8px;
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-
-    .history-address {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 500;
-      color: var(--mat-sys-on-surface);
-      margin-bottom: 4px;
-    }
-
-    .history-details {
-      display: flex;
-      gap: 16px;
-      font-size: 0.875rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .submit-section {
-      background: var(--mat-sys-surface-container-low);
-      border-radius: 12px;
-      padding: 24px;
-      border: 1px solid var(--mat-sys-primary);
-    }
-
-    .submit-info {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .success-icon {
-      color: var(--mat-sys-primary);
-      flex-shrink: 0;
-    }
-
-    .submit-text h4 {
-      margin: 0 0 4px;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .submit-text p {
-      margin: 0;
-      font-size: 0.9375rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .submit-actions {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .back-action-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-
-    .submit-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      flex: 2;
-      height: 52px;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 8px;
-    }
-
-    @media (max-width: 768px) {
-      .info-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .submit-actions {
-        flex-direction: column;
-      }
-
-      .back-action-btn,
-      .submit-btn {
-        width: 100%;
-        flex: none;
-      }
-
+  styles: [
+    `
       .step-content {
-        padding: 16px 0;
+        padding: 24px 0;
+      }
+
+      .step-header {
+        margin-bottom: 32px;
+        text-align: center;
+      }
+
+      .step-header h2 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .step-header p {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .summary-card {
+        margin-bottom: 24px;
+        border: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      .summary-card mat-card-header {
+        padding: 16px 24px;
+        background: var(--mat-sys-surface-container-low);
+      }
+
+      .summary-card mat-card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
       }
 
       .summary-card mat-card-content {
-        padding: 16px;
+        padding: 24px;
       }
-    }
-  `]
+
+      .card-header-with-action {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+      }
+
+      .edit-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .property-summary h3 {
+        margin: 0 0 12px;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .property-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--mat-sys-primary);
+        margin: 16px 0 12px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface-variant);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .info-value {
+        font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface);
+        font-weight: 500;
+      }
+
+      .rental-history-summary {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 12px;
+      }
+
+      .history-summary-item {
+        padding: 12px;
+        background: var(--mat-sys-surface-container-low);
+        border-radius: 8px;
+        border: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      .history-address {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        color: var(--mat-sys-on-surface);
+        margin-bottom: 4px;
+      }
+
+      .history-details {
+        display: flex;
+        gap: 16px;
+        font-size: 0.875rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .submit-section {
+        background: var(--mat-sys-surface-container-low);
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid var(--mat-sys-primary);
+      }
+
+      .submit-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .success-icon {
+        color: var(--mat-sys-primary);
+        flex-shrink: 0;
+      }
+
+      .submit-text h4 {
+        margin: 0 0 4px;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .submit-text p {
+        margin: 0;
+        font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .submit-actions {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .back-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+      }
+
+      .submit-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex: 2;
+        height: 52px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+      }
+
+      @media (max-width: 768px) {
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .submit-actions {
+          flex-direction: column;
+        }
+
+        .back-action-btn,
+        .submit-btn {
+          width: 100%;
+          flex: none;
+        }
+
+        .step-content {
+          padding: 16px 0;
+        }
+
+        .summary-card mat-card-content {
+          padding: 16px;
+        }
+      }
+    `,
+  ],
 })
 export class Step3PreviewSubmitComponent {
   readonly User = User;
@@ -464,28 +493,28 @@ export class Step3PreviewSubmitComponent {
     return date.toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
   }
 
   getMaritalStatusLabel(status?: string): string {
     const labels: Record<string, string> = {
-      'soltero': 'Soltero/a',
-      'casado': 'Casado/a',
-      'divorciado': 'Divorciado/a',
-      'viudo': 'Viudo/a',
-      'union_libre': 'Unión Libre'
+      soltero: 'Soltero/a',
+      casado: 'Casado/a',
+      divorciado: 'Divorciado/a',
+      viudo: 'Viudo/a',
+      union_libre: 'Unión Libre',
     };
     return labels[status || ''] || status || '-';
   }
 
   getEmploymentTypeLabel(type?: string): string {
     const labels: Record<string, string> = {
-      'tiempo_completo': 'Tiempo Completo',
-      'medio_tiempo': 'Medio Tiempo',
-      'freelance': 'Freelance',
-      'autonomo': 'Autónomo',
-      'empresario': 'Empresario'
+      tiempo_completo: 'Tiempo Completo',
+      medio_tiempo: 'Medio Tiempo',
+      freelance: 'Freelance',
+      autonomo: 'Autónomo',
+      empresario: 'Empresario',
     };
     return labels[type || ''] || type || '-';
   }

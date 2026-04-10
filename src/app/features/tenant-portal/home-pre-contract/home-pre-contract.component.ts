@@ -5,12 +5,22 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
-import { LucideAngularModule, Home, Plus, FileEdit, Clock, CheckCircle2, XCircle, AlertCircle, FileSignature } from 'lucide-angular';
-import { TenantAuthService } from '../../../core/services/tenant-auth.service';
+import {
+  LucideAngularModule,
+  Home,
+  Plus,
+  FileEdit,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  FileSignature,
+} from 'lucide-angular';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { ApplicationService } from '../../../core/services/application.service';
-import { ContractService, Contract } from '../../../core/services/contract.service';
-import { Application, ApplicationListItem, ApplicationStatus } from '../../../core/models/application.model';
+import { ApplicationService } from '../../../core/services/admin/application.service';
+import { ContractService, Contract } from '../../../core/services/admin/contract.service';
+import { ApplicationListItem, ApplicationStatus } from '../../../core/models/application.model';
 
 @Component({
   selector: 'app-home-pre-contract',
@@ -21,7 +31,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
     MatCardModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   template: `
     <div class="home-pre-contract">
@@ -40,7 +50,8 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
           mat-raised-button
           color="primary"
           class="new-app-btn"
-          (click)="goToNewApplication()">
+          (click)="goToNewApplication()"
+        >
           <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
           <span>Nueva Solicitud</span>
         </button>
@@ -48,7 +59,6 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
 
       <!-- Content -->
       <div class="content-grid">
-
         <!-- Banner: Contrato pendiente de firma -->
         @if (pendingContract()) {
           <mat-card class="pending-contract-card">
@@ -61,14 +71,13 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                 <p>Tienes un contrato listo para firmar.</p>
                 <div class="contract-meta">
                   <span><strong>Contrato:</strong> {{ pendingContract()!.contract_number }}</span>
-                  <span><strong>Renta:</strong> {{ pendingContract()!.monthly_rent | number }} {{ pendingContract()!.currency }}</span>
+                  <span
+                    ><strong>Renta:</strong> {{ pendingContract()!.monthly_rent | number }}
+                    {{ pendingContract()!.currency }}</span
+                  >
                 </div>
               </div>
-              <button
-                mat-raised-button
-                color="primary"
-                class="sign-btn"
-                (click)="goToContracts()">
+              <button mat-raised-button color="primary" class="sign-btn" (click)="goToContracts()">
                 <lucide-icon [img]="FileSignature" [size]="18"></lucide-icon>
                 Ver y Firmar Contrato
               </button>
@@ -88,10 +97,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
               disponibles y enviar una solicitud de alquiler.
             </p>
             <div class="welcome-actions">
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="goToNewApplication()">
+              <button mat-raised-button color="primary" (click)="goToNewApplication()">
                 <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
                 Ver Propiedades Disponibles
               </button>
@@ -107,11 +113,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
               <h3>Mis Solicitudes</h3>
             </div>
             @if (applications().length > 0) {
-              <button
-                mat-stroked-button
-                (click)="viewAllApplications()">
-                Ver Todas
-              </button>
+              <button mat-stroked-button (click)="viewAllApplications()">Ver Todas</button>
             }
           </div>
 
@@ -126,10 +128,7 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                 <lucide-icon [img]="FileEdit" [size]="48" class="empty-icon"></lucide-icon>
                 <h4>Aún no has enviado solicitudes</h4>
                 <p>Explora nuestras propiedades disponibles y envía tu primera solicitud</p>
-                <button
-                  mat-flat-button
-                  color="primary"
-                  (click)="goToNewApplication()">
+                <button mat-flat-button color="primary" (click)="goToNewApplication()">
                   Explorar Propiedades
                 </button>
               </div>
@@ -160,7 +159,9 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
                           <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
                           <span>¡Felicitaciones! Tu solicitud fue aprobada</span>
                         </div>
-                      } @else if (app.status === ApplicationStatus.RECHAZADA && app.admin_feedback) {
+                      } @else if (
+                        app.status === ApplicationStatus.RECHAZADA && app.admin_feedback
+                      ) {
                         <div class="detail-item rejected">
                           <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
                           <span>{{ app.admin_feedback }}</span>
@@ -176,352 +177,358 @@ import { Application, ApplicationListItem, ApplicationStatus } from '../../../co
       </div>
     </div>
   `,
-  styles: [`
-    .home-pre-contract {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .header-content {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .header-icon {
-      width: 56px;
-      height: 56px;
-      background: var(--mat-sys-primary-container);
-      color: var(--mat-sys-on-primary-container);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .header-text h1 {
-      margin: 0;
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .subtitle {
-      margin: 4px 0 0;
-      font-size: 1rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .new-app-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 48px;
-      padding: 0 24px;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 8px;
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-    }
-
-    .welcome-card {
-      background: linear-gradient(135deg, var(--mat-sys-primary-container) 0%, var(--mat-sys-surface-container-low) 100%);
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-
-    .welcome-content {
-      padding: 32px;
-      text-align: center;
-    }
-
-    .welcome-icon {
-      color: var(--mat-sys-primary);
-      margin-bottom: 16px;
-    }
-
-    .welcome-content h2 {
-      margin: 0 0 12px;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .welcome-text {
-      margin: 0 0 24px;
-      font-size: 1rem;
-      line-height: 1.6;
-      color: var(--mat-sys-on-surface-variant);
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .welcome-actions button {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .applications-card {
-      border: 1px solid var(--mat-sys-outline-variant);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--mat-sys-outline-variant);
-    }
-
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-title h3 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .card-header mat-chip {
-      color: var(--mat-sys-primary);
-    }
-
-    mat-card-content {
-      padding: 24px;
-    }
-
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 48px 24px;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 48px 24px;
-      text-align: center;
-    }
-
-    .empty-icon {
-      color: var(--mat-sys-outline-variant);
-      opacity: 0.5;
-    }
-
-    .empty-state h4 {
-      margin: 0;
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-    }
-
-    .empty-state p {
-      margin: 0 0 16px;
-      font-size: 0.9375rem;
-      color: var(--mat-sys-on-surface-variant);
-      max-width: 400px;
-    }
-
-    .pending-contract-card {
-      background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
-      border: 2px solid #16a34a;
-    }
-
-    .pending-contract-content {
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .pending-icon {
-      color: #16a34a;
-      flex-shrink: 0;
-    }
-
-    .pending-info {
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .pending-info h2 {
-      margin: 0 0 4px;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #14532d;
-    }
-
-    .pending-info p {
-      margin: 0 0 8px;
-      font-size: 0.9375rem;
-      color: #166534;
-    }
-
-    .contract-meta {
-      display: flex;
-      gap: 16px;
-      font-size: 0.875rem;
-      color: #15803d;
-      flex-wrap: wrap;
-    }
-
-    .sign-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-
-    .applications-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .application-item {
-      padding: 16px;
-      border-radius: 12px;
-      border: 1px solid var(--mat-sys-outline-variant);
-      background: var(--mat-sys-surface-container-low);
-      transition: all 0.2s;
-    }
-
-    .application-item:hover {
-      border-color: var(--mat-sys-primary);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-
-    .application-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-      gap: 12px;
-    }
-
-    .property-title {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--mat-sys-on-surface);
-      flex: 1;
-    }
-
-    .status-chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 36px;
-      padding: 0 24px;
-      border-radius: 9999px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      letter-spacing: 0.0892857143em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      border: none;
-      line-height: 1;
-    }
-
-    .status-chip.status-pendiente {
-      background: #1d4ed8;
-      color: #ffffff;
-    }
-
-    .status-chip.status-aprobada {
-      background: #10b981;
-      color: #ffffff;
-    }
-
-    .status-chip.status-rechazada {
-      background: #b91c1c;
-      color: #ffffff;
-    }
-
-    .application-details {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .detail-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.875rem;
-      color: var(--mat-sys-on-surface-variant);
-    }
-
-    .detail-item.pending {
-      color: #2563eb;
-    }
-
-    .detail-item.approved {
-      color: #0f5132;
-      font-weight: 500;
-    }
-
-    .detail-item.rejected {
-      color: #842029;
-    }
-
-    @media (max-width: 768px) {
+  styles: [
+    `
       .home-pre-contract {
-        padding: 16px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
       }
 
       .page-header {
-        flex-direction: column;
-        align-items: stretch;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+        gap: 16px;
       }
 
       .header-content {
-        flex-direction: column;
-        text-align: center;
+        display: flex;
+        align-items: center;
+        gap: 16px;
       }
 
-      .new-app-btn {
-        width: 100%;
+      .header-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
         justify-content: center;
       }
 
+      .header-text h1 {
+        margin: 0;
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .subtitle {
+        margin: 4px 0 0;
+        font-size: 1rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .new-app-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 48px;
+        padding: 0 24px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .welcome-card {
+        background: linear-gradient(
+          135deg,
+          var(--mat-sys-primary-container) 0%,
+          var(--mat-sys-surface-container-low) 100%
+        );
+        border: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      .welcome-content {
+        padding: 32px;
+        text-align: center;
+      }
+
+      .welcome-icon {
+        color: var(--mat-sys-primary);
+        margin-bottom: 16px;
+      }
+
+      .welcome-content h2 {
+        margin: 0 0 12px;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .welcome-text {
+        margin: 0 0 24px;
+        font-size: 1rem;
+        line-height: 1.6;
+        color: var(--mat-sys-on-surface-variant);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .welcome-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .applications-card {
+        border: 1px solid var(--mat-sys-outline-variant);
+      }
+
       .card-header {
-        flex-direction: column;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
+      }
+
+      .header-title {
+        display: flex;
+        align-items: center;
         gap: 12px;
-        align-items: stretch;
+      }
+
+      .header-title h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .card-header mat-chip {
+        color: var(--mat-sys-primary);
+      }
+
+      mat-card-content {
+        padding: 24px;
+      }
+
+      .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 48px 24px;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 48px 24px;
+        text-align: center;
+      }
+
+      .empty-icon {
+        color: var(--mat-sys-outline-variant);
+        opacity: 0.5;
+      }
+
+      .empty-state h4 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+      }
+
+      .empty-state p {
+        margin: 0 0 16px;
+        font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface-variant);
+        max-width: 400px;
+      }
+
+      .pending-contract-card {
+        background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
+        border: 2px solid #16a34a;
+      }
+
+      .pending-contract-content {
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+      }
+
+      .pending-icon {
+        color: #16a34a;
+        flex-shrink: 0;
+      }
+
+      .pending-info {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .pending-info h2 {
+        margin: 0 0 4px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #14532d;
+      }
+
+      .pending-info p {
+        margin: 0 0 8px;
+        font-size: 0.9375rem;
+        color: #166534;
+      }
+
+      .contract-meta {
+        display: flex;
+        gap: 16px;
+        font-size: 0.875rem;
+        color: #15803d;
+        flex-wrap: wrap;
+      }
+
+      .sign-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .applications-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .application-item {
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--mat-sys-outline-variant);
+        background: var(--mat-sys-surface-container-low);
+        transition: all 0.2s;
+      }
+
+      .application-item:hover {
+        border-color: var(--mat-sys-primary);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       }
 
       .application-header {
-        flex-direction: column;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+        gap: 12px;
       }
-    }
-  `]
+
+      .property-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface);
+        flex: 1;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 36px;
+        padding: 0 24px;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        letter-spacing: 0.0892857143em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        border: none;
+        line-height: 1;
+      }
+
+      .status-chip.status-pendiente {
+        background: #1d4ed8;
+        color: #ffffff;
+      }
+
+      .status-chip.status-aprobada {
+        background: #10b981;
+        color: #ffffff;
+      }
+
+      .status-chip.status-rechazada {
+        background: #b91c1c;
+        color: #ffffff;
+      }
+
+      .application-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.875rem;
+        color: var(--mat-sys-on-surface-variant);
+      }
+
+      .detail-item.pending {
+        color: #2563eb;
+      }
+
+      .detail-item.approved {
+        color: #0f5132;
+        font-weight: 500;
+      }
+
+      .detail-item.rejected {
+        color: #842029;
+      }
+
+      @media (max-width: 768px) {
+        .home-pre-contract {
+          padding: 16px;
+        }
+
+        .page-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .header-content {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .new-app-btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .card-header {
+          flex-direction: column;
+          gap: 12px;
+          align-items: stretch;
+        }
+
+        .application-header {
+          flex-direction: column;
+        }
+      }
+    `,
+  ],
 })
 export class HomePreContractComponent implements OnInit {
   readonly Home = Home;
@@ -553,12 +560,12 @@ export class HomePreContractComponent implements OnInit {
   checkPendingContract(): void {
     this.contractService.hasAnyContracts().subscribe({
       next: (contracts) => {
-        const borrador = contracts.find(c => c.status === 'BORRADOR');
+        const borrador = contracts.find((c) => c.status === 'BORRADOR');
         if (borrador) {
           this.pendingContract.set(borrador);
         }
       },
-      error: () => {}
+      error: () => {},
     });
   }
 
@@ -571,7 +578,7 @@ export class HomePreContractComponent implements OnInit {
       },
       error: () => {
         this.isLoading.set(false);
-      }
+      },
     });
   }
 

@@ -2,17 +2,15 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ApplicationService } from '../../../core/services/application.service';
+import { ApplicationService } from '../../../core/services/admin/application.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
   CreateApplicationDto,
   PersonalData,
   EmploymentData,
-  RentalHistory,
-  References,
   MaritalStatus,
-  EmploymentType
+  EmploymentType,
 } from '../../../core/models/application.model';
 
 @Component({
@@ -20,7 +18,7 @@ import {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './application-form.component.html',
-  styleUrls: ['./application-form.component.css']
+  styleUrls: ['./application-form.component.css'],
 })
 export class ApplicationFormComponent implements OnInit {
   private router = inject(Router);
@@ -44,10 +42,10 @@ export class ApplicationFormComponent implements OnInit {
     rental_history: [],
     references: {
       personal: [],
-      professional: []
+      professional: [],
     },
     documents: [],
-    additional_notes: ''
+    additional_notes: '',
   };
 
   // Options for selects
@@ -59,7 +57,7 @@ export class ApplicationFormComponent implements OnInit {
     console.log('📍 Ruta actual:', this.route.snapshot);
 
     // Check if returning from login with pending form data
-    this.route.queryParamMap.subscribe(params => {
+    this.route.queryParamMap.subscribe((params) => {
       const restoreForm = params.get('restoreForm');
       if (restoreForm === 'true') {
         console.log('🔄 Restaurando formulario después del login');
@@ -68,7 +66,7 @@ export class ApplicationFormComponent implements OnInit {
     });
 
     // Get property ID from route params or query params
-    this.route.paramMap.subscribe(params => {
+    this.route.paramMap.subscribe((params) => {
       const id = params.get('propertyId');
       console.log('🔍 PropertyId de params:', id);
       if (id) {
@@ -78,7 +76,7 @@ export class ApplicationFormComponent implements OnInit {
       }
     });
 
-    this.route.queryParamMap.subscribe(params => {
+    this.route.queryParamMap.subscribe((params) => {
       const id = params.get('propertyId');
       console.log('🔍 PropertyId de query params:', id);
       if (id && !this.propertyId) {
@@ -106,7 +104,7 @@ export class ApplicationFormComponent implements OnInit {
       birth_date: '',
       national_id: '',
       marital_status: MaritalStatus.SOLTERO,
-      number_of_dependents: 0
+      number_of_dependents: 0,
     };
   }
 
@@ -121,8 +119,8 @@ export class ApplicationFormComponent implements OnInit {
         start_date: '',
         employment_type: EmploymentType.TIEMPO_COMPLETO,
         supervisor_name: '',
-        supervisor_phone: ''
-      }
+        supervisor_phone: '',
+      },
     };
   }
 
@@ -135,7 +133,7 @@ export class ApplicationFormComponent implements OnInit {
       monthly_rent: 0,
       start_date: '',
       end_date: '',
-      reason_for_leaving: ''
+      reason_for_leaving: '',
     });
   }
 
@@ -149,7 +147,7 @@ export class ApplicationFormComponent implements OnInit {
       name: '',
       relationship: '',
       phone: '',
-      email: ''
+      email: '',
     });
   }
 
@@ -163,7 +161,7 @@ export class ApplicationFormComponent implements OnInit {
       company: '',
       position: '',
       phone: '',
-      email: ''
+      email: '',
     });
   }
 
@@ -173,18 +171,24 @@ export class ApplicationFormComponent implements OnInit {
 
   // Getter for previous job to handle optional chaining in template
   get previousJob() {
-    return this.formData.employment_data.previous_job || {
-      company: '',
-      position: '',
-      salary: 0,
-      end_date: ''
-    };
+    return (
+      this.formData.employment_data.previous_job || {
+        company: '',
+        position: '',
+        salary: 0,
+        end_date: '',
+      }
+    );
   }
 
   // Submit
   onSubmit(): void {
     // Validate all sections
-    if (!this.validatePersonalData() || !this.validateEmploymentData() || !this.validateReferences()) {
+    if (
+      !this.validatePersonalData() ||
+      !this.validateEmploymentData() ||
+      !this.validateReferences()
+    ) {
       return;
     }
 
@@ -211,15 +215,16 @@ export class ApplicationFormComponent implements OnInit {
         setTimeout(() => {
           this.router.navigate(['../../registro'], {
             relativeTo: this.route,
-            queryParams: { application: 'success', applicationId: response.id }
+            queryParams: { application: 'success', applicationId: response.id },
           });
         }, 3000);
       },
       error: (err: any) => {
-        this.error = err.error?.message || 'Error al enviar la solicitud. Por favor intenta nuevamente.';
+        this.error =
+          err.error?.message || 'Error al enviar la solicitud. Por favor intenta nuevamente.';
         this.submitting = false;
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      },
     });
   }
 
@@ -236,7 +241,7 @@ export class ApplicationFormComponent implements OnInit {
       const dataToSave = {
         formData: this.formData,
         propertyId: this.propertyId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       localStorage.setItem(this.FORM_DATA_KEY, JSON.stringify(dataToSave));
       console.log('💾 Datos del formulario guardados en localStorage');
@@ -310,7 +315,14 @@ export class ApplicationFormComponent implements OnInit {
 
   validateEmploymentData(): boolean {
     const cj = this.formData.employment_data.current_job;
-    if (!cj.company || !cj.position || !cj.salary || !cj.start_date || !cj.supervisor_name || !cj.supervisor_phone) {
+    if (
+      !cj.company ||
+      !cj.position ||
+      !cj.salary ||
+      !cj.start_date ||
+      !cj.supervisor_name ||
+      !cj.supervisor_phone
+    ) {
       this.error = 'Por favor completa todos los campos obligatorios de información laboral';
       return false;
     }

@@ -2,17 +2,35 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { LucideAngularModule, Home, Search, CheckCircle, Star, ArrowRight, MapPin, Maximize, Heart, BedDouble, Bath, Car } from 'lucide-angular';
-import { PropertyService } from '../../../core/services/property.service';
+import {
+  LucideAngularModule,
+  Home,
+  Search,
+  CheckCircle,
+  Star,
+  ArrowRight,
+  MapPin,
+  Maximize,
+  Heart,
+  BedDouble,
+  Bath,
+  Car,
+} from 'lucide-angular';
+import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { Property, PropertyFilters, PropertyStatus, SortOption } from '../../../core/models/property.model';
+import {
+  Property,
+  PropertyFilters,
+  PropertyStatus,
+  SortOption,
+} from '../../../core/models/property.model';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, RouterModule, MatButtonModule, LucideAngularModule],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
   readonly Home = Home;
@@ -44,7 +62,7 @@ export class HomeComponent implements OnInit {
       sort_by: SortOption.CREATED_AT,
       sort_order: 'DESC',
       page: 1,
-      limit: 6
+      limit: 6,
     };
     this.propertyService.getFilteredProperties(filters).subscribe({
       next: (properties) => {
@@ -53,7 +71,7 @@ export class HomeComponent implements OnInit {
       },
       error: () => {
         this.isLoadingProperties = false;
-      }
+      },
     });
   }
 
@@ -62,7 +80,7 @@ export class HomeComponent implements OnInit {
     if (property.first_image) {
       imagePath = property.first_image;
     } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      imagePath = property.images[0] as string;
+      imagePath = property.images[0];
     }
     if (imagePath) {
       if (imagePath.startsWith('http')) return imagePath;

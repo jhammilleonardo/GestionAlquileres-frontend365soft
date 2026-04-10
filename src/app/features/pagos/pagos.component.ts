@@ -18,12 +18,28 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { LucideAngularModule, DollarSign, TrendingUp, AlertCircle, CheckCircle2, XCircle, Filter, Eye, RefreshCw, Plus, X, Search, Download, Trash2, ExternalLink } from 'lucide-angular';
-import { startWith, debounceTime, switchMap, map } from 'rxjs/operators';
+import {
+  LucideAngularModule,
+  DollarSign,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Filter,
+  Eye,
+  RefreshCw,
+  Plus,
+  X,
+  Search,
+  Download,
+  Trash2,
+  ExternalLink,
+} from 'lucide-angular';
+import { startWith, debounceTime, switchMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
-import { PaymentService } from '../../core/services/payment.service';
-import { TenantUserService } from '../../core/services/tenant-user.service';
-import { ContractService, Contract } from '../../core/services/contract.service';
+import { PaymentService } from '../../core/services/admin/payment.service';
+import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
+import { ContractService, Contract } from '../../core/services/admin/contract.service';
 import {
   Payment,
   PaymentStatus,
@@ -39,7 +55,7 @@ import {
   PaymentFilters,
   CreatePaymentAsAdminDto,
   PaymentProcessor,
-  BulkPaymentActionDto
+  BulkPaymentActionDto,
 } from '../../core/models/payment.model';
 
 @Component({
@@ -64,10 +80,10 @@ import {
     MatAutocompleteModule,
     MatProgressBarModule,
     MatCheckboxModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './pagos.component.html',
-  styleUrl: './pagos.component.scss'
+  styleUrl: './pagos.component.scss',
 })
 export class PagosComponent implements OnInit {
   // Icons
@@ -103,15 +119,16 @@ export class PagosComponent implements OnInit {
   activeFilters = signal<PaymentFilters>({});
 
   pendingPaymentIds = computed(() =>
-    this.paymentService.payments()
-      .filter(p => p.status === PaymentStatus.PENDING)
-      .map(p => p.id)
+    this.paymentService
+      .payments()
+      .filter((p) => p.status === PaymentStatus.PENDING)
+      .map((p) => p.id),
   );
 
   // Create payment state
   tenantSearchControl = new FormControl('');
   filteredTenants$: Observable<any[]> = of([]);
-  selectedTenant = signal<any | null>(null);
+  selectedTenant = signal<any>(null);
   availableContracts = signal<Contract[]>([]);
   selectedContract = signal<Contract | null>(null);
   loadingContracts = signal(false);
@@ -129,7 +146,19 @@ export class PagosComponent implements OnInit {
   PaymentStatusColors = PaymentStatusColors;
 
   // Table columns
-  displayedColumns: string[] = ['select', 'id', 'tenant', 'property', 'amount', 'currency', 'type', 'method', 'payment_date', 'status', 'actions'];
+  displayedColumns: string[] = [
+    'select',
+    'id',
+    'tenant',
+    'property',
+    'amount',
+    'currency',
+    'type',
+    'method',
+    'payment_date',
+    'status',
+    'actions',
+  ];
 
   // Filter form
   filterForm = this.fb.group({
@@ -138,7 +167,7 @@ export class PagosComponent implements OnInit {
     method: [''],
     currency: [''],
     date_from: [null as Date | null],
-    date_to: [null as Date | null]
+    date_to: [null as Date | null],
   });
 
   // Create payment form (sin IDs manuales)
@@ -165,7 +194,7 @@ export class PagosComponent implements OnInit {
     bank_account_last_4: [''],
 
     // Campos específicos - Efectivo
-    received_by: ['']
+    received_by: [''],
   });
 
   // Computed para saber qué método está seleccionado
@@ -196,7 +225,7 @@ export class PagosComponent implements OnInit {
     this.filteredTenants$ = this.tenantSearchControl.valueChanges.pipe(
       startWith(''),
       debounceTime(300),
-      switchMap(value => {
+      switchMap((value) => {
         if (typeof value !== 'string') {
           return of([]);
         }
@@ -207,13 +236,13 @@ export class PagosComponent implements OnInit {
           return of(allTenants.slice(0, 10)); // Mostrar primeros 10
         }
         const term = searchTerm.toLowerCase();
-        const filtered = allTenants.filter(tenant => {
+        const filtered = allTenants.filter((tenant) => {
           const name = tenant.name.toLowerCase();
           const email = tenant.email.toLowerCase();
           return name.includes(term) || email.includes(term);
         });
         return of(filtered.slice(0, 10)); // Máximo 10 resultados
-      })
+      }),
     );
   }
 
@@ -258,7 +287,7 @@ export class PagosComponent implements OnInit {
     if (payment.status !== PaymentStatus.PENDING) return;
     const current = this.selectedIds();
     if (current.includes(payment.id)) {
-      this.selectedIds.set(current.filter(i => i !== payment.id));
+      this.selectedIds.set(current.filter((i) => i !== payment.id));
     } else {
       this.selectedIds.set([...current, payment.id]);
     }
@@ -273,7 +302,7 @@ export class PagosComponent implements OnInit {
   }
 
   get hasPendingPayments(): boolean {
-    return this.paymentService.payments().some(p => p.status === PaymentStatus.PENDING);
+    return this.paymentService.payments().some((p) => p.status === PaymentStatus.PENDING);
   }
 
   executeBulkAction(action: 'approve' | 'reject' | 'delete'): void {
@@ -283,10 +312,14 @@ export class PagosComponent implements OnInit {
     const labels: Record<string, string> = {
       approve: 'aprobar',
       reject: 'rechazar',
-      delete: 'eliminar'
+      delete: 'eliminar',
     };
 
-    if (!confirm(`¿${labels[action].charAt(0).toUpperCase() + labels[action].slice(1)} ${ids.length} pago(s) seleccionado(s)?`)) {
+    if (
+      !confirm(
+        `¿${labels[action].charAt(0).toUpperCase() + labels[action].slice(1)} ${ids.length} pago(s) seleccionado(s)?`,
+      )
+    ) {
       return;
     }
 
@@ -306,7 +339,7 @@ export class PagosComponent implements OnInit {
       error: (error) => {
         console.error('Error en acción masiva:', error);
         alert(`Error: ${error?.error?.message || 'Error del servidor'}`);
-      }
+      },
     });
   }
 
@@ -327,23 +360,24 @@ export class PagosComponent implements OnInit {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       },
-      error: async (error) => {
+      error: (error) => {
         console.error('Error exportando CSV:', error);
-        // Leer el mensaje del blob de error si existe
         let msg = `Error ${error.status || ''}: `;
         if (error.error instanceof Blob) {
-          try {
-            const text = await error.error.text();
-            const json = JSON.parse(text);
-            msg += json.message || text;
-          } catch {
-            msg += 'Error del servidor';
-          }
+          void (error.error as Blob).text().then((text) => {
+            try {
+              const json = JSON.parse(text) as { message?: string };
+              msg += json.message || text;
+            } catch {
+              msg += 'Error del servidor';
+            }
+            alert('Error al exportar el CSV\n' + msg);
+          });
         } else {
           msg += error.error?.message || error.message || 'Error desconocido';
+          alert('Error al exportar el CSV\n' + msg);
         }
-        alert('Error al exportar el CSV\n' + msg);
-      }
+      },
     });
   }
 
@@ -368,40 +402,52 @@ export class PagosComponent implements OnInit {
 
   approvePayment(payment: Payment): void {
     const tenantName = this.getTenantName(payment);
-    if (confirm(`¿Aprobar el pago de ${this.formatCurrency(payment.amount, payment.currency)} de ${tenantName}?`)) {
-      this.paymentService.updatePaymentStatus(payment.id, {
-        status: PaymentStatus.APPROVED,
-        admin_notes: 'Pago aprobado por administrador'
-      }).subscribe({
-        next: () => {
-          console.log('Pago aprobado exitosamente');
-          this.loadData();
-        },
-        error: (error) => {
-          console.error('Error al aprobar pago:', error);
-          alert(`Error al aprobar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`);
-        }
-      });
+    if (
+      confirm(
+        `¿Aprobar el pago de ${this.formatCurrency(payment.amount, payment.currency)} de ${tenantName}?`,
+      )
+    ) {
+      this.paymentService
+        .updatePaymentStatus(payment.id, {
+          status: PaymentStatus.APPROVED,
+          admin_notes: 'Pago aprobado por administrador',
+        })
+        .subscribe({
+          next: () => {
+            console.log('Pago aprobado exitosamente');
+            this.loadData();
+          },
+          error: (error) => {
+            console.error('Error al aprobar pago:', error);
+            alert(
+              `Error al aprobar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
+            );
+          },
+        });
     }
   }
 
   rejectPayment(payment: Payment): void {
     const reason = prompt('¿Por qué rechazas este pago?');
     if (reason !== null) {
-      this.paymentService.updatePaymentStatus(payment.id, {
-        status: PaymentStatus.REJECTED,
-        admin_notes: reason || 'Pago rechazado',
-        rejection_reason: reason || 'Rechazado por administrador'
-      }).subscribe({
-        next: () => {
-          console.log('Pago rechazado');
-          this.loadData();
-        },
-        error: (error) => {
-          console.error('Error al rechazar pago:', error);
-          alert(`Error al rechazar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`);
-        }
-      });
+      this.paymentService
+        .updatePaymentStatus(payment.id, {
+          status: PaymentStatus.REJECTED,
+          admin_notes: reason || 'Pago rechazado',
+          rejection_reason: reason || 'Rechazado por administrador',
+        })
+        .subscribe({
+          next: () => {
+            console.log('Pago rechazado');
+            this.loadData();
+          },
+          error: (error) => {
+            console.error('Error al rechazar pago:', error);
+            alert(
+              `Error al rechazar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
+            );
+          },
+        });
     }
   }
 
@@ -414,7 +460,7 @@ export class PagosComponent implements OnInit {
         error: (error) => {
           console.error('Error al eliminar pago:', error);
           alert('Error al eliminar el pago');
-        }
+        },
       });
     }
   }
@@ -438,7 +484,7 @@ export class PagosComponent implements OnInit {
         console.error('Error loading contracts:', error);
         this.loadingContracts.set(false);
         alert('Error al cargar los contratos del inquilino');
-      }
+      },
     });
   }
 
@@ -474,7 +520,7 @@ export class PagosComponent implements OnInit {
       payment_type: PaymentType.RENT,
       payment_method: PaymentMethod.TRANSFER,
       status: PaymentStatus.APPROVED,
-      payment_date: new Date()
+      payment_date: new Date(),
     });
   }
 
@@ -525,7 +571,7 @@ export class PagosComponent implements OnInit {
       card_expiry: formValue.card_expiry || undefined,
       bank_name: formValue.bank_name || undefined,
       bank_account_last_4: formValue.bank_account_last_4 || undefined,
-      received_by: formValue.received_by || undefined
+      received_by: formValue.received_by || undefined,
     };
 
     this.paymentService.createPaymentAsAdmin(payload).subscribe({
@@ -537,7 +583,7 @@ export class PagosComponent implements OnInit {
       error: (error) => {
         console.error('Error al crear pago:', error);
         alert(error.error?.message || 'Error al crear el pago');
-      }
+      },
     });
   }
 

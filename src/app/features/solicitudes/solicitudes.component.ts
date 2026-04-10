@@ -1,4 +1,11 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  inject,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -15,9 +22,15 @@ import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   LucideAngularModule,
-  Search, FileText, Eye, CheckCircle2, XCircle, Clock, X
+  Search,
+  FileText,
+  Eye,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  X,
 } from 'lucide-angular';
-import { ApplicationService } from '../../core/services/application.service';
+import { ApplicationService } from '../../core/services/admin/application.service';
 import { ApplicationListItem, ApplicationStatus } from '../../core/models/application.model';
 
 @Component({
@@ -25,13 +38,23 @@ import { ApplicationListItem, ApplicationStatus } from '../../core/models/applic
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, RouterModule, FormsModule,
-    MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatCardModule, MatTooltipModule, MatChipsModule,
-    MatTableModule, MatProgressSpinnerModule, LucideAngularModule
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    MatButtonModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCardModule,
+    MatTooltipModule,
+    MatChipsModule,
+    MatTableModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
   ],
   templateUrl: './solicitudes.component.html',
-  styleUrls: ['./solicitudes.component.css']
+  styleUrls: ['./solicitudes.component.css'],
 })
 export class SolicitudesComponent implements OnInit, OnDestroy {
   // Icons
@@ -61,10 +84,10 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
   displayedColumns = ['id', 'applicant', 'property', 'income', 'date', 'status', 'actions'];
 
   statuses = [
-    { value: '',          label: 'Todos'      },
+    { value: '', label: 'Todos' },
     { value: 'PENDIENTE', label: 'Pendientes' },
-    { value: 'APROBADA',  label: 'Aprobadas'  },
-    { value: 'RECHAZADA', label: 'Rechazadas' }
+    { value: 'APROBADA', label: 'Aprobadas' },
+    { value: 'RECHAZADA', label: 'Rechazadas' },
   ];
 
   // ── Getters computados (sin llamadas HTTP extra) ──────────────────────────────
@@ -73,15 +96,16 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
     let result = this.allApplications;
 
     if (this.selectedStatus) {
-      result = result.filter(a => a.status === this.selectedStatus);
+      result = result.filter((a) => a.status === (this.selectedStatus as ApplicationStatus));
     }
 
     if (this.searchTerm) {
       const q = this.searchTerm.toLowerCase();
-      result = result.filter(a =>
-        a.personal_data.full_name.toLowerCase().includes(q) ||
-        a.applicant_email.toLowerCase().includes(q) ||
-        a.property_title.toLowerCase().includes(q)
+      result = result.filter(
+        (a) =>
+          a.personal_data.full_name.toLowerCase().includes(q) ||
+          a.applicant_email.toLowerCase().includes(q) ||
+          a.property_title.toLowerCase().includes(q),
       );
     }
 
@@ -90,10 +114,12 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
 
   get metrics() {
     return {
-      total:      this.allApplications.length,
-      pendientes: this.allApplications.filter(a => a.status === 'PENDIENTE').length,
-      aprobadas:  this.allApplications.filter(a => a.status === 'APROBADA').length,
-      rechazadas: this.allApplications.filter(a => a.status === 'RECHAZADA').length,
+      total: this.allApplications.length,
+      pendientes: this.allApplications.filter((a) => a.status === ApplicationStatus.PENDIENTE)
+        .length,
+      aprobadas: this.allApplications.filter((a) => a.status === ApplicationStatus.APROBADA).length,
+      rechazadas: this.allApplications.filter((a) => a.status === ApplicationStatus.RECHAZADA)
+        .length,
     };
   }
 
@@ -114,7 +140,8 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    this.applicationService.getAllApplications()
+    this.applicationService
+      .getAllApplications()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (apps) => {
@@ -126,22 +153,32 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
           this.error = err?.message ?? 'Error al cargar las solicitudes';
           this.loading = false;
           this.cdr.markForCheck();
-        }
+        },
       });
   }
 
   // ── Handlers (solo filtran en memoria, sin nueva petición) ────────────────────
 
-  onStatusChange(): void { /* el getter filteredApplications recalcula automáticamente */ }
-  onSearch(): void { /* ídem */ }
-  clearSearch(): void { this.searchTerm = ''; }
+  onStatusChange(): void {
+    /* el getter filteredApplications recalcula automáticamente */
+  }
+  onSearch(): void {
+    /* ídem */
+  }
+  clearSearch(): void {
+    this.searchTerm = '';
+  }
 
   getStatusLabel(status: string): string {
     switch (status) {
-      case 'PENDIENTE': return 'Pendiente';
-      case 'APROBADA':  return 'Aprobada';
-      case 'RECHAZADA': return 'Rechazada';
-      default:          return status;
+      case 'PENDIENTE':
+        return 'Pendiente';
+      case 'APROBADA':
+        return 'Aprobada';
+      case 'RECHAZADA':
+        return 'Rechazada';
+      default:
+        return status;
     }
   }
 }

@@ -14,8 +14,23 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
-import { LucideAngularModule, Search, Filter, MoreVertical, Clock, AlertCircle, CheckCircle2, XCircle, Wrench, Home, User, Calendar, TrendingUp, MessageSquare } from 'lucide-angular';
-import { MaintenanceService } from '../../core/services/maintenance.service';
+import {
+  LucideAngularModule,
+  Search,
+  Filter,
+  MoreVertical,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  XCircle,
+  Wrench,
+  Home,
+  User,
+  Calendar,
+  TrendingUp,
+  MessageSquare,
+} from 'lucide-angular';
+import { MaintenanceService } from '../../core/services/admin/maintenance.service';
 import {
   MaintenanceRequest,
   MaintenanceStatus,
@@ -23,7 +38,7 @@ import {
   MaintenanceCategory,
   MaintenanceStatusLabels,
   MaintenancePriorityLabels,
-  MaintenanceCategoryLabels
+  MaintenanceCategoryLabels,
 } from '../../core/models/maintenance-request.model';
 import { RequestDetailComponent } from './components/request-detail.component';
 
@@ -45,10 +60,10 @@ import { RequestDetailComponent } from './components/request-detail.component';
     MatDialogModule,
     MatTooltipModule,
     MatDividerModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   templateUrl: './mantenimiento.component.html',
-  styleUrl: './mantenimiento.component.scss'
+  styleUrl: './mantenimiento.component.scss',
 })
 export class MantenimientoComponent implements OnInit {
   // Icons
@@ -94,7 +109,7 @@ export class MantenimientoComponent implements OnInit {
     this.maintenanceService.loadStats();
 
     // Check for query param 'open' to auto-open a request detail
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.subscribe((params) => {
       if (params['open']) {
         const id = parseInt(params['open'], 10);
         if (!isNaN(id)) {
@@ -106,10 +121,12 @@ export class MantenimientoComponent implements OnInit {
                 height: '90vh',
                 maxHeight: '90vh',
                 data: { request },
-                panelClass: 'request-detail-dialog-panel'
+                panelClass: 'request-detail-dialog-panel',
               });
             },
-            error: () => { /* Silently ignore if not found */ }
+            error: () => {
+              /* Silently ignore if not found */
+            },
           });
         }
       }
@@ -126,28 +143,29 @@ export class MantenimientoComponent implements OnInit {
     // Filter by search query
     if (this.searchQuery()) {
       const query = this.searchQuery().toLowerCase();
-      requests = requests.filter(req =>
-        req.title.toLowerCase().includes(query) ||
-        req.description.toLowerCase().includes(query) ||
-        req.ticket_number.toLowerCase().includes(query) ||
-        req.property?.title?.toLowerCase().includes(query) ||
-        req.id.toString().includes(query)
+      requests = requests.filter(
+        (req) =>
+          req.title.toLowerCase().includes(query) ||
+          req.description.toLowerCase().includes(query) ||
+          req.ticket_number.toLowerCase().includes(query) ||
+          req.property?.title?.toLowerCase().includes(query) ||
+          req.id.toString().includes(query),
       );
     }
 
     // Filter by status
     if (this.selectedStatus() !== 'all') {
-      requests = requests.filter(req => req.status === this.selectedStatus());
+      requests = requests.filter((req) => req.status === this.selectedStatus());
     }
 
     // Filter by priority
     if (this.selectedPriority() !== 'all') {
-      requests = requests.filter(req => req.priority === this.selectedPriority());
+      requests = requests.filter((req) => req.priority === this.selectedPriority());
     }
 
     // Filter by category
     if (this.selectedCategory() !== 'all') {
-      requests = requests.filter(req => req.category === this.selectedCategory());
+      requests = requests.filter((req) => req.category === this.selectedCategory());
     }
 
     // Sort by date (newest first) - spread to avoid mutating the original signal array
@@ -178,10 +196,10 @@ export class MantenimientoComponent implements OnInit {
       height: '90vh',
       maxHeight: '90vh',
       data: { request },
-      panelClass: 'request-detail-dialog-panel'
+      panelClass: 'request-detail-dialog-panel',
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result?.deleted) {
         // Request was deleted, no need to do anything as service already updated
       }
@@ -197,7 +215,7 @@ export class MantenimientoComponent implements OnInit {
       error: (error) => {
         console.error('Error updating status:', error);
         alert('Error al actualizar el estado de la solicitud');
-      }
+      },
     });
   }
 
@@ -209,7 +227,7 @@ export class MantenimientoComponent implements OnInit {
       error: (error) => {
         console.error('Error updating priority:', error);
         alert('Error al actualizar la prioridad de la solicitud');
-      }
+      },
     });
   }
 
@@ -222,7 +240,7 @@ export class MantenimientoComponent implements OnInit {
         error: (error) => {
           console.error('Error deleting request:', error);
           alert('Error al eliminar la solicitud');
-        }
+        },
       });
     }
   }
@@ -257,7 +275,7 @@ export class MantenimientoComponent implements OnInit {
     }
   }
 
-  getCategoryIcon(category: MaintenanceCategory): any {
+  getCategoryIcon(_category: MaintenanceCategory): any {
     // Return appropriate icon based on category
     return this.Wrench; // Default icon for now
   }
@@ -290,4 +308,3 @@ export class MantenimientoComponent implements OnInit {
     return Object.values(MaintenanceCategory);
   }
 }
-

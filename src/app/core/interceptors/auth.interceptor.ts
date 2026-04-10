@@ -1,11 +1,7 @@
 import { inject } from '@angular/core';
-import {
-  HttpRequest,
-  HttpHandlerFn,
-  HttpInterceptorFn
-} from '@angular/common/http';
+import { HttpRequest, HttpHandlerFn, HttpInterceptorFn } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
-import { TenantAuthService } from '../services/tenant-auth.service';
+import { TenantAuthService } from '../services/tenant/tenant-auth.service';
 
 /**
  * Authentication Interceptor
@@ -18,7 +14,7 @@ import { TenantAuthService } from '../services/tenant-auth.service';
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
-  next: HttpHandlerFn
+  next: HttpHandlerFn,
 ) => {
   // If the service already set an Authorization header explicitly, don't overwrite it
   if (req.headers.has('Authorization')) {
@@ -31,15 +27,13 @@ export const authInterceptor: HttpInterceptorFn = (
   // Seleccionar el token según el tipo de ruta, sin fallback entre roles.
   // Un token de admin nunca debe usarse en rutas de tenant y viceversa.
   const isTenantRoute = req.url.includes('/tenant/');
-  const token = isTenantRoute
-    ? tenantAuthService.getToken()
-    : authService.getToken();
+  const token = isTenantRoute ? tenantAuthService.getToken() : authService.getToken();
 
   if (token) {
     const authReq = req.clone({
       setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     return next(authReq);
   }

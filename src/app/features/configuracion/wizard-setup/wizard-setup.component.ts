@@ -29,7 +29,7 @@ import {
   TenantConfigService,
   TenantConfig,
   UpdateTenantConfigDto,
-} from '../../../core/services/tenant-config.service';
+} from '../../../core/services/admin/tenant-config.service';
 import { SlugService } from '../../../core/services/slug.service';
 
 interface PaymentOption {

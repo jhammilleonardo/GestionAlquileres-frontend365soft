@@ -1,15 +1,15 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Property, RentalApplication } from '../../../core/models/property.model';
-import { PropertyService } from '../../../core/services/property.service';
+import { PropertyService } from '../../../core/services/admin/property.service';
 
 @Component({
   selector: 'app-application-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './application-modal.component.html',
-  styleUrls: ['./application-modal.component.css']
+  styleUrls: ['./application-modal.component.css'],
 })
 export class ApplicationModalComponent {
   @Input() property!: Property;
@@ -25,15 +25,15 @@ export class ApplicationModalComponent {
       currentAddress: '',
       employmentStatus: '',
       monthlyIncome: 0,
-      moveInDate: new Date()
+      moveInDate: new Date(),
     },
-    additionalInfo: ''
+    additionalInfo: '',
   };
 
   isSubmitting = false;
   submitted = false;
 
-  constructor(private propertyService: PropertyService) { }
+  constructor(private propertyService: PropertyService) {}
 
   ngOnInit() {
     this.application.propertyId = this.property.id;
@@ -56,7 +56,7 @@ export class ApplicationModalComponent {
         console.error('Error submitting application:', error);
         alert('Hubo un error al enviar la solicitud. Por favor intente nuevamente.');
         this.isSubmitting = false;
-      }
+      },
     });
   }
 

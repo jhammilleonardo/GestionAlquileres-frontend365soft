@@ -1,6 +1,12 @@
 import { Component, OnInit, inject, DestroyRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  FormsModule,
+} from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
@@ -9,7 +15,22 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { LucideAngularModule, Home, User, Mail, Lock, Phone, Eye, EyeOff, AlertCircle, CheckCircle2, Shield, CalendarDays, FileText, MessageSquare } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Home,
+  User,
+  Mail,
+  Lock,
+  Phone,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+  Shield,
+  CalendarDays,
+  FileText,
+  MessageSquare,
+} from 'lucide-angular';
 import { environment } from '../../../../environments/environment';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SlugService } from '../../../core/services/slug.service';
@@ -39,7 +60,7 @@ interface RegisterResponse {
     MatButtonModule,
     MatProgressSpinnerModule,
     MatIconModule,
-    LucideAngularModule
+    LucideAngularModule,
   ],
   template: `
     <div class="register-page">
@@ -108,8 +129,11 @@ interface RegisterResponse {
                 matInput
                 formControlName="name"
                 placeholder="Tu nombre completo"
-                autocomplete="name">
-              @if (registerForm.get('name')?.hasError('required') && registerForm.get('name')?.touched) {
+                autocomplete="name"
+              />
+              @if (
+                registerForm.get('name')?.hasError('required') && registerForm.get('name')?.touched
+              ) {
                 <mat-error>El nombre es requerido</mat-error>
               }
               @if (registerForm.get('name')?.hasError('minlength')) {
@@ -125,8 +149,12 @@ interface RegisterResponse {
                 type="email"
                 formControlName="email"
                 placeholder="tu@email.com"
-                autocomplete="email">
-              @if (registerForm.get('email')?.hasError('required') && registerForm.get('email')?.touched) {
+                autocomplete="email"
+              />
+              @if (
+                registerForm.get('email')?.hasError('required') &&
+                registerForm.get('email')?.touched
+              ) {
                 <mat-error>El correo es requerido</mat-error>
               }
               @if (registerForm.get('email')?.hasError('email')) {
@@ -142,7 +170,8 @@ interface RegisterResponse {
                 type="tel"
                 formControlName="phone"
                 placeholder="+591 12345678"
-                autocomplete="tel">
+                autocomplete="tel"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
@@ -153,12 +182,22 @@ interface RegisterResponse {
                 [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
                 placeholder="••••••••"
-                autocomplete="new-password">
-              <button mat-icon-button matSuffix type="button" (click)="togglePassword()" tabindex="-1">
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="togglePassword()"
+                tabindex="-1"
+              >
                 <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
               </button>
               <mat-hint>Mínimo 6 caracteres</mat-hint>
-              @if (registerForm.get('password')?.hasError('required') && registerForm.get('password')?.touched) {
+              @if (
+                registerForm.get('password')?.hasError('required') &&
+                registerForm.get('password')?.touched
+              ) {
                 <mat-error>La contraseña es requerida</mat-error>
               }
               @if (registerForm.get('password')?.hasError('minlength')) {
@@ -174,14 +213,27 @@ interface RegisterResponse {
                 [type]="showConfirmPassword() ? 'text' : 'password'"
                 formControlName="confirmPassword"
                 placeholder="••••••••"
-                autocomplete="new-password">
-              <button mat-icon-button matSuffix type="button" (click)="toggleConfirmPassword()" tabindex="-1">
+                autocomplete="new-password"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                (click)="toggleConfirmPassword()"
+                tabindex="-1"
+              >
                 <lucide-icon [img]="showConfirmPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
               </button>
-              @if (registerForm.get('confirmPassword')?.hasError('required') && registerForm.get('confirmPassword')?.touched) {
+              @if (
+                registerForm.get('confirmPassword')?.hasError('required') &&
+                registerForm.get('confirmPassword')?.touched
+              ) {
                 <mat-error>Confirma tu contraseña</mat-error>
               }
-              @if (registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched) {
+              @if (
+                registerForm.hasError('passwordMismatch') &&
+                registerForm.get('confirmPassword')?.touched
+              ) {
                 <mat-error>Las contraseñas no coinciden</mat-error>
               }
             </mat-form-field>
@@ -191,7 +243,8 @@ interface RegisterResponse {
               color="primary"
               type="submit"
               class="submit-btn"
-              [disabled]="registerForm.invalid || isLoading()">
+              [disabled]="registerForm.invalid || isLoading()"
+            >
               @if (isLoading()) {
                 <mat-spinner diameter="20" color="accent"></mat-spinner>
                 <span>Registrando...</span>
@@ -208,7 +261,9 @@ interface RegisterResponse {
             </div>
             <div class="help-links">
               @if (slug) {
-                <a [routerLink]="['/', slug, 'login']" class="help-link">¿Ya tienes cuenta? Inicia Sesión</a>
+                <a [routerLink]="['/', slug, 'login']" class="help-link"
+                  >¿Ya tienes cuenta? Inicia Sesión</a
+                >
               }
             </div>
           </div>
@@ -216,328 +271,330 @@ interface RegisterResponse {
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-      height: 100vh;
-    }
+  styles: [
+    `
+      :host {
+        display: block;
+        height: 100vh;
+      }
 
-    .register-page {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* Left Side - Branding */
-    .register-brand {
-      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 60px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .register-brand::before {
-      content: '';
-      position: absolute;
-      width: 500px;
-      height: 500px;
-      background: rgba(16, 185, 129, 0.1);
-      border-radius: 50%;
-      top: -200px;
-      left: -200px;
-    }
-
-    .register-brand::after {
-      content: '';
-      position: absolute;
-      width: 400px;
-      height: 400px;
-      background: rgba(16, 185, 129, 0.08);
-      border-radius: 50%;
-      bottom: -150px;
-      right: -150px;
-    }
-
-    .brand-content {
-      position: relative;
-      z-index: 1;
-      color: white;
-      max-width: 480px;
-    }
-
-    .brand-logo {
-      width: 80px;
-      height: 80px;
-      background: rgba(16, 185, 129, 0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 32px;
-      border: 2px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .brand-content h1 {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin: 0 0 8px;
-      letter-spacing: -0.5px;
-    }
-
-    .brand-content h2 {
-      font-size: 1.5rem;
-      font-weight: 400;
-      margin: 0 0 24px;
-      opacity: 0.95;
-      color: #6ee7b7;
-    }
-
-    .brand-tagline {
-      font-size: 1.05rem;
-      line-height: 1.6;
-      opacity: 0.9;
-      margin: 0 0 48px;
-    }
-
-    .features {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .feature-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 1rem;
-      opacity: 0.95;
-    }
-
-    .feature-item lucide-icon {
-      flex-shrink: 0;
-      color: #34d399;
-    }
-
-    /* Right Side - Form */
-    .register-form-container {
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 60px;
-      overflow-y: auto;
-    }
-
-    .register-form-wrapper {
-      width: 100%;
-      max-width: 440px;
-    }
-
-    .form-header {
-      margin-bottom: 32px;
-    }
-
-    .form-header h3 {
-      font-size: 1.875rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin: 0 0 8px;
-      letter-spacing: -0.5px;
-    }
-
-    .form-header p {
-      font-size: 1rem;
-      color: #64748b;
-      margin: 0;
-    }
-
-    .error-alert {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      background: #fef2f2;
-      border-left: 4px solid #ef4444;
-      border-radius: 8px;
-      margin-bottom: 24px;
-    }
-
-    .error-alert lucide-icon {
-      color: #ef4444;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .error-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .error-content strong {
-      color: #991b1b;
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    .error-content span {
-      color: #dc2626;
-      font-size: 0.875rem;
-    }
-
-    .success-alert {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px;
-      background: #f0fdf4;
-      border-left: 4px solid #22c55e;
-      border-radius: 8px;
-      margin-bottom: 24px;
-    }
-
-    .success-alert lucide-icon {
-      color: #22c55e;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-
-    .alert-content {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .alert-content strong {
-      font-size: 0.875rem;
-      font-weight: 600;
-    }
-
-    .alert-content span {
-      font-size: 0.875rem;
-    }
-
-    .register-form {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .custom-field {
-      width: 100%;
-      margin-bottom: 16px;
-    }
-
-    .submit-btn {
-      width: 100%;
-      height: 52px;
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 8px;
-      text-transform: none;
-      letter-spacing: 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    .submit-btn:not(:disabled):hover {
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-footer {
-      margin-top: 32px;
-      padding-top: 24px;
-      border-top: 1px solid #e2e8f0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .security-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #64748b;
-      font-size: 0.8125rem;
-    }
-
-    .security-badge lucide-icon {
-      color: #10b981;
-    }
-
-    .help-links {
-      text-align: center;
-      font-size: 0.875rem;
-    }
-
-    .help-link {
-      color: #059669;
-      text-decoration: none;
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    .help-link:hover {
-      text-decoration: underline;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 1024px) {
       .register-page {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100vh;
+        overflow: hidden;
       }
 
+      /* Left Side - Branding */
       .register-brand {
-        display: none;
+        background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        position: relative;
+        overflow: hidden;
       }
 
-      .register-form-container {
-        padding: 40px 24px;
+      .register-brand::before {
+        content: '';
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 50%;
+        top: -200px;
+        left: -200px;
       }
-    }
 
-    @media (max-width: 640px) {
-      .register-form-container {
-        padding: 32px 20px;
+      .register-brand::after {
+        content: '';
+        position: absolute;
+        width: 400px;
+        height: 400px;
+        background: rgba(16, 185, 129, 0.08);
+        border-radius: 50%;
+        bottom: -150px;
+        right: -150px;
       }
 
-      .form-header h3 {
+      .brand-content {
+        position: relative;
+        z-index: 1;
+        color: white;
+        max-width: 480px;
+      }
+
+      .brand-logo {
+        width: 80px;
+        height: 80px;
+        background: rgba(16, 185, 129, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 32px;
+        border: 2px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .brand-content h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0 0 8px;
+        letter-spacing: -0.5px;
+      }
+
+      .brand-content h2 {
         font-size: 1.5rem;
+        font-weight: 400;
+        margin: 0 0 24px;
+        opacity: 0.95;
+        color: #6ee7b7;
       }
 
-      .form-header p {
-        font-size: 0.9375rem;
+      .brand-tagline {
+        font-size: 1.05rem;
+        line-height: 1.6;
+        opacity: 0.9;
+        margin: 0 0 48px;
+      }
+
+      .features {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 1rem;
+        opacity: 0.95;
+      }
+
+      .feature-item lucide-icon {
+        flex-shrink: 0;
+        color: #34d399;
+      }
+
+      /* Right Side - Form */
+      .register-form-container {
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px;
+        overflow-y: auto;
       }
 
       .register-form-wrapper {
-        max-width: 100%;
-      }
-
-      .submit-btn {
-        height: 48px;
-        font-size: 0.9375rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .register-form-container {
-        padding: 24px 16px;
+        width: 100%;
+        max-width: 440px;
       }
 
       .form-header {
+        margin-bottom: 32px;
+      }
+
+      .form-header h3 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 8px;
+        letter-spacing: -0.5px;
+      }
+
+      .form-header p {
+        font-size: 1rem;
+        color: #64748b;
+        margin: 0;
+      }
+
+      .error-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background: #fef2f2;
+        border-left: 4px solid #ef4444;
+        border-radius: 8px;
         margin-bottom: 24px;
       }
-    }
-  `]
+
+      .error-alert lucide-icon {
+        color: #ef4444;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .error-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .error-content strong {
+        color: #991b1b;
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .error-content span {
+        color: #dc2626;
+        font-size: 0.875rem;
+      }
+
+      .success-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background: #f0fdf4;
+        border-left: 4px solid #22c55e;
+        border-radius: 8px;
+        margin-bottom: 24px;
+      }
+
+      .success-alert lucide-icon {
+        color: #22c55e;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .alert-content {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .alert-content strong {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .alert-content span {
+        font-size: 0.875rem;
+      }
+
+      .register-form {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .custom-field {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+
+      .submit-btn {
+        width: 100%;
+        height: 52px;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        text-transform: none;
+        letter-spacing: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 8px;
+      }
+
+      .submit-btn:not(:disabled):hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-footer {
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .security-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #64748b;
+        font-size: 0.8125rem;
+      }
+
+      .security-badge lucide-icon {
+        color: #10b981;
+      }
+
+      .help-links {
+        text-align: center;
+        font-size: 0.875rem;
+      }
+
+      .help-link {
+        color: #059669;
+        text-decoration: none;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .help-link:hover {
+        text-decoration: underline;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .register-page {
+          grid-template-columns: 1fr;
+        }
+
+        .register-brand {
+          display: none;
+        }
+
+        .register-form-container {
+          padding: 40px 24px;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .register-form-container {
+          padding: 32px 20px;
+        }
+
+        .form-header h3 {
+          font-size: 1.5rem;
+        }
+
+        .form-header p {
+          font-size: 0.9375rem;
+        }
+
+        .register-form-wrapper {
+          max-width: 100%;
+        }
+
+        .submit-btn {
+          height: 48px;
+          font-size: 0.9375rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .register-form-container {
+          padding: 24px 16px;
+        }
+
+        .form-header {
+          margin-bottom: 24px;
+        }
+      }
+    `,
+  ],
 })
 export class TenantRegisterComponent implements OnInit {
   readonly Home = Home;
@@ -572,24 +629,38 @@ export class TenantRegisterComponent implements OnInit {
   registerForm: FormGroup;
 
   constructor() {
-    this.registerForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]],
-      phone: ['']
-    }, { validators: this.passwordMatchValidator });
+    this.registerForm = this.fb.group(
+      {
+        name: ['', [Validators.required, Validators.minLength(3)]],
+        email: ['', [Validators.required, Validators.email]],
+        password: ['', [Validators.required, Validators.minLength(6)]],
+        confirmPassword: ['', [Validators.required]],
+        phone: [''],
+      },
+      { validators: this.passwordMatchValidator.bind(this) },
+    );
   }
 
   // Palabras reservadas por el sistema de rutas que nunca pueden ser un slug de inquilino
-  private readonly RESERVED_SLUGS = ['login', 'register', 'dashboard', 'portal', 'publico', 'admin', 'api', 'forgot-password'];
+  private readonly RESERVED_SLUGS = [
+    'login',
+    'register',
+    'dashboard',
+    'portal',
+    'publico',
+    'admin',
+    'api',
+    'forgot-password',
+  ];
 
   ngOnInit(): void {
     // Get slug from URL — read in ngOnInit to ensure inherited params are available
     this.slug = this.route.snapshot.paramMap.get('slug');
 
     if (!this.slug) {
-      this.errorMessage.set('No se pudo identificar la organización. Por favor, use un enlace válido.');
+      this.errorMessage.set(
+        'No se pudo identificar la organización. Por favor, use un enlace válido.',
+      );
       return;
     }
 
@@ -597,7 +668,7 @@ export class TenantRegisterComponent implements OnInit {
     if (this.RESERVED_SLUGS.includes(this.slug.toLowerCase())) {
       this.errorMessage.set(
         `La URL no es válida. El segmento "${this.slug}" es una ruta reservada del sistema. ` +
-        'Por favor, solicita el enlace de registro correcto a tu administrador.'
+          'Por favor, solicita el enlace de registro correcto a tu administrador.',
       );
       this.slug = null; // Prevent form submission with wrong slug
       return;
@@ -612,11 +683,11 @@ export class TenantRegisterComponent implements OnInit {
   }
 
   togglePassword(): void {
-    this.showPassword.update(v => !v);
+    this.showPassword.update((v) => !v);
   }
 
   toggleConfirmPassword(): void {
-    this.showConfirmPassword.update(v => !v);
+    this.showConfirmPassword.update((v) => !v);
   }
 
   onSubmit(): void {
@@ -631,47 +702,52 @@ export class TenantRegisterComponent implements OnInit {
 
     const { name, email, password, phone } = this.registerForm.value;
 
-    this.http.post<RegisterResponse>(
-      `${environment.apiUrl}auth/${this.slug}/register`,
-      { name, email, password, phone }
-    ).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (response) => {
-        this.isLoading.set(false);
+    this.http
+      .post<RegisterResponse>(`${environment.apiUrl}auth/${this.slug}/register`, {
+        name,
+        email,
+        password,
+        phone,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.isLoading.set(false);
 
-        // Set slug in SlugService
-        this.slugService.setSlug(this.slug);
+          // Set slug in SlugService
+          this.slugService.setSlug(this.slug);
 
-        // If API returns access_token, save it and redirect to dashboard
-        if (response.access_token) {
-          // Save token and user data
-          localStorage.setItem('tenant_access_token', response.access_token);
-          localStorage.setItem('tenant_user', JSON.stringify(response));
+          // If API returns access_token, save it and redirect to dashboard
+          if (response.access_token) {
+            // Save token and user data
+            localStorage.setItem('tenant_access_token', response.access_token);
+            localStorage.setItem('tenant_user', JSON.stringify(response));
 
-          this.successMessage.set('Redirigiendo a tu portal...');
+            this.successMessage.set('Redirigiendo a tu portal...');
 
-          // Redirect to tenant dashboard after 1 second
-          setTimeout(() => {
-            this.router.navigate(['/', this.slug, 'portal', 'dashboard'], { replaceUrl: true });
-          }, 1000);
-        } else {
-          // No token returned, redirect to login
-          this.successMessage.set('Ahora puedes iniciar sesión.');
+            // Redirect to tenant dashboard after 1 second
+            setTimeout(() => {
+              this.router.navigate(['/', this.slug, 'portal', 'dashboard'], { replaceUrl: true });
+            }, 1000);
+          } else {
+            // No token returned, redirect to login
+            this.successMessage.set('Ahora puedes iniciar sesión.');
 
-          // Redirect to login after 2 seconds
-          setTimeout(() => {
-            this.router.navigate(['/', this.slug, 'login'], {
-              queryParams: { registered: 'true' },
-              replaceUrl: true
-            });
-          }, 2000);
-        }
-      },
-      error: (error) => {
-        this.isLoading.set(false);
-        this.errorMessage.set(error.error?.message || 'Error al registrarse. Por favor, intenta nuevamente.');
-      }
-    });
+            // Redirect to login after 2 seconds
+            setTimeout(() => {
+              this.router.navigate(['/', this.slug, 'login'], {
+                queryParams: { registered: 'true' },
+                replaceUrl: true,
+              });
+            }, 2000);
+          }
+        },
+        error: (error) => {
+          this.isLoading.set(false);
+          this.errorMessage.set(
+            error.error?.message || 'Error al registrarse. Por favor, intenta nuevamente.',
+          );
+        },
+      });
   }
 }
