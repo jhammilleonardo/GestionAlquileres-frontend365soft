@@ -42,6 +42,16 @@ export const moduleGuard: CanActivateFn = (route, _state) => {
 
       if (role === 'ADMIN' || role === 'SUPERADMIN') return true;
 
+      // TECNICO → solo mantenimiento (hardcodeado, independiente del backend)
+      if (role === 'TECNICO') {
+        if (requiredModule === 'maintenance') return true;
+        void router.navigate(['/', slug, 'dashboard'], {
+          replaceUrl: true,
+          state: { accessDenied: true, module: requiredModule },
+        });
+        return false;
+      }
+
       if (allowedModules.includes(requiredModule)) return true;
 
       // Sin permiso → redirigir al dashboard con estado

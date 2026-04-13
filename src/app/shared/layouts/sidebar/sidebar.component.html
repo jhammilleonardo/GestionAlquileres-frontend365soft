@@ -2,25 +2,39 @@
   <div class="sidebar-header">
     <div class="logo-section">
       <div class="logo-icon">
-        <lucide-icon [img]="Building2" [size]="18"></lucide-icon>
+        <lucide-icon [img]="getIconComponent('Building2')" [size]="18"></lucide-icon>
       </div>
-      <div class="logo-text" *ngIf="expanded()">
-        <h1>365Soft</h1>
-        <p>Gestión de Alquileres</p>
-      </div>
+      @if (expanded()) {
+        <div class="logo-text">
+          <h1>365Soft</h1>
+          <p>Gestión de Alquileres</p>
+        </div>
+      }
     </div>
   </div>
 
-  <nav class="sidebar-nav">
-    <ul class="nav-list">
+  <nav class="sidebar-nav" aria-label="Menú principal">
+    <ul class="nav-list" role="list">
       @for (option of menuOptions(); track option.route) {
-      <li class="nav-item">
-        <a class="nav-link" [routerLink]="option.route" routerLinkActive="active"
-          [attr.title]="!expanded() ? option.label : ''">
-          <lucide-icon class="nav-icon" [img]="getIconComponent(option.icon)" [size]="18"></lucide-icon>
-          <span class="nav-label" *ngIf="expanded()">{{ option.label }}</span>
-        </a>
-      </li>
+        <li class="nav-item" role="listitem">
+          <a
+            class="nav-link"
+            [routerLink]="option.route"
+            routerLinkActive="active"
+            [attr.aria-label]="option.label"
+            [attr.title]="!expanded() ? option.label : null"
+          >
+            <lucide-icon
+              class="nav-icon"
+              [img]="getIconComponent(option.icon)"
+              [size]="18"
+              aria-hidden="true"
+            ></lucide-icon>
+            @if (expanded()) {
+              <span class="nav-label">{{ option.label }}</span>
+            }
+          </a>
+        </li>
       }
     </ul>
   </nav>
