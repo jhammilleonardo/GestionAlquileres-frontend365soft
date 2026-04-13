@@ -1,0 +1,26 @@
+.full-width {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.error-banner {
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+}
+
+mat-dialog-content {
+  padding-top: 0.5rem !important;
+  min-width: min(440px, 90vw);
+}
+
+mat-dialog-actions {
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+mat-spinner {
+  display: inline-block;
+}
