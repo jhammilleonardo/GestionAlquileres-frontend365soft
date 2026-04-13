@@ -2,6 +2,7 @@ import { Component, inject, computed, DestroyRef, ChangeDetectionStrategy } from
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import {
   LucideAngularModule,
+  type LucideIconData,
   Building2,
   LayoutDashboard,
   Users,
@@ -21,7 +22,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { MenuOption } from '../../../core/models/user.model';
 
-const ICON_MAP: Record<string, unknown> = {
+const ICON_MAP: Record<string, LucideIconData> = {
   LayoutDashboard,
   Building2,
   Users,
@@ -77,7 +78,7 @@ export class SidebarComponent {
     });
   }
 
-  getIconComponent(iconName: string): unknown {
+  getIconComponent(iconName: string): LucideIconData {
     return ICON_MAP[iconName] ?? Settings;
   }
 
