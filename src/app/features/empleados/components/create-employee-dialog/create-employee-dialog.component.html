@@ -1,0 +1,90 @@
+<h2 mat-dialog-title>Nuevo Empleado</h2>
+
+<mat-dialog-content>
+  <form [formGroup]="form" id="create-employee-form" novalidate>
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+    }
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre completo</mat-label>
+      <input
+        matInput
+        formControlName="name"
+        placeholder="Ej. Ana García"
+        autocomplete="off"
+        aria-describedby="name-error"
+      />
+      @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+        <mat-error id="name-error">El nombre es requerido</mat-error>
+      } @else if (form.controls.name.hasError('minlength') && form.controls.name.touched) {
+        <mat-error id="name-error">Mínimo 2 caracteres</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Correo electrónico</mat-label>
+      <input
+        matInput
+        formControlName="email"
+        type="email"
+        placeholder="ana@empresa.com"
+        autocomplete="off"
+        aria-describedby="email-error"
+      />
+      @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+        <mat-error id="email-error">El email es requerido</mat-error>
+      } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
+        <mat-error id="email-error">Email inválido</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Contraseña temporal</mat-label>
+      <input
+        matInput
+        formControlName="password"
+        [type]="showPassword() ? 'text' : 'password'"
+        autocomplete="new-password"
+        aria-describedby="password-error"
+      />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="showPassword.set(!showPassword())"
+        [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+      >
+        <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+      @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+        <mat-error id="password-error">La contraseña es requerida</mat-error>
+      } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
+        <mat-error id="password-error">Mínimo 6 caracteres</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Teléfono (opcional)</mat-label>
+      <input matInput formControlName="phone" type="tel" placeholder="+591 70000000" />
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="isLoading()">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    (click)="submit()"
+    [disabled]="isLoading()"
+    aria-label="Crear empleado"
+  >
+    @if (isLoading()) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Crear Empleado
+    }
+  </button>
+</mat-dialog-actions>

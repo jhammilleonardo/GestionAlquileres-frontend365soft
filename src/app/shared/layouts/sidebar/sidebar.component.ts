@@ -15,6 +15,7 @@ import {
   Bell,
   FileCheck,
   User,
+  UserCog,
 } from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
@@ -35,6 +36,7 @@ const ICON_MAP: Record<string, LucideIconData> = {
   Settings,
   Bell,
   User,
+  UserCog,
 };
 
 @Component({

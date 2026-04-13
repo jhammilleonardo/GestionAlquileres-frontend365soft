@@ -12,6 +12,7 @@ const ALL_MENU_ITEMS: MenuOption[] = [
   { label: 'Solicitudes', icon: 'FileCheck', route: '/solicitudes', module: 'applications' },
   { label: 'Pagos', icon: 'CreditCard', route: '/pagos', module: 'payments' },
   { label: 'Mantenimiento', icon: 'Wrench', route: '/mantenimiento', module: 'maintenance' },
+  { label: 'Empleados', icon: 'UserCog', route: '/empleados', module: 'employees' },
   { label: 'Notificaciones', icon: 'Bell', route: '/notificaciones' },
   { label: 'Configuración', icon: 'Settings', route: '/configuracion', module: 'config' },
   { label: 'Perfil', icon: 'User', route: '/perfil' },

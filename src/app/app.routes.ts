@@ -188,6 +188,14 @@ export const routes: Routes = [
             data: { module: 'config' },
           },
 
+          {
+            path: 'empleados',
+            loadComponent: () =>
+              import('./features/empleados/empleados.component').then((m) => m.EmpleadosComponent),
+            canActivate: [moduleGuard],
+            data: { module: 'employees' },
+          },
+
           // Sin restricción de módulo
           { path: 'componentes', component: ComponentesComponent },
           { path: 'notificaciones', component: NotificationsComponent },

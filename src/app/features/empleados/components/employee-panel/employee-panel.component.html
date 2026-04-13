@@ -1,0 +1,147 @@
+<div
+  class="panel-container"
+  role="complementary"
+  [attr.aria-label]="'Permisos de ' + employee().name"
+>
+  <!-- Header -->
+  <div class="panel-header">
+    <div class="employee-info">
+      <div class="avatar" [attr.aria-hidden]="true">{{ getInitials(employee().name) }}</div>
+      <div class="employee-meta">
+        <h3 class="employee-name">{{ employee().name }}</h3>
+        <span class="employee-email">{{ employee().email }}</span>
+      </div>
+    </div>
+    <button
+      mat-icon-button
+      (click)="panelClosed.emit()"
+      aria-label="Cerrar panel"
+      class="close-btn"
+    >
+      <lucide-icon [img]="XIcon" [size]="18" aria-hidden="true"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- Badge de estado -->
+  <div class="status-row">
+    <span
+      class="status-badge"
+      [class.active]="employee().is_active"
+      [class.inactive]="!employee().is_active"
+    >
+      {{ employee().is_active ? 'Activo' : 'Inactivo' }}
+    </span>
+    <span class="role-badge">Empleado</span>
+  </div>
+
+  <!-- Permisos por módulo -->
+  <div class="permissions-section">
+    <div class="section-title">
+      <lucide-icon [img]="ShieldIcon" [size]="16" aria-hidden="true"></lucide-icon>
+      <span>Permisos de acceso</span>
+    </div>
+
+    <div class="permissions-header-row" aria-hidden="true">
+      <span class="module-col">Módulo</span>
+      <span class="action-col" title="Ver">
+        <lucide-icon [img]="EyeIcon" [size]="14"></lucide-icon>
+      </span>
+      <span class="action-col" title="Crear">
+        <lucide-icon [img]="PlusIcon" [size]="14"></lucide-icon>
+      </span>
+      <span class="action-col" title="Editar">
+        <lucide-icon [img]="PenLineIcon" [size]="14"></lucide-icon>
+      </span>
+      <span class="action-col" title="Eliminar">
+        <lucide-icon [img]="Trash2Icon" [size]="14"></lucide-icon>
+      </span>
+    </div>
+
+    @for (mod of PERMISSION_MODULES; track mod.key) {
+      @let perm = getPermission(mod.key);
+      <div class="permission-row" [class.disabled]="!perm.can_view && perm.module !== mod.key">
+        <span class="module-name">{{ mod.label }}</span>
+
+        <mat-slide-toggle
+          class="action-toggle"
+          [checked]="perm.can_view"
+          (change)="toggleAction(mod.key, 'can_view', $event.checked)"
+          [attr.aria-label]="'Ver ' + mod.label"
+          color="primary"
+        ></mat-slide-toggle>
+
+        <mat-slide-toggle
+          class="action-toggle"
+          [checked]="perm.can_create"
+          [disabled]="!perm.can_view"
+          (change)="toggleAction(mod.key, 'can_create', $event.checked)"
+          [attr.aria-label]="'Crear en ' + mod.label"
+          color="primary"
+        ></mat-slide-toggle>
+
+        <mat-slide-toggle
+          class="action-toggle"
+          [checked]="perm.can_edit"
+          [disabled]="!perm.can_view"
+          (change)="toggleAction(mod.key, 'can_edit', $event.checked)"
+          [attr.aria-label]="'Editar en ' + mod.label"
+          color="primary"
+        ></mat-slide-toggle>
+
+        <mat-slide-toggle
+          class="action-toggle"
+          [checked]="perm.can_delete"
+          [disabled]="!perm.can_view"
+          (change)="toggleAction(mod.key, 'can_delete', $event.checked)"
+          [attr.aria-label]="'Eliminar en ' + mod.label"
+          color="warn"
+        ></mat-slide-toggle>
+      </div>
+    }
+  </div>
+
+  <!-- Acciones -->
+  <div class="panel-actions">
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="savePermissions()"
+      [disabled]="isSaving()"
+      class="save-btn"
+      aria-label="Guardar permisos"
+    >
+      @if (isSaving()) {
+        <mat-spinner diameter="18"></mat-spinner>
+        <span>Guardando...</span>
+      } @else {
+        Guardar permisos
+      }
+    </button>
+
+    @if (employee().is_active) {
+      <button
+        mat-stroked-button
+        color="warn"
+        (click)="openDeactivateDialog()"
+        [disabled]="isTogglingStatus()"
+        aria-label="Desactivar empleado"
+        class="status-btn"
+      >
+        <lucide-icon [img]="UserXIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        Desactivar
+      </button>
+    } @else {
+      <button
+        mat-stroked-button
+        color="primary"
+        (click)="activate()"
+        [disabled]="isTogglingStatus()"
+        aria-label="Activar empleado"
+        class="status-btn"
+      >
+        <lucide-icon [img]="UserCheckIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        Activar
+      </button>
+    }
+  </div>
+</div>

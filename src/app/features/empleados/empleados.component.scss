@@ -1,0 +1,228 @@
+/* ─── Page layout ─────────────────────────────────────────── */
+.page-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ─── Header ──────────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem 0.75rem;
+  flex-shrink: 0;
+  gap: 1rem;
+
+  @media (max-width: 640px) {
+    padding: 1rem;
+    flex-wrap: wrap;
+  }
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ─── Content layout (split view) ────────────────────────── */
+.content-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.table-section {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+  padding: 0 1.5rem 1.5rem;
+  transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @media (max-width: 640px) {
+    padding: 0 1rem 1rem;
+  }
+}
+
+.content-layout.panel-open .table-section {
+  margin-right: 360px;
+
+  @media (max-width: 768px) {
+    margin-right: 0;
+  }
+}
+
+/* ─── Panel lateral ───────────────────────────────────────── */
+.panel-section {
+  position: fixed;
+  right: 0;
+  top: 64px;
+  bottom: 0;
+  width: 360px;
+  border-left: 1px solid var(--mat-sys-outline-variant);
+  z-index: 100;
+  overflow: hidden;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    top: 0;
+    z-index: 200;
+  }
+}
+
+.panel-backdrop {
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+  }
+}
+
+/* ─── States ──────────────────────────────────────────────── */
+.loading-state,
+.empty-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+}
+
+.empty-icon {
+  opacity: 0.3;
+}
+
+/* ─── Table ───────────────────────────────────────────────── */
+.table-container {
+  overflow-x: auto;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+}
+
+.employees-table {
+  width: 100%;
+  min-width: 400px;
+}
+
+.col-avatar {
+  width: 52px;
+  padding-right: 0 !important;
+}
+
+.col-actions {
+  width: 52px;
+  text-align: right;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.cell-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface);
+}
+
+.cell-sub {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  margin-top: 0.1rem;
+}
+
+.status-chip {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  &.active {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &.inactive {
+    background: var(--mat-sys-error-container);
+    color: var(--mat-sys-on-error-container);
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+  }
+
+  &.row-selected {
+    background: var(--mat-sys-primary-container);
+
+    &:hover {
+      background: var(--mat-sys-primary-container);
+    }
+  }
+}
+
+button.selected {
+  color: var(--mat-sys-primary);
+}
+
+/* ─── Responsive visibility ───────────────────────────────── */
+.hide-mobile {
+  @media (max-width: 640px) {
+    display: none;
+  }
+}
+
+.hide-tablet {
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+.mobile-only {
+  display: none;
+
+  @media (max-width: 640px) {
+    display: block;
+  }
+}
