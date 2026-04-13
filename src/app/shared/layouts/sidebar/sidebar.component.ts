@@ -1,9 +1,8 @@
-import { Component, inject, computed, DestroyRef, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
+  type LucideIconData,
   Building2,
   LayoutDashboard,
   Users,
@@ -15,6 +14,7 @@ import {
   Settings,
   Bell,
   FileCheck,
+  User,
 } from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
@@ -22,14 +22,30 @@ import { AuthService } from '../../../core/services/auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { MenuOption } from '../../../core/models/user.model';
 
+const ICON_MAP: Record<string, LucideIconData> = {
+  LayoutDashboard,
+  Building2,
+  Users,
+  FileText,
+  FileCheck,
+  CreditCard,
+  Wrench,
+  Component: ComponentIcon,
+  BarChart3,
+  Settings,
+  Bell,
+  User,
+};
+
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, MatButtonModule, LucideAngularModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
 })
-export class SidebarComponent implements OnInit, OnDestroy {
+export class SidebarComponent {
   private sidebarService = inject(SidebarService);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -39,7 +55,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   expanded = this.sidebarService.expanded;
   isMobileOpen = this.sidebarService.mobileOpen;
 
-  // Items filtrados por permisos + slug prefijado en la ruta
+  /** Items filtrados por permisos + slug prefijado en la ruta */
   menuOptions = computed<MenuOption[]>(() =>
     this.sidebarService.menuItems().map((option) => ({
       ...option,
@@ -47,59 +63,27 @@ export class SidebarComponent implements OnInit, OnDestroy {
     })),
   );
 
-  // Lucide icons
-  readonly Building2 = Building2;
-  readonly LayoutDashboard = LayoutDashboard;
-  readonly Users = Users;
-  readonly FileText = FileText;
-  readonly FileCheck = FileCheck;
-  readonly CreditCard = CreditCard;
-  readonly Wrench = Wrench;
-  readonly ComponentIcon = ComponentIcon;
-  readonly BarChart3 = BarChart3;
-  readonly Settings = Settings;
-  readonly Bell = Bell;
-
-  getIconComponent(iconName: string) {
-    const iconMap: Record<string, any> = {
-      LayoutDashboard: LayoutDashboard,
-      Building2: Building2,
-      Users: Users,
-      FileText: FileText,
-      FileCheck: FileCheck,
-      CreditCard: CreditCard,
-      Wrench: Wrench,
-      Component: ComponentIcon,
-      BarChart3: BarChart3,
-      Settings: Settings,
-      Bell: Bell,
-    };
-    return iconMap[iconName] || Settings;
-  }
-
-  ngOnInit(): void {
-    // Escuchar cambios de tamaño de pantalla
-    const resizeObserver = () => {
+  constructor() {
+    const onResize = () => {
       if (!this.sidebarService.isMobile() && this.sidebarService.mobileOpen()) {
         this.sidebarService.closeMobile();
       }
     };
 
-    window.addEventListener('resize', resizeObserver);
+    window.addEventListener('resize', onResize);
 
-    // Limpiar el listener al destruir el componente
     this.destroyRef.onDestroy(() => {
-      window.removeEventListener('resize', resizeObserver);
+      window.removeEventListener('resize', onResize);
       document.body.style.overflow = '';
     });
   }
 
-  ngOnDestroy(): void {
-    document.body.style.overflow = '';
+  getIconComponent(iconName: string): LucideIconData {
+    return ICON_MAP[iconName] ?? Settings;
   }
 
   logout(): void {
     this.authService.logout();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 }

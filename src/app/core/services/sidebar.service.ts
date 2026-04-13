@@ -40,7 +40,9 @@ export class SidebarService {
       if (!item.module) return true;
       // ADMIN / SUPERADMIN → ven todo
       if (role === 'ADMIN' || role === 'SUPERADMIN') return true;
-      // Resto → solo si el módulo está en su lista
+      // TECNICO → solo mantenimiento (hardcodeado, independiente del backend)
+      if (role === 'TECNICO') return item.module === 'maintenance';
+      // EMPLEADO → solo módulos asignados por el admin
       return allowed.includes(item.module);
     });
   });
