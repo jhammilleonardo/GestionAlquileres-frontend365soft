@@ -1,6 +1,8 @@
 import { Component, computed, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PermissionsService } from '../../core/services/permissions.service';
+import { TecnicoMantenimientoComponent } from './tecnico/tecnico-mantenimiento.component';
 import { ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -61,11 +63,14 @@ import { RequestDetailComponent } from './components/request-detail.component';
     MatTooltipModule,
     MatDividerModule,
     LucideAngularModule,
+    TecnicoMantenimientoComponent,
   ],
   templateUrl: './mantenimiento.component.html',
   styleUrl: './mantenimiento.component.scss',
 })
 export class MantenimientoComponent implements OnInit {
+  private permissionsService = inject(PermissionsService);
+  readonly isTecnico = computed(() => this.permissionsService.role() === 'TECNICO');
   // Icons
   readonly Search = Search;
   readonly Filter = Filter;
