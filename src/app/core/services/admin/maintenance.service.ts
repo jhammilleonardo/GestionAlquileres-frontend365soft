@@ -32,10 +32,13 @@ export class MaintenanceService {
   // Signal-based reactive state
   private requestsSignal = signal<MaintenanceRequest[]>([]);
   private statsSignal = signal<MaintenanceStats | null>(null);
+  private loadingSignal = signal(false);
 
   // Computed signals for filtered data
   requests = this.requestsSignal.asReadonly();
   stats = computed(() => this.statsSignal());
+  /** true mientras loadAllRequests() tiene una petición en vuelo */
+  isLoading = this.loadingSignal.asReadonly();
 
   // NOTE: Removed automatic data loading from constructor
   // The component will explicitly call loadAllRequests() and loadStats() in ngOnInit
@@ -63,9 +66,9 @@ export class MaintenanceService {
 
     const endpoint = `${this.slugService.buildApiEndpoint('admin/maintenance')}${params.toString() ? '?' + params.toString() : ''}`;
 
+    this.loadingSignal.set(true);
     this.apiService.get<MaintenanceRequest[]>(endpoint).subscribe({
       next: (requests) => {
-        // Convert date strings to Date objects
         const processedRequests = requests.map((req) => ({
           ...req,
           created_at: new Date(req.created_at),
@@ -75,10 +78,12 @@ export class MaintenanceService {
           attachments: req.attachments ?? [],
         }));
         this.requestsSignal.set(processedRequests);
+        this.loadingSignal.set(false);
       },
       error: (error) => {
         console.error('Error loading maintenance requests:', error);
         this.requestsSignal.set([]);
+        this.loadingSignal.set(false);
       },
     });
   }

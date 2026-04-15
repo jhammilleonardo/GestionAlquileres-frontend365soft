@@ -1,0 +1,135 @@
+<div class="tecnico-view">
+  <!-- Detail overlay (full screen on mobile) -->
+  @if (selectedRequest()) {
+    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="Detalle de orden">
+      <app-order-detail
+        [request]="selectedRequest()!"
+        (closed)="closeDetail()"
+        (statusAdvanced)="onStatusAdvanced($event)"
+      />
+    </div>
+  }
+
+  <!-- List view -->
+  <div class="list-view" [class.hidden]="selectedRequest() !== null">
+    <!-- App header -->
+    <header class="app-header">
+      <div class="header-title">
+        <lucide-icon [img]="WrenchIcon" size="20" aria-hidden="true" />
+        <h1>Mis Órdenes</h1>
+      </div>
+      <button
+        mat-icon-button
+        (click)="refresh()"
+        aria-label="Actualizar lista"
+        [disabled]="isLoading()"
+      >
+        <lucide-icon [img]="RefreshCwIcon" size="18" [class.spinning]="isLoading()" />
+      </button>
+    </header>
+
+    <!-- Filter tabs -->
+    <nav class="filter-tabs" role="tablist" aria-label="Filtrar por estado">
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'all'"
+        [class.active]="activeTab() === 'all'"
+        (click)="setTab('all')"
+      >
+        Todas
+        <span class="tab-count">{{ tabCounts().all }}</span>
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === MaintenanceStatus.NEW"
+        [class.active]="activeTab() === MaintenanceStatus.NEW"
+        (click)="setTab(MaintenanceStatus.NEW)"
+      >
+        Nuevas
+        <span class="tab-count tab-count--new">{{ tabCounts().new }}</span>
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === MaintenanceStatus.IN_PROGRESS"
+        [class.active]="activeTab() === MaintenanceStatus.IN_PROGRESS"
+        (click)="setTab(MaintenanceStatus.IN_PROGRESS)"
+      >
+        En progreso
+        <span class="tab-count tab-count--progress">{{ tabCounts().inProgress }}</span>
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === MaintenanceStatus.COMPLETED"
+        [class.active]="activeTab() === MaintenanceStatus.COMPLETED"
+        (click)="setTab(MaintenanceStatus.COMPLETED)"
+      >
+        Completadas
+        <span class="tab-count tab-count--done">{{ tabCounts().completed }}</span>
+      </button>
+    </nav>
+
+    <!-- Request list -->
+    <main class="request-list">
+      @if (isLoading()) {
+        <div class="loading-center">
+          <mat-spinner diameter="40" />
+          <p>Cargando órdenes...</p>
+        </div>
+      } @else if (filteredRequests().length === 0) {
+        <div class="empty-state">
+          <lucide-icon [img]="CheckCircle2Icon" size="48" aria-hidden="true" />
+          <p>Sin órdenes en esta categoría.</p>
+        </div>
+      } @else {
+        <ul role="list" aria-label="Lista de órdenes asignadas">
+          @for (req of filteredRequests(); track req.id) {
+            <li role="listitem">
+              <button
+                class="order-card"
+                (click)="selectRequest(req)"
+                [attr.aria-label]="'Ver orden ' + req.ticket_number + ': ' + req.title"
+              >
+                <!-- Priority indicator -->
+                <div class="priority-bar" [attr.data-priority]="req.priority"></div>
+
+                <div class="card-content">
+                  <div class="card-top">
+                    <span class="ticket">{{ req.ticket_number }}</span>
+                    <span class="status-chip" [class]="getStatusColor(req.status)">
+                      {{ statusLabels[req.status] }}
+                    </span>
+                  </div>
+
+                  <h2 class="order-title">{{ req.title }}</h2>
+
+                  @if (req.property) {
+                    <div class="order-meta">
+                      <lucide-icon [img]="AlertCircleIcon" size="13" aria-hidden="true" />
+                      <span>{{ req.property.title }}</span>
+                    </div>
+                  }
+
+                  <div class="card-footer">
+                    <span class="priority-label" [attr.data-priority]="req.priority">
+                      {{ priorityLabels[req.priority] }}
+                    </span>
+                    @if (req.has_pets) {
+                      <span class="pets-badge">Mascotas</span>
+                    }
+                  </div>
+                </div>
+
+                <lucide-icon
+                  [img]="ChevronRightIcon"
+                  size="18"
+                  class="chevron"
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </main>
+  </div>
+</div>
