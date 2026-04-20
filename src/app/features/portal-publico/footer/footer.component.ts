@@ -1,13 +1,27 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Home, MapPin, Mail, Phone, Clock, Facebook, Instagram, Twitter, Linkedin } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  Home,
+  MapPin,
+  Mail,
+  Phone,
+  Clock,
+  Facebook,
+  Instagram,
+  Twitter,
+  Linkedin,
+} from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './footer.component.html',
-  styleUrls: ['./footer.component.css']
+  styleUrls: ['./footer.component.css'],
 })
 export class FooterComponent {
   currentYear = new Date().getFullYear();
@@ -27,6 +41,6 @@ export class FooterComponent {
     { name: 'Facebook', icon: this.Facebook, url: '#' },
     { name: 'Instagram', icon: this.Instagram, url: '#' },
     { name: 'Twitter', icon: this.Twitter, url: '#' },
-    { name: 'LinkedIn', icon: this.Linkedin, url: '#' }
+    { name: 'LinkedIn', icon: this.Linkedin, url: '#' },
   ];
 }

@@ -7,6 +7,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, EMPTY } from 'rxjs';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { EmployeesService } from '../../../../core/services/admin/employees.service';
 import { SlugService } from '../../../../core/services/slug.service';
 import type { Employee } from '../../../../core/models/employee.model';
@@ -14,6 +16,7 @@ import type { Employee } from '../../../../core/models/employee.model';
 @Component({
   selector: 'app-create-employee-dialog',
   standalone: true,
+  providers: [provideTranslocoScope({ scope: 'empleados', alias: 'employees' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
@@ -23,6 +26,7 @@ import type { Employee } from '../../../../core/models/employee.model';
     MatInputModule,
     MatProgressSpinnerModule,
     MatIconModule,
+    TranslocoModule,
   ],
   templateUrl: './create-employee-dialog.component.html',
   styleUrl: './create-employee-dialog.component.scss',
@@ -32,6 +36,7 @@ export class CreateEmployeeDialogComponent {
   private dialogRef = inject(MatDialogRef<CreateEmployeeDialogComponent>);
   private employeesService = inject(EmployeesService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -61,7 +66,9 @@ export class CreateEmployeeDialogComponent {
       .pipe(
         catchError((err: { error?: { message?: string } }) => {
           this.isLoading.set(false);
-          this.errorMessage.set(err.error?.message ?? 'Error al crear el empleado');
+          this.errorMessage.set(
+            err.error?.message ?? this.transloco.translate('employees.dialog.createError'),
+          );
           return EMPTY;
         }),
       )

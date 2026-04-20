@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, computed } from '@angular/core';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -22,6 +23,9 @@ import {
   ContractStatusLabels,
 } from '../../../core/services/tenant/tenant-contract.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { FormatService } from '../../../core/services/format.service';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
 @Component({
   selector: 'app-tenant-contract-list',
@@ -35,6 +39,9 @@ import { SlugService } from '../../../core/services/slug.service';
     MatSelectModule,
     MatFormFieldModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
   template: `
     <div class="contracts-list-container">
@@ -42,18 +49,22 @@ import { SlugService } from '../../../core/services/slug.service';
       <div class="list-header">
         <div class="header-title">
           <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
-          <h2>Mis Contratos</h2>
+          <h2>{{ 'tenantContracts.title' | transloco }}</h2>
         </div>
         <div class="filter-section">
           <mat-form-field appearance="outline" class="filter-field">
-            <mat-label>Filtrar por estado</mat-label>
+            <mat-label>{{ 'tenantContracts.filterLabel' | transloco }}</mat-label>
             <mat-select (selectionChange)="onFilterChange($event)" [(value)]="selectedStatus">
-              <mat-option [value]="null">Todos los estados</mat-option>
-              <mat-option [value]="ContractStatus.BORRADOR"
-                >Borrador (Pendiente de firma)</mat-option
-              >
-              <mat-option [value]="ContractStatus.ACTIVO">Activo</mat-option>
-              <mat-option [value]="ContractStatus.FINALIZADO">Finalizado</mat-option>
+              <mat-option [value]="null">{{ 'tenantContracts.allStates' | transloco }}</mat-option>
+              <mat-option [value]="ContractStatus.BORRADOR">{{
+                'tenantContracts.status.BORRADOR' | transloco
+              }}</mat-option>
+              <mat-option [value]="ContractStatus.ACTIVO">{{
+                'tenantContracts.status.ACTIVO' | transloco
+              }}</mat-option>
+              <mat-option [value]="ContractStatus.FINALIZADO">{{
+                'tenantContracts.status.FINALIZADO' | transloco
+              }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
@@ -63,7 +74,7 @@ import { SlugService } from '../../../core/services/slug.service';
       @if (contractService.isLoading()) {
         <div class="loading-container">
           <mat-spinner diameter="50"></mat-spinner>
-          <p>Cargando contratos...</p>
+          <p>{{ 'tenantContracts.loading' | transloco }}</p>
         </div>
       }
 
@@ -71,18 +82,18 @@ import { SlugService } from '../../../core/services/slug.service';
       @else if (filteredContracts().length === 0) {
         <div class="empty-state">
           <lucide-icon [img]="FileText" [size]="64"></lucide-icon>
-          <h2>No tienes contratos</h2>
+          <h2>{{ 'tenantContracts.noContractsTitle' | transloco }}</h2>
           <p>
             @if (selectedStatus) {
-              No hay contratos con el estado seleccionado.
+              {{ 'tenantContracts.noContractsWithStatus' | transloco }}
             } @else {
-              Aún no tienes contratos de alquiler registrados.
+              {{ 'tenantContracts.noContractsDesc' | transloco }}
             }
           </p>
           @if (!selectedStatus) {
             <button mat-stroked-button (click)="loadContracts()">
               <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-              Recargar
+              {{ 'tenantContracts.reload' | transloco }}
             </button>
           }
         </div>
@@ -102,31 +113,39 @@ import { SlugService } from '../../../core/services/slug.service';
                 </div>
                 <div class="contract-status">
                   <span class="status-badge" [class]="'status-' + contract.status.toLowerCase()">
-                    {{ getStatusLabel(contract.status) }}
+                    {{ 'tenantContracts.status.' + contract.status | transloco }}
                   </span>
                 </div>
               </div>
 
               <div class="contract-body">
                 <h3 class="property-title">
-                  {{ contract.property?.title || 'Propiedad no especificada' }}
+                  {{
+                    contract.property?.title || ('tenantContracts.propertyNotSpecified' | transloco)
+                  }}
                 </h3>
 
                 <div class="contract-dates">
                   <div class="date-item">
                     <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                    <span>Inicio: {{ formatDate(contract.start_date) }}</span>
+                    <span
+                      >{{ 'tenantContracts.startDate' | transloco }}:
+                      {{ contract.start_date | tenantDate }}</span
+                    >
                   </div>
                   <div class="date-item">
                     <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                    <span>Fin: {{ formatDate(contract.end_date) }}</span>
+                    <span
+                      >{{ 'tenantContracts.endDate' | transloco }}:
+                      {{ contract.end_date | tenantDate }}</span
+                    >
                   </div>
                 </div>
 
                 <div class="contract-rent">
-                  <span class="rent-label">Alquiler mensual:</span>
+                  <span class="rent-label">{{ 'tenantContracts.monthlyRent' | transloco }}:</span>
                   <span class="rent-amount">
-                    {{ formatRent(contract.monthly_rent) }}
+                    {{ contract.monthly_rent | tenantCurrency }}
                     @if (contract.currency) {
                       {{ contract.currency }}
                     }
@@ -137,7 +156,7 @@ import { SlugService } from '../../../core/services/slug.service';
                 @if (contract.status === ContractStatus.BORRADOR) {
                   <div class="pending-alert">
                     <lucide-icon [img]="AlertTriangle" [size]="16"></lucide-icon>
-                    <span>Pendiente de tu firma</span>
+                    <span>{{ 'tenantContracts.pendingSignatureAlert' | transloco }}</span>
                   </div>
                 }
 
@@ -145,7 +164,10 @@ import { SlugService } from '../../../core/services/slug.service';
                 @if (contract.status === ContractStatus.ACTIVO && contract.signed_at) {
                   <div class="signed-info">
                     <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                    <span>Firmado el {{ formatDate(contract.signed_at) }}</span>
+                    <span>{{
+                      'tenantContracts.signedOn'
+                        | transloco: { date: formatDate(contract.signed_at) }
+                    }}</span>
                   </div>
                 }
               </div>
@@ -157,7 +179,7 @@ import { SlugService } from '../../../core/services/slug.service';
                   class="action-btn view-btn"
                 >
                   <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                  Ver Detalle
+                  {{ 'tenantContracts.viewDetail' | transloco }}
                 </button>
 
                 @if (contract.status === ContractStatus.BORRADOR) {
@@ -168,7 +190,7 @@ import { SlugService } from '../../../core/services/slug.service';
                     class="action-btn sign-btn"
                   >
                     <lucide-icon [img]="Edit" [size]="16"></lucide-icon>
-                    Firmar Ahora
+                    {{ 'tenantContracts.signNow' | transloco }}
                   </button>
                 }
               </div>
@@ -456,6 +478,8 @@ export class TenantContractListComponent implements OnInit {
   private router = inject(Router);
   contractService = inject(TenantContractService);
   private slugService = inject(SlugService);
+  private translocoService = inject(TranslocoService);
+  private formatService = inject(FormatService);
 
   selectedStatus: ContractStatus | null = null;
 
@@ -510,22 +534,10 @@ export class TenantContractListComponent implements OnInit {
   }
 
   getStatusLabel(status: ContractStatus): string {
-    return ContractStatusLabels[status];
+    return this.translocoService.translate('tenantContracts.status.' + status);
   }
 
   formatDate(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  formatRent(rent: number): string {
-    return rent.toLocaleString('es-BO', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return this.formatService.formatDate(date);
   }
 }

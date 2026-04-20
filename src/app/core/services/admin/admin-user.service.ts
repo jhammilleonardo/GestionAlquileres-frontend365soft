@@ -3,6 +3,7 @@ import { Observable, tap, catchError, of } from 'rxjs';
 import { ApiHttpService } from '../api-http.service';
 import { SlugService } from '../slug.service';
 import { AuthService } from '../auth.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 /**
  * Usuario del sistema
@@ -31,6 +32,7 @@ export class AdminUserService {
   private apiHttp = inject(ApiHttpService);
   private slugService = inject(SlugService);
   private authService = inject(AuthService);
+  private transloco = inject(TranslocoService);
 
   // Signals para estado reactivo
   private usersSignal = signal<User[]>([]);
@@ -84,7 +86,7 @@ export class AdminUserService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar los usuarios');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadUsers'));
           this.isLoadingSignal.set(false);
           console.error('Error loading users:', error);
           return of([]);
@@ -114,7 +116,7 @@ export class AdminUserService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar los inquilinos');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadTenants'));
           this.isLoadingSignal.set(false);
           console.error('Error loading tenants:', error);
           return of([]);
@@ -135,7 +137,7 @@ export class AdminUserService {
 
     return this.apiHttp.get<User>(endpoint, {}, this.headers).pipe(
       catchError((error) => {
-        this.errorSignal.set('Error al cargar el usuario');
+        this.errorSignal.set(this.transloco.translate('common.errors.loadUser'));
         console.error('Error getting user:', error);
         throw error;
       }),

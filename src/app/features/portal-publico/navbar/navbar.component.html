@@ -1,4 +1,4 @@
-  <nav [class.scrolled]="isScrolled" class="navbar">
+<nav [class.scrolled]="isScrolled" class="navbar">
   <div class="navbar-container">
     <div class="navbar-brand">
       <a [routerLink]="getPublicPath('inicio')" class="logo">
@@ -16,45 +16,73 @@
     <div class="navbar-menu" [class.active]="isMenuOpen">
       <ul class="navbar-links">
         <li>
-          <a [routerLink]="getPublicPath('inicio')"
-             class="nav-link"
-             [class.active]="isActive('inicio')">
-            Inicio
+          <a
+            [routerLink]="getPublicPath('inicio')"
+            class="nav-link"
+            [class.active]="isActive('inicio')"
+          >
+            {{ 'public.nav.home' | transloco }}
           </a>
         </li>
         <li>
-          <a [routerLink]="getPublicPath('propiedades')"
-             class="nav-link"
-             [class.active]="isActive('propiedades')">
-            Propiedades
+          <a
+            [routerLink]="getPublicPath('propiedades')"
+            class="nav-link"
+            [class.active]="isActive('propiedades')"
+          >
+            {{ 'public.nav.properties' | transloco }}
           </a>
         </li>
         <li>
-          <a [routerLink]="getPublicPath('nosotros')"
-             class="nav-link"
-             [class.active]="isActive('nosotros')">
-            Nosotros
+          <a
+            [routerLink]="getPublicPath('nosotros')"
+            class="nav-link"
+            [class.active]="isActive('nosotros')"
+          >
+            {{ 'public.nav.about' | transloco }}
           </a>
         </li>
         <li>
-          <a [routerLink]="getPublicPath('contacto')"
-             class="nav-link"
-             [class.active]="isActive('contacto')">
-            Contacto
+          <a
+            [routerLink]="getPublicPath('contacto')"
+            class="nav-link"
+            [class.active]="isActive('contacto')"
+          >
+            {{ 'public.nav.contact' | transloco }}
           </a>
         </li>
         <li>
-          <a [routerLink]="getPublicPath('faq')"
-             class="nav-link"
-             [class.active]="isActive('faq')">
-            FAQ
+          <a [routerLink]="getPublicPath('faq')" class="nav-link" [class.active]="isActive('faq')">
+            {{ 'public.nav.faq' | transloco }}
           </a>
         </li>
       </ul>
 
       <div class="navbar-actions">
-        <a [routerLink]="getLoginPath()" class="btn-login">Iniciar Sesión</a>
-        <a [routerLink]="getRegisterPath()" class="btn-register">Registrarse</a>
+        <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isSpanish()"
+            (click)="languageService.setLanguage('es')"
+            aria-label="Español"
+            title="Español"
+          >
+            ES
+          </button>
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isEnglish()"
+            (click)="languageService.setLanguage('en')"
+            aria-label="English"
+            title="English"
+          >
+            EN
+          </button>
+        </div>
+        <a [routerLink]="getLoginPath()" class="btn-login">{{ 'public.nav.login' | transloco }}</a>
+        <a [routerLink]="getRegisterPath()" class="btn-register">{{
+          'public.nav.register' | transloco
+        }}</a>
       </div>
     </div>
   </div>

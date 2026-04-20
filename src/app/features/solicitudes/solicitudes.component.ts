@@ -30,12 +30,17 @@ import {
   Clock,
   X,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { ApplicationService } from '../../core/services/admin/application.service';
 import { ApplicationListItem, ApplicationStatus } from '../../core/models/application.model';
+import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
 
 @Component({
   selector: 'app-solicitudes',
   standalone: true,
+  providers: [provideTranslocoScope('solicitudes')],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
@@ -52,6 +57,9 @@ import { ApplicationListItem, ApplicationStatus } from '../../core/models/applic
     MatTableModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
   templateUrl: './solicitudes.component.html',
   styleUrls: ['./solicitudes.component.css'],
@@ -83,12 +91,7 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
 
   displayedColumns = ['id', 'applicant', 'property', 'income', 'date', 'status', 'actions'];
 
-  statuses = [
-    { value: '', label: 'Todos' },
-    { value: 'PENDIENTE', label: 'Pendientes' },
-    { value: 'APROBADA', label: 'Aprobadas' },
-    { value: 'RECHAZADA', label: 'Rechazadas' },
-  ];
+  statuses = ['', 'PENDIENTE', 'APROBADA', 'RECHAZADA'];
 
   // ── Getters computados (sin llamadas HTTP extra) ──────────────────────────────
 
@@ -167,18 +170,5 @@ export class SolicitudesComponent implements OnInit, OnDestroy {
   }
   clearSearch(): void {
     this.searchTerm = '';
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'PENDIENTE':
-        return 'Pendiente';
-      case 'APROBADA':
-        return 'Aprobada';
-      case 'RECHAZADA':
-        return 'Rechazada';
-      default:
-        return status;
-    }
   }
 }

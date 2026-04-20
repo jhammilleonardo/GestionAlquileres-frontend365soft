@@ -3,8 +3,8 @@
   <section class="hero-section">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <h1 class="hero-title">Sobre Nosotros</h1>
-      <p class="hero-subtitle">Conoce la historia y misión detrás de nuestra plataforma de alquileres</p>
+      <h1 class="hero-title">{{ 'public.about.heroTitle' | transloco }}</h1>
+      <p class="hero-subtitle">{{ 'public.about.heroSubtitle' | transloco }}</p>
     </div>
   </section>
 
@@ -12,15 +12,12 @@
   <section class="mission-section">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-title">Nuestra Misión</h2>
-        <p class="section-subtitle">Transformar la experiencia de alquiler de propiedades</p>
+        <h2 class="section-title">{{ 'public.about.missionTitle' | transloco }}</h2>
+        <p class="section-subtitle">{{ 'public.about.missionSubtitle' | transloco }}</p>
       </div>
       <div class="mission-content">
         <p class="mission-text">
-          En RentHub, nos dedicamos a simplificar el proceso de alquiler de propiedades, 
-          conectando propietarios e inquilinos de manera eficiente y transparente. 
-          Nuestra plataforma ofrece herramientas modernas que facilitan cada etapa del proceso, 
-          desde la búsqueda hasta la gestión de contratos y pagos.
+          {{ 'public.about.missionText' | transloco }}
         </p>
       </div>
     </div>
@@ -29,40 +26,40 @@
   <!-- Values Section -->
   <section class="values-section">
     <div class="container">
-      <h2 class="section-title">Nuestros Valores</h2>
-      <p class="section-subtitle">Principios que guían cada una de nuestras acciones</p>
-      
+      <h2 class="section-title">{{ 'public.about.valuesTitle' | transloco }}</h2>
+      <p class="section-subtitle">{{ 'public.about.valuesSubtitle' | transloco }}</p>
+
       <div class="values-grid">
         <div class="value-card">
           <div class="value-icon">
             <lucide-icon [img]="Heart"></lucide-icon>
           </div>
-          <h3 class="value-title">Transparencia</h3>
-          <p class="value-description">Mantenemos una comunicación clara y honesta con todos nuestros usuarios.</p>
+          <h3 class="value-title">{{ 'public.about.v1Title' | transloco }}</h3>
+          <p class="value-description">{{ 'public.about.v1Desc' | transloco }}</p>
         </div>
-        
+
         <div class="value-card">
           <div class="value-icon">
             <lucide-icon [img]="Target"></lucide-icon>
           </div>
-          <h3 class="value-title">Compromiso</h3>
-          <p class="value-description">Estamos comprometidos a brindar el mejor servicio y soporte continuo.</p>
+          <h3 class="value-title">{{ 'public.about.v2Title' | transloco }}</h3>
+          <p class="value-description">{{ 'public.about.v2Desc' | transloco }}</p>
         </div>
-        
+
         <div class="value-card">
           <div class="value-icon">
             <lucide-icon [img]="Award"></lucide-icon>
           </div>
-          <h3 class="value-title">Excelencia</h3>
-          <p class="value-description">Buscamos constantemente la mejora y la calidad en todo lo que hacemos.</p>
+          <h3 class="value-title">{{ 'public.about.v3Title' | transloco }}</h3>
+          <p class="value-description">{{ 'public.about.v3Desc' | transloco }}</p>
         </div>
-        
+
         <div class="value-card">
           <div class="value-icon">
             <lucide-icon [img]="Users"></lucide-icon>
           </div>
-          <h3 class="value-title">Colaboración</h3>
-          <p class="value-description">Fomentamos un ambiente de trabajo en equipo y colaboración mutua.</p>
+          <h3 class="value-title">{{ 'public.about.v4Title' | transloco }}</h3>
+          <p class="value-description">{{ 'public.about.v4Desc' | transloco }}</p>
         </div>
       </div>
     </div>
@@ -74,19 +71,19 @@
       <div class="stats-grid">
         <div class="stat-item">
           <div class="stat-number">500+</div>
-          <div class="stat-label">Propiedades</div>
+          <div class="stat-label">{{ 'public.about.s1Label' | transloco }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-number">1000+</div>
-          <div class="stat-label">Inquilinos Satisfechos</div>
+          <div class="stat-label">{{ 'public.about.s2Label' | transloco }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-number">50+</div>
-          <div class="stat-label">Propietarios</div>
+          <div class="stat-label">{{ 'public.about.s3Label' | transloco }}</div>
         </div>
         <div class="stat-item">
           <div class="stat-number">5+</div>
-          <div class="stat-label">Años de Experiencia</div>
+          <div class="stat-label">{{ 'public.about.s4Label' | transloco }}</div>
         </div>
       </div>
     </div>

@@ -17,6 +17,10 @@ import {
   Check,
 } from 'lucide-angular';
 import { Contract } from '../../../core/services/tenant/tenant-contract.service';
+import { TranslocoModule } from '@jsverse/transloco';
+import { FormatService } from '../../../core/services/format.service';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
 export interface ContractSigningDialogData {
   contract: Contract;
@@ -34,6 +38,9 @@ export interface ContractSigningDialogData {
     MatCheckboxModule,
     FormsModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
   template: `
     <div class="signing-dialog-wrapper">
@@ -43,9 +50,9 @@ export interface ContractSigningDialogData {
           <div class="header-icon">
             <lucide-icon [img]="FileCheck" [size]="32"></lucide-icon>
           </div>
-          <h2 class="dialog-title">Confirmación de Firma del Contrato</h2>
+          <h2 class="dialog-title">{{ 'public.contractSigning.title' | transloco }}</h2>
           <p class="dialog-subtitle">
-            Por favor, revisa y confirma todos los detalles antes de firmar
+            {{ 'public.contractSigning.subtitle' | transloco }}
           </p>
         </div>
 
@@ -58,8 +65,10 @@ export interface ContractSigningDialogData {
             <div class="important-notice">
               <lucide-icon [img]="AlertTriangle" [size]="20"></lucide-icon>
               <span>
-                <strong>Importante:</strong> Al firmar este contrato, aceptas todos los términos y
-                condiciones. Esta acción es <strong>irreversible</strong> y tendrá validez legal.
+                <strong>{{ 'public.contractSigning.importantNoticeLabel' | transloco }}:</strong>
+                {{ 'public.contractSigning.importantNoticeBody' | transloco }}
+                <strong>{{ 'public.contractSigning.importantNoticeEmphasis' | transloco }}</strong>
+                {{ 'public.contractSigning.importantNoticeEnd' | transloco }}
               </span>
             </div>
 
@@ -67,31 +76,35 @@ export interface ContractSigningDialogData {
             <div class="contract-summary">
               <h3 class="section-title">
                 <lucide-icon [img]="Info" [size]="18"></lucide-icon>
-                Información del Contrato
+                {{ 'public.contractSigning.contractInfo' | transloco }}
               </h3>
 
               <div class="summary-grid">
                 <div class="summary-item">
-                  <span class="label">Número de contrato:</span>
+                  <span class="label">{{
+                    'public.contractSigning.contractNumber' | transloco
+                  }}</span>
                   <span class="value contract-number">{{ c.contract_number }}</span>
                 </div>
                 <div class="summary-item">
-                  <span class="label">Propiedad:</span>
+                  <span class="label">{{ 'public.contractSigning.property' | transloco }}</span>
                   <span class="value">
                     @if (c.property && c.property.title) {
                       {{ c.property.title }}
                     } @else {
-                      <em style="color: #94a3b8;">No especificada</em>
+                      <em style="color: #94a3b8;">{{
+                        'public.contractSigning.propertyNotSpecified' | transloco
+                      }}</em>
                     }
                   </span>
                 </div>
                 <div class="summary-item">
-                  <span class="label">Fecha de inicio:</span>
-                  <span class="value">{{ formatDate(c.start_date) }}</span>
+                  <span class="label">{{ 'public.contractSigning.startDate' | transloco }}</span>
+                  <span class="value">{{ c.start_date | tenantDate }}</span>
                 </div>
                 <div class="summary-item">
-                  <span class="label">Fecha de finalización:</span>
-                  <span class="value">{{ formatDate(c.end_date) }}</span>
+                  <span class="label">{{ 'public.contractSigning.endDate' | transloco }}</span>
+                  <span class="value">{{ c.end_date | tenantDate }}</span>
                 </div>
               </div>
             </div>
@@ -100,14 +113,16 @@ export interface ContractSigningDialogData {
             <div class="payment-info">
               <h3 class="section-title">
                 <lucide-icon [img]="DollarSign" [size]="18"></lucide-icon>
-                Información de Pago
+                {{ 'public.contractSigning.paymentInfo' | transloco }}
               </h3>
 
               <div class="payment-highlight">
                 <div class="rent-amount">
-                  <span class="rent-label">Alquiler mensual:</span>
+                  <span class="rent-label">{{
+                    'public.contractSigning.monthlyRent' | transloco
+                  }}</span>
                   <span class="rent-value">
-                    {{ formatRent(c.monthly_rent) }}
+                    {{ c.monthly_rent | tenantCurrency }}
                     @if (c.currency) {
                       {{ c.currency }}
                     }
@@ -116,9 +131,11 @@ export interface ContractSigningDialogData {
 
                 @if (c.deposit_amount) {
                   <div class="deposit-amount">
-                    <span class="deposit-label">Depósito:</span>
+                    <span class="deposit-label">{{
+                      'public.contractSigning.deposit' | transloco
+                    }}</span>
                     <span class="deposit-value">
-                      {{ formatRent(+c.deposit_amount) }}
+                      {{ c.deposit_amount | tenantCurrency }}
                       @if (c.currency) {
                         {{ c.currency }}
                       }
@@ -132,7 +149,10 @@ export interface ContractSigningDialogData {
                   <div class="detail-row">
                     <lucide-icon [img]="Calendar" [size]="16"></lucide-icon>
                     <span class="detail-text">
-                      Día de pago: <strong>Día {{ c.payment_day }} de cada mes</strong>
+                      {{ 'public.contractSigning.paymentDayLabel' | transloco }}
+                      <strong>{{
+                        'public.contractSigning.paymentDayValue' | transloco: { day: c.payment_day }
+                      }}</strong>
                     </span>
                   </div>
                 }
@@ -140,7 +160,8 @@ export interface ContractSigningDialogData {
                 <div class="detail-row">
                   <lucide-icon [img]="Calendar" [size]="16"></lucide-icon>
                   <span class="detail-text">
-                    Próximo pago: <strong>{{ calculateNextPaymentDate() }}</strong>
+                    {{ 'public.contractSigning.nextPaymentLabel' | transloco }}
+                    <strong>{{ calculateNextPaymentDate() }}</strong>
                   </span>
                 </div>
 
@@ -148,7 +169,8 @@ export interface ContractSigningDialogData {
                   <div class="detail-row">
                     <lucide-icon [img]="Info" [size]="16"></lucide-icon>
                     <span class="detail-text">
-                      Método de pago: <strong>{{ c.payment_method }}</strong>
+                      {{ 'public.contractSigning.paymentMethodLabel' | transloco }}
+                      <strong>{{ c.payment_method }}</strong>
                     </span>
                   </div>
                 }
@@ -159,24 +181,30 @@ export interface ContractSigningDialogData {
                 <div class="bank-details">
                   <h4 class="bank-title">
                     <lucide-icon [img]="Building" [size]="16"></lucide-icon>
-                    Datos para Transferencia Bancaria
+                    {{ 'public.contractSigning.bankDetailsTitle' | transloco }}
                   </h4>
                   <div class="bank-info-grid">
                     @if (c.bank_name) {
                       <div class="bank-item">
-                        <span class="bank-label">Banco:</span>
+                        <span class="bank-label">{{
+                          'public.contractSigning.bank' | transloco
+                        }}</span>
                         <span class="bank-value">{{ c.bank_name }}</span>
                       </div>
                     }
                     @if (c.bank_account_holder) {
                       <div class="bank-item">
-                        <span class="bank-label">Titular:</span>
+                        <span class="bank-label">{{
+                          'public.contractSigning.accountHolder' | transloco
+                        }}</span>
                         <span class="bank-value">{{ c.bank_account_holder }}</span>
                       </div>
                     }
                     @if (c.bank_account_type && c.bank_account_number) {
                       <div class="bank-item">
-                        <span class="bank-label">Cuenta:</span>
+                        <span class="bank-label">{{
+                          'public.contractSigning.account' | transloco
+                        }}</span>
                         <span class="bank-value">
                           {{ c.bank_account_type }} - {{ c.bank_account_number }}
                         </span>
@@ -192,7 +220,7 @@ export interface ContractSigningDialogData {
               <div class="terms-section">
                 <h3 class="section-title">
                   <lucide-icon [img]="Check" [size]="18"></lucide-icon>
-                  Servicios Incluidos
+                  {{ 'public.contractSigning.includedServices' | transloco }}
                 </h3>
                 <div class="services-list">
                   @for (service of c.included_services; track $index) {
@@ -212,27 +240,25 @@ export interface ContractSigningDialogData {
                 [disabled]="isSigning"
                 class="terms-checkbox"
               >
-                Entiendo y acepto que al firmar este contrato:
+                {{ 'public.contractSigning.termsAccept1' | transloco }}
               </mat-checkbox>
 
               <ul class="terms-list">
                 <li>
-                  Me comprometo a pagar el alquiler mensual de
+                  {{ 'public.contractSigning.termsAccept2Before' | transloco }}
                   <strong>{{ formatRent(c.monthly_rent) }} {{ c.currency || '' }}</strong>
-                  puntualmente.
+                  {{ 'public.contractSigning.termsAccept2After' | transloco }}
                 </li>
                 <li>
-                  Acepto que <strong>no se podrán realizar modificaciones</strong> al contrato
-                  después de la firma.
+                  {{ 'public.contractSigning.termsAccept3Before' | transloco }}
+                  <strong>{{ 'public.contractSigning.termsAccept3Emphasis' | transloco }}</strong>
+                  {{ 'public.contractSigning.termsAccept3After' | transloco }}
                 </li>
-                <li>Reconozco que este contrato tiene validez legal y es vinculante.</li>
-                <li>
-                  Me comprometo a cumplir con todas las responsabilidades establecidas en el
-                  contrato.
-                </li>
+                <li>{{ 'public.contractSigning.termsAccept4' | transloco }}</li>
+                <li>{{ 'public.contractSigning.termsAccept5' | transloco }}</li>
                 @if (c.late_fee_percentage) {
                   <li>
-                    Entiendo que los pagos tardíos tendrán una penalidad del
+                    {{ 'public.contractSigning.termsAccept6Prefix' | transloco }}
                     <strong>{{ c.late_fee_percentage }}%</strong>.
                   </li>
                 }
@@ -246,7 +272,7 @@ export interface ContractSigningDialogData {
         <!-- Actions -->
         <div class="dialog-actions">
           <button mat-button (click)="onCancel()" [disabled]="isSigning" class="cancel-btn">
-            Cancelar
+            {{ 'public.contractSigning.cancel' | transloco }}
           </button>
           <button
             mat-raised-button
@@ -257,10 +283,10 @@ export interface ContractSigningDialogData {
           >
             @if (isSigning) {
               <mat-spinner diameter="20" class="spinner"></mat-spinner>
-              <span>Firmando...</span>
+              <span>{{ 'public.contractSigning.signing' | transloco }}</span>
             } @else {
               <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
-              <span>Firmar Contrato</span>
+              <span>{{ 'public.contractSigning.signContract' | transloco }}</span>
             }
           </button>
         </div>
@@ -706,6 +732,7 @@ export class ContractSigningDialogComponent {
     MatDialogRef<ContractSigningDialogComponent>,
   );
   private data = inject<ContractSigningDialogData>(MAT_DIALOG_DATA);
+  private formatService = inject(FormatService);
 
   contract = signal<Contract | null>(null);
   acceptedTerms = false;
@@ -741,20 +768,8 @@ export class ContractSigningDialogComponent {
     this.dialogRef.close(true);
   }
 
-  formatDate(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  }
-
   formatRent(rent: number): string {
-    return rent.toLocaleString('es-BO', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return this.formatService.formatCurrency(rent);
   }
 
   calculateNextPaymentDate(): string {
@@ -779,10 +794,6 @@ export class ContractSigningDialogComponent {
 
     const nextPaymentDate = new Date(nextYear, nextMonth, contract.payment_day);
 
-    return nextPaymentDate.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
+    return this.formatService.formatDate(nextPaymentDate);
   }
 }

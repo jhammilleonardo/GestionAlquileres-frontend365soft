@@ -6,8 +6,8 @@
       </div>
       @if (expanded()) {
         <div class="logo-text">
-          <h1>365Soft</h1>
-          <p>Gestión de Alquileres</p>
+          <h1>{{ 'sidebar.appName' | transloco }}</h1>
+          <p>{{ 'sidebar.appSubtitle' | transloco }}</p>
         </div>
       }
     </div>
@@ -21,8 +21,8 @@
             class="nav-link"
             [routerLink]="option.route"
             routerLinkActive="active"
-            [attr.aria-label]="option.label"
-            [attr.title]="!expanded() ? option.label : null"
+            [attr.aria-label]="option.label | transloco"
+            [attr.title]="!expanded() ? (option.label | transloco) : null"
           >
             <lucide-icon
               class="nav-icon"
@@ -31,11 +31,38 @@
               aria-hidden="true"
             ></lucide-icon>
             @if (expanded()) {
-              <span class="nav-label">{{ option.label }}</span>
+              <span class="nav-label">{{ option.label | transloco }}</span>
             }
           </a>
         </li>
       }
     </ul>
   </nav>
+
+  <!-- Language toggle -->
+  <div class="lang-toggle" [class.collapsed]="!expanded()">
+    @if (expanded()) {
+      <span class="lang-label" aria-hidden="true">{{ 'sidebar.language' | transloco }}</span>
+    }
+    <div class="lang-buttons" role="group" [attr.aria-label]="'sidebar.language' | transloco">
+      <button
+        class="lang-btn"
+        [class.active]="languageService.isSpanish()"
+        (click)="languageService.setLanguage('es')"
+        aria-label="Español"
+        [attr.title]="'Español'"
+      >
+        ES
+      </button>
+      <button
+        class="lang-btn"
+        [class.active]="languageService.isEnglish()"
+        (click)="languageService.setLanguage('en')"
+        aria-label="English"
+        [attr.title]="'English'"
+      >
+        EN
+      </button>
+    </div>
+  </div>
 </aside>

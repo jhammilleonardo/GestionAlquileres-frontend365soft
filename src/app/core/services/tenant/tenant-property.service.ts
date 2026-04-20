@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
@@ -47,6 +48,7 @@ export class TenantPropertyService {
   private http = inject(HttpClient);
   private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Signal-based reactive state
   private propertiesSignal = signal<Property[]>([]);
@@ -90,7 +92,7 @@ export class TenantPropertyService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar las propiedades');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadProperties'));
           this.isLoadingSignal.set(false);
           console.error('Error loading properties:', error);
           return of([]);

@@ -1,4 +1,13 @@
-import { Component, Inject, signal, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import {
+  Component,
+  Inject,
+  inject,
+  signal,
+  OnInit,
+  OnDestroy,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { interval, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -37,13 +46,12 @@ import {
   MaintenancePriority,
   MaintenanceCategory,
   MaintenanceMessage,
-  MaintenanceStatusLabels,
-  MaintenancePriorityLabels,
-  MaintenanceCategoryLabels,
-  PermissionToEnterLabels,
   CreateMessageDto,
 } from '../../../core/models/maintenance-request.model';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { MaintenanceService } from '../../../core/services/admin/maintenance.service';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 
 @Component({
   selector: 'app-request-detail',
@@ -61,7 +69,10 @@ import { MaintenanceService } from '../../../core/services/admin/maintenance.ser
     MatCheckboxModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
   ],
+  providers: [provideTranslocoScope({ scope: 'mantenimiento', alias: 'maintenance' })],
   templateUrl: './request-detail.component.html',
   styleUrl: './request-detail.component.scss',
 })
@@ -92,11 +103,7 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
   MaintenancePriority = MaintenancePriority;
   MaintenanceCategory = MaintenanceCategory;
 
-  // Labels for display
-  statusLabels = MaintenanceStatusLabels;
-  priorityLabels = MaintenancePriorityLabels;
-  categoryLabels = MaintenanceCategoryLabels;
-  permissionLabels = PermissionToEnterLabels;
+  private transloco = inject(TranslocoService);
 
   // State
   request: MaintenanceRequest;
@@ -425,16 +432,6 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
       default:
         return '';
     }
-  }
-
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 
   formatDateForBackend(date: Date): string {

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import {
   Payment,
@@ -19,6 +20,7 @@ import { SlugService } from '../slug.service';
 export class PaymentService {
   private http = inject(HttpClient);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Reactive state
   private paymentsSignal = signal<Payment[]>([]);
@@ -117,7 +119,9 @@ export class PaymentService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set(error.error?.message || 'Error al cargar los pagos');
+          this.errorSignal.set(
+            error.error?.message || this.transloco.translate('common.errors.loadPayments'),
+          );
           this.isLoadingSignal.set(false);
           console.error('Error loading payments:', error);
           this.paymentsSignal.set([]);
@@ -188,7 +192,9 @@ export class PaymentService {
         this.loadStats();
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al actualizar el pago');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.updatePayment'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -227,7 +233,9 @@ export class PaymentService {
         this.loadStats();
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al crear el pago');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.createPayment'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -251,7 +259,9 @@ export class PaymentService {
         this.loadStats();
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al eliminar el pago');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.deletePayment'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -274,7 +284,9 @@ export class PaymentService {
           this.loadStats();
         }),
         catchError((error) => {
-          this.errorSignal.set(error.error?.message || 'Error en acción masiva');
+          this.errorSignal.set(
+            error.error?.message || this.transloco.translate('common.errors.bulkAction'),
+          );
           this.isLoadingSignal.set(false);
           throw error;
         }),

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { TenantDocument } from '../../models/document.model';
 
@@ -9,6 +10,7 @@ import { TenantDocument } from '../../models/document.model';
 })
 export class TenantDocumentService {
   private http = inject(HttpClient);
+  private transloco = inject(TranslocoService);
 
   // Reactive state
   private documentsSignal = signal<TenantDocument[]>([]);
@@ -42,7 +44,7 @@ export class TenantDocumentService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar los documentos');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadDocuments'));
           this.isLoadingSignal.set(false);
           console.error('Error loading documents:', error);
           return of([]);
@@ -106,7 +108,7 @@ export class TenantDocumentService {
           );
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al firmar el documento');
+          this.errorSignal.set(this.transloco.translate('common.errors.signDocument'));
           throw error;
         }),
       );

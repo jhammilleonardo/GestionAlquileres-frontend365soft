@@ -29,6 +29,8 @@ import {
   Currency,
   PaymentType,
 } from '../../../core/models/payment.model';
+import { TranslocoModule } from '@jsverse/transloco';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 
 @Component({
   selector: 'app-tenant-qr-payments-list',
@@ -41,6 +43,8 @@ import {
     MatProgressSpinnerModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
   ],
   template: `
     <div class="qrl-container">
@@ -49,13 +53,13 @@ import {
         <div class="header-left">
           <lucide-icon [img]="QrCode" [size]="32" class="icon-primary"></lucide-icon>
           <div>
-            <h1>Pagos QR</h1>
-            <p>Historial de pagos realizados con código QR (MC4)</p>
+            <h1>{{ 'public.tenantPayments.qrTitle' | transloco }}</h1>
+            <p>{{ 'public.tenantPayments.qrSubtitle' | transloco }}</p>
           </div>
         </div>
         <button mat-raised-button color="primary" [routerLink]="nuevoQrUrl()">
           <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-          Generar QR
+          {{ 'public.tenantPayments.generateQr' | transloco }}
         </button>
       </div>
 
@@ -71,7 +75,7 @@ import {
       @if (qrService.isLoading() && qrService.qrList().length === 0) {
         <div class="loading-state">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Cargando historial QR...</p>
+          <p>{{ 'public.tenantPayments.loadingQrHistory' | transloco }}</p>
         </div>
       }
 
@@ -79,11 +83,11 @@ import {
       @else if (!qrService.isLoading() && qrService.qrList().length === 0) {
         <mat-card class="empty-card">
           <lucide-icon [img]="QrCode" [size]="60" class="empty-icon"></lucide-icon>
-          <h2>Sin pagos QR</h2>
-          <p>Aún no has realizado ningún pago con código QR.</p>
+          <h2>{{ 'public.tenantPayments.noQrTitle' | transloco }}</h2>
+          <p>{{ 'public.tenantPayments.noQrDesc' | transloco }}</p>
           <button mat-raised-button color="primary" [routerLink]="nuevoQrUrl()">
             <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-            Generar primer QR
+            {{ 'public.tenantPayments.generateFirstQr' | transloco }}
           </button>
         </mat-card>
       }
@@ -92,12 +96,15 @@ import {
       @else {
         <mat-card class="list-card">
           <div class="list-header">
-            <span class="list-count">{{ qrService.qrList().length }} registros</span>
+            <span class="list-count">{{
+              'public.tenantPayments.qrRecordsCount'
+                | transloco: { count: qrService.qrList().length }
+            }}</span>
             <button
               mat-icon-button
               (click)="qrService.loadQrList()"
               [disabled]="qrService.isLoading()"
-              aria-label="Recargar"
+              [attr.aria-label]="'public.tenantPayments.reload' | transloco"
             >
               <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
             </button>
@@ -134,9 +141,11 @@ import {
                   <span class="qr-type">
                     {{ typeLabel(qr.payment_type) }}
                   </span>
-                  <span class="qr-date">{{ formatDate(qr.created_at) }}</span>
+                  <span class="qr-date">{{ qr.created_at | tenantDate }}</span>
                   @if (qr.transaction_id) {
-                    <span class="qr-tx">TXN: {{ qr.transaction_id }}</span>
+                    <span class="qr-tx"
+                      >{{ 'public.tenantPayments.txn' | transloco }} {{ qr.transaction_id }}</span
+                    >
                   }
                 </div>
 
@@ -164,7 +173,7 @@ import {
                     color="warn"
                     (click)="onCancel(qr)"
                     [disabled]="cancellingId() === qr.id"
-                    aria-label="Cancelar QR"
+                    [attr.aria-label]="'public.tenantPayments.cancelQr' | transloco"
                   >
                     @if (cancellingId() === qr.id) {
                       <mat-spinner diameter="16"></mat-spinner>
@@ -421,14 +430,6 @@ export class TenantQrPaymentsListComponent implements OnInit {
 
   currencySymbol(code: string): string {
     return CurrencySymbols[code as Currency] ?? code;
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-BO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
   }
 
   // ── Cancel ────────────────────────────────────────────────────────

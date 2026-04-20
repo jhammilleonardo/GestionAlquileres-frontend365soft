@@ -15,6 +15,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { LucideAngularModule, ArrowLeft, Save, X, AlertCircle } from 'lucide-angular';
 import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import {
   UpdateContractDTO,
   Contract,
@@ -40,16 +42,18 @@ import {
     MatCheckboxModule,
     MatIconModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
   template: `
     <div class="contract-edit-container">
       <!-- Header -->
       <div class="page-header">
         <button mat-button class="back-button" (click)="goBack()">
           <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-          Volver
+          {{ 'common.back' | transloco }}
         </button>
-        <h1>Editar Contrato {{ contractNumber() }}</h1>
+        <h1>{{ 'contracts.edit.titlePrefix' | transloco }} {{ contractNumber() }}</h1>
       </div>
 
       <!-- Alerta de solo borradores -->
@@ -57,36 +61,40 @@ import {
         <mat-card class="warning-card">
           <lucide-icon [img]="AlertCircle" [size]="24" class="warning-icon"></lucide-icon>
           <div class="warning-content">
-            <h3>Contrato no editable</h3>
+            <h3>{{ 'contracts.edit.notEditable' | transloco }}</h3>
             <p>
-              Solo se pueden editar contratos en estado <strong>Borrador</strong>. Este contrato
-              está en estado <strong>{{ ContractStatusLabels[currentContract()!.status] }}</strong
-              >.
+              {{
+                'contracts.edit.notEditableMsg'
+                  | transloco
+                    : { status: ('contracts.status.' + currentContract()!.status | transloco) }
+              }}
             </p>
-            <button mat-raised-button color="warn" (click)="goBack()">Volver</button>
+            <button mat-raised-button color="warn" (click)="goBack()">
+              {{ 'common.back' | transloco }}
+            </button>
           </div>
         </mat-card>
       } @else if (isLoading()) {
         <div class="loading-container">
           <mat-spinner diameter="50"></mat-spinner>
-          <p>Cargando contrato...</p>
+          <p>{{ 'contracts.detail.loading' | transloco }}</p>
         </div>
       } @else if (currentContract()) {
         <mat-card class="form-card">
           <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
             <!-- Información Básica -->
             <div class="form-section">
-              <h2>Información Básica</h2>
+              <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
 
               <div class="info-readonly">
                 <div class="info-item">
-                  <label>Inquilino:</label>
+                  <label>{{ 'contracts.edit.tenantLabel' | transloco }}</label>
                   <span>{{
                     currentContract()!.tenant?.name || currentContract()!.tenant_name || 'N/A'
                   }}</span>
                 </div>
                 <div class="info-item">
-                  <label>Propiedad:</label>
+                  <label>{{ 'contracts.edit.propertyLabel' | transloco }}</label>
                   <span>{{
                     currentContract()!.property?.title || currentContract()!.property_title || 'N/A'
                   }}</span>
@@ -96,7 +104,7 @@ import {
               <!-- Fechas -->
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Fecha Inicio *</mat-label>
+                  <mat-label>{{ 'contracts.create.startDate' | transloco }}</mat-label>
                   <input
                     matInput
                     [matDatepicker]="startDatePicker"
@@ -111,7 +119,7 @@ import {
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Fecha Fin *</mat-label>
+                  <mat-label>{{ 'contracts.create.endDate' | transloco }}</mat-label>
                   <input
                     matInput
                     [matDatepicker]="endDatePicker"
@@ -126,7 +134,7 @@ import {
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Entrega Llaves</mat-label>
+                  <mat-label>{{ 'contracts.create.keyDelivery' | transloco }}</mat-label>
                   <input
                     matInput
                     [matDatepicker]="keyDatePicker"
@@ -143,30 +151,30 @@ import {
               <!-- Alquiler -->
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Alquiler Mensual (Bs) *</mat-label>
+                  <mat-label>{{ 'contracts.create.monthlyRent' | transloco }}</mat-label>
                   <input matInput type="number" formControlName="monthly_rent" required />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Día de Pago</mat-label>
+                  <mat-label>{{ 'contracts.create.paymentDay' | transloco }}</mat-label>
                   <input matInput type="number" min="1" max="31" formControlName="payment_day" />
                 </mat-form-field>
               </div>
 
               <!-- Método de pago -->
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Método de Pago</mat-label>
+                <mat-label>{{ 'contracts.create.paymentMethod' | transloco }}</mat-label>
                 <input matInput formControlName="payment_method" />
               </mat-form-field>
             </div>
 
             <!-- Condiciones de Pago -->
             <div class="form-section">
-              <h2>Condiciones de Pago</h2>
+              <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>% Recargo por Mora</mat-label>
+                  <mat-label>{{ 'contracts.create.lateFee' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -176,7 +184,7 @@ import {
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Días de Gracia</mat-label>
+                  <mat-label>{{ 'contracts.create.graceDays' | transloco }}</mat-label>
                   <input matInput type="number" formControlName="grace_days" placeholder="3" />
                 </mat-form-field>
               </div>
@@ -184,7 +192,7 @@ import {
 
             <!-- Servicios Incluidos -->
             <div class="form-section">
-              <h2>Servicios Incluidos</h2>
+              <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
               <div class="services-grid">
                 @for (service of serviceOptions; track service) {
                   <mat-checkbox
@@ -199,101 +207,94 @@ import {
 
             <!-- Responsabilidades -->
             <div class="form-section">
-              <h2>Responsabilidades</h2>
+              <h2>{{ 'contracts.edit.responsibilities' | transloco }}</h2>
 
               <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>Responsabilidades del Inquilino</mat-label>
+                <mat-label>{{ 'contracts.detail.tenantResp' | transloco }}</mat-label>
                 <textarea matInput formControlName="tenant_responsibilities" rows="3"></textarea>
-                <mat-hint
-                  >Ej: Mantener la propiedad en buen estado, pagar servicios a su cargo</mat-hint
-                >
+                <mat-hint>{{ 'contracts.edit.tenantRespHint' | transloco }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>Responsabilidades del Propietario</mat-label>
+                <mat-label>{{ 'contracts.detail.ownerResp' | transloco }}</mat-label>
                 <textarea matInput formControlName="owner_responsibilities" rows="3"></textarea>
-                <mat-hint
-                  >Ej: Realizar reparaciones necesarias, mantener la propiedad habitable</mat-hint
-                >
+                <mat-hint>{{ 'contracts.edit.ownerRespHint' | transloco }}</mat-hint>
               </mat-form-field>
             </div>
 
             <!-- Prohibiciones y Reglas -->
             <div class="form-section">
-              <h2>Prohibiciones y Reglas</h2>
+              <h2>{{ 'contracts.edit.prohibAndRules' | transloco }}</h2>
 
               <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>Prohibiciones</mat-label>
+                <mat-label>{{ 'contracts.detail.prohibitions' | transloco }}</mat-label>
                 <textarea matInput formControlName="prohibitions" rows="2"></textarea>
-                <mat-hint>Ej: No se permiten mascotas, no fumadores</mat-hint>
+                <mat-hint>{{ 'contracts.edit.prohibitionsHint' | transloco }}</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>Reglas de Convivencia</mat-label>
+                <mat-label>{{ 'contracts.detail.coexistenceRules' | transloco }}</mat-label>
                 <textarea matInput formControlName="coexistence_rules" rows="2"></textarea>
-                <mat-hint
-                  >Ej: Respetar horarios de descanso, no hacer ruido después de las 22hs</mat-hint
-                >
+                <mat-hint>{{ 'contracts.edit.coexistenceHint' | transloco }}</mat-hint>
               </mat-form-field>
             </div>
 
             <!-- Términos del Contrato -->
             <div class="form-section">
-              <h2>Términos del Contrato</h2>
+              <h2>{{ 'contracts.edit.contractTerms' | transloco }}</h2>
 
               <div class="form-row">
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Términos de Renovación</mat-label>
+                  <mat-label>{{ 'contracts.edit.renewalTerms' | transloco }}</mat-label>
                   <textarea matInput formControlName="renewal_terms" rows="2"></textarea>
-                  <mat-hint
-                    >Ej: El contrato se renueva automáticamente si ninguna de las partes avisa con
-                    30 días de antelación</mat-hint
-                  >
+                  <mat-hint>{{ 'contracts.edit.renewalTermsHint' | transloco }}</mat-hint>
                 </mat-form-field>
               </div>
 
               <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>Términos de Rescisión</mat-label>
+                <mat-label>{{ 'contracts.edit.terminationTerms' | transloco }}</mat-label>
                 <textarea matInput formControlName="termination_terms" rows="2"></textarea>
-                <mat-hint
-                  >Ej: Cualquiera de las partes puede rescindir con 60 días de preaviso</mat-hint
-                >
+                <mat-hint>{{ 'contracts.edit.terminationHint' | transloco }}</mat-hint>
               </mat-form-field>
 
               <div class="form-row">
-                <mat-checkbox formControlName="auto_renew"> Renovación Automática </mat-checkbox>
+                <mat-checkbox formControlName="auto_renew">
+                  {{ 'contracts.edit.autoRenew' | transloco }}
+                </mat-checkbox>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Días de Aviso</mat-label>
+                  <mat-label>{{ 'contracts.edit.noticeDays' | transloco }}</mat-label>
                   <input matInput type="number" formControlName="renewal_notice_days" />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>% Aumento Anual</mat-label>
+                  <mat-label>{{ 'contracts.edit.annualIncrease' | transloco }}</mat-label>
                   <input matInput type="number" formControlName="auto_increase_percentage" />
                 </mat-form-field>
               </div>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Jurisdicción</mat-label>
+                <mat-label>{{ 'contracts.detail.jurisdiction' | transloco }}</mat-label>
                 <input matInput formControlName="jurisdiction" />
               </mat-form-field>
             </div>
 
             <!-- Datos Bancarios -->
             <div class="form-section">
-              <h2>Datos Bancarios</h2>
+              <h2>{{ 'contracts.detail.bankData' | transloco }}</h2>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Nombre del Banco</mat-label>
+                <mat-label>{{ 'contracts.edit.bankName' | transloco }}</mat-label>
                 <input matInput formControlName="bank_name" />
               </mat-form-field>
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Tipo de Cuenta</mat-label>
+                  <mat-label>{{ 'contracts.edit.accountType' | transloco }}</mat-label>
                   <mat-select formControlName="bank_account_type">
-                    <mat-option value="">Seleccionar...</mat-option>
+                    <mat-option value="">{{
+                      'contracts.edit.selectPlaceholder' | transloco
+                    }}</mat-option>
                     @for (option of bankAccountTypes; track option.value) {
                       <mat-option [value]="option.value">{{ option.label }}</mat-option>
                     }
@@ -301,13 +302,13 @@ import {
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Número de Cuenta</mat-label>
+                  <mat-label>{{ 'contracts.edit.accountNumber' | transloco }}</mat-label>
                   <input matInput formControlName="bank_account_number" />
                 </mat-form-field>
               </div>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Titular de la Cuenta</mat-label>
+                <mat-label>{{ 'contracts.edit.accountHolder' | transloco }}</mat-label>
                 <input matInput formControlName="bank_account_holder" />
               </mat-form-field>
             </div>
@@ -330,15 +331,15 @@ import {
               >
                 @if (isSubmitting) {
                   <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
-                  Guardando...
+                  {{ 'common.saving' | transloco }}
                 } @else {
                   <lucide-icon [img]="Save" [size]="18"></lucide-icon>
-                  Guardar Cambios
+                  {{ 'common.saveChanges' | transloco }}
                 }
               </button>
               <button type="button" mat-stroked-button (click)="goBack()" [disabled]="isSubmitting">
                 <lucide-icon [img]="X" [size]="18"></lucide-icon>
-                Cancelar
+                {{ 'common.cancel' | transloco }}
               </button>
             </div>
           </form>
@@ -547,17 +548,13 @@ export class ContractEditComponent implements OnInit {
   readonly X = X;
   readonly AlertCircle = AlertCircle;
   readonly ContractStatus = ContractStatus;
-  readonly ContractStatusLabels = {
-    [ContractStatus.BORRADOR]: 'Borrador',
-    [ContractStatus.ACTIVO]: 'Activo',
-    [ContractStatus.FINALIZADO]: 'Finalizado',
-  };
 
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private contractService = inject(AdminContractService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Formulario reactivo
   contractForm: FormGroup;
@@ -606,7 +603,7 @@ export class ContractEditComponent implements OnInit {
     if (contractId) {
       this.loadContract(parseInt(contractId));
     } else {
-      this.errorMessage.set('No se especificó el contrato');
+      this.errorMessage.set(this.transloco.translate('contracts.edit.noContractError'));
       this.isLoading.set(false);
     }
   }
@@ -620,7 +617,7 @@ export class ContractEditComponent implements OnInit {
         this.isLoading.set(false);
       },
       error: (_error) => {
-        this.errorMessage.set('Error al cargar el contrato');
+        this.errorMessage.set(this.transloco.translate('contracts.edit.loadError'));
         this.isLoading.set(false);
       },
     });
@@ -702,7 +699,7 @@ export class ContractEditComponent implements OnInit {
     const endDate = this.contractForm.value.end_date;
 
     if (endDate && startDate && endDate <= startDate) {
-      this.errorMessage.set('La fecha de fin debe ser posterior a la fecha de inicio');
+      this.errorMessage.set(this.transloco.translate('contracts.create.dateRangeError'));
       return;
     }
 
@@ -757,7 +754,9 @@ export class ContractEditComponent implements OnInit {
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.errorMessage.set(error.error?.message || 'Error al actualizar el contrato');
+        this.errorMessage.set(
+          error.error?.message || this.transloco.translate('contracts.edit.updateError'),
+        );
       },
     });
   }

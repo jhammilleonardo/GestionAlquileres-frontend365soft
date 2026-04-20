@@ -37,9 +37,14 @@ import {
 } from 'lucide-angular';
 import { startWith, debounceTime, switchMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { PaymentService } from '../../core/services/admin/payment.service';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import { ContractService, Contract } from '../../core/services/admin/contract.service';
+import { FormatService } from '../../core/services/format.service';
+import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
 import {
   Payment,
   PaymentStatus,
@@ -81,7 +86,11 @@ import {
     MatProgressBarModule,
     MatCheckboxModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope({ scope: 'pagos', alias: 'payments' })],
   templateUrl: './pagos.component.html',
   styleUrl: './pagos.component.scss',
 })
@@ -108,6 +117,7 @@ export class PagosComponent implements OnInit {
   paymentService = inject(PaymentService);
   tenantUserService = inject(TenantUserService);
   contractService = inject(ContractService);
+  private formatService = inject(FormatService);
 
   // State
   showFilters = signal(false);
@@ -592,9 +602,7 @@ export class PagosComponent implements OnInit {
   }
 
   formatCurrency(amount: number, currency?: Currency): string {
-    const curr = currency || Currency.USD;
-    const symbol = CurrencySymbols[curr];
-    return `${symbol}${amount.toFixed(2)}`;
+    return this.formatService.formatCurrency(amount, currency);
   }
 
   getCurrencyLabel(currency: Currency): string {

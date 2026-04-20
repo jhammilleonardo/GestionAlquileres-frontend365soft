@@ -8,10 +8,8 @@
         <div class="header-title-section">
           <lucide-icon [img]="Wrench" [size]="32" class="header-icon"></lucide-icon>
           <div>
-            <h1>Gestión de Mantenimiento</h1>
-            <p class="subtitle">
-              Administra todas las solicitudes de mantenimiento de los inquilinos
-            </p>
+            <h1>{{ 'maintenance.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'maintenance.subtitle' | transloco }}</p>
           </div>
         </div>
       </div>
@@ -29,7 +27,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats()?.total || 0 }}</div>
-          <div class="stat-label">Total Solicitudes</div>
+          <div class="stat-label">{{ 'maintenance.totalRequests' | transloco }}</div>
         </div>
       </div>
 
@@ -43,7 +41,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats()?.newRequests || 0 }}</div>
-          <div class="stat-label">Nuevas</div>
+          <div class="stat-label">{{ 'maintenance.new' | transloco }}</div>
         </div>
       </div>
 
@@ -57,7 +55,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats()?.byStatus?.IN_PROGRESS || 0 }}</div>
-          <div class="stat-label">En Progreso</div>
+          <div class="stat-label">{{ 'maintenance.inProgress' | transloco }}</div>
         </div>
       </div>
 
@@ -71,7 +69,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats()?.byStatus?.COMPLETED || 0 }}</div>
-          <div class="stat-label">Completadas</div>
+          <div class="stat-label">{{ 'maintenance.completed' | transloco }}</div>
         </div>
       </div>
     </div>
@@ -82,33 +80,33 @@
       <div class="filter-bar">
         <mat-form-field appearance="outline" class="search-field">
           <lucide-icon matIconPrefix [img]="Search" [size]="20"></lucide-icon>
-          <mat-label>Buscar solicitudes...</mat-label>
+          <mat-label>{{ 'maintenance.searchPlaceholder' | transloco }}</mat-label>
           <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Prioridad</mat-label>
+          <mat-label>{{ 'maintenance.priorityLabel' | transloco }}</mat-label>
           <mat-select [ngModel]="selectedPriority()" (ngModelChange)="selectedPriority.set($event)">
-            <mat-option value="all">Todas</mat-option>
+            <mat-option value="all">{{ 'common.all' | transloco }}</mat-option>
             <mat-option *ngFor="let priority of getPriorityValues()" [value]="priority">
-              {{ priorityLabels[priority] }}
+              {{ 'maintenance.priority.' + priority | transloco }}
             </mat-option>
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Categoría</mat-label>
+          <mat-label>{{ 'maintenance.categoryLabel' | transloco }}</mat-label>
           <mat-select [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)">
-            <mat-option value="all">Todas</mat-option>
+            <mat-option value="all">{{ 'common.all' | transloco }}</mat-option>
             <mat-option *ngFor="let category of getCategoryValues()" [value]="category">
-              {{ categoryLabels[category] }}
+              {{ 'maintenance.category.' + category | transloco }}
             </mat-option>
           </mat-select>
         </mat-form-field>
 
         <button mat-stroked-button (click)="clearFilters()" class="clear-filters-btn">
           <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
-          Limpiar Filtros
+          {{ 'common.clearFilters' | transloco }}
         </button>
       </div>
     </mat-card>
@@ -118,11 +116,11 @@
       @if (filteredRequests().length === 0) {
         <div class="empty-state">
           <lucide-icon [img]="Wrench" [size]="64" class="empty-icon"></lucide-icon>
-          <h2>No hay solicitudes</h2>
-          <p>No se encontraron solicitudes de mantenimiento con los filtros aplicados.</p>
+          <h2>{{ 'maintenance.empty' | transloco }}</h2>
+          <p>{{ 'maintenance.emptyFiltered' | transloco }}</p>
           @if (searchQuery() || selectedPriority() !== 'all' || selectedCategory() !== 'all') {
             <button mat-raised-button color="primary" (click)="clearFilters()">
-              Limpiar Filtros
+              {{ 'common.clearFilters' | transloco }}
             </button>
           }
         </div>
@@ -147,15 +145,17 @@
 
                   <mat-menu #menu="matMenu">
                     <button mat-menu-item (click)="viewRequestDetails(request)">
-                      Ver Detalles
+                      {{ 'maintenance.viewDetail' | transloco }}
                     </button>
-                    <button mat-menu-item [matMenuTriggerFor]="statusMenu">Cambiar Estado</button>
+                    <button mat-menu-item [matMenuTriggerFor]="statusMenu">
+                      {{ 'maintenance.changeStatus' | transloco }}
+                    </button>
                     <button mat-menu-item [matMenuTriggerFor]="priorityMenu">
-                      Cambiar Prioridad
+                      {{ 'maintenance.changePriority' | transloco }}
                     </button>
                     <mat-divider></mat-divider>
                     <button mat-menu-item (click)="deleteRequest(request)" class="delete-option">
-                      Eliminar
+                      {{ 'common.delete' | transloco }}
                     </button>
                   </mat-menu>
 
@@ -163,7 +163,7 @@
                   <mat-menu #statusMenu="matMenu">
                     @for (status of getStatusValues(); track status) {
                       <button mat-menu-item (click)="updateRequestStatus(request, status)">
-                        {{ statusLabels[status] }}
+                        {{ 'maintenance.status.' + status | transloco }}
                       </button>
                     }
                   </mat-menu>
@@ -172,7 +172,7 @@
                   <mat-menu #priorityMenu="matMenu">
                     @for (priority of getPriorityValues(); track priority) {
                       <button mat-menu-item (click)="updateRequestPriority(request, priority)">
-                        {{ priorityLabels[priority] }}
+                        {{ 'maintenance.priority.' + priority | transloco }}
                       </button>
                     }
                   </mat-menu>
@@ -187,7 +187,7 @@
                       style="color: var(--mat-sys-primary); margin-bottom: 12px; font-weight: 500"
                     >
                       <lucide-icon [img]="Wrench" [size]="14"></lucide-icon>
-                      <span>{{ categoryLabels[request.category] }}</span>
+                      <span>{{ 'maintenance.category.' + request.category | transloco }}</span>
                     </div>
                   }
 
@@ -208,7 +208,7 @@
                     }
                     <div class="meta-item">
                       <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                      <span>{{ formatDate(request.created_at) }}</span>
+                      <span>{{ request.created_at | tenantDate }}</span>
                     </div>
                   </div>
                 </div>
@@ -216,7 +216,7 @@
 
               <div class="request-footer">
                 <span class="status-badge" [ngClass]="getStatusColor(request.status)">
-                  {{ statusLabels[request.status] }}
+                  {{ 'maintenance.status.' + request.status | transloco }}
                 </span>
 
                 <div class="d-flex align-items-center gap-3">
@@ -241,7 +241,7 @@
                       [size]="14"
                       *ngIf="request.priority === MaintenancePriority.HIGH"
                     ></lucide-icon>
-                    <span>{{ priorityLabels[request.priority] }}</span>
+                    <span>{{ 'maintenance.priority.' + request.priority | transloco }}</span>
                   </div>
                 </div>
               </div>

@@ -51,6 +51,8 @@ import {
   QrPaymentStatus,
   PaymentStatus,
 } from '../../../core/models/payment.model';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { FormatService } from '../../../core/services/format.service';
 
 interface PaymentScheduleItem {
   label: string;
@@ -80,6 +82,7 @@ interface PaymentScheduleItem {
     MatProgressSpinnerModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="create-payment-container">
@@ -88,8 +91,8 @@ interface PaymentScheduleItem {
           <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
         </button>
         <div>
-          <h1>Registrar Pago</h1>
-          <p>Completa la información de tu pago</p>
+          <h1>{{ 'public.tenantCreatePayment.title' | transloco }}</h1>
+          <p>{{ 'public.tenantCreatePayment.subtitle' | transloco }}</p>
         </div>
       </div>
 
@@ -97,7 +100,7 @@ interface PaymentScheduleItem {
       @if (contractService.isLoading()) {
         <mat-card class="contract-summary-card loading">
           <mat-spinner diameter="32"></mat-spinner>
-          <span>Cargando datos del contrato...</span>
+          <span>{{ 'public.tenantCreatePayment.loadingContract' | transloco }}</span>
         </mat-card>
       } @else if (contractService.currentContract(); as c) {
         <mat-card class="contract-summary-card">
@@ -105,7 +108,7 @@ interface PaymentScheduleItem {
             <span class="summary-icon">
               <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
             </span>
-            <h2>Lo que debes pagar según tu contrato</h2>
+            <h2>{{ 'public.tenantCreatePayment.contractSummaryTitle' | transloco }}</h2>
             <span class="contract-number">{{ c.contract_number }}</span>
           </div>
           <div class="summary-grid">
@@ -115,8 +118,12 @@ interface PaymentScheduleItem {
                 <lucide-icon [img]="Home" [size]="16"></lucide-icon>
               </span>
               <div>
-                <span class="summary-label">Propiedad</span>
-                <span class="summary-value">{{ c.property?.title || 'Propiedad' }}</span>
+                <span class="summary-label">{{
+                  'public.tenantCreatePayment.property' | transloco
+                }}</span>
+                <span class="summary-value">{{
+                  c.property?.title || ('public.tenantCreatePayment.property' | transloco)
+                }}</span>
               </div>
             </div>
 
@@ -126,7 +133,9 @@ interface PaymentScheduleItem {
                 <lucide-icon [img]="CreditCard" [size]="16"></lucide-icon>
               </span>
               <div>
-                <span class="summary-label">Renta mensual</span>
+                <span class="summary-label">{{
+                  'public.tenantCreatePayment.monthlyRent' | transloco
+                }}</span>
                 <span class="summary-value amount">
                   {{ c.currency || 'USD' }} {{ c.monthly_rent | number: '1.2-2' }}
                 </span>
@@ -140,8 +149,12 @@ interface PaymentScheduleItem {
                   <lucide-icon [img]="Calendar" [size]="16"></lucide-icon>
                 </span>
                 <div>
-                  <span class="summary-label">Día de pago</span>
-                  <span class="summary-value">Día {{ c.payment_day }} de cada mes</span>
+                  <span class="summary-label">{{
+                    'public.tenantCreatePayment.paymentDay' | transloco
+                  }}</span>
+                  <span class="summary-value">{{
+                    'public.tenantCreatePayment.paymentDayDesc' | transloco: { day: c.payment_day }
+                  }}</span>
                 </div>
               </div>
             }
@@ -153,7 +166,9 @@ interface PaymentScheduleItem {
                   <lucide-icon [img]="Info" [size]="16"></lucide-icon>
                 </span>
                 <div>
-                  <span class="summary-label">Método pactado</span>
+                  <span class="summary-label">{{
+                    'public.tenantCreatePayment.agreedMethod' | transloco
+                  }}</span>
                   <span class="summary-value">{{ c.payment_method }}</span>
                 </div>
               </div>
@@ -166,16 +181,27 @@ interface PaymentScheduleItem {
                   <lucide-icon [img]="Landmark" [size]="16"></lucide-icon>
                 </span>
                 <div>
-                  <span class="summary-label">Banco destino (propietario)</span>
+                  <span class="summary-label">{{
+                    'public.tenantCreatePayment.bankDestination' | transloco
+                  }}</span>
                   <span class="summary-value">{{ c.bank_name }}</span>
                   @if (c.bank_account_holder) {
-                    <span class="summary-sub">Titular: {{ c.bank_account_holder }}</span>
+                    <span class="summary-sub"
+                      >{{ 'public.tenantCreatePayment.holder' | transloco }}:
+                      {{ c.bank_account_holder }}</span
+                    >
                   }
                   @if (c.bank_account_number) {
-                    <span class="summary-sub">Cuenta: {{ c.bank_account_number }}</span>
+                    <span class="summary-sub"
+                      >{{ 'public.tenantCreatePayment.account' | transloco }}:
+                      {{ c.bank_account_number }}</span
+                    >
                   }
                   @if (c.bank_account_type) {
-                    <span class="summary-sub">Tipo: {{ c.bank_account_type }}</span>
+                    <span class="summary-sub"
+                      >{{ 'public.tenantCreatePayment.accountType' | transloco }}:
+                      {{ c.bank_account_type }}</span
+                    >
                   }
                 </div>
               </div>
@@ -188,13 +214,21 @@ interface PaymentScheduleItem {
                   <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
                 </span>
                 <div>
-                  <span class="summary-label">Penalidad por mora</span>
+                  <span class="summary-label">{{
+                    'public.tenantCreatePayment.latePenalty' | transloco
+                  }}</span>
                   <span class="summary-value">
                     @if (c.grace_days) {
-                      {{ c.grace_days }} días de gracia ·
+                      {{
+                        'public.tenantCreatePayment.graceDays' | transloco: { days: c.grace_days }
+                      }}
+                      ·
                     }
                     @if (c.late_fee_percentage) {
-                      {{ c.late_fee_percentage }}% de recargo
+                      {{
+                        'public.tenantCreatePayment.lateFee'
+                          | transloco: { fee: c.late_fee_percentage }
+                      }}
                     }
                   </span>
                 </div>
@@ -208,15 +242,18 @@ interface PaymentScheduleItem {
       @if (contractService.isLoading()) {
         <mat-card class="calendar-card loading-cal">
           <mat-spinner diameter="28"></mat-spinner>
-          <span>Cargando calendario...</span>
+          <span>{{ 'public.tenantPayments.loadingCalendar' | transloco }}</span>
         </mat-card>
       } @else if (paymentSchedule().length > 0) {
         <mat-card class="calendar-card">
           <div class="calendar-header" (click)="calendarExpanded.set(!calendarExpanded())">
             <div class="calendar-title">
               <lucide-icon [img]="CalendarDays" [size]="20" class="cal-icon"></lucide-icon>
-              <h2>Calendario de Pagos</h2>
-              <span class="cal-badge">{{ paymentSchedule().length }} cuotas</span>
+              <h2>{{ 'public.tenantPayments.calendarTitle' | transloco }}</h2>
+              <span class="cal-badge">{{
+                'public.tenantPayments.installmentsCount'
+                  | transloco: { count: paymentSchedule().length }
+              }}</span>
             </div>
             <!-- Stepper inline -->
             <div class="cal-stepper">
@@ -249,10 +286,22 @@ interface PaymentScheduleItem {
             <mat-divider></mat-divider>
 
             <div class="cal-legend">
-              <span class="legend-item paid"><span class="legend-dot"></span>Pagado</span>
-              <span class="legend-item current"><span class="legend-dot"></span>Este mes</span>
-              <span class="legend-item overdue"><span class="legend-dot"></span>Pendiente</span>
-              <span class="legend-item upcoming"><span class="legend-dot"></span>Próximo</span>
+              <span class="legend-item paid"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calPaid' | transloco }}</span
+              >
+              <span class="legend-item current"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calCurrent' | transloco }}</span
+              >
+              <span class="legend-item overdue"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calOverdue' | transloco }}</span
+              >
+              <span class="legend-item upcoming"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calUpcoming' | transloco }}</span
+              >
             </div>
 
             <div class="cal-scroll-container">
@@ -261,7 +310,12 @@ interface PaymentScheduleItem {
                   <div class="cal-item cal-{{ item.status }}">
                     <div class="cal-item-body">
                       <div class="cal-month">{{ item.label }}</div>
-                      <div class="cal-due">Vence día {{ item.dueDate.getDate() }}</div>
+                      <div class="cal-due">
+                        {{
+                          'public.tenantPayments.dueDayX'
+                            | transloco: { day: item.dueDate.getDate() }
+                        }}
+                      </div>
                       <div class="cal-amount">
                         {{ item.currency }}&nbsp;{{ item.amount | number: '1.2-2' }}
                       </div>
@@ -308,31 +362,39 @@ interface PaymentScheduleItem {
       @if (qrService.activeQr()?.status === QrStatus.PAGADO) {
         <mat-card class="success-card">
           <lucide-icon [img]="CheckCircle2" [size]="48" class="success-icon"></lucide-icon>
-          <h2>¡Pago QR Confirmado!</h2>
+          <h2>{{ 'public.tenantCreatePayment.qrConfirmedTitle' | transloco }}</h2>
           <p>
-            Tu pago por
+            {{ 'public.tenantCreatePayment.qrConfirmedDescBefore' | transloco }}
             <strong
               >{{ currencySymbol(qrService.activeQr()!.currency)
               }}{{ qrService.activeQr()!.amount | number: '1.2-2' }}</strong
             >
-            fue procesado automáticamente.
+            {{ 'public.tenantCreatePayment.qrConfirmedDescAfter' | transloco }}
           </p>
           @if (qrService.activeQr()?.transaction_id) {
             <span class="tx-badge">TXN: {{ qrService.activeQr()!.transaction_id }}</span>
           }
           <div class="success-actions">
-            <button mat-raised-button color="primary" (click)="goBack()">Volver a Pagos</button>
-            <button mat-stroked-button (click)="resetForm()">Nuevo Pago</button>
+            <button mat-raised-button color="primary" (click)="goBack()">
+              {{ 'public.tenantCreatePayment.backToPayments' | transloco }}
+            </button>
+            <button mat-stroked-button (click)="resetForm()">
+              {{ 'public.tenantCreatePayment.newPayment' | transloco }}
+            </button>
           </div>
         </mat-card>
       } @else if (success()) {
         <mat-card class="success-card">
           <lucide-icon [img]="CheckCircle2" [size]="48" class="success-icon"></lucide-icon>
-          <h2>¡Pago Registrado!</h2>
-          <p>Tu pago ha sido registrado exitosamente y está pendiente de aprobación.</p>
+          <h2>{{ 'public.tenantCreatePayment.paymentRegisteredTitle' | transloco }}</h2>
+          <p>{{ 'public.tenantCreatePayment.paymentRegisteredDesc' | transloco }}</p>
           <div class="success-actions">
-            <button mat-raised-button color="primary" (click)="goBack()">Volver a Pagos</button>
-            <button mat-stroked-button (click)="resetForm()">Registrar Otro Pago</button>
+            <button mat-raised-button color="primary" (click)="goBack()">
+              {{ 'public.tenantCreatePayment.backToPayments' | transloco }}
+            </button>
+            <button mat-stroked-button (click)="resetForm()">
+              {{ 'public.tenantCreatePayment.registerAnotherPayment' | transloco }}
+            </button>
           </div>
         </mat-card>
       } @else {
@@ -342,7 +404,7 @@ interface PaymentScheduleItem {
             <span class="form-card-header-icon">
               <lucide-icon [img]="CreditCard" [size]="16"></lucide-icon>
             </span>
-            <span>Registrar Pago</span>
+            <span>{{ 'public.tenantCreatePayment.registerPayment' | transloco }}</span>
           </div>
 
           <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()" class="form-body">
@@ -351,11 +413,11 @@ interface PaymentScheduleItem {
               <div class="section-title">
                 <span class="section-title-accent"></span>
                 <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
-                Información del Pago
+                {{ 'public.tenantCreatePayment.paymentInfo' | transloco }}
               </div>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Tipo de Pago*</mat-label>
+                <mat-label>{{ 'public.tenantCreatePayment.paymentType' | transloco }}</mat-label>
                 <mat-select formControlName="payment_type" required>
                   @for (type of paymentTypes; track type.value) {
                     <mat-option [value]="type.value">{{ type.label }}</mat-option>
@@ -365,13 +427,13 @@ interface PaymentScheduleItem {
                   paymentForm.get('payment_type')?.hasError('required') &&
                   paymentForm.get('payment_type')?.touched
                 ) {
-                  <mat-error>El tipo de pago es requerido</mat-error>
+                  <mat-error>{{ 'public.tenantCreatePayment.typeRequired' | transloco }}</mat-error>
                 }
               </mat-form-field>
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Monto*</mat-label>
+                  <mat-label>{{ 'public.tenantCreatePayment.amount' | transloco }}</mat-label>
                   <span matTextPrefix>Bs&nbsp;</span>
                   <input
                     matInput
@@ -386,15 +448,17 @@ interface PaymentScheduleItem {
                     paymentForm.get('amount')?.hasError('required') &&
                     paymentForm.get('amount')?.touched
                   ) {
-                    <mat-error>El monto es requerido</mat-error>
+                    <mat-error>{{
+                      'public.tenantCreatePayment.amountRequired' | transloco
+                    }}</mat-error>
                   }
                   @if (paymentForm.get('amount')?.hasError('min')) {
-                    <mat-error>El monto debe ser mayor a 0</mat-error>
+                    <mat-error>{{ 'public.tenantCreatePayment.amountMin' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Moneda*</mat-label>
+                  <mat-label>{{ 'public.tenantCreatePayment.currency' | transloco }}</mat-label>
                   <mat-select formControlName="currency" required>
                     @for (curr of currencies; track curr.value) {
                       <mat-option [value]="curr.value">
@@ -406,14 +470,16 @@ interface PaymentScheduleItem {
                     paymentForm.get('currency')?.hasError('required') &&
                     paymentForm.get('currency')?.touched
                   ) {
-                    <mat-error>La moneda es requerida</mat-error>
+                    <mat-error>{{
+                      'public.tenantCreatePayment.currencyRequired' | transloco
+                    }}</mat-error>
                   }
                 </mat-form-field>
               </div>
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Método de Pago*</mat-label>
+                  <mat-label>{{ 'public.tenantCreatePayment.method' | transloco }}</mat-label>
                   <mat-select formControlName="payment_method" required>
                     @for (method of paymentMethods; track method.value) {
                       <mat-option [value]="method.value">{{ method.label }}</mat-option>
@@ -423,13 +489,17 @@ interface PaymentScheduleItem {
                     paymentForm.get('payment_method')?.hasError('required') &&
                     paymentForm.get('payment_method')?.touched
                   ) {
-                    <mat-error>El método de pago es requerido</mat-error>
+                    <mat-error>{{
+                      'public.tenantCreatePayment.methodRequired' | transloco
+                    }}</mat-error>
                   }
                 </mat-form-field>
 
                 @if (!isQrMethod()) {
                   <mat-form-field appearance="outline">
-                    <mat-label>Fecha de Pago*</mat-label>
+                    <mat-label>{{
+                      'public.tenantCreatePayment.paymentDate' | transloco
+                    }}</mat-label>
                     <input
                       matInput
                       [matDatepicker]="picker"
@@ -443,7 +513,9 @@ interface PaymentScheduleItem {
                       paymentForm.get('payment_date')?.hasError('required') &&
                       paymentForm.get('payment_date')?.touched
                     ) {
-                      <mat-error>La fecha es requerida</mat-error>
+                      <mat-error>{{
+                        'public.tenantCreatePayment.dateRequired' | transloco
+                      }}</mat-error>
                     }
                   </mat-form-field>
                 }
@@ -455,10 +527,11 @@ interface PaymentScheduleItem {
               <div class="form-section last">
                 <div class="qr-info-banner">
                   <lucide-icon [img]="QrCode" [size]="18"></lucide-icon>
-                  <span
-                    >Compatible con <strong>MC4 / SIP Bolivia</strong>. Escanéalo desde cualquier
-                    app bancaria que soporte QR interbancario.</span
-                  >
+                  <span>
+                    {{ 'public.tenantCreatePayment.qrInfoBefore' | transloco }}
+                    <strong>MC4 / SIP Bolivia</strong>.
+                    {{ 'public.tenantCreatePayment.qrInfoAfter' | transloco }}
+                  </span>
                 </div>
 
                 @if (
@@ -467,16 +540,13 @@ interface PaymentScheduleItem {
                 ) {
                   <div class="qr-result-msg expired">
                     <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
-                    <span
-                      >El QR
-                      {{
-                        qrService.activeQr()!.status === QrStatus.EXPIRADO
-                          ? 'expiró'
-                          : 'fue cancelado'
-                      }}. Genera uno nuevo.</span
-                    >
+                    <span>{{
+                      qrService.activeQr()!.status === QrStatus.EXPIRADO
+                        ? ('public.tenantCreatePayment.qrExpired' | transloco)
+                        : ('public.tenantCreatePayment.qrCancelled' | transloco)
+                    }}</span>
                     <button mat-stroked-button type="button" (click)="resetQr()">
-                      Intentar de nuevo
+                      {{ 'public.tenantCreatePayment.tryAgain' | transloco }}
                     </button>
                   </div>
                 }
@@ -484,7 +554,9 @@ interface PaymentScheduleItem {
                 @if (qrService.activeQr()?.status === QrStatus.PENDIENTE) {
                   <div class="qr-active-section">
                     <div class="qr-amount-row">
-                      <span class="qr-amount-label">Total a pagar</span>
+                      <span class="qr-amount-label">{{
+                        'public.tenantCreatePayment.totalToPay' | transloco
+                      }}</span>
                       <span class="qr-amount-value">
                         {{ currencySymbol(qrService.activeQr()!.currency)
                         }}{{ qrService.activeQr()!.amount | number: '1.2-2' }}
@@ -492,7 +564,7 @@ interface PaymentScheduleItem {
                       </span>
                       <span class="qr-pending-chip">
                         <lucide-icon [img]="Clock" [size]="13"></lucide-icon>
-                        Esperando pago...
+                        {{ 'public.tenantCreatePayment.waitingPayment' | transloco }}
                       </span>
                     </div>
                     <div class="qr-image-wrapper">
@@ -501,27 +573,44 @@ interface PaymentScheduleItem {
                       } @else {
                         <div class="qr-placeholder">
                           <lucide-icon [img]="QrCode" [size]="72"></lucide-icon>
-                          <span>Generando QR...</span>
+                          <span>{{ 'public.tenantCreatePayment.generatingQr' | transloco }}</span>
                         </div>
                       }
                     </div>
                     <div class="qr-steps">
-                      <div class="step"><span class="step-no">1</span>Abre tu app bancaria</div>
                       <div class="step">
-                        <span class="step-no">2</span>Selecciona <strong>Pagar con QR</strong>
+                        <span class="step-no">1</span
+                        >{{ 'public.tenantCreatePayment.step1' | transloco }}
                       </div>
                       <div class="step">
-                        <span class="step-no">3</span>Escanea y confirma el pago
+                        <span class="step-no">2</span>
+                        <span>
+                          {{ 'public.tenantCreatePayment.step2Before' | transloco }}
+                          <strong>{{
+                            'public.tenantCreatePayment.step2Action' | transloco
+                          }}</strong>
+                          {{ 'public.tenantCreatePayment.step2After' | transloco }}
+                        </span>
                       </div>
                       <div class="step">
-                        <span class="step-no">4</span>Esta pantalla se actualiza sola
+                        <span class="step-no">3</span
+                        >{{ 'public.tenantCreatePayment.step3' | transloco }}
+                      </div>
+                      <div class="step">
+                        <span class="step-no">4</span
+                        >{{ 'public.tenantCreatePayment.step4' | transloco }}
                       </div>
                     </div>
                     @if (qrService.activeQr()?.expires_at) {
                       <div class="qr-expires">
                         <lucide-icon [img]="Clock" [size]="13"></lucide-icon>
-                        Vence: {{ formatDate(qrService.activeQr()!.expires_at!) }}
-                        <span class="poll-label">· Verificando cada 5s</span>
+                        {{
+                          'public.tenantCreatePayment.expiresAt'
+                            | transloco: { date: formatDate(qrService.activeQr()!.expires_at!) }
+                        }}
+                        <span class="poll-label"
+                          >· {{ 'public.tenantCreatePayment.pollingStatus' | transloco }}</span
+                        >
                       </div>
                     }
                     <div class="qr-active-actions">
@@ -536,12 +625,12 @@ interface PaymentScheduleItem {
                         } @else {
                           <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
                         }
-                        Verificar ahora
+                        {{ 'public.tenantCreatePayment.verifyNow' | transloco }}
                       </button>
                       @if (qrSafeUrl()) {
                         <button mat-stroked-button type="button" (click)="downloadQr()">
                           <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-                          Descargar QR
+                          {{ 'public.tenantCreatePayment.downloadQr' | transloco }}
                         </button>
                       }
                       <button
@@ -556,7 +645,7 @@ interface PaymentScheduleItem {
                         } @else {
                           <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
                         }
-                        Cancelar QR
+                        {{ 'public.tenantCreatePayment.cancelQr' | transloco }}
                       </button>
                     </div>
                   </div>
@@ -571,12 +660,16 @@ interface PaymentScheduleItem {
                       [disabled]="paymentForm.get('amount')?.invalid || qrService.isLoading()"
                     >
                       @if (qrService.isLoading()) {
-                        <mat-spinner diameter="20"></mat-spinner> Generando QR...
+                        <mat-spinner diameter="20"></mat-spinner>
+                        {{ 'public.tenantCreatePayment.generatingBtn' | transloco }}
                       } @else {
-                        <lucide-icon [img]="QrCode" [size]="20"></lucide-icon> Generar QR de Pago
+                        <lucide-icon [img]="QrCode" [size]="20"></lucide-icon>
+                        {{ 'public.tenantCreatePayment.generateQrBtn' | transloco }}
                       }
                     </button>
-                    <button type="button" mat-stroked-button (click)="goBack()">Cancelar</button>
+                    <button type="button" mat-stroked-button (click)="goBack()">
+                      {{ 'public.tenantCreatePayment.cancel' | transloco }}
+                    </button>
                   </div>
                 }
               </div>
@@ -596,7 +689,7 @@ interface PaymentScheduleItem {
                 <div class="section-title">
                   <span class="section-title-accent"></span>
                   <lucide-icon [img]="Landmark" [size]="15"></lucide-icon>
-                  Datos del Método
+                  {{ 'public.tenantCreatePayment.methodData' | transloco }}
                 </div>
 
                 <!-- Tarjeta de Crédito/Débito -->
@@ -606,7 +699,9 @@ interface PaymentScheduleItem {
                 ) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Últimos 4 dígitos</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.last4Digits' | transloco
+                      }}</mat-label>
                       <input
                         matInput
                         formControlName="card_last_4_digits"
@@ -614,29 +709,33 @@ interface PaymentScheduleItem {
                         maxlength="4"
                         pattern="[0-9]{4}"
                       />
-                      <mat-hint>Dígitos de la tarjeta</mat-hint>
+                      <mat-hint>{{ 'public.tenantCreatePayment.last4Hint' | transloco }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Nombre del Titular</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.cardHolder' | transloco
+                      }}</mat-label>
                       <input matInput formControlName="card_holder_name" placeholder="Juan Pérez" />
                     </mat-form-field>
                   </div>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Fecha de Expiración</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.expiryDate' | transloco
+                      }}</mat-label>
                       <input
                         matInput
                         formControlName="card_expiry"
                         placeholder="MM/YY"
                         maxlength="5"
                       />
-                      <mat-hint>Formato: MM/YY</mat-hint>
+                      <mat-hint>{{ 'public.tenantCreatePayment.expiryHint' | transloco }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Código de Autorización (Opcional)</mat-label>
+                      <mat-label>{{ 'public.tenantCreatePayment.authCode' | transloco }}</mat-label>
                       <input
                         matInput
                         formControlName="reference_number"
@@ -650,18 +749,20 @@ interface PaymentScheduleItem {
                 @if (paymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Número de Cheque</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.checkNumber' | transloco
+                      }}</mat-label>
                       <input matInput formControlName="check_number" placeholder="Ej: CHK-001" />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Banco Emisor</mat-label>
+                      <mat-label>{{ 'public.tenantCreatePayment.bankName' | transloco }}</mat-label>
                       <input matInput formControlName="bank_name" placeholder="Banco Nacional" />
                     </mat-form-field>
                   </div>
 
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                    <mat-label>{{ 'public.tenantCreatePayment.accTitle' | transloco }}</mat-label>
                     <input
                       matInput
                       formControlName="bank_account_last_4"
@@ -677,23 +778,25 @@ interface PaymentScheduleItem {
                   paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER
                 ) {
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Número de Referencia</mat-label>
+                    <mat-label>{{ 'public.tenantCreatePayment.refNumber' | transloco }}</mat-label>
                     <input
                       matInput
                       formControlName="reference_number"
                       placeholder="Ej: TRF-12345"
                     />
-                    <mat-hint>Número de transacción bancaria</mat-hint>
+                    <mat-hint>{{ 'public.tenantCreatePayment.refHint' | transloco }}</mat-hint>
                   </mat-form-field>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Banco de Origen</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.originBank' | transloco
+                      }}</mat-label>
                       <input matInput formControlName="bank_name" placeholder="Tu banco" />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Últimos 4 dígitos cuenta</mat-label>
+                      <mat-label>{{ 'public.tenantCreatePayment.accTitle' | transloco }}</mat-label>
                       <input
                         matInput
                         formControlName="bank_account_last_4"
@@ -708,17 +811,23 @@ interface PaymentScheduleItem {
                 @if (paymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Recibido por</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.receivedBy' | transloco
+                      }}</mat-label>
                       <input
                         matInput
                         formControlName="received_by"
                         placeholder="Nombre de quien recibió"
                       />
-                      <mat-hint>Persona que recibió el pago</mat-hint>
+                      <mat-hint>{{
+                        'public.tenantCreatePayment.receivedByHint' | transloco
+                      }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Número de Recibo (Opcional)</mat-label>
+                      <mat-label>{{
+                        'public.tenantCreatePayment.receiptNumber' | transloco
+                      }}</mat-label>
                       <input
                         matInput
                         formControlName="reference_number"
@@ -736,17 +845,17 @@ interface PaymentScheduleItem {
                 <div class="section-title">
                   <span class="section-title-accent"></span>
                   <lucide-icon [img]="FileText" [size]="15"></lucide-icon>
-                  Notas Adicionales
+                  {{ 'public.tenantCreatePayment.additionalNotes' | transloco }}
                 </div>
 
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Notas del Pago (Opcional)</mat-label>
+                  <mat-label>{{ 'public.tenantCreatePayment.notesLbl' | transloco }}</mat-label>
                   <textarea
                     matInput
                     formControlName="notes"
                     rows="3"
                     maxlength="500"
-                    placeholder="Información adicional sobre el pago..."
+                    [placeholder]="'public.tenantCreatePayment.notesPlaceholder' | transloco"
                   ></textarea>
                   <mat-hint align="end">
                     {{ paymentForm.get('notes')?.value?.length || 0 }} / 500
@@ -763,10 +872,10 @@ interface PaymentScheduleItem {
                 >
                   @if (paymentService.isLoading()) {
                     <mat-spinner diameter="20"></mat-spinner>
-                    Registrando...
+                    {{ 'public.tenantCreatePayment.registering' | transloco }}
                   } @else {
                     <lucide-icon [img]="CreditCard" [size]="20"></lucide-icon>
-                    Registrar Pago
+                    {{ 'public.tenantCreatePayment.registerPayment' | transloco }}
                   }
                 </button>
                 <button
@@ -775,7 +884,7 @@ interface PaymentScheduleItem {
                   (click)="goBack()"
                   [disabled]="paymentService.isLoading()"
                 >
-                  Cancelar
+                  {{ 'public.tenantCreatePayment.cancel' | transloco }}
                 </button>
               </div>
             }
@@ -1756,6 +1865,8 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
   qrService = inject(TenantQrPaymentService);
   contractService = inject(TenantContractService);
   private tenantAuthService = inject(TenantAuthService);
+  private translocoService = inject(TranslocoService);
+  private formatService = inject(FormatService);
 
   success = signal(false);
   maxDate = new Date();
@@ -1890,16 +2001,16 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
 
       if (isPaid) {
         status = 'paid';
-        statusLabel = 'Pagado';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calPaid');
       } else if (isCurrent) {
         status = 'current';
-        statusLabel = 'Este mes';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calCurrent');
       } else if (isPastDue) {
         status = 'overdue';
-        statusLabel = 'Pendiente';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calOverdue');
       } else {
         status = 'upcoming';
-        statusLabel = 'Próximo';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calUpcoming');
       }
 
       const raw = cursor.toLocaleDateString('es', { month: 'short', year: 'numeric' });
@@ -1944,13 +2055,7 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
   }
 
   formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es-BO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return this.formatService.formatDateTime(iso);
   }
 
   onSubmit(): void {

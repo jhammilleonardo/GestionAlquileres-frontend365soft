@@ -1,8 +1,11 @@
-import { Component, AfterViewInit, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, AfterViewInit, PLATFORM_ID, Inject, inject } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { LanguageService } from '../../core/services/language.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import {
   LucideAngularModule,
   Building2,
@@ -25,7 +28,15 @@ import {
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatButtonModule, MatCardModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatButtonModule,
+    MatCardModule,
+    LucideAngularModule,
+    TranslocoModule,
+  ],
+  providers: [provideTranslocoScope('landing')],
   template: `
     <div class="landing-page">
       <!-- Top Bar -->
@@ -38,12 +49,32 @@ import {
             <span class="brand-name">365Soft</span>
           </div>
           <div class="top-actions">
+            <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isSpanish()"
+                (click)="languageService.setLanguage('es')"
+                aria-label="Español"
+                title="Español"
+              >
+                ES
+              </button>
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isEnglish()"
+                (click)="languageService.setLanguage('en')"
+                aria-label="English"
+                title="English"
+              >
+                EN
+              </button>
+            </div>
             <button mat-button routerLink="/login" class="login-link">
               <lucide-icon [img]="LogIn" [size]="18"></lucide-icon>
-              Iniciar Sesión
+              {{ 'landing.login' | transloco }}
             </button>
             <button mat-raised-button color="primary" routerLink="/register" class="signup-btn">
-              Comenzar Gratis
+              {{ 'landing.startFree' | transloco }}
             </button>
           </div>
         </div>
@@ -61,19 +92,16 @@ import {
           <div class="hero-content">
             <div class="hero-badge reveal">
               <lucide-icon [img]="Zap" [size]="14"></lucide-icon>
-              La plataforma #1 para gestión de alquileres
+              {{ 'landing.heroBadge' | transloco }}
             </div>
             <h1 class="reveal">
-              Gestiona tus propiedades<br />
-              <span class="gradient-text">sin complicaciones</span>
+              {{ 'landing.heroTitle1' | transloco }}<br />
+              <span class="gradient-text">{{ 'landing.heroTitle2' | transloco }}</span>
             </h1>
-            <p class="hero-subtitle reveal">
-              Administra propiedades, inquilinos, contratos y pagos desde una sola plataforma.
-              Automatiza tu negocio inmobiliario y ahorra tiempo.
-            </p>
+            <p class="hero-subtitle reveal">{{ 'landing.heroSubtitle' | transloco }}</p>
             <div class="hero-cta reveal">
               <button mat-raised-button color="primary" routerLink="/register" class="cta-large">
-                Comenzar Ahora — Es Gratis
+                {{ 'landing.heroCta' | transloco }}
                 <lucide-icon [img]="ArrowRight" [size]="20"></lucide-icon>
               </button>
             </div>
@@ -91,13 +119,16 @@ import {
                 <div class="d-card-body">
                   <div class="d-stat-row">
                     <div class="d-stat">
-                      <span class="d-num">24</span><span class="d-lbl">Propiedades</span>
+                      <span class="d-num">24</span
+                      ><span class="d-lbl">{{ 'landing.dashboardProperties' | transloco }}</span>
                     </div>
                     <div class="d-stat">
-                      <span class="d-num">18</span><span class="d-lbl">Inquilinos</span>
+                      <span class="d-num">18</span
+                      ><span class="d-lbl">{{ 'landing.dashboardTenants' | transloco }}</span>
                     </div>
                     <div class="d-stat">
-                      <span class="d-num">Bs 42k</span><span class="d-lbl">Ingresos</span>
+                      <span class="d-num">Bs 42k</span
+                      ><span class="d-lbl">{{ 'landing.dashboardRevenue' | transloco }}</span>
                     </div>
                   </div>
                   <div class="d-bar-group">
@@ -112,17 +143,17 @@ import {
               </div>
               <div class="dashboard-card card-small card-s1">
                 <lucide-icon [img]="CheckCircle" [size]="18" class="cs-icon green"></lucide-icon>
-                <span>Pago aprobado</span>
+                <span>{{ 'landing.dashboardPaymentApproved' | transloco }}</span>
                 <strong>Bs 2,500</strong>
               </div>
               <div class="dashboard-card card-small card-s2">
                 <lucide-icon [img]="Wrench" [size]="18" class="cs-icon orange"></lucide-icon>
-                <span>Solicitud nueva</span>
+                <span>{{ 'landing.dashboardNewRequest' | transloco }}</span>
                 <strong>Plomería</strong>
               </div>
               <div class="dashboard-card card-small card-s3">
                 <lucide-icon [img]="FileText" [size]="18" class="cs-icon blue"></lucide-icon>
-                <span>Contrato firmado</span>
+                <span>{{ 'landing.dashboardContractSigned' | transloco }}</span>
                 <strong>Apto 4B</strong>
               </div>
             </div>
@@ -135,23 +166,23 @@ import {
         <div class="container">
           <div class="stats-row">
             <div class="stat-item reveal">
-              <span class="stat-num">500+</span>
-              <span class="stat-desc">Propiedades gestionadas</span>
+              <span class="stat-num">{{ 'landing.stat1Num' | transloco }}</span>
+              <span class="stat-desc">{{ 'landing.stat1Desc' | transloco }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item reveal">
-              <span class="stat-num">1,200+</span>
-              <span class="stat-desc">Inquilinos activos</span>
+              <span class="stat-num">{{ 'landing.stat2Num' | transloco }}</span>
+              <span class="stat-desc">{{ 'landing.stat2Desc' | transloco }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item reveal">
-              <span class="stat-num">98%</span>
-              <span class="stat-desc">Satisfacción de clientes</span>
+              <span class="stat-num">{{ 'landing.stat3Num' | transloco }}</span>
+              <span class="stat-desc">{{ 'landing.stat3Desc' | transloco }}</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item reveal">
-              <span class="stat-num">Bs 5M+</span>
-              <span class="stat-desc">Pagos procesados</span>
+              <span class="stat-num">{{ 'landing.stat4Num' | transloco }}</span>
+              <span class="stat-desc">{{ 'landing.stat4Desc' | transloco }}</span>
             </div>
           </div>
         </div>
@@ -161,9 +192,9 @@ import {
       <section class="modules">
         <div class="container">
           <div class="section-header reveal">
-            <div class="section-tag">Módulos</div>
-            <h2>Todo lo que necesitas para<br />administrar tu negocio</h2>
-            <p>Módulos potentes diseñados para propietarios e inmobiliarias</p>
+            <div class="section-tag">{{ 'landing.modulesTag' | transloco }}</div>
+            <h2>{{ 'landing.modulesTitle' | transloco }}</h2>
+            <p>{{ 'landing.modulesSubtitle' | transloco }}</p>
           </div>
 
           <div class="modules-grid">
@@ -171,27 +202,24 @@ import {
               <div class="module-icon-wrap properties">
                 <lucide-icon [img]="Building2" [size]="28"></lucide-icon>
               </div>
-              <h3>Propiedades</h3>
-              <p>
-                Gestiona tu portafolio completo de propiedades con información detallada, imágenes y
-                documentos.
-              </p>
+              <h3>{{ 'landing.mod1Title' | transloco }}</h3>
+              <p>{{ 'landing.mod1Desc' | transloco }}</p>
               <ul class="module-features">
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Catálogo digital con
-                  imágenes
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod1F1' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Control de
-                  disponibilidad
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod1F2' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Historial de
-                  mantenimiento
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod1F3' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Portal público de
-                  alquiler
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod1F4' | transloco }}
                 </li>
               </ul>
               <div class="card-shine"></div>
@@ -201,24 +229,24 @@ import {
               <div class="module-icon-wrap tenants">
                 <lucide-icon [img]="Users" [size]="28"></lucide-icon>
               </div>
-              <h3>Inquilinos</h3>
-              <p>
-                Administra toda la información de tus inquilinos y su comunicación desde un solo
-                lugar.
-              </p>
+              <h3>{{ 'landing.mod2Title' | transloco }}</h3>
+              <p>{{ 'landing.mod2Desc' | transloco }}</p>
               <ul class="module-features">
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Base de datos
-                  centralizada
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod2F1' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Portal de autogestión
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod2F2' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Mensajería integrada
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod2F3' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Documentos digitales
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod2F4' | transloco }}
                 </li>
               </ul>
               <div class="card-shine"></div>
@@ -228,22 +256,24 @@ import {
               <div class="module-icon-wrap leases">
                 <lucide-icon [img]="FileText" [size]="28"></lucide-icon>
               </div>
-              <h3>Contratos</h3>
-              <p>Crea, gestiona y renueva contratos de arrendamiento de forma digital.</p>
+              <h3>{{ 'landing.mod3Title' | transloco }}</h3>
+              <p>{{ 'landing.mod3Desc' | transloco }}</p>
               <ul class="module-features">
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Generación automática
-                  PDF
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod3F1' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Firma digital de
-                  inquilinos
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod3F2' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Alertas de vencimiento
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod3F3' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Renovación automática
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod3F4' | transloco }}
                 </li>
               </ul>
               <div class="card-shine"></div>
@@ -253,23 +283,24 @@ import {
               <div class="module-icon-wrap payments">
                 <lucide-icon [img]="DollarSign" [size]="28"></lucide-icon>
               </div>
-              <h3>Pagos y Finanzas</h3>
-              <p>Registra pagos, aprueba comprobantes y mantén tu contabilidad al día.</p>
+              <h3>{{ 'landing.mod4Title' | transloco }}</h3>
+              <p>{{ 'landing.mod4Desc' | transloco }}</p>
               <ul class="module-features">
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Registro de pagos en
-                  línea
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod4F1' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Aprobación de
-                  comprobantes
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod4F2' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Recordatorios
-                  automáticos
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod4F3' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Reportes financieros
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod4F4' | transloco }}
                 </li>
               </ul>
               <div class="card-shine"></div>
@@ -279,22 +310,24 @@ import {
               <div class="module-icon-wrap maintenance">
                 <lucide-icon [img]="Wrench" [size]="28"></lucide-icon>
               </div>
-              <h3>Mantenimiento</h3>
-              <p>Gestiona solicitudes de mantenimiento y da seguimiento hasta su resolución.</p>
+              <h3>{{ 'landing.mod5Title' | transloco }}</h3>
+              <p>{{ 'landing.mod5Desc' | transloco }}</p>
               <ul class="module-features">
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Portal de solicitudes
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod5F1' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Asignación de personal
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod5F2' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Seguimiento en tiempo
-                  real
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod5F3' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Historial de
-                  reparaciones
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod5F4' | transloco }}
                 </li>
               </ul>
               <div class="card-shine"></div>
@@ -304,20 +337,24 @@ import {
               <div class="module-icon-wrap reports">
                 <lucide-icon [img]="BarChart3" [size]="28"></lucide-icon>
               </div>
-              <h3>Reportes y Analytics</h3>
-              <p>Visualiza el rendimiento de tu negocio con dashboards en tiempo real.</p>
+              <h3>{{ 'landing.mod6Title' | transloco }}</h3>
+              <p>{{ 'landing.mod6Desc' | transloco }}</p>
               <ul class="module-features">
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Dashboard interactivo
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod6F1' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Ingresos y gastos
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod6F2' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Tasa de ocupación
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod6F3' | transloco }}
                 </li>
                 <li>
-                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon> Exportación a Excel
+                  <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+                  {{ 'landing.mod6F4' | transloco }}
                 </li>
               </ul>
               <div class="card-shine"></div>
@@ -330,9 +367,9 @@ import {
       <section class="how-it-works">
         <div class="container">
           <div class="section-header reveal">
-            <div class="section-tag">Proceso</div>
-            <h2>Empieza en minutos</h2>
-            <p>Configura tu cuenta y comienza a gestionar tus propiedades</p>
+            <div class="section-tag">{{ 'landing.howTag' | transloco }}</div>
+            <h2>{{ 'landing.howTitle' | transloco }}</h2>
+            <p>{{ 'landing.howSubtitle' | transloco }}</p>
           </div>
 
           <div class="steps">
@@ -340,31 +377,31 @@ import {
               <div class="step-number">1</div>
               <div class="step-line"></div>
               <div class="step-content">
-                <h3>Crea tu cuenta</h3>
-                <p>Regístrate y configura tu organización en el sistema en menos de 2 minutos.</p>
+                <h3>{{ 'landing.step1Title' | transloco }}</h3>
+                <p>{{ 'landing.step1Desc' | transloco }}</p>
               </div>
             </div>
             <div class="step reveal-left" style="--delay: 100ms">
               <div class="step-number">2</div>
               <div class="step-line"></div>
               <div class="step-content">
-                <h3>Agrega tus propiedades</h3>
-                <p>Importa o carga tus propiedades con fotos, descripciones y detalles.</p>
+                <h3>{{ 'landing.step2Title' | transloco }}</h3>
+                <p>{{ 'landing.step2Desc' | transloco }}</p>
               </div>
             </div>
             <div class="step reveal-left" style="--delay: 200ms">
               <div class="step-number">3</div>
               <div class="step-line"></div>
               <div class="step-content">
-                <h3>Invita a tus inquilinos</h3>
-                <p>Crea contratos digitales e invita a tus inquilinos al portal.</p>
+                <h3>{{ 'landing.step3Title' | transloco }}</h3>
+                <p>{{ 'landing.step3Desc' | transloco }}</p>
               </div>
             </div>
             <div class="step reveal-left" style="--delay: 300ms">
               <div class="step-number">4</div>
               <div class="step-content">
-                <h3>Gestiona todo en un lugar</h3>
-                <p>Administra pagos, mantenimiento y comunicaciones desde una sola plataforma.</p>
+                <h3>{{ 'landing.step4Title' | transloco }}</h3>
+                <p>{{ 'landing.step4Desc' | transloco }}</p>
               </div>
             </div>
           </div>
@@ -383,12 +420,12 @@ import {
               <lucide-icon [img]="Star" [size]="16"></lucide-icon>
               <lucide-icon [img]="Star" [size]="16"></lucide-icon>
               <lucide-icon [img]="Star" [size]="16"></lucide-icon>
-              <span>Confiado por cientos de propietarios</span>
+              <span>{{ 'landing.ctaTrust' | transloco }}</span>
             </div>
-            <h2>¿Listo para gestionar tus propiedades de manera profesional?</h2>
-            <p>Simplifica la administración de tus alquileres con una plataforma completa</p>
+            <h2>{{ 'landing.ctaTitle' | transloco }}</h2>
+            <p>{{ 'landing.ctaSubtitle' | transloco }}</p>
             <button mat-raised-button color="primary" routerLink="/register" class="cta-button-xl">
-              Crear Cuenta Gratis
+              {{ 'landing.ctaBtn' | transloco }}
               <lucide-icon [img]="ArrowRight" [size]="24"></lucide-icon>
             </button>
           </div>
@@ -406,31 +443,31 @@ import {
                 </div>
                 <span>365Soft</span>
               </div>
-              <p>La plataforma completa para gestión de propiedades en alquiler</p>
+              <p>{{ 'landing.footerTagline' | transloco }}</p>
             </div>
             <div class="footer-links">
               <div class="footer-section">
-                <h4>Producto</h4>
-                <a href="#">Características</a>
-                <a href="#">Precios</a>
-                <a href="#">Demo</a>
+                <h4>{{ 'landing.footerProduct' | transloco }}</h4>
+                <a href="#">{{ 'landing.footerFeatures' | transloco }}</a>
+                <a href="#">{{ 'landing.footerPricing' | transloco }}</a>
+                <a href="#">{{ 'landing.footerDemo' | transloco }}</a>
               </div>
               <div class="footer-section">
-                <h4>Soporte</h4>
-                <a href="#">Centro de Ayuda</a>
-                <a href="#">Contacto</a>
-                <a href="#">Estado del Sistema</a>
+                <h4>{{ 'landing.footerSupport' | transloco }}</h4>
+                <a href="#">{{ 'landing.footerHelp' | transloco }}</a>
+                <a href="#">{{ 'landing.footerContact' | transloco }}</a>
+                <a href="#">{{ 'landing.footerStatus' | transloco }}</a>
               </div>
               <div class="footer-section">
-                <h4>Empresa</h4>
-                <a href="#">Sobre Nosotros</a>
-                <a href="#">Blog</a>
-                <a href="#">Términos</a>
+                <h4>{{ 'landing.footerCompany' | transloco }}</h4>
+                <a href="#">{{ 'landing.footerAbout' | transloco }}</a>
+                <a href="#">{{ 'landing.footerBlog' | transloco }}</a>
+                <a href="#">{{ 'landing.footerTerms' | transloco }}</a>
               </div>
             </div>
           </div>
           <div class="footer-bottom">
-            <p>&copy; 2026 365Soft. Todos los derechos reservados.</p>
+            <p>{{ 'landing.footerCopyright' | transloco }}</p>
           </div>
         </div>
       </footer>
@@ -541,6 +578,32 @@ import {
       .signup-btn {
         font-weight: 700 !important;
         border-radius: 8px !important;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 2px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 3px;
+      }
+      .lang-btn {
+        background: none;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lang-btn:hover {
+        color: #0f172a;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
       }
 
       /* ── Hero ── */
@@ -1301,6 +1364,8 @@ import {
   ],
 })
 export class LandingComponent implements AfterViewInit {
+  readonly languageService = inject(LanguageService);
+
   readonly Building2 = Building2;
   readonly Users = Users;
   readonly FileText = FileText;

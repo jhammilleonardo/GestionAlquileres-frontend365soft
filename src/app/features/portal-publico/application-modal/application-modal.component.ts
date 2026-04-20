@@ -1,13 +1,16 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { Property, RentalApplication } from '../../../core/models/property.model';
 import { PropertyService } from '../../../core/services/admin/property.service';
 
 @Component({
   selector: 'app-application-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './application-modal.component.html',
   styleUrls: ['./application-modal.component.css'],
 })

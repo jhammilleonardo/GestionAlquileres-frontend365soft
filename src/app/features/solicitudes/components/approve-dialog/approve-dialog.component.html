@@ -1,9 +1,8 @@
 <div class="approve-container">
-
   <!-- Loading -->
   <div *ngIf="loading" class="state-box">
     <mat-spinner diameter="48" color="primary"></mat-spinner>
-    <p>Cargando solicitud...</p>
+    <p>{{ 'solicitudes.approve.loadingRequest' | transloco }}</p>
   </div>
 
   <!-- Error -->
@@ -11,11 +10,11 @@
     <div class="state-icon-wrapper error">
       <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
     </div>
-    <h2>Error</h2>
+    <h2>{{ 'common.error' | transloco }}</h2>
     <p>{{ error }}</p>
     <button mat-stroked-button color="primary" (click)="cancel()">
       <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
-      Volver
+      {{ 'solicitudes.approve.volver' | transloco }}
     </button>
   </div>
 
@@ -24,8 +23,8 @@
     <div class="state-icon-wrapper success">
       <lucide-icon [img]="CheckCircle2" [size]="64"></lucide-icon>
     </div>
-    <h2>¡Solicitud Aprobada!</h2>
-    <p>La solicitud fue aprobada y el contrato fue generado exitosamente.</p>
+    <h2>{{ 'solicitudes.approve.successTitle' | transloco }}</h2>
+    <p>{{ 'solicitudes.approve.successMessage' | transloco }}</p>
 
     <mat-card class="contract-card">
       <mat-card-content>
@@ -33,24 +32,28 @@
           <div class="contract-icon-wrapper">
             <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
           </div>
-          <h3>Detalles del Contrato</h3>
+          <h3>{{ 'solicitudes.approve.contractDetails' | transloco }}</h3>
         </div>
         <div class="contract-details">
           <div class="contract-detail-item">
-            <span class="detail-label">Número de Contrato</span>
+            <span class="detail-label">{{ 'solicitudes.approve.contractNumber' | transloco }}</span>
             <span class="detail-value highlight">{{ contractGenerated.number }}</span>
           </div>
           <div class="contract-detail-item">
-            <span class="detail-label">Estado</span>
+            <span class="detail-label">{{ 'common.status' | transloco }}</span>
             <span class="contract-status">{{ contractGenerated.status }}</span>
           </div>
           <div class="contract-detail-item">
-            <span class="detail-label">Alquiler Mensual</span>
-            <span class="contract-amount">${{ contractGenerated.monthly_rent | number }} {{ contractGenerated.currency }}</span>
+            <span class="detail-label">{{ 'solicitudes.approve.monthlyRent' | transloco }}</span>
+            <span class="contract-amount">{{
+              contractGenerated.monthly_rent | tenantCurrency
+            }}</span>
           </div>
           <div class="contract-detail-item">
-            <span class="detail-label">Depósito</span>
-            <span class="detail-value">${{ contractGenerated.deposit_amount | number }} {{ contractGenerated.currency }}</span>
+            <span class="detail-label">{{ 'solicitudes.approve.depositLabel' | transloco }}</span>
+            <span class="detail-value">{{
+              contractGenerated.deposit_amount | tenantCurrency
+            }}</span>
           </div>
         </div>
         <div class="contract-message" *ngIf="contractGenerated.message">
@@ -62,17 +65,16 @@
 
     <div class="redirect-notice">
       <mat-spinner diameter="16" color="primary"></mat-spinner>
-      <span>Redirigiendo a la lista de solicitudes...</span>
+      <span>{{ 'solicitudes.approve.redirecting' | transloco }}</span>
     </div>
   </div>
 
   <!-- Form -->
   <ng-container *ngIf="!loading && !success && !error">
-
     <!-- Back Button -->
     <button mat-button class="back-btn" (click)="cancel()">
       <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
-      Volver a Detalles
+      {{ 'solicitudes.approve.backToDetails' | transloco }}
     </button>
 
     <!-- Page Header -->
@@ -81,13 +83,12 @@
         <lucide-icon [img]="CheckCircle2" [size]="32"></lucide-icon>
       </div>
       <div class="header-text">
-        <h1>Aprobar Solicitud de Alquiler</h1>
-        <p>Complete los términos del contrato para aprobar esta solicitud</p>
+        <h1>{{ 'solicitudes.approve.title' | transloco }}</h1>
+        <p>{{ 'solicitudes.approve.subtitle' | transloco }}</p>
       </div>
     </div>
 
     <form (ngSubmit)="onSubmit()" class="approval-form">
-
       <!-- Términos Económicos -->
       <mat-card class="section-card">
         <mat-card-content>
@@ -95,48 +96,82 @@
             <div class="section-icon-wrapper green">
               <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
             </div>
-            <h2>Términos Económicos</h2>
+            <h2>{{ 'solicitudes.approve.economicTerms' | transloco }}</h2>
           </div>
 
           <div class="form-grid">
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Alquiler Mensual *</mat-label>
-              <lucide-icon matPrefix [img]="DollarSign" [size]="18" class="field-icon"></lucide-icon>
-              <input matInput type="number" [(ngModel)]="formData.monthly_rent"
-                     name="monthly_rent" required min="0" step="0.01">
+              <mat-label>{{ 'solicitudes.approve.monthlyRentLabel' | transloco }}</mat-label>
+              <lucide-icon
+                matPrefix
+                [img]="DollarSign"
+                [size]="18"
+                class="field-icon"
+              ></lucide-icon>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.monthly_rent"
+                name="monthly_rent"
+                required
+                min="0"
+                step="0.01"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Moneda</mat-label>
+              <mat-label>{{ 'common.currency' | transloco }}</mat-label>
               <mat-select [(ngModel)]="formData.currency" name="currency">
-                <mat-option value="BOB">BOB - Boliviano</mat-option>
-                <mat-option value="USD">USD - Dólar</mat-option>
+                <mat-option value="BOB"
+                  >BOB - {{ 'auth.countries.bolivia' | transloco }}</mat-option
+                >
+                <mat-option value="USD">USD - {{ 'auth.countries.usa' | transloco }}</mat-option>
                 <mat-option value="EUR">EUR - Euro</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Depósito</mat-label>
-              <lucide-icon matPrefix [img]="DollarSign" [size]="18" class="field-icon"></lucide-icon>
-              <input matInput type="number" [(ngModel)]="formData.deposit_amount"
-                     name="deposit_amount" min="0" step="0.01"
-                     placeholder="Por defecto: igual al alquiler">
-              <mat-hint>Si se deja vacío, será igual a un mes de alquiler</mat-hint>
+              <mat-label>{{ 'solicitudes.approve.depositLabel' | transloco }}</mat-label>
+              <lucide-icon
+                matPrefix
+                [img]="DollarSign"
+                [size]="18"
+                class="field-icon"
+              ></lucide-icon>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.deposit_amount"
+                name="deposit_amount"
+                min="0"
+                step="0.01"
+                [placeholder]="'solicitudes.approve.depositDefault' | transloco"
+              />
+              <mat-hint>{{ 'solicitudes.approve.depositHint' | transloco }}</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Día de Pago</mat-label>
+              <mat-label>{{ 'solicitudes.approve.paymentDay' | transloco }}</mat-label>
               <lucide-icon matPrefix [img]="Calendar" [size]="18" class="field-icon"></lucide-icon>
-              <input matInput type="number" [(ngModel)]="formData.payment_day"
-                     name="payment_day" min="1" max="31">
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.payment_day"
+                name="payment_day"
+                min="1"
+                max="31"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Método de Pago</mat-label>
+              <mat-label>{{ 'solicitudes.approve.paymentMethod' | transloco }}</mat-label>
               <lucide-icon matPrefix [img]="Building2" [size]="18" class="field-icon"></lucide-icon>
-              <input matInput [(ngModel)]="formData.payment_method"
-                     name="payment_method"
-                     placeholder="Ej: Transferencia bancaria, Efectivo...">
+              <input
+                matInput
+                [(ngModel)]="formData.payment_method"
+                name="payment_method"
+                [placeholder]="'solicitudes.approve.paymentMethodPlaceholder' | transloco"
+              />
             </mat-form-field>
           </div>
         </mat-card-content>
@@ -149,22 +184,37 @@
             <div class="section-icon-wrapper amber">
               <lucide-icon [img]="Clock" [size]="24"></lucide-icon>
             </div>
-            <h2>Recargos y Días de Gracia</h2>
+            <h2>{{ 'solicitudes.approve.lateCharges' | transloco }}</h2>
           </div>
 
           <div class="form-grid">
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>% Recargo por Mora</mat-label>
-              <input matInput type="number" [(ngModel)]="formData.late_fee_percentage"
-                     name="late_fee_percentage" min="0" max="100" step="0.1" placeholder="0">
+              <mat-label>{{ 'solicitudes.approve.lateFee' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.late_fee_percentage"
+                name="late_fee_percentage"
+                min="0"
+                max="100"
+                step="0.1"
+                placeholder="0"
+              />
               <span matSuffix>%</span>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Días de Gracia</mat-label>
-              <input matInput type="number" [(ngModel)]="formData.grace_days"
-                     name="grace_days" min="0" max="30" placeholder="0">
-              <mat-hint>Días antes de aplicar recargo</mat-hint>
+              <mat-label>{{ 'solicitudes.approve.graceDays' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.grace_days"
+                name="grace_days"
+                min="0"
+                max="30"
+                placeholder="0"
+              />
+              <mat-hint>{{ 'solicitudes.approve.graceDaysHint' | transloco }}</mat-hint>
             </mat-form-field>
           </div>
         </mat-card-content>
@@ -177,32 +227,44 @@
             <div class="section-icon-wrapper blue">
               <lucide-icon [img]="Calendar" [size]="24"></lucide-icon>
             </div>
-            <h2>Fechas del Contrato</h2>
+            <h2>{{ 'solicitudes.approve.contractDates' | transloco }}</h2>
           </div>
 
           <div class="form-grid">
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Fecha de Inicio</mat-label>
-              <input matInput [matDatepicker]="pickerStart"
-                     [(ngModel)]="formData.start_date" name="start_date">
+              <mat-label>{{ 'solicitudes.approve.startDate' | transloco }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="pickerStart"
+                [(ngModel)]="formData.start_date"
+                name="start_date"
+              />
               <mat-datepicker-toggle matIconSuffix [for]="pickerStart"></mat-datepicker-toggle>
               <mat-datepicker #pickerStart></mat-datepicker>
-              <mat-hint>Por defecto: hoy</mat-hint>
+              <mat-hint>{{ 'solicitudes.approve.startDateHint' | transloco }}</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Fecha de Finalización</mat-label>
-              <input matInput [matDatepicker]="pickerEnd"
-                     [(ngModel)]="formData.end_date" name="end_date">
+              <mat-label>{{ 'solicitudes.approve.endDate' | transloco }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="pickerEnd"
+                [(ngModel)]="formData.end_date"
+                name="end_date"
+              />
               <mat-datepicker-toggle matIconSuffix [for]="pickerEnd"></mat-datepicker-toggle>
               <mat-datepicker #pickerEnd></mat-datepicker>
-              <mat-hint>Por defecto: 1 año desde inicio</mat-hint>
+              <mat-hint>{{ 'solicitudes.approve.endDateHint' | transloco }}</mat-hint>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Fecha de Entrega de Llaves</mat-label>
-              <input matInput [matDatepicker]="pickerKeys"
-                     [(ngModel)]="formData.key_delivery_date" name="key_delivery_date">
+              <mat-label>{{ 'solicitudes.approve.keyDelivery' | transloco }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="pickerKeys"
+                [(ngModel)]="formData.key_delivery_date"
+                name="key_delivery_date"
+              />
               <mat-datepicker-toggle matIconSuffix [for]="pickerKeys"></mat-datepicker-toggle>
               <mat-datepicker #pickerKeys></mat-datepicker>
             </mat-form-field>
@@ -217,16 +279,20 @@
             <div class="section-icon-wrapper purple">
               <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
             </div>
-            <h2>Servicios Incluidos</h2>
+            <h2>{{ 'solicitudes.approve.includedServices' | transloco }}</h2>
           </div>
 
           <div class="services-grid">
-            <label class="service-item" *ngFor="let service of availableServices"
-                   [class.selected]="isServiceSelected(service)">
+            <label
+              class="service-item"
+              *ngFor="let service of availableServices"
+              [class.selected]="isServiceSelected(service)"
+            >
               <mat-checkbox
                 [checked]="isServiceSelected(service)"
                 (change)="toggleService(service)"
-                color="primary">
+                color="primary"
+              >
                 {{ service }}
               </mat-checkbox>
             </label>
@@ -241,26 +307,40 @@
             <div class="section-icon-wrapper blue">
               <lucide-icon [img]="RefreshCw" [size]="24"></lucide-icon>
             </div>
-            <h2>Renovación Automática</h2>
+            <h2>{{ 'solicitudes.approve.autoRenewSection' | transloco }}</h2>
           </div>
 
           <div class="toggle-container">
             <mat-slide-toggle [(ngModel)]="formData.auto_renew" name="auto_renew" color="primary">
-              Habilitar renovación automática
+              {{ 'solicitudes.approve.enableAutoRenew' | transloco }}
             </mat-slide-toggle>
           </div>
 
           <div class="form-grid conditional-fields" *ngIf="formData.auto_renew">
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Días de Aviso para No Renovar</mat-label>
-              <input matInput type="number" [(ngModel)]="formData.renewal_notice_days"
-                     name="renewal_notice_days" min="1" max="90">
+              <mat-label>{{ 'solicitudes.approve.renewalNoticeDays' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.renewal_notice_days"
+                name="renewal_notice_days"
+                min="1"
+                max="90"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>% Aumento Anual Automático</mat-label>
-              <input matInput type="number" [(ngModel)]="formData.auto_increase_percentage"
-                     name="auto_increase_percentage" min="0" max="100" step="0.1" placeholder="0">
+              <mat-label>{{ 'solicitudes.approve.autoIncreasePercentage' | transloco }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="formData.auto_increase_percentage"
+                name="auto_increase_percentage"
+                min="0"
+                max="100"
+                step="0.1"
+                placeholder="0"
+              />
               <span matSuffix>%</span>
             </mat-form-field>
           </div>
@@ -274,22 +354,30 @@
             <div class="section-icon-wrapper amber">
               <lucide-icon [img]="ClipboardList" [size]="24"></lucide-icon>
             </div>
-            <h2>Responsabilidades</h2>
+            <h2>{{ 'solicitudes.approve.responsibilities' | transloco }}</h2>
           </div>
 
           <div class="form-stack">
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Responsabilidades del Inquilino</mat-label>
-              <textarea matInput [(ngModel)]="formData.tenant_responsibilities"
-                        name="tenant_responsibilities" rows="3"
-                        placeholder="Ej: Mantener la propiedad en buen estado, pagar servicios a su cargo..."></textarea>
+              <mat-label>{{ 'solicitudes.approve.tenantResponsibilities' | transloco }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="formData.tenant_responsibilities"
+                name="tenant_responsibilities"
+                rows="3"
+                [placeholder]="'solicitudes.approve.tenantRespPlaceholder' | transloco"
+              ></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Responsabilidades del Propietario</mat-label>
-              <textarea matInput [(ngModel)]="formData.owner_responsibilities"
-                        name="owner_responsibilities" rows="3"
-                        placeholder="Ej: Realizar reparaciones necesarias, mantener la propiedad habitable..."></textarea>
+              <mat-label>{{ 'solicitudes.approve.ownerResponsibilities' | transloco }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="formData.owner_responsibilities"
+                name="owner_responsibilities"
+                rows="3"
+                [placeholder]="'solicitudes.approve.ownerRespPlaceholder' | transloco"
+              ></textarea>
             </mat-form-field>
           </div>
         </mat-card-content>
@@ -302,22 +390,30 @@
             <div class="section-icon-wrapper red">
               <lucide-icon [img]="ScrollText" [size]="24"></lucide-icon>
             </div>
-            <h2>Reglas del Contrato</h2>
+            <h2>{{ 'solicitudes.approve.contractRules' | transloco }}</h2>
           </div>
 
           <div class="form-stack">
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Prohibiciones</mat-label>
-              <textarea matInput [(ngModel)]="formData.prohibitions"
-                        name="prohibitions" rows="2"
-                        placeholder="Ej: No se permiten mascotas, no fumadores..."></textarea>
+              <mat-label>{{ 'solicitudes.approve.prohibitions' | transloco }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="formData.prohibitions"
+                name="prohibitions"
+                rows="2"
+                [placeholder]="'solicitudes.approve.prohibitionsPlaceholder' | transloco"
+              ></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Reglas de Convivencia</mat-label>
-              <textarea matInput [(ngModel)]="formData.coexistence_rules"
-                        name="coexistence_rules" rows="2"
-                        placeholder="Ej: Respetar horarios de descanso, no hacer ruido después de las 22hs..."></textarea>
+              <mat-label>{{ 'solicitudes.approve.coexistenceRules' | transloco }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="formData.coexistence_rules"
+                name="coexistence_rules"
+                rows="2"
+                [placeholder]="'solicitudes.approve.coexistencePlaceholder' | transloco"
+              ></textarea>
             </mat-form-field>
           </div>
         </mat-card-content>
@@ -330,28 +426,40 @@
             <div class="section-icon-wrapper blue">
               <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
             </div>
-            <h2>Términos Adicionales</h2>
+            <h2>{{ 'solicitudes.approve.additionalTerms' | transloco }}</h2>
           </div>
 
           <div class="form-stack">
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Términos de Renovación</mat-label>
-              <textarea matInput [(ngModel)]="formData.renewal_terms"
-                        name="renewal_terms" rows="2"
-                        placeholder="Ej: El contrato se renueva automáticamente si ninguna de las partes avisa con 30 días..."></textarea>
+              <mat-label>{{ 'solicitudes.approve.renewalTerms' | transloco }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="formData.renewal_terms"
+                name="renewal_terms"
+                rows="2"
+                [placeholder]="'solicitudes.approve.renewalTermsPlaceholder' | transloco"
+              ></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width form-field">
-              <mat-label>Términos de Rescisión</mat-label>
-              <textarea matInput [(ngModel)]="formData.termination_terms"
-                        name="termination_terms" rows="2"
-                        placeholder="Ej: Cualquiera de las partes puede rescindir con 60 días de preaviso..."></textarea>
+              <mat-label>{{ 'solicitudes.approve.terminationTerms' | transloco }}</mat-label>
+              <textarea
+                matInput
+                [(ngModel)]="formData.termination_terms"
+                name="termination_terms"
+                rows="2"
+                [placeholder]="'solicitudes.approve.terminationTermsPlaceholder' | transloco"
+              ></textarea>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Jurisdicción</mat-label>
-              <input matInput [(ngModel)]="formData.jurisdiction"
-                     name="jurisdiction" placeholder="Ej: Bolivia, Argentina...">
+              <mat-label>{{ 'solicitudes.approve.jurisdiction' | transloco }}</mat-label>
+              <input
+                matInput
+                [(ngModel)]="formData.jurisdiction"
+                name="jurisdiction"
+                [placeholder]="'solicitudes.approve.jurisdictionPlaceholder' | transloco"
+              />
             </mat-form-field>
           </div>
         </mat-card-content>
@@ -364,35 +472,53 @@
             <div class="section-icon-wrapper green">
               <lucide-icon [img]="Building2" [size]="24"></lucide-icon>
             </div>
-            <h2>Datos Bancarios</h2>
+            <h2>{{ 'solicitudes.approve.bankData' | transloco }}</h2>
           </div>
 
           <div class="form-grid">
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Banco</mat-label>
-              <input matInput [(ngModel)]="formData.bank_name"
-                     name="bank_name" placeholder="Ej: Banco Nacional de Bolivia">
+              <mat-label>{{ 'solicitudes.approve.bank' | transloco }}</mat-label>
+              <input
+                matInput
+                [(ngModel)]="formData.bank_name"
+                name="bank_name"
+                [placeholder]="'solicitudes.approve.bankPlaceholder' | transloco"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Tipo de Cuenta</mat-label>
+              <mat-label>{{ 'solicitudes.approve.accountType' | transloco }}</mat-label>
               <mat-select [(ngModel)]="formData.bank_account_type" name="bank_account_type">
-                <mat-option value="">Seleccionar...</mat-option>
-                <mat-option value="Ahorros">Ahorros</mat-option>
-                <mat-option value="Corriente">Corriente</mat-option>
+                <mat-option value="">{{
+                  'solicitudes.approve.accountTypePlaceholder' | transloco
+                }}</mat-option>
+                <mat-option value="Ahorros">{{
+                  'solicitudes.approve.accountTypeSavings' | transloco
+                }}</mat-option>
+                <mat-option value="Corriente">{{
+                  'solicitudes.approve.accountTypeChecking' | transloco
+                }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Número de Cuenta</mat-label>
-              <input matInput [(ngModel)]="formData.bank_account_number"
-                     name="bank_account_number" placeholder="Ej: 123-456-789">
+              <mat-label>{{ 'solicitudes.approve.accountNumber' | transloco }}</mat-label>
+              <input
+                matInput
+                [(ngModel)]="formData.bank_account_number"
+                name="bank_account_number"
+                [placeholder]="'solicitudes.approve.accountNumberPlaceholder' | transloco"
+              />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="form-field">
-              <mat-label>Titular de la Cuenta</mat-label>
-              <input matInput [(ngModel)]="formData.bank_account_holder"
-                     name="bank_account_holder" placeholder="Nombre del titular">
+              <mat-label>{{ 'solicitudes.approve.accountHolder' | transloco }}</mat-label>
+              <input
+                matInput
+                [(ngModel)]="formData.bank_account_holder"
+                name="bank_account_holder"
+                [placeholder]="'solicitudes.approve.accountHolderPlaceholder' | transloco"
+              />
             </mat-form-field>
           </div>
         </mat-card-content>
@@ -405,15 +531,19 @@
             <div class="section-icon-wrapper purple">
               <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
             </div>
-            <h2>Mensaje para el Inquilino</h2>
+            <h2>{{ 'solicitudes.approve.tenantMessage' | transloco }}</h2>
           </div>
 
           <mat-form-field appearance="outline" class="full-width form-field">
-            <mat-label>Mensaje de Aprobación</mat-label>
-            <textarea matInput [(ngModel)]="formData.admin_feedback"
-                      name="admin_feedback" rows="3"
-                      placeholder="Ej: Aprobado. Excelente perfil. Bienvenido!"></textarea>
-            <mat-hint>Este mensaje será visible para el inquilino en su portal</mat-hint>
+            <mat-label>{{ 'solicitudes.approve.approvalMessage' | transloco }}</mat-label>
+            <textarea
+              matInput
+              [(ngModel)]="formData.admin_feedback"
+              name="admin_feedback"
+              rows="3"
+              [placeholder]="'solicitudes.approve.approvalMessagePlaceholder' | transloco"
+            ></textarea>
+            <mat-hint>{{ 'solicitudes.approve.approvalMessageHint' | transloco }}</mat-hint>
           </mat-form-field>
         </mat-card-content>
       </mat-card>
@@ -421,17 +551,29 @@
       <!-- Actions -->
       <div class="form-actions">
         <button type="button" mat-stroked-button class="cancel-btn" (click)="cancel()">
-          Cancelar
+          {{ 'common.cancel' | transloco }}
         </button>
-        <button type="submit" mat-flat-button color="primary" class="submit-btn"
-                [disabled]="submitting || !formData.monthly_rent">
+        <button
+          type="submit"
+          mat-flat-button
+          color="primary"
+          class="submit-btn"
+          [disabled]="submitting || !formData.monthly_rent"
+        >
           <mat-spinner *ngIf="submitting" diameter="20" color="accent"></mat-spinner>
-          <lucide-icon *ngIf="!submitting" [img]="CheckCircle2" [size]="20" class="btn-icon"></lucide-icon>
-          <span>{{ submitting ? 'Procesando...' : 'Aprobar y Generar Contrato' }}</span>
+          <lucide-icon
+            *ngIf="!submitting"
+            [img]="CheckCircle2"
+            [size]="20"
+            class="btn-icon"
+          ></lucide-icon>
+          <span>{{
+            submitting
+              ? ('solicitudes.approve.processing' | transloco)
+              : ('solicitudes.approve.approveAndGenerate' | transloco)
+          }}</span>
         </button>
       </div>
-
     </form>
   </ng-container>
-
 </div>

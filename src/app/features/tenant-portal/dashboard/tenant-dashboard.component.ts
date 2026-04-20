@@ -30,6 +30,9 @@ import {
   MaintenancePriorityLabels,
 } from '../../../core/models/maintenance-request.model';
 import { PaymentStatusLabels } from '../../../core/models/payment.model';
+import { TranslocoModule } from '@jsverse/transloco';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
 @Component({
   selector: 'app-tenant-dashboard',
@@ -42,14 +45,17 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
     MatProgressSpinnerModule,
     MatChipsModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
   template: `
     <div class="dashboard-container">
       <!-- Welcome Section -->
       <div class="welcome-section">
         <div class="welcome-content">
-          <h1>Hola, {{ getFirstName() }}</h1>
-          <p>Bienvenido a tu portal de inquilino</p>
+          <h1>{{ 'public.tenantDashboard.greeting' | transloco: { name: getFirstName() } }}</h1>
+          <p>{{ 'public.tenantDashboard.subtitle' | transloco }}</p>
         </div>
       </div>
 
@@ -58,7 +64,7 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
         <mat-card class="property-card">
           <div class="property-header">
             <lucide-icon [img]="Home" [size]="24"></lucide-icon>
-            <span>Mi Propiedad</span>
+            <span>{{ 'public.tenantDashboard.myProperty' | transloco }}</span>
           </div>
           <div class="property-content">
             <h2>{{ authService.currentUser()?.contract?.property_title }}</h2>
@@ -112,7 +118,9 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ maintenanceService.stats()?.active || 0 }}</div>
-              <div class="stat-label">Solicitudes Activas</div>
+              <div class="stat-label">
+                {{ 'public.tenantDashboard.activeRequests' | transloco }}
+              </div>
             </div>
           </div>
 
@@ -123,7 +131,9 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ messageService.unreadCount() }}</div>
-              <div class="stat-label">Mensajes Sin Leer</div>
+              <div class="stat-label">
+                {{ 'public.tenantDashboard.unreadMessages' | transloco }}
+              </div>
             </div>
           </div>
 
@@ -134,7 +144,7 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ documentService.documents().length }}</div>
-              <div class="stat-label">Documentos</div>
+              <div class="stat-label">{{ 'public.tenantDashboard.documents' | transloco }}</div>
             </div>
           </div>
         </div>
@@ -144,9 +154,9 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
         <!-- Recent Maintenance Requests -->
         <mat-card class="recent-requests">
           <div class="card-header">
-            <h3>Solicitudes Recientes</h3>
+            <h3>{{ 'public.tenantDashboard.recentRequests' | transloco }}</h3>
             <a [routerLink]="mantenimientoUrl()" class="view-all">
-              Ver todas
+              {{ 'public.tenantDashboard.viewAll' | transloco }}
               <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
             </a>
           </div>
@@ -164,7 +174,7 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
           } @else if (maintenanceService.requests().length === 0) {
             <div class="empty-state">
               <lucide-icon [img]="Wrench" [size]="48"></lucide-icon>
-              <p>No tienes solicitudes de mantenimiento</p>
+              <p>{{ 'public.tenantDashboard.noRequests' | transloco }}</p>
             </div>
           } @else {
             <div class="requests-list">
@@ -188,9 +198,9 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
         <!-- Recent Payments -->
         <mat-card class="recent-payments">
           <div class="card-header">
-            <h3>Pagos Recientes</h3>
+            <h3>{{ 'public.tenantDashboard.recentPayments' | transloco }}</h3>
             <a [routerLink]="pagosUrl()" class="view-all">
-              Ver todos
+              {{ 'public.tenantDashboard.viewAllPayments' | transloco }}
               <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
             </a>
           </div>
@@ -207,15 +217,15 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
           } @else if (paymentService.payments().length === 0) {
             <div class="empty-state">
               <lucide-icon [img]="CreditCard" [size]="48"></lucide-icon>
-              <p>No hay pagos registrados</p>
+              <p>{{ 'public.tenantDashboard.noPayments' | transloco }}</p>
             </div>
           } @else {
             <div class="payments-list">
               @for (payment of paymentService.payments().slice(0, 5); track payment.id) {
                 <div class="payment-item">
                   <div class="payment-info">
-                    <span class="date">{{ formatDate(payment.payment_date) }}</span>
-                    <span class="amount">\${{ payment.amount.toLocaleString() }}</span>
+                    <span class="date">{{ payment.payment_date | tenantDate }}</span>
+                    <span class="amount">{{ payment.amount | tenantCurrency }}</span>
                   </div>
                   <mat-chip-set>
                     <mat-chip
@@ -224,7 +234,7 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
                       [style.font-weight]="'700'"
                       [style.font-size]="'11px'"
                     >
-                      {{ paymentStatusLabels[payment.status] ?? payment.status }}
+                      {{ paymentStatusLabels[payment.status] || payment.status }}
                     </mat-chip>
                   </mat-chip-set>
                 </div>
@@ -236,23 +246,23 @@ import { PaymentStatusLabels } from '../../../core/models/payment.model';
 
       <!-- Quick Actions -->
       <div class="quick-actions">
-        <h3>Acciones Rápidas</h3>
+        <h3>{{ 'public.tenantDashboard.quickActions' | transloco }}</h3>
         <div class="actions-grid">
           <a [routerLink]="mantenimientoNuevoUrl()" class="action-card">
             <lucide-icon [img]="Wrench" [size]="32"></lucide-icon>
-            <span>Reportar Problema</span>
+            <span>{{ 'public.tenantDashboard.reportIssue' | transloco }}</span>
           </a>
           <a [routerLink]="pagosNuevoUrl()" class="action-card">
             <lucide-icon [img]="CreditCard" [size]="32"></lucide-icon>
-            <span>Registrar Pago</span>
+            <span>{{ 'public.tenantDashboard.registerPayment' | transloco }}</span>
           </a>
           <a [routerLink]="mensajesUrl()" class="action-card">
             <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
-            <span>Enviar Mensaje</span>
+            <span>{{ 'public.tenantDashboard.sendMessage' | transloco }}</span>
           </a>
           <a [routerLink]="documentosUrl()" class="action-card">
             <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
-            <span>Ver Documentos</span>
+            <span>{{ 'public.tenantDashboard.viewDocs' | transloco }}</span>
           </a>
         </div>
       </div>
@@ -883,21 +893,6 @@ export class TenantDashboardComponent implements OnInit {
   getFirstName(): string {
     const name = this.authService.currentUser()?.name || '';
     return name.split(' ')[0] || 'Usuario';
-  }
-
-  formatDate(date: Date | string): string {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  formatCurrency(amount: number | string): string {
-    // Convert to number if it's a string (Decimal from backend)
-    const numAmount = typeof amount === 'number' ? amount : parseFloat(amount || '0');
-    return `${numAmount.toFixed(2)} BOB`;
   }
 
   pagosListUrl(): string {

@@ -1,14 +1,17 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { Property } from '../../../core/models/property.model';
 
 @Component({
   selector: 'app-contact-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './contact-modal.component.html',
-  styleUrls: ['./contact-modal.component.css']
+  styleUrls: ['./contact-modal.component.css'],
 })
 export class ContactModalComponent {
   @Input() property!: Property;
@@ -19,7 +22,7 @@ export class ContactModalComponent {
     email: '',
     phone: '',
     message: '',
-    preferredContact: 'email'
+    preferredContact: 'email',
   };
 
   isSubmitting = false;
@@ -43,4 +46,3 @@ export class ContactModalComponent {
     this.close.emit();
   }
 }
-

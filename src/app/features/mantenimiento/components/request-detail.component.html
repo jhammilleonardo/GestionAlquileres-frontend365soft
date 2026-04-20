@@ -1,5 +1,4 @@
 <div class="rd-dialog">
-
   <!-- ── HEADER ── -->
   <div class="rd-header">
     <div class="rd-header-left">
@@ -7,7 +6,7 @@
         <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
       </button>
       <div>
-        <h1>Detalle de Solicitud</h1>
+        <h1>{{ 'maintenance.detailTitle' | transloco }}</h1>
         <span class="rd-ticket">
           <lucide-icon [img]="FileText" [size]="11"></lucide-icon>
           {{ request.ticket_number }}
@@ -17,40 +16,55 @@
     <div class="rd-header-actions">
       <button mat-stroked-button color="warn" (click)="delete()" class="btn-delete">
         <lucide-icon [img]="X" [size]="15"></lucide-icon>
-        Eliminar
+        {{ 'common.delete' | transloco }}
       </button>
-      <button mat-raised-button color="primary" (click)="save()" [disabled]="isUpdating()" class="btn-save">
-        @if (isUpdating()) { <mat-spinner diameter="14"></mat-spinner> }
-        @else { <lucide-icon [img]="Settings" [size]="15"></lucide-icon> }
-        Guardar Cambios
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="save()"
+        [disabled]="isUpdating()"
+        class="btn-save"
+      >
+        @if (isUpdating()) {
+          <mat-spinner diameter="14"></mat-spinner>
+        } @else {
+          <lucide-icon [img]="Settings" [size]="15"></lucide-icon>
+        }
+        {{ 'common.saveChanges' | transloco }}
       </button>
     </div>
   </div>
 
   <!-- ── BODY ── -->
   <div class="rd-body">
-
     <!-- ════ LEFT ════ -->
     <div class="rd-left">
-
       <!-- Hero Banner -->
       <div class="hero-banner" [class]="'banner-' + request.status.toLowerCase()">
         <div class="hero-icon-wrap">
-          <lucide-icon [img]="request.request_type === 'MAINTENANCE' ? Wrench : MessageSquare" [size]="22"></lucide-icon>
+          <lucide-icon
+            [img]="request.request_type === 'MAINTENANCE' ? Wrench : MessageSquare"
+            [size]="22"
+          ></lucide-icon>
         </div>
         <div class="hero-text">
-          <span class="hero-type">{{ request.request_type === 'MAINTENANCE' ? 'Mantenimiento' : 'Consulta General' }}</span>
+          <span class="hero-type">{{
+            'maintenance.type.' + request.request_type | transloco
+          }}</span>
           <span class="hero-title">{{ request.title }}</span>
         </div>
         <div class="hero-badges">
-          <span class="badge badge-status" [ngClass]="getStatusColor(request.status)">{{ statusLabels[request.status] }}</span>
-          <span class="badge badge-priority" [ngClass]="getPriorityColor(request.priority)">{{ priorityLabels[request.priority] }}</span>
+          <span class="badge badge-status" [ngClass]="getStatusColor(request.status)">{{
+            'maintenance.status.' + request.status | transloco
+          }}</span>
+          <span class="badge badge-priority" [ngClass]="getPriorityColor(request.priority)">{{
+            'maintenance.priority.' + request.priority | transloco
+          }}</span>
         </div>
       </div>
 
       <!-- Content Card -->
       <div class="content-card">
-
         <!-- Solicitante -->
         <div class="tenant-card" [class.tenant-card--fallback]="!request.tenant">
           <div class="tenant-avatar">
@@ -70,13 +84,15 @@
                 </span>
               }
             } @else {
-              <span class="tenant-name">Inquilino #{{ request.tenant_id }}</span>
-              <span class="tenant-detail">Datos no disponibles</span>
+              <span class="tenant-name"
+                >{{ 'tenants.title' | transloco }} #{{ request.tenant_id }}</span
+              >
+              <span class="tenant-detail">{{ 'maintenance.noData' | transloco }}</span>
             }
           </div>
           <span class="tenant-badge">
             <lucide-icon [img]="User" [size]="11"></lucide-icon>
-            Solicitante
+            {{ 'maintenance.requesterLabel' | transloco }}
           </span>
         </div>
 
@@ -88,11 +104,11 @@
             <div class="section-icon-wrap desc-icon">
               <lucide-icon [img]="FileText" [size]="13"></lucide-icon>
             </div>
-            <span class="cc-label">Descripción</span>
+            <span class="cc-label">{{ 'common.description' | transloco }}</span>
             @if (request.category) {
               <span class="cat-chip">
                 <lucide-icon [img]="Wrench" [size]="12"></lucide-icon>
-                {{ categoryLabels[request.category] }}
+                {{ 'maintenance.category.' + request.category | transloco }}
               </span>
             }
           </div>
@@ -107,14 +123,16 @@
             <div class="section-icon-wrap info-icon">
               <lucide-icon [img]="AlertCircle" [size]="13"></lucide-icon>
             </div>
-            <span class="cc-label">Información</span>
+            <span class="cc-label">{{ 'maintenance.information' | transloco }}</span>
           </div>
           <div class="meta-grid">
             @if (request.property) {
               <div class="meta-card">
-                <div class="meta-icon home"><lucide-icon [img]="Home" [size]="15"></lucide-icon></div>
+                <div class="meta-icon home">
+                  <lucide-icon [img]="Home" [size]="15"></lucide-icon>
+                </div>
                 <div class="meta-text">
-                  <span class="meta-lbl">Propiedad</span>
+                  <span class="meta-lbl">{{ 'common.property' | transloco }}</span>
                   <span class="meta-val">{{ request.property.title }}</span>
                   @if (request.property.address) {
                     <span class="meta-sub">{{ request.property.address }}</span>
@@ -124,41 +142,51 @@
             }
             @if (request.contract) {
               <div class="meta-card">
-                <div class="meta-icon contract"><lucide-icon [img]="FileText" [size]="15"></lucide-icon></div>
+                <div class="meta-icon contract">
+                  <lucide-icon [img]="FileText" [size]="15"></lucide-icon>
+                </div>
                 <div class="meta-text">
-                  <span class="meta-lbl">Contrato</span>
+                  <span class="meta-lbl">{{ 'common.contract' | transloco }}</span>
                   <span class="meta-val">{{ request.contract.contract_number }}</span>
                 </div>
               </div>
             }
             <div class="meta-card">
-              <div class="meta-icon created"><lucide-icon [img]="Clock" [size]="15"></lucide-icon></div>
+              <div class="meta-icon created">
+                <lucide-icon [img]="Clock" [size]="15"></lucide-icon>
+              </div>
               <div class="meta-text">
-                <span class="meta-lbl">Creado el</span>
-                <span class="meta-val">{{ formatDate(request.created_at) }}</span>
+                <span class="meta-lbl">{{ 'maintenance.createdAt' | transloco }}</span>
+                <span class="meta-val">{{ request.created_at | tenantDate: true }}</span>
               </div>
             </div>
             <div class="meta-card">
-              <div class="meta-icon updated"><lucide-icon [img]="Settings" [size]="15"></lucide-icon></div>
+              <div class="meta-icon updated">
+                <lucide-icon [img]="Settings" [size]="15"></lucide-icon>
+              </div>
               <div class="meta-text">
-                <span class="meta-lbl">Última actualización</span>
-                <span class="meta-val">{{ formatDate(request.updated_at) }}</span>
+                <span class="meta-lbl">{{ 'maintenance.updatedAt' | transloco }}</span>
+                <span class="meta-val">{{ request.updated_at | tenantDate: true }}</span>
               </div>
             </div>
             @if (request.due_date) {
               <div class="meta-card">
-                <div class="meta-icon due"><lucide-icon [img]="Calendar" [size]="15"></lucide-icon></div>
+                <div class="meta-icon due">
+                  <lucide-icon [img]="Calendar" [size]="15"></lucide-icon>
+                </div>
                 <div class="meta-text">
-                  <span class="meta-lbl">Fecha Límite</span>
-                  <span class="meta-val">{{ formatDate(request.due_date) }}</span>
+                  <span class="meta-lbl">{{ 'maintenance.dueDate' | transloco }}</span>
+                  <span class="meta-val">{{ request.due_date | tenantDate }}</span>
                 </div>
               </div>
             }
             @if (request.assigned_to) {
               <div class="meta-card">
-                <div class="meta-icon assigned"><lucide-icon [img]="User" [size]="15"></lucide-icon></div>
+                <div class="meta-icon assigned">
+                  <lucide-icon [img]="User" [size]="15"></lucide-icon>
+                </div>
                 <div class="meta-text">
-                  <span class="meta-lbl">Asignado a</span>
+                  <span class="meta-lbl">{{ 'maintenance.assignedTo' | transloco }}</span>
                   <span class="meta-val">{{ getStaffName(request.assigned_to) }}</span>
                 </div>
               </div>
@@ -174,37 +202,40 @@
             <div class="section-icon-wrap mgmt-icon">
               <lucide-icon [img]="Settings" [size]="13"></lucide-icon>
             </div>
-            <span class="cc-label">Gestión</span>
+            <span class="cc-label">{{ 'maintenance.management' | transloco }}</span>
           </div>
           <div class="mgmt-grid">
             <mat-form-field appearance="outline" class="mf">
-              <mat-label>Estado</mat-label>
+              <mat-label>{{ 'common.status' | transloco }}</mat-label>
               <mat-select [(ngModel)]="request.status" (ngModelChange)="updateStatus($event)">
                 @for (s of getStatusValues(); track s) {
-                  <mat-option [value]="s">{{ statusLabels[s] }}</mat-option>
+                  <mat-option [value]="s">{{ 'maintenance.status.' + s | transloco }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="mf">
-              <mat-label>Prioridad</mat-label>
+              <mat-label>{{ 'maintenance.priorityLabel' | transloco }}</mat-label>
               <mat-select [(ngModel)]="request.priority" (ngModelChange)="updatePriority($event)">
                 @for (p of getPriorityValues(); track p) {
-                  <mat-option [value]="p">{{ priorityLabels[p] }}</mat-option>
+                  <mat-option [value]="p">{{ 'maintenance.priority.' + p | transloco }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="mf">
-              <mat-label>Asignar a</mat-label>
-              <mat-select [value]="request.assigned_to" (selectionChange)="onStaffAssignment($event.value)">
-                <mat-option [value]="null">Sin asignar</mat-option>
+              <mat-label>{{ 'maintenance.assignTo' | transloco }}</mat-label>
+              <mat-select
+                [value]="request.assigned_to"
+                (selectionChange)="onStaffAssignment($event.value)"
+              >
+                <mat-option [value]="null">{{ 'maintenance.unassigned' | transloco }}</mat-option>
                 @for (staff of staffMembers; track staff.id) {
                   <mat-option [value]="staff.id">{{ staff.name }}</mat-option>
                 }
               </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline" class="mf">
-              <mat-label>Fecha límite</mat-label>
-              <input matInput type="date" [(ngModel)]="dueDateString">
+              <mat-label>{{ 'maintenance.dueDate' | transloco }}</mat-label>
+              <input matInput type="date" [(ngModel)]="dueDateString" />
             </mat-form-field>
           </div>
         </div>
@@ -217,39 +248,39 @@
               <div class="section-icon-wrap access-icon">
                 <lucide-icon [img]="Home" [size]="13"></lucide-icon>
               </div>
-              <span class="cc-label">Acceso</span>
+              <span class="cc-label">{{ 'maintenance.access' | transloco }}</span>
             </div>
             <div class="access-table">
               <div class="access-row">
-                <span class="access-key">Permiso de entrada</span>
-                <strong class="access-val">{{ permissionLabels[request.permission_to_enter] }}</strong>
+                <span class="access-key">{{ 'maintenance.permissionToEnter' | transloco }}</span>
+                <strong class="access-val">{{
+                  'maintenance.permission.' + request.permission_to_enter | transloco
+                }}</strong>
               </div>
               @if (request.has_pets) {
                 <div class="access-alert">
                   <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-                  Hay mascotas en la propiedad
+                  {{ 'maintenance.hasPets' | transloco }}
                 </div>
               }
               @if (request.entry_notes) {
                 <div class="access-row">
-                  <span class="access-key">Notas</span>
+                  <span class="access-key">{{ 'maintenance.notes' | transloco }}</span>
                   <strong class="access-val">{{ request.entry_notes }}</strong>
                 </div>
               }
             </div>
           </div>
         }
-
       </div>
     </div>
 
     <!-- ════ RIGHT: Conversation ════ -->
     <div class="rd-right">
-
       <div class="conv-header">
         <div class="conv-title">
           <lucide-icon [img]="MessageSquare" [size]="17"></lucide-icon>
-          <span>Conversación</span>
+          <span>{{ 'maintenance.conversation' | transloco }}</span>
         </div>
         @if (messages().length > 0) {
           <span class="conv-count">{{ messages().length }}</span>
@@ -267,22 +298,26 @@
               <div class="empty-icon-wrap">
                 <lucide-icon [img]="MessageSquare" [size]="28"></lucide-icon>
               </div>
-              <p>Sin mensajes aún</p>
-              <span>Escribe el primer mensaje abajo</span>
+              <p>{{ 'maintenance.noMessages' | transloco }}</p>
+              <span>{{ 'maintenance.noMessagesHint' | transloco }}</span>
             </div>
           } @else {
             @for (msg of messages(); track msg.id) {
               @if (isFirstPollingNew(msg)) {
                 <div class="new-polling-divider">
                   <div class="new-polling-line"></div>
-                  <span class="new-polling-label">↓ mensajes nuevos</span>
+                  <span class="new-polling-label">{{
+                    'maintenance.newMessages' | transloco: { count: '' }
+                  }}</span>
                   <div class="new-polling-line"></div>
                 </div>
               }
               @if (isFirstUnread(msg)) {
                 <div class="unread-divider">
                   <div class="unread-line"></div>
-                  <span class="unread-label">{{ unreadCountFromHere }} mensaje{{ unreadCountFromHere !== 1 ? 's' : '' }} no leído{{ unreadCountFromHere !== 1 ? 's' : '' }}</span>
+                  <span class="unread-label">{{
+                    'maintenance.unreadMessages' | transloco: { count: unreadCountFromHere }
+                  }}</span>
                   <div class="unread-line"></div>
                 </div>
               }
@@ -291,20 +326,23 @@
                 <div class="internal-note">
                   <div class="internal-note-header">
                     <lucide-icon [img]="Lock" [size]="11"></lucide-icon>
-                    Nota interna · Admin
+                    {{ 'maintenance.internalNote' | transloco }}
                   </div>
                   <p class="internal-note-text">{{ msg.message }}</p>
                   @if (msg.attachments && msg.attachments.length > 0) {
                     <div class="msg-attachments">
                       @for (att of msg.attachments; track att.id) {
                         <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip">
-                          <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                          <lucide-icon
+                            [img]="isImageAttachment(att.file_type) ? Image : FileText"
+                            [size]="12"
+                          ></lucide-icon>
                           <span>{{ att.file_name }}</span>
                         </a>
                       }
                     </div>
                   }
-                  <span class="msg-time">{{ formatDate(msg.created_at) }}</span>
+                  <span class="msg-time">{{ msg.created_at | tenantDate: true }}</span>
                 </div>
               } @else if (isFromTenant(msg)) {
                 <!-- Tenant message (left) -->
@@ -319,32 +357,44 @@
                       <div class="msg-attachments">
                         @for (att of msg.attachments; track att.id) {
                           <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip">
-                            <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                            <lucide-icon
+                              [img]="isImageAttachment(att.file_type) ? Image : FileText"
+                              [size]="12"
+                            ></lucide-icon>
                             <span>{{ att.file_name }}</span>
                           </a>
                         }
                       </div>
                     }
-                    <span class="msg-time">{{ formatDate(msg.created_at) }}</span>
+                    <span class="msg-time">{{ msg.created_at | tenantDate: true }}</span>
                   </div>
                 </div>
               } @else {
                 <!-- Admin message (right, blue) -->
                 <div class="msg-row msg-mine">
                   <div class="msg-group">
-                    <span class="msg-sender msg-sender-mine">Tú (Admin)</span>
+                    <span class="msg-sender msg-sender-mine">{{
+                      'maintenance.you' | transloco
+                    }}</span>
                     <div class="msg-bubble bubble-mine">{{ msg.message }}</div>
                     @if (msg.attachments && msg.attachments.length > 0) {
                       <div class="msg-attachments msg-attachments-mine">
                         @for (att of msg.attachments; track att.id) {
-                          <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip att-chip-mine">
-                            <lucide-icon [img]="isImageAttachment(att.file_type) ? Image : FileText" [size]="12"></lucide-icon>
+                          <a
+                            [href]="getFileUrl(att.file_url)"
+                            target="_blank"
+                            class="att-chip att-chip-mine"
+                          >
+                            <lucide-icon
+                              [img]="isImageAttachment(att.file_type) ? Image : FileText"
+                              [size]="12"
+                            ></lucide-icon>
                             <span>{{ att.file_name }}</span>
                           </a>
                         }
                       </div>
                     }
-                    <span class="msg-time">{{ formatDate(msg.created_at) }}</span>
+                    <span class="msg-time">{{ msg.created_at | tenantDate: true }}</span>
                   </div>
                   <div class="msg-avatar admin-msg-avatar">A</div>
                 </div>
@@ -352,21 +402,26 @@
             }
           }
         </div>
-      </div><!-- /conv-messages-wrap -->
+      </div>
+      <!-- /conv-messages-wrap -->
 
       @if (newMessagesCount() > 0) {
         <div class="new-msg-bar">
           <button class="new-msg-btn" (click)="scrollToNewMessages()">
-            ↓ {{ newMessagesCount() }} mensaje{{ newMessagesCount() !== 1 ? 's' : '' }} nuevo{{ newMessagesCount() !== 1 ? 's' : '' }}
+            {{ 'maintenance.newMessages' | transloco: { count: newMessagesCount() } }}
           </button>
         </div>
       }
 
       <div class="conv-send">
-        <input #fileInputRef type="file" multiple
-               accept="image/jpeg,image/png,image/webp,application/pdf"
-               style="display:none"
-               (change)="onFileSelected($event)">
+        <input
+          #fileInputRef
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp,application/pdf"
+          style="display: none"
+          (change)="onFileSelected($event)"
+        />
 
         @if (selectedFiles().length > 0) {
           <div class="file-preview">
@@ -383,12 +438,14 @@
         }
 
         <div class="send-input-wrap">
-          <textarea class="send-textarea"
-                    [ngModel]="newMessage()"
-                    (ngModelChange)="newMessage.set($event)"
-                    placeholder="Escribe tu mensaje..."
-                    rows="2"
-                    (keydown.enter)="$event.preventDefault(); addMessage()"></textarea>
+          <textarea
+            class="send-textarea"
+            [ngModel]="newMessage()"
+            (ngModelChange)="newMessage.set($event)"
+            [attr.placeholder]="'maintenance.messagePlaceholder' | transloco"
+            rows="2"
+            (keydown.enter)="$event.preventDefault(); addMessage()"
+          ></textarea>
         </div>
 
         <div class="send-row">
@@ -396,34 +453,36 @@
             <mat-checkbox [ngModel]="isInternalNote()" (ngModelChange)="isInternalNote.set($event)">
               <span class="check-lbl">
                 <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
-                Solo staff
+                {{ 'maintenance.staffOnly' | transloco }}
               </span>
             </mat-checkbox>
-            <button class="attach-btn"
-                    type="button"
-                    (click)="fileInputRef.click()"
-                    [disabled]="selectedFiles().length >= 3"
-                    title="Adjuntar archivo (máx. 3)">
+            <button
+              class="attach-btn"
+              type="button"
+              (click)="fileInputRef.click()"
+              [disabled]="selectedFiles().length >= 3"
+              [title]="'maintenance.attachFile' | transloco"
+            >
               <lucide-icon [img]="Paperclip" [size]="14"></lucide-icon>
               @if (selectedFiles().length > 0) {
                 <span class="attach-count">{{ selectedFiles().length }}/3</span>
               }
             </button>
           </div>
-          <button class="send-btn"
-                  (click)="addMessage()"
-                  [disabled]="!newMessage() || isSendingMessage()">
+          <button
+            class="send-btn"
+            (click)="addMessage()"
+            [disabled]="!newMessage() || isSendingMessage()"
+          >
             @if (isSendingMessage()) {
               <mat-spinner diameter="14"></mat-spinner>
             } @else {
               <lucide-icon [img]="Send" [size]="14"></lucide-icon>
             }
-            Enviar
+            {{ 'common.send' | transloco }}
           </button>
         </div>
       </div>
-
     </div>
   </div>
-
 </div>

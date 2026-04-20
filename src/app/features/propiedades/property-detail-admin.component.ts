@@ -37,10 +37,13 @@ import {
   FileText,
   Shield,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SlugService } from '../../core/services/slug.service';
 import { Property } from '../../core/models/property.model';
+import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
 
 @Component({
   selector: 'app-property-detail-admin',
@@ -55,9 +58,12 @@ import { Property } from '../../core/models/property.model';
     MatDividerModule,
     MatSnackBarModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantCurrencyPipe,
   ],
   templateUrl: './property-detail-admin.component.html',
   styleUrls: ['./property-detail-admin.component.scss'],
+  providers: [provideTranslocoScope({ scope: 'propiedades', alias: 'properties' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropertyDetailAdminComponent implements OnInit {

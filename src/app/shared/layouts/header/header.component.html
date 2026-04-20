@@ -3,19 +3,19 @@
     <lucide-icon [img]="Menu" [size]="20"></lucide-icon>
   </button>
 
-  <span class="header-title">Gestión de Alquileres</span>
+  <span class="header-title">{{ 'sidebar.appSubtitle' | transloco }}</span>
 
   <span class="spacer"></span>
 
   <div class="header-actions">
-
     <!-- Notifications -->
     <div class="notification-container">
       <button
         type="button"
         mat-icon-button
         class="action-btn"
-        (click)="toggleNotificationsDropdown()">
+        (click)="toggleNotificationsDropdown()"
+      >
         <div class="bell-wrapper">
           <lucide-icon [img]="Bell" [size]="20"></lucide-icon>
           @if (unreadCount() > 0) {
@@ -28,17 +28,16 @@
       <div
         *ngIf="isNotificationsDropdownOpen"
         class="dropdown-overlay"
-        (click)="closeNotificationsDropdown()">
-      </div>
+        (click)="closeNotificationsDropdown()"
+      ></div>
 
       <!-- Dropdown -->
       <div *ngIf="isNotificationsDropdownOpen" class="notif-panel">
-
         <!-- Header -->
         <div class="notif-panel__header">
           <div class="notif-panel__title">
             <lucide-icon [img]="Bell" [size]="16"></lucide-icon>
-            <span>Notificaciones</span>
+            <span>{{ 'notifications.title' | transloco }}</span>
             @if (unreadCount() > 0) {
               <span class="notif-count">{{ unreadCount() }}</span>
             }
@@ -47,9 +46,10 @@
             <button
               type="button"
               class="btn-mark-all"
-              (click)="$event.stopPropagation(); markAllNotificationsRead()">
+              (click)="$event.stopPropagation(); markAllNotificationsRead()"
+            >
               <lucide-icon [img]="CheckCheck" [size]="14"></lucide-icon>
-              Marcar leídas
+              {{ 'notifications.markReadShort' | transloco }}
             </button>
           }
         </div>
@@ -61,23 +61,31 @@
               <div class="notif-empty__icon">
                 <lucide-icon [img]="Bell" [size]="28"></lucide-icon>
               </div>
-              <p>Sin notificaciones pendientes</p>
+              <p>{{ 'notifications.noPending' | transloco }}</p>
             </div>
           } @else {
             @for (notification of notifications(); track notification.id) {
               <div
                 class="notif-item"
                 [class.notif-item--unread]="!notification.is_read"
-                (click)="handleNotificationClick(notification)">
-
-                <div class="notif-item__icon" [ngClass]="getNotificationIconColor(notification.event_type)">
-                  <lucide-icon [img]="getNotificationIcon(notification.event_type)" [size]="16"></lucide-icon>
+                (click)="handleNotificationClick(notification)"
+              >
+                <div
+                  class="notif-item__icon"
+                  [ngClass]="getNotificationIconColor(notification.event_type)"
+                >
+                  <lucide-icon
+                    [img]="getNotificationIcon(notification.event_type)"
+                    [size]="16"
+                  ></lucide-icon>
                 </div>
 
                 <div class="notif-item__content">
                   <p class="notif-item__title">{{ notification.title }}</p>
                   <p class="notif-item__message">{{ notification.message }}</p>
-                  <span class="notif-item__time">{{ formatNotificationTime(notification.created_at) }}</span>
+                  <span class="notif-item__time">{{
+                    formatNotificationTime(notification.created_at)
+                  }}</span>
                 </div>
 
                 @if (!notification.is_read) {
@@ -93,12 +101,12 @@
           <button
             type="button"
             class="btn-view-all"
-            (click)="$event.stopPropagation(); goToNotifications()">
-            Ver todas las notificaciones
+            (click)="$event.stopPropagation(); goToNotifications()"
+          >
+            {{ 'notifications.viewAll' | transloco }}
             <lucide-icon [img]="ChevronRight" [size]="16"></lucide-icon>
           </button>
         </div>
-
       </div>
     </div>
 
@@ -125,18 +133,17 @@
       <mat-divider></mat-divider>
       <button mat-menu-item (click)="goToProfile()">
         <lucide-icon [img]="User" [size]="18"></lucide-icon>
-        <span>Mi Perfil</span>
+        <span>{{ 'common.myProfile' | transloco }}</span>
       </button>
       <button mat-menu-item (click)="goToSettings()">
         <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
-        <span>Configuración</span>
+        <span>{{ 'config.title' | transloco }}</span>
       </button>
       <mat-divider></mat-divider>
       <button mat-menu-item (click)="logout()" class="logout-item">
         <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
-        <span>Cerrar Sesión</span>
+        <span>{{ 'auth.logout' | transloco }}</span>
       </button>
     </mat-menu>
-
   </div>
 </mat-toolbar>

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { Payment, PaymentStats, CreatePaymentDto, PaymentStatus } from '../../models/payment.model';
 import { SlugService } from '../slug.service';
@@ -11,6 +12,7 @@ import { SlugService } from '../slug.service';
 export class TenantPaymentService {
   private http = inject(HttpClient);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Reactive state
   private paymentsSignal = signal<Payment[]>([]);
@@ -61,7 +63,9 @@ export class TenantPaymentService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set(error.error?.message || 'Error al cargar los pagos');
+          this.errorSignal.set(
+            error.error?.message || this.transloco.translate('common.errors.loadPayments'),
+          );
           this.isLoadingSignal.set(false);
           console.error('Error loading payments:', error);
           return of([]);
@@ -116,7 +120,9 @@ export class TenantPaymentService {
         this.loadStats();
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al registrar el pago');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.registerPayment'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),

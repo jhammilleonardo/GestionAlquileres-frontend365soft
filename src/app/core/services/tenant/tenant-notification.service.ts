@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject, DestroyRef } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of, interval, startWith, Subscription } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
@@ -53,6 +54,7 @@ export class TenantNotificationService {
   private http = inject(HttpClient);
   private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Signal-based reactive state
   private notificationsSignal = signal<TenantNotification[]>([]);
@@ -129,7 +131,7 @@ export class TenantNotificationService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar las notificaciones');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadNotifications'));
           this.isLoadingSignal.set(false);
           console.error('Error loading tenant notifications:', error);
           return of([]);
@@ -233,7 +235,7 @@ export class TenantNotificationService {
           this.loadStats();
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al marcar todas como leídas');
+          this.errorSignal.set(this.transloco.translate('common.errors.markAllRead'));
           console.error('Error marking all tenant notifications as read:', error);
           return of(undefined);
         }),
@@ -259,7 +261,7 @@ export class TenantNotificationService {
           this.loadStats();
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al eliminar la notificación');
+          this.errorSignal.set(this.transloco.translate('common.errors.deleteNotification'));
           console.error('Error deleting tenant notification:', error);
           return of(undefined);
         }),

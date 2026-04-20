@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   ArrowLeft,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../core/services/language.service';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
@@ -31,23 +33,46 @@ import { HttpClient } from '@angular/common/http';
     MatButtonModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="forgot-page">
       <div class="forgot-container">
+        <div class="lang-toggle-row">
+          <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+            <button
+              class="lang-btn"
+              [class.active]="languageService.isSpanish()"
+              (click)="languageService.setLanguage('es')"
+              aria-label="Español"
+              title="Español"
+            >
+              ES
+            </button>
+            <button
+              class="lang-btn"
+              [class.active]="languageService.isEnglish()"
+              (click)="languageService.setLanguage('en')"
+              aria-label="English"
+              title="English"
+            >
+              EN
+            </button>
+          </div>
+        </div>
         <div class="forgot-header">
           <div class="brand-logo">
             <lucide-icon [img]="Building2" [size]="48"></lucide-icon>
           </div>
-          <h1>¿Olvidaste tu contraseña?</h1>
-          <p>Ingresa tu correo electrónico y te enviaremos instrucciones para restablecerla</p>
+          <h1>{{ 'auth.forgotPasswordTitle' | transloco }}</h1>
+          <p>{{ 'auth.forgotPasswordDesc' | transloco }}</p>
         </div>
 
         @if (successMessage()) {
           <div class="success-alert">
             <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
             <div class="alert-content">
-              <strong>Email enviado</strong>
+              <strong>{{ 'auth.emailSent' | transloco }}</strong>
               <span>{{ successMessage() }}</span>
             </div>
           </div>
@@ -57,7 +82,7 @@ import { HttpClient } from '@angular/common/http';
           <div class="error-alert">
             <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
             <div class="alert-content">
-              <strong>Error</strong>
+              <strong>{{ 'common.error' | transloco }}</strong>
               <span>{{ errorMessage() }}</span>
             </div>
           </div>
@@ -66,7 +91,7 @@ import { HttpClient } from '@angular/common/http';
         @if (!successMessage()) {
           <form [formGroup]="forgotForm" (ngSubmit)="onSubmit()" class="forgot-form">
             <div class="form-group">
-              <label class="form-label">Correo Electrónico</label>
+              <label class="form-label">{{ 'auth.email' | transloco }}</label>
               <mat-form-field appearance="outline" class="custom-field">
                 <input
                   matInput
@@ -78,10 +103,10 @@ import { HttpClient } from '@angular/common/http';
                 @if (
                   forgotForm.get('email')?.hasError('required') && forgotForm.get('email')?.touched
                 ) {
-                  <mat-error>Requerido</mat-error>
+                  <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                 }
                 @if (forgotForm.get('email')?.hasError('email')) {
-                  <mat-error>Correo inválido</mat-error>
+                  <mat-error>{{ 'auth.emailInvalid' | transloco }}</mat-error>
                 }
               </mat-form-field>
             </div>
@@ -95,9 +120,9 @@ import { HttpClient } from '@angular/common/http';
             >
               @if (isLoading()) {
                 <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>Enviando...</span>
+                <span>{{ 'auth.sending' | transloco }}</span>
               } @else {
-                <span>Enviar Instrucciones</span>
+                <span>{{ 'auth.sendInstructions' | transloco }}</span>
               }
             </button>
           </form>
@@ -106,7 +131,7 @@ import { HttpClient } from '@angular/common/http';
         <div class="forgot-footer">
           <a routerLink="/login" class="back-link">
             <lucide-icon [img]="ArrowLeft" [size]="16"></lucide-icon>
-            Volver al inicio de sesión
+            {{ 'auth.backToLogin' | transloco }}
           </a>
         </div>
       </div>
@@ -137,6 +162,37 @@ import { HttpClient } from '@angular/common/http';
         padding: 48px;
       }
 
+      .lang-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 16px;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 2px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 3px;
+      }
+      .lang-btn {
+        background: none;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lang-btn:hover {
+        color: #0f172a;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
       .forgot-header {
         text-align: center;
         margin-bottom: 32px;
@@ -287,9 +343,11 @@ export class ForgotPasswordComponent {
   readonly CheckCircle2 = CheckCircle2;
   readonly ArrowLeft = ArrowLeft;
 
+  readonly languageService = inject(LanguageService);
   private fb = inject(FormBuilder);
   private http = inject(HttpClient);
   private router = inject(Router);
+  private transloco = inject(TranslocoService);
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
@@ -317,9 +375,7 @@ export class ForgotPasswordComponent {
     // Simulated API call
     setTimeout(() => {
       this.isLoading.set(false);
-      this.successMessage.set(
-        `Se han enviado las instrucciones de recuperación a ${email}. Por favor revisa tu bandeja de entrada.`,
-      );
+      this.successMessage.set(this.transloco.translate('auth.forgotPasswordSentMsg', { email }));
     }, 1500);
   }
 }

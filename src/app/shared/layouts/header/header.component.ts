@@ -25,6 +25,7 @@ import {
   ChevronRight,
 } from 'lucide-angular';
 
+import { TranslocoModule } from '@jsverse/transloco';
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import {
@@ -44,6 +45,7 @@ import { SlugService } from '../../../core/services/slug.service';
     MatBadgeModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',

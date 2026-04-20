@@ -29,6 +29,7 @@ import {
 } from '../../../core/services/tenant/tenant-notification.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 type NotificationFilter = 'all' | 'unread' | 'read';
 
@@ -44,6 +45,7 @@ type NotificationFilter = 'all' | 'unread' | 'read';
     MatProgressSpinnerModule,
     MatTooltipModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   templateUrl: './tenant-notifications.component.html',
   styleUrl: './tenant-notifications.component.scss',
@@ -53,6 +55,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
+  private translocoService = inject(TranslocoService);
 
   // Signals
   notifications = this.notificationService.notifications;
@@ -129,7 +132,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
 
   deleteNotification(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('¿Eliminar esta notificación?')) {
+    if (confirm(this.translocoService.translate('public.tenantNotifications.confirmDelete'))) {
       this.notificationService.deleteNotification(id).subscribe();
     }
   }
@@ -179,19 +182,21 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
 
   getNotificationTypeLabel(eventType: string): string {
     const types: { [key: string]: string } = {
-      'maintenance.request.created': 'Nueva Solicitud',
-      'maintenance.status.changed': 'Estado Actualizado',
-      'maintenance.message.received': 'Nuevo Mensaje',
-      'maintenance.assigned': 'Asignado',
-      'maintenance.completed': 'Completado',
-      'contract.created': 'Nuevo Contrato',
-      'contract.signed': 'Contrato Firmado',
-      'contract.expiring': 'Contrato por Vencer',
-      'payment.created': 'Pago Registrado',
-      'payment.approved': 'Pago Aprobado',
-      'payment.rejected': 'Pago Rechazado',
+      'maintenance.request.created': 'public.tenantNotifications.types.maintenanceCreated',
+      'maintenance.status.changed': 'public.tenantNotifications.types.maintenanceUpdated',
+      'maintenance.message.received': 'public.tenantNotifications.types.maintenanceMessage',
+      'maintenance.assigned': 'public.tenantNotifications.types.maintenanceAssigned',
+      'maintenance.completed': 'public.tenantNotifications.types.maintenanceCompleted',
+      'contract.created': 'public.tenantNotifications.types.contractCreated',
+      'contract.signed': 'public.tenantNotifications.types.contractSigned',
+      'contract.expiring': 'public.tenantNotifications.types.contractExpiring',
+      'payment.created': 'public.tenantNotifications.types.paymentCreated',
+      'payment.approved': 'public.tenantNotifications.types.paymentApproved',
+      'payment.rejected': 'public.tenantNotifications.types.paymentRejected',
     };
-    return types[eventType] || 'Notificación';
+    return this.translocoService.translate(
+      types[eventType] || 'public.tenantNotifications.types.default',
+    );
   }
 
   formatNotificationTime(date: Date): string {
@@ -201,16 +206,32 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Ahora mismo';
-    if (minutes < 60) return `Hace ${minutes} minuto${minutes !== 1 ? 's' : ''}`;
-    if (hours < 24) return `Hace ${hours} hora${hours !== 1 ? 's' : ''}`;
-    if (days === 1) return 'Ayer';
-    if (days < 7) return `Hace ${days} días`;
-    return new Date(date).toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      year: new Date(date).getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
-    });
+    if (minutes < 1) return this.translocoService.translate('public.tenantNotifications.now');
+    if (minutes < 60)
+      return this.translocoService.translate(
+        minutes !== 1
+          ? 'public.tenantNotifications.minutesAgoPlural'
+          : 'public.tenantNotifications.minutesAgo',
+        { count: minutes },
+      );
+    if (hours < 24)
+      return this.translocoService.translate(
+        hours !== 1
+          ? 'public.tenantNotifications.hoursAgoPlural'
+          : 'public.tenantNotifications.hoursAgo',
+        { count: hours },
+      );
+    if (days === 1) return this.translocoService.translate('public.tenantNotifications.yesterday');
+    if (days < 7)
+      return this.translocoService.translate('public.tenantNotifications.daysAgo', { count: days });
+    return new Date(date).toLocaleDateString(
+      this.translocoService.getActiveLang() === 'es' ? 'es-ES' : 'en-US',
+      {
+        day: 'numeric',
+        month: 'short',
+        year: new Date(date).getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      },
+    );
   }
 
   clearError(): void {

@@ -16,6 +16,8 @@ import {
   Bath,
   Car,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
@@ -28,7 +30,8 @@ import {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatButtonModule, LucideAngularModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, LucideAngularModule, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
 })

@@ -1,7 +1,7 @@
 <div
   class="panel-container"
   role="complementary"
-  [attr.aria-label]="'Permisos de ' + employee().name"
+  [attr.aria-label]="'employees.panel.title' | transloco: { name: employee().name }"
 >
   <!-- Header -->
   <div class="panel-header">
@@ -15,7 +15,7 @@
     <button
       mat-icon-button
       (click)="panelClosed.emit()"
-      aria-label="Cerrar panel"
+      [attr.aria-label]="'employees.panel.closeAria' | transloco"
       class="close-btn"
     >
       <lucide-icon [img]="XIcon" [size]="18" aria-hidden="true"></lucide-icon>
@@ -29,30 +29,30 @@
       [class.active]="employee().is_active"
       [class.inactive]="!employee().is_active"
     >
-      {{ employee().is_active ? 'Activo' : 'Inactivo' }}
+      {{ (employee().is_active ? 'common.active' : 'common.inactive') | transloco }}
     </span>
-    <span class="role-badge">Empleado</span>
+    <span class="role-badge">{{ 'employees.panel.role' | transloco }}</span>
   </div>
 
   <!-- Permisos por módulo -->
   <div class="permissions-section">
     <div class="section-title">
       <lucide-icon [img]="ShieldIcon" [size]="16" aria-hidden="true"></lucide-icon>
-      <span>Permisos de acceso</span>
+      <span>{{ 'employees.panel.permissions' | transloco }}</span>
     </div>
 
     <div class="permissions-header-row" aria-hidden="true">
-      <span class="module-col">Módulo</span>
-      <span class="action-col" title="Ver">
+      <span class="module-col">{{ 'employees.panel.module' | transloco }}</span>
+      <span class="action-col" [title]="'employees.panel.view' | transloco">
         <lucide-icon [img]="EyeIcon" [size]="14"></lucide-icon>
       </span>
-      <span class="action-col" title="Crear">
+      <span class="action-col" [title]="'employees.panel.create' | transloco">
         <lucide-icon [img]="PlusIcon" [size]="14"></lucide-icon>
       </span>
-      <span class="action-col" title="Editar">
+      <span class="action-col" [title]="'employees.panel.editAction' | transloco">
         <lucide-icon [img]="PenLineIcon" [size]="14"></lucide-icon>
       </span>
-      <span class="action-col" title="Eliminar">
+      <span class="action-col" [title]="'employees.panel.deleteAction' | transloco">
         <lucide-icon [img]="Trash2Icon" [size]="14"></lucide-icon>
       </span>
     </div>
@@ -66,7 +66,7 @@
           class="action-toggle"
           [checked]="perm.can_view"
           (change)="toggleAction(mod.key, 'can_view', $event.checked)"
-          [attr.aria-label]="'Ver ' + mod.label"
+          [attr.aria-label]="'employees.panel.viewAria' | transloco: { module: mod.label }"
           color="primary"
         ></mat-slide-toggle>
 
@@ -75,7 +75,7 @@
           [checked]="perm.can_create"
           [disabled]="!perm.can_view"
           (change)="toggleAction(mod.key, 'can_create', $event.checked)"
-          [attr.aria-label]="'Crear en ' + mod.label"
+          [attr.aria-label]="'employees.panel.createAria' | transloco: { module: mod.label }"
           color="primary"
         ></mat-slide-toggle>
 
@@ -84,7 +84,7 @@
           [checked]="perm.can_edit"
           [disabled]="!perm.can_view"
           (change)="toggleAction(mod.key, 'can_edit', $event.checked)"
-          [attr.aria-label]="'Editar en ' + mod.label"
+          [attr.aria-label]="'employees.panel.editAria' | transloco: { module: mod.label }"
           color="primary"
         ></mat-slide-toggle>
 
@@ -93,7 +93,7 @@
           [checked]="perm.can_delete"
           [disabled]="!perm.can_view"
           (change)="toggleAction(mod.key, 'can_delete', $event.checked)"
-          [attr.aria-label]="'Eliminar en ' + mod.label"
+          [attr.aria-label]="'employees.panel.deleteAria' | transloco: { module: mod.label }"
           color="warn"
         ></mat-slide-toggle>
       </div>
@@ -108,13 +108,13 @@
       (click)="savePermissions()"
       [disabled]="isSaving()"
       class="save-btn"
-      aria-label="Guardar permisos"
+      [attr.aria-label]="'employees.panel.savePermissions' | transloco"
     >
       @if (isSaving()) {
         <mat-spinner diameter="18"></mat-spinner>
-        <span>Guardando...</span>
+        <span>{{ 'employees.panel.saving' | transloco }}</span>
       } @else {
-        Guardar permisos
+        {{ 'employees.panel.savePermissions' | transloco }}
       }
     </button>
 
@@ -124,11 +124,11 @@
         color="warn"
         (click)="openDeactivateDialog()"
         [disabled]="isTogglingStatus()"
-        aria-label="Desactivar empleado"
+        [attr.aria-label]="'employees.panel.deactivate' | transloco"
         class="status-btn"
       >
         <lucide-icon [img]="UserXIcon" [size]="16" aria-hidden="true"></lucide-icon>
-        Desactivar
+        {{ 'employees.panel.deactivate' | transloco }}
       </button>
     } @else {
       <button
@@ -136,11 +136,11 @@
         color="primary"
         (click)="activate()"
         [disabled]="isTogglingStatus()"
-        aria-label="Activar empleado"
+        [attr.aria-label]="'employees.panel.activate' | transloco"
         class="status-btn"
       >
         <lucide-icon [img]="UserCheckIcon" [size]="16" aria-hidden="true"></lucide-icon>
-        Activar
+        {{ 'employees.panel.activate' | transloco }}
       </button>
     }
   </div>

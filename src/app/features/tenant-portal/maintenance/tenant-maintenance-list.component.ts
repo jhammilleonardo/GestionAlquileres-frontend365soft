@@ -31,12 +31,8 @@ import {
 } from 'lucide-angular';
 import { TenantMaintenanceService } from '../../../core/services/tenant/tenant-maintenance.service';
 import { SlugService } from '../../../core/services/slug.service';
-import {
-  MaintenanceStatus,
-  MaintenanceStatusLabels,
-  MaintenancePriorityLabels,
-  MaintenanceCategoryLabels,
-} from '../../../core/models/maintenance-request.model';
+import { MaintenanceStatus } from '../../../core/models/maintenance-request.model';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-tenant-maintenance-list',
@@ -52,6 +48,7 @@ import {
     MatFormFieldModule,
     MatInputModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
@@ -62,9 +59,11 @@ import {
             <lucide-icon [img]="Wrench" class="text-primary-600" [size]="28"></lucide-icon>
           </div>
           <div>
-            <h1 class="text-3xl font-bold text-slate-800 tracking-tight mb-1">Mis Solicitudes</h1>
+            <h1 class="text-3xl font-bold text-slate-800 tracking-tight mb-1">
+              {{ 'public.tenantMaintenance.listTitle' | transloco }}
+            </h1>
             <p class="text-slate-500 text-sm md:text-base">
-              Administra y haz seguimiento a tus reportes de mantenimiento.
+              {{ 'public.tenantMaintenance.listSubtitle' | transloco }}
             </p>
           </div>
         </div>
@@ -75,7 +74,7 @@ import {
           style="background-color: #2563eb; color: white; border-radius: 12px; padding: 10px 24px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;"
         >
           <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
-          Nueva Solicitud
+          {{ 'public.tenantMaintenance.newRequest' | transloco }}
         </button>
       </div>
 
@@ -91,18 +90,20 @@ import {
             style="flex-shrink:0;"
           >
             <mat-chip-option value="all">
-              Todas
+              {{ 'public.tenantMaintenance.all' | transloco }}
               <strong style="margin-left:4px;">{{ maintenanceService.stats()?.total || 0 }}</strong>
             </mat-chip-option>
-            <mat-chip-option value="NEW">Nuevas</mat-chip-option>
+            <mat-chip-option value="NEW">{{
+              'public.tenantMaintenance.new' | transloco
+            }}</mat-chip-option>
             <mat-chip-option value="IN_PROGRESS">
-              En Proceso
+              {{ 'public.tenantMaintenance.inProgress' | transloco }}
               <strong style="margin-left:4px;">{{
                 maintenanceService.stats()?.active || 0
               }}</strong>
             </mat-chip-option>
             <mat-chip-option value="COMPLETED">
-              Completadas
+              {{ 'public.tenantMaintenance.completed' | transloco }}
               <strong style="margin-left:4px;">{{
                 maintenanceService.stats()?.completed || 0
               }}</strong>
@@ -124,7 +125,7 @@ import {
             <input
               matInput
               [(ngModel)]="searchQuery"
-              placeholder="Buscar por título, ID o descripción..."
+              [placeholder]="'public.tenantMaintenance.searchPlaceholder' | transloco"
             />
           </mat-form-field>
         </div>
@@ -159,15 +160,15 @@ import {
           <h3 class="text-xl font-bold text-slate-800 mb-2">
             {{
               searchQuery || selectedStatus !== 'all'
-                ? 'No se encontraron resultados'
-                : 'No hay solicitudes'
+                ? ('public.tenantMaintenance.noResults' | transloco)
+                : ('public.tenantMaintenance.noRequests' | transloco)
             }}
           </h3>
           <p class="text-slate-500 max-w-sm mx-auto mb-8">
             {{
               searchQuery || selectedStatus !== 'all'
-                ? 'Intenta ajustando los filtros o el término de búsqueda para encontrar lo que necesitas.'
-                : 'Aún no has creado ninguna solicitud de mantenimiento para tu propiedad.'
+                ? ('public.tenantMaintenance.noResultsDesc' | transloco)
+                : ('public.tenantMaintenance.noRequestsDesc' | transloco)
             }}
           </p>
           @if (searchQuery || selectedStatus !== 'all') {
@@ -175,14 +176,14 @@ import {
               (click)="clearFilters()"
               class="text-primary-600 font-medium hover:text-primary-700 bg-primary-50 px-6 py-2.5 rounded-xl transition-colors"
             >
-              Limpiar Filtros
+              {{ 'public.tenantMaintenance.clearFilters' | transloco }}
             </button>
           } @else {
             <button
               [routerLink]="crearSolicitudUrl()"
               class="text-white font-medium bg-primary-600 hover:bg-primary-700 px-6 py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md"
             >
-              Crear mi primera solicitud
+              {{ 'public.tenantMaintenance.createFirst' | transloco }}
             </button>
           }
         </div>
@@ -200,7 +201,7 @@ import {
                   @if (
                     getUnreadCount(
                       request.id,
-                      maintenanceService.messageCounts()[request.id] ?? 0
+                      maintenanceService.messageCounts()[request.id] || 0
                     ) > 0
                   ) {
                     <div class="relative inline-flex">
@@ -212,7 +213,7 @@ import {
                         {{
                           getUnreadCount(
                             request.id,
-                            maintenanceService.messageCounts()[request.id] ?? 0
+                            maintenanceService.messageCounts()[request.id] || 0
                           )
                         }}
                       </span>
@@ -228,7 +229,7 @@ import {
                     'bg-orange-500': request.status === 'DEFERRED',
                   }"
                 >
-                  {{ statusLabels[request.status] }}
+                  {{ 'public.tenantMaintenance.status.' + request.status | transloco }}
                 </span>
               </div>
 
@@ -264,7 +265,9 @@ import {
                       "
                     >
                     </lucide-icon>
-                    <span class="text-xs font-medium">{{ categoryLabels[request.category] }}</span>
+                    <span class="text-xs font-medium">{{
+                      'public.tenantMaintenance.category.' + request.category | transloco
+                    }}</span>
                   </div>
                 }
 
@@ -276,7 +279,7 @@ import {
                     'bg-red-500': request.priority === 'HIGH',
                   }"
                 >
-                  {{ priorityLabels[request.priority] }}
+                  {{ 'public.tenantMaintenance.priority.' + request.priority | transloco }}
                 </span>
               </div>
             </div>
@@ -391,10 +394,6 @@ export class TenantMaintenanceListComponent implements OnInit {
   maintenanceService = inject(TenantMaintenanceService);
   private slugService = inject(SlugService);
 
-  statusLabels = MaintenanceStatusLabels;
-  priorityLabels = MaintenancePriorityLabels;
-  categoryLabels = MaintenanceCategoryLabels;
-
   searchQuery = '';
   selectedStatus: string = 'all';
   hoveredCat: Record<number, boolean> = {};
@@ -439,25 +438,6 @@ export class TenantMaintenanceListComponent implements OnInit {
   clearFilters(): void {
     this.searchQuery = '';
     this.selectedStatus = 'all';
-  }
-
-  formatDate(date: any): string {
-    if (!date) return '';
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    if (isNaN(dateObj.getTime())) return '';
-
-    const now = new Date();
-    const diffMs = now.getTime() - dateObj.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-
-    return dateObj.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-    });
   }
 
   buildRequestDetailUrl(requestId: number): string {

@@ -1,0 +1,18 @@
+{
+  "title": "Notificaciones",
+  "subtitle": "Mantente al día con todas las actualizaciones",
+  "markAllRead": "Marcar todas como leídas",
+  "refresh": "Actualizar",
+  "all": "Todas",
+  "unread": "No leídas",
+  "read": "Leídas",
+  "loading": "Cargando notificaciones...",
+  "empty": "Sin notificaciones",
+  "emptyUnread": "¡Excelente! No tienes notificaciones pendientes por leer.",
+  "emptyAll": "No hay notificaciones para mostrar en este momento.",
+  "markRead": "Marcar como leída",
+  "markReadShort": "Marcar leídas",
+  "noPending": "Sin notificaciones pendientes",
+  "viewAll": "Ver todas las notificaciones",
+  "delete": "Eliminar"
+}

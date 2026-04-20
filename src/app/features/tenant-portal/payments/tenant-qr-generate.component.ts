@@ -36,6 +36,8 @@ import {
   CurrencyLabels,
   CurrencySymbols,
 } from '../../../core/models/payment.model';
+import { TranslocoModule } from '@jsverse/transloco';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 
 @Component({
   selector: 'app-tenant-qr-generate',
@@ -51,6 +53,8 @@ import {
     MatProgressSpinnerModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
   ],
   template: `
     <div class="qr-container">
@@ -60,8 +64,8 @@ import {
           <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
         </button>
         <div>
-          <h1>Pagar con QR</h1>
-          <p>Genera un código QR y escanealo con tu app bancaria</p>
+          <h1>{{ 'public.tenantQrGenerate.qrPayTitle' | transloco }}</h1>
+          <p>{{ 'public.tenantQrGenerate.qrPaySubtitle' | transloco }}</p>
         </div>
       </div>
 
@@ -80,7 +84,7 @@ import {
         <mat-card class="form-card">
           <div class="card-header">
             <lucide-icon [img]="QrCode" [size]="24" class="icon-primary"></lucide-icon>
-            <h2>Datos del Pago</h2>
+            <h2>{{ 'public.tenantQrGenerate.paymentDataTitle' | transloco }}</h2>
           </div>
           <mat-divider></mat-divider>
 
@@ -88,8 +92,9 @@ import {
           <div class="info-banner">
             <lucide-icon [img]="Info" [size]="16"></lucide-icon>
             <span>
-              El código QR es compatible con <strong>MC4 / SIP Bolivia</strong>. Puedes escanerlo
-              desde cualquier app bancaria que soporte QR de pago interbancario.
+              {{ 'public.tenantQrGenerate.qrCompatibilityInfoBefore' | transloco }}
+              <strong>MC4 / SIP Bolivia</strong>.
+              {{ 'public.tenantQrGenerate.qrCompatibilityInfoAfter' | transloco }}
             </span>
           </div>
 
@@ -97,7 +102,7 @@ import {
             <!-- Monto + Moneda -->
             <div class="form-row">
               <mat-form-field appearance="outline">
-                <mat-label>Monto *</mat-label>
+                <mat-label>{{ 'public.tenantQrGenerate.amountFieldLabel' | transloco }}</mat-label>
                 <span matTextPrefix>Bs&nbsp;</span>
                 <input
                   matInput
@@ -108,12 +113,16 @@ import {
                   min="0.01"
                 />
                 @if (form.get('amount')?.invalid && form.get('amount')?.touched) {
-                  <mat-error>Ingresa un monto válido</mat-error>
+                  <mat-error>{{
+                    'public.tenantQrGenerate.invalidAmountError' | transloco
+                  }}</mat-error>
                 }
               </mat-form-field>
 
               <mat-form-field appearance="outline">
-                <mat-label>Moneda</mat-label>
+                <mat-label>{{
+                  'public.tenantQrGenerate.currencyFieldLabel' | transloco
+                }}</mat-label>
                 <mat-select formControlName="currency">
                   @for (c of currencies; track c.value) {
                     <mat-option [value]="c.value"> {{ c.symbol }} — {{ c.label }} </mat-option>
@@ -124,7 +133,7 @@ import {
 
             <!-- Tipo de pago -->
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Tipo de Pago *</mat-label>
+              <mat-label>{{ 'public.tenantQrGenerate.paymentTypeLabel' | transloco }}</mat-label>
               <mat-select formControlName="payment_type">
                 @for (t of paymentTypes; track t.value) {
                   <mat-option [value]="t.value">{{ t.label }}</mat-option>
@@ -134,12 +143,12 @@ import {
 
             <!-- Nota opcional -->
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Nota (opcional)</mat-label>
+              <mat-label>{{ 'public.tenantQrGenerate.notesFieldLabel' | transloco }}</mat-label>
               <input
                 matInput
                 formControlName="notes"
                 maxlength="200"
-                placeholder="Ej. Pago de enero 2026"
+                [placeholder]="'public.tenantQrGenerate.notesPlaceholder' | transloco"
               />
             </mat-form-field>
 
@@ -152,13 +161,15 @@ import {
               >
                 @if (qrService.isLoading()) {
                   <mat-spinner diameter="20"></mat-spinner>
-                  Generando...
+                  {{ 'public.tenantQrGenerate.generatingQr' | transloco }}
                 } @else {
                   <lucide-icon [img]="QrCode" [size]="20"></lucide-icon>
-                  Generar QR
+                  {{ 'public.tenantQrGenerate.generateQr' | transloco }}
                 }
               </button>
-              <button type="button" mat-stroked-button (click)="goBack()">Cancelar</button>
+              <button type="button" mat-stroked-button (click)="goBack()">
+                {{ 'public.tenantQrGenerate.cancel' | transloco }}
+              </button>
             </div>
           </form>
         </mat-card>
@@ -172,18 +183,22 @@ import {
         @if (qr.status === QrStatus.PAGADO) {
           <mat-card class="result-card success">
             <lucide-icon [img]="CheckCircle2" [size]="56" class="result-icon"></lucide-icon>
-            <h2>¡Pago Confirmado!</h2>
+            <h2>{{ 'public.tenantQrGenerate.paymentConfirmedTitle' | transloco }}</h2>
             <p>
-              Tu pago por
+              {{ 'public.tenantQrGenerate.paymentProcessedDescBefore' | transloco }}
               <strong>{{ currencySymbol(qr.currency) }}{{ qr.amount | number: '1.2-2' }}</strong>
-              fue procesado exitosamente.
+              {{ 'public.tenantQrGenerate.paymentProcessedDescAfter' | transloco }}
             </p>
             @if (qr.transaction_id) {
               <span class="tx-id">TXN: {{ qr.transaction_id }}</span>
             }
             <div class="result-actions">
-              <button mat-raised-button color="primary" (click)="goBack()">Volver a Pagos</button>
-              <button mat-stroked-button (click)="resetQr()">Generar Otro QR</button>
+              <button mat-raised-button color="primary" (click)="goBack()">
+                {{ 'public.tenantQrGenerate.backToPayments' | transloco }}
+              </button>
+              <button mat-stroked-button (click)="resetQr()">
+                {{ 'public.tenantQrGenerate.generateAnotherQr' | transloco }}
+              </button>
             </div>
           </mat-card>
         }
@@ -192,9 +207,11 @@ import {
         @if (qr.status === QrStatus.EXPIRADO) {
           <mat-card class="result-card expired">
             <lucide-icon [img]="Clock" [size]="56" class="result-icon"></lucide-icon>
-            <h2>QR Expirado</h2>
-            <p>El código QR venció sin recibir pago. Genera uno nuevo.</p>
-            <button mat-raised-button color="primary" (click)="resetQr()">Generar Nuevo QR</button>
+            <h2>{{ 'public.tenantQrGenerate.qrExpiredTitle' | transloco }}</h2>
+            <p>{{ 'public.tenantQrGenerate.qrExpiredDesc' | transloco }}</p>
+            <button mat-raised-button color="primary" (click)="resetQr()">
+              {{ 'public.tenantQrGenerate.generateNewQr' | transloco }}
+            </button>
           </mat-card>
         }
 
@@ -202,9 +219,11 @@ import {
         @if (qr.status === QrStatus.CANCELADO) {
           <mat-card class="result-card cancelled">
             <lucide-icon [img]="XCircle" [size]="56" class="result-icon"></lucide-icon>
-            <h2>QR Cancelado</h2>
-            <p>Este código QR fue cancelado.</p>
-            <button mat-raised-button color="primary" (click)="resetQr()">Generar Nuevo QR</button>
+            <h2>{{ 'public.tenantQrGenerate.qrCancelledTitle' | transloco }}</h2>
+            <p>{{ 'public.tenantQrGenerate.qrCancelledDesc' | transloco }}</p>
+            <button mat-raised-button color="primary" (click)="resetQr()">
+              {{ 'public.tenantQrGenerate.generateNewQr' | transloco }}
+            </button>
           </mat-card>
         }
 
@@ -213,7 +232,9 @@ import {
           <mat-card class="qr-display-card">
             <div class="qr-display-header">
               <div class="qr-amount">
-                <span class="qr-amount-label">Total a pagar</span>
+                <span class="qr-amount-label">{{
+                  'public.tenantQrGenerate.totalToPayLabel' | transloco
+                }}</span>
                 <span class="qr-amount-value">
                   {{ currencySymbol(qr.currency) }}{{ qr.amount | number: '1.2-2' }}
                   <small>{{ qr.currency }}</small>
@@ -221,7 +242,7 @@ import {
               </div>
               <div class="qr-status-chip pending">
                 <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                <span>Esperando pago...</span>
+                <span>{{ 'public.tenantQrGenerate.waitingForPayment' | transloco }}</span>
               </div>
             </div>
 
@@ -234,7 +255,7 @@ import {
               } @else {
                 <div class="qr-placeholder">
                   <lucide-icon [img]="QrCode" [size]="80"></lucide-icon>
-                  <span>QR no disponible</span>
+                  <span>{{ 'public.tenantQrGenerate.qrNotAvailable' | transloco }}</span>
                 </div>
               }
             </div>
@@ -242,16 +263,21 @@ import {
             <!-- Instrucciones -->
             <div class="qr-steps">
               <div class="step">
-                <span class="step-no">1</span>Abre tu app bancaria o billetera digital
+                <span class="step-no">1</span>{{ 'public.tenantQrGenerate.step1' | transloco }}
               </div>
               <div class="step">
-                <span class="step-no">2</span>Selecciona la opción <strong>Pagar con QR</strong>
+                <span class="step-no">2</span>
+                <span>
+                  {{ 'public.tenantQrGenerate.step2Before' | transloco }}
+                  <strong>{{ 'public.tenantQrGenerate.step2Action' | transloco }}</strong>
+                  {{ 'public.tenantQrGenerate.step2After' | transloco }}
+                </span>
               </div>
               <div class="step">
-                <span class="step-no">3</span>Escanea el código y confirma el pago
+                <span class="step-no">3</span>{{ 'public.tenantQrGenerate.step3' | transloco }}
               </div>
               <div class="step">
-                <span class="step-no">4</span>Esta pantalla se actualizará automáticamente
+                <span class="step-no">4</span>{{ 'public.tenantQrGenerate.step4' | transloco }}
               </div>
             </div>
 
@@ -259,8 +285,16 @@ import {
             @if (qr.expires_at) {
               <div class="expires-row">
                 <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                <span>Vence: {{ formatDate(qr.expires_at) }}</span>
-                <span class="poll-label"> Verificando cada {{ pollIntervalSec }}s </span>
+                <span
+                  >{{ 'public.tenantQrGenerate.expiresAtLabel' | transloco }}
+                  {{ qr.expires_at | tenantDate: true }}</span
+                >
+                <span class="poll-label">
+                  {{
+                    'public.tenantQrGenerate.pollingStatusLabel'
+                      | transloco: { seconds: pollIntervalSec }
+                  }}
+                </span>
               </div>
             }
 
@@ -273,12 +307,12 @@ import {
                 } @else {
                   <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
                 }
-                Verificar ahora
+                {{ 'public.tenantQrGenerate.verifyNow' | transloco }}
               </button>
               @if (qrSafeUrl()) {
                 <button mat-stroked-button (click)="downloadQr(qr)">
                   <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-                  Descargar QR
+                  {{ 'public.tenantQrGenerate.downloadQr' | transloco }}
                 </button>
               }
               <button
@@ -292,7 +326,7 @@ import {
                 } @else {
                   <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
                 }
-                Cancelar QR
+                {{ 'public.tenantQrGenerate.cancelQr' | transloco }}
               </button>
             </div>
           </mat-card>
@@ -717,16 +751,6 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
 
   currencySymbol(code: string): string {
     return CurrencySymbols[code as Currency] ?? code;
-  }
-
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleString('es-BO', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 
   // ── Actions ───────────────────────────────────────────────────────

@@ -9,6 +9,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule, ArrowLeft, CheckCircle2 } from 'lucide-angular';
 import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { merge, debounceTime } from 'rxjs';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationService } from '../../../core/services/admin/application.service';
 import { PropertyService } from '../../../core/services/admin/property.service';
@@ -34,17 +36,19 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
     MatStepperModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
+    TranslocoModule,
     Step1PersonalInfoComponent,
     Step2EmploymentHistoryComponent,
     Step3PreviewSubmitComponent,
   ],
+  providers: [provideTranslocoScope('rentalApp')],
   template: `
     <div class="application-wizard">
       <!-- Header -->
       <div class="page-header">
         <button mat-button class="back-btn" (click)="goBack()">
           <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-          <span>Volver</span>
+          <span>{{ 'rentalApp.back' | transloco }}</span>
         </button>
 
         <div class="header-content">
@@ -52,7 +56,7 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
             <lucide-icon [img]="CheckCircle2" [size]="28"></lucide-icon>
           </div>
           <div class="header-text">
-            <h1>Solicitud de Alquiler</h1>
+            <h1>{{ 'rentalApp.title' | transloco }}</h1>
             @if (property()) {
               <p class="subtitle">{{ property()!.title }}</p>
             }
@@ -64,7 +68,7 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
       @if (isLoadingProperty()) {
         <div class="loading-state">
           <mat-spinner diameter="48"></mat-spinner>
-          <p>Cargando información de la propiedad...</p>
+          <p>{{ 'rentalApp.loading' | transloco }}</p>
         </div>
       }
 
@@ -79,7 +83,7 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
           >
             <!-- Step 1: Información Personal -->
             <mat-step [stepControl]="personalInfoForm">
-              <ng-template matStepLabel>Datos Personales</ng-template>
+              <ng-template matStepLabel>{{ 'rentalApp.step1Label' | transloco }}</ng-template>
               <app-step-1-personal-info
                 [formGroup]="personalInfoForm"
                 (isValid)="personalInfoValid.set($event)"
@@ -89,7 +93,7 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
 
             <!-- Step 2: Historial Laboral -->
             <mat-step [stepControl]="employmentHistoryForm">
-              <ng-template matStepLabel>Información Laboral</ng-template>
+              <ng-template matStepLabel>{{ 'rentalApp.step2Label' | transloco }}</ng-template>
               <app-step-2-employment-history
                 [formGroup]="employmentHistoryForm"
                 (isValid)="employmentHistoryValid.set($event)"
@@ -99,7 +103,7 @@ import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.compo
 
             <!-- Step 3: Previsualización y Envío -->
             <mat-step>
-              <ng-template matStepLabel>Revisar y Enviar</ng-template>
+              <ng-template matStepLabel>{{ 'rentalApp.step3Label' | transloco }}</ng-template>
               <app-step-3-preview-submit
                 [property]="property()!"
                 [personalInfo]="personalInfoForm.value"

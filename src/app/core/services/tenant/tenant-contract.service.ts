@@ -4,6 +4,7 @@ import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 export enum ContractStatus {
   BORRADOR = 'BORRADOR',
@@ -88,6 +89,7 @@ export class TenantContractService {
   private http = inject(HttpClient);
   private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Signal-based reactive state
   private contractsSignal = signal<Contract[]>([]);
@@ -133,7 +135,7 @@ export class TenantContractService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar el contrato activo');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadActiveContract'));
           this.isLoadingSignal.set(false);
           console.error('Error loading current contract:', error);
           return of(null);
@@ -164,7 +166,7 @@ export class TenantContractService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar los contratos');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadContracts'));
           this.isLoadingSignal.set(false);
           console.error('Error loading contracts:', error);
           return of([]);
@@ -223,7 +225,9 @@ export class TenantContractService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set(error.error?.message || 'Error al firmar el contrato');
+          this.errorSignal.set(
+            error.error?.message || this.transloco.translate('common.errors.signContract'),
+          );
           this.isLoadingSignal.set(false);
           throw error;
         }),

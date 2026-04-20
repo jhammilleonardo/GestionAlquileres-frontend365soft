@@ -23,6 +23,8 @@ import {
   Users,
   FileText,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TenantAuthService } from '../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../core/services/slug.service';
@@ -43,6 +45,7 @@ import { SlugService } from '../../core/services/slug.service';
     MatIconModule,
     MatCheckboxModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="login-page">
@@ -53,23 +56,23 @@ import { SlugService } from '../../core/services/slug.service';
             <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
           </div>
           <h1>365Soft</h1>
-          <h2>Panel de Administración</h2>
+          <h2>{{ 'auth.adminPanel' | transloco }}</h2>
           <p class="brand-tagline">
-            Gestiona todas tus propiedades, inquilinos y contratos desde un solo lugar
+            {{ 'auth.tagline' | transloco }}
           </p>
 
           <div class="features">
             <div class="feature-item">
               <lucide-icon [img]="BarChart3" [size]="20"></lucide-icon>
-              <span>Dashboard con métricas en tiempo real</span>
+              <span>{{ 'auth.feature1' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="Users" [size]="20"></lucide-icon>
-              <span>Gestión completa de inquilinos</span>
+              <span>{{ 'auth.feature2' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
-              <span>Automatización de contratos y pagos</span>
+              <span>{{ 'auth.feature3' | transloco }}</span>
             </div>
           </div>
         </div>
@@ -78,10 +81,36 @@ import { SlugService } from '../../core/services/slug.service';
       <!-- Right Side - Login Form -->
       <div class="login-form-container">
         <div class="login-form-wrapper">
+          <div class="lang-toggle-row">
+            <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isSpanish()"
+                (click)="languageService.setLanguage('es')"
+                aria-label="Español"
+                title="Español"
+              >
+                ES
+              </button>
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isEnglish()"
+                (click)="languageService.setLanguage('en')"
+                aria-label="English"
+                title="English"
+              >
+                EN
+              </button>
+            </div>
+          </div>
           <div class="form-header">
-            <h3>Iniciar Sesión</h3>
+            <h3>{{ 'auth.loginTitle' | transloco }}</h3>
             <p>
-              {{ slug ? 'Accede a tu portal de inquilino' : 'Accede al panel de administración' }}
+              {{
+                slug
+                  ? ('auth.loginSubtitleTenant' | transloco)
+                  : ('auth.loginSubtitleAdmin' | transloco)
+              }}
             </p>
           </div>
 
@@ -89,7 +118,7 @@ import { SlugService } from '../../core/services/slug.service';
             <div class="error-alert">
               <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
               <div class="error-content">
-                <strong>Error de autenticación</strong>
+                <strong>{{ 'auth.loginError' | transloco }}</strong>
                 <span>{{ errorMessage() }}</span>
               </div>
             </div>
@@ -97,7 +126,7 @@ import { SlugService } from '../../core/services/slug.service';
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Correo electrónico</mat-label>
+              <mat-label>{{ 'auth.email' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
               <input
                 matInput
@@ -109,15 +138,15 @@ import { SlugService } from '../../core/services/slug.service';
               @if (
                 loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched
               ) {
-                <mat-error>El correo es requerido</mat-error>
+                <mat-error>{{ 'auth.emailRequired' | transloco }}</mat-error>
               }
               @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
-                <mat-error>Correo inválido</mat-error>
+                <mat-error>{{ 'auth.emailInvalid' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Contraseña</mat-label>
+              <mat-label>{{ 'auth.password' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
               <input
                 matInput
@@ -139,13 +168,17 @@ import { SlugService } from '../../core/services/slug.service';
                 loginForm.get('password')?.hasError('required') &&
                 loginForm.get('password')?.touched
               ) {
-                <mat-error>La contraseña es requerida</mat-error>
+                <mat-error>{{ 'auth.passwordRequired' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <div class="form-options">
-              <mat-checkbox formControlName="rememberMe" color="primary"> Recordarme </mat-checkbox>
-              <a routerLink="/forgot-password" class="forgot-link">¿Olvidaste tu contraseña?</a>
+              <mat-checkbox formControlName="rememberMe" color="primary">
+                {{ 'auth.rememberMe' | transloco }}
+              </mat-checkbox>
+              <a routerLink="/forgot-password" class="forgot-link">{{
+                'auth.forgotPassword' | transloco
+              }}</a>
             </div>
 
             <button
@@ -157,9 +190,9 @@ import { SlugService } from '../../core/services/slug.service';
             >
               @if (isLoading()) {
                 <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>Iniciando sesión...</span>
+                <span>{{ 'auth.loggingIn' | transloco }}</span>
               } @else {
-                <span>Iniciar Sesión</span>
+                <span>{{ 'auth.login' | transloco }}</span>
               }
             </button>
           </form>
@@ -167,15 +200,15 @@ import { SlugService } from '../../core/services/slug.service';
           <div class="form-footer">
             <div class="security-badge">
               <lucide-icon [img]="Shield" [size]="16"></lucide-icon>
-              <span>Conexión segura SSL</span>
+              <span>{{ 'auth.sslBadge' | transloco }}</span>
             </div>
             <div class="help-links">
               @if (!slug) {
-                <a routerLink="/register" class="help-link">¿No tienes cuenta? Regístrate</a>
+                <a routerLink="/register" class="help-link">{{ 'auth.noAccount' | transloco }}</a>
               } @else {
-                <a [routerLink]="['/', slug, 'register']" class="help-link"
-                  >¿No tienes cuenta? Regístrate</a
-                >
+                <a [routerLink]="['/', slug, 'register']" class="help-link">{{
+                  'auth.noAccount' | transloco
+                }}</a>
               }
             </div>
           </div>
@@ -306,6 +339,37 @@ import { SlugService } from '../../core/services/slug.service';
         max-width: 440px;
       }
 
+      .lang-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 24px;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 2px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 3px;
+      }
+      .lang-btn {
+        background: none;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lang-btn:hover {
+        color: #0f172a;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
       .form-header {
         margin-bottom: 32px;
       }
@@ -535,6 +599,7 @@ export class LoginComponent {
   readonly Users = Users;
   readonly FileText = FileText;
 
+  readonly languageService = inject(LanguageService);
   private authService = inject(AuthService);
   private tenantAuthService = inject(TenantAuthService);
   private router = inject(Router);
@@ -542,6 +607,7 @@ export class LoginComponent {
   private fb = inject(FormBuilder);
   private location = inject(Location);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   showPassword = signal(false);
   isLoading = signal(false);
@@ -621,7 +687,7 @@ export class LoginComponent {
           console.error('Login error:', error);
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message || 'Credenciales inválidas. Por favor, intenta nuevamente.',
+            error.error?.message || this.transloco.translate('auth.credentialsInvalid'),
           );
         },
       });
@@ -648,14 +714,14 @@ export class LoginComponent {
                 this.location.replaceState(`/${userSlug}/dashboard`);
               });
           } else {
-            this.errorMessage.set('No se pudo determinar la organización');
+            this.errorMessage.set(this.transloco.translate('auth.orgNotFound'));
           }
         },
         error: (error) => {
           console.error('Login error:', error);
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message || 'Credenciales inválidas. Por favor, intenta nuevamente.',
+            error.error?.message || this.transloco.translate('auth.credentialsInvalid'),
           );
         },
       });

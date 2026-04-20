@@ -34,6 +34,8 @@ import {
 import { environment } from '../../../../environments/environment';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SlugService } from '../../../core/services/slug.service';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
+import { LanguageService } from '../../../core/services/language.service';
 
 interface RegisterResponse {
   access_token?: string;
@@ -61,7 +63,9 @@ interface RegisterResponse {
     MatProgressSpinnerModule,
     MatIconModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
     <div class="register-page">
       <!-- Left Side - Branding -->
@@ -70,24 +74,24 @@ interface RegisterResponse {
           <div class="brand-logo">
             <lucide-icon [img]="Home" [size]="56"></lucide-icon>
           </div>
-          <h1>365Soft</h1>
-          <h2>Portal del Inquilino</h2>
+          <h1>{{ 'public.tenantRegister.brandTitle' | transloco }}</h1>
+          <h2>{{ 'public.tenantRegister.brandSubtitle' | transloco }}</h2>
           <p class="brand-tagline">
-            Únete a nuestra plataforma y gestiona todo desde un solo lugar
+            {{ 'public.tenantRegister.brandDesc' | transloco }}
           </p>
 
           <div class="features">
             <div class="feature-item">
               <lucide-icon [img]="CalendarDays" [size]="20"></lucide-icon>
-              <span>Registra y consulta tus pagos</span>
+              <span>{{ 'public.tenantRegister.feature1' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
-              <span>Acceso a contratos y documentos</span>
+              <span>{{ 'public.tenantRegister.feature2' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="MessageSquare" [size]="20"></lucide-icon>
-              <span>Reporta problemas de mantenimiento</span>
+              <span>{{ 'public.tenantRegister.feature3' | transloco }}</span>
             </div>
           </div>
         </div>
@@ -96,16 +100,38 @@ interface RegisterResponse {
       <!-- Right Side - Register Form -->
       <div class="register-form-container">
         <div class="register-form-wrapper">
+          <div class="lang-toggle-row">
+            <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isSpanish()"
+                (click)="languageService.setLanguage('es')"
+                aria-label="Español"
+                title="Español"
+              >
+                ES
+              </button>
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isEnglish()"
+                (click)="languageService.setLanguage('en')"
+                aria-label="English"
+                title="English"
+              >
+                EN
+              </button>
+            </div>
+          </div>
           <div class="form-header">
-            <h3>Crear Cuenta</h3>
-            <p>Únete a la plataforma de alquileres</p>
+            <h3>{{ 'public.tenantRegister.heroTitle' | transloco }}</h3>
+            <p>{{ 'public.tenantRegister.heroSubtitle' | transloco }}</p>
           </div>
 
           @if (errorMessage()) {
             <div class="error-alert">
               <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
               <div class="error-content">
-                <strong>Error de registro</strong>
+                <strong>{{ 'public.tenantRegister.errorTitle' | transloco }}</strong>
                 <span>{{ errorMessage() }}</span>
               </div>
             </div>
@@ -115,7 +141,7 @@ interface RegisterResponse {
             <div class="success-alert">
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
               <div class="alert-content">
-                <strong>¡Registro exitoso!</strong>
+                <strong>{{ 'public.tenantRegister.successTitle' | transloco }}</strong>
                 <span>{{ successMessage() }}</span>
               </div>
             </div>
@@ -123,65 +149,65 @@ interface RegisterResponse {
 
           <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Nombre Completo</mat-label>
+              <mat-label>{{ 'public.tenantRegister.nameLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
               <input
                 matInput
                 formControlName="name"
-                placeholder="Tu nombre completo"
+                [placeholder]="'public.tenantRegister.namePlaceholder' | transloco"
                 autocomplete="name"
               />
               @if (
                 registerForm.get('name')?.hasError('required') && registerForm.get('name')?.touched
               ) {
-                <mat-error>El nombre es requerido</mat-error>
+                <mat-error>{{ 'public.tenantRegister.nameRequired' | transloco }}</mat-error>
               }
               @if (registerForm.get('name')?.hasError('minlength')) {
-                <mat-error>Mínimo 3 caracteres</mat-error>
+                <mat-error>{{ 'public.tenantRegister.nameMin' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Correo Electrónico</mat-label>
+              <mat-label>{{ 'public.tenantRegister.emailLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
               <input
                 matInput
                 type="email"
                 formControlName="email"
-                placeholder="tu@email.com"
+                [placeholder]="'public.tenantRegister.emailPlaceholder' | transloco"
                 autocomplete="email"
               />
               @if (
                 registerForm.get('email')?.hasError('required') &&
                 registerForm.get('email')?.touched
               ) {
-                <mat-error>El correo es requerido</mat-error>
+                <mat-error>{{ 'public.tenantRegister.emailRequired' | transloco }}</mat-error>
               }
               @if (registerForm.get('email')?.hasError('email')) {
-                <mat-error>Correo inválido</mat-error>
+                <mat-error>{{ 'public.tenantRegister.emailInvalid' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Teléfono (opcional)</mat-label>
+              <mat-label>{{ 'public.tenantRegister.phoneLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Phone" [size]="20"></lucide-icon>
               <input
                 matInput
                 type="tel"
                 formControlName="phone"
-                placeholder="+591 12345678"
+                [placeholder]="'public.tenantRegister.phonePlaceholder' | transloco"
                 autocomplete="tel"
               />
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Contraseña</mat-label>
+              <mat-label>{{ 'public.tenantRegister.passwordLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
               <input
                 matInput
                 [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
-                placeholder="••••••••"
+                [placeholder]="'public.tenantRegister.passwordPlaceholder' | transloco"
                 autocomplete="new-password"
               />
               <button
@@ -193,26 +219,26 @@ interface RegisterResponse {
               >
                 <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
               </button>
-              <mat-hint>Mínimo 6 caracteres</mat-hint>
+              <mat-hint>{{ 'public.tenantRegister.passwordMin' | transloco }}</mat-hint>
               @if (
                 registerForm.get('password')?.hasError('required') &&
                 registerForm.get('password')?.touched
               ) {
-                <mat-error>La contraseña es requerida</mat-error>
+                <mat-error>{{ 'public.tenantRegister.passwordRequired' | transloco }}</mat-error>
               }
               @if (registerForm.get('password')?.hasError('minlength')) {
-                <mat-error>Mínimo 6 caracteres</mat-error>
+                <mat-error>{{ 'public.tenantRegister.passwordMin' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Confirmar Contraseña</mat-label>
+              <mat-label>{{ 'public.tenantRegister.confirmPasswordLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
               <input
                 matInput
                 [type]="showConfirmPassword() ? 'text' : 'password'"
                 formControlName="confirmPassword"
-                placeholder="••••••••"
+                [placeholder]="'public.tenantRegister.passwordPlaceholder' | transloco"
                 autocomplete="new-password"
               />
               <button
@@ -228,13 +254,15 @@ interface RegisterResponse {
                 registerForm.get('confirmPassword')?.hasError('required') &&
                 registerForm.get('confirmPassword')?.touched
               ) {
-                <mat-error>Confirma tu contraseña</mat-error>
+                <mat-error>{{
+                  'public.tenantRegister.confirmPasswordRequired' | transloco
+                }}</mat-error>
               }
               @if (
                 registerForm.hasError('passwordMismatch') &&
                 registerForm.get('confirmPassword')?.touched
               ) {
-                <mat-error>Las contraseñas no coinciden</mat-error>
+                <mat-error>{{ 'public.tenantRegister.passwordMismatch' | transloco }}</mat-error>
               }
             </mat-form-field>
 
@@ -247,9 +275,9 @@ interface RegisterResponse {
             >
               @if (isLoading()) {
                 <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>Registrando...</span>
+                <span>{{ 'public.tenantRegister.submittingBtn' | transloco }}</span>
               } @else {
-                <span>Crear Cuenta</span>
+                <span>{{ 'public.tenantRegister.submitBtn' | transloco }}</span>
               }
             </button>
           </form>
@@ -257,13 +285,13 @@ interface RegisterResponse {
           <div class="form-footer">
             <div class="security-badge">
               <lucide-icon [img]="Shield" [size]="16"></lucide-icon>
-              <span>Conexión segura SSL</span>
+              <span>{{ 'public.tenantRegister.sslBadge' | transloco }}</span>
             </div>
             <div class="help-links">
               @if (slug) {
-                <a [routerLink]="['/', slug, 'login']" class="help-link"
-                  >¿Ya tienes cuenta? Inicia Sesión</a
-                >
+                <a [routerLink]="['/', slug, 'login']" class="help-link">{{
+                  'public.tenantRegister.loginLink' | transloco
+                }}</a>
               }
             </div>
           </div>
@@ -394,6 +422,37 @@ interface RegisterResponse {
         max-width: 440px;
       }
 
+      .lang-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 24px;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 2px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 3px;
+      }
+      .lang-btn {
+        background: none;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lang-btn:hover {
+        color: #0f172a;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
       .form-header {
         margin-bottom: 32px;
       }
@@ -611,12 +670,14 @@ export class TenantRegisterComponent implements OnInit {
   readonly FileText = FileText;
   readonly MessageSquare = MessageSquare;
 
+  readonly languageService = inject(LanguageService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
   private slugService = inject(SlugService);
+  private translocoService = inject(TranslocoService);
 
   showPassword = signal(false);
   showConfirmPassword = signal(false);
@@ -659,7 +720,7 @@ export class TenantRegisterComponent implements OnInit {
 
     if (!this.slug) {
       this.errorMessage.set(
-        'No se pudo identificar la organización. Por favor, use un enlace válido.',
+        this.translocoService.translate('public.tenantRegister.invalidSlugError'),
       );
       return;
     }
@@ -667,8 +728,9 @@ export class TenantRegisterComponent implements OnInit {
     // Validate that the slug is not a reserved system route segment
     if (this.RESERVED_SLUGS.includes(this.slug.toLowerCase())) {
       this.errorMessage.set(
-        `La URL no es válida. El segmento "${this.slug}" es una ruta reservada del sistema. ` +
-          'Por favor, solicita el enlace de registro correcto a tu administrador.',
+        this.translocoService.translate('public.tenantRegister.reservedSlugError', {
+          slug: this.slug,
+        }),
       );
       this.slug = null; // Prevent form submission with wrong slug
       return;
@@ -723,7 +785,9 @@ export class TenantRegisterComponent implements OnInit {
             localStorage.setItem('tenant_access_token', response.access_token);
             localStorage.setItem('tenant_user', JSON.stringify(response));
 
-            this.successMessage.set('Redirigiendo a tu portal...');
+            this.successMessage.set(
+              this.translocoService.translate('public.tenantRegister.redirectingMsg'),
+            );
 
             // Redirect to tenant dashboard after 1 second
             setTimeout(() => {
@@ -731,7 +795,9 @@ export class TenantRegisterComponent implements OnInit {
             }, 1000);
           } else {
             // No token returned, redirect to login
-            this.successMessage.set('Ahora puedes iniciar sesión.');
+            this.successMessage.set(
+              this.translocoService.translate('public.tenantRegister.loginReadyMsg'),
+            );
 
             // Redirect to login after 2 seconds
             setTimeout(() => {
@@ -745,7 +811,8 @@ export class TenantRegisterComponent implements OnInit {
         error: (error) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message || 'Error al registrarse. Por favor, intenta nuevamente.',
+            error.error?.message ||
+              this.translocoService.translate('public.tenantRegister.defaultError'),
           );
         },
       });

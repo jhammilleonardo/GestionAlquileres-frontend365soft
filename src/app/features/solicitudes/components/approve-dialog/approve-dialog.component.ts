@@ -30,6 +30,9 @@ import {
   MessageSquare,
   Timer,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
+import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { ApplicationService } from '../../../../core/services/admin/application.service';
 import {
   Application,
@@ -54,7 +57,10 @@ import {
     MatDatepickerModule,
     MatNativeDateModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope('solicitudes')],
   templateUrl: './approve-dialog.component.html',
   styleUrls: ['./approve-dialog.component.css'],
 })

@@ -18,11 +18,11 @@ import {
 } from 'lucide-angular';
 import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../../core/services/slug.service';
-import {
-  Contract,
-  ContractStatus,
-  ContractStatusLabels,
-} from '../../../core/models/contract.model';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
+import { Contract, ContractStatus } from '../../../core/models/contract.model';
 
 @Component({
   selector: 'app-contract-detail',
@@ -35,20 +35,24 @@ import {
     MatIconModule,
     MatMenuModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
   template: `
     <div class="contract-detail-container">
       <!-- Header -->
       <div class="page-header">
         <button mat-button class="back-button" (click)="goBack()">
           <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-          Volver a Contratos
+          {{ 'contracts.detail.back' | transloco }}
         </button>
         <div class="header-title">
-          <h1>Contrato {{ contractNumber() }}</h1>
+          <h1>{{ 'contracts.detail.titlePrefix' | transloco }} {{ contractNumber() }}</h1>
           @if (currentContract()) {
             <span class="status-badge" [class]="getStatusClass(currentContract()!.status)">
-              {{ ContractStatusLabels[currentContract()!.status] }}
+              {{ 'contracts.status.' + currentContract()!.status | transloco }}
             </span>
           }
         </div>
@@ -57,7 +61,7 @@ import {
       @if (isLoading()) {
         <div class="loading-container">
           <mat-spinner diameter="50"></mat-spinner>
-          <p>Cargando contrato...</p>
+          <p>{{ 'contracts.detail.loading' | transloco }}</p>
         </div>
       } @else if (currentContract()) {
         <div class="content-grid">
@@ -66,12 +70,12 @@ import {
             <!-- Información de Propiedad e Inquilino -->
             <mat-card class="info-card">
               <div class="card-header">
-                <h3>Información del Contrato</h3>
+                <h3>{{ 'contracts.detail.contractInfo' | transloco }}</h3>
               </div>
 
               <!-- Propiedad -->
               <div class="info-section">
-                <div class="section-label">Propiedad</div>
+                <div class="section-label">{{ 'common.property' | transloco }}</div>
                 <div class="section-content">
                   <h4>{{ currentContract()!.property?.title }}</h4>
                   @if (
@@ -93,7 +97,7 @@ import {
 
               <!-- Inquilino -->
               <div class="info-section">
-                <div class="section-label">Inquilino</div>
+                <div class="section-label">{{ 'contracts.detail.tenantLabel' | transloco }}</div>
                 <div class="section-content">
                   <h4>{{ currentContract()!.tenant?.name }}</h4>
                   <p class="contact">
@@ -113,21 +117,23 @@ import {
 
               <!-- Fechas -->
               <div class="info-section">
-                <div class="section-label">Fechas</div>
+                <div class="section-label">{{ 'contracts.detail.dates' | transloco }}</div>
                 <div class="dates-grid">
                   <div class="date-item">
-                    <span class="label">Inicio:</span>
-                    <span class="value">{{ formatDate(currentContract()!.start_date) }}</span>
+                    <span class="label">{{ 'contracts.detail.startLabel' | transloco }}</span>
+                    <span class="value">{{ currentContract()!.start_date | tenantDate }}</span>
                   </div>
                   <div class="date-item">
-                    <span class="label">Fin:</span>
-                    <span class="value">{{ formatDate(currentContract()!.end_date) }}</span>
+                    <span class="label">{{ 'contracts.detail.endLabel' | transloco }}</span>
+                    <span class="value">{{ currentContract()!.end_date | tenantDate }}</span>
                   </div>
                   @if (currentContract()!.key_delivery_date) {
                     <div class="date-item">
-                      <span class="label">Entrega llaves:</span>
+                      <span class="label">{{
+                        'contracts.detail.keyDeliveryLabel' | transloco
+                      }}</span>
                       <span class="value">{{
-                        formatDate(currentContract()!.key_delivery_date)
+                        currentContract()!.key_delivery_date | tenantDate
                       }}</span>
                     </div>
                   }
@@ -138,23 +144,29 @@ import {
 
               <!-- Alquiler -->
               <div class="info-section">
-                <div class="section-label">Alquiler</div>
+                <div class="section-label">{{ 'contracts.detail.rentLabel' | transloco }}</div>
                 <div class="rent-info">
                   <div class="rent-amount">
-                    \${{ currentContract()!.monthly_rent.toLocaleString() }}
-                    <span class="currency">{{ currentContract()!.currency || 'USD' }}</span>
+                    {{ currentContract()!.monthly_rent | tenantCurrency }}
                   </div>
                   <div class="rent-details">
                     @if (currentContract()!.payment_day) {
-                      <span>Día de pago: {{ currentContract()!.payment_day }}</span>
+                      <span
+                        >{{ 'contracts.detail.paymentDayLabel' | transloco }}
+                        {{ currentContract()!.payment_day }}</span
+                      >
                     }
                     @if (currentContract()!.deposit_amount) {
                       <span
-                        >Depósito: \${{ currentContract()!.deposit_amount?.toLocaleString() }}</span
+                        >{{ 'contracts.detail.depositLabel' | transloco }}
+                        {{ currentContract()!.deposit_amount | tenantCurrency }}</span
                       >
                     }
                     @if (currentContract()!.payment_method) {
-                      <span>Método: {{ currentContract()!.payment_method }}</span>
+                      <span
+                        >{{ 'contracts.detail.methodLabel' | transloco }}
+                        {{ currentContract()!.payment_method }}</span
+                      >
                     }
                   </div>
                 </div>
@@ -165,28 +177,38 @@ import {
             @if (hasConditions()) {
               <mat-card class="info-card">
                 <div class="card-header">
-                  <h3>Condiciones de Pago</h3>
+                  <h3>{{ 'contracts.detail.paymentConditions' | transloco }}</h3>
                 </div>
 
                 <div class="conditions-list">
                   @if (currentContract()!.late_fee_percentage) {
                     <div class="condition-item">
                       <mat-icon>trending_up</mat-icon>
-                      <span>Recargo por mora: {{ currentContract()!.late_fee_percentage }}%</span>
+                      <span
+                        >{{ 'contracts.detail.lateFeeLabel' | transloco }}
+                        {{ currentContract()!.late_fee_percentage }}%</span
+                      >
                     </div>
                   }
                   @if (currentContract()!.grace_days) {
                     <div class="condition-item">
                       <mat-icon>schedule</mat-icon>
-                      <span>Días de gracia: {{ currentContract()!.grace_days }}</span>
+                      <span
+                        >{{ 'contracts.detail.graceDaysLabel' | transloco }}
+                        {{ currentContract()!.grace_days }}</span
+                      >
                     </div>
                   }
                   @if (currentContract()!.auto_renew !== undefined) {
                     <div class="condition-item">
                       <mat-icon>autorenew</mat-icon>
                       <span
-                        >Renovación automática:
-                        {{ currentContract()!.auto_renew ? 'Sí' : 'No' }}</span
+                        >{{ 'contracts.detail.autoRenewLabel' | transloco }}
+                        {{
+                          currentContract()!.auto_renew
+                            ? ('common.yes' | transloco)
+                            : ('common.no' | transloco)
+                        }}</span
                       >
                     </div>
                   }
@@ -194,15 +216,19 @@ import {
                     <div class="condition-item">
                       <mat-icon>notifications</mat-icon>
                       <span
-                        >Aviso de renovación:
-                        {{ currentContract()!.renewal_notice_days }} días</span
+                        >{{ 'contracts.detail.renewalNoticeLabel' | transloco }}
+                        {{ currentContract()!.renewal_notice_days }}
+                        {{ 'contracts.detail.days' | transloco }}</span
                       >
                     </div>
                   }
                   @if (currentContract()!.auto_increase_percentage) {
                     <div class="condition-item">
                       <mat-icon>show_chart</mat-icon>
-                      <span>Aumento anual: {{ currentContract()!.auto_increase_percentage }}%</span>
+                      <span
+                        >{{ 'contracts.detail.autoIncreaseLabel' | transloco }}
+                        {{ currentContract()!.auto_increase_percentage }}%</span
+                      >
                     </div>
                   }
                 </div>
@@ -213,7 +239,9 @@ import {
                 ) {
                   <hr />
                   <div class="services-section">
-                    <div class="section-label">Servicios Incluidos</div>
+                    <div class="section-label">
+                      {{ 'contracts.detail.includedServices' | transloco }}
+                    </div>
                     <div class="services-list">
                       @for (service of currentContract()!.included_services; track service) {
                         <span class="service-tag">{{ service }}</span>
@@ -230,7 +258,7 @@ import {
             <!-- Acciones -->
             <mat-card class="actions-card">
               <div class="card-header">
-                <h3>Acciones</h3>
+                <h3>{{ 'contracts.detail.actions' | transloco }}</h3>
               </div>
 
               <!-- Banner: pendiente de firma del inquilino -->
@@ -238,11 +266,8 @@ import {
                 <div class="pending-sign-banner">
                   <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
                   <div>
-                    <strong>Pendiente de firma</strong>
-                    <p>
-                      El inquilino debe iniciar sesión en su portal para revisar y firmar este
-                      contrato.
-                    </p>
+                    <strong>{{ 'contracts.detail.pendingSign' | transloco }}</strong>
+                    <p>{{ 'contracts.detail.pendingSignDesc' | transloco }}</p>
                   </div>
                 </div>
               }
@@ -255,21 +280,21 @@ import {
                   (click)="downloadPDF()"
                 >
                   <lucide-icon [img]="Download" [size]="18"></lucide-icon>
-                  Ver PDF
-                  <span class="button-hint">(abre en nueva pestaña)</span>
+                  {{ 'contracts.detail.viewPdf' | transloco }}
+                  <span class="button-hint">{{ 'contracts.detail.newTab' | transloco }}</span>
                 </button>
 
                 @if (canEdit()) {
                   <button mat-stroked-button class="action-button" (click)="editContract()">
                     <lucide-icon [img]="Edit" [size]="18"></lucide-icon>
-                    Editar Contrato
+                    {{ 'contracts.detail.edit' | transloco }}
                   </button>
                 }
 
                 @if (canRenew()) {
                   <button mat-stroked-button class="action-button" (click)="renewContract()">
                     <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
-                    Renovar Contrato
+                    {{ 'contracts.detail.renew' | transloco }}
                   </button>
                 }
 
@@ -280,7 +305,7 @@ import {
                     (click)="finalizeContract()"
                   >
                     <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
-                    Finalizar Contrato
+                    {{ 'contracts.detail.finalize' | transloco }}
                   </button>
                 }
               </div>
@@ -290,47 +315,49 @@ import {
             @if (hasTerms()) {
               <mat-card class="info-card">
                 <div class="card-header">
-                  <h3>Términos y Condiciones</h3>
+                  <h3>{{ 'contracts.detail.terms' | transloco }}</h3>
                 </div>
 
                 @if (currentContract()!.tenant_responsibilities) {
                   <div class="term-section">
-                    <div class="term-label">Responsabilidades del Inquilino</div>
+                    <div class="term-label">{{ 'contracts.detail.tenantResp' | transloco }}</div>
                     <p class="term-text">{{ currentContract()!.tenant_responsibilities }}</p>
                   </div>
                 }
 
                 @if (currentContract()!.owner_responsibilities) {
                   <div class="term-section">
-                    <div class="term-label">Responsabilidades del Propietario</div>
+                    <div class="term-label">{{ 'contracts.detail.ownerResp' | transloco }}</div>
                     <p class="term-text">{{ currentContract()!.owner_responsibilities }}</p>
                   </div>
                 }
 
                 @if (currentContract()!.prohibitions) {
                   <div class="term-section">
-                    <div class="term-label">Prohibiciones</div>
+                    <div class="term-label">{{ 'contracts.detail.prohibitions' | transloco }}</div>
                     <p class="term-text">{{ currentContract()!.prohibitions }}</p>
                   </div>
                 }
 
                 @if (currentContract()!.coexistence_rules) {
                   <div class="term-section">
-                    <div class="term-label">Reglas de Convivencia</div>
+                    <div class="term-label">
+                      {{ 'contracts.detail.coexistenceRules' | transloco }}
+                    </div>
                     <p class="term-text">{{ currentContract()!.coexistence_rules }}</p>
                   </div>
                 }
 
                 @if (currentContract()!.renewal_terms) {
                   <div class="term-section">
-                    <div class="term-label">Renovación</div>
+                    <div class="term-label">{{ 'contracts.detail.renewal' | transloco }}</div>
                     <p class="term-text">{{ currentContract()!.renewal_terms }}</p>
                   </div>
                 }
 
                 @if (currentContract()!.termination_terms) {
                   <div class="term-section">
-                    <div class="term-label">Rescisión</div>
+                    <div class="term-label">{{ 'contracts.detail.termination' | transloco }}</div>
                     <p class="term-text">{{ currentContract()!.termination_terms }}</p>
                   </div>
                 }
@@ -338,7 +365,7 @@ import {
                 @if (currentContract()!.jurisdiction) {
                   <hr />
                   <div class="term-section">
-                    <div class="term-label">Jurisdicción</div>
+                    <div class="term-label">{{ 'contracts.detail.jurisdiction' | transloco }}</div>
                     <p class="term-text">{{ currentContract()!.jurisdiction }}</p>
                   </div>
                 }
@@ -349,31 +376,35 @@ import {
             @if (hasBankInfo()) {
               <mat-card class="info-card">
                 <div class="card-header">
-                  <h3>Datos Bancarios</h3>
+                  <h3>{{ 'contracts.detail.bankData' | transloco }}</h3>
                 </div>
 
                 <div class="bank-info">
                   @if (currentContract()!.bank_name) {
                     <div class="bank-item">
-                      <span class="bank-label">Banco:</span>
+                      <span class="bank-label">{{ 'contracts.detail.bankLabel' | transloco }}</span>
                       <span class="bank-value">{{ currentContract()!.bank_name }}</span>
                     </div>
                   }
                   @if (currentContract()!.bank_account_type) {
                     <div class="bank-item">
-                      <span class="bank-label">Tipo:</span>
+                      <span class="bank-label">{{ 'contracts.detail.bankType' | transloco }}</span>
                       <span class="bank-value">{{ currentContract()!.bank_account_type }}</span>
                     </div>
                   }
                   @if (currentContract()!.bank_account_number) {
                     <div class="bank-item">
-                      <span class="bank-label">Cuenta:</span>
+                      <span class="bank-label">{{
+                        'contracts.detail.bankAccount' | transloco
+                      }}</span>
                       <span class="bank-value">{{ currentContract()!.bank_account_number }}</span>
                     </div>
                   }
                   @if (currentContract()!.bank_account_holder) {
                     <div class="bank-item">
-                      <span class="bank-label">Titular:</span>
+                      <span class="bank-label">{{
+                        'contracts.detail.bankHolder' | transloco
+                      }}</span>
                       <span class="bank-value">{{ currentContract()!.bank_account_holder }}</span>
                     </div>
                   }
@@ -385,7 +416,7 @@ import {
             @if (hasSignatures()) {
               <mat-card class="info-card">
                 <div class="card-header">
-                  <h3>Firmas</h3>
+                  <h3>{{ 'contracts.detail.signatures' | transloco }}</h3>
                 </div>
 
                 <div class="signatures-list">
@@ -393,9 +424,9 @@ import {
                     <div class="signature-item">
                       <lucide-icon [img]="Check" [size]="16"></lucide-icon>
                       <div>
-                        <div class="sig-label">Admin</div>
+                        <div class="sig-label">{{ 'contracts.detail.adminSig' | transloco }}</div>
                         <div class="sig-date">
-                          {{ formatDateTime(currentContract()!.owner_signature_date) }}
+                          {{ currentContract()!.owner_signature_date | tenantDate: true }}
                         </div>
                       </div>
                     </div>
@@ -404,9 +435,9 @@ import {
                     <div class="signature-item">
                       <lucide-icon [img]="Check" [size]="16"></lucide-icon>
                       <div>
-                        <div class="sig-label">Inquilino</div>
+                        <div class="sig-label">{{ 'contracts.detail.tenantSig' | transloco }}</div>
                         <div class="sig-date">
-                          {{ formatDateTime(currentContract()!.tenant_signature_date) }}
+                          {{ currentContract()!.tenant_signature_date | tenantDate: true }}
                         </div>
                       </div>
                     </div>
@@ -780,12 +811,12 @@ export class ContractDetailComponent implements OnInit {
   readonly Check = Check;
   readonly CheckCircle2 = CheckCircle2;
   readonly ContractStatus = ContractStatus;
-  readonly ContractStatusLabels = ContractStatusLabels;
 
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private contractService = inject(AdminContractService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   isLoading = signal(true);
   currentContract = signal<Contract | null>(null);
@@ -900,7 +931,9 @@ export class ContractDetailComponent implements OnInit {
 
     if (
       !confirm(
-        `¿Deseas renovar el contrato ${contract.contract_number}? Se creará un nuevo contrato basado en el actual.`,
+        this.transloco.translate('contracts.detail.confirmRenew', {
+          number: contract.contract_number,
+        }),
       )
     ) {
       return;
@@ -908,12 +941,12 @@ export class ContractDetailComponent implements OnInit {
 
     this.contractService.renewContract(contract.id).subscribe({
       next: (response) => {
-        alert('Contrato renovado exitosamente. Redirigiendo al nuevo contrato...');
+        alert(this.transloco.translate('contracts.detail.renewedSuccess'));
         const newContractUrl = this.slugService.buildUrl(`/contratos/${response.id}`);
         this.router.navigateByUrl(newContractUrl);
       },
       error: () => {
-        alert('Error al renovar el contrato');
+        alert(this.transloco.translate('contracts.detail.renewError'));
       },
     });
   }
@@ -924,7 +957,9 @@ export class ContractDetailComponent implements OnInit {
 
     if (
       !confirm(
-        `¿Deseas finalizar el contrato ${contract.contract_number}? Esta acción pasará el contrato a estado Finalizado.`,
+        this.transloco.translate('contracts.detail.confirmFinalize', {
+          number: contract.contract_number,
+        }),
       )
     ) {
       return;
@@ -933,15 +968,15 @@ export class ContractDetailComponent implements OnInit {
     this.contractService
       .updateStatus(contract.id, {
         status: ContractStatus.FINALIZADO,
-        reason: 'Finalizado por el administrador',
+        reason: this.transloco.translate('contracts.detail.finalizedReason'),
       })
       .subscribe({
         next: () => {
-          alert('Contrato finalizado exitosamente');
+          alert(this.transloco.translate('contracts.detail.finalizedSuccess'));
           this.loadContract(contract.id);
         },
         error: () => {
-          alert('Error al finalizar el contrato');
+          alert(this.transloco.translate('contracts.detail.finalizeError'));
         },
       });
   }
@@ -949,28 +984,6 @@ export class ContractDetailComponent implements OnInit {
   goBack(): void {
     const contractsUrl = this.slugService.buildUrl('/contratos');
     this.router.navigateByUrl(contractsUrl);
-  }
-
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  formatDateTime(dateString: string | undefined): string {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 
   getStatusClass(status: ContractStatus): string {

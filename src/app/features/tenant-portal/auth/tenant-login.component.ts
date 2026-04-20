@@ -25,6 +25,8 @@ import {
 } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
+import { LanguageService } from '../../../core/services/language.service';
 
 @Component({
   selector: 'app-tenant-login',
@@ -42,7 +44,9 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
     MatIconModule,
     MatCheckboxModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
     <div class="login-page">
       <!-- Left Side - Branding -->
@@ -51,24 +55,24 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
           <div class="brand-logo">
             <lucide-icon [img]="Home" [size]="56"></lucide-icon>
           </div>
-          <h1>365Soft</h1>
-          <h2>Portal del Inquilino</h2>
+          <h1>{{ 'public.tenantLogin.brandTitle' | transloco }}</h1>
+          <h2>{{ 'public.tenantLogin.brandSubtitle' | transloco }}</h2>
           <p class="brand-tagline">
-            Gestiona tus pagos, solicitudes de mantenimiento y documentos desde un solo lugar
+            {{ 'public.tenantLogin.brandDesc' | transloco }}
           </p>
 
           <div class="features">
             <div class="feature-item">
               <lucide-icon [img]="CalendarDays" [size]="20"></lucide-icon>
-              <span>Consulta el estado de tus pagos</span>
+              <span>{{ 'public.tenantLogin.feature1' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
-              <span>Accede a tu contrato y documentos</span>
+              <span>{{ 'public.tenantLogin.feature2' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="MessageSquare" [size]="20"></lucide-icon>
-              <span>Reporta problemas de mantenimiento</span>
+              <span>{{ 'public.tenantLogin.feature3' | transloco }}</span>
             </div>
           </div>
         </div>
@@ -77,16 +81,38 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
       <!-- Right Side - Login Form -->
       <div class="login-form-container">
         <div class="login-form-wrapper">
+          <div class="lang-toggle-row">
+            <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isSpanish()"
+                (click)="languageService.setLanguage('es')"
+                aria-label="Español"
+                title="Español"
+              >
+                ES
+              </button>
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isEnglish()"
+                (click)="languageService.setLanguage('en')"
+                aria-label="English"
+                title="English"
+              >
+                EN
+              </button>
+            </div>
+          </div>
           <div class="form-header">
-            <h3>Iniciar Sesión</h3>
-            <p>Accede a tu portal de inquilino</p>
+            <h3>{{ 'public.tenantLogin.heroTitle' | transloco }}</h3>
+            <p>{{ 'public.tenantLogin.heroSubtitle' | transloco }}</p>
           </div>
 
           @if (authService.error()) {
             <div class="error-alert">
               <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
               <div class="error-content">
-                <strong>Error de autenticación</strong>
+                <strong>{{ 'public.tenantLogin.errorTitle' | transloco }}</strong>
                 <span>{{ authService.error() }}</span>
               </div>
             </div>
@@ -94,33 +120,33 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Correo electronico</mat-label>
+              <mat-label>{{ 'public.tenantLogin.emailLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
               <input
                 matInput
                 type="email"
                 formControlName="email"
-                placeholder="correo@ejemplo.com"
+                [placeholder]="'public.tenantLogin.emailPlaceholder' | transloco"
                 autocomplete="email"
               />
               @if (
                 loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched
               ) {
-                <mat-error>El correo es requerido</mat-error>
+                <mat-error>{{ 'public.tenantLogin.emailRequired' | transloco }}</mat-error>
               }
               @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
-                <mat-error>Ingresa un correo válido</mat-error>
+                <mat-error>{{ 'public.tenantLogin.emailInvalid' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>Contraseña</mat-label>
+              <mat-label>{{ 'public.tenantLogin.passwordLabel' | transloco }}</mat-label>
               <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
               <input
                 matInput
                 [type]="showPassword() ? 'text' : 'password'"
                 formControlName="password"
-                placeholder="••••••••"
+                [placeholder]="'public.tenantLogin.passwordPlaceholder' | transloco"
                 autocomplete="current-password"
               />
               <button
@@ -136,13 +162,17 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
                 loginForm.get('password')?.hasError('required') &&
                 loginForm.get('password')?.touched
               ) {
-                <mat-error>La contraseña es requerida</mat-error>
+                <mat-error>{{ 'public.tenantLogin.passwordRequired' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <div class="form-options">
-              <mat-checkbox formControlName="rememberMe" color="primary"> Recordarme </mat-checkbox>
-              <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+              <mat-checkbox formControlName="rememberMe" color="primary">
+                {{ 'public.tenantLogin.rememberMe' | transloco }}
+              </mat-checkbox>
+              <a href="#" class="forgot-link">{{
+                'public.tenantLogin.forgotPassword' | transloco
+              }}</a>
             </div>
 
             <button
@@ -154,9 +184,9 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
             >
               @if (authService.isLoading()) {
                 <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>Iniciando sesión...</span>
+                <span>{{ 'public.tenantLogin.submittingBtn' | transloco }}</span>
               } @else {
-                <span>Iniciar Sesión</span>
+                <span>{{ 'public.tenantLogin.submitBtn' | transloco }}</span>
               }
             </button>
           </form>
@@ -164,13 +194,13 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
           <div class="form-footer">
             <div class="security-badge">
               <lucide-icon [img]="Shield" [size]="16"></lucide-icon>
-              <span>Conexión segura SSL</span>
+              <span>{{ 'public.tenantLogin.sslBadge' | transloco }}</span>
             </div>
             <div class="help-links">
               @if (slug) {
-                <a [routerLink]="['/', slug, 'register']" class="help-link"
-                  >¿No tienes cuenta? Regístrate</a
-                >
+                <a [routerLink]="['/', slug, 'register']" class="help-link">{{
+                  'public.tenantLogin.registerLink' | transloco
+                }}</a>
               }
             </div>
           </div>
@@ -301,6 +331,37 @@ import { ApplicationIntentionService } from '../../../core/services/tenant/appli
         max-width: 440px;
       }
 
+      .lang-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 24px;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 2px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 3px;
+      }
+      .lang-btn {
+        background: none;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lang-btn:hover {
+        color: #0f172a;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
       .form-header {
         margin-bottom: 32px;
       }
@@ -502,12 +563,14 @@ export class TenantLoginComponent implements OnInit {
   readonly FileText = FileText;
   readonly MessageSquare = MessageSquare;
 
+  readonly languageService = inject(LanguageService);
   authService = inject(TenantAuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private location = inject(Location);
   private intentionService = inject(ApplicationIntentionService);
+  private translocoService = inject(TranslocoService);
 
   showPassword = signal(false);
   slug: string | null = null;

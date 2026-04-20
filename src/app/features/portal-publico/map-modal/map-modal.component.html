@@ -5,13 +5,13 @@
     <div class="modal-content no-padding">
       <div class="map-header">
         <div>
-          <h2 class="modal-title">Ubicación de la Propiedad</h2>
+          <h2 class="modal-title">{{ 'public.map.title' | transloco }}</h2>
           <p class="map-address">
             {{ location.address }}
           </p>
         </div>
         <button class="btn-external" (click)="openInNewTab()">
-          🗺️ Abrir en OpenStreetMap
+          🗺️ {{ 'public.map.openMap' | transloco }}
         </button>
       </div>
 
@@ -21,7 +21,7 @@
           width="100%"
           height="500"
           frameborder="0"
-          style="border: 0;"
+          style="border: 0"
         ></iframe>
       </div>
 
@@ -29,7 +29,7 @@
         <div class="info-item">
           <span class="info-icon">📍</span>
           <div>
-            <div class="info-label">Dirección</div>
+            <div class="info-label">{{ 'common.address' | transloco }}</div>
             <div class="info-value">{{ location.address }}</div>
           </div>
         </div>
@@ -37,15 +37,17 @@
         <div class="info-item" *ngIf="location.city">
           <span class="info-icon">🏙️</span>
           <div>
-            <div class="info-label">Ciudad</div>
-            <div class="info-value">{{ location.city }}{{ location.state ? ', ' + location.state : '' }}</div>
+            <div class="info-label">{{ 'public.map.city' | transloco }}</div>
+            <div class="info-value">
+              {{ location.city }}{{ location.state ? ', ' + location.state : '' }}
+            </div>
           </div>
         </div>
 
         <div class="info-item" *ngIf="location.zipCode">
           <span class="info-icon">📮</span>
           <div>
-            <div class="info-label">Código Postal</div>
+            <div class="info-label">{{ 'public.map.zipCode' | transloco }}</div>
             <div class="info-value">{{ location.zipCode }}</div>
           </div>
         </div>
@@ -53,4 +55,3 @@
     </div>
   </div>
 </div>
-

@@ -20,6 +20,8 @@ import {
   Maximize,
   X,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
@@ -47,7 +49,9 @@ import {
     MatChipsModule,
     MatIconModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './property-list.component.html',
   styleUrls: ['./property-list.component.css'],
 })
@@ -74,8 +78,8 @@ export class PropertyListComponent implements OnInit {
   };
 
   sortOptions = [
-    { value: SortOption.CREATED_AT, label: 'Más Recientes' },
-    { value: SortOption.TITLE, label: 'Título A-Z' },
+    { value: SortOption.CREATED_AT, label: 'public.properties.sortLatest' },
+    { value: SortOption.TITLE, label: 'public.properties.sortTitleAZ' },
   ];
 
   showFilters = false;
@@ -90,6 +94,7 @@ export class PropertyListComponent implements OnInit {
   readonly X = X;
 
   private slugService = inject(SlugService);
+  private translocoService = inject(TranslocoService);
 
   constructor(
     private propertyService: PropertyService,
@@ -216,7 +221,7 @@ export class PropertyListComponent implements OnInit {
       const address = property.addresses[0];
       return `${address.city}, ${address.country}`;
     }
-    return 'Ubicación no disponible';
+    return 'public.properties.locationNotAvailable';
   }
 
   getPropertyAddress(property: Property): string {
@@ -247,5 +252,10 @@ export class PropertyListComponent implements OnInit {
     }
 
     return '';
+  }
+
+  handleImageError(event: any): void {
+    const text = this.translocoService.translate('public.properties.noImage');
+    event.target.src = `data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="260"%3E%3Crect width="400" height="260" fill="%23dbeafe"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="15" fill="%2393c5fd"%3E${encodeURIComponent(text)}%3C/text%3E%3C/svg%3E`;
   }
 }

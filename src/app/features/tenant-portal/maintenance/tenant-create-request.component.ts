@@ -38,6 +38,7 @@ import {
   MaintenanceRequestType,
   PermissionToEnter,
 } from '../../../core/models/maintenance-request.model';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-tenant-create-request',
@@ -57,6 +58,7 @@ import {
     MatProgressSpinnerModule,
     MatStepperModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="create-request-container">
@@ -65,8 +67,8 @@ import {
           <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
         </button>
         <div>
-          <h1>Nueva Solicitud</h1>
-          <p>Reporta un problema o realiza una consulta</p>
+          <h1>{{ 'public.tenantMaintenance.newRequestTitle' | transloco }}</h1>
+          <p>{{ 'public.tenantMaintenance.newRequestSubtitle' | transloco }}</p>
         </div>
       </div>
 
@@ -81,7 +83,7 @@ import {
         <form [formGroup]="requestForm" (ngSubmit)="onSubmit()">
           <!-- Step 1: Request Type -->
           <div class="form-section">
-            <h3>¿Que tipo de solicitud es?</h3>
+            <h3>{{ 'public.tenantMaintenance.requestTypeQ' | transloco }}</h3>
             <div class="type-options">
               <label
                 class="type-option"
@@ -89,8 +91,12 @@ import {
               >
                 <input type="radio" formControlName="request_type" value="MAINTENANCE" />
                 <lucide-icon [img]="Wrench" [size]="32"></lucide-icon>
-                <span class="type-label">Mantenimiento</span>
-                <span class="type-desc">Problema que requiere reparacion</span>
+                <span class="type-label">{{
+                  'public.tenantMaintenance.maintenanceType' | transloco
+                }}</span>
+                <span class="type-desc">{{
+                  'public.tenantMaintenance.maintenanceDesc' | transloco
+                }}</span>
               </label>
               <label
                 class="type-option"
@@ -98,8 +104,12 @@ import {
               >
                 <input type="radio" formControlName="request_type" value="GENERAL" />
                 <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
-                <span class="type-label">Consulta General</span>
-                <span class="type-desc">Pregunta o solicitud de informacion</span>
+                <span class="type-label">{{
+                  'public.tenantMaintenance.generalType' | transloco
+                }}</span>
+                <span class="type-desc">{{
+                  'public.tenantMaintenance.generalDesc' | transloco
+                }}</span>
               </label>
             </div>
           </div>
@@ -107,7 +117,7 @@ import {
           <!-- Step 2: Category (only for MAINTENANCE) -->
           @if (requestForm.get('request_type')?.value === 'MAINTENANCE') {
             <div class="form-section">
-              <h3>¿Que categoria describe mejor el problema?</h3>
+              <h3>{{ 'public.tenantMaintenance.categoryQ' | transloco }}</h3>
               <div class="category-grid">
                 @for (cat of categories; track cat.value) {
                   <label
@@ -125,37 +135,41 @@ import {
 
           <!-- Step 3: Details -->
           <div class="form-section">
-            <h3>Describe tu solicitud</h3>
+            <h3>{{ 'public.tenantMaintenance.describeQ' | transloco }}</h3>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Titulo</mat-label>
-              <input matInput formControlName="title" placeholder="Ej: Fuga en el bano principal" />
+              <mat-label>{{ 'public.tenantMaintenance.titleLabel' | transloco }}</mat-label>
+              <input
+                matInput
+                formControlName="title"
+                [placeholder]="'public.tenantMaintenance.titlePlaceholder' | transloco"
+              />
               @if (
                 requestForm.get('title')?.hasError('required') && requestForm.get('title')?.touched
               ) {
-                <mat-error>El titulo es requerido</mat-error>
+                <mat-error>{{ 'public.tenantMaintenance.titleRequired' | transloco }}</mat-error>
               }
               @if (requestForm.get('title')?.hasError('minlength')) {
-                <mat-error>Minimo 5 caracteres</mat-error>
+                <mat-error>{{ 'public.tenantMaintenance.min5' | transloco }}</mat-error>
               }
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Descripcion detallada</mat-label>
+              <mat-label>{{ 'public.tenantMaintenance.descLabel' | transloco }}</mat-label>
               <textarea
                 matInput
                 formControlName="description"
                 rows="4"
-                placeholder="Describe el problema con el mayor detalle posible..."
+                [placeholder]="'public.tenantMaintenance.descPlaceholder' | transloco"
               ></textarea>
               @if (
                 requestForm.get('description')?.hasError('required') &&
                 requestForm.get('description')?.touched
               ) {
-                <mat-error>La descripcion es requerida</mat-error>
+                <mat-error>{{ 'public.tenantMaintenance.descRequired' | transloco }}</mat-error>
               }
               @if (requestForm.get('description')?.hasError('minlength')) {
-                <mat-error>Minimo 10 caracteres</mat-error>
+                <mat-error>{{ 'public.tenantMaintenance.min10' | transloco }}</mat-error>
               }
             </mat-form-field>
           </div>
@@ -163,39 +177,45 @@ import {
           <!-- Step 4: Entry Permission (only for MAINTENANCE) -->
           @if (requestForm.get('request_type')?.value === 'MAINTENANCE') {
             <div class="form-section">
-              <h3>Permiso de Entrada</h3>
+              <h3>{{ 'public.tenantMaintenance.entryPerm' | transloco }}</h3>
               <p class="section-desc">
-                ¿Autorizas que el personal entre a la propiedad sin tu presencia?
+                {{ 'public.tenantMaintenance.entryPermDesc' | transloco }}
               </p>
 
               <mat-radio-group formControlName="permission_to_enter" class="permission-options">
                 <mat-radio-button value="YES">
-                  <strong>Si, pueden entrar</strong>
-                  <span class="radio-desc">Autorizo entrada sin mi presencia</span>
+                  <strong>{{ 'public.tenantMaintenance.yesEnter' | transloco }}</strong>
+                  <span class="radio-desc">{{
+                    'public.tenantMaintenance.yesEnterDesc' | transloco
+                  }}</span>
                 </mat-radio-button>
                 <mat-radio-button value="NO">
-                  <strong>No, debo estar presente</strong>
-                  <span class="radio-desc">Necesito estar presente durante la visita</span>
+                  <strong>{{ 'public.tenantMaintenance.noPresence' | transloco }}</strong>
+                  <span class="radio-desc">{{
+                    'public.tenantMaintenance.noPresenceDesc' | transloco
+                  }}</span>
                 </mat-radio-button>
                 <mat-radio-button value="NOT_APPLICABLE">
-                  <strong>No aplica</strong>
-                  <span class="radio-desc">No es necesario entrar a la propiedad</span>
+                  <strong>{{ 'public.tenantMaintenance.notApplicable' | transloco }}</strong>
+                  <span class="radio-desc">{{
+                    'public.tenantMaintenance.notApplicableDesc' | transloco
+                  }}</span>
                 </mat-radio-button>
               </mat-radio-group>
 
               @if (requestForm.get('permission_to_enter')?.value === 'YES') {
                 <div class="entry-details">
                   <mat-checkbox formControlName="has_pets">
-                    Tengo mascotas en la propiedad
+                    {{ 'public.tenantMaintenance.hasPets' | transloco }}
                   </mat-checkbox>
 
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Notas de acceso (opcional)</mat-label>
+                    <mat-label>{{ 'public.tenantMaintenance.entryNotes' | transloco }}</mat-label>
                     <textarea
                       matInput
                       formControlName="entry_notes"
                       rows="2"
-                      placeholder="Ej: La llave esta debajo de la maceta..."
+                      [placeholder]="'public.tenantMaintenance.entryNotesPlaceholder' | transloco"
                     ></textarea>
                   </mat-form-field>
                 </div>
@@ -205,7 +225,9 @@ import {
 
           <!-- Submit -->
           <div class="form-actions">
-            <button mat-button type="button" [routerLink]="mantenimientoUrl()">Cancelar</button>
+            <button mat-button type="button" [routerLink]="mantenimientoUrl()">
+              {{ 'public.tenantMaintenance.cancel' | transloco }}
+            </button>
             <button
               mat-raised-button
               color="primary"
@@ -214,10 +236,10 @@ import {
             >
               @if (maintenanceService.isLoading()) {
                 <mat-spinner diameter="20"></mat-spinner>
-                Enviando...
+                {{ 'public.tenantMaintenance.sending' | transloco }}
               } @else {
                 <lucide-icon [img]="Check" [size]="20"></lucide-icon>
-                Enviar Solicitud
+                {{ 'public.tenantMaintenance.sendRequest' | transloco }}
               }
             </button>
           </div>

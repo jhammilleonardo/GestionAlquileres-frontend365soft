@@ -3,6 +3,8 @@ import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { LucideAngularModule, CheckCircle, FileText } from 'lucide-angular';
 import { Contract } from '../../../core/services/tenant/tenant-contract.service';
+import { TranslocoModule } from '@jsverse/transloco';
+import { FormatService } from '../../../core/services/format.service';
 
 export interface SigningSuccessDialogData {
   contract: Contract;
@@ -11,35 +13,38 @@ export interface SigningSuccessDialogData {
 @Component({
   selector: 'app-signing-success-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, LucideAngularModule],
+  imports: [MatDialogModule, MatButtonModule, LucideAngularModule, TranslocoModule],
   template: `
     <div class="success-dialog-container">
       <div class="success-icon">
         <lucide-icon [img]="CheckCircle" [size]="64"></lucide-icon>
       </div>
-      <h2 class="success-title">¡Contrato Firmado Exitosamente!</h2>
+      <h2 class="success-title">{{ 'public.signingSuccess.title' | transloco }}</h2>
       <p class="success-message">
-        Tu firma digital ha sido registrada correctamente. El contrato ahora tiene validez legal.
+        {{ 'public.signingSuccess.message' | transloco }}
       </p>
 
       <div class="contract-info">
         <div class="info-row">
           <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
-          <span class="info-label">Número de contrato:</span>
+          <span class="info-label">{{ 'public.signingSuccess.contractNumber' | transloco }}</span>
           <span class="info-value">{{ data.contract.contract_number }}</span>
         </div>
       </div>
 
       <div class="success-details">
-        <p class="detail-item"><strong>Fecha de firma:</strong> {{ signingDate }}</p>
         <p class="detail-item">
-          Tu firma ha sido almacenada de forma segura para fines de verificación.
+          <strong>{{ 'public.signingSuccess.signingDateLabel' | transloco }}</strong>
+          {{ signingDate }}
+        </p>
+        <p class="detail-item">
+          {{ 'public.signingSuccess.storageMessage' | transloco }}
         </p>
       </div>
 
       <div class="dialog-actions">
         <button mat-raised-button color="primary" (click)="onClose()" class="close-btn">
-          Entendido
+          {{ 'public.signingSuccess.understood' | transloco }}
         </button>
       </div>
     </div>
@@ -180,20 +185,11 @@ export class SigningSuccessDialogComponent {
     MatDialogRef<SigningSuccessDialogComponent>,
   );
   readonly data = inject<SigningSuccessDialogData>(MAT_DIALOG_DATA);
+  private formatService = inject(FormatService);
 
-  signingDate = this.formatDate(new Date());
+  signingDate = this.formatService.formatDateTime(new Date());
 
   onClose(): void {
     this.dialogRef.close(true);
-  }
-
-  formatDate(date: Date): string {
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 }

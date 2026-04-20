@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, throwError } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import {
   QrPayment,
@@ -16,6 +17,7 @@ import { SlugService } from '../slug.service';
 export class TenantQrPaymentService {
   private http = inject(HttpClient);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // ── Reactive state ──────────────────────────────────────────────────────
   private qrListSignal = signal<QrPayment[]>([]);
@@ -53,7 +55,9 @@ export class TenantQrPaymentService {
           this.isLoadingSignal.set(false);
         }),
         catchError((err) => {
-          this.errorSignal.set(err.error?.message || 'Error al cargar los QR');
+          this.errorSignal.set(
+            err.error?.message || this.transloco.translate('common.errors.loadQR'),
+          );
           this.isLoadingSignal.set(false);
           return [];
         }),

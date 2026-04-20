@@ -3,6 +3,7 @@ import { Observable, tap, catchError, of } from 'rxjs';
 import { ApiHttpService } from '../api-http.service';
 import { SlugService } from '../slug.service';
 import { AuthService } from '../auth.service';
+import { TranslocoService } from '@jsverse/transloco';
 import {
   Contract,
   ContractDashboard,
@@ -29,6 +30,7 @@ export class AdminContractService {
   private apiHttp = inject(ApiHttpService);
   private slugService = inject(SlugService);
   private authService = inject(AuthService);
+  private transloco = inject(TranslocoService);
 
   // Signals para estado reactivo
   private contractsSignal = signal<Contract[]>([]);
@@ -80,7 +82,7 @@ export class AdminContractService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar las métricas');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadMetrics'));
           this.isLoadingSignal.set(false);
           console.error('Error loading dashboard:', error);
           return of(null);
@@ -114,7 +116,7 @@ export class AdminContractService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar los contratos');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadContracts'));
           this.isLoadingSignal.set(false);
           console.error('Error loading contracts:', error);
           return of([]);
@@ -144,7 +146,7 @@ export class AdminContractService {
         );
       }),
       catchError((error) => {
-        this.errorSignal.set('Error al cargar el contrato');
+        this.errorSignal.set(this.transloco.translate('common.errors.loadContract'));
         console.error('Error getting contract:', error);
         throw error;
       }),
@@ -174,7 +176,9 @@ export class AdminContractService {
         this.isLoadingSignal.set(false);
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al crear el contrato');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.createContract'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -211,7 +215,9 @@ export class AdminContractService {
         this.isLoadingSignal.set(false);
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al actualizar el contrato');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.updateContract'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -248,7 +254,9 @@ export class AdminContractService {
         this.isLoadingSignal.set(false);
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al cambiar el estado');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.changeStatus'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -290,7 +298,9 @@ export class AdminContractService {
         this.isLoadingSignal.set(false);
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al renovar el contrato');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.renewContract'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),

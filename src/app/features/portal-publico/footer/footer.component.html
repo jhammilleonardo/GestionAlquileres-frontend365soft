@@ -8,7 +8,7 @@
           <span class="logo-text">RentHub</span>
         </div>
         <p class="footer-description">
-          Tu portal confiable para encontrar el hogar perfecto. Conectamos inquilinos con las mejores propiedades disponibles.
+          {{ 'public.footer.desc' | transloco }}
         </p>
         <div class="social-links">
           <a
@@ -24,31 +24,49 @@
 
       <!-- Quick Links -->
       <div class="footer-section">
-        <h3 class="footer-title">Enlaces Rápidos</h3>
+        <h3 class="footer-title">{{ 'public.footer.quickLinks' | transloco }}</h3>
         <ul class="footer-links">
-          <li><a href="/">Inicio</a></li>
-          <li><a href="/properties">Propiedades</a></li>
-          <li><a href="/about">Nosotros</a></li>
-          <li><a href="/faq">Preguntas Frecuentes</a></li>
+          <li>
+            <a href="/">{{ 'public.nav.home' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/properties">{{ 'public.nav.properties' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/about">{{ 'public.nav.about' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/faq">{{ 'public.nav.faq' | transloco }}</a>
+          </li>
           <li><a href="/blog">Blog</a></li>
         </ul>
       </div>
 
       <!-- Services -->
       <div class="footer-section">
-        <h3 class="footer-title">Servicios</h3>
+        <h3 class="footer-title">{{ 'public.footer.services' | transloco }}</h3>
         <ul class="footer-links">
-          <li><a href="/rent">Alquilar Propiedad</a></li>
-          <li><a href="/list">Publicar Propiedad</a></li>
-          <li><a href="/services">Servicios de Administración</a></li>
-          <li><a href="/screening">Verificación de Inquilinos</a></li>
-          <li><a href="/maintenance">Mantenimiento</a></li>
+          <li>
+            <a href="/rent">{{ 'public.footer.serviceRent' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/list">{{ 'public.footer.serviceList' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/services">{{ 'public.footer.serviceAdmin' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/screening">{{ 'public.footer.serviceScreening' | transloco }}</a>
+          </li>
+          <li>
+            <a href="/maintenance">{{ 'public.footer.serviceMaintenance' | transloco }}</a>
+          </li>
         </ul>
       </div>
 
       <!-- Contact -->
       <div class="footer-section">
-        <h3 class="footer-title">Contacto</h3>
+        <h3 class="footer-title">{{ 'public.footer.contact' | transloco }}</h3>
         <ul class="footer-contact">
           <li>
             <lucide-icon [img]="MapPin" class="contact-icon"></lucide-icon>
@@ -64,7 +82,7 @@
           </li>
           <li>
             <lucide-icon [img]="Clock" class="contact-icon"></lucide-icon>
-            <span>Lun - Vie: 9AM - 6PM</span>
+            <span>{{ 'public.footer.hours' | transloco }}</span>
           </li>
         </ul>
       </div>
@@ -74,12 +92,12 @@
     <div class="footer-bottom">
       <div class="footer-bottom-content">
         <p class="copyright">
-          © {{ currentYear }} RentHub. Todos los derechos reservados.
+          © {{ currentYear }} RentHub. {{ 'public.footer.rights' | transloco }}
         </p>
         <div class="footer-legal">
-          <a href="/privacy">Privacidad</a>
-          <a href="/terms">Términos</a>
-          <a href="/cookies">Cookies</a>
+          <a href="/privacy">{{ 'public.footer.privacy' | transloco }}</a>
+          <a href="/terms">{{ 'public.footer.terms' | transloco }}</a>
+          <a href="/cookies">{{ 'public.footer.cookies' | transloco }}</a>
         </div>
       </div>
     </div>

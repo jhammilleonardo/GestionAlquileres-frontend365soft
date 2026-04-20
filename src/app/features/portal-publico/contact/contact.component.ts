@@ -2,13 +2,16 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Mail, Phone, MapPin, Send } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './contact.component.html',
-  styleUrls: ['./contact.component.css']
+  styleUrls: ['./contact.component.css'],
 })
 export class ContactComponent {
   readonly Mail = Mail;
@@ -21,7 +24,7 @@ export class ContactComponent {
     email: '',
     phone: '',
     subject: '',
-    message: ''
+    message: '',
   };
 
   isSubmitting = false;
@@ -29,7 +32,7 @@ export class ContactComponent {
 
   onSubmit() {
     this.isSubmitting = true;
-    
+
     // Simulate form submission
     setTimeout(() => {
       this.isSubmitting = false;
@@ -39,9 +42,9 @@ export class ContactComponent {
         email: '',
         phone: '',
         subject: '',
-        message: ''
+        message: '',
       };
-      
+
       setTimeout(() => {
         this.submitted = false;
       }, 5000);
@@ -54,7 +57,7 @@ export class ContactComponent {
       email: '',
       phone: '',
       subject: '',
-      message: ''
+      message: '',
     };
   }
 }

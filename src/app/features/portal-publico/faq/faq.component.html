@@ -4,8 +4,8 @@
     <div class="hero-overlay"></div>
     <div class="hero-content">
       <lucide-icon [img]="HelpCircle" class="hero-icon"></lucide-icon>
-      <h1 class="hero-title">Preguntas Frecuentes</h1>
-      <p class="hero-subtitle">Encuentra respuestas a las preguntas más comunes sobre nuestros servicios</p>
+      <h1 class="hero-title">{{ 'public.faq.heroTitle' | transloco }}</h1>
+      <p class="hero-subtitle">{{ 'public.faq.heroSubtitle' | transloco }}</p>
     </div>
   </section>
 
@@ -13,38 +13,38 @@
   <section class="faq-section">
     <div class="container">
       <div class="faq-header">
-        <h2 class="section-title">¿Tienes alguna pregunta?</h2>
-        <p class="section-subtitle">Aquí encontrarás las respuestas a las preguntas más frecuentes</p>
-        
+        <h2 class="section-title">{{ 'public.faq.sectionTitle' | transloco }}</h2>
+        <p class="section-subtitle">{{ 'public.faq.sectionSubtitle' | transloco }}</p>
+
         <div class="faq-actions">
-          <button class="btn-action" (click)="openAll()">Abrir Todas</button>
-          <button class="btn-action" (click)="closeAll()">Cerrar Todas</button>
+          <button class="btn-action" (click)="openAll()">
+            {{ 'public.faq.openAll' | transloco }}
+          </button>
+          <button class="btn-action" (click)="closeAll()">
+            {{ 'public.faq.closeAll' | transloco }}
+          </button>
         </div>
       </div>
 
       <div class="faq-list">
-        <div
-          *ngFor="let faq of faqs; let i = index"
-          class="faq-item"
-          [class.active]="faq.isOpen"
-        >
+        <div *ngFor="let faq of faqs; let i = index" class="faq-item" [class.active]="faq.isOpen">
           <div class="faq-question" (click)="toggleFaq(i)">
-            <h3>{{ faq.question }}</h3>
+            <h3>{{ faq.question | transloco }}</h3>
             <div class="faq-toggle">
               <lucide-icon [img]="faq.isOpen ? ChevronUp : ChevronDown"></lucide-icon>
             </div>
           </div>
           <div class="faq-answer" [class.active]="faq.isOpen">
-            <p>{{ faq.answer }}</p>
+            <p>{{ faq.answer | transloco }}</p>
           </div>
         </div>
       </div>
 
       <!-- Contact CTA -->
       <div class="contact-cta">
-        <h3>¿No encontraste la respuesta que buscabas?</h3>
-        <p>Estamos aquí para ayudarte. Contáctanos directamente.</p>
-        <a routerLink="../contacto" class="btn-contact">Contactar Soporte</a>
+        <h3>{{ 'public.faq.ctaTitle' | transloco }}</h3>
+        <p>{{ 'public.faq.ctaSubtitle' | transloco }}</p>
+        <a routerLink="../contacto" class="btn-contact">{{ 'public.faq.ctaBtn' | transloco }}</a>
       </div>
     </div>
   </section>

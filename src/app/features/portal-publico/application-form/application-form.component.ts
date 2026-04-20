@@ -12,11 +12,14 @@ import {
   MaritalStatus,
   EmploymentType,
 } from '../../../core/models/application.model';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-application-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './application-form.component.html',
   styleUrls: ['./application-form.component.css'],
 })
@@ -26,6 +29,7 @@ export class ApplicationFormComponent implements OnInit {
   private applicationService = inject(ApplicationService);
   private authService = inject(AuthService);
   private slugService = inject(SlugService);
+  private translocoService = inject(TranslocoService);
 
   private readonly FORM_DATA_KEY = 'pending_application_form';
 
@@ -221,7 +225,7 @@ export class ApplicationFormComponent implements OnInit {
       },
       error: (err: any) => {
         this.error =
-          err.error?.message || 'Error al enviar la solicitud. Por favor intenta nuevamente.';
+          err.error?.message || this.translocoService.translate('public.applicationForm.errSubmit');
         this.submitting = false;
         window.scrollTo({ top: 0, behavior: 'smooth' });
       },
@@ -229,7 +233,7 @@ export class ApplicationFormComponent implements OnInit {
   }
 
   cancel(): void {
-    if (confirm('¿Estás seguro de cancelar? Se perderán todos los datos ingresados.')) {
+    if (confirm(this.translocoService.translate('public.applicationForm.msgCancel'))) {
       this.clearSavedFormData();
       this.router.navigate(['../../propiedades'], { relativeTo: this.route });
     }
@@ -302,11 +306,11 @@ export class ApplicationFormComponent implements OnInit {
   validatePersonalData(): boolean {
     const pd = this.formData.personal_data;
     if (!pd.full_name || !pd.phone || !pd.email || !pd.birth_date || !pd.national_id) {
-      this.error = 'Por favor completa todos los campos obligatorios de información personal';
+      this.error = this.translocoService.translate('public.applicationForm.errPersonal');
       return false;
     }
     if (!pd.email.includes('@')) {
-      this.error = 'Por favor ingresa un email válido';
+      this.error = this.translocoService.translate('public.applicationForm.errEmail');
       return false;
     }
     this.error = null;
@@ -323,11 +327,11 @@ export class ApplicationFormComponent implements OnInit {
       !cj.supervisor_name ||
       !cj.supervisor_phone
     ) {
-      this.error = 'Por favor completa todos los campos obligatorios de información laboral';
+      this.error = this.translocoService.translate('public.applicationForm.errWork');
       return false;
     }
     if (cj.salary <= 0) {
-      this.error = 'El salario debe ser mayor a 0';
+      this.error = this.translocoService.translate('public.applicationForm.errSalary');
       return false;
     }
     this.error = null;
@@ -337,21 +341,21 @@ export class ApplicationFormComponent implements OnInit {
   validateReferences(): boolean {
     const refs = this.formData.references;
     if (refs.personal.length === 0 && refs.professional.length === 0) {
-      this.error = 'Por favor agrega al menos una referencia (personal o profesional)';
+      this.error = this.translocoService.translate('public.applicationForm.errRefMissing');
       return false;
     }
 
     // Validate that all references have required fields
     for (const ref of refs.personal) {
       if (!ref.name || !ref.relationship || !ref.phone) {
-        this.error = 'Por favor completa todos los campos de las referencias personales';
+        this.error = this.translocoService.translate('public.applicationForm.errRefPersonal');
         return false;
       }
     }
 
     for (const ref of refs.professional) {
       if (!ref.name || !ref.company || !ref.position || !ref.phone) {
-        this.error = 'Por favor completa todos los campos de las referencias profesionales';
+        this.error = this.translocoService.translate('public.applicationForm.errRefProf');
         return false;
       }
     }
