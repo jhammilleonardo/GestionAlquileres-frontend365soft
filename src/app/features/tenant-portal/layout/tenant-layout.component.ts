@@ -34,6 +34,10 @@ import {
 } from '../../../core/services/tenant/tenant-notification.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ContractService } from '../../../core/services/admin/contract.service';
+import { TenantConfigService } from '../../../core/services/admin/tenant-config.service';
+import { FormatService } from '../../../core/services/format.service';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../../core/services/language.service';
 
 interface NavItem {
   label: string;
@@ -56,6 +60,7 @@ interface NavItem {
     MatSidenavModule,
     MatBadgeModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="tenant-layout">
@@ -66,11 +71,33 @@ interface NavItem {
             <lucide-icon [img]="Menu" [size]="24"></lucide-icon>
           </button>
           <div class="brand">
-            <span class="brand-text">Portal del Inquilino</span>
+            <span class="brand-text">{{ 'public.tenantLayout.portalName' | transloco }}</span>
           </div>
         </div>
 
         <div class="header-right">
+          <!-- Language switcher -->
+          <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+            <button
+              class="lang-btn"
+              [class.active]="languageService.isSpanish()"
+              (click)="languageService.setLanguage('es')"
+              aria-label="Español"
+              title="Español"
+            >
+              ES
+            </button>
+            <button
+              class="lang-btn"
+              [class.active]="languageService.isEnglish()"
+              (click)="languageService.setLanguage('en')"
+              aria-label="English"
+              title="English"
+            >
+              EN
+            </button>
+          </div>
+
           <!-- Notifications -->
           <div class="notification-container">
             <button
@@ -89,14 +116,14 @@ interface NavItem {
             @if (isNotificationsDropdownOpen) {
               <div class="notifications-dropdown">
                 <div class="dropdown-header">
-                  <h3>Notificaciones</h3>
+                  <h3>{{ 'public.tenantLayout.notifications' | transloco }}</h3>
                   <div class="header-actions-btns">
                     @if (unreadCount() > 0) {
                       <button
                         class="mark-all-btn"
                         (click)="markAllNotificationsRead(); $event.stopPropagation()"
                       >
-                        Marcar todas como leídas
+                        {{ 'public.tenantLayout.markAllRead' | transloco }}
                       </button>
                     }
                   </div>
@@ -105,7 +132,7 @@ interface NavItem {
                 @if (notifications().length === 0) {
                   <div class="no-notifications">
                     <lucide-icon [img]="Bell" [size]="48" class="empty-icon"></lucide-icon>
-                    <p>No tienes notificaciones pendientes</p>
+                    <p>{{ 'public.tenantLayout.noNotifications' | transloco }}</p>
                   </div>
                 } @else {
                   <ul class="notifications-list">
@@ -140,7 +167,7 @@ interface NavItem {
                     class="view-all-btn"
                     (click)="goToNotifications(); $event.stopPropagation()"
                   >
-                    Ver todas las notificaciones
+                    {{ 'public.tenantLayout.viewAllNotifications' | transloco }}
                   </button>
                 </div>
               </div>
@@ -175,16 +202,16 @@ interface NavItem {
           <mat-menu #userMenu="matMenu">
             <button mat-menu-item [routerLink]="perfilUrl()">
               <lucide-icon [img]="User" [size]="18"></lucide-icon>
-              <span>Mi Perfil</span>
+              <span>{{ 'public.tenantLayout.myProfile' | transloco }}</span>
             </button>
             <button mat-menu-item [routerLink]="configuracionUrl()">
               <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
-              <span>Configuracion</span>
+              <span>{{ 'public.tenantLayout.settings' | transloco }}</span>
             </button>
             <mat-divider></mat-divider>
             <button mat-menu-item (click)="logout()" class="logout-btn">
               <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
-              <span>Cerrar Sesion</span>
+              <span>{{ 'public.tenantLayout.logout' | transloco }}</span>
             </button>
           </mat-menu>
         </div>
@@ -216,7 +243,7 @@ interface NavItem {
           <!-- Contract Info -->
           @if (authService.currentUser()?.contract) {
             <div class="contract-info">
-              <div class="contract-label">Mi Propiedad</div>
+              <div class="contract-label">{{ 'public.tenantLayout.myProperty' | transloco }}</div>
               <div class="contract-value">
                 {{ authService.currentUser()?.contract?.property_title }}
               </div>
@@ -276,6 +303,40 @@ interface NavItem {
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+
+      .lang-toggle {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        background: rgba(0, 0, 0, 0.06);
+        border-radius: 6px;
+        padding: 2px;
+      }
+
+      .lang-btn {
+        background: transparent;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        transition: all 0.15s;
+        letter-spacing: 0.05em;
+        line-height: 1;
+      }
+
+      .lang-btn:hover {
+        color: rgba(0, 0, 0, 0.75);
+        background: rgba(0, 0, 0, 0.06);
+      }
+
+      .lang-btn.active {
+        background: white;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
       }
 
       .notification-btn {
@@ -752,7 +813,11 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
   notificationService = inject(TenantNotificationService);
   contractService = inject(ContractService);
   private router = inject(Router);
+  readonly languageService = inject(LanguageService);
   private slugService = inject(SlugService);
+  private tenantConfigService = inject(TenantConfigService);
+  private formatService = inject(FormatService);
+  private translocoService = inject(TranslocoService);
 
   sidebarCollapsed = false;
   isNotificationsDropdownOpen = false;
@@ -769,14 +834,18 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
     if (!hasContract) {
       // SIDEBAR PRE-CONTRATO (simplificado)
       return [
-        { label: 'Inicio', route: this.slugService.buildUrl('/portal/home'), icon: this.Home },
         {
-          label: 'Nueva Solicitud',
+          label: this.translocoService.translate('public.tenantLayout.navHome'),
+          route: this.slugService.buildUrl('/portal/home'),
+          icon: this.Home,
+        },
+        {
+          label: this.translocoService.translate('public.tenantLayout.navNewApp'),
           route: this.slugService.buildUrl('/portal/new-application'),
           icon: this.Plus,
         },
         {
-          label: 'Mis Solicitudes',
+          label: this.translocoService.translate('public.tenantLayout.navMyApp'),
           route: this.slugService.buildUrl('/portal/my-applications'),
           icon: this.FileEdit,
         },
@@ -785,15 +854,23 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
 
     // SIDEBAR COMPLETO (con contrato)
     return [
-      { label: 'Inicio', route: this.slugService.buildUrl('/portal/dashboard'), icon: this.Home },
       {
-        label: 'Mantenimiento',
+        label: this.translocoService.translate('public.tenantLayout.navHome'),
+        route: this.slugService.buildUrl('/portal/dashboard'),
+        icon: this.Home,
+      },
+      {
+        label: this.translocoService.translate('public.tenantLayout.navMaintenance'),
         route: this.slugService.buildUrl('/portal/mantenimiento'),
         icon: this.Wrench,
       },
-      { label: 'Pagos', route: this.slugService.buildUrl('/portal/pagos'), icon: this.CreditCard },
       {
-        label: 'Documentos',
+        label: this.translocoService.translate('public.tenantLayout.navPayments'),
+        route: this.slugService.buildUrl('/portal/pagos'),
+        icon: this.CreditCard,
+      },
+      {
+        label: this.translocoService.translate('public.tenantLayout.navDocuments'),
         route: this.slugService.buildUrl('/portal/documentos'),
         icon: this.FileText,
       },
@@ -848,6 +925,13 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
           },
         });
       }
+    }
+
+    const slug = this.slugService.getSlug();
+    if (slug) {
+      this.tenantConfigService.getConfig(slug).subscribe({
+        next: (config) => this.formatService.setConfig(config),
+      });
     }
 
     // Load notifications and stats

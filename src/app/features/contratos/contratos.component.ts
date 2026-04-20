@@ -32,14 +32,13 @@ import {
   ArrowRight,
   User,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { AdminContractService } from '../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../core/services/slug.service';
-import {
-  Contract,
-  ContractStatus,
-  ContractStatusLabels,
-  ContractFilters,
-} from '../../core/models/contract.model';
+import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
+import { Contract, ContractStatus, ContractFilters } from '../../core/models/contract.model';
 
 @Component({
   selector: 'app-contratos',
@@ -59,7 +58,11 @@ import {
     MatDividerModule,
     MatChipsModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
   template: `
     <div class="contracts-container">
       <!-- ── Page Header ── -->
@@ -69,20 +72,20 @@ import {
             <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
           </div>
           <div>
-            <h1>Contratos</h1>
-            <p class="page-subtitle">Gestión de contratos de arrendamiento</p>
+            <h1>{{ 'contracts.title' | transloco }}</h1>
+            <p class="page-subtitle">{{ 'contracts.subtitle' | transloco }}</p>
           </div>
         </div>
         <button mat-raised-button color="primary" class="create-button" (click)="createContract()">
           <lucide-icon [img]="Plus" [size]="17"></lucide-icon>
-          Nuevo Contrato
+          {{ 'contracts.new' | transloco }}
         </button>
       </div>
 
       @if (isLoading() && contracts().length === 0) {
         <div class="loading-container">
           <mat-spinner diameter="44"></mat-spinner>
-          <p>Cargando contratos...</p>
+          <p>{{ 'contracts.loading' | transloco }}</p>
         </div>
       } @else {
         <!-- ── Métricas ── -->
@@ -95,7 +98,7 @@ import {
                 </div>
                 <div class="metric-body">
                   <span class="metric-value">{{ dashboard()!.total_contracts }}</span>
-                  <span class="metric-label">Total Contratos</span>
+                  <span class="metric-label">{{ 'contracts.totalContracts' | transloco }}</span>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -107,7 +110,7 @@ import {
                 </div>
                 <div class="metric-body">
                   <span class="metric-value">{{ dashboard()!.active_contracts }}</span>
-                  <span class="metric-label">Activos</span>
+                  <span class="metric-label">{{ 'contracts.activeContracts' | transloco }}</span>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -119,7 +122,7 @@ import {
                 </div>
                 <div class="metric-body">
                   <span class="metric-value">{{ dashboard()!.draft_contracts }}</span>
-                  <span class="metric-label">Borradores</span>
+                  <span class="metric-label">{{ 'contracts.draftContracts' | transloco }}</span>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -130,10 +133,10 @@ import {
                   <lucide-icon [img]="DollarSign" [size]="20"></lucide-icon>
                 </div>
                 <div class="metric-body">
-                  <span class="metric-value"
-                    >Bs {{ formatRevenue(dashboard()!.monthly_revenue) }}</span
-                  >
-                  <span class="metric-label">Ingresos Mensuales</span>
+                  <span class="metric-value">{{
+                    dashboard()!.monthly_revenue | tenantCurrency
+                  }}</span>
+                  <span class="metric-label">{{ 'contracts.monthlyRevenue' | transloco }}</span>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -144,8 +147,8 @@ import {
                   <lucide-icon [img]="TrendingUp" [size]="20"></lucide-icon>
                 </div>
                 <div class="metric-body">
-                  <span class="metric-value">Bs {{ dashboard()!.avg_rent }}</span>
-                  <span class="metric-label">Alquiler Promedio</span>
+                  <span class="metric-value">{{ dashboard()!.avg_rent | tenantCurrency }}</span>
+                  <span class="metric-label">{{ 'contracts.avgRent' | transloco }}</span>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -158,7 +161,7 @@ import {
                   </div>
                   <div class="metric-body">
                     <span class="metric-value">{{ dashboard()!.contracts_expiring_soon }}</span>
-                    <span class="metric-label">Por Vencer (30 días)</span>
+                    <span class="metric-label">{{ 'contracts.expiringSoon' | transloco }}</span>
                   </div>
                 </mat-card-content>
               </mat-card>
@@ -170,7 +173,7 @@ import {
         <mat-card appearance="outlined" class="filters-card">
           <mat-card-content class="filters-content">
             <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
-              <mat-label>Buscar</mat-label>
+              <mat-label>{{ 'contracts.search' | transloco }}</mat-label>
               <lucide-icon
                 matIconPrefix
                 [img]="Search"
@@ -180,7 +183,7 @@ import {
               <input
                 matInput
                 type="text"
-                placeholder="Inquilino, propiedad o N° contrato..."
+                [placeholder]="'contracts.searchPlaceholder' | transloco"
                 (input)="onSearchChange($event)"
                 [value]="searchTerm"
               />
@@ -192,25 +195,35 @@ import {
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="status-field" subscriptSizing="dynamic">
-              <mat-label>Estado</mat-label>
+              <mat-label>{{ 'contracts.statusFilter' | transloco }}</mat-label>
               <mat-select (selectionChange)="onFilterChange()" [(ngModel)]="filters.status">
-                <mat-option value="">Todos los estados</mat-option>
-                <mat-option [value]="ContractStatus.BORRADOR">Borrador</mat-option>
-                <mat-option [value]="ContractStatus.ACTIVO">Activo</mat-option>
-                <mat-option [value]="ContractStatus.FINALIZADO">Finalizado</mat-option>
+                <mat-option value="">{{ 'contracts.allStatuses' | transloco }}</mat-option>
+                <mat-option [value]="ContractStatus.BORRADOR">{{
+                  'contracts.status.BORRADOR' | transloco
+                }}</mat-option>
+                <mat-option [value]="ContractStatus.ACTIVO">{{
+                  'contracts.status.ACTIVO' | transloco
+                }}</mat-option>
+                <mat-option [value]="ContractStatus.FINALIZADO">{{
+                  'contracts.status.FINALIZADO' | transloco
+                }}</mat-option>
               </mat-select>
             </mat-form-field>
 
             @if (hasActiveFilters()) {
               <button mat-stroked-button (click)="clearFilters()" class="clear-btn">
                 <lucide-icon [img]="X" [size]="14"></lucide-icon>
-                Limpiar
+                {{ 'contracts.clear' | transloco }}
               </button>
             }
 
             <span class="filters-spacer"></span>
 
-            <button mat-icon-button (click)="loadContracts()" matTooltip="Actualizar lista">
+            <button
+              mat-icon-button
+              (click)="loadContracts()"
+              [matTooltip]="'contracts.refresh' | transloco"
+            >
               <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
             </button>
           </mat-card-content>
@@ -221,7 +234,7 @@ import {
           <mat-card-header class="contracts-card-header">
             <div class="ch-title">
               <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
-              <span>Lista de Contratos</span>
+              <span>{{ 'contracts.listTitle' | transloco }}</span>
             </div>
             <mat-chip-set>
               <mat-chip
@@ -244,8 +257,8 @@ import {
                 <div class="empty-icon">
                   <lucide-icon [img]="FileText" [size]="30"></lucide-icon>
                 </div>
-                <p class="empty-title">No se encontraron contratos</p>
-                <span class="empty-sub">Crea el primer contrato para comenzar</span>
+                <p class="empty-title">{{ 'contracts.emptyTitle' | transloco }}</p>
+                <span class="empty-sub">{{ 'contracts.emptySub' | transloco }}</span>
                 <button
                   mat-raised-button
                   color="primary"
@@ -253,7 +266,7 @@ import {
                   class="create-button"
                 >
                   <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-                  Crear Primer Contrato
+                  {{ 'contracts.createFirst' | transloco }}
                 </button>
               </div>
             } @else {
@@ -261,13 +274,13 @@ import {
                 <div class="contracts-table">
                   <!-- Header -->
                   <div class="table-header">
-                    <div class="cell col-contract">N° Contrato</div>
-                    <div class="cell col-tenant">Inquilino</div>
-                    <div class="cell col-property">Propiedad</div>
-                    <div class="cell col-dates">Fechas</div>
-                    <div class="cell col-rent">Alquiler / mes</div>
-                    <div class="cell col-status">Estado</div>
-                    <div class="cell col-actions">Acciones</div>
+                    <div class="cell col-contract">{{ 'contracts.colNumber' | transloco }}</div>
+                    <div class="cell col-tenant">{{ 'contracts.colTenant' | transloco }}</div>
+                    <div class="cell col-property">{{ 'contracts.colProperty' | transloco }}</div>
+                    <div class="cell col-dates">{{ 'contracts.colDates' | transloco }}</div>
+                    <div class="cell col-rent">{{ 'contracts.colRent' | transloco }}</div>
+                    <div class="cell col-status">{{ 'contracts.colStatus' | transloco }}</div>
+                    <div class="cell col-actions">{{ 'contracts.colActions' | transloco }}</div>
                   </div>
 
                   <!-- Rows -->
@@ -308,20 +321,21 @@ import {
 
                       <div class="cell col-dates">
                         <div class="date-stack">
-                          <span class="date-from">{{ formatDate(contract.start_date) }}</span>
-                          <span class="date-to">{{ formatDate(contract.end_date) }}</span>
+                          <span class="date-from">{{ contract.start_date | tenantDate }}</span>
+                          <span class="date-to">{{ contract.end_date | tenantDate }}</span>
                         </div>
                       </div>
 
                       <div class="cell col-rent">
-                        <span class="rent-currency">Bs</span>
-                        <span class="rent-amount">{{ formatRent(contract.monthly_rent) }}</span>
+                        <span class="rent-amount">{{
+                          contract.monthly_rent | tenantCurrency
+                        }}</span>
                       </div>
 
                       <div class="cell col-status">
                         <span class="status-pill" [class]="getStatusClass(contract.status)">
                           <span class="status-dot"></span>
-                          {{ ContractStatusLabels[contract.status] }}
+                          {{ 'contracts.status.' + contract.status | transloco }}
                         </span>
                       </div>
 
@@ -331,7 +345,7 @@ import {
                             mat-icon-button
                             class="action-btn view-btn"
                             [routerLink]="buildContractDetailUrl(contract.id)"
-                            matTooltip="Ver detalle"
+                            [matTooltip]="'contracts.tooltipView' | transloco"
                           >
                             <lucide-icon [img]="Eye" [size]="15"></lucide-icon>
                           </button>
@@ -340,7 +354,7 @@ import {
                               mat-icon-button
                               class="action-btn edit-btn"
                               [routerLink]="buildContractEditUrl(contract.id)"
-                              matTooltip="Editar"
+                              [matTooltip]="'contracts.tooltipEdit' | transloco"
                             >
                               <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
                             </button>
@@ -349,7 +363,7 @@ import {
                             mat-icon-button
                             class="action-btn download-btn"
                             (click)="downloadPDF(contract.id)"
-                            matTooltip="Descargar PDF"
+                            [matTooltip]="'contracts.tooltipDownload' | transloco"
                           >
                             <lucide-icon [img]="Download" [size]="15"></lucide-icon>
                           </button>
@@ -358,7 +372,7 @@ import {
                               mat-icon-button
                               class="action-btn renew-btn"
                               (click)="renewContract(contract.id)"
-                              matTooltip="Renovar contrato"
+                              [matTooltip]="'contracts.tooltipRenew' | transloco"
                             >
                               <lucide-icon [img]="RotateCcw" [size]="15"></lucide-icon>
                             </button>
@@ -1044,7 +1058,6 @@ export class ContratosComponent implements OnInit {
   readonly ArrowRight = ArrowRight;
   readonly User = User;
   readonly ContractStatus = ContractStatus;
-  readonly ContractStatusLabels = ContractStatusLabels;
 
   private router = inject(Router);
   private contractService: AdminContractService = inject(AdminContractService);
@@ -1142,31 +1155,6 @@ export class ContratosComponent implements OnInit {
       error: () => {
         alert('Error al renovar el contrato');
       },
-    });
-  }
-
-  formatRevenue(amount: number): string {
-    return amount.toLocaleString();
-  }
-
-  formatRent(rent: number | string): string {
-    const rentNumber = typeof rent === 'string' ? parseFloat(rent) : rent;
-    return rentNumber.toLocaleString('es-BO', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-
-  formatDate(dateString: string): string {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    // Verificar si la fecha es válida
-    if (isNaN(date.getTime())) return 'N/A';
-
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
     });
   }
 

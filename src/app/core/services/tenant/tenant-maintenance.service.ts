@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap, catchError, map } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
@@ -42,6 +43,7 @@ export class TenantMaintenanceService {
   private http = inject(HttpClient);
   private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Signal-based reactive state
   private requestsSignal = signal<MaintenanceRequest[]>([]);
@@ -86,7 +88,7 @@ export class TenantMaintenanceService {
       .pipe(
         map((requests) => requests.map((req) => this.processRequest(req))),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar las solicitudes');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadRequests'));
           this.isLoadingSignal.set(false);
           throw error;
         }),

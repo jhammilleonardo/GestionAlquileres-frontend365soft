@@ -5,17 +5,32 @@ import { PermissionsService } from './permissions.service';
 /** Todos los items del menú con su clave de módulo.
  *  module: undefined → siempre visible (dashboard, perfil, notificaciones). */
 const ALL_MENU_ITEMS: MenuOption[] = [
-  { label: 'Dashboard', icon: 'LayoutDashboard', route: '/dashboard' },
-  { label: 'Propiedades', icon: 'Building2', route: '/propiedades', module: 'properties' },
-  { label: 'Inquilinos', icon: 'Users', route: '/inquilinos', module: 'users' },
-  { label: 'Contratos', icon: 'FileText', route: '/contratos', module: 'contracts' },
-  { label: 'Solicitudes', icon: 'FileCheck', route: '/solicitudes', module: 'applications' },
-  { label: 'Pagos', icon: 'CreditCard', route: '/pagos', module: 'payments' },
-  { label: 'Mantenimiento', icon: 'Wrench', route: '/mantenimiento', module: 'maintenance' },
-  { label: 'Empleados', icon: 'UserCog', route: '/empleados', module: 'employees' },
-  { label: 'Notificaciones', icon: 'Bell', route: '/notificaciones' },
-  { label: 'Configuración', icon: 'Settings', route: '/configuracion', module: 'config' },
-  { label: 'Perfil', icon: 'User', route: '/perfil' },
+  { label: 'sidebar.menu.dashboard', icon: 'LayoutDashboard', route: '/dashboard' },
+  {
+    label: 'sidebar.menu.properties',
+    icon: 'Building2',
+    route: '/propiedades',
+    module: 'properties',
+  },
+  { label: 'sidebar.menu.tenants', icon: 'Users', route: '/inquilinos', module: 'users' },
+  { label: 'sidebar.menu.contracts', icon: 'FileText', route: '/contratos', module: 'contracts' },
+  {
+    label: 'sidebar.menu.applications',
+    icon: 'FileCheck',
+    route: '/solicitudes',
+    module: 'applications',
+  },
+  { label: 'sidebar.menu.payments', icon: 'CreditCard', route: '/pagos', module: 'payments' },
+  {
+    label: 'sidebar.menu.maintenance',
+    icon: 'Wrench',
+    route: '/mantenimiento',
+    module: 'maintenance',
+  },
+  { label: 'sidebar.menu.employees', icon: 'UserCog', route: '/empleados', module: 'employees' },
+  { label: 'sidebar.menu.notifications', icon: 'Bell', route: '/notificaciones' },
+  { label: 'sidebar.menu.settings', icon: 'Settings', route: '/configuracion', module: 'config' },
+  { label: 'sidebar.menu.profile', icon: 'User', route: '/perfil' },
 ];
 
 @Injectable({ providedIn: 'root' })

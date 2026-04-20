@@ -19,12 +19,16 @@ import { catchError, EMPTY } from 'rxjs';
 import { EmployeesService } from '../../core/services/admin/employees.service';
 import { SlugService } from '../../core/services/slug.service';
 import type { Employee } from '../../core/models/employee.model';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { EmployeePanelComponent } from './components/employee-panel/employee-panel.component';
 import { CreateEmployeeDialogComponent } from './components/create-employee-dialog/create-employee-dialog.component';
+import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
 
 @Component({
   selector: 'app-empleados',
   standalone: true,
+  providers: [provideTranslocoScope({ scope: 'empleados', alias: 'employees' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatTableModule,
@@ -33,7 +37,9 @@ import { CreateEmployeeDialogComponent } from './components/create-employee-dial
     MatProgressSpinnerModule,
     MatTooltipModule,
     LucideAngularModule,
+    TranslocoModule,
     EmployeePanelComponent,
+    TenantDatePipe,
   ],
   templateUrl: './empleados.component.html',
   styleUrl: './empleados.component.scss',
@@ -43,6 +49,7 @@ export class EmpleadosComponent {
   private slugService = inject(SlugService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
+  private transloco = inject(TranslocoService);
   private destroyRef = inject(DestroyRef);
 
   // Icons
@@ -117,10 +124,11 @@ export class EmpleadosComponent {
     ref.afterClosed().subscribe((newEmployee: Employee | null) => {
       if (!newEmployee) return;
       this.employees.update((list) => [...list, newEmployee]);
-      this.snackBar.open(`Empleado ${newEmployee.name} creado`, undefined, {
-        duration: 3000,
-        panelClass: ['snack-success'],
-      });
+      this.snackBar.open(
+        this.transloco.translate('employees.createdSuccess', { name: newEmployee.name }),
+        undefined,
+        { duration: 3000, panelClass: ['snack-success'] },
+      );
     });
   }
 
@@ -131,14 +139,5 @@ export class EmpleadosComponent {
       .map((n) => n[0])
       .join('')
       .toUpperCase();
-  }
-
-  formatDate(date: string | null | undefined): string {
-    if (!date) return '—';
-    return new Date(date).toLocaleDateString('es', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
   }
 }

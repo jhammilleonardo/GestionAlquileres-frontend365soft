@@ -27,6 +27,8 @@ import {
   UserCheck,
   UserX,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { EmployeesService } from '../../../../core/services/admin/employees.service';
 import { SlugService } from '../../../../core/services/slug.service';
 import type {
@@ -40,19 +42,20 @@ import { PERMISSION_MODULES, mergePermissions } from '../../../../core/models/em
 @Component({
   selector: 'app-confirm-deactivate-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule],
+  imports: [MatDialogModule, MatButtonModule, TranslocoModule],
   template: `
-    <h2 mat-dialog-title>Desactivar empleado</h2>
+    <h2 mat-dialog-title>{{ 'employees.panel.confirmDeactivateTitle' | transloco }}</h2>
     <mat-dialog-content>
       <p>
-        ¿Desactivar a <strong>{{ data.name }}</strong
-        >?
+        {{ 'employees.panel.confirmDeactivateMessage' | transloco: { name: data.name } }}
       </p>
-      <p class="warning-text">El empleado ya no podrá acceder al sistema.</p>
+      <p class="warning-text">{{ 'employees.panel.confirmDeactivateWarning' | transloco }}</p>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button [mat-dialog-close]="false">Cancelar</button>
-      <button mat-flat-button color="warn" [mat-dialog-close]="true">Desactivar</button>
+      <button mat-button [mat-dialog-close]="false">{{ 'common.cancel' | transloco }}</button>
+      <button mat-flat-button color="warn" [mat-dialog-close]="true">
+        {{ 'employees.panel.deactivate' | transloco }}
+      </button>
     </mat-dialog-actions>
   `,
   styles: [
@@ -75,6 +78,7 @@ export class ConfirmDeactivateDialogComponent {
 @Component({
   selector: 'app-employee-panel',
   standalone: true,
+  providers: [provideTranslocoScope({ scope: 'empleados', alias: 'employees' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     MatButtonModule,
@@ -83,6 +87,7 @@ export class ConfirmDeactivateDialogComponent {
     MatIconModule,
     MatTooltipModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   templateUrl: './employee-panel.component.html',
   styleUrl: './employee-panel.component.scss',
@@ -99,6 +104,7 @@ export class EmployeePanelComponent {
   private slugService = inject(SlugService);
   private snackBar = inject(MatSnackBar);
   private dialog = inject(MatDialog);
+  private transloco = inject(TranslocoService);
 
   // Icons
   readonly XIcon = X;
@@ -171,15 +177,17 @@ export class EmployeePanelComponent {
       .pipe(
         catchError((err: { error?: { message?: string } }) => {
           this.isSaving.set(false);
-          this.snackBar.open(err.error?.message ?? 'Error al guardar los permisos', 'Cerrar', {
-            duration: 4000,
-          });
+          this.snackBar.open(
+            err.error?.message ?? this.transloco.translate('employees.panel.saveError'),
+            this.transloco.translate('common.close'),
+            { duration: 4000 },
+          );
           return EMPTY;
         }),
       )
       .subscribe((updated) => {
         this.isSaving.set(false);
-        this.snackBar.open('Permisos actualizados', undefined, {
+        this.snackBar.open(this.transloco.translate('employees.panel.saveSuccess'), undefined, {
           duration: 3000,
           panelClass: ['snack-success'],
         });
@@ -207,18 +215,21 @@ export class EmployeePanelComponent {
       .pipe(
         catchError((err: { error?: { message?: string } }) => {
           this.isTogglingStatus.set(false);
-          this.snackBar.open(err.error?.message ?? 'Error al desactivar', 'Cerrar', {
-            duration: 4000,
-          });
+          this.snackBar.open(
+            err.error?.message ?? this.transloco.translate('employees.panel.deactivateError'),
+            this.transloco.translate('common.close'),
+            { duration: 4000 },
+          );
           return EMPTY;
         }),
       )
       .subscribe(() => {
         this.isTogglingStatus.set(false);
-        this.snackBar.open('Empleado desactivado', undefined, {
-          duration: 3000,
-          panelClass: ['snack-success'],
-        });
+        this.snackBar.open(
+          this.transloco.translate('employees.panel.deactivateSuccess'),
+          undefined,
+          { duration: 3000, panelClass: ['snack-success'] },
+        );
         this.employeeStatusChanged.emit({ ...this.employee(), is_active: false });
       });
   }
@@ -232,15 +243,17 @@ export class EmployeePanelComponent {
       .pipe(
         catchError((err: { error?: { message?: string } }) => {
           this.isTogglingStatus.set(false);
-          this.snackBar.open(err.error?.message ?? 'Error al activar', 'Cerrar', {
-            duration: 4000,
-          });
+          this.snackBar.open(
+            err.error?.message ?? this.transloco.translate('employees.panel.activateError'),
+            this.transloco.translate('common.close'),
+            { duration: 4000 },
+          );
           return EMPTY;
         }),
       )
       .subscribe((updated) => {
         this.isTogglingStatus.set(false);
-        this.snackBar.open('Empleado activado', undefined, {
+        this.snackBar.open(this.transloco.translate('employees.panel.activateSuccess'), undefined, {
           duration: 3000,
           panelClass: ['snack-success'],
         });

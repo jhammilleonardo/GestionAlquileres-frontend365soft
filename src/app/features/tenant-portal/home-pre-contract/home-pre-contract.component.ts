@@ -21,6 +21,7 @@ import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationService } from '../../../core/services/admin/application.service';
 import { ContractService, Contract } from '../../../core/services/admin/contract.service';
 import { ApplicationListItem, ApplicationStatus } from '../../../core/models/application.model';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-home-pre-contract',
@@ -32,6 +33,7 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
     MatProgressSpinnerModule,
     MatChipsModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="home-pre-contract">
@@ -42,8 +44,8 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
             <lucide-icon [img]="Home" [size]="32"></lucide-icon>
           </div>
           <div class="header-text">
-            <h1>Bienvenido, {{ userName() }}</h1>
-            <p class="subtitle">Gestiona tus solicitudes de alquiler</p>
+            <h1>{{ 'public.homePreContract.greeting' | transloco: { name: userName() } }}</h1>
+            <p class="subtitle">{{ 'public.homePreContract.subtitle' | transloco }}</p>
           </div>
         </div>
         <button
@@ -53,7 +55,7 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
           (click)="goToNewApplication()"
         >
           <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-          <span>Nueva Solicitud</span>
+          <span>{{ 'public.homePreContract.newApplication' | transloco }}</span>
         </button>
       </div>
 
@@ -67,19 +69,23 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
                 <lucide-icon [img]="FileSignature" [size]="40"></lucide-icon>
               </div>
               <div class="pending-info">
-                <h2>¡Tu solicitud fue aprobada!</h2>
-                <p>Tienes un contrato listo para firmar.</p>
+                <h2>{{ 'public.homePreContract.approvedTitle' | transloco }}</h2>
+                <p>{{ 'public.homePreContract.approvedDesc' | transloco }}</p>
                 <div class="contract-meta">
-                  <span><strong>Contrato:</strong> {{ pendingContract()!.contract_number }}</span>
                   <span
-                    ><strong>Renta:</strong> {{ pendingContract()!.monthly_rent | number }}
+                    ><strong>{{ 'public.homePreContract.contract' | transloco }}</strong>
+                    {{ pendingContract()!.contract_number }}</span
+                  >
+                  <span
+                    ><strong>{{ 'public.homePreContract.rent' | transloco }}</strong>
+                    {{ pendingContract()!.monthly_rent | number }}
                     {{ pendingContract()!.currency }}</span
                   >
                 </div>
               </div>
               <button mat-raised-button color="primary" class="sign-btn" (click)="goToContracts()">
                 <lucide-icon [img]="FileSignature" [size]="18"></lucide-icon>
-                Ver y Firmar Contrato
+                {{ 'public.homePreContract.signContractBtn' | transloco }}
               </button>
             </div>
           </mat-card>
@@ -91,15 +97,14 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
             <div class="welcome-icon">
               <lucide-icon [img]="Home" [size]="48"></lucide-icon>
             </div>
-            <h2>¡Hola de nuevo!</h2>
+            <h2>{{ 'public.homePreContract.welcomeBackTitle' | transloco }}</h2>
             <p class="welcome-text">
-              Actualmente no tienes un contrato activo. Puedes explorar nuestras propiedades
-              disponibles y enviar una solicitud de alquiler.
+              {{ 'public.homePreContract.welcomeBackDesc' | transloco }}
             </p>
             <div class="welcome-actions">
               <button mat-raised-button color="primary" (click)="goToNewApplication()">
                 <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
-                Ver Propiedades Disponibles
+                {{ 'public.homePreContract.viewPropertiesBtn' | transloco }}
               </button>
             </div>
           </div>
@@ -110,10 +115,12 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
           <div class="card-header">
             <div class="header-title">
               <lucide-icon [img]="FileEdit" [size]="24"></lucide-icon>
-              <h3>Mis Solicitudes</h3>
+              <h3>{{ 'public.homePreContract.myApplications' | transloco }}</h3>
             </div>
             @if (applications().length > 0) {
-              <button mat-stroked-button (click)="viewAllApplications()">Ver Todas</button>
+              <button mat-stroked-button (click)="viewAllApplications()">
+                {{ 'public.homePreContract.viewAll' | transloco }}
+              </button>
             }
           </div>
 
@@ -121,15 +128,15 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
             @if (isLoading()) {
               <div class="loading-state">
                 <mat-spinner diameter="40"></mat-spinner>
-                <p>Cargando tus solicitudes...</p>
+                <p>{{ 'public.homePreContract.loadingApps' | transloco }}</p>
               </div>
             } @else if (applications().length === 0) {
               <div class="empty-state">
                 <lucide-icon [img]="FileEdit" [size]="48" class="empty-icon"></lucide-icon>
-                <h4>Aún no has enviado solicitudes</h4>
-                <p>Explora nuestras propiedades disponibles y envía tu primera solicitud</p>
+                <h4>{{ 'public.homePreContract.noAppsTitle' | transloco }}</h4>
+                <p>{{ 'public.homePreContract.noAppsDesc' | transloco }}</p>
                 <button mat-flat-button color="primary" (click)="goToNewApplication()">
-                  Explorar Propiedades
+                  {{ 'public.homePreContract.exploreBtn' | transloco }}
                 </button>
               </div>
             } @else {
@@ -146,18 +153,21 @@ import { ApplicationListItem, ApplicationStatus } from '../../../core/models/app
                     <div class="application-details">
                       <div class="detail-item">
                         <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-                        <span>Enviada: {{ formatDate(app.created_at) }}</span>
+                        <span>{{
+                          'public.homePreContract.sentDate'
+                            | transloco: { date: formatDate(app.created_at) }
+                        }}</span>
                       </div>
 
                       @if (app.status === ApplicationStatus.PENDIENTE) {
                         <div class="detail-item pending">
                           <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
-                          <span>Esperando revisión del administrador</span>
+                          <span>{{ 'public.homePreContract.pendingReview' | transloco }}</span>
                         </div>
                       } @else if (app.status === ApplicationStatus.APROBADA) {
                         <div class="detail-item approved">
                           <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                          <span>¡Felicitaciones! Tu solicitud fue aprobada</span>
+                          <span>{{ 'public.homePreContract.approvedMsg' | transloco }}</span>
                         </div>
                       } @else if (
                         app.status === ApplicationStatus.RECHAZADA && app.admin_feedback

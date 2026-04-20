@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, computed } from '@angular/core';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +18,8 @@ import {
   FileSignature,
 } from 'lucide-angular';
 import { TenantDocumentService } from '../../../core/services/tenant/tenant-document.service';
+import { FormatService } from '../../../core/services/format.service';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import {
   TenantDocument,
   DocumentTypeLabels,
@@ -35,7 +38,9 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
     MatProgressSpinnerModule,
     MatTabsModule,
     LucideAngularModule,
+    TranslocoModule,
     TenantContractListComponent,
+    TenantDatePipe,
   ],
   template: `
     <div class="documents-container">
@@ -44,8 +49,8 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
         <div class="header-content">
           <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
           <div>
-            <h1>Documentos y Contratos</h1>
-            <p>Accede a todos tus documentos y gestiona tus contratos de alquiler</p>
+            <h1>{{ 'tenantDocuments.title' | transloco }}</h1>
+            <p>{{ 'tenantDocuments.subtitle' | transloco }}</p>
           </div>
         </div>
       </div>
@@ -53,16 +58,18 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
       <!-- Tabs Navigation -->
       <mat-tab-group class="docs-tabs" mat-stretch-tabs animationDuration="0ms">
         <!-- Tab: Documentos Generales -->
-        <mat-tab label="Documentos">
+        <mat-tab [label]="'tenantDocuments.tabDocs' | transloco">
           <ng-template matTabContent>
             <!-- Stats -->
             <div class="stats-row">
               <mat-chip-listbox>
                 <mat-chip-option>
-                  Todos ({{ documentService.documents().length }})
+                  {{ 'tenantDocuments.all' | transloco }} ({{ documentService.documents().length }})
                 </mat-chip-option>
                 <mat-chip-option>
-                  Pendientes de Firma ({{ pendingSignatureCount() }})
+                  {{ 'tenantDocuments.pendingSignature' | transloco }} ({{
+                    pendingSignatureCount()
+                  }})
                 </mat-chip-option>
               </mat-chip-listbox>
             </div>
@@ -72,6 +79,7 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
               <div class="documents-grid">
                 @for (i of [1, 2, 3, 4, 5, 6]; track i) {
                   <mat-card class="skeleton-document-card">
+                    <!-- ... skeleton content ... -->
                     <div class="skeleton-doc-header">
                       <div class="skeleton-doc-icon"></div>
                       <div class="skeleton-badge"></div>
@@ -96,8 +104,8 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
             @else if (documentService.documents().length === 0) {
               <div class="empty-state">
                 <lucide-icon [img]="FileText" [size]="64"></lucide-icon>
-                <h2>No hay documentos disponibles</h2>
-                <p>Aún no tienes documentos en tu cuenta</p>
+                <h2>{{ 'tenantDocuments.noDocsTitle' | transloco }}</h2>
+                <p>{{ 'tenantDocuments.noDocsDesc' | transloco }}</p>
               </div>
             }
 
@@ -111,7 +119,7 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                         <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
                       </div>
                       <div class="document-type">
-                        {{ documentTypeLabels[doc.document_type] }}
+                        {{ 'tenantDocuments.type.' + doc.document_type | transloco }}
                       </div>
                     </div>
 
@@ -124,7 +132,7 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                     <div class="document-meta">
                       <div class="meta-item">
                         <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                        {{ formatDate(doc.uploaded_at) }}
+                        {{ doc.uploaded_at | tenantDate }}
                       </div>
                       <div class="meta-item">
                         {{ formatFileSize(doc.file_size) }}
@@ -136,10 +144,13 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                       <div class="signature-status" [class.signed]="doc.is_signed">
                         @if (doc.is_signed) {
                           <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                          <span>Firmado el {{ formatDate(doc.signed_at!) }}</span>
+                          <span>{{
+                            'tenantDocuments.signedOn'
+                              | transloco: { date: formatDate(doc.signed_at!) }
+                          }}</span>
                         } @else {
                           <lucide-icon [img]="AlertTriangle" [size]="16"></lucide-icon>
-                          <span>Requiere Firma</span>
+                          <span>{{ 'tenantDocuments.requiresSignature' | transloco }}</span>
                         }
                       </div>
                     }
@@ -148,7 +159,10 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                     @if (doc.expires_at && isExpiringSoon(doc.expires_at)) {
                       <div class="expiration-warning">
                         <lucide-icon [img]="AlertTriangle" [size]="14"></lucide-icon>
-                        <span>Expira el {{ formatDate(doc.expires_at) }}</span>
+                        <span>{{
+                          'tenantDocuments.expiresOn'
+                            | transloco: { date: formatDate(doc.expires_at) }
+                        }}</span>
                       </div>
                     }
 
@@ -156,11 +170,11 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                     <div class="document-actions">
                       <button mat-stroked-button (click)="viewDocument(doc)" class="action-btn">
                         <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                        Ver
+                        {{ 'tenantDocuments.view' | transloco }}
                       </button>
                       <button mat-stroked-button (click)="downloadDocument(doc)" class="action-btn">
                         <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-                        Descargar
+                        {{ 'tenantDocuments.download' | transloco }}
                       </button>
                       @if (doc.requires_signature && !doc.is_signed) {
                         <button
@@ -170,7 +184,7 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                           class="action-btn"
                         >
                           <lucide-icon [img]="FileCheck" [size]="16"></lucide-icon>
-                          Firmar
+                          {{ 'tenantDocuments.sign' | transloco }}
                         </button>
                       }
                     </div>
@@ -182,7 +196,7 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
         </mat-tab>
 
         <!-- Tab: Contratos -->
-        <mat-tab label="Contratos">
+        <mat-tab [label]="'tenantDocuments.tabContracts' | transloco">
           <ng-template matTabContent>
             <app-tenant-contract-list></app-tenant-contract-list>
           </ng-template>
@@ -554,6 +568,8 @@ export class TenantDocumentsComponent implements OnInit {
   readonly FileSignature = FileSignature;
 
   documentService = inject(TenantDocumentService);
+  translocoService = inject(TranslocoService);
+  private formatService = inject(FormatService);
 
   documentTypeLabels = DocumentTypeLabels;
 
@@ -586,31 +602,30 @@ export class TenantDocumentsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error downloading document:', error);
-        alert('Error al descargar el documento');
+        alert(this.translocoService.translate('tenantDocuments.downloadError'));
       },
     });
   }
 
   signDocument(doc: TenantDocument): void {
-    if (confirm(`¿Deseas firmar el documento "${doc.title}"?`)) {
+    const confirmMsg = this.translocoService.translate('tenantDocuments.confirmSign', {
+      title: doc.title,
+    });
+    if (confirm(confirmMsg)) {
       this.documentService.signDocument(doc.id).subscribe({
         next: () => {
-          alert('Documento firmado exitosamente');
+          alert(this.translocoService.translate('tenantDocuments.signSuccess'));
         },
         error: (error) => {
           console.error('Error signing document:', error);
-          alert('Error al firmar el documento');
+          alert(this.translocoService.translate('tenantDocuments.signError'));
         },
       });
     }
   }
 
   formatDate(date: Date): string {
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    return this.formatService.formatDate(date);
   }
 
   formatFileSize(bytes: number): string {

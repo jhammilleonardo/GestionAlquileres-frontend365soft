@@ -9,6 +9,7 @@ import {
   ElementRef,
   AfterViewChecked,
 } from '@angular/core';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { interval, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -40,14 +41,11 @@ import {
 import { environment } from '../../../../environments/environment';
 import { TenantMaintenanceService } from '../../../core/services/tenant/tenant-maintenance.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import {
   MaintenanceRequest,
   MaintenanceMessage,
   MaintenanceStatus,
-  MaintenanceStatusLabels,
-  MaintenancePriorityLabels,
-  MaintenanceCategoryLabels,
-  PermissionToEnterLabels,
 } from '../../../core/models/maintenance-request.model';
 
 @Component({
@@ -65,6 +63,8 @@ import {
     MatDividerModule,
     MatChipsModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
   ],
   template: `
     <div class="detail-container">
@@ -74,7 +74,7 @@ import {
           <lucide-icon [img]="ArrowLeft" [size]="22"></lucide-icon>
         </button>
         <div class="page-header-text">
-          <h1>Detalle de Solicitud</h1>
+          <h1>{{ 'public.tenantMaintenance.detailTitle' | transloco }}</h1>
           @if (request()) {
             <span class="ticket-chip">{{ request()?.ticket_number }}</span>
           }
@@ -116,8 +116,8 @@ import {
                   <span class="banner-type">
                     {{
                       request()!.request_type === 'MAINTENANCE'
-                        ? 'Mantenimiento'
-                        : 'Consulta General'
+                        ? ('public.tenantMaintenance.maintenanceType' | transloco)
+                        : ('public.tenantMaintenance.generalType' | transloco)
                     }}
                   </span>
                   <span class="banner-title">{{ request()!.title }}</span>
@@ -131,7 +131,7 @@ import {
                     [style.font-weight]="'700'"
                     [style.font-size]="'12px'"
                   >
-                    {{ statusLabels[request()!.status] }}
+                    {{ 'public.tenantMaintenance.status.' + request()!.status | transloco }}
                   </mat-chip>
                   <mat-chip
                     [style.background]="getPriorityBgColor(request()!.priority)"
@@ -139,7 +139,7 @@ import {
                     [style.font-weight]="'700'"
                     [style.font-size]="'12px'"
                   >
-                    {{ priorityLabels[request()!.priority] }}
+                    {{ 'public.tenantMaintenance.priority.' + request()!.priority | transloco }}
                   </mat-chip>
                 </mat-chip-set>
               </div>
@@ -153,7 +153,7 @@ import {
                   <mat-chip-set>
                     <mat-chip>
                       <lucide-icon matChipAvatar [img]="Link" [size]="13"></lucide-icon>
-                      {{ categoryLabels[request()!.category!] }}
+                      {{ 'public.tenantMaintenance.category.' + request()!.category! | transloco }}
                     </mat-chip>
                   </mat-chip-set>
                 </div>
@@ -161,13 +161,13 @@ import {
 
               <!-- Description -->
               <div class="cc-section">
-                <div class="cc-label">Descripción</div>
+                <div class="cc-label">{{ 'public.tenantMaintenance.description' | transloco }}</div>
                 <div class="cc-desc">{{ request()!.description }}</div>
               </div>
 
               <!-- Information meta-cards -->
               <div class="cc-section">
-                <div class="cc-label">Información</div>
+                <div class="cc-label">{{ 'public.tenantMaintenance.information' | transloco }}</div>
                 <div class="meta-grid">
                   @if (request()!.property) {
                     <div class="meta-card">
@@ -175,7 +175,9 @@ import {
                         <lucide-icon [img]="Home" [size]="16"></lucide-icon>
                       </div>
                       <div class="meta-text">
-                        <span class="meta-lbl">Propiedad</span>
+                        <span class="meta-lbl">{{
+                          'public.tenantMaintenance.property' | transloco
+                        }}</span>
                         <span class="meta-val">{{ request()!.property!.title }}</span>
                       </div>
                     </div>
@@ -186,7 +188,9 @@ import {
                         <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
                       </div>
                       <div class="meta-text">
-                        <span class="meta-lbl">Contrato</span>
+                        <span class="meta-lbl">{{
+                          'public.tenantMaintenance.contract' | transloco
+                        }}</span>
                         <span class="meta-val">{{ request()!.contract!.contract_number }}</span>
                       </div>
                     </div>
@@ -196,8 +200,10 @@ import {
                       <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
                     </div>
                     <div class="meta-text">
-                      <span class="meta-lbl">Creado el</span>
-                      <span class="meta-val">{{ formatDate(request()!.created_at) }}</span>
+                      <span class="meta-lbl">{{
+                        'public.tenantMaintenance.createdAt' | transloco
+                      }}</span>
+                      <span class="meta-val">{{ request()!.created_at | tenantDate }}</span>
                     </div>
                   </div>
                   @if (request()!.due_date) {
@@ -206,8 +212,10 @@ import {
                         <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
                       </div>
                       <div class="meta-text">
-                        <span class="meta-lbl">Fecha Límite</span>
-                        <span class="meta-val">{{ formatDate(request()!.due_date!) }}</span>
+                        <span class="meta-lbl">{{
+                          'public.tenantMaintenance.dueDate' | transloco
+                        }}</span>
+                        <span class="meta-val">{{ request()!.due_date | tenantDate }}</span>
                       </div>
                     </div>
                   }
@@ -217,22 +225,27 @@ import {
               <!-- Access row -->
               @if (request()!.request_type === 'MAINTENANCE') {
                 <div class="cc-section access-section">
-                  <div class="cc-label">Acceso</div>
+                  <div class="cc-label">{{ 'public.tenantMaintenance.access' | transloco }}</div>
                   <div class="access-row">
-                    <span class="access-key">Permiso de entrada</span>
+                    <span class="access-key">{{
+                      'public.tenantMaintenance.permissionTitle' | transloco
+                    }}</span>
                     <span class="access-val">{{
-                      permissionLabels[request()!.permission_to_enter]
+                      'public.tenantMaintenance.permission.' + request()!.permission_to_enter
+                        | transloco
                     }}</span>
                   </div>
                   @if (request()!.has_pets) {
                     <div class="pets-warning">
                       <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
-                      Hay mascotas en la propiedad
+                      {{ 'public.tenantMaintenance.petsWarning' | transloco }}
                     </div>
                   }
                   @if (request()!.entry_notes) {
                     <div class="access-row">
-                      <span class="access-key">Notas</span>
+                      <span class="access-key">{{
+                        'public.tenantMaintenance.notes' | transloco
+                      }}</span>
                       <span class="access-val">{{ request()!.entry_notes }}</span>
                     </div>
                   }
@@ -249,7 +262,9 @@ import {
               <div class="conv-header-icon">
                 <lucide-icon [img]="MessageSquare" [size]="16"></lucide-icon>
               </div>
-              <span class="conv-title">Conversación</span>
+              <span class="conv-title">{{
+                'public.tenantMaintenance.conversation' | transloco
+              }}</span>
               @if (messages().length > 0) {
                 <span class="conv-badge">{{ messages().length }}</span>
               }
@@ -272,9 +287,11 @@ import {
                       <div class="conv-empty-icon">
                         <lucide-icon [img]="MessageSquare" [size]="28"></lucide-icon>
                       </div>
-                      <p class="conv-empty-title">Sin mensajes aún</p>
+                      <p class="conv-empty-title">
+                        {{ 'public.tenantMaintenance.noMessages' | transloco }}
+                      </p>
                       <p class="conv-empty-sub">
-                        Inicia la conversación con el equipo de administración
+                        {{ 'public.tenantMaintenance.startConversation' | transloco }}
                       </p>
                     </div>
                   } @else {
@@ -282,19 +299,19 @@ import {
                       @if (isFirstPollingNew(message)) {
                         <div class="new-polling-divider">
                           <div class="new-polling-line"></div>
-                          <span class="new-polling-label">↓ mensajes nuevos</span>
+                          <span class="new-polling-label"
+                            >↓ {{ 'public.tenantMaintenance.newMessages' | transloco }}</span
+                          >
                           <div class="new-polling-line"></div>
                         </div>
                       }
                       @if (isFirstUnread(message)) {
                         <div class="unread-divider">
                           <div class="unread-line"></div>
-                          <span class="unread-label"
-                            >{{ unreadCountFromHere }} mensaje{{
-                              unreadCountFromHere !== 1 ? 's' : ''
-                            }}
-                            no leído{{ unreadCountFromHere !== 1 ? 's' : '' }}</span
-                          >
+                          <span class="unread-label">{{
+                            'public.tenantMaintenance.unreadMessages'
+                              | transloco: { count: unreadCountFromHere }
+                          }}</span>
                           <div class="unread-line"></div>
                         </div>
                       }
@@ -304,7 +321,11 @@ import {
                         }
                         <div class="msg-group">
                           <span class="msg-sender" [class.msg-sender-mine]="isMyMessage(message)">
-                            {{ isMyMessage(message) ? 'Tú' : 'Administración' }}
+                            {{
+                              isMyMessage(message)
+                                ? ('public.tenantMaintenance.you' | transloco)
+                                : ('public.tenantMaintenance.admin' | transloco)
+                            }}
                           </span>
                           <div class="msg-bubble" [class.bubble-mine]="isMyMessage(message)">
                             {{ message.message }}
@@ -330,10 +351,12 @@ import {
                               }
                             </div>
                           }
-                          <span class="msg-time">{{ formatMessageDate(message.created_at) }}</span>
+                          <span class="msg-time">{{ message.created_at | tenantDate: true }}</span>
                         </div>
                         @if (isMyMessage(message)) {
-                          <div class="msg-avatar tenant-avatar">Tú</div>
+                          <div class="msg-avatar tenant-avatar">
+                            {{ 'public.tenantMaintenance.you' | transloco }}
+                          </div>
                         }
                       </div>
                     }
@@ -345,10 +368,8 @@ import {
               @if (newMessagesCount() > 0) {
                 <div class="new-msg-bar">
                   <button class="new-msg-btn" (click)="scrollToNewMessages()">
-                    ↓ {{ newMessagesCount() }} mensaje{{
-                      newMessagesCount() !== 1 ? 's' : ''
-                    }}
-                    nuevo{{ newMessagesCount() !== 1 ? 's' : '' }}
+                    ↓ {{ newMessagesCount() }}
+                    {{ 'public.tenantMaintenance.newMessages' | transloco }}
                   </button>
                 </div>
               }
@@ -398,7 +419,7 @@ import {
                       class="conv-textarea"
                       [(ngModel)]="newMessage"
                       rows="1"
-                      placeholder="Escribe tu mensaje..."
+                      [placeholder]="'public.tenantMaintenance.writeMessage' | transloco"
                       (keydown.enter)="$event.preventDefault(); sendMessage()"
                     ></textarea>
                     <button
@@ -417,7 +438,7 @@ import {
               } @else {
                 <div class="conv-closed">
                   <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                  <p>Esta solicitud está cerrada</p>
+                  <p>{{ 'public.tenantMaintenance.requestClosed' | transloco }}</p>
                 </div>
               }
             }
@@ -429,10 +450,10 @@ import {
       } @else {
         <div class="not-found">
           <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
-          <h2>Solicitud no encontrada</h2>
-          <p>La solicitud que buscas no existe o no tienes acceso a ella.</p>
+          <h2>{{ 'public.tenantMaintenance.notFound' | transloco }}</h2>
+          <p>{{ 'public.tenantMaintenance.notFoundDesc' | transloco }}</p>
           <button mat-raised-button color="primary" [routerLink]="mantenimientoUrl()">
-            Volver a Mis Solicitudes
+            {{ 'public.tenantMaintenance.backToList' | transloco }}
           </button>
         </div>
       }
@@ -1347,11 +1368,7 @@ export class TenantRequestDetailComponent implements OnInit, OnDestroy, AfterVie
   private route = inject(ActivatedRoute);
   private maintenanceService = inject(TenantMaintenanceService);
   private slugService = inject(SlugService);
-
-  statusLabels = MaintenanceStatusLabels;
-  priorityLabels = MaintenancePriorityLabels;
-  categoryLabels = MaintenanceCategoryLabels;
-  permissionLabels = PermissionToEnterLabels;
+  private translocoService = inject(TranslocoService);
 
   // URL para volver a la lista de mantenimiento
   mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
@@ -1647,22 +1664,5 @@ export class TenantRequestDetailComponent implements OnInit, OnDestroy, AfterVie
 
   isMyMessage(message: MaintenanceMessage): boolean {
     return message.user_id === this.currentUserId;
-  }
-
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
-  }
-
-  formatMessageDate(date: Date): string {
-    return new Date(date).toLocaleString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 }

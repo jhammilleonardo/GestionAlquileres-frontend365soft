@@ -3,19 +3,24 @@
   <section class="hero-section">
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <h1 class="hero-title">Encuentra tu Hogar Ideal</h1>
-      <p class="hero-subtitle">Descubre propiedades exclusivas listas para alquilar</p>
+      <h1 class="hero-title">{{ 'public.properties.heroTitle' | transloco }}</h1>
+      <p class="hero-subtitle">{{ 'public.properties.heroSubtitle' | transloco }}</p>
 
       <div class="search-bar-container">
         <div class="search-bar">
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
             <lucide-icon [img]="Search" matIconPrefix></lucide-icon>
-            <input matInput type="text" [(ngModel)]="filters.search" (keyup.enter)="applyFilters()"
-              placeholder="Buscar por ubicación, código postal o palabra clave..." />
+            <input
+              matInput
+              type="text"
+              [(ngModel)]="filters.search"
+              (keyup.enter)="applyFilters()"
+              [placeholder]="'public.properties.searchPlaceholder' | transloco"
+            />
           </mat-form-field>
           <button mat-raised-button (click)="applyFilters()" class="search-btn">
             <lucide-icon [img]="Search"></lucide-icon>
-            Buscar
+            {{ 'public.properties.searchBtn' | transloco }}
           </button>
         </div>
       </div>
@@ -26,58 +31,78 @@
   <div class="filters-container">
     <div class="filters-header">
       <div class="results-info">
-        <h2>{{ filteredProperties.length }} Propiedades Disponibles</h2>
+        <h2>
+          {{ 'public.properties.availableCount' | transloco: { count: filteredProperties.length } }}
+        </h2>
       </div>
       <button mat-stroked-button color="primary" (click)="toggleFilters()">
         <lucide-icon [img]="showFilters ? X : Settings"></lucide-icon>
-        {{ showFilters ? 'Ocultar' : 'Mostrar' }} Filtros
+        {{
+          showFilters
+            ? ('public.properties.hideFilters' | transloco)
+            : ('public.properties.showFilters' | transloco)
+        }}
       </button>
     </div>
 
     <div class="filters-panel" [class.active]="showFilters">
       <div class="filters-grid">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Tipo de Propiedad</mat-label>
+          <mat-label>{{ 'public.properties.propertyType' | transloco }}</mat-label>
           <lucide-icon [img]="Home" matIconPrefix></lucide-icon>
           <mat-select [(ngModel)]="filters.property_type_id" (selectionChange)="applyFilters()">
-            <mat-option [value]="undefined">Todos los tipos</mat-option>
-            <mat-option *ngFor="let type of propertyTypes" [value]="type.id">{{ type.name }}</mat-option>
+            <mat-option [value]="undefined">{{
+              'public.properties.allTypes' | transloco
+            }}</mat-option>
+            <mat-option *ngFor="let type of propertyTypes" [value]="type.id">{{
+              type.name
+            }}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Ciudad</mat-label>
+          <mat-label>{{ 'public.properties.city' | transloco }}</mat-label>
           <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
-          <input matInput type="text" [(ngModel)]="filters.city" (change)="applyFilters()"
-            placeholder="Ej: Lima, Buenos Aires" />
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="filters.city"
+            (change)="applyFilters()"
+            [placeholder]="'public.properties.cityPlaceholder' | transloco"
+          />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>País</mat-label>
+          <mat-label>{{ 'public.properties.country' | transloco }}</mat-label>
           <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
-          <input matInput type="text" [(ngModel)]="filters.country" (change)="applyFilters()"
-            placeholder="Ej: Perú, Argentina" />
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="filters.country"
+            (change)="applyFilters()"
+            [placeholder]="'public.properties.countryPlaceholder' | transloco"
+          />
         </mat-form-field>
       </div>
 
       <div class="filters-actions">
         <button mat-button (click)="clearFilters()">
           <lucide-icon [img]="X"></lucide-icon>
-          Limpiar Filtros
+          {{ 'common.clearFilters' | transloco }}
         </button>
         <button mat-raised-button color="primary" (click)="applyFilters()">
           <lucide-icon [img]="Search"></lucide-icon>
-          Aplicar Filtros
+          {{ 'common.applyFilters' | transloco }}
         </button>
       </div>
     </div>
 
     <div class="sort-container">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>Ordenar por</mat-label>
+        <mat-label>{{ 'public.properties.sortBy' | transloco }}</mat-label>
         <mat-select [(ngModel)]="filters.sort_by" (selectionChange)="applyFilters()">
           <mat-option *ngFor="let option of sortOptions" [value]="option.value">
-            {{ option.label }}
+            {{ option.label | transloco }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -88,38 +113,37 @@
   <div class="properties-section">
     <div *ngIf="isLoading" class="loading-spinner">
       <mat-spinner></mat-spinner>
-      <p>Cargando propiedades...</p>
+      <p>{{ 'public.properties.loading' | transloco }}</p>
     </div>
 
     <div *ngIf="!isLoading && filteredProperties.length === 0" class="no-results">
       <lucide-icon [img]="Home" class="no-results-icon"></lucide-icon>
-      <h3>No se encontraron propiedades</h3>
-      <p>Intenta ajustar tus filtros de búsqueda</p>
+      <h3>{{ 'public.properties.noResultsTitle' | transloco }}</h3>
+      <p>{{ 'public.properties.noResultsSubtitle' | transloco }}</p>
       <button mat-raised-button color="primary" (click)="clearFilters()">
         <lucide-icon [img]="X"></lucide-icon>
-        Reiniciar Búsqueda
+        {{ 'public.properties.resetSearch' | transloco }}
       </button>
     </div>
 
     <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
       <div class="glass-card" *ngFor="let property of filteredProperties">
-        
         <!-- Top Image Section -->
         <div class="card-image-section" (click)="viewProperty(property.id)">
           <img
             [src]="getPropertyImageUrl(property)"
             [alt]="property.title"
             class="card-bg-img"
-            (error)="$any($event.target).src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22260%22%3E%3Crect width=%22400%22 height=%22260%22 fill=%22%23dbeafe%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22sans-serif%22 font-size=%2215%22 fill=%22%2393c5fd%22%3ESin imagen%3C/text%3E%3C/svg%3E'"
+            (error)="handleImageError($event)"
           />
           <div class="image-fade"></div>
-          
+
           <!-- Bookmark / Fav button top right -->
           <button
             class="btn-bookmark"
             [class.is-fav]="isFavorite(property.id)"
             (click)="toggleFavorite(property.id, $event)"
-            title="Guardar en favoritos"
+            [title]="'public.properties.saveFavorite' | transloco"
           >
             <lucide-icon [img]="Heart"></lucide-icon>
           </button>
@@ -127,19 +151,24 @@
 
         <!-- Content Section -->
         <div class="card-content">
-
           <!-- Title and Subtitle -->
           <div class="info-section">
             <div class="main-info" (click)="viewProperty(property.id)">
               <h3 class="title">{{ property.title }}</h3>
-              <p class="subtitle" *ngIf="getPropertyAddress(property)">{{ getPropertyAddress(property) }}</p>
+              <p class="subtitle" *ngIf="getPropertyAddress(property)">
+                {{ getPropertyAddress(property) }}
+              </p>
             </div>
-            
+
             <!-- Tools/Tags -->
             <div class="tags-pill" *ngIf="property.property_type">
               <div class="tag-icons">
-                <div class="t-icon-circle bg-blue"><lucide-icon [img]="Home" class="t-icon"></lucide-icon></div>
-                <div class="t-icon-circle bg-orange" *ngIf="property.property_subtype"><lucide-icon [img]="MapPin" class="t-icon"></lucide-icon></div>
+                <div class="t-icon-circle bg-blue">
+                  <lucide-icon [img]="Home" class="t-icon"></lucide-icon>
+                </div>
+                <div class="t-icon-circle bg-orange" *ngIf="property.property_subtype">
+                  <lucide-icon [img]="MapPin" class="t-icon"></lucide-icon>
+                </div>
               </div>
               <span>{{ property.property_type.name }}</span>
             </div>
@@ -149,27 +178,39 @@
           <div class="bottom-section">
             <div class="stats-container">
               <div class="stat-block" *ngIf="property.square_meters">
-                <span class="stat-value"><lucide-icon [img]="Maximize" class="inline-icon"></lucide-icon> {{ property.square_meters }}</span>
-                <span class="stat-label">m² área</span>
-              </div>
-              
-              <div class="stat-divider" *ngIf="property.square_meters && property.bedrooms"></div>
-              
-              <div class="stat-block" *ngIf="property.bedrooms">
-                <span class="stat-value"><lucide-icon [img]="Home" class="inline-icon"></lucide-icon> {{ property.bedrooms }}</span>
-                <span class="stat-label">habs.</span>
+                <span class="stat-value"
+                  ><lucide-icon [img]="Maximize" class="inline-icon"></lucide-icon>
+                  {{ property.square_meters }}</span
+                >
+                <span class="stat-label">{{ 'public.properties.area' | transloco }}</span>
               </div>
 
-              <div class="stat-divider" *ngIf="(property.square_meters || property.bedrooms) && property.monthly_rent"></div>
-              
+              <div class="stat-divider" *ngIf="property.square_meters && property.bedrooms"></div>
+
+              <div class="stat-block" *ngIf="property.bedrooms">
+                <span class="stat-value"
+                  ><lucide-icon [img]="Home" class="inline-icon"></lucide-icon>
+                  {{ property.bedrooms }}</span
+                >
+                <span class="stat-label">{{ 'public.properties.bedrooms' | transloco }}</span>
+              </div>
+
+              <div
+                class="stat-divider"
+                *ngIf="(property.square_meters || property.bedrooms) && property.monthly_rent"
+              ></div>
+
               <div class="stat-block" *ngIf="property.monthly_rent">
-                <span class="stat-value">{{ property.currency || 'BOB' }} {{ property.monthly_rent | number:'1.0-0' }}</span>
-                <span class="stat-label">precio/mes</span>
+                <span class="stat-value"
+                  >{{ property.currency || 'BOB' }}
+                  {{ property.monthly_rent | number: '1.0-0' }}</span
+                >
+                <span class="stat-label">{{ 'public.properties.priceMonth' | transloco }}</span>
               </div>
             </div>
 
             <button class="btn-action" (click)="viewProperty(property.id)">
-              Ver Detalles
+              {{ 'public.properties.viewDetails' | transloco }}
             </button>
           </div>
         </div>

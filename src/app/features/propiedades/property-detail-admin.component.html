@@ -1,313 +1,376 @@
 <div class="pd-container">
-    <!-- Loading State -->
-    <div *ngIf="isLoading()" class="pd-loading">
-        <mat-progress-spinner mode="indeterminate" diameter="48" color="primary">
-        </mat-progress-spinner>
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="pd-loading">
+    <mat-progress-spinner mode="indeterminate" diameter="48" color="primary">
+    </mat-progress-spinner>
+  </div>
+
+  <!-- Property Detail -->
+  <div *ngIf="!isLoading() && property()" class="pd-content">
+    <!-- Header with Back Button -->
+    <div class="pd-header">
+      <button mat-button (click)="goBack()" class="pd-back-btn">
+        <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
+        {{ 'properties.backToList' | transloco }}
+      </button>
+
+      <button mat-flat-button color="primary" (click)="editProperty()" class="pd-edit-btn">
+        <lucide-icon [img]="Pencil" [size]="16"></lucide-icon>
+        {{ 'properties.edit' | transloco }}
+      </button>
     </div>
 
-    <!-- Property Detail -->
-    <div *ngIf="!isLoading() && property()" class="pd-content">
-        <!-- Header with Back Button -->
-        <div class="pd-header">
-            <button mat-button (click)="goBack()" class="pd-back-btn">
-                <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-                Volver a Propiedades
-            </button>
-
-            <button mat-flat-button color="primary" (click)="editProperty()" class="pd-edit-btn">
-                <lucide-icon [img]="Pencil" [size]="16"></lucide-icon>
-                Editar Propiedad
-            </button>
+    <!-- Title and Status -->
+    <div class="pd-card pd-title-card">
+      <div class="pd-title-row">
+        <div class="pd-title-info">
+          <h1 class="pd-title">{{ property()?.title }}</h1>
+          <div class="pd-location">
+            <lucide-icon [img]="MapPin" [size]="18"></lucide-icon>
+            <span>{{ getPropertyAddress() }}</span>
+          </div>
         </div>
 
-        <!-- Title and Status -->
-        <div class="pd-card pd-title-card">
-            <div class="pd-title-row">
-                <div class="pd-title-info">
-                    <h1 class="pd-title">{{ property()?.title }}</h1>
-                    <div class="pd-location">
-                        <lucide-icon [img]="MapPin" [size]="18"></lucide-icon>
-                        <span>{{ getPropertyAddress() }}</span>
-                    </div>
-                </div>
-
-                <div class="pd-badges">
-                    <span class="pd-badge" [ngClass]="getStatusClass()">
-                        {{ property()?.status || 'N/A' }}
-                    </span>
-                    <span class="pd-badge" [ngClass]="property()?.active ? 'status-disponible' : 'status-default'">
-                        {{ property()?.active ? 'Activo' : 'Inactivo' }}
-                    </span>
-                </div>
-            </div>
+        <div class="pd-badges">
+          <span class="pd-badge" [ngClass]="getStatusClass()">
+            {{ property()?.status || 'N/A' }}
+          </span>
+          <span
+            class="pd-badge"
+            [ngClass]="property()?.active ? 'status-disponible' : 'status-default'"
+          >
+            {{
+              property()?.active ? ('common.active' | transloco) : ('common.inactive' | transloco)
+            }}
+          </span>
         </div>
-
-        <div class="pd-grid">
-            <!-- Left Column: Images -->
-            <div class="pd-col-main">
-                <!-- Image Gallery -->
-                <div class="pd-card pd-gallery">
-                    <div class="pd-gallery-main">
-                        <img *ngIf="getCurrentImage()" [src]="getCurrentImage()" [alt]="property()?.title"
-                            class="pd-gallery-img" />
-
-                        <div *ngIf="!getCurrentImage()" class="pd-gallery-placeholder">
-                            <lucide-icon [img]="LucideImage" [size]="64" class="pd-placeholder-icon"></lucide-icon>
-                        </div>
-
-                        <!-- Navigation Buttons -->
-                        <button *ngIf="getImagesArray().length > 1" mat-icon-button (click)="previousImage()"
-                            class="pd-gallery-nav pd-gallery-nav--prev">
-                            <lucide-icon [img]="ChevronLeft" [size]="24"></lucide-icon>
-                        </button>
-                        <button *ngIf="getImagesArray().length > 1" mat-icon-button (click)="nextImage()"
-                            class="pd-gallery-nav pd-gallery-nav--next">
-                            <lucide-icon [img]="ChevronRight" [size]="24"></lucide-icon>
-                        </button>
-
-                        <!-- Image Counter -->
-                        <div *ngIf="getImagesArray().length > 0" class="pd-gallery-counter">
-                            {{ currentImageIndex() + 1 }} / {{ getImagesArray().length }}
-                        </div>
-                    </div>
-
-                    <!-- Thumbnails -->
-                    <div *ngIf="getImagesArray().length > 1" class="pd-thumbnails">
-                        <button *ngFor="let img of getImagesArray(); let i = index" (click)="selectImage(i)"
-                            class="pd-thumbnail" [class.pd-thumbnail--active]="i === currentImageIndex()">
-                            <img [src]="getThumbnailUrl(img)" [alt]="'Imagen ' + (i + 1)" />
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Description -->
-                <div *ngIf="property()?.description" class="pd-card pd-section">
-                    <h3 class="pd-section-title">
-                        <lucide-icon [img]="FileText" [size]="22" class="pd-section-icon"></lucide-icon>
-                        Descripción
-                    </h3>
-                    <p class="pd-description-text">{{ property()?.description }}</p>
-                </div>
-            </div>
-
-            <!-- Right Column: Details -->
-            <div class="pd-col-side">
-                <!-- Price Card -->
-                <div class="pd-card pd-price-card">
-                    <div class="pd-price-label">
-                        <lucide-icon [img]="DollarSign" [size]="18"></lucide-icon>
-                        Precio Mensual
-                    </div>
-                    <div class="pd-price-amount">
-                        {{ property()?.currency || 'BOB' }} {{ (property()?.monthly_rent || 0).toLocaleString('es-BO') }}
-                    </div>
-                    <div class="pd-price-deposit">
-                        Depósito: {{ property()?.currency || 'BOB' }} {{ (property()?.security_deposit_amount ||
-                        0).toLocaleString('es-BO') }}
-                    </div>
-                </div>
-
-                <!-- Property Details -->
-                <div class="pd-card pd-section">
-                    <h3 class="pd-section-title">
-                        <lucide-icon [img]="Home" [size]="22" class="pd-section-icon"></lucide-icon>
-                        Características
-                    </h3>
-
-                    <div class="pd-features-grid">
-                        <div *ngIf="property()?.square_meters" class="pd-feature-item">
-                            <lucide-icon [img]="Maximize2" [size]="18" class="pd-feature-icon"></lucide-icon>
-                            <div>
-                                <div class="pd-feature-label">Área</div>
-                                <div class="pd-feature-value">{{ property()?.square_meters }} m²</div>
-                            </div>
-                        </div>
-
-                        <div *ngIf="property()?.bedrooms" class="pd-feature-item">
-                            <lucide-icon [img]="BedDouble" [size]="18" class="pd-feature-icon"></lucide-icon>
-                            <div>
-                                <div class="pd-feature-label">Habitaciones</div>
-                                <div class="pd-feature-value">{{ property()?.bedrooms }}</div>
-                            </div>
-                        </div>
-
-                        <div *ngIf="property()?.bathrooms" class="pd-feature-item">
-                            <lucide-icon [img]="Bath" [size]="18" class="pd-feature-icon"></lucide-icon>
-                            <div>
-                                <div class="pd-feature-label">Baños</div>
-                                <div class="pd-feature-value">{{ property()?.bathrooms }}</div>
-                            </div>
-                        </div>
-
-                        <div *ngIf="property()?.parking_spaces" class="pd-feature-item">
-                            <lucide-icon [img]="Car" [size]="18" class="pd-feature-icon"></lucide-icon>
-                            <div>
-                                <div class="pd-feature-label">Estacionamientos</div>
-                                <div class="pd-feature-value">{{ property()?.parking_spaces }}</div>
-                            </div>
-                        </div>
-
-                        <div *ngIf="property()?.year_built" class="pd-feature-item">
-                            <lucide-icon [img]="Calendar" [size]="18" class="pd-feature-icon"></lucide-icon>
-                            <div>
-                                <div class="pd-feature-label">Año</div>
-                                <div class="pd-feature-value">{{ property()?.year_built }}</div>
-                            </div>
-                        </div>
-
-                        <div class="pd-feature-item">
-                            <lucide-icon [img]="CheckCircle2" [size]="18" class="pd-feature-icon"></lucide-icon>
-                            <div>
-                                <div class="pd-feature-label">Amoblado</div>
-                                <div class="pd-feature-value">{{ property()?.is_furnished ? 'Sí' : 'No' }}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Property Rules -->
-                <div *ngIf="property()?.property_rules" class="pd-card pd-section">
-                    <h3 class="pd-section-title">
-                        <lucide-icon [img]="Shield" [size]="22" class="pd-section-icon"></lucide-icon>
-                        Reglas de la Propiedad
-                    </h3>
-
-                    <div class="pd-rules-list">
-                        <div class="pd-rule-item">
-                            <div class="pd-rule-left">
-                                <lucide-icon [img]="PawPrint" [size]="20" class="pd-rule-icon"></lucide-icon>
-                                <span>Mascotas</span>
-                            </div>
-                            <span [class]="property()?.property_rules?.pets_allowed ? 'pd-rule-allowed' : 'pd-rule-denied'">
-                                {{ property()?.property_rules?.pets_allowed ? 'Permitidas' : 'No permitidas' }}
-                            </span>
-                        </div>
-
-                        <div class="pd-rule-item">
-                            <div class="pd-rule-left">
-                                <lucide-icon [img]="XCircle" [size]="20" class="pd-rule-icon"></lucide-icon>
-                                <span>Fumar</span>
-                            </div>
-                            <span
-                                [class]="property()?.property_rules?.smoking_allowed ? 'pd-rule-allowed' : 'pd-rule-denied'">
-                                {{ property()?.property_rules?.smoking_allowed ? 'Permitido' : 'No permitido' }}
-                            </span>
-                        </div>
-
-                        <div *ngIf="property()?.property_rules?.max_occupants" class="pd-rule-item">
-                            <div class="pd-rule-left">
-                                <lucide-icon [img]="Users" [size]="20" class="pd-rule-icon"></lucide-icon>
-                                <span>Ocupantes máximos</span>
-                            </div>
-                            <span class="pd-rule-value">{{ property()?.property_rules?.max_occupants }}</span>
-                        </div>
-
-                        <div *ngIf="property()?.property_rules?.min_lease_months" class="pd-rule-item">
-                            <div class="pd-rule-left">
-                                <lucide-icon [img]="Calendar" [size]="20" class="pd-rule-icon"></lucide-icon>
-                                <span>Contrato mínimo</span>
-                            </div>
-                            <span class="pd-rule-value">{{ property()?.property_rules?.min_lease_months }} meses</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Type Info -->
-                <div class="pd-card pd-section">
-                    <h3 class="pd-section-title">
-                        <lucide-icon [img]="Home" [size]="22" class="pd-section-icon"></lucide-icon>
-                        Tipo de Propiedad
-                    </h3>
-
-                    <div class="pd-type-list">
-                        <div class="pd-type-row">
-                            <span class="pd-type-label">Tipo:</span>
-                            <span class="pd-type-value">{{ property()?.property_type?.name ||
-                                property()?.property_type_name || 'N/A' }}</span>
-                        </div>
-                        <div class="pd-type-row">
-                            <span class="pd-type-label">Subtipo:</span>
-                            <span class="pd-type-value">{{ property()?.property_subtype?.name ||
-                                property()?.property_subtype_name || 'N/A' }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Full Width Sections -->
-        <div class="pd-bottom-grid">
-            <!-- Addresses -->
-            <div *ngIf="property()?.addresses && property()?.addresses!.length > 0" class="pd-card pd-section">
-                <h3 class="pd-section-title">
-                    <lucide-icon [img]="MapPin" [size]="22" class="pd-section-icon"></lucide-icon>
-                    Direcciones
-                </h3>
-
-                <div class="pd-addresses">
-                    <div *ngFor="let addr of property()?.addresses" class="pd-address-item">
-                        <div class="pd-address-street">{{ addr.street_address }}</div>
-                        <div class="pd-address-city">{{ addr.city }}, {{ addr.country }}</div>
-                        <div *ngIf="addr.zip_code" class="pd-address-zip">CP: {{ addr.zip_code }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Account Info -->
-            <div *ngIf="property()?.account_number" class="pd-card pd-section">
-                <h3 class="pd-section-title">
-                    <lucide-icon [img]="CreditCard" [size]="22" class="pd-section-icon"></lucide-icon>
-                    Información Bancaria
-                </h3>
-
-                <div class="pd-type-list">
-                    <div class="pd-type-row">
-                        <span class="pd-type-label">Número de cuenta:</span>
-                        <span class="pd-type-value pd-mono">{{ property()?.account_number }}</span>
-                    </div>
-                    <div *ngIf="property()?.account_type" class="pd-type-row">
-                        <span class="pd-type-label">Tipo:</span>
-                        <span class="pd-type-value">{{ property()?.account_type }}</span>
-                    </div>
-                    <div *ngIf="property()?.account_holder_name" class="pd-type-row">
-                        <span class="pd-type-label">Titular:</span>
-                        <span class="pd-type-value">{{ property()?.account_holder_name }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Amenities -->
-        <div *ngIf="property()?.amenities && property()?.amenities!.length > 0" class="pd-card pd-section pd-fullwidth">
-            <h3 class="pd-section-title">
-                <lucide-icon [img]="CheckCircle2" [size]="22" class="pd-section-icon"></lucide-icon>
-                Amenidades
-            </h3>
-
-            <div class="pd-chips">
-                <mat-chip-set>
-                    <mat-chip *ngFor="let amenity of property()?.amenities" highlighted>
-                        {{ amenity }}
-                    </mat-chip>
-                </mat-chip-set>
-            </div>
-        </div>
-
-        <!-- Included Items -->
-        <div *ngIf="property()?.included_items && property()?.included_items!.length > 0"
-            class="pd-card pd-section pd-fullwidth">
-            <h3 class="pd-section-title">
-                <lucide-icon [img]="Package" [size]="22" class="pd-section-icon"></lucide-icon>
-                Artículos Incluidos
-            </h3>
-
-            <div class="pd-chips">
-                <mat-chip-set>
-                    <mat-chip *ngFor="let item of property()?.included_items" class="pd-chip-green">
-                        {{ item }}
-                    </mat-chip>
-                </mat-chip-set>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <div class="pd-grid">
+      <!-- Left Column: Images -->
+      <div class="pd-col-main">
+        <!-- Image Gallery -->
+        <div class="pd-card pd-gallery">
+          <div class="pd-gallery-main">
+            <img
+              *ngIf="getCurrentImage()"
+              [src]="getCurrentImage()"
+              [alt]="property()?.title"
+              class="pd-gallery-img"
+            />
+
+            <div *ngIf="!getCurrentImage()" class="pd-gallery-placeholder">
+              <lucide-icon
+                [img]="LucideImage"
+                [size]="64"
+                class="pd-placeholder-icon"
+              ></lucide-icon>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <button
+              *ngIf="getImagesArray().length > 1"
+              mat-icon-button
+              (click)="previousImage()"
+              class="pd-gallery-nav pd-gallery-nav--prev"
+            >
+              <lucide-icon [img]="ChevronLeft" [size]="24"></lucide-icon>
+            </button>
+            <button
+              *ngIf="getImagesArray().length > 1"
+              mat-icon-button
+              (click)="nextImage()"
+              class="pd-gallery-nav pd-gallery-nav--next"
+            >
+              <lucide-icon [img]="ChevronRight" [size]="24"></lucide-icon>
+            </button>
+
+            <!-- Image Counter -->
+            <div *ngIf="getImagesArray().length > 0" class="pd-gallery-counter">
+              {{ currentImageIndex() + 1 }} / {{ getImagesArray().length }}
+            </div>
+          </div>
+
+          <!-- Thumbnails -->
+          <div *ngIf="getImagesArray().length > 1" class="pd-thumbnails">
+            <button
+              *ngFor="let img of getImagesArray(); let i = index"
+              (click)="selectImage(i)"
+              class="pd-thumbnail"
+              [class.pd-thumbnail--active]="i === currentImageIndex()"
+            >
+              <img [src]="getThumbnailUrl(img)" [alt]="i + 1" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div *ngIf="property()?.description" class="pd-card pd-section">
+          <h3 class="pd-section-title">
+            <lucide-icon [img]="FileText" [size]="22" class="pd-section-icon"></lucide-icon>
+            {{ 'common.description' | transloco }}
+          </h3>
+          <p class="pd-description-text">{{ property()?.description }}</p>
+        </div>
+      </div>
+
+      <!-- Right Column: Details -->
+      <div class="pd-col-side">
+        <!-- Price Card -->
+        <div class="pd-card pd-price-card">
+          <div class="pd-price-label">
+            <lucide-icon [img]="DollarSign" [size]="18"></lucide-icon>
+            {{ 'properties.monthlyPrice' | transloco }}
+          </div>
+          <div class="pd-price-amount">
+            {{ property()?.monthly_rent | tenantCurrency }}
+          </div>
+          <div class="pd-price-deposit">
+            {{ 'properties.depositLabel' | transloco }}
+            {{ property()?.security_deposit_amount | tenantCurrency }}
+          </div>
+        </div>
+
+        <!-- Property Details -->
+        <div class="pd-card pd-section">
+          <h3 class="pd-section-title">
+            <lucide-icon [img]="Home" [size]="22" class="pd-section-icon"></lucide-icon>
+            {{ 'properties.characteristics' | transloco }}
+          </h3>
+
+          <div class="pd-features-grid">
+            <div *ngIf="property()?.square_meters" class="pd-feature-item">
+              <lucide-icon [img]="Maximize2" [size]="18" class="pd-feature-icon"></lucide-icon>
+              <div>
+                <div class="pd-feature-label">{{ 'properties.features.area' | transloco }}</div>
+                <div class="pd-feature-value">{{ property()?.square_meters }} m²</div>
+              </div>
+            </div>
+
+            <div *ngIf="property()?.bedrooms" class="pd-feature-item">
+              <lucide-icon [img]="BedDouble" [size]="18" class="pd-feature-icon"></lucide-icon>
+              <div>
+                <div class="pd-feature-label">{{ 'properties.features.bedrooms' | transloco }}</div>
+                <div class="pd-feature-value">{{ property()?.bedrooms }}</div>
+              </div>
+            </div>
+
+            <div *ngIf="property()?.bathrooms" class="pd-feature-item">
+              <lucide-icon [img]="Bath" [size]="18" class="pd-feature-icon"></lucide-icon>
+              <div>
+                <div class="pd-feature-label">
+                  {{ 'properties.features.bathrooms' | transloco }}
+                </div>
+                <div class="pd-feature-value">{{ property()?.bathrooms }}</div>
+              </div>
+            </div>
+
+            <div *ngIf="property()?.parking_spaces" class="pd-feature-item">
+              <lucide-icon [img]="Car" [size]="18" class="pd-feature-icon"></lucide-icon>
+              <div>
+                <div class="pd-feature-label">{{ 'properties.features.parking' | transloco }}</div>
+                <div class="pd-feature-value">{{ property()?.parking_spaces }}</div>
+              </div>
+            </div>
+
+            <div *ngIf="property()?.year_built" class="pd-feature-item">
+              <lucide-icon [img]="Calendar" [size]="18" class="pd-feature-icon"></lucide-icon>
+              <div>
+                <div class="pd-feature-label">{{ 'properties.features.year' | transloco }}</div>
+                <div class="pd-feature-value">{{ property()?.year_built }}</div>
+              </div>
+            </div>
+
+            <div class="pd-feature-item">
+              <lucide-icon [img]="CheckCircle2" [size]="18" class="pd-feature-icon"></lucide-icon>
+              <div>
+                <div class="pd-feature-label">
+                  {{ 'properties.features.furnished' | transloco }}
+                </div>
+                <div class="pd-feature-value">
+                  {{
+                    property()?.is_furnished
+                      ? ('common.yes' | transloco)
+                      : ('common.no' | transloco)
+                  }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Property Rules -->
+        <div *ngIf="property()?.property_rules" class="pd-card pd-section">
+          <h3 class="pd-section-title">
+            <lucide-icon [img]="Shield" [size]="22" class="pd-section-icon"></lucide-icon>
+            {{ 'properties.rules' | transloco }}
+          </h3>
+
+          <div class="pd-rules-list">
+            <div class="pd-rule-item">
+              <div class="pd-rule-left">
+                <lucide-icon [img]="PawPrint" [size]="20" class="pd-rule-icon"></lucide-icon>
+                <span>{{ 'properties.policies.pets' | transloco }}</span>
+              </div>
+              <span
+                [class]="
+                  property()?.property_rules?.pets_allowed ? 'pd-rule-allowed' : 'pd-rule-denied'
+                "
+              >
+                {{
+                  property()?.property_rules?.pets_allowed
+                    ? ('common.permitted' | transloco)
+                    : ('common.notPermitted' | transloco)
+                }}
+              </span>
+            </div>
+
+            <div class="pd-rule-item">
+              <div class="pd-rule-left">
+                <lucide-icon [img]="XCircle" [size]="20" class="pd-rule-icon"></lucide-icon>
+                <span>{{ 'properties.policies.smoking' | transloco }}</span>
+              </div>
+              <span
+                [class]="
+                  property()?.property_rules?.smoking_allowed ? 'pd-rule-allowed' : 'pd-rule-denied'
+                "
+              >
+                {{
+                  property()?.property_rules?.smoking_allowed
+                    ? ('common.allowed' | transloco)
+                    : ('common.notAllowed' | transloco)
+                }}
+              </span>
+            </div>
+
+            <div *ngIf="property()?.property_rules?.max_occupants" class="pd-rule-item">
+              <div class="pd-rule-left">
+                <lucide-icon [img]="Users" [size]="20" class="pd-rule-icon"></lucide-icon>
+                <span>{{ 'properties.policies.maxOccupants' | transloco }}</span>
+              </div>
+              <span class="pd-rule-value">{{ property()?.property_rules?.max_occupants }}</span>
+            </div>
+
+            <div *ngIf="property()?.property_rules?.min_lease_months" class="pd-rule-item">
+              <div class="pd-rule-left">
+                <lucide-icon [img]="Calendar" [size]="20" class="pd-rule-icon"></lucide-icon>
+                <span>{{ 'properties.policies.minContract' | transloco }}</span>
+              </div>
+              <span class="pd-rule-value"
+                >{{ property()?.property_rules?.min_lease_months }}
+                {{ 'common.months' | transloco }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Type Info -->
+        <div class="pd-card pd-section">
+          <h3 class="pd-section-title">
+            <lucide-icon [img]="Home" [size]="22" class="pd-section-icon"></lucide-icon>
+            {{ 'common.type' | transloco }}
+          </h3>
+
+          <div class="pd-type-list">
+            <div class="pd-type-row">
+              <span class="pd-type-label">{{ 'common.type' | transloco }}:</span>
+              <span class="pd-type-value">{{
+                property()?.property_type?.name || property()?.property_type_name || 'N/A'
+              }}</span>
+            </div>
+            <div class="pd-type-row">
+              <span class="pd-type-label">{{ 'properties.subtype' | transloco }}:</span>
+              <span class="pd-type-value">{{
+                property()?.property_subtype?.name || property()?.property_subtype_name || 'N/A'
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Width Sections -->
+    <div class="pd-bottom-grid">
+      <!-- Addresses -->
+      <div
+        *ngIf="property()?.addresses && property()?.addresses!.length > 0"
+        class="pd-card pd-section"
+      >
+        <h3 class="pd-section-title">
+          <lucide-icon [img]="MapPin" [size]="22" class="pd-section-icon"></lucide-icon>
+          {{ 'common.address' | transloco }}
+        </h3>
+
+        <div class="pd-addresses">
+          <div *ngFor="let addr of property()?.addresses" class="pd-address-item">
+            <div class="pd-address-street">{{ addr.street_address }}</div>
+            <div class="pd-address-city">{{ addr.city }}, {{ addr.country }}</div>
+            <div *ngIf="addr.zip_code" class="pd-address-zip">CP: {{ addr.zip_code }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Info -->
+      <div *ngIf="property()?.account_number" class="pd-card pd-section">
+        <h3 class="pd-section-title">
+          <lucide-icon [img]="CreditCard" [size]="22" class="pd-section-icon"></lucide-icon>
+          {{ 'properties.bankInfo' | transloco }}
+        </h3>
+
+        <div class="pd-type-list">
+          <div class="pd-type-row">
+            <span class="pd-type-label">{{ 'properties.accountNumber' | transloco }}:</span>
+            <span class="pd-type-value pd-mono">{{ property()?.account_number }}</span>
+          </div>
+          <div *ngIf="property()?.account_type" class="pd-type-row">
+            <span class="pd-type-label">{{ 'properties.accountType' | transloco }}:</span>
+            <span class="pd-type-value">{{ property()?.account_type }}</span>
+          </div>
+          <div *ngIf="property()?.account_holder_name" class="pd-type-row">
+            <span class="pd-type-label">{{ 'properties.accountHolder' | transloco }}:</span>
+            <span class="pd-type-value">{{ property()?.account_holder_name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Amenities -->
+    <div
+      *ngIf="property()?.amenities && property()?.amenities!.length > 0"
+      class="pd-card pd-section pd-fullwidth"
+    >
+      <h3 class="pd-section-title">
+        <lucide-icon [img]="CheckCircle2" [size]="22" class="pd-section-icon"></lucide-icon>
+        {{ 'properties.amenities' | transloco }}
+      </h3>
+
+      <div class="pd-chips">
+        <mat-chip-set>
+          <mat-chip *ngFor="let amenity of property()?.amenities" highlighted>
+            {{ amenity }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </div>
+
+    <!-- Included Items -->
+    <div
+      *ngIf="property()?.included_items && property()?.included_items!.length > 0"
+      class="pd-card pd-section pd-fullwidth"
+    >
+      <h3 class="pd-section-title">
+        <lucide-icon [img]="Package" [size]="22" class="pd-section-icon"></lucide-icon>
+        {{ 'properties.includedItems' | transloco }}
+      </h3>
+
+      <div class="pd-chips">
+        <mat-chip-set>
+          <mat-chip *ngFor="let item of property()?.included_items" class="pd-chip-green">
+            {{ item }}
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+    </div>
+  </div>
 </div>

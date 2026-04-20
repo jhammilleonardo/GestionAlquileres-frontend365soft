@@ -17,6 +17,8 @@ import {
   Lightbulb,
   Timer,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { ApplicationService } from '../../../../core/services/admin/application.service';
 
 @Component({
@@ -31,7 +33,9 @@ import { ApplicationService } from '../../../../core/services/admin/application.
     MatInputModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope('solicitudes')],
   templateUrl: './reject-dialog.component.html',
   styleUrls: ['./reject-dialog.component.css'],
 })
@@ -48,6 +52,7 @@ export class RejectDialogComponent {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private applicationService = inject(ApplicationService);
+  private transloco = inject(TranslocoService);
 
   submitting = false;
   error: string | null = null;
@@ -58,20 +63,20 @@ export class RejectDialogComponent {
     status: 'RECHAZADA',
   };
 
-  commonReasons = [
-    'No cumple con los requisitos mínimos de ingresos',
-    'Referencias laborales insuficientes',
-    'Historial de alquiler desfavorable',
-    'La propiedad ya no está disponible',
-    'Documentación incompleta',
-    'No se pudo contactar a las referencias proporcionadas',
+  readonly commonReasonKeys = [
+    'solicitudes.reject.reason1',
+    'solicitudes.reject.reason2',
+    'solicitudes.reject.reason3',
+    'solicitudes.reject.reason4',
+    'solicitudes.reject.reason5',
+    'solicitudes.reject.reason6',
   ];
 
   onSubmit(): void {
     if (this.submitting) return;
 
     if (!this.formData.admin_feedback.trim()) {
-      this.error = 'Por favor proporciona una razón para el rechazo';
+      this.error = this.transloco.translate('solicitudes.reject.requiredFeedback');
       return;
     }
 
@@ -97,8 +102,8 @@ export class RejectDialogComponent {
       });
   }
 
-  selectReason(reason: string): void {
-    this.formData.admin_feedback = reason;
+  selectReason(key: string): void {
+    this.formData.admin_feedback = this.transloco.translate(key);
   }
 
   cancel(): void {

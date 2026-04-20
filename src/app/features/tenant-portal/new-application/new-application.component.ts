@@ -1,4 +1,7 @@
 import { Component, inject, computed, OnInit, signal } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +42,10 @@ import { SlugService } from '../../../core/services/slug.service';
     MatProgressSpinnerModule,
     MatPaginatorModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope('rentalApp')],
   template: `
     <div class="new-application">
       <!-- Header -->
@@ -49,8 +55,8 @@ import { SlugService } from '../../../core/services/slug.service';
             <lucide-icon [img]="SlidersHorizontal" [size]="28"></lucide-icon>
           </div>
           <div class="header-text">
-            <h1>Nueva Solicitud de Alquiler</h1>
-            <p class="subtitle">Selecciona una propiedad para enviar tu solicitud</p>
+            <h1>{{ 'tenantApplications.marketplace.title' | transloco }}</h1>
+            <p class="subtitle">{{ 'tenantApplications.marketplace.subtitle' | transloco }}</p>
           </div>
         </div>
       </div>
@@ -62,7 +68,7 @@ import { SlugService } from '../../../core/services/slug.service';
             <lucide-icon [img]="Search" [size]="20"></lucide-icon>
             <input
               type="text"
-              placeholder="Buscar por título, ciudad o dirección..."
+              [placeholder]="'tenantApplications.marketplace.searchPlaceholder' | transloco"
               [value]="filters().search"
               (input)="updateFilter('search', $any($event.target).value)"
               class="search-input"
@@ -71,12 +77,14 @@ import { SlugService } from '../../../core/services/slug.service';
 
           <div class="filter-group">
             <mat-select
-              placeholder="Tipo de propiedad"
+              [placeholder]="'tenantApplications.marketplace.typePlaceholder' | transloco"
               [value]="filters().property_type_id"
               (selectionChange)="updateFilter('property_type_id', $event.value)"
               class="filter-select"
             >
-              <mat-option [value]="null">Todos los tipos</mat-option>
+              <mat-option [value]="null">{{
+                'tenantApplications.marketplace.allTypes' | transloco
+              }}</mat-option>
               @for (type of propertyTypes(); track type) {
                 <mat-option [value]="type">{{ type }}</mat-option>
               }
@@ -85,15 +93,23 @@ import { SlugService } from '../../../core/services/slug.service';
 
           <div class="filter-group">
             <mat-select
-              placeholder="Ordenar por"
+              [placeholder]="'tenantApplications.marketplace.sortBy' | transloco"
               [value]="filters().sort_by"
               (selectionChange)="updateFilter('sort_by', $event.value)"
               class="filter-select"
             >
-              <mat-option value="created_at">Más recientes</mat-option>
-              <mat-option value="price_asc">Precio: Menor a Mayor</mat-option>
-              <mat-option value="price_desc">Precio: Mayor a Menor</mat-option>
-              <mat-option value="area">Área: Mayor a Menor</mat-option>
+              <mat-option value="created_at">{{
+                'tenantApplications.marketplace.recent' | transloco
+              }}</mat-option>
+              <mat-option value="price_asc">{{
+                'tenantApplications.marketplace.priceLow' | transloco
+              }}</mat-option>
+              <mat-option value="price_desc">{{
+                'tenantApplications.marketplace.priceHigh' | transloco
+              }}</mat-option>
+              <mat-option value="area">{{
+                'tenantApplications.marketplace.area' | transloco
+              }}</mat-option>
             </mat-select>
           </div>
         </div>
@@ -103,15 +119,15 @@ import { SlugService } from '../../../core/services/slug.service';
       @if (isLoading()) {
         <div class="loading-state">
           <mat-spinner diameter="48"></mat-spinner>
-          <p>Cargando propiedades disponibles...</p>
+          <p>{{ 'tenantApplications.marketplace.loading' | transloco }}</p>
         </div>
       } @else if (filteredProperties().length === 0) {
         <div class="empty-state">
           <lucide-icon [img]="Home" [size]="64" class="empty-icon"></lucide-icon>
-          <h3>No se encontraron propiedades</h3>
-          <p>Intenta ajustar los filtros de búsqueda</p>
+          <h3>{{ 'tenantApplications.marketplace.noResultsTitle' | transloco }}</h3>
+          <p>{{ 'tenantApplications.marketplace.noResultsDesc' | transloco }}</p>
           <button mat-raised-button color="primary" (click)="clearFilters()">
-            Limpiar Filtros
+            {{ 'tenantApplications.marketplace.clearFilters' | transloco }}
           </button>
         </div>
       } @else {
@@ -127,8 +143,10 @@ import { SlugService } from '../../../core/services/slug.service';
                   </div>
                 }
                 <div class="property-price">
-                  <span class="price-amount">\${{ property.monthly_rent }}</span>
-                  <span class="price-period">/mes</span>
+                  <span class="price-amount">{{ property.monthly_rent | tenantCurrency }}</span>
+                  <span class="price-period">{{
+                    'tenantApplications.marketplace.priceMonth' | transloco
+                  }}</span>
                 </div>
               </div>
 
@@ -147,19 +165,23 @@ import { SlugService } from '../../../core/services/slug.service';
                   @if (property.bedrooms) {
                     <div class="feature">
                       <lucide-icon [img]="Bed" [size]="16"></lucide-icon>
-                      <span
-                        >{{ property.bedrooms }}
-                        {{ property.bedrooms === 1 ? 'Dorm' : 'Dorms' }}</span
-                      >
+                      <span>{{
+                        (property.bedrooms === 1
+                          ? 'tenantApplications.marketplace.bedrooms'
+                          : 'tenantApplications.marketplace.bedroomsPlural'
+                        ) | transloco: { count: property.bedrooms }
+                      }}</span>
                     </div>
                   }
                   @if (property.bathrooms) {
                     <div class="feature">
                       <lucide-icon [img]="Bath" [size]="16"></lucide-icon>
-                      <span
-                        >{{ property.bathrooms }}
-                        {{ property.bathrooms === 1 ? 'Baño' : 'Baños' }}</span
-                      >
+                      <span>{{
+                        (property.bathrooms === 1
+                          ? 'tenantApplications.marketplace.bathrooms'
+                          : 'tenantApplications.marketplace.bathroomsPlural'
+                        ) | transloco: { count: property.bathrooms }
+                      }}</span>
                     </div>
                   }
                   @if (property.square_meters) {
@@ -171,7 +193,10 @@ import { SlugService } from '../../../core/services/slug.service';
                   @if (property.property_rules && property.property_rules.max_occupants) {
                     <div class="feature">
                       <lucide-icon [img]="Users" [size]="16"></lucide-icon>
-                      <span>{{ property.property_rules.max_occupants }} pers.</span>
+                      <span>{{
+                        'tenantApplications.marketplace.occupants'
+                          | transloco: { count: property.property_rules.max_occupants }
+                      }}</span>
                     </div>
                   }
                 </div>
@@ -182,7 +207,7 @@ import { SlugService } from '../../../core/services/slug.service';
                   class="apply-btn"
                   (click)="$event.stopPropagation(); selectProperty(property)"
                 >
-                  Aplicar
+                  {{ 'tenantApplications.marketplace.apply' | transloco }}
                   <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
                 </button>
               </div>
@@ -199,7 +224,7 @@ import { SlugService } from '../../../core/services/slug.service';
               [pageIndex]="currentPage()"
               [showFirstLastButtons]="true"
               (page)="onPageChange($event)"
-              label="Propiedades"
+              [aria-label]="'tenantApplications.marketplace.paginationLabel' | transloco"
             >
             </mat-paginator>
           </div>

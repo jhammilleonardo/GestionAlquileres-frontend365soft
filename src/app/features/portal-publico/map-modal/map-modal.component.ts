@@ -1,14 +1,16 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SafePipe } from '../../../shared/pipes/safe.pipe';
-
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-map-modal',
   standalone: true,
-  imports: [CommonModule, SafePipe],
+  imports: [CommonModule, SafePipe, TranslocoModule],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './map-modal.component.html',
-  styleUrls: ['./map-modal.component.css']
+  styleUrls: ['./map-modal.component.css'],
 })
 export class MapModalComponent {
   @Input() location: any;
@@ -32,4 +34,3 @@ export class MapModalComponent {
     window.open(this.openStreetMapUrl, '_blank');
   }
 }
-

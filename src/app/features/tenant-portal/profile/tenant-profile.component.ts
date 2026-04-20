@@ -21,6 +21,7 @@ import {
   Calendar,
 } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-tenant-profile',
@@ -36,7 +37,9 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
     MatProgressSpinnerModule,
     MatDividerModule,
     MatTabsModule,
+    MatTabsModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="profile-container">
@@ -45,8 +48,8 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
         <div class="header-content">
           <lucide-icon [img]="User" [size]="32"></lucide-icon>
           <div>
-            <h1>Mi Perfil</h1>
-            <p>Gestiona tu información personal</p>
+            <h1>{{ 'public.tenantProfile.title' | transloco }}</h1>
+            <p>{{ 'public.tenantProfile.subtitle' | transloco }}</p>
           </div>
         </div>
       </div>
@@ -61,12 +64,12 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
             </div>
             <h2>{{ user.name }}</h2>
             <p class="user-email">{{ user.email }}</p>
-            <div class="user-role">Inquilino</div>
+            <div class="user-role">{{ 'public.tenantProfile.role' | transloco }}</div>
 
             @if (user.contract) {
               <mat-divider style="margin: 16px 0;"></mat-divider>
               <div class="contract-info">
-                <h3>Información del Contrato</h3>
+                <h3>{{ 'public.tenantProfile.contractInfo' | transloco }}</h3>
                 <div class="info-item">
                   <lucide-icon [img]="Home" [size]="16"></lucide-icon>
                   <span>{{ user.contract.property_title }}</span>
@@ -86,12 +89,12 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
           <div class="forms-container">
             <mat-tab-group>
               <!-- Personal Info Tab -->
-              <mat-tab label="Información Personal">
+              <mat-tab [label]="'public.tenantProfile.tabPersonalInfo' | transloco">
                 <mat-card class="form-card">
                   @if (updateSuccess()) {
                     <div class="success-alert">
                       <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                      <span>Información actualizada exitosamente</span>
+                      <span>{{ 'public.tenantProfile.profileUpdated' | transloco }}</span>
                     </div>
                   }
 
@@ -104,19 +107,19 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
 
                   <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
                     <mat-form-field appearance="outline">
-                      <mat-label>Nombre Completo</mat-label>
+                      <mat-label>{{ 'public.tenantProfile.fullName' | transloco }}</mat-label>
                       <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
                       <input matInput formControlName="name" placeholder="Juan Pérez" required />
                       @if (
                         profileForm.get('name')?.hasError('required') &&
                         profileForm.get('name')?.touched
                       ) {
-                        <mat-error>El nombre es requerido</mat-error>
+                        <mat-error>{{ 'public.tenantProfile.nameRequired' | transloco }}</mat-error>
                       }
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Email</mat-label>
+                      <mat-label>{{ 'public.tenantProfile.email' | transloco }}</mat-label>
                       <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
                       <input
                         matInput
@@ -129,15 +132,17 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
                         profileForm.get('email')?.hasError('required') &&
                         profileForm.get('email')?.touched
                       ) {
-                        <mat-error>El email es requerido</mat-error>
+                        <mat-error>{{
+                          'public.tenantProfile.emailRequired' | transloco
+                        }}</mat-error>
                       }
                       @if (profileForm.get('email')?.hasError('email')) {
-                        <mat-error>Email inválido</mat-error>
+                        <mat-error>{{ 'public.tenantProfile.emailInvalid' | transloco }}</mat-error>
                       }
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Teléfono</mat-label>
+                      <mat-label>{{ 'public.tenantProfile.phone' | transloco }}</mat-label>
                       <lucide-icon matIconPrefix [img]="Phone" [size]="20"></lucide-icon>
                       <input
                         matInput
@@ -154,7 +159,7 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
                         (click)="resetProfileForm()"
                         [disabled]="isUpdating()"
                       >
-                        Cancelar
+                        {{ 'public.tenantProfile.cancel' | transloco }}
                       </button>
                       <button
                         type="submit"
@@ -164,9 +169,9 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
                       >
                         @if (isUpdating()) {
                           <mat-spinner diameter="20"></mat-spinner>
-                          Actualizando...
+                          {{ 'public.tenantProfile.updating' | transloco }}
                         } @else {
-                          Guardar Cambios
+                          {{ 'public.tenantProfile.saveChanges' | transloco }}
                         }
                       </button>
                     </div>
@@ -175,12 +180,12 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
               </mat-tab>
 
               <!-- Password Tab -->
-              <mat-tab label="Cambiar Contraseña">
+              <mat-tab [label]="'public.tenantProfile.tabPassword' | transloco">
                 <mat-card class="form-card">
                   @if (passwordSuccess()) {
                     <div class="success-alert">
                       <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                      <span>Contraseña actualizada exitosamente</span>
+                      <span>{{ 'public.tenantProfile.passwordUpdated' | transloco }}</span>
                     </div>
                   }
 
@@ -193,48 +198,60 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
 
                   <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
                     <mat-form-field appearance="outline">
-                      <mat-label>Contraseña Actual</mat-label>
+                      <mat-label>{{
+                        'public.tenantProfile.currentPassword' | transloco
+                      }}</mat-label>
                       <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
                       <input matInput type="password" formControlName="current_password" required />
                       @if (
                         passwordForm.get('current_password')?.hasError('required') &&
                         passwordForm.get('current_password')?.touched
                       ) {
-                        <mat-error>La contraseña actual es requerida</mat-error>
+                        <mat-error>{{
+                          'public.tenantProfile.currentPasswordRequired' | transloco
+                        }}</mat-error>
                       }
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Nueva Contraseña</mat-label>
+                      <mat-label>{{ 'public.tenantProfile.newPassword' | transloco }}</mat-label>
                       <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
                       <input matInput type="password" formControlName="new_password" required />
                       @if (
                         passwordForm.get('new_password')?.hasError('required') &&
                         passwordForm.get('new_password')?.touched
                       ) {
-                        <mat-error>La nueva contraseña es requerida</mat-error>
+                        <mat-error>{{
+                          'public.tenantProfile.newPasswordRequired' | transloco
+                        }}</mat-error>
                       }
                       @if (passwordForm.get('new_password')?.hasError('minlength')) {
-                        <mat-error>Mínimo 8 caracteres</mat-error>
+                        <mat-error>{{ 'public.tenantProfile.min8Chars' | transloco }}</mat-error>
                       }
-                      <mat-hint>Mínimo 8 caracteres</mat-hint>
+                      <mat-hint>{{ 'public.tenantProfile.min8Chars' | transloco }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Confirmar Nueva Contraseña</mat-label>
+                      <mat-label>{{
+                        'public.tenantProfile.confirmNewPassword' | transloco
+                      }}</mat-label>
                       <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
                       <input matInput type="password" formControlName="confirm_password" required />
                       @if (
                         passwordForm.get('confirm_password')?.hasError('required') &&
                         passwordForm.get('confirm_password')?.touched
                       ) {
-                        <mat-error>Confirma tu contraseña</mat-error>
+                        <mat-error>{{
+                          'public.tenantProfile.confirmRequired' | transloco
+                        }}</mat-error>
                       }
                       @if (
                         passwordForm.hasError('passwordMismatch') &&
                         passwordForm.get('confirm_password')?.touched
                       ) {
-                        <mat-error>Las contraseñas no coinciden</mat-error>
+                        <mat-error>{{
+                          'public.tenantProfile.passwordsMismatch' | transloco
+                        }}</mat-error>
                       }
                     </mat-form-field>
 
@@ -245,7 +262,7 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
                         (click)="resetPasswordForm()"
                         [disabled]="isUpdatingPassword()"
                       >
-                        Cancelar
+                        {{ 'public.tenantProfile.cancel' | transloco }}
                       </button>
                       <button
                         type="submit"
@@ -255,9 +272,9 @@ import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.ser
                       >
                         @if (isUpdatingPassword()) {
                           <mat-spinner diameter="20"></mat-spinner>
-                          Actualizando...
+                          {{ 'public.tenantProfile.updating' | transloco }}
                         } @else {
-                          Cambiar Contraseña
+                          {{ 'public.tenantProfile.changePasswordBtn' | transloco }}
                         }
                       </button>
                     </div>

@@ -1,15 +1,15 @@
 <!-- Loading State -->
 <div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
-  <p>Cargando detalles de la propiedad...</p>
+  <p>{{ 'public.propertyDetail.loading' | transloco }}</p>
 </div>
 
 <!-- Error State -->
 <div class="error-container" *ngIf="!isLoading && hasError">
   <div class="error-icon">⚠️</div>
-  <h2>No se pudo cargar la propiedad</h2>
-  <p>La propiedad que buscas no existe o no está disponible en este momento.</p>
-  <a routerLink="../" class="btn-back">← Volver al listado</a>
+  <h2>{{ 'public.propertyDetail.errorTitle' | transloco }}</h2>
+  <p>{{ 'public.propertyDetail.errorSubtitle' | transloco }}</p>
+  <a routerLink="../" class="btn-back">← {{ 'public.propertyDetail.backToList' | transloco }}</a>
 </div>
 
 <!-- Property Detail -->
@@ -17,7 +17,7 @@
   <!-- Back Button -->
   <div class="back-navigation">
     <a routerLink="../" class="back-btn">
-      ← Volver a Propiedades
+      ← {{ 'public.propertyDetail.backToList' | transloco }}
     </a>
   </div>
 
@@ -30,16 +30,14 @@
       <ng-template #noImage>
         <div class="no-image-placeholder">
           <span class="placeholder-icon">🏠</span>
-          <p>Sin imágenes</p>
+          <p>{{ 'public.propertyDetail.noImages' | transloco }}</p>
         </div>
       </ng-template>
 
       <button class="nav-btn prev-btn" (click)="previousImage()" *ngIf="hasMultipleImages()">
         ‹
       </button>
-      <button class="nav-btn next-btn" (click)="nextImage()" *ngIf="hasMultipleImages()">
-        ›
-      </button>
+      <button class="nav-btn next-btn" (click)="nextImage()" *ngIf="hasMultipleImages()">›</button>
 
       <div class="image-counter" *ngIf="getImagesCount() > 0">
         {{ currentImageIndex + 1 }} / {{ getImagesCount() }}
@@ -47,8 +45,14 @@
     </div>
 
     <div class="thumbnail-gallery" *ngIf="hasMultipleImages()">
-      <img *ngFor="let image of getImagesArray(); let i = index" [src]="image" [alt]="'Imagen ' + (i + 1)"
-        [class.active]="i === currentImageIndex" (click)="selectImage(i)" class="thumbnail" />
+      <img
+        *ngFor="let image of getImagesArray(); let i = index"
+        [src]="image"
+        [alt]="'public.propertyDetail.imageNumber' | transloco: { num: i + 1 }"
+        [class.active]="i === currentImageIndex"
+        (click)="selectImage(i)"
+        class="thumbnail"
+      />
     </div>
   </div>
 
@@ -65,8 +69,12 @@
 
       <div class="tags-pill-detail" *ngIf="getPropertyTypeName()">
         <div class="tag-icons-detail">
-          <div class="t-icon-circle-detail bg-blue"><lucide-icon [img]="Home" class="t-icon-detail"></lucide-icon></div>
-          <div class="t-icon-circle-detail bg-orange" *ngIf="getPropertySubtypeName()"><lucide-icon [img]="MapPin" class="t-icon-detail"></lucide-icon></div>
+          <div class="t-icon-circle-detail bg-blue">
+            <lucide-icon [img]="Home" class="t-icon-detail"></lucide-icon>
+          </div>
+          <div class="t-icon-circle-detail bg-orange" *ngIf="getPropertySubtypeName()">
+            <lucide-icon [img]="MapPin" class="t-icon-detail"></lucide-icon>
+          </div>
         </div>
         <span>{{ getPropertyTypeName() }}</span>
       </div>
@@ -74,13 +82,20 @@
 
     <div class="header-side-info">
       <div class="price-section-new" *ngIf="property.monthly_rent || property.monthly_rent_amount">
-        <span class="price-value">{{ property.currency || 'BOB' }} {{ (property.monthly_rent || property.monthly_rent_amount) | number:'1.0-0' }}</span>
-        <span class="price-label">/mes</span>
+        <span class="price-value"
+          >{{ property.currency || 'BOB' }}
+          {{ property.monthly_rent || property.monthly_rent_amount | number: '1.0-0' }}</span
+        >
+        <span class="price-label">{{ 'public.propertyDetail.perMonth' | transloco }}</span>
       </div>
 
       <div class="header-actions-new">
         <button class="action-btn-new" (click)="toggleFavorite()" [class.active]="isFavorite">
-          <lucide-icon [img]="Heart" class="btn-icon-detail" [style.fill]="isFavorite ? '#ef4444' : 'none'"></lucide-icon>
+          <lucide-icon
+            [img]="Heart"
+            class="btn-icon-detail"
+            [style.fill]="isFavorite ? '#ef4444' : 'none'"
+          ></lucide-icon>
         </button>
         <button class="action-btn-new" (click)="shareProperty()">
           <lucide-icon [img]="Share2" class="btn-icon-detail"></lucide-icon>
@@ -99,7 +114,7 @@
           <div class="stat-icon-wrap"><lucide-icon [img]="Maximize"></lucide-icon></div>
           <div class="stat-info-new">
             <span class="stat-val-new">{{ property.square_meters || property.total_area }}m²</span>
-            <span class="stat-lab-new">Área Total</span>
+            <span class="stat-lab-new">{{ 'public.propertyDetail.totalArea' | transloco }}</span>
           </div>
         </div>
 
@@ -107,7 +122,7 @@
           <div class="stat-icon-wrap"><lucide-icon [img]="Bed"></lucide-icon></div>
           <div class="stat-info-new">
             <span class="stat-val-new">{{ property.bedrooms }}</span>
-            <span class="stat-lab-new">Habitaciones</span>
+            <span class="stat-lab-new">{{ 'public.propertyDetail.bedrooms' | transloco }}</span>
           </div>
         </div>
 
@@ -115,7 +130,7 @@
           <div class="stat-icon-wrap"><lucide-icon [img]="Bath"></lucide-icon></div>
           <div class="stat-info-new">
             <span class="stat-val-new">{{ property.bathrooms }}</span>
-            <span class="stat-lab-new">Baños</span>
+            <span class="stat-lab-new">{{ 'public.propertyDetail.bathrooms' | transloco }}</span>
           </div>
         </div>
 
@@ -123,20 +138,20 @@
           <div class="stat-icon-wrap"><lucide-icon [img]="Car"></lucide-icon></div>
           <div class="stat-info-new">
             <span class="stat-val-new">{{ property.parking_spaces }}</span>
-            <span class="stat-lab-new">Parqueos</span>
+            <span class="stat-lab-new">{{ 'public.propertyDetail.parking' | transloco }}</span>
           </div>
         </div>
       </div>
 
       <!-- Description -->
       <div class="section-card">
-        <h2 class="section-title">Descripción</h2>
+        <h2 class="section-title">{{ 'public.propertyDetail.description' | transloco }}</h2>
         <p class="description-text">{{ property.description }}</p>
       </div>
 
       <!-- Amenities -->
       <div class="section-card">
-        <h2 class="section-title">Amenidades</h2>
+        <h2 class="section-title">{{ 'public.propertyDetail.amenities' | transloco }}</h2>
         <div class="amenities-grid">
           <div class="amenity-item" *ngFor="let amenity of property.amenities">
             <span class="amenity-icon">✓</span>
@@ -147,36 +162,46 @@
 
       <!-- Property Details -->
       <div class="section-card">
-        <h2 class="section-title">Detalles de la Propiedad</h2>
+        <h2 class="section-title">{{ 'public.propertyDetail.detailsTitle' | transloco }}</h2>
         <div class="details-grid">
           <div class="detail-row">
-            <span class="detail-label">Tipo de Propiedad</span>
+            <span class="detail-label">{{ 'public.propertyDetail.propType' | transloco }}</span>
             <span class="detail-value">{{ getPropertyTypeName() }}</span>
           </div>
           <div class="detail-row" *ngIf="getPropertySubtypeName()">
-            <span class="detail-label">Subtipo</span>
+            <span class="detail-label">{{ 'public.propertyDetail.propSubtype' | transloco }}</span>
             <span class="detail-value">{{ getPropertySubtypeName() }}</span>
           </div>
           <div class="detail-row" *ngIf="property.monthly_rent || property.monthly_rent_amount">
-            <span class="detail-label">Renta Mensual</span>
-            <span class="detail-value">{{ property.currency || 'BOB' }} {{ (property.monthly_rent ||
-              property.monthly_rent_amount) | number:'1.0-0' }}</span>
+            <span class="detail-label">{{ 'public.propertyDetail.monthlyRent' | transloco }}</span>
+            <span class="detail-value"
+              >{{ property.currency || 'BOB' }}
+              {{ property.monthly_rent || property.monthly_rent_amount | number: '1.0-0' }}</span
+            >
           </div>
           <div class="detail-row" *ngIf="property.security_deposit_amount">
-            <span class="detail-label">Depósito de Seguridad</span>
-            <span class="detail-value">{{ property.currency || 'BOB' }} {{ property.security_deposit_amount |
-              number:'1.0-0' }}</span>
+            <span class="detail-label">{{
+              'public.propertyDetail.depositAmount' | transloco
+            }}</span>
+            <span class="detail-value"
+              >{{ property.currency || 'BOB' }}
+              {{ property.security_deposit_amount | number: '1.0-0' }}</span
+            >
           </div>
           <div class="detail-row" *ngIf="property.year_built">
-            <span class="detail-label">Año de Construcción</span>
+            <span class="detail-label">{{ 'public.propertyDetail.yearBuilt' | transloco }}</span>
             <span class="detail-value">{{ property.year_built }}</span>
           </div>
           <div class="detail-row">
-            <span class="detail-label">Amueblado</span>
-            <span class="detail-value">{{ property.is_furnished ? 'Sí' : 'No' }}</span>
+            <span class="detail-label">{{ 'public.propertyDetail.furnished' | transloco }}</span>
+            <span class="detail-value">{{
+              property.is_furnished ? ('common.yes' | transloco) : ('common.no' | transloco)
+            }}</span>
           </div>
           <div class="detail-row" *ngIf="property.availability_date">
-            <span class="detail-label">Disponible desde</span>
+            <span class="detail-label">{{
+              'public.propertyDetail.availableFrom' | transloco
+            }}</span>
             <span class="detail-value">{{ property.availability_date | date: 'dd/MM/yyyy' }}</span>
           </div>
         </div>
@@ -184,14 +209,14 @@
 
       <!-- Map Section -->
       <div class="section-card-map">
-        <h2 class="section-title-new">Ubicación</h2>
+        <h2 class="section-title-new">{{ 'public.propertyDetail.location' | transloco }}</h2>
         <div class="map-placeholder-new">
           <div class="map-overlay-new">
             <div class="map-info-new">
               <lucide-icon [img]="MapPin" class="map-icon-big"></lucide-icon>
               <p class="map-address-new">{{ getPropertyAddress() }}</p>
               <button class="btn-view-map-new" (click)="openMapModal()">
-                Ver en Google Maps
+                {{ 'public.propertyDetail.viewMap' | transloco }}
               </button>
             </div>
           </div>
@@ -202,14 +227,16 @@
     <!-- Right Column - Contact Card -->
     <div class="sidebar-new">
       <div class="contact-card-premium sticky-sidebar">
-        <h3 class="contact-title-new">¿Te interesa esta propiedad?</h3>
-        <p class="contact-subtitle-new">Nuestro equipo está listo para ayudarte con el proceso de alquiler.</p>
+        <h3 class="contact-title-new">{{ 'public.propertyDetail.interestedTitle' | transloco }}</h3>
+        <p class="contact-subtitle-new">
+          {{ 'public.propertyDetail.interestedSubtitle' | transloco }}
+        </p>
 
         <div class="contact-info-list">
           <div class="contact-item-new" *ngIf="getOwnerName()">
             <div class="contact-icon-new blue-bg"><lucide-icon [img]="User"></lucide-icon></div>
             <div class="contact-text-new">
-              <span class="contact-label-new">Propietario</span>
+              <span class="contact-label-new">{{ 'public.propertyDetail.owner' | transloco }}</span>
               <span class="contact-value-new">{{ getOwnerName() }}</span>
             </div>
           </div>
@@ -217,7 +244,7 @@
           <div class="contact-item-new" *ngIf="getOwnerEmail()">
             <div class="contact-icon-new green-bg"><lucide-icon [img]="Mail"></lucide-icon></div>
             <div class="contact-text-new">
-              <span class="contact-label-new">Email</span>
+              <span class="contact-label-new">{{ 'public.propertyDetail.email' | transloco }}</span>
               <span class="contact-value-new">{{ getOwnerEmail() }}</span>
             </div>
           </div>
@@ -225,7 +252,7 @@
           <div class="contact-item-new" *ngIf="getOwnerPhone()">
             <div class="contact-icon-new orange-bg"><lucide-icon [img]="Phone"></lucide-icon></div>
             <div class="contact-text-new">
-              <span class="contact-label-new">Teléfono</span>
+              <span class="contact-label-new">{{ 'public.propertyDetail.phone' | transloco }}</span>
               <span class="contact-value-new">{{ getOwnerPhone() }}</span>
             </div>
           </div>
@@ -233,23 +260,23 @@
 
         <div class="cta-actions-new">
           <button class="btn-apply-now" (click)="openApplicationModal()">
-            Solicitar Alquiler
+            {{ 'public.propertyDetail.applyNow' | transloco }}
           </button>
           <button class="btn-message-now" (click)="openContactModal()">
             <lucide-icon [img]="MessageSquare" class="btn-icon-small"></lucide-icon>
-            Enviar Mensaje
+            {{ 'public.propertyDetail.sendMessage' | transloco }}
           </button>
           <button class="btn-call-now">
             <lucide-icon [img]="PhoneCall" class="btn-icon-small"></lucide-icon>
-            Llamar Ahora
+            {{ 'public.propertyDetail.callNow' | transloco }}
           </button>
         </div>
 
         <div class="schedule-section-new">
           <div class="divider-new"></div>
-          <p class="schedule-text-new">¿Quieres agendar una visita?</p>
+          <p class="schedule-text-new">{{ 'public.propertyDetail.scheduleTitle' | transloco }}</p>
           <button class="btn-schedule-new">
-            Agendar Visita Presencial
+            {{ 'public.propertyDetail.scheduleBtn' | transloco }}
           </button>
         </div>
       </div>
@@ -258,11 +285,20 @@
 </div>
 
 <!-- Modals -->
-<app-application-modal *ngIf="showApplicationModal && property" [property]="property"
-  (close)="closeApplicationModal()"></app-application-modal>
+<app-application-modal
+  *ngIf="showApplicationModal && property"
+  [property]="property"
+  (close)="closeApplicationModal()"
+></app-application-modal>
 
-<app-contact-modal *ngIf="showContactModal && property" [property]="property"
-  (close)="closeContactModal()"></app-contact-modal>
+<app-contact-modal
+  *ngIf="showContactModal && property"
+  [property]="property"
+  (close)="closeContactModal()"
+></app-contact-modal>
 
-<app-map-modal *ngIf="showMapModal && property" [location]="getLocationForMap()"
-  (close)="closeMapModal()"></app-map-modal>
+<app-map-modal
+  *ngIf="showMapModal && property"
+  [location]="getLocationForMap()"
+  (close)="closeMapModal()"
+></app-map-modal>

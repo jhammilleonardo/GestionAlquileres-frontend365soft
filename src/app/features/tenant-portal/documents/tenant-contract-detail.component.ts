@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, DestroyRef, signal } from '@angular/core';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -29,6 +30,9 @@ import {
 } from '../../../core/services/tenant/tenant-contract.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { FormatService } from '../../../core/services/format.service';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ContractSigningDialogComponent } from '../dialogs/contract-signing-dialog.component';
 import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog.component';
@@ -44,6 +48,9 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
     MatDividerModule,
     MatDialogModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
   template: `
     <div class="contract-detail-container">
@@ -51,13 +58,13 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
       <div class="detail-header">
         <button mat-stroked-button (click)="goBack()" class="back-btn">
           <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
-          Volver
+          {{ 'tenantContracts.details.back' | transloco }}
         </button>
         <div class="header-info">
           @if (contract(); as c) {
             <h1>{{ c.contract_number }}</h1>
             <span class="status-badge" [class]="'status-' + c.status.toLowerCase()">
-              {{ ContractStatusLabels[c.status] }}
+              {{ 'tenantContracts.status.' + c.status | transloco }}
             </span>
           }
         </div>
@@ -67,7 +74,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
       @if (isLoading()) {
         <div class="loading-container">
           <mat-spinner diameter="50"></mat-spinner>
-          <p>Cargando contrato...</p>
+          <p>{{ 'tenantContracts.details.loading' | transloco }}</p>
         </div>
       }
 
@@ -76,9 +83,11 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
         <mat-card class="error-card">
           <div class="error-content">
             <lucide-icon [img]="X" [size]="48"></lucide-icon>
-            <h2>Error</h2>
+            <h2>{{ 'tenantContracts.details.error' | transloco }}</h2>
             <p>{{ error() }}</p>
-            <button mat-raised-button color="primary" (click)="goBack()">Volver</button>
+            <button mat-raised-button color="primary" (click)="goBack()">
+              {{ 'tenantContracts.details.back' | transloco }}
+            </button>
           </div>
         </mat-card>
       }
@@ -92,10 +101,13 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
               <div class="alert-content">
                 <lucide-icon [img]="AlertTriangle" [size]="32"></lucide-icon>
                 <div class="alert-text">
-                  <h3>Contrato pendiente de tu firma</h3>
+                  <h3>{{ 'tenantContracts.details.pendingAlertTitle' | transloco }}</h3>
                   <p>
-                    Revisa los términos y condiciones en esta página. Cuando estés listo, haz clic
-                    en <strong>"Firmar Contrato"</strong> para aceptarlos y activar el contrato.
+                    {{ 'tenantContracts.details.pendingAlertDescBefore' | transloco }}
+                    <strong>{{
+                      'tenantContracts.details.pendingAlertDescButton' | transloco
+                    }}</strong>
+                    {{ 'tenantContracts.details.pendingAlertDescAfter' | transloco }}
                   </p>
                 </div>
               </div>
@@ -108,7 +120,11 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                   class="sign-btn-top"
                 >
                   <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
-                  {{ isSigning() ? 'Firmando...' : 'Firmar Contrato' }}
+                  {{
+                    isSigning()
+                      ? ('tenantContracts.details.signing' | transloco)
+                      : ('tenantContracts.details.signButton' | transloco)
+                  }}
                 </button>
               </div>
             </mat-card>
@@ -120,8 +136,13 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
               <div class="confirmation-content">
                 <lucide-icon [img]="CheckCircle2" [size]="32"></lucide-icon>
                 <div class="confirmation-text">
-                  <h3>Contrato firmado</h3>
-                  <p>Firmado digitalmente el {{ formatDate(c.signed_at) }}</p>
+                  <h3>{{ 'tenantContracts.details.signedTitle' | transloco }}</h3>
+                  <p>
+                    {{
+                      'tenantContracts.details.signedDesc'
+                        | transloco: { date: formatDate(c.signed_at) }
+                    }}
+                  </p>
                 </div>
               </div>
             </mat-card>
@@ -131,11 +152,11 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
           <mat-card class="info-card">
             <div class="card-header">
               <lucide-icon [img]="Home" [size]="24"></lucide-icon>
-              <h3>Propiedad</h3>
+              <h3>{{ 'tenantContracts.details.propertyTitle' | transloco }}</h3>
             </div>
             <div class="card-content">
               <h2 class="property-title">
-                {{ c.property?.title || 'Propiedad no especificada' }}
+                {{ c.property?.title || ('tenantContracts.propertyNotSpecified' | transloco) }}
               </h2>
               @if (c.property && c.property.address) {
                 <p class="property-address">
@@ -149,28 +170,32 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
           <mat-card class="info-card">
             <div class="card-header">
               <lucide-icon [img]="Calendar" [size]="24"></lucide-icon>
-              <h3>Vigencia del Contrato</h3>
+              <h3>{{ 'tenantContracts.details.validityTitle' | transloco }}</h3>
             </div>
             <div class="card-content">
               <div class="dates-grid">
                 <div class="date-item">
-                  <span class="label">Fecha de inicio:</span>
-                  <span class="value">{{ formatDate(c.start_date) }}</span>
+                  <span class="label">{{ 'tenantContracts.details.startLabel' | transloco }}:</span>
+                  <span class="value">{{ c.start_date | tenantDate }}</span>
                 </div>
                 <div class="date-item">
-                  <span class="label">Fecha de finalización:</span>
-                  <span class="value">{{ formatDate(c.end_date) }}</span>
+                  <span class="label">{{ 'tenantContracts.details.endLabel' | transloco }}:</span>
+                  <span class="value">{{ c.end_date | tenantDate }}</span>
                 </div>
                 @if (c.key_delivery_date) {
                   <div class="date-item">
-                    <span class="label">Entrega de llaves:</span>
-                    <span class="value">{{ formatDate(c.key_delivery_date) }}</span>
+                    <span class="label"
+                      >{{ 'tenantContracts.details.keyDeliveryLabel' | transloco }}:</span
+                    >
+                    <span class="value">{{ c.key_delivery_date | tenantDate }}</span>
                   </div>
                 }
                 @if (c.signed_at) {
                   <div class="date-item signed">
-                    <span class="label">Fecha de firma:</span>
-                    <span class="value">{{ formatDate(c.signed_at) }}</span>
+                    <span class="label"
+                      >{{ 'tenantContracts.details.signDateLabel' | transloco }}:</span
+                    >
+                    <span class="value">{{ c.signed_at | tenantDate }}</span>
                   </div>
                 }
               </div>
@@ -181,14 +206,14 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
           <mat-card class="info-card">
             <div class="card-header">
               <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
-              <h3>Condiciones Económicas</h3>
+              <h3>{{ 'tenantContracts.details.economicTitle' | transloco }}</h3>
             </div>
             <div class="card-content">
               <div class="economic-terms">
                 <div class="term-item">
-                  <span class="label">Alquiler mensual:</span>
+                  <span class="label">{{ 'tenantContracts.details.rentLabel' | transloco }}:</span>
                   <span class="value amount">
-                    {{ formatRent(c.monthly_rent) }}
+                    {{ c.monthly_rent | tenantCurrency }}
                     @if (c.currency) {
                       {{ c.currency }}
                     }
@@ -196,9 +221,11 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                 </div>
                 @if (c.deposit_amount) {
                   <div class="term-item">
-                    <span class="label">Depósito:</span>
+                    <span class="label"
+                      >{{ 'tenantContracts.details.depositLabel' | transloco }}:</span
+                    >
                     <span class="value">
-                      {{ formatRent(+c.deposit_amount) }}
+                      {{ c.deposit_amount | tenantCurrency }}
                       @if (c.currency) {
                         {{ c.currency }}
                       }
@@ -207,13 +234,19 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                 }
                 @if (c.payment_day) {
                   <div class="term-item">
-                    <span class="label">Día de pago:</span>
-                    <span class="value">Día {{ c.payment_day }} de cada mes</span>
+                    <span class="label"
+                      >{{ 'tenantContracts.details.paymentDayLabel' | transloco }}:</span
+                    >
+                    <span class="value">{{
+                      'tenantContracts.details.paymentDayValue' | transloco: { day: c.payment_day }
+                    }}</span>
                   </div>
                 }
                 @if (c.payment_method) {
                   <div class="term-item">
-                    <span class="label">Método de pago:</span>
+                    <span class="label"
+                      >{{ 'tenantContracts.details.methodLabel' | transloco }}:</span
+                    >
                     <span class="value">{{ c.payment_method }}</span>
                   </div>
                 }
@@ -223,16 +256,23 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
               @if (c.bank_name || c.bank_account_number) {
                 <mat-divider class="my-4"></mat-divider>
                 <div class="bank-info">
-                  <h4>Datos para Transferencia</h4>
+                  <h4>{{ 'tenantContracts.details.bankTitle' | transloco }}</h4>
                   @if (c.bank_name) {
-                    <p><strong>Banco:</strong> {{ c.bank_name }}</p>
+                    <p>
+                      <strong>{{ 'tenantContracts.details.bankLabel' | transloco }}:</strong>
+                      {{ c.bank_name }}
+                    </p>
                   }
                   @if (c.bank_account_holder) {
-                    <p><strong>Titular:</strong> {{ c.bank_account_holder }}</p>
+                    <p>
+                      <strong>{{ 'tenantContracts.details.holderLabel' | transloco }}:</strong>
+                      {{ c.bank_account_holder }}
+                    </p>
                   }
                   @if (c.bank_account_type && c.bank_account_number) {
                     <p>
-                      <strong>Cuenta:</strong> {{ c.bank_account_type }} -
+                      <strong>{{ 'tenantContracts.details.accountLabel' | transloco }}:</strong>
+                      {{ c.bank_account_type }} -
                       {{ c.bank_account_number }}
                     </p>
                   }
@@ -246,7 +286,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
             <mat-card class="info-card">
               <div class="card-header">
                 <lucide-icon [img]="Info" [size]="24"></lucide-icon>
-                <h3>Servicios Incluidos</h3>
+                <h3>{{ 'tenantContracts.details.servicesTitle' | transloco }}</h3>
               </div>
               <div class="card-content">
                 <div class="services-list">
@@ -266,7 +306,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
             <mat-card class="info-card">
               <div class="card-header">
                 <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
-                <h3>Mis Responsabilidades</h3>
+                <h3>{{ 'tenantContracts.details.responsibilitiesTitle' | transloco }}</h3>
               </div>
               <div class="card-content">
                 <p class="terms-text">{{ c.tenant_responsibilities }}</p>
@@ -279,7 +319,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
             <mat-card class="info-card prohibitions">
               <div class="card-header">
                 <lucide-icon [img]="AlertTriangle" [size]="24"></lucide-icon>
-                <h3>Prohibiciones</h3>
+                <h3>{{ 'tenantContracts.details.prohibitionsTitle' | transloco }}</h3>
               </div>
               <div class="card-content">
                 <p class="terms-text">{{ c.prohibitions }}</p>
@@ -292,24 +332,24 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
             <mat-card class="info-card">
               <div class="card-header">
                 <lucide-icon [img]="Info" [size]="24"></lucide-icon>
-                <h3>Términos Adicionales</h3>
+                <h3>{{ 'tenantContracts.details.additionalTitle' | transloco }}</h3>
               </div>
               <div class="card-content">
                 @if (c.renewal_terms) {
                   <div class="additional-term">
-                    <h4>Renovación</h4>
+                    <h4>{{ 'tenantContracts.details.renewalLabel' | transloco }}</h4>
                     <p>{{ c.renewal_terms }}</p>
                   </div>
                 }
                 @if (c.termination_terms) {
                   <div class="additional-term">
-                    <h4>Terminación</h4>
+                    <h4>{{ 'tenantContracts.details.terminationLabel' | transloco }}</h4>
                     <p>{{ c.termination_terms }}</p>
                   </div>
                 }
                 @if (c.jurisdiction) {
                   <div class="additional-term">
-                    <h4>Jurisdicción</h4>
+                    <h4>{{ 'tenantContracts.details.jurisdictionLabel' | transloco }}</h4>
                     <p>{{ c.jurisdiction }}</p>
                   </div>
                 }
@@ -321,7 +361,7 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
           <div class="actions-footer">
             <button mat-stroked-button (click)="viewPDF()" class="action-btn download-btn">
               <lucide-icon [img]="Download" [size]="18"></lucide-icon>
-              Ver PDF
+              {{ 'tenantContracts.details.viewPDF' | transloco }}
             </button>
 
             @if (c.status === ContractStatus.BORRADOR) {
@@ -333,11 +373,11 @@ import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog
                 class="action-btn sign-btn"
               >
                 <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
-                @if (isSigning()) {
-                  Firmando...
-                } @else {
-                  Firmar Contrato
-                }
+                {{
+                  isSigning()
+                    ? ('tenantContracts.details.signing' | transloco)
+                    : ('tenantContracts.details.signButton' | transloco)
+                }}
               </button>
             }
           </div>
@@ -794,6 +834,8 @@ export class TenantContractDetailComponent implements OnInit {
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
   private dialog = inject(MatDialog);
+  private translocoService = inject(TranslocoService);
+  private formatService = inject(FormatService);
 
   contract = signal<Contract | null>(null);
   isLoading = signal(true);
@@ -884,7 +926,8 @@ export class TenantContractDetailComponent implements OnInit {
           this.isSigning.set(false);
           console.error('Error signing contract:', err);
           alert(
-            err.error?.message || 'Error al firmar el contrato. Por favor, intenta nuevamente.',
+            err.error?.message ||
+              this.translocoService.translate('tenantContracts.details.signError'),
           );
         },
       });
@@ -907,7 +950,7 @@ export class TenantContractDetailComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error viewing PDF:', err);
-          alert('Error al visualizar el PDF. Por favor, intenta nuevamente.');
+          alert(this.translocoService.translate('tenantContracts.details.pdfError'));
         },
       });
   }
@@ -929,26 +972,12 @@ export class TenantContractDetailComponent implements OnInit {
         },
         error: (err) => {
           console.error('Error viewing PDF:', err);
-          alert('Error al visualizar el PDF. Por favor, intenta nuevamente.');
+          alert(this.translocoService.translate('tenantContracts.details.pdfError'));
         },
       });
   }
 
   formatDate(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  }
-
-  formatRent(rent: number): string {
-    return rent.toLocaleString('es-BO', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return this.formatService.formatDate(date);
   }
 }

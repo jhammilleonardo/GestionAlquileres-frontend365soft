@@ -10,13 +10,13 @@ import {
   ChevronRight,
   RefreshCw,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { MaintenanceService } from '../../../core/services/admin/maintenance.service';
 import { AuthService } from '../../../core/services/auth.service';
 import {
   MaintenanceRequest,
   MaintenanceStatus,
-  MaintenanceStatusLabels,
-  MaintenancePriorityLabels,
 } from '../../../core/models/maintenance-request.model';
 import { OrderDetailComponent } from './components/order-detail/order-detail.component';
 
@@ -29,8 +29,15 @@ type FilterTab =
 @Component({
   selector: 'app-tecnico-mantenimiento',
   standalone: true,
+  providers: [provideTranslocoScope('tecnico')],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MatProgressSpinnerModule, MatButtonModule, LucideAngularModule, OrderDetailComponent],
+  imports: [
+    MatProgressSpinnerModule,
+    MatButtonModule,
+    LucideAngularModule,
+    OrderDetailComponent,
+    TranslocoModule,
+  ],
   templateUrl: './tecnico-mantenimiento.component.html',
   styleUrl: './tecnico-mantenimiento.component.scss',
 })
@@ -47,9 +54,6 @@ export class TecnicoMantenimientoComponent {
   private maintenanceService = inject(MaintenanceService);
   private authService = inject(AuthService);
 
-  // Labels
-  readonly statusLabels = MaintenanceStatusLabels;
-  readonly priorityLabels = MaintenancePriorityLabels;
   readonly MaintenanceStatus = MaintenanceStatus;
 
   // Estado local — solo el tab activo y la orden seleccionada

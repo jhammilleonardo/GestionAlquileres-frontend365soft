@@ -33,6 +33,8 @@ import {
   BellOff,
   ArrowUpRight,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { NotificationService, Notification } from '../../core/services/admin/notification.service';
 import { SlugService } from '../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
@@ -51,7 +53,9 @@ type NotificationFilter = 'all' | 'unread' | 'read';
     MatProgressSpinnerModule,
     MatTooltipModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'notificaciones', alias: 'notifications' })],
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss',
 })

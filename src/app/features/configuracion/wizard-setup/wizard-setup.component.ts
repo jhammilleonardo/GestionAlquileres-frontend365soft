@@ -25,6 +25,8 @@ import {
   Percent,
   Clock,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import {
   TenantConfigService,
   TenantConfig,
@@ -66,7 +68,9 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
     MatCardModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'configuracion', alias: 'config' })],
   template: `
     <div class="wizard-page">
       <!-- Header -->
@@ -75,7 +79,7 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
           <lucide-icon [img]="Building2" [size]="28"></lucide-icon>
           <span>365Soft</span>
         </div>
-        <p class="wizard-subtitle">Configura tu espacio de trabajo en unos pocos pasos</p>
+        <p class="wizard-subtitle">{{ 'wizard.subtitle' | transloco }}</p>
       </div>
 
       <div class="wizard-container">
@@ -88,17 +92,14 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
 
         <mat-stepper [linear]="true" #stepper class="wizard-stepper" labelPosition="bottom">
           <!-- ─── Paso 1: País y zona horaria ─── -->
-          <mat-step [stepControl]="countryStep" label="País">
+          <mat-step [stepControl]="countryStep" [label]="'wizard.step1Label' | transloco">
             <form [formGroup]="countryStep" class="step-body">
               <div class="step-icon"><lucide-icon [img]="Globe" [size]="36"></lucide-icon></div>
-              <h2 class="step-title">País y zona horaria</h2>
-              <p class="step-desc">
-                Confirma el país de operación — define moneda, zona horaria y métodos de pago
-                disponibles.
-              </p>
+              <h2 class="step-title">{{ 'wizard.step1Title' | transloco }}</h2>
+              <p class="step-desc">{{ 'wizard.step1Desc' | transloco }}</p>
 
               <mat-form-field appearance="outline" class="full-field">
-                <mat-label>País</mat-label>
+                <mat-label>{{ 'wizard.step1Label' | transloco }}</mat-label>
                 <mat-select
                   formControlName="country"
                   (selectionChange)="onCountryChange($event.value)"
@@ -110,7 +111,7 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-field">
-                <mat-label>Zona horaria</mat-label>
+                <mat-label>{{ 'wizard.timezone' | transloco }}</mat-label>
                 <mat-select formControlName="timezone">
                   @for (tz of timezones; track tz.value) {
                     <mat-option [value]="tz.value">{{ tz.label }}</mat-option>
@@ -127,20 +128,21 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
                   [disabled]="countryStep.invalid"
                   class="btn-next"
                 >
-                  Siguiente <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+                  {{ 'wizard.next' | transloco }}
+                  <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
                 </button>
               </div>
             </form>
           </mat-step>
 
           <!-- ─── Paso 2: Pagos ─── -->
-          <mat-step [stepControl]="paymentsStep" label="Pagos">
+          <mat-step [stepControl]="paymentsStep" [label]="'wizard.step2Label' | transloco">
             <form [formGroup]="paymentsStep" class="step-body">
               <div class="step-icon">
                 <lucide-icon [img]="CreditCard" [size]="36"></lucide-icon>
               </div>
-              <h2 class="step-title">Métodos de pago</h2>
-              <p class="step-desc">Selecciona los métodos que aceptarás de tus inquilinos.</p>
+              <h2 class="step-title">{{ 'wizard.step2Title' | transloco }}</h2>
+              <p class="step-desc">{{ 'wizard.step2Desc' | transloco }}</p>
 
               <div class="payment-options">
                 @for (opt of availablePaymentOptions(); track opt.value) {
@@ -150,19 +152,22 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
                       [checked]="isPaymentSelected(opt.value)"
                       (change)="togglePayment(opt.value)"
                     />
-                    <span class="option-label">{{ opt.label }}</span>
+                    <span class="option-label">{{
+                      'wizard.paymentMethods.' + opt.value | transloco
+                    }}</span>
                     <span class="checkmark">✓</span>
                   </label>
                 }
               </div>
 
               @if (selectedPayments().length === 0) {
-                <p class="payments-error">Selecciona al menos un método de pago</p>
+                <p class="payments-error">{{ 'wizard.paymentsRequired' | transloco }}</p>
               }
 
               <div class="step-actions">
                 <button mat-button matStepperPrevious class="btn-back">
-                  <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon> Atrás
+                  <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+                  {{ 'wizard.back' | transloco }}
                 </button>
                 <button
                   mat-raised-button
@@ -171,38 +176,39 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
                   [disabled]="selectedPayments().length === 0"
                   class="btn-next"
                 >
-                  Siguiente <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+                  {{ 'wizard.next' | transloco }}
+                  <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
                 </button>
               </div>
             </form>
           </mat-step>
 
           <!-- ─── Paso 3: Tipo de arriendo ─── -->
-          <mat-step [stepControl]="rentalStep" label="Arriendo">
+          <mat-step [stepControl]="rentalStep" [label]="'wizard.step3Label' | transloco">
             <form [formGroup]="rentalStep" class="step-body">
               <div class="step-icon"><lucide-icon [img]="Home" [size]="36"></lucide-icon></div>
-              <h2 class="step-title">Tipo de arriendo</h2>
-              <p class="step-desc">Configura el modelo de negocio y las condiciones de mora.</p>
+              <h2 class="step-title">{{ 'wizard.step3Title' | transloco }}</h2>
+              <p class="step-desc">{{ 'wizard.step3Desc' | transloco }}</p>
 
               <mat-form-field appearance="outline" class="full-field">
-                <mat-label>Tipo de arriendo</mat-label>
+                <mat-label>{{ 'wizard.rentalTypeLabel' | transloco }}</mat-label>
                 <mat-select formControlName="rental_type">
-                  <mat-option value="LONG_TERM">Largo plazo (mensual)</mat-option>
-                  <mat-option value="SHORT_TERM">Corto plazo (vacacional)</mat-option>
-                  <mat-option value="BOTH">Ambos</mat-option>
+                  <mat-option value="LONG_TERM">{{ 'wizard.longTerm' | transloco }}</mat-option>
+                  <mat-option value="SHORT_TERM">{{ 'wizard.shortTerm' | transloco }}</mat-option>
+                  <mat-option value="BOTH">{{ 'wizard.both' | transloco }}</mat-option>
                 </mat-select>
               </mat-form-field>
 
               <div class="fee-row">
                 <mat-form-field appearance="outline" class="half-field">
-                  <mat-label>Días de gracia</mat-label>
+                  <mat-label>{{ 'contracts.create.graceDays' | transloco }}</mat-label>
                   <input matInput type="number" formControlName="grace_days" min="0" max="30" />
                   <lucide-icon matIconSuffix [img]="Clock" [size]="18"></lucide-icon>
-                  <mat-hint>Días sin mora tras el vencimiento</mat-hint>
+                  <mat-hint>{{ 'wizard.graceDaysHint' | transloco }}</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="half-field">
-                  <mat-label>% mora mensual</mat-label>
+                  <mat-label>{{ 'wizard.lateFeeLabel' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -217,7 +223,8 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
 
               <div class="step-actions">
                 <button mat-button matStepperPrevious class="btn-back">
-                  <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon> Atrás
+                  <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+                  {{ 'wizard.back' | transloco }}
                 </button>
                 <button
                   mat-raised-button
@@ -226,49 +233,52 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
                   [disabled]="rentalStep.invalid"
                   class="btn-next"
                 >
-                  Siguiente <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+                  {{ 'wizard.next' | transloco }}
+                  <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
                 </button>
               </div>
             </form>
           </mat-step>
 
           <!-- ─── Paso 4: Resumen ─── -->
-          <mat-step label="Listo">
+          <mat-step [label]="'wizard.step4Label' | transloco">
             <div class="step-body summary-step">
               <div class="step-icon success">
                 <lucide-icon [img]="Rocket" [size]="40"></lucide-icon>
               </div>
-              <h2 class="step-title">Todo listo</h2>
-              <p class="step-desc">Revisa tu configuración antes de ir al panel.</p>
+              <h2 class="step-title">{{ 'wizard.step4Title' | transloco }}</h2>
+              <p class="step-desc">{{ 'wizard.step4Desc' | transloco }}</p>
 
               <div class="summary-card">
                 <div class="summary-row">
-                  <span class="summary-label">País</span>
+                  <span class="summary-label">{{ 'wizard.step1Label' | transloco }}</span>
                   <span class="summary-value">{{ countryLabel() }}</span>
                 </div>
                 <mat-divider></mat-divider>
                 <div class="summary-row">
-                  <span class="summary-label">Zona horaria</span>
+                  <span class="summary-label">{{ 'wizard.timezone' | transloco }}</span>
                   <span class="summary-value">{{ countryStep.value.timezone }}</span>
                 </div>
                 <mat-divider></mat-divider>
                 <div class="summary-row">
-                  <span class="summary-label">Métodos de pago</span>
+                  <span class="summary-label">{{ 'wizard.step2Title' | transloco }}</span>
                   <span class="summary-value">{{ paymentLabels() }}</span>
                 </div>
                 <mat-divider></mat-divider>
                 <div class="summary-row">
-                  <span class="summary-label">Tipo de arriendo</span>
+                  <span class="summary-label">{{ 'wizard.rentalTypeLabel' | transloco }}</span>
                   <span class="summary-value">{{ rentalTypeLabel() }}</span>
                 </div>
                 <mat-divider></mat-divider>
                 <div class="summary-row">
-                  <span class="summary-label">Días de gracia</span>
-                  <span class="summary-value">{{ rentalStep.value.grace_days }} días</span>
+                  <span class="summary-label">{{ 'contracts.create.graceDays' | transloco }}</span>
+                  <span class="summary-value"
+                    >{{ rentalStep.value.grace_days }} {{ 'wizard.summaryDays' | transloco }}</span
+                  >
                 </div>
                 <mat-divider></mat-divider>
                 <div class="summary-row">
-                  <span class="summary-label">Mora mensual</span>
+                  <span class="summary-label">{{ 'wizard.summaryLateFee' | transloco }}</span>
                   <span class="summary-value">{{ rentalStep.value.late_fee_pct }}%</span>
                 </div>
               </div>
@@ -279,7 +289,8 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
 
               <div class="step-actions">
                 <button mat-button matStepperPrevious class="btn-back" [disabled]="isSaving()">
-                  <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon> Atrás
+                  <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+                  {{ 'wizard.back' | transloco }}
                 </button>
                 <button
                   mat-raised-button
@@ -290,10 +301,10 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
                 >
                   @if (isSaving()) {
                     <mat-spinner diameter="20" color="accent"></mat-spinner>
-                    <span>Guardando...</span>
+                    <span>{{ 'wizard.saving' | transloco }}</span>
                   } @else {
                     <lucide-icon [img]="Rocket" [size]="18"></lucide-icon>
-                    <span>Ir al panel</span>
+                    <span>{{ 'wizard.goToDashboard' | transloco }}</span>
                   }
                 </button>
               </div>
@@ -568,6 +579,7 @@ export class WizardSetupComponent implements OnInit {
   private configService = inject(TenantConfigService);
   private slugService = inject(SlugService);
   private router = inject(Router);
+  private transloco = inject(TranslocoService);
 
   isSaving = signal(false);
   saveError = signal<string | null>(null);
@@ -591,10 +603,10 @@ export class WizardSetupComponent implements OnInit {
     { value: 'America/Tegucigalpa', label: 'América/Tegucigalpa (CST, UTC-6)' },
   ];
 
-  readonly rentalTypeLabels: Record<string, string> = {
-    LONG_TERM: 'Largo plazo (mensual)',
-    SHORT_TERM: 'Corto plazo (vacacional)',
-    BOTH: 'Ambos',
+  private readonly rentalTypeKeys: Record<string, string> = {
+    LONG_TERM: 'wizard.longTerm',
+    SHORT_TERM: 'wizard.shortTerm',
+    BOTH: 'wizard.both',
   };
 
   countryStep = this.fb.group({
@@ -616,10 +628,7 @@ export class WizardSetupComponent implements OnInit {
 
     this.configService.getConfig(slug).subscribe({
       next: (config) => this.applyConfig(config),
-      error: () =>
-        this.loadError.set(
-          'No se pudo cargar la configuración. Se usarán los valores por defecto.',
-        ),
+      error: () => this.loadError.set(this.transloco.translate('wizard.loadError')),
     });
   }
 
@@ -679,12 +688,13 @@ export class WizardSetupComponent implements OnInit {
 
   paymentLabels(): string {
     return this.selectedPayments()
-      .map((v) => ALL_PAYMENT_OPTIONS.find((o) => o.value === v)?.label ?? v)
+      .map((v) => this.transloco.translate(`wizard.paymentMethods.${v}`))
       .join(', ');
   }
 
   rentalTypeLabel(): string {
-    return this.rentalTypeLabels[this.rentalStep.value.rental_type ?? 'BOTH'] ?? '';
+    const key = this.rentalTypeKeys[this.rentalStep.value.rental_type ?? 'BOTH'];
+    return key ? this.transloco.translate(key) : '';
   }
 
   finishSetup(): void {
@@ -712,13 +722,17 @@ export class WizardSetupComponent implements OnInit {
           },
           error: (err) => {
             this.isSaving.set(false);
-            this.saveError.set(err.error?.message ?? 'Error al finalizar la configuración.');
+            this.saveError.set(
+              err.error?.message ?? this.transloco.translate('wizard.finishError'),
+            );
           },
         });
       },
       error: (err) => {
         this.isSaving.set(false);
-        this.saveError.set(err.error?.message ?? 'Error al guardar la configuración.');
+        this.saveError.set(
+          err.error?.message ?? this.transloco.translate('wizard.saveConfigError'),
+        );
       },
     });
   }

@@ -1,0 +1,22 @@
+{
+  "title": "Configuración",
+  "subtitle": "Personaliza tu experiencia en el panel de administración",
+  "saved": "Configuración guardada",
+  "notificationsSection": "Notificaciones",
+  "enableNotif": "Activar notificaciones",
+  "enableNotifDesc": "Recibe alertas sobre pagos, mantenimiento y contratos",
+  "updateInterval": "Intervalo de actualización",
+  "updateIntervalDesc": "Con qué frecuencia se verifican nuevas notificaciones",
+  "sec30": "30 segundos",
+  "min1": "1 minuto",
+  "min5": "5 minutos",
+  "appearanceSection": "Apariencia",
+  "compactMode": "Modo compacto",
+  "compactModeDesc": "Reduce el espacio entre elementos para ver más contenido",
+  "accountSection": "Cuenta",
+  "timezone": "Zona horaria",
+  "timezoneDesc": "Detectada automáticamente desde tu navegador",
+  "language": "Idioma",
+  "languageDesc": "Idioma de la interfaz",
+  "languageValue": "Español"
+}

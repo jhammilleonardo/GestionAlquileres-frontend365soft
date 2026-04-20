@@ -1,0 +1,18 @@
+{
+  "title": "Notifications",
+  "subtitle": "Stay up to date with all updates",
+  "markAllRead": "Mark all as read",
+  "refresh": "Refresh",
+  "all": "All",
+  "unread": "Unread",
+  "read": "Read",
+  "loading": "Loading notifications...",
+  "empty": "No notifications",
+  "emptyUnread": "Great! You have no pending notifications to read.",
+  "emptyAll": "There are no notifications to show at this time.",
+  "markRead": "Mark as read",
+  "markReadShort": "Mark read",
+  "noPending": "No pending notifications",
+  "viewAll": "View all notifications",
+  "delete": "Delete"
+}

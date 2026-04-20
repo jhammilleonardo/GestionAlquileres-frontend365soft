@@ -2,14 +2,14 @@
   @if (accessDenied()) {
     <div class="access-denied-banner" role="alert">
       <span>⚠️</span>
-      <span>No tienes permiso para acceder a esa sección. Contacta al administrador.</span>
+      <span>{{ 'dashboard.accessDenied' | transloco }}</span>
     </div>
   }
 
-  <h1>Dashboard</h1>
-  <p>Bienvenido al sistema de gestión de alquileres</p>
+  <h1>{{ 'dashboard.title' | transloco }}</h1>
+  <p>{{ 'dashboard.welcome' | transloco }}</p>
 
   <button class="btn-public-view" (click)="goToPublicProperties()">
-    Ver Portal Público de Propiedades
+    {{ 'dashboard.viewPublicPortal' | transloco }}
   </button>
 </div>

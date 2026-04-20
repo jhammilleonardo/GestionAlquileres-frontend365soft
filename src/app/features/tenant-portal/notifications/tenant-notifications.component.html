@@ -9,28 +9,22 @@
             <span class="title-badge">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
           }
         </div>
-        Notificaciones
+        {{ 'public.tenantNotifications.title' | transloco }}
       </h1>
-      <p class="page-subtitle">Mantente informado sobre tu propiedad</p>
+      <p class="page-subtitle">{{ 'public.tenantNotifications.subtitle' | transloco }}</p>
     </div>
 
     <div class="header-actions">
       @if (unreadCount() > 0) {
-        <button
-          class="action-btn secondary"
-          (click)="markAllAsRead()"
-          mat-button>
+        <button class="action-btn secondary" (click)="markAllAsRead()" mat-button>
           <lucide-icon [img]="Check" [size]="16"></lucide-icon>
-          <span>Marcar todas como leídas</span>
+          <span>{{ 'public.tenantNotifications.markAllRead' | transloco }}</span>
         </button>
       }
 
-      <button
-        class="action-btn"
-        (click)="refresh()"
-        mat-button>
+      <button class="action-btn" (click)="refresh()" mat-button>
         <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-        <span>Actualizar</span>
+        <span>{{ 'public.tenantNotifications.refresh' | transloco }}</span>
       </button>
     </div>
   </div>
@@ -41,24 +35,27 @@
       <button
         class="filter-tab"
         [class.active]="currentFilter === 'all'"
-        (click)="setFilter('all')">
-        Todas
+        (click)="setFilter('all')"
+      >
+        {{ 'public.tenantNotifications.filterAll' | transloco }}
         <span class="count">{{ stats()?.total || 0 }}</span>
       </button>
 
       <button
         class="filter-tab"
         [class.active]="currentFilter === 'unread'"
-        (click)="setFilter('unread')">
-        No leídas
+        (click)="setFilter('unread')"
+      >
+        {{ 'public.tenantNotifications.filterUnread' | transloco }}
         <span class="count unread">{{ stats()?.unread || 0 }}</span>
       </button>
 
       <button
         class="filter-tab"
         [class.active]="currentFilter === 'read'"
-        (click)="setFilter('read')">
-        Leídas
+        (click)="setFilter('read')"
+      >
+        {{ 'public.tenantNotifications.filterRead' | transloco }}
         <span class="count">{{ readCount }}</span>
       </button>
     </div>
@@ -79,7 +76,7 @@
   @if (isLoading()) {
     <div class="loading-container">
       <mat-spinner diameter="40"></mat-spinner>
-      <p>Cargando notificaciones...</p>
+      <p>{{ 'public.tenantNotifications.loading' | transloco }}</p>
     </div>
   }
 
@@ -89,17 +86,17 @@
       <div class="empty-icon-wrapper">
         <lucide-icon [img]="BellOff" [size]="40"></lucide-icon>
       </div>
-      <h2>Sin notificaciones</h2>
+      <h2>{{ 'public.tenantNotifications.emptyTitle' | transloco }}</h2>
       <p>
         @if (currentFilter === 'unread') {
-          ¡Excelente! No tienes notificaciones pendientes por leer.
+          {{ 'public.tenantNotifications.emptyUnread' | transloco }}
         } @else {
-          No hay notificaciones para mostrar en este momento.
+          {{ 'public.tenantNotifications.emptyAll' | transloco }}
         }
       </p>
       <button class="action-btn" (click)="refresh()" mat-button>
         <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-        <span>Actualizar</span>
+        <span>{{ 'public.tenantNotifications.refresh' | transloco }}</span>
       </button>
     </div>
   }
@@ -111,12 +108,18 @@
         <div
           class="notification-card"
           [class.unread]="!notification.is_read"
-          (click)="handleNotificationClick(notification)">
-
+          (click)="handleNotificationClick(notification)"
+        >
           <!-- Left: Icon -->
           <div class="notification-icon-wrapper">
-            <div class="notification-icon" [ngClass]="getNotificationIconClass(notification.event_type)">
-              <lucide-icon [img]="getNotificationIcon(notification.event_type)" [size]="20"></lucide-icon>
+            <div
+              class="notification-icon"
+              [ngClass]="getNotificationIconClass(notification.event_type)"
+            >
+              <lucide-icon
+                [img]="getNotificationIcon(notification.event_type)"
+                [size]="20"
+              ></lucide-icon>
             </div>
             @if (!notification.is_read) {
               <div class="unread-indicator"></div>
@@ -126,7 +129,10 @@
           <!-- Center: Content -->
           <div class="notification-content">
             <div class="notification-header-row">
-              <span class="notification-type" [ngClass]="getNotificationTypeBadgeClass(notification.event_type)">
+              <span
+                class="notification-type"
+                [ngClass]="getNotificationTypeBadgeClass(notification.event_type)"
+              >
                 {{ getNotificationTypeLabel(notification.event_type) }}
               </span>
               <span class="notification-time">
@@ -162,7 +168,8 @@
                 class="icon-btn"
                 (click)="markAsRead(notification.id, $event)"
                 mat-icon-button
-                matTooltip="Marcar como leída">
+                [matTooltip]="'public.tenantNotifications.markAsReadTitle' | transloco"
+              >
                 <lucide-icon [img]="Check" [size]="16"></lucide-icon>
               </button>
             }
@@ -171,7 +178,8 @@
               class="icon-btn delete-btn"
               (click)="deleteNotification(notification.id, $event)"
               mat-icon-button
-              matTooltip="Eliminar">
+              [matTooltip]="'public.tenantNotifications.deleteTitle' | transloco"
+            >
               <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
             </button>
 

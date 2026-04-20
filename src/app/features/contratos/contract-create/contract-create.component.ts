@@ -17,6 +17,8 @@ import { AdminContractService } from '../../../core/services/admin/admin-contrac
 import { AdminUserService } from '../../../core/services/admin/admin-user.service';
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { CreateContractDTO, SERVICE_OPTIONS } from '../../../core/models/contract.model';
 import { Property } from '../../../core/models/property.model';
 
@@ -37,49 +39,55 @@ import { Property } from '../../../core/models/property.model';
     MatIconModule,
     MatCheckboxModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
   template: `
     <div class="contract-create-container">
       <!-- Header -->
       <div class="page-header">
         <button mat-button class="back-button" (click)="goBack()">
           <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-          Volver a Contratos
+          {{ 'contracts.create.back' | transloco }}
         </button>
-        <h1>Crear Nuevo Contrato</h1>
+        <h1>{{ 'contracts.create.title' | transloco }}</h1>
       </div>
 
       <mat-card class="form-card">
         @if (isLoadingTenants() || isLoadingProperties()) {
           <div class="loading-container">
             <mat-spinner diameter="50"></mat-spinner>
-            <p>Cargando datos...</p>
+            <p>{{ 'contracts.create.loading' | transloco }}</p>
           </div>
         } @else {
           <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
             <!-- Información Básica -->
             <div class="form-section">
-              <h2>Información Básica</h2>
+              <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
 
               <!-- Inquilino -->
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Inquilino *</mat-label>
+                <mat-label>{{ 'contracts.create.tenant' | transloco }}</mat-label>
                 <mat-select formControlName="tenant_id" required>
-                  <mat-option value="">Seleccionar inquilino...</mat-option>
+                  <mat-option value="">{{
+                    'contracts.create.selectTenant' | transloco
+                  }}</mat-option>
                   @for (tenant of tenants(); track tenant.id) {
                     <mat-option [value]="tenant.id">
                       {{ tenant.name }} - {{ tenant.email }}
                     </mat-option>
                   }
                 </mat-select>
-                <mat-error>Debes seleccionar un inquilino</mat-error>
+                <mat-error>{{ 'contracts.create.tenantRequired' | transloco }}</mat-error>
               </mat-form-field>
 
               <!-- Propiedad -->
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Propiedad *</mat-label>
+                <mat-label>{{ 'contracts.create.property' | transloco }}</mat-label>
                 <mat-select formControlName="property_id" required>
-                  <mat-option value="">Seleccionar propiedad...</mat-option>
+                  <mat-option value="">{{
+                    'contracts.create.selectProperty' | transloco
+                  }}</mat-option>
                   @for (property of availableProperties(); track property.id) {
                     <mat-option [value]="property.id">
                       {{ property.title }}
@@ -89,13 +97,13 @@ import { Property } from '../../../core/models/property.model';
                     </mat-option>
                   }
                 </mat-select>
-                <mat-error>Debes seleccionar una propiedad</mat-error>
+                <mat-error>{{ 'contracts.create.propertyRequired' | transloco }}</mat-error>
               </mat-form-field>
 
               <!-- Fechas -->
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Fecha Inicio *</mat-label>
+                  <mat-label>{{ 'contracts.create.startDate' | transloco }}</mat-label>
                   <input
                     matInput
                     [matDatepicker]="startDatePicker"
@@ -107,11 +115,11 @@ import { Property } from '../../../core/models/property.model';
                     [for]="startDatePicker"
                   ></mat-datepicker-toggle>
                   <mat-datepicker #startDatePicker></mat-datepicker>
-                  <mat-error>La fecha es requerida</mat-error>
+                  <mat-error>{{ 'contracts.create.dateRequired' | transloco }}</mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Fecha Fin *</mat-label>
+                  <mat-label>{{ 'contracts.create.endDate' | transloco }}</mat-label>
                   <input
                     matInput
                     [matDatepicker]="endDatePicker"
@@ -123,11 +131,11 @@ import { Property } from '../../../core/models/property.model';
                     [for]="endDatePicker"
                   ></mat-datepicker-toggle>
                   <mat-datepicker #endDatePicker></mat-datepicker>
-                  <mat-error>La fecha es requerida</mat-error>
+                  <mat-error>{{ 'contracts.create.dateRequired' | transloco }}</mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Entrega Llaves</mat-label>
+                  <mat-label>{{ 'contracts.create.keyDelivery' | transloco }}</mat-label>
                   <input
                     matInput
                     [matDatepicker]="keyDatePicker"
@@ -144,7 +152,7 @@ import { Property } from '../../../core/models/property.model';
               <!-- Alquiler -->
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Alquiler Mensual (Bs) *</mat-label>
+                  <mat-label>{{ 'contracts.create.monthlyRent' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -152,11 +160,11 @@ import { Property } from '../../../core/models/property.model';
                     required
                     placeholder="1200.00"
                   />
-                  <mat-error>El monto es requerido</mat-error>
+                  <mat-error>{{ 'contracts.create.amountRequired' | transloco }}</mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Día de Pago</mat-label>
+                  <mat-label>{{ 'contracts.create.paymentDay' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -170,18 +178,18 @@ import { Property } from '../../../core/models/property.model';
 
               <!-- Método de pago -->
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Método de Pago</mat-label>
+                <mat-label>{{ 'contracts.create.paymentMethod' | transloco }}</mat-label>
                 <input
                   matInput
                   formControlName="payment_method"
-                  placeholder="Ej: Transferencia bancaria"
+                  [placeholder]="'contracts.create.paymentMethodPlaceholder' | transloco"
                 />
               </mat-form-field>
             </div>
 
             <!-- Servicios Incluidos -->
             <div class="form-section">
-              <h2>Servicios Incluidos</h2>
+              <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
               <div class="services-grid">
                 @for (service of serviceOptions; track service) {
                   <mat-checkbox
@@ -196,11 +204,11 @@ import { Property } from '../../../core/models/property.model';
 
             <!-- Condiciones Adicionales -->
             <div class="form-section">
-              <h2>Condiciones de Pago</h2>
+              <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>% Recargo por Mora</mat-label>
+                  <mat-label>{{ 'contracts.create.lateFee' | transloco }}</mat-label>
                   <input
                     matInput
                     type="number"
@@ -210,7 +218,7 @@ import { Property } from '../../../core/models/property.model';
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Días de Gracia</mat-label>
+                  <mat-label>{{ 'contracts.create.graceDays' | transloco }}</mat-label>
                   <input matInput type="number" formControlName="grace_days" placeholder="3" />
                 </mat-form-field>
               </div>
@@ -234,10 +242,10 @@ import { Property } from '../../../core/models/property.model';
               >
                 @if (isSubmitting()) {
                   <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
-                  Creando...
+                  {{ 'contracts.create.creating' | transloco }}
                 } @else {
                   <lucide-icon [img]="Save" [size]="18"></lucide-icon>
-                  Crear Contrato
+                  {{ 'contracts.create.submit' | transloco }}
                 }
               </button>
               <button
@@ -247,7 +255,7 @@ import { Property } from '../../../core/models/property.model';
                 [disabled]="isSubmitting()"
               >
                 <lucide-icon [img]="X" [size]="18"></lucide-icon>
-                Cancelar
+                {{ 'common.cancel' | transloco }}
               </button>
             </div>
           </form>
@@ -409,6 +417,7 @@ export class ContractCreateComponent implements OnInit {
   private userService = inject(AdminUserService);
   private propertyService = inject(PropertyService);
   private slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   // Formulario reactivo
   contractForm: FormGroup;
@@ -497,7 +506,7 @@ export class ContractCreateComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading properties:', error);
-        this.errorMessage.set('Error al cargar las propiedades');
+        this.errorMessage.set(this.transloco.translate('contracts.create.loadError'));
         this.isLoadingProperties.set(false);
       },
     });
@@ -514,7 +523,7 @@ export class ContractCreateComponent implements OnInit {
     const endDate = this.contractForm.value.end_date;
 
     if (endDate <= startDate) {
-      this.errorMessage.set('La fecha de fin debe ser posterior a la fecha de inicio');
+      this.errorMessage.set(this.transloco.translate('contracts.create.dateRangeError'));
       return;
     }
 
@@ -552,7 +561,9 @@ export class ContractCreateComponent implements OnInit {
       },
       error: (error) => {
         this.isSubmitting.set(false);
-        this.errorMessage.set(error.error?.message || 'Error al crear el contrato');
+        this.errorMessage.set(
+          error.error?.message || this.transloco.translate('contracts.create.submitError'),
+        );
       },
     });
   }

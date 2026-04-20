@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, catchError, tap, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { TranslocoService } from '@jsverse/transloco';
 
 export interface TenantInfo {
   id: number;
@@ -22,6 +23,7 @@ export interface TenantInfo {
 export class SlugService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private transloco = inject(TranslocoService);
 
   private readonly SLUG_KEY = 'tenant_slug';
 
@@ -91,7 +93,7 @@ export class SlugService {
         error: () => {
           this.currentTenantSignal.set(null);
           this.isLoadingSignal.set(false);
-          this.errorSignal.set(`La organización "${slug}" no existe`);
+          this.errorSignal.set(this.transloco.translate('common.errors.orgNotFound', { slug }));
         },
       }),
       map(() => true),

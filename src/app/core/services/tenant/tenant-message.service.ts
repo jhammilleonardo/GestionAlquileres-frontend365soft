@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
+import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import {
   Message,
@@ -15,6 +16,7 @@ import {
 })
 export class TenantMessageService {
   private http = inject(HttpClient);
+  private transloco = inject(TranslocoService);
 
   // Reactive state
   private messagesSignal = signal<Message[]>([]);
@@ -54,7 +56,7 @@ export class TenantMessageService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar los mensajes');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadMessages'));
           this.isLoadingSignal.set(false);
           console.error('Error loading messages:', error);
           return of([]);
@@ -87,7 +89,7 @@ export class TenantMessageService {
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
-          this.errorSignal.set('Error al cargar las conversaciones');
+          this.errorSignal.set(this.transloco.translate('common.errors.loadConversations'));
           this.isLoadingSignal.set(false);
           console.error('Error loading threads:', error);
           return of([]);
@@ -138,7 +140,9 @@ export class TenantMessageService {
         this.isLoadingSignal.set(false);
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al enviar el mensaje');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.sendMessage'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),
@@ -163,7 +167,9 @@ export class TenantMessageService {
         this.isLoadingSignal.set(false);
       }),
       catchError((error) => {
-        this.errorSignal.set(error.error?.message || 'Error al enviar la respuesta');
+        this.errorSignal.set(
+          error.error?.message || this.transloco.translate('common.errors.sendReply'),
+        );
         this.isLoadingSignal.set(false);
         throw error;
       }),

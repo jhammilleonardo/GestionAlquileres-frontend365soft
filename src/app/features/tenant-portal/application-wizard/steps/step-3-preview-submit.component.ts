@@ -18,6 +18,11 @@ import {
   Edit2,
   ArrowLeft,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
+import { inject } from '@angular/core';
+import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { Property } from '../../../../core/models/property.model';
 import {
   PersonalData,
@@ -35,18 +40,22 @@ import {
     MatChipsModule,
     MatProgressSpinnerModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope('rentalApp')],
   template: `
     <div class="step-content">
       <div class="step-header">
-        <h2>Revisar tu Solicitud</h2>
-        <p>Verifica que toda la información sea correcta antes de enviar</p>
+        <h2>{{ 'rentalApp.step3Title' | transloco }}</h2>
+        <p>{{ 'rentalApp.step3Subtitle' | transloco }}</p>
       </div>
 
       <!-- Property Summary -->
       <mat-card class="summary-card">
         <mat-card-header>
-          <mat-card-title>Propiedad Seleccionada</mat-card-title>
+          <mat-card-title>{{ 'rentalApp.selectedProperty' | transloco }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <div class="property-summary">
@@ -61,7 +70,10 @@ import {
               </div>
               <div class="detail-item">
                 <lucide-icon [img]="DollarSign" [size]="16"></lucide-icon>
-                <span>\${{ property().monthly_rent || 0 }} / mes</span>
+                <span
+                  >{{ property().monthly_rent | tenantCurrency }}
+                  {{ 'rentalApp.perMonth' | transloco }}</span
+                >
               </div>
             </div>
           </div>
@@ -71,7 +83,7 @@ import {
       <!-- Personal Info Summary -->
       <mat-card class="summary-card">
         <div class="card-header-with-action">
-          <mat-card-title>Información Personal</mat-card-title>
+          <mat-card-title>{{ 'rentalApp.personalInfoSection' | transloco }}</mat-card-title>
           <button mat-icon-button color="primary" (click)="editStep.emit(0)" class="edit-btn">
             <lucide-icon [img]="Edit2" [size]="18"></lucide-icon>
           </button>
@@ -79,33 +91,33 @@ import {
         <mat-card-content>
           <div class="info-grid">
             <div class="info-item">
-              <div class="info-label">Nombre Completo</div>
+              <div class="info-label">{{ 'rentalApp.fullName' | transloco }}</div>
               <div class="info-value">{{ personalInfo()?.full_name || '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Email</div>
+              <div class="info-label">{{ 'rentalApp.emailLabel' | transloco }}</div>
               <div class="info-value">{{ personalInfo()?.email || '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Teléfono</div>
+              <div class="info-label">{{ 'rentalApp.phone' | transloco }}</div>
               <div class="info-value">{{ personalInfo()?.phone || '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Fecha de Nacimiento</div>
-              <div class="info-value">{{ formatDate(personalInfo()?.birth_date) }}</div>
+              <div class="info-label">{{ 'rentalApp.birthDate' | transloco }}</div>
+              <div class="info-value">{{ personalInfo()?.birth_date | tenantDate }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">DNI / Pasaporte</div>
+              <div class="info-label">{{ 'rentalApp.nationalId' | transloco }}</div>
               <div class="info-value">{{ personalInfo()?.national_id || '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Estado Civil</div>
+              <div class="info-label">{{ 'rentalApp.maritalStatusLabel' | transloco }}</div>
               <div class="info-value">
                 {{ getMaritalStatusLabel(personalInfo()?.marital_status) }}
               </div>
             </div>
             <div class="info-item">
-              <div class="info-label">Dependientes</div>
+              <div class="info-label">{{ 'rentalApp.dependentsLabel' | transloco }}</div>
               <div class="info-value">{{ personalInfo()?.number_of_dependents || 0 }}</div>
             </div>
           </div>
@@ -115,49 +127,48 @@ import {
       <!-- Employment Info Summary -->
       <mat-card class="summary-card">
         <div class="card-header-with-action">
-          <mat-card-title>Información Laboral</mat-card-title>
+          <mat-card-title>{{ 'rentalApp.employmentSection' | transloco }}</mat-card-title>
           <button mat-icon-button color="primary" (click)="editStep.emit(1)" class="edit-btn">
             <lucide-icon [img]="Edit2" [size]="18"></lucide-icon>
           </button>
         </div>
         <mat-card-content>
-          <div class="section-title">Empleo Actual</div>
+          <div class="section-title">{{ 'rentalApp.currentJobSection' | transloco }}</div>
           <div class="info-grid">
             <div class="info-item">
-              <div class="info-label">Empresa</div>
+              <div class="info-label">{{ 'rentalApp.companyLabel' | transloco }}</div>
               <div class="info-value">{{ employmentHistory()?.current_job?.company || '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Puesto</div>
+              <div class="info-label">{{ 'rentalApp.positionLabel' | transloco }}</div>
               <div class="info-value">{{ employmentHistory()?.current_job?.position || '-' }}</div>
             </div>
             <div class="info-item">
-              <div class="info-label">Tipo de Empleo</div>
+              <div class="info-label">{{ 'rentalApp.employmentTypeSummary' | transloco }}</div>
               <div class="info-value">
                 {{ getEmploymentTypeLabel(employmentHistory()?.current_job?.employment_type) }}
               </div>
             </div>
             <div class="info-item">
-              <div class="info-label">Salario Mensual</div>
+              <div class="info-label">{{ 'rentalApp.salarySummary' | transloco }}</div>
               <div class="info-value">
-                \${{ employmentHistory()?.current_job?.salary || 0 }}
-                {{ employmentHistory()?.current_job?.currency || 'USD' }}
+                {{ employmentHistory()?.current_job?.salary | tenantCurrency }}
               </div>
             </div>
             <div class="info-item">
-              <div class="info-label">Fecha de Inicio</div>
+              <div class="info-label">{{ 'rentalApp.startDateSummary' | transloco }}</div>
               <div class="info-value">
-                {{ formatDate(employmentHistory()?.current_job?.start_date) }}
+                {{ employmentHistory()?.current_job?.start_date | tenantDate }}
               </div>
             </div>
             <div class="info-item">
-              <div class="info-label">Supervisor</div>
+              <div class="info-label">{{ 'rentalApp.supervisorLabel' | transloco }}</div>
               <div class="info-value">
                 {{ employmentHistory()?.current_job?.supervisor_name || '-' }}
               </div>
             </div>
             <div class="info-item">
-              <div class="info-label">Teléfono Supervisor</div>
+              <div class="info-label">{{ 'rentalApp.supervisorPhoneLabel' | transloco }}</div>
               <div class="info-value">
                 {{ employmentHistory()?.current_job?.supervisor_phone || '-' }}
               </div>
@@ -165,21 +176,21 @@ import {
           </div>
 
           @if (employmentHistory()?.previous_job?.company) {
-            <div class="section-title">Empleo Anterior</div>
+            <div class="section-title">{{ 'rentalApp.previousJobSection' | transloco }}</div>
             <div class="info-grid">
               <div class="info-item">
-                <div class="info-label">Empresa</div>
+                <div class="info-label">{{ 'rentalApp.companyLabel' | transloco }}</div>
                 <div class="info-value">{{ employmentHistory()?.previous_job?.company }}</div>
               </div>
               <div class="info-item">
-                <div class="info-label">Puesto</div>
+                <div class="info-label">{{ 'rentalApp.positionLabel' | transloco }}</div>
                 <div class="info-value">{{ employmentHistory()?.previous_job?.position }}</div>
               </div>
             </div>
           }
 
           @if (rentalHistory() && rentalHistory().length > 0) {
-            <div class="section-title">Historial de Alquiler</div>
+            <div class="section-title">{{ 'rentalApp.rentalHistorySection' | transloco }}</div>
             <div class="rental-history-summary">
               @for (history of rentalHistory(); track history) {
                 <div class="history-summary-item">
@@ -188,8 +199,12 @@ import {
                     <span>{{ history.property_address }}</span>
                   </div>
                   <div class="history-details">
-                    <span>\${{ history.monthly_rent }}/mes</span>
-                    <span>{{ formatDate(history.start_date) }}</span>
+                    <span
+                      >{{ history.monthly_rent | tenantCurrency }}/{{
+                        'common.month' | transloco
+                      }}</span
+                    >
+                    <span>{{ history.start_date | tenantDate }}</span>
                   </div>
                 </div>
               }
@@ -203,8 +218,8 @@ import {
         <div class="submit-info">
           <lucide-icon [img]="CheckCircle2" [size]="24" class="success-icon"></lucide-icon>
           <div class="submit-text">
-            <h4>Listo para enviar</h4>
-            <p>Tu solicitud será revisada por el administrador</p>
+            <h4>{{ 'rentalApp.readyToSubmit' | transloco }}</h4>
+            <p>{{ 'rentalApp.readyDesc' | transloco }}</p>
           </div>
         </div>
 
@@ -216,7 +231,7 @@ import {
             (click)="editStep.emit(0)"
           >
             <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
-            Volver al Paso 1
+            {{ 'rentalApp.backToStep1' | transloco }}
           </button>
 
           <button
@@ -228,10 +243,10 @@ import {
           >
             @if (isSubmitting()) {
               <mat-spinner diameter="20" color="accent"></mat-spinner>
-              <span>Enviando...</span>
+              <span>{{ 'rentalApp.submitting' | transloco }}</span>
             } @else {
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-              <span>Enviar Solicitud</span>
+              <span>{{ 'rentalApp.submitBtn' | transloco }}</span>
             }
           </button>
         </div>
@@ -474,6 +489,8 @@ export class Step3PreviewSubmitComponent {
   readonly Edit2 = Edit2;
   readonly ArrowLeft = ArrowLeft;
 
+  private transloco = inject(TranslocoService);
+
   property = input.required<Property>();
   personalInfo = input<Partial<PersonalData> | null>(null);
   employmentHistory = input<Partial<EmploymentData> | null>(null);
@@ -487,35 +504,13 @@ export class Step3PreviewSubmitComponent {
     this.submit.emit();
   }
 
-  formatDate(dateString?: string): string {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
   getMaritalStatusLabel(status?: string): string {
-    const labels: Record<string, string> = {
-      soltero: 'Soltero/a',
-      casado: 'Casado/a',
-      divorciado: 'Divorciado/a',
-      viudo: 'Viudo/a',
-      union_libre: 'Unión Libre',
-    };
-    return labels[status || ''] || status || '-';
+    if (!status) return '-';
+    return this.transloco.translate(`rentalApp.maritalStatus.${status}`) || status;
   }
 
   getEmploymentTypeLabel(type?: string): string {
-    const labels: Record<string, string> = {
-      tiempo_completo: 'Tiempo Completo',
-      medio_tiempo: 'Medio Tiempo',
-      freelance: 'Freelance',
-      autonomo: 'Autónomo',
-      empresario: 'Empresario',
-    };
-    return labels[type || ''] || type || '-';
+    if (!type) return '-';
+    return this.transloco.translate(`rentalApp.employmentTypes.${type}`) || type;
   }
 }

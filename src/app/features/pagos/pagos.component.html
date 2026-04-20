@@ -2,25 +2,25 @@
   <!-- Header -->
   <div class="page-header">
     <div class="header-content">
-      <h1>Gestión de Pagos</h1>
-      <p>Administra y aprueba los pagos registrados por los inquilinos</p>
+      <h1>{{ 'payments.title' | transloco }}</h1>
+      <p>{{ 'payments.subtitle' | transloco }}</p>
     </div>
     <div class="header-actions">
       <button mat-raised-button (click)="loadData()" [disabled]="paymentService.isLoading()">
         <lucide-icon [img]="RefreshCw" [size]="20"></lucide-icon>
-        Refrescar
+        {{ 'common.refresh' | transloco }}
       </button>
       <button mat-raised-button (click)="exportCsv()" [disabled]="paymentService.isLoading()">
         <lucide-icon [img]="Download" [size]="20"></lucide-icon>
-        Exportar CSV
+        {{ 'payments.exportCsv' | transloco }}
       </button>
       <button mat-raised-button color="accent" (click)="openCreateForm()">
         <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-        Registrar Pago
+        {{ 'payments.register' | transloco }}
       </button>
       <button mat-raised-button color="primary" (click)="showFilters.set(!showFilters())">
         <lucide-icon [img]="Filter" [size]="20"></lucide-icon>
-        Filtros
+        {{ 'common.filters' | transloco }}
       </button>
     </div>
   </div>
@@ -42,7 +42,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats.total_payments }}</div>
-          <div class="stat-label">Total Pagos</div>
+          <div class="stat-label">{{ 'payments.total' | transloco }}</div>
         </div>
       </div>
 
@@ -52,7 +52,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats.total_pending }}</div>
-          <div class="stat-label">Pendientes</div>
+          <div class="stat-label">{{ 'payments.pending' | transloco }}</div>
           <div class="stat-amount">{{ formatCurrency(stats.total_amount_pending) }}</div>
         </div>
       </div>
@@ -63,7 +63,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats.total_approved }}</div>
-          <div class="stat-label">Aprobados</div>
+          <div class="stat-label">{{ 'payments.approved' | transloco }}</div>
           <div class="stat-amount">{{ formatCurrency(stats.total_amount_approved) }}</div>
         </div>
       </div>
@@ -74,7 +74,7 @@
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ stats.total_rejected }}</div>
-          <div class="stat-label">Rechazados</div>
+          <div class="stat-label">{{ 'payments.rejected' | transloco }}</div>
         </div>
       </div>
     </div>
@@ -86,9 +86,9 @@
       <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
         <div class="filters-grid">
           <mat-form-field appearance="outline">
-            <mat-label>Estado</mat-label>
+            <mat-label>{{ 'common.status' | transloco }}</mat-label>
             <mat-select formControlName="status">
-              <mat-option value="">Todos</mat-option>
+              <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
               @for (status of paymentStatuses; track status) {
                 <mat-option [value]="status">
                   {{ getStatusLabel(status) }}
@@ -98,9 +98,9 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Tipo</mat-label>
+            <mat-label>{{ 'common.type' | transloco }}</mat-label>
             <mat-select formControlName="type">
-              <mat-option value="">Todos</mat-option>
+              <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
               @for (type of paymentTypes; track type) {
                 <mat-option [value]="type">
                   {{ getTypeLabel(type) }}
@@ -110,9 +110,9 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Método</mat-label>
+            <mat-label>{{ 'payments.method' | transloco }}</mat-label>
             <mat-select formControlName="method">
-              <mat-option value="">Todos</mat-option>
+              <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
               @for (method of paymentMethods; track method) {
                 <mat-option [value]="method">
                   {{ getMethodLabel(method) }}
@@ -122,9 +122,9 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Moneda</mat-label>
+            <mat-label>{{ 'payments.allCurrencies' | transloco }}</mat-label>
             <mat-select formControlName="currency">
-              <mat-option value="">Todas</mat-option>
+              <mat-option value="">{{ 'common.all' | transloco }}</mat-option>
               @for (currency of currencies; track currency) {
                 <mat-option [value]="currency">
                   {{ CurrencySymbols[currency] }} - {{ currency }}
@@ -134,15 +134,15 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Fecha Desde</mat-label>
-            <input matInput [matDatepicker]="pickerFrom" formControlName="date_from">
+            <mat-label>{{ 'payments.dateFrom' | transloco }}</mat-label>
+            <input matInput [matDatepicker]="pickerFrom" formControlName="date_from" />
             <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
             <mat-datepicker #pickerFrom></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>Fecha Hasta</mat-label>
-            <input matInput [matDatepicker]="pickerTo" formControlName="date_to">
+            <mat-label>{{ 'payments.dateTo' | transloco }}</mat-label>
+            <input matInput [matDatepicker]="pickerTo" formControlName="date_to" />
             <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
             <mat-datepicker #pickerTo></mat-datepicker>
           </mat-form-field>
@@ -150,10 +150,10 @@
 
         <div class="filters-actions">
           <button type="button" mat-stroked-button (click)="clearFilters()">
-            Limpiar
+            {{ 'common.clearFilters' | transloco }}
           </button>
           <button type="submit" mat-raised-button color="primary">
-            Aplicar Filtros
+            {{ 'common.applyFilters' | transloco }}
           </button>
         </div>
       </form>
@@ -164,24 +164,24 @@
   @if (selectedIds().length > 0) {
     <div class="bulk-action-bar">
       <span class="bulk-count">
-        <strong>{{ selectedIds().length }}</strong> pago(s) seleccionado(s)
+        {{ 'payments.selected' | transloco: { count: selectedIds().length } }}
       </span>
       <div class="bulk-actions">
         <button mat-raised-button color="primary" (click)="executeBulkAction('approve')">
           <lucide-icon [img]="CheckCircle2" [size]="18"></lucide-icon>
-          Aprobar todos
+          {{ 'payments.approveAll' | transloco }}
         </button>
         <button mat-raised-button color="warn" (click)="executeBulkAction('reject')">
           <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
-          Rechazar todos
+          {{ 'payments.rejectAll' | transloco }}
         </button>
         <button mat-raised-button (click)="executeBulkAction('delete')">
           <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
-          Eliminar todos
+          {{ 'payments.deleteAll' | transloco }}
         </button>
         <button mat-stroked-button (click)="clearSelection()">
           <lucide-icon [img]="X" [size]="18"></lucide-icon>
-          Cancelar
+          {{ 'common.cancel' | transloco }}
         </button>
       </div>
     </div>
@@ -192,27 +192,31 @@
     @if (paymentService.isLoading()) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>
-        <p>Cargando pagos...</p>
+        <p>{{ 'payments.loading' | transloco }}</p>
       </div>
     } @else if (paymentService.payments().length === 0) {
       <div class="empty-state">
         <lucide-icon [img]="DollarSign" [size]="48"></lucide-icon>
-        <h3>No hay pagos registrados</h3>
-        <p>Los pagos registrados por inquilinos aparecerán aquí</p>
+        <h3>{{ 'payments.empty' | transloco }}</h3>
+        <p>{{ 'payments.emptyHint' | transloco }}</p>
       </div>
     } @else {
       <div class="table-container">
         <table mat-table [dataSource]="paymentService.payments()" class="payments-table">
-
           <!-- Select Column -->
           <ng-container matColumnDef="select">
             <th mat-header-cell *matHeaderCellDef>
               @if (hasPendingPayments) {
                 <mat-checkbox
-                  [checked]="selectedIds().length > 0 && selectedIds().length === pendingPaymentIds().length"
-                  [indeterminate]="selectedIds().length > 0 && selectedIds().length < pendingPaymentIds().length"
+                  [checked]="
+                    selectedIds().length > 0 && selectedIds().length === pendingPaymentIds().length
+                  "
+                  [indeterminate]="
+                    selectedIds().length > 0 && selectedIds().length < pendingPaymentIds().length
+                  "
                   (change)="$event.checked ? selectAll() : clearSelection()"
-                  matTooltip="Seleccionar todos los pendientes">
+                  [matTooltip]="'payments.pending' | transloco"
+                >
                 </mat-checkbox>
               }
             </th>
@@ -221,7 +225,8 @@
                 <mat-checkbox
                   [checked]="isSelected(payment.id)"
                   (change)="toggleSelection(payment)"
-                  (click)="$event.stopPropagation()">
+                  (click)="$event.stopPropagation()"
+                >
                 </mat-checkbox>
               }
             </td>
@@ -235,27 +240,27 @@
 
           <!-- Tenant Column -->
           <ng-container matColumnDef="tenant">
-            <th mat-header-cell *matHeaderCellDef>Inquilino</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'payments.tenant' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">{{ getTenantName(payment) }}</td>
           </ng-container>
 
           <!-- Property Column -->
           <ng-container matColumnDef="property">
-            <th mat-header-cell *matHeaderCellDef>Propiedad</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'properties.title' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">{{ getPropertyName(payment) }}</td>
           </ng-container>
 
           <!-- Amount Column -->
           <ng-container matColumnDef="amount">
-            <th mat-header-cell *matHeaderCellDef>Monto</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.amount' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
-              <strong>{{ formatCurrency(payment.amount, payment.currency) }}</strong>
+              <strong>{{ payment.amount | tenantCurrency }}</strong>
             </td>
           </ng-container>
 
           <!-- Currency Column -->
           <ng-container matColumnDef="currency">
-            <th mat-header-cell *matHeaderCellDef>Moneda</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.currency' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
               {{ payment.currency || 'USD' }}
             </td>
@@ -263,7 +268,7 @@
 
           <!-- Type Column -->
           <ng-container matColumnDef="type">
-            <th mat-header-cell *matHeaderCellDef>Tipo</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.type' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
               {{ getTypeLabel(payment.payment_type) }}
             </td>
@@ -271,7 +276,7 @@
 
           <!-- Method Column -->
           <ng-container matColumnDef="method">
-            <th mat-header-cell *matHeaderCellDef>Método</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'payments.method' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
               {{ getMethodLabel(payment.payment_method) }}
             </td>
@@ -279,18 +284,20 @@
 
           <!-- Payment Date Column -->
           <ng-container matColumnDef="payment_date">
-            <th mat-header-cell *matHeaderCellDef>Fecha</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.date' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
-              {{ payment.payment_date | date:'dd/MM/yyyy' }}
+              {{ payment.payment_date | tenantDate }}
             </td>
           </ng-container>
 
           <!-- Status Column -->
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
-              <mat-chip [style.background-color]="getStatusColor(payment.status)"
-                        style="color: white;">
+              <mat-chip
+                [style.background-color]="getStatusColor(payment.status)"
+                style="color: white"
+              >
                 {{ getStatusLabel(payment.status) }}
               </mat-chip>
             </td>
@@ -298,24 +305,32 @@
 
           <!-- Actions Column -->
           <ng-container matColumnDef="actions">
-            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.actions' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">
               <div class="action-buttons">
                 @if (payment.status === PaymentStatus.PENDING) {
-                  <button mat-icon-button color="primary"
-                          (click)="approvePayment(payment)"
-                          matTooltip="Aprobar">
+                  <button
+                    mat-icon-button
+                    color="primary"
+                    (click)="approvePayment(payment)"
+                    [matTooltip]="'payments.approved' | transloco"
+                  >
                     <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
                   </button>
-                  <button mat-icon-button color="warn"
-                          (click)="rejectPayment(payment)"
-                          matTooltip="Rechazar">
+                  <button
+                    mat-icon-button
+                    color="warn"
+                    (click)="rejectPayment(payment)"
+                    [matTooltip]="'payments.rejected' | transloco"
+                  >
                     <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
                   </button>
                 }
-                <button mat-icon-button
-                        (click)="viewPaymentDetail(payment)"
-                        matTooltip="Ver Detalle">
+                <button
+                  mat-icon-button
+                  (click)="viewPaymentDetail(payment)"
+                  [matTooltip]="'properties.viewDetail' | transloco"
+                >
                   <lucide-icon [img]="Eye" [size]="20"></lucide-icon>
                 </button>
               </div>
@@ -323,14 +338,14 @@
           </ng-container>
 
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
       </div>
 
       <!-- Table Summary -->
       <div class="table-footer">
-        <p>Total de pagos: <strong>{{ paymentService.payments().length }}</strong></p>
-        <p>Monto total: <strong>{{ formatCurrency(totalAmount()) }}</strong></p>
+        <p>{{ 'payments.totalCount' | transloco: { count: paymentService.payments().length } }}</p>
+        <p>{{ 'payments.totalAmount' | transloco: { amount: formatCurrency(totalAmount()) } }}</p>
       </div>
     }
   </mat-card>
@@ -340,7 +355,7 @@
     <div class="modal-overlay" (click)="selectedPayment.set(null)">
       <mat-card class="detail-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Detalle del Pago #{{ payment.id }}</h2>
+          <h2>{{ 'payments.detailTitle' | transloco: { id: payment.id } }}</h2>
           <button mat-icon-button (click)="selectedPayment.set(null)">
             <mat-icon>close</mat-icon>
           </button>
@@ -349,59 +364,66 @@
         <div class="modal-content">
           <div class="detail-grid">
             <div class="detail-item">
-              <label>Inquilino:</label>
+              <label>{{ 'payments.tenant' | transloco }}:</label>
               <p>{{ getTenantName(payment) }}</p>
             </div>
 
             <div class="detail-item">
-              <label>Propiedad:</label>
+              <label>{{ 'properties.title' | transloco }}:</label>
               <p>{{ getPropertyName(payment) }}</p>
             </div>
 
             <div class="detail-item">
-              <label>Monto:</label>
-              <p><strong>{{ formatCurrency(payment.amount, payment.currency) }}</strong></p>
+              <label>{{ 'common.amount' | transloco }}:</label>
+              <p>
+                <strong>{{ payment.amount | tenantCurrency }}</strong>
+              </p>
             </div>
 
             <div class="detail-item">
-              <label>Moneda:</label>
-              <p>{{ payment.currency || 'USD' }} - {{ getCurrencyLabel(payment.currency || Currency.USD) }}</p>
+              <label>{{ 'common.currency' | transloco }}:</label>
+              <p>
+                {{ payment.currency || 'USD' }} -
+                {{ getCurrencyLabel(payment.currency || Currency.USD) }}
+              </p>
             </div>
 
             <div class="detail-item">
-              <label>Tipo:</label>
+              <label>{{ 'common.type' | transloco }}:</label>
               <p>{{ getTypeLabel(payment.payment_type) }}</p>
             </div>
 
             <div class="detail-item">
-              <label>Método:</label>
+              <label>{{ 'payments.method' | transloco }}:</label>
               <p>{{ getMethodLabel(payment.payment_method) }}</p>
             </div>
 
             <div class="detail-item">
-              <label>Fecha de Pago:</label>
-              <p>{{ payment.payment_date | date:'dd/MM/yyyy' }}</p>
+              <label>{{ 'payments.paymentDate' | transloco }}:</label>
+              <p>{{ payment.payment_date | tenantDate }}</p>
             </div>
 
             @if (payment.reference_number) {
               <div class="detail-item">
-                <label>Número de Referencia:</label>
+                <label>{{ 'payments.referenceNumber' | transloco }}:</label>
                 <p>{{ payment.reference_number }}</p>
               </div>
             }
 
             @if (payment.check_number) {
               <div class="detail-item">
-                <label>Número de Cheque:</label>
+                <label>{{ 'payments.checkNumber' | transloco }}:</label>
                 <p>{{ payment.check_number }}</p>
               </div>
             }
 
             <div class="detail-item">
-              <label>Estado:</label>
+              <label>{{ 'common.status' | transloco }}:</label>
               <p>
-                <mat-chip [style.background-color]="getStatusColor(payment.status)"
-                          style="color: white;">
+                <mat-chip
+                  [style.background-color]="getStatusColor(payment.status)"
+                  style="color: white"
+                >
                   {{ getStatusLabel(payment.status) }}
                 </mat-chip>
               </p>
@@ -409,25 +431,25 @@
 
             @if (payment.notes) {
               <div class="detail-item full-width">
-                <label>Notas del Inquilino:</label>
+                <label>{{ 'payments.tenantNotes' | transloco }}</label>
                 <p>{{ payment.notes }}</p>
               </div>
             }
 
             @if (payment.admin_notes) {
               <div class="detail-item full-width">
-                <label>Notas del Admin:</label>
+                <label>{{ 'payments.adminNotes' | transloco }}</label>
                 <p>{{ payment.admin_notes }}</p>
               </div>
             }
 
             @if (payment.proof_file) {
               <div class="detail-item full-width">
-                <label>Comprobante de Pago:</label>
+                <label>{{ 'payments.receipt' | transloco }}</label>
                 <p>
                   <button mat-stroked-button color="primary" (click)="openProof(payment)">
                     <lucide-icon [img]="ExternalLink" [size]="18"></lucide-icon>
-                    Ver Comprobante
+                    {{ 'payments.viewReceipt' | transloco }}
                   </button>
                 </p>
               </div>
@@ -439,15 +461,15 @@
           @if (payment.status === PaymentStatus.PENDING) {
             <button mat-raised-button color="primary" (click)="approvePayment(payment)">
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-              Aprobar
+              {{ 'common.approve' | transloco }}
             </button>
             <button mat-raised-button color="warn" (click)="rejectPayment(payment)">
               <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
-              Rechazar
+              {{ 'common.reject' | transloco }}
             </button>
           }
           <button mat-stroked-button (click)="selectedPayment.set(null)">
-            Cerrar
+            {{ 'common.close' | transloco }}
           </button>
         </div>
       </mat-card>
@@ -459,26 +481,36 @@
     <div class="modal-overlay" (click)="closeCreateForm()">
       <mat-card class="detail-modal create-payment-modal" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Registrar Nuevo Pago</h2>
-          <button mat-icon-button (click)="closeCreateForm()">
+          <h2>{{ 'payments.newTitle' | transloco }}</h2>
+          <button
+            mat-icon-button
+            [attr.aria-label]="'common.close' | transloco"
+            (click)="closeCreateForm()"
+          >
             <lucide-icon [img]="X" [size]="20"></lucide-icon>
           </button>
         </div>
 
         <div class="modal-content">
           <form [formGroup]="createPaymentForm" (ngSubmit)="submitCreatePayment()">
-
             <!-- Sección 1: Inquilino y Contrato -->
             <div class="form-section">
-              <h2 class="section-title">Inquilino y Contrato</h2>
+              <h2 class="section-title">{{ 'payments.tenantAndContract' | transloco }}</h2>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Buscar Inquilino</mat-label>
+                <mat-label>{{ 'payments.searchTenant' | transloco }}</mat-label>
                 <lucide-icon matIconPrefix [img]="Search" [size]="18"></lucide-icon>
-                <input matInput [formControl]="tenantSearchControl" [matAutocomplete]="autoTenant"
-                       placeholder="Busca por nombre o email">
-                <mat-autocomplete #autoTenant="matAutocomplete" [displayWith]="displayTenantFn"
-                                  (optionSelected)="onTenantSelected($event.option.value)">
+                <input
+                  matInput
+                  [formControl]="tenantSearchControl"
+                  [matAutocomplete]="autoTenant"
+                  [placeholder]="'payments.searchTenantHint' | transloco"
+                />
+                <mat-autocomplete
+                  #autoTenant="matAutocomplete"
+                  [displayWith]="displayTenantFn"
+                  (optionSelected)="onTenantSelected($event.option.value)"
+                >
                   @for (tenant of filteredTenants$ | async; track tenant.id) {
                     <mat-option [value]="tenant">
                       <div class="tenant-option">
@@ -488,36 +520,47 @@
                     </mat-option>
                   }
                 </mat-autocomplete>
-                <mat-hint>Busca por nombre o email del inquilino</mat-hint>
+                <mat-hint>{{ 'payments.searchTenantHint' | transloco }}</mat-hint>
               </mat-form-field>
 
               @if (selectedTenant()) {
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Seleccionar Contrato</mat-label>
+                  <mat-label>{{ 'payments.selectContract' | transloco }}</mat-label>
                   @if (loadingContracts()) {
                     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
                   }
-                  <mat-select [disabled]="loadingContracts()"
-                              (selectionChange)="onContractSelected($event.value)"
-                              placeholder="Selecciona un contrato">
+                  <mat-select
+                    [disabled]="loadingContracts()"
+                    (selectionChange)="onContractSelected($event.value)"
+                    [placeholder]="'payments.selectContractPlaceholder' | transloco"
+                  >
                     @for (contract of availableContracts(); track contract.id) {
                       <mat-option [value]="contract">
                         <div class="contract-option">
                           <strong>{{ contract.contract_number }}</strong>
-                          <span>{{ contract.property?.title || 'Propiedad #' + contract.property_id }}</span>
-                          <span class="contract-rent">Bs {{ contract.monthly_rent }}/mes</span>
+                          <span>{{
+                            contract.property?.title ||
+                              ('common.property' | transloco) + ' #' + contract.property_id
+                          }}</span>
+                          <span class="contract-rent"
+                            >{{ contract.monthly_rent | tenantCurrency }}/{{
+                              'common.month' | transloco
+                            }}</span
+                          >
                         </div>
                       </mat-option>
-                    }
-                    @empty {
-                      <mat-option disabled>No hay contratos disponibles</mat-option>
+                    } @empty {
+                      <mat-option disabled>{{ 'payments.noContracts' | transloco }}</mat-option>
                     }
                   </mat-select>
                   <mat-hint>
                     @if (availableContracts().length === 0 && !loadingContracts()) {
-                      Este inquilino no tiene contratos activos
+                      {{ 'payments.noActiveContracts' | transloco }}
                     } @else {
-                      {{ availableContracts().length }} contrato(s) disponible(s)
+                      {{
+                        'payments.contractsAvailable'
+                          | transloco: { count: availableContracts().length }
+                      }}
                     }
                   </mat-hint>
                 </mat-form-field>
@@ -525,29 +568,39 @@
 
               @if (selectedContract()) {
                 <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>Propiedad</mat-label>
-                  <input matInput
-                         [value]="selectedContract()?.property?.title || 'Propiedad #' + selectedContract()?.property_id"
-                         readonly disabled>
-                  <mat-hint>Se asigna automáticamente del contrato seleccionado</mat-hint>
+                  <mat-label>{{ 'common.property' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    [value]="
+                      selectedContract()?.property?.title ||
+                      ('common.property' | transloco) + ' #' + selectedContract()?.property_id
+                    "
+                    readonly
+                    disabled
+                  />
+                  <mat-hint>{{ 'payments.propertyAutoAssigned' | transloco }}</mat-hint>
                 </mat-form-field>
               }
             </div>
 
             <!-- Sección 2: Información del Pago -->
             <div class="form-section">
-              <h2 class="section-title">Información del Pago</h2>
+              <h2 class="section-title">{{ 'payments.paymentInfo' | transloco }}</h2>
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Monto*</mat-label>
-                  <span matTextPrefix>Bs&nbsp;</span>
-                  <input matInput type="number" formControlName="amount" placeholder="0.00" required>
-                  <mat-hint>Monto del pago</mat-hint>
+                  <mat-label>{{ 'common.amount' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    type="number"
+                    formControlName="amount"
+                    placeholder="0.00"
+                    required
+                  />
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Moneda*</mat-label>
+                  <mat-label>{{ 'common.currency' | transloco }}</mat-label>
                   <mat-select formControlName="currency" required>
                     @for (curr of currencies; track curr) {
                       <mat-option [value]="curr">{{ CurrencyLabels[curr] }}</mat-option>
@@ -558,7 +611,7 @@
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Tipo de Pago*</mat-label>
+                  <mat-label>{{ 'payments.paymentType' | transloco }}</mat-label>
                   <mat-select formControlName="payment_type" required>
                     @for (type of paymentTypes; track type) {
                       <mat-option [value]="type">{{ PaymentTypeLabels[type] }}</mat-option>
@@ -567,7 +620,7 @@
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Método de Pago*</mat-label>
+                  <mat-label>{{ 'payments.paymentMethod' | transloco }}</mat-label>
                   <mat-select formControlName="payment_method" required>
                     @for (method of paymentMethods; track method) {
                       <mat-option [value]="method">{{ PaymentMethodLabels[method] }}</mat-option>
@@ -578,84 +631,107 @@
 
               <div class="form-row">
                 <mat-form-field appearance="outline">
-                  <mat-label>Estado</mat-label>
+                  <mat-label>{{ 'common.status' | transloco }}</mat-label>
                   <mat-select formControlName="status">
                     @for (status of paymentStatuses; track status) {
                       <mat-option [value]="status">{{ PaymentStatusLabels[status] }}</mat-option>
                     }
                   </mat-select>
-                  <mat-hint>Por defecto se crea como Aprobado</mat-hint>
+                  <mat-hint>{{ 'payments.statusDefault' | transloco }}</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Fecha de Pago*</mat-label>
-                  <input matInput [matDatepicker]="paymentDatePicker" formControlName="payment_date" required>
-                  <mat-datepicker-toggle matIconSuffix [for]="paymentDatePicker"></mat-datepicker-toggle>
+                  <mat-label>{{ 'payments.paymentDate' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    [matDatepicker]="paymentDatePicker"
+                    formControlName="payment_date"
+                    required
+                  />
+                  <mat-datepicker-toggle
+                    matIconSuffix
+                    [for]="paymentDatePicker"
+                  ></mat-datepicker-toggle>
                   <mat-datepicker #paymentDatePicker></mat-datepicker>
                 </mat-form-field>
               </div>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Fecha de Vencimiento (Opcional)</mat-label>
-                <input matInput [matDatepicker]="dueDatePicker" formControlName="due_date">
+                <mat-label>{{ 'payments.dueDate' | transloco }}</mat-label>
+                <input matInput [matDatepicker]="dueDatePicker" formControlName="due_date" />
                 <mat-datepicker-toggle matIconSuffix [for]="dueDatePicker"></mat-datepicker-toggle>
                 <mat-datepicker #dueDatePicker></mat-datepicker>
               </mat-form-field>
             </div>
 
             <!-- Sección 3: Datos del Método (condicional) -->
-            @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.CHECK ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.ACH ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.ECHECK ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.SEPA ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.CASH ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.ZELLE ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.VENMO ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.PAYPAL ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.STRIPE ||
-                 createPaymentForm.get('payment_method')?.value === PaymentMethod.MONEY_ORDER) {
+            @if (
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.CHECK ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.ACH ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.ECHECK ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.SEPA ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.CASH ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.ZELLE ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.VENMO ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.PAYPAL ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.STRIPE ||
+              createPaymentForm.get('payment_method')?.value === PaymentMethod.MONEY_ORDER
+            ) {
               <div class="form-section">
-                <h2 class="section-title">Datos del Método</h2>
+                <h2 class="section-title">{{ 'payments.methodData' | transloco }}</h2>
 
                 <!-- Tarjeta de Crédito/Débito -->
-                @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD) {
+                @if (
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD
+                ) {
                   <div class="card-info-banner">
                     <span class="card-banner-icon">ℹ️</span>
-                    <span>Ingresa los datos del comprobante de la tarjeta. El <strong>CVV no se guarda</strong> por normativas de seguridad (PCI-DSS).</span>
+                    <span>{{ 'payments.cardSecurityNote' | transloco }}</span>
                   </div>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Nombre del Titular</mat-label>
-                      <input matInput formControlName="card_holder_name" placeholder="Ej: Juan Pérez">
-                      <mat-hint>Nombre como aparece en la tarjeta</mat-hint>
+                      <mat-label>{{ 'payments.cardHolder' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="card_holder_name"
+                        placeholder="Ej: Juan Pérez"
+                      />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Últimos 4 dígitos de la tarjeta</mat-label>
-                      <input matInput formControlName="card_last_4_digits"
-                             placeholder="1234" maxlength="4" pattern="[0-9]{4}">
-                      <mat-hint>Solo los últimos 4 dígitos</mat-hint>
+                      <mat-label>{{ 'payments.cardLast4' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="card_last_4_digits"
+                        placeholder="1234"
+                        maxlength="4"
+                        pattern="[0-9]{4}"
+                      />
                     </mat-form-field>
                   </div>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Fecha de Vencimiento</mat-label>
-                      <input matInput formControlName="card_expiry"
-                             placeholder="MM/AA" maxlength="5">
-                      <mat-hint>Formato: MM/AA</mat-hint>
+                      <mat-label>{{ 'payments.cardExpiry' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="card_expiry"
+                        placeholder="MM/AA"
+                        maxlength="5"
+                      />
+                      <mat-hint>{{ 'payments.cardExpiryFormat' | transloco }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Código de Autorización</mat-label>
-                      <input matInput formControlName="reference_number" placeholder="Ej: 123456">
-                      <mat-hint>Del comprobante / voucher del banco</mat-hint>
+                      <mat-label>{{ 'payments.authCode' | transloco }}</mat-label>
+                      <input matInput formControlName="reference_number" placeholder="Ej: 123456" />
+                      <mat-hint>{{ 'payments.authCodeHint' | transloco }}</mat-hint>
                     </mat-form-field>
                   </div>
                 }
@@ -664,72 +740,104 @@
                 @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Número de Cheque</mat-label>
-                      <input matInput formControlName="check_number" placeholder="Ej: 001234">
+                      <mat-label>{{ 'payments.checkNumber' | transloco }}</mat-label>
+                      <input matInput formControlName="check_number" placeholder="Ej: 001234" />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Banco Emisor</mat-label>
-                      <input matInput formControlName="bank_name" placeholder="Banco Nacional">
+                      <mat-label>{{ 'payments.issuingBank' | transloco }}</mat-label>
+                      <input matInput formControlName="bank_name" placeholder="Banco Nacional" />
                     </mat-form-field>
                   </div>
 
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Últimos 4 dígitos de la cuenta</mat-label>
-                    <input matInput formControlName="bank_account_last_4" placeholder="5678" maxlength="4">
+                    <mat-label>{{ 'payments.accountLast4' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      formControlName="bank_account_last_4"
+                      placeholder="5678"
+                      maxlength="4"
+                    />
                   </mat-form-field>
                 }
 
                 <!-- Transferencia / Wire Transfer / ACH / Cheque Electrónico / SEPA -->
-                @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.ACH ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.ECHECK ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.SEPA) {
+                @if (
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.ACH ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.ECHECK ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.SEPA
+                ) {
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Número de Referencia / Transacción</mat-label>
-                    <input matInput formControlName="reference_number" placeholder="Ej: TRF-12345678">
-                    <mat-hint>Número de confirmación del banco</mat-hint>
+                    <mat-label>{{ 'payments.referenceNumber' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      formControlName="reference_number"
+                      placeholder="Ej: TRF-12345678"
+                    />
+                    <mat-hint>{{ 'payments.bankConfirmationHint' | transloco }}</mat-hint>
                   </mat-form-field>
 
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Banco de Origen</mat-label>
-                      <input matInput formControlName="bank_name" placeholder="Banco del inquilino">
+                      <mat-label>{{ 'payments.originBank' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="bank_name"
+                        [placeholder]="'payments.originBankHint' | transloco"
+                      />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Últimos 4 dígitos de la cuenta</mat-label>
-                      <input matInput formControlName="bank_account_last_4" placeholder="9012" maxlength="4">
+                      <mat-label>{{ 'payments.accountLast4' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="bank_account_last_4"
+                        placeholder="9012"
+                        maxlength="4"
+                      />
                     </mat-form-field>
                   </div>
                 }
 
                 <!-- Zelle / Venmo -->
-                @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.ZELLE ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.VENMO) {
+                @if (
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.ZELLE ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.VENMO
+                ) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Código de Confirmación</mat-label>
-                      <input matInput formControlName="reference_number" placeholder="Ej: ZMEMO123456">
-                      <mat-hint>ID de la transacción en la app</mat-hint>
+                      <mat-label>{{ 'payments.confirmationCode' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="reference_number"
+                        placeholder="Ej: ZMEMO123456"
+                      />
+                      <mat-hint>{{ 'payments.transactionId' | transloco }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Enviado desde (tel/correo)</mat-label>
-                      <input matInput formControlName="received_by" placeholder="Ej: +1 555-1234">
-                      <mat-hint>Teléfono o correo del remitente</mat-hint>
+                      <mat-label>{{ 'payments.sentFrom' | transloco }}</mat-label>
+                      <input matInput formControlName="received_by" placeholder="Ej: +1 555-1234" />
+                      <mat-hint>{{ 'payments.senderPhone' | transloco }}</mat-hint>
                     </mat-form-field>
                   </div>
                 }
 
                 <!-- PayPal / Stripe -->
-                @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.PAYPAL ||
-                     createPaymentForm.get('payment_method')?.value === PaymentMethod.STRIPE) {
+                @if (
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.PAYPAL ||
+                  createPaymentForm.get('payment_method')?.value === PaymentMethod.STRIPE
+                ) {
                   <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>ID de Transacción</mat-label>
-                    <input matInput formControlName="reference_number" placeholder="Ej: PAYID-1234ABCD">
-                    <mat-hint>ID generado por PayPal o Stripe</mat-hint>
+                    <mat-label>{{ 'payments.transactionIdLabel' | transloco }}</mat-label>
+                    <input
+                      matInput
+                      formControlName="reference_number"
+                      placeholder="Ej: PAYID-1234ABCD"
+                    />
+                    <mat-hint>{{ 'payments.transactionIdHint' | transloco }}</mat-hint>
                   </mat-form-field>
                 }
 
@@ -737,13 +845,17 @@
                 @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.MONEY_ORDER) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Número de Giro Postal</mat-label>
-                      <input matInput formControlName="reference_number" placeholder="Ej: MO-001234">
+                      <mat-label>{{ 'payments.moneyOrderNumber' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="reference_number"
+                        placeholder="Ej: MO-001234"
+                      />
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Entidad Emisora</mat-label>
-                      <input matInput formControlName="bank_name" placeholder="Ej: Western Union">
+                      <mat-label>{{ 'payments.issuingEntity' | transloco }}</mat-label>
+                      <input matInput formControlName="bank_name" placeholder="Ej: Western Union" />
                     </mat-form-field>
                   </div>
                 }
@@ -752,15 +864,22 @@
                 @if (createPaymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
                   <div class="form-row">
                     <mat-form-field appearance="outline">
-                      <mat-label>Recibido por</mat-label>
-                      <input matInput formControlName="received_by"
-                             placeholder="Nombre de quien recibió el pago">
-                      <mat-hint>Persona que recibió el efectivo</mat-hint>
+                      <mat-label>{{ 'payments.receivedBy' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="received_by"
+                        [placeholder]="'payments.receivedByHint' | transloco"
+                      />
+                      <mat-hint>{{ 'payments.receivedByHint' | transloco }}</mat-hint>
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                      <mat-label>Número de Recibo (Opcional)</mat-label>
-                      <input matInput formControlName="reference_number" placeholder="Ej: REC-001">
+                      <mat-label>{{ 'payments.receiptNumber' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="reference_number"
+                        placeholder="Ej: REC-001"
+                      />
                     </mat-form-field>
                   </div>
                 }
@@ -769,31 +888,43 @@
 
             <!-- Sección 4: Observaciones -->
             <div class="form-section last">
-              <h2 class="section-title">Observaciones</h2>
+              <h2 class="section-title">{{ 'payments.observations' | transloco }}</h2>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Notas del Inquilino (Opcional)</mat-label>
-                <textarea matInput formControlName="notes" rows="2"
-                          placeholder="Información adicional del inquilino"></textarea>
+                <mat-label>{{ 'payments.tenantNotesOptional' | transloco }}</mat-label>
+                <textarea
+                  matInput
+                  formControlName="notes"
+                  rows="2"
+                  [placeholder]="'payments.tenantNotesHint' | transloco"
+                ></textarea>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Notas del Admin (Opcional)</mat-label>
-                <textarea matInput formControlName="admin_notes" rows="2"
-                          placeholder="Notas administrativas internas"></textarea>
+                <mat-label>{{ 'payments.adminNotesOptional' | transloco }}</mat-label>
+                <textarea
+                  matInput
+                  formControlName="admin_notes"
+                  rows="2"
+                  [placeholder]="'payments.adminNotesHint' | transloco"
+                ></textarea>
               </mat-form-field>
             </div>
-
           </form>
         </div>
 
         <div class="modal-actions">
-          <button mat-raised-button color="primary" (click)="submitCreatePayment()" [disabled]="createPaymentForm.invalid">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="submitCreatePayment()"
+            [disabled]="createPaymentForm.invalid"
+          >
             <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-            Crear Pago
+            {{ 'payments.create' | transloco }}
           </button>
           <button mat-stroked-button (click)="closeCreateForm()">
-            Cancelar
+            {{ 'common.cancel' | transloco }}
           </button>
         </div>
       </mat-card>

@@ -1,7 +1,12 @@
 <div class="tecnico-view">
   <!-- Detail overlay (full screen on mobile) -->
   @if (selectedRequest()) {
-    <div class="detail-overlay" role="dialog" aria-modal="true" aria-label="Detalle de orden">
+    <div
+      class="detail-overlay"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="'maintenance.detailTitle' | transloco"
+    >
       <app-order-detail
         [request]="selectedRequest()!"
         (closed)="closeDetail()"
@@ -16,12 +21,12 @@
     <header class="app-header">
       <div class="header-title">
         <lucide-icon [img]="WrenchIcon" size="20" aria-hidden="true" />
-        <h1>Mis Órdenes</h1>
+        <h1>{{ 'tecnico.myOrders' | transloco }}</h1>
       </div>
       <button
         mat-icon-button
         (click)="refresh()"
-        aria-label="Actualizar lista"
+        [attr.aria-label]="'tecnico.refresh' | transloco"
         [disabled]="isLoading()"
       >
         <lucide-icon [img]="RefreshCwIcon" size="18" [class.spinning]="isLoading()" />
@@ -29,14 +34,18 @@
     </header>
 
     <!-- Filter tabs -->
-    <nav class="filter-tabs" role="tablist" aria-label="Filtrar por estado">
+    <nav
+      class="filter-tabs"
+      role="tablist"
+      [attr.aria-label]="'tecnico.filterByStatus' | transloco"
+    >
       <button
         role="tab"
         [attr.aria-selected]="activeTab() === 'all'"
         [class.active]="activeTab() === 'all'"
         (click)="setTab('all')"
       >
-        Todas
+        {{ 'tecnico.all' | transloco }}
         <span class="tab-count">{{ tabCounts().all }}</span>
       </button>
       <button
@@ -45,7 +54,7 @@
         [class.active]="activeTab() === MaintenanceStatus.NEW"
         (click)="setTab(MaintenanceStatus.NEW)"
       >
-        Nuevas
+        {{ 'tecnico.new' | transloco }}
         <span class="tab-count tab-count--new">{{ tabCounts().new }}</span>
       </button>
       <button
@@ -54,7 +63,7 @@
         [class.active]="activeTab() === MaintenanceStatus.IN_PROGRESS"
         (click)="setTab(MaintenanceStatus.IN_PROGRESS)"
       >
-        En progreso
+        {{ 'tecnico.inProgress' | transloco }}
         <span class="tab-count tab-count--progress">{{ tabCounts().inProgress }}</span>
       </button>
       <button
@@ -63,7 +72,7 @@
         [class.active]="activeTab() === MaintenanceStatus.COMPLETED"
         (click)="setTab(MaintenanceStatus.COMPLETED)"
       >
-        Completadas
+        {{ 'tecnico.completed' | transloco }}
         <span class="tab-count tab-count--done">{{ tabCounts().completed }}</span>
       </button>
     </nav>
@@ -73,21 +82,23 @@
       @if (isLoading()) {
         <div class="loading-center">
           <mat-spinner diameter="40" />
-          <p>Cargando órdenes...</p>
+          <p>{{ 'tecnico.loading' | transloco }}</p>
         </div>
       } @else if (filteredRequests().length === 0) {
         <div class="empty-state">
           <lucide-icon [img]="CheckCircle2Icon" size="48" aria-hidden="true" />
-          <p>Sin órdenes en esta categoría.</p>
+          <p>{{ 'tecnico.empty' | transloco }}</p>
         </div>
       } @else {
-        <ul role="list" aria-label="Lista de órdenes asignadas">
+        <ul role="list" [attr.aria-label]="'tecnico.myOrders' | transloco">
           @for (req of filteredRequests(); track req.id) {
             <li role="listitem">
               <button
                 class="order-card"
                 (click)="selectRequest(req)"
-                [attr.aria-label]="'Ver orden ' + req.ticket_number + ': ' + req.title"
+                [attr.aria-label]="
+                  'tecnico.orderAria' | transloco: { ticket: req.ticket_number, title: req.title }
+                "
               >
                 <!-- Priority indicator -->
                 <div class="priority-bar" [attr.data-priority]="req.priority"></div>
@@ -96,7 +107,7 @@
                   <div class="card-top">
                     <span class="ticket">{{ req.ticket_number }}</span>
                     <span class="status-chip" [class]="getStatusColor(req.status)">
-                      {{ statusLabels[req.status] }}
+                      {{ 'maintenance.status.' + req.status | transloco }}
                     </span>
                   </div>
 
@@ -111,10 +122,10 @@
 
                   <div class="card-footer">
                     <span class="priority-label" [attr.data-priority]="req.priority">
-                      {{ priorityLabels[req.priority] }}
+                      {{ 'maintenance.priority.' + req.priority | transloco }}
                     </span>
                     @if (req.has_pets) {
-                      <span class="pets-badge">Mascotas</span>
+                      <span class="pets-badge">{{ 'tecnico.hasPets' | transloco }}</span>
                     }
                   </div>
                 </div>

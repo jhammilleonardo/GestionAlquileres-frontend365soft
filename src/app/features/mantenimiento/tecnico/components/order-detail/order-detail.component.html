@@ -1,13 +1,13 @@
 <article class="order-detail">
   <!-- Header -->
   <header class="detail-header">
-    <button mat-icon-button (click)="closed.emit()" aria-label="Volver a la lista">
+    <button mat-icon-button (click)="closed.emit()" [attr.aria-label]="'tecnico.back' | transloco">
       <lucide-icon [img]="ArrowLeftIcon" size="20" />
     </button>
     <div class="header-info">
       <span class="ticket-number">{{ request().ticket_number }}</span>
       <span class="status-badge" [attr.data-status]="request().status">
-        {{ statusLabels[request().status] }}
+        {{ 'maintenance.status.' + request().status | transloco }}
       </span>
     </div>
   </header>
@@ -18,7 +18,7 @@
     <section class="section-card">
       <h2 class="request-title">{{ request().title }}</h2>
       <span class="priority-badge" [attr.data-priority]="request().priority">
-        {{ priorityLabels[request().priority] }}
+        {{ 'maintenance.priority.' + request().priority | transloco }}
       </span>
     </section>
 
@@ -32,14 +32,14 @@
 
     <!-- Description -->
     <section class="section-card">
-      <h3 class="section-label">Descripción</h3>
+      <h3 class="section-label">{{ 'tecnico.description' | transloco }}</h3>
       <p class="description-text">{{ request().description }}</p>
     </section>
 
     <!-- Entry notes -->
     @if (request().entry_notes) {
       <section class="section-card">
-        <h3 class="section-label">Notas de acceso</h3>
+        <h3 class="section-label">{{ 'tecnico.accessNotes' | transloco }}</h3>
         <p class="description-text">{{ request().entry_notes }}</p>
       </section>
     }
@@ -48,7 +48,7 @@
     @if (request().has_pets) {
       <section class="section-card alert-pets">
         <lucide-icon [img]="AlertCircleIcon" size="16" aria-hidden="true" />
-        <span>La propiedad tiene mascotas</span>
+        <span>{{ 'tecnico.hasPets' | transloco }}</span>
       </section>
     }
 
@@ -79,7 +79,7 @@
     <!-- Attached images on request -->
     @if (request().attachments.length > 0) {
       <section class="section-card">
-        <h3 class="section-label">Fotos del reporte</h3>
+        <h3 class="section-label">{{ 'tecnico.reportPhotos' | transloco }}</h3>
         <div class="attachments-grid">
           @for (att of request().attachments; track att.id) {
             <a [href]="getFileUrl(att.file_url)" target="_blank" rel="noopener noreferrer">
@@ -94,7 +94,7 @@
     <section class="section-card messages-section">
       <h3 class="section-label">
         <lucide-icon [img]="MessageSquareIcon" size="15" aria-hidden="true" />
-        Historial de notas
+        {{ 'tecnico.notesHistory' | transloco }}
       </h3>
 
       @if (isLoadingMessages()) {
@@ -102,7 +102,7 @@
           <mat-spinner diameter="28" />
         </div>
       } @else if (messages().length === 0) {
-        <p class="empty-messages">Sin notas aún.</p>
+        <p class="empty-messages">{{ 'tecnico.noNotes' | transloco }}</p>
       } @else {
         <ul class="messages-list" role="list">
           @for (msg of messages(); track msg.id) {
@@ -113,9 +113,9 @@
                   size="12"
                   aria-hidden="true"
                 />
-                <time>{{ formatDate(msg.created_at) }}</time>
+                <time>{{ msg.created_at | tenantDate: true }}</time>
                 @if (isInternal(msg)) {
-                  <span class="internal-label">interna</span>
+                  <span class="internal-label">{{ 'tecnico.internal' | transloco }}</span>
                 }
               </div>
               <p class="message-text">{{ msg.message }}</p>
@@ -136,15 +136,15 @@
 
     <!-- Add note -->
     <section class="section-card add-note-section">
-      <h3 class="section-label">Agregar nota / fotos</h3>
+      <h3 class="section-label">{{ 'tecnico.addNote' | transloco }}</h3>
 
       <!-- File previews -->
       @if (selectedFiles().length > 0) {
-        <div class="preview-grid" role="list" aria-label="Archivos seleccionados">
+        <div class="preview-grid" role="list" [attr.aria-label]="'common.actions' | transloco">
           @for (url of previewUrls(); track $index) {
             <div class="preview-item" role="listitem">
               @if (url) {
-                <img [src]="url" alt="Vista previa" />
+                <img [src]="url" [alt]="'tecnico.previewAlt' | transloco" />
               } @else {
                 <div class="file-placeholder">
                   <lucide-icon [img]="PaperclipIcon" size="20" aria-hidden="true" />
@@ -154,7 +154,7 @@
                 class="remove-file-btn"
                 mat-icon-button
                 (click)="removeFile($index)"
-                [attr.aria-label]="'Eliminar archivo ' + ($index + 1)"
+                [attr.aria-label]="'tecnico.removeFileAria' | transloco: { n: $index + 1 }"
               >
                 <lucide-icon [img]="XIcon" size="12" />
               </button>
@@ -165,16 +165,21 @@
 
       <textarea
         class="note-textarea"
-        placeholder="Escribe una nota sobre el trabajo realizado..."
+        [placeholder]="'tecnico.notePlaceholder' | transloco"
         [value]="noteText()"
         (input)="noteText.set($any($event.target).value)"
         rows="3"
-        aria-label="Nota"
+        [attr.aria-label]="'tecnico.addNote' | transloco"
       ></textarea>
 
       <div class="note-actions">
         <!-- File picker -->
-        <label class="file-picker-label" aria-label="Adjuntar fotos (máx. 3)">
+        <label
+          class="file-picker-label"
+          [attr.aria-label]="
+            'tecnico.photosCount' | transloco: { current: selectedFiles().length, max: 3 }
+          "
+        >
           <input
             type="file"
             accept="image/*,.pdf"
@@ -184,7 +189,9 @@
             hidden
           />
           <lucide-icon [img]="ImageIcon" size="18" aria-hidden="true" />
-          <span>Fotos ({{ selectedFiles().length }}/3)</span>
+          <span>{{
+            'tecnico.photosCount' | transloco: { current: selectedFiles().length, max: 3 }
+          }}</span>
         </label>
 
         <!-- Send button -->
@@ -199,7 +206,7 @@
           } @else {
             <lucide-icon [img]="SendIcon" size="16" aria-hidden="true" />
           }
-          Enviar
+          {{ 'tecnico.send' | transloco }}
         </button>
       </div>
     </section>

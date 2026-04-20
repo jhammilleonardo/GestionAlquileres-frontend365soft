@@ -32,7 +32,10 @@ import {
   TrendingUp,
   MessageSquare,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { MaintenanceService } from '../../core/services/admin/maintenance.service';
+import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
 import {
   MaintenanceRequest,
   MaintenanceStatus,
@@ -64,7 +67,10 @@ import { RequestDetailComponent } from './components/request-detail.component';
     MatDividerModule,
     LucideAngularModule,
     TecnicoMantenimientoComponent,
+    TranslocoModule,
+    TenantDatePipe,
   ],
+  providers: [provideTranslocoScope({ scope: 'mantenimiento', alias: 'maintenance' })],
   templateUrl: './mantenimiento.component.html',
   styleUrl: './mantenimiento.component.scss',
 })
@@ -283,22 +289,6 @@ export class MantenimientoComponent implements OnInit {
   getCategoryIcon(_category: MaintenanceCategory): any {
     // Return appropriate icon based on category
     return this.Wrench; // Default icon for now
-  }
-
-  formatDate(date: Date): string {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return 'Hoy';
-    } else if (diffDays === 1) {
-      return 'Ayer';
-    } else if (diffDays < 7) {
-      return `Hace ${diffDays} días`;
-    } else {
-      return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
   }
 
   getStatusValues(): MaintenanceStatus[] {

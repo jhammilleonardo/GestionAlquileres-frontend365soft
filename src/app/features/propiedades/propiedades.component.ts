@@ -52,9 +52,12 @@ import {
   RefreshCw,
   AlertTriangle,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { AuthService } from '../../core/services/auth.service';
 import { SlugService } from '../../core/services/slug.service';
+import { FormatService } from '../../core/services/format.service';
 import {
   Property,
   PropertyFilters,
@@ -80,9 +83,11 @@ import {
     MatProgressSpinnerModule,
     MatSnackBarModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   templateUrl: './propiedades.component.html',
   styleUrl: './propiedades.component.scss',
+  providers: [provideTranslocoScope({ scope: 'propiedades', alias: 'properties' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PropiedadesComponent implements OnInit {
@@ -176,6 +181,7 @@ export class PropiedadesComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private snackBar: MatSnackBar,
+    private formatService: FormatService,
   ) {
     this.propertyForm = this.createForm();
   }
@@ -797,10 +803,7 @@ export class PropiedadesComponent implements OnInit {
 
   getPropertyPrice(property: Property): string {
     const price = property.monthly_rent || property.monthly_rent_amount;
-    if (price) {
-      const currency = property.currency || 'BOB';
-      return `${currency} ${price.toLocaleString('es-BO')}`;
-    }
+    if (price) return this.formatService.formatCurrency(price);
     return 'N/A';
   }
 

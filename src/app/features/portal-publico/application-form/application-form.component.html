@@ -2,17 +2,17 @@
   <!-- Success State -->
   <div *ngIf="submitSuccess" class="success-state">
     <div class="success-icon">🎉</div>
-    <h1>¡Solicitud Enviada!</h1>
-    <p>Tu solicitud de alquiler ha sido enviada correctamente.</p>
-    <p>Te estamos redirigiendo para completar tu registro...</p>
+    <h1>{{ 'public.applicationForm.successTitle' | transloco }}</h1>
+    <p>{{ 'public.applicationForm.successMsg' | transloco }}</p>
+    <p>{{ 'public.applicationForm.redirectMsg' | transloco }}</p>
   </div>
 
   <!-- Form -->
   <div *ngIf="!submitSuccess" class="form-wrapper">
     <!-- Header -->
     <div class="form-header">
-      <h1>📝 Solicitud de Alquiler</h1>
-      <p class="form-subtitle">Completa todos los campos para aplicar a esta propiedad</p>
+      <h1>{{ 'public.applicationForm.title' | transloco }}</h1>
+      <p class="form-subtitle">{{ 'public.applicationForm.subtitle' | transloco }}</p>
     </div>
 
     <!-- Error Alert -->
@@ -24,11 +24,11 @@
     <form (ngSubmit)="onSubmit()" class="application-form">
       <!-- SECTION 1: Personal Data -->
       <div class="form-section">
-        <h2>👤 Información Personal</h2>
+        <h2>{{ 'public.applicationForm.personalSection' | transloco }}</h2>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="full_name">Nombre Completo *</label>
+            <label for="full_name">{{ 'public.applicationForm.fullName' | transloco }}</label>
             <input
               type="text"
               id="full_name"
@@ -36,12 +36,12 @@
               [(ngModel)]="formData.personal_data.full_name"
               name="full_name"
               required
-              placeholder="Ej: Juan Pérez"
+              [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
             />
           </div>
 
           <div class="form-group">
-            <label for="national_id">Cédula de Identidad *</label>
+            <label for="national_id">{{ 'public.applicationForm.nationalId' | transloco }}</label>
             <input
               type="text"
               id="national_id"
@@ -49,14 +49,14 @@
               [(ngModel)]="formData.personal_data.national_id"
               name="national_id"
               required
-              placeholder="Ej: 12345678"
+              [placeholder]="'public.applicationForm.nationalIdPlace' | transloco"
             />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="email">Email *</label>
+            <label for="email">{{ 'public.applicationForm.email' | transloco }}</label>
             <input
               type="email"
               id="email"
@@ -64,12 +64,12 @@
               [(ngModel)]="formData.personal_data.email"
               name="email"
               required
-              placeholder="ejemplo@email.com"
+              [placeholder]="'public.applicationForm.emailPlace' | transloco"
             />
           </div>
 
           <div class="form-group">
-            <label for="phone">Teléfono *</label>
+            <label for="phone">{{ 'public.applicationForm.phone' | transloco }}</label>
             <input
               type="tel"
               id="phone"
@@ -77,14 +77,14 @@
               [(ngModel)]="formData.personal_data.phone"
               name="phone"
               required
-              placeholder="+591 71234567"
+              [placeholder]="'public.applicationForm.phonePlace' | transloco"
             />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="birth_date">Fecha de Nacimiento *</label>
+            <label for="birth_date">{{ 'public.applicationForm.birthDate' | transloco }}</label>
             <input
               type="date"
               id="birth_date"
@@ -96,7 +96,9 @@
           </div>
 
           <div class="form-group">
-            <label for="marital_status">Estado Civil</label>
+            <label for="marital_status">{{
+              'public.applicationForm.maritalStatus' | transloco
+            }}</label>
             <select
               id="marital_status"
               class="form-control"
@@ -104,14 +106,17 @@
               name="marital_status"
             >
               <option *ngFor="let status of maritalStatuses" [value]="status">
-                {{ status | titlecase }}
+                {{ status }}
+                <!-- We could map this to translations, but keeping simple for now -->
               </option>
             </select>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="number_of_dependents">Número de Dependientes</label>
+          <label for="number_of_dependents">{{
+            'public.applicationForm.dependents' | transloco
+          }}</label>
           <input
             type="number"
             id="number_of_dependents"
@@ -121,18 +126,18 @@
             min="0"
             value="0"
           />
-          <small class="form-hint">Personas que dependen económicamente de ti</small>
+          <small class="form-hint">{{ 'public.applicationForm.dependentsHint' | transloco }}</small>
         </div>
       </div>
 
       <!-- SECTION 2: Employment Data -->
       <div class="form-section">
-        <h2>💼 Información Laboral</h2>
-        <p class="section-hint">Tu empleo actual</p>
+        <h2>{{ 'public.applicationForm.workSection' | transloco }}</h2>
+        <p class="section-hint">{{ 'public.applicationForm.workHint' | transloco }}</p>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="company">Empresa *</label>
+            <label for="company">{{ 'public.applicationForm.company' | transloco }}</label>
             <input
               type="text"
               id="company"
@@ -140,12 +145,12 @@
               [(ngModel)]="formData.employment_data.current_job.company"
               name="company"
               required
-              placeholder="Nombre de la empresa"
+              [placeholder]="'public.applicationForm.companyPlace' | transloco"
             />
           </div>
 
           <div class="form-group">
-            <label for="position">Puesto/Cargo *</label>
+            <label for="position">{{ 'public.applicationForm.position' | transloco }}</label>
             <input
               type="text"
               id="position"
@@ -153,14 +158,14 @@
               [(ngModel)]="formData.employment_data.current_job.position"
               name="position"
               required
-              placeholder="Tu puesto de trabajo"
+              [placeholder]="'public.applicationForm.positionPlace' | transloco"
             />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="salary">Salario Mensual *</label>
+            <label for="salary">{{ 'public.applicationForm.salary' | transloco }}</label>
             <input
               type="number"
               id="salary"
@@ -175,23 +180,23 @@
           </div>
 
           <div class="form-group">
-            <label for="currency">Moneda</label>
+            <label for="currency">{{ 'public.applicationForm.currency' | transloco }}</label>
             <select
               id="currency"
               class="form-control"
               [(ngModel)]="formData.employment_data.current_job.currency"
               name="currency"
             >
-              <option value="BOB">BOB - Boliviano</option>
-              <option value="USD">USD - Dólar</option>
-              <option value="EUR">EUR - Euro</option>
+              <option value="BOB">BOB</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
             </select>
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="start_date">Fecha de Inicio *</label>
+            <label for="start_date">{{ 'public.applicationForm.startDate' | transloco }}</label>
             <input
               type="date"
               id="start_date"
@@ -203,7 +208,9 @@
           </div>
 
           <div class="form-group">
-            <label for="employment_type">Tipo de Empleo</label>
+            <label for="employment_type">{{
+              'public.applicationForm.employmentType' | transloco
+            }}</label>
             <select
               id="employment_type"
               class="form-control"
@@ -211,7 +218,7 @@
               name="employment_type"
             >
               <option *ngFor="let type of employmentTypes" [value]="type">
-                {{ type | titlecase }}
+                {{ type }}
               </option>
             </select>
           </div>
@@ -219,7 +226,9 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="supervisor_name">Nombre del Supervisor *</label>
+            <label for="supervisor_name">{{
+              'public.applicationForm.supervisorName' | transloco
+            }}</label>
             <input
               type="text"
               id="supervisor_name"
@@ -227,12 +236,14 @@
               [(ngModel)]="formData.employment_data.current_job.supervisor_name"
               name="supervisor_name"
               required
-              placeholder="Nombre de tu jefe inmediato"
+              [placeholder]="'public.applicationForm.supervisorNamePlace' | transloco"
             />
           </div>
 
           <div class="form-group">
-            <label for="supervisor_phone">Teléfono del Supervisor *</label>
+            <label for="supervisor_phone">{{
+              'public.applicationForm.supervisorPhone' | transloco
+            }}</label>
             <input
               type="tel"
               id="supervisor_phone"
@@ -240,44 +251,48 @@
               [(ngModel)]="formData.employment_data.current_job.supervisor_phone"
               name="supervisor_phone"
               required
-              placeholder="+591..."
+              [placeholder]="'public.applicationForm.supervisorPhonePlace' | transloco"
             />
           </div>
         </div>
 
         <!-- Previous Job (Optional) -->
         <div class="subsection">
-          <h3>Empleo Anterior (Opcional)</h3>
+          <h3>{{ 'public.applicationForm.prevJobTitle' | transloco }}</h3>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="prev_company">Empresa</label>
+              <label for="prev_company">{{
+                'public.applicationForm.prevCompany' | transloco
+              }}</label>
               <input
                 type="text"
                 id="prev_company"
                 class="form-control"
                 [(ngModel)]="previousJob.company"
                 name="prev_company"
-                placeholder="Empresa anterior"
+                [placeholder]="'public.applicationForm.prevCompany' | transloco"
               />
             </div>
 
             <div class="form-group">
-              <label for="prev_position">Puesto</label>
+              <label for="prev_position">{{
+                'public.applicationForm.prevPosition' | transloco
+              }}</label>
               <input
                 type="text"
                 id="prev_position"
                 class="form-control"
                 [(ngModel)]="previousJob.position"
                 name="prev_position"
-                placeholder="Tu puesto anterior"
+                [placeholder]="'public.applicationForm.prevPosition' | transloco"
               />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="prev_salary">Salario</label>
+              <label for="prev_salary">{{ 'public.applicationForm.prevSalary' | transloco }}</label>
               <input
                 type="number"
                 id="prev_salary"
@@ -290,7 +305,9 @@
             </div>
 
             <div class="form-group">
-              <label for="prev_end_date">Fecha Finalización</label>
+              <label for="prev_end_date">{{
+                'public.applicationForm.prevEndDate' | transloco
+              }}</label>
               <input
                 type="date"
                 id="prev_end_date"
@@ -305,58 +322,58 @@
 
       <!-- SECTION 3: Rental History (Optional) -->
       <div class="form-section">
-        <h2>🏠 Historial de Alquiler (Opcional)</h2>
-        <p class="section-hint">Lugares donde has vivido anteriormente</p>
+        <h2>{{ 'public.applicationForm.rentalSection' | transloco }}</h2>
+        <p class="section-hint">{{ 'public.applicationForm.rentalHint' | transloco }}</p>
 
         <div *ngIf="formData.rental_history.length === 0" class="empty-state">
-          <p>🏠 No has agregado lugares de residencia anteriores</p>
+          <p>{{ 'public.applicationForm.rentalEmpty' | transloco }}</p>
           <button type="button" class="btn btn-secondary" (click)="addRentalHistory()">
-            + Agregar Residencia Anterior
+            {{ 'public.applicationForm.addRentalBtn' | transloco }}
           </button>
         </div>
 
         <div *ngFor="let history of formData.rental_history; let i = index" class="history-card">
           <div class="card-header">
-            <h4>Residencia #{{ i + 1 }}</h4>
+            <h4>{{ 'public.applicationForm.residenceNumber' | transloco: { number: i + 1 } }}</h4>
             <button
               type="button"
               class="btn-remove"
               (click)="removeRentalHistory(i)"
               title="Eliminar"
             >
-              🗑️ Eliminar
+              {{ 'public.applicationForm.deleteBtn' | transloco }}
             </button>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Dirección de la Propiedad *</label>
+              <label>{{ 'public.applicationForm.propertyAddress' | transloco }}</label>
               <input
                 type="text"
                 class="form-control"
                 [(ngModel)]="history.property_address"
                 name="address_{{ i }}"
                 required
-                placeholder="Calle, número, ciudad"
+                [placeholder]="'public.applicationForm.propertyAddressPlace' | transloco"
               />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Nombre del Propietario *</label>
+              <label>{{ 'public.applicationForm.landlordName' | transloco }}</label>
               <input
                 type="text"
                 class="form-control"
                 [(ngModel)]="history.landlord_name"
                 name="landlord_{{ i }}"
                 required
-                placeholder="Nombre completo"
+                [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
               />
             </div>
 
             <div class="form-group">
-              <label>Teléfono del Propietario *</label>
+              <label>{{ 'public.applicationForm.landlordPhone' | transloco }}</label>
               <input
                 type="tel"
                 class="form-control"
@@ -370,7 +387,7 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>Alquiler Mensual *</label>
+              <label>{{ 'public.applicationForm.rentAmount' | transloco }}</label>
               <input
                 type="number"
                 class="form-control"
@@ -384,7 +401,7 @@
             </div>
 
             <div class="form-group">
-              <label>Fecha de Inicio *</label>
+              <label>{{ 'public.applicationForm.startDate' | transloco }}</label>
               <input
                 type="date"
                 class="form-control"
@@ -397,90 +414,98 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label>Fecha de Finalización</label>
+              <label>{{ 'public.applicationForm.endDate' | transloco }}</label>
               <input
                 type="date"
                 class="form-control"
                 [(ngModel)]="history.end_date"
                 name="end_date_{{ i }}"
               />
-              <small class="form-hint">Déjalo vacío si vives allí actualmente</small>
+              <small class="form-hint">{{
+                'public.applicationForm.endDateHint' | transloco
+              }}</small>
             </div>
 
             <div class="form-group">
-              <label>Motivo de Salida</label>
+              <label>{{ 'public.applicationForm.leaveReason' | transloco }}</label>
               <input
                 type="text"
                 class="form-control"
                 [(ngModel)]="history.reason_for_leaving"
                 name="reason_{{ i }}"
-                placeholder="Ej: Cambio de ciudad, mejor vivienda, etc."
+                [placeholder]="'public.applicationForm.leaveReasonPlace' | transloco"
               />
             </div>
           </div>
         </div>
 
         <button
+          *ngIf="formData.rental_history.length > 0"
           type="button"
           class="btn btn-secondary btn-full"
           (click)="addRentalHistory()"
         >
-          + Agregar Otra Residencia
+          {{ 'public.applicationForm.addAnotherRentalBtn' | transloco }}
         </button>
       </div>
 
       <!-- SECTION 4: References -->
       <div class="form-section">
-        <h2>📞 Referencias</h2>
-        <p class="section-hint">Mínimo una referencia personal o profesional</p>
+        <h2>{{ 'public.applicationForm.refSection' | transloco }}</h2>
+        <p class="section-hint">{{ 'public.applicationForm.refHint' | transloco }}</p>
 
         <!-- Personal References -->
         <div class="subsection">
-          <h3>Referencias Personales</h3>
-          <p class="section-hint">Amigos, familiares o personas que te conocen</p>
+          <h3>{{ 'public.applicationForm.personalRefTitle' | transloco }}</h3>
+          <p class="section-hint">{{ 'public.applicationForm.personalRefHint' | transloco }}</p>
 
-          <div *ngFor="let ref of formData.references.personal; let i = index" class="reference-card">
+          <div
+            *ngFor="let ref of formData.references.personal; let i = index"
+            class="reference-card"
+          >
             <div class="card-header">
-              <h4>Referencia Personal #{{ i + 1 }}</h4>
+              <h4>
+                {{ 'public.applicationForm.personalRefNumber' | transloco: { number: i + 1 } }}
+              </h4>
               <button
                 type="button"
                 class="btn-remove"
                 (click)="removePersonalReference(i)"
                 title="Eliminar"
               >
-                🗑️
+                {{ 'public.applicationForm.deleteBtn' | transloco }}
               </button>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>Nombre Completo *</label>
+                <label>{{ 'public.applicationForm.fullName' | transloco }}</label>
                 <input
                   type="text"
                   class="form-control"
                   [(ngModel)]="ref.name"
                   name="pers_name_{{ i }}"
                   required
-                  placeholder="Nombre completo"
+                  [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
                 />
               </div>
 
               <div class="form-group">
-                <label>Relación *</label>
+                <label>{{ 'public.applicationForm.relationship' | transloco }}</label>
                 <input
                   type="text"
                   class="form-control"
                   [(ngModel)]="ref.relationship"
                   name="pers_rel_{{ i }}"
                   required
-                  placeholder="Ej: Amigo, Familiar, Vecino"
+                  [placeholder]="'public.applicationForm.relationshipPlace' | transloco"
                 />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>Teléfono *</label>
+                <label>{{ 'public.applicationForm.phone' | transloco }}</label>
                 <input
                   type="tel"
                   class="form-control"
@@ -492,86 +517,85 @@
               </div>
 
               <div class="form-group">
-                <label>Email</label>
+                <label>{{ 'public.applicationForm.email' | transloco }}</label>
                 <input
                   type="email"
                   class="form-control"
                   [(ngModel)]="ref.email"
                   name="pers_email_{{ i }}"
-                  placeholder="email@ejemplo.com"
+                  [placeholder]="'public.applicationForm.emailPlace' | transloco"
                 />
               </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            class="btn btn-secondary btn-full"
-            (click)="addPersonalReference()"
-          >
-            + Agregar Referencia Personal
+          <button type="button" class="btn btn-secondary btn-full" (click)="addPersonalReference()">
+            {{ 'public.applicationForm.addPersonalRefBtn' | transloco }}
           </button>
         </div>
 
         <!-- Professional References -->
         <div class="subsection">
-          <h3>Referencias Profesionales</h3>
-          <p class="section-hint">Compañeros de trabajo o supervisores</p>
+          <h3>{{ 'public.applicationForm.profRefTitle' | transloco }}</h3>
+          <p class="section-hint">{{ 'public.applicationForm.profRefHint' | transloco }}</p>
 
-          <div *ngFor="let ref of formData.references.professional; let i = index" class="reference-card">
+          <div
+            *ngFor="let ref of formData.references.professional; let i = index"
+            class="reference-card"
+          >
             <div class="card-header">
-              <h4>Referencia Profesional #{{ i + 1 }}</h4>
+              <h4>{{ 'public.applicationForm.profRefNumber' | transloco: { number: i + 1 } }}</h4>
               <button
                 type="button"
                 class="btn-remove"
                 (click)="removeProfessionalReference(i)"
                 title="Eliminar"
               >
-                🗑️
+                {{ 'public.applicationForm.deleteBtn' | transloco }}
               </button>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>Nombre Completo *</label>
+                <label>{{ 'public.applicationForm.fullName' | transloco }}</label>
                 <input
                   type="text"
                   class="form-control"
                   [(ngModel)]="ref.name"
                   name="prof_name_{{ i }}"
                   required
-                  placeholder="Nombre completo"
+                  [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
                 />
               </div>
 
               <div class="form-group">
-                <label>Empresa *</label>
+                <label>{{ 'public.applicationForm.company' | transloco }}</label>
                 <input
                   type="text"
                   class="form-control"
                   [(ngModel)]="ref.company"
                   name="prof_company_{{ i }}"
                   required
-                  placeholder="Nombre de la empresa"
+                  [placeholder]="'public.applicationForm.companyPlace' | transloco"
                 />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
-                <label>Puesto *</label>
+                <label>{{ 'public.applicationForm.position' | transloco }}</label>
                 <input
                   type="text"
                   class="form-control"
                   [(ngModel)]="ref.position"
                   name="prof_position_{{ i }}"
                   required
-                  placeholder="Puesto en la empresa"
+                  [placeholder]="'public.applicationForm.positionPlace' | transloco"
                 />
               </div>
 
               <div class="form-group">
-                <label>Teléfono *</label>
+                <label>{{ 'public.applicationForm.phone' | transloco }}</label>
                 <input
                   type="tel"
                   class="form-control"
@@ -584,13 +608,13 @@
             </div>
 
             <div class="form-group">
-              <label>Email</label>
+              <label>{{ 'public.applicationForm.email' | transloco }}</label>
               <input
                 type="email"
                 class="form-control"
                 [(ngModel)]="ref.email"
                 name="prof_email_{{ i }}"
-                placeholder="email@ejemplo.com"
+                [placeholder]="'public.applicationForm.emailPlace' | transloco"
               />
             </div>
           </div>
@@ -600,15 +624,15 @@
             class="btn btn-secondary btn-full"
             (click)="addProfessionalReference()"
           >
-            + Agregar Referencia Profesional
+            {{ 'public.applicationForm.addProfRefBtn' | transloco }}
           </button>
         </div>
       </div>
 
       <!-- SECTION 5: Additional Notes -->
       <div class="form-section">
-        <h2>📝 Notas Adicionales</h2>
-        <p class="section-hint">Cualquier información extra que quieras compartir</p>
+        <h2>{{ 'public.applicationForm.notesSection' | transloco }}</h2>
+        <p class="section-hint">{{ 'public.applicationForm.notesHint' | transloco }}</p>
 
         <div class="form-group">
           <textarea
@@ -616,39 +640,31 @@
             [(ngModel)]="formData.additional_notes"
             name="additional_notes"
             rows="5"
-            placeholder="Ej: Tengo mascotas pequeñas, trabajo desde casa, fumaría solo en el balcón, etc."
+            [placeholder]="'public.applicationForm.notesPlace' | transloco"
           ></textarea>
         </div>
       </div>
 
       <!-- Info Box -->
       <div class="info-box">
-        <p>⚠️ Antes de enviar tu solicitud:</p>
+        <p>{{ 'public.applicationForm.infoBoxTitle' | transloco }}</p>
         <ul>
-          <li>Verifica que todos los datos marcados con * estén completos</li>
-          <li>Debes agregar al menos una referencia (personal o profesional)</li>
-          <li>Después de enviar, te pediremos que te registres o inicies sesión</li>
-          <li>Podrás ver el estado de tu solicitud desde tu portal personal</li>
+          <li>{{ 'public.applicationForm.info1' | transloco }}</li>
+          <li>{{ 'public.applicationForm.info2' | transloco }}</li>
+          <li>{{ 'public.applicationForm.info3' | transloco }}</li>
+          <li>{{ 'public.applicationForm.info4' | transloco }}</li>
         </ul>
       </div>
 
       <!-- Form Actions -->
       <div class="form-actions">
-        <button
-          type="button"
-          class="btn btn-outline"
-          (click)="cancel()"
-        >
-          Cancelar
+        <button type="button" class="btn btn-outline" (click)="cancel()">
+          {{ 'public.applicationForm.cancelBtn' | transloco }}
         </button>
 
-        <button
-          type="submit"
-          class="btn btn-success"
-          [disabled]="submitting"
-        >
-          <span *ngIf="submitting">Enviando...</span>
-          <span *ngIf="!submitting">✅ Enviar Solicitud</span>
+        <button type="submit" class="btn btn-success" [disabled]="submitting">
+          <span *ngIf="submitting">{{ 'public.applicationForm.submittingBtn' | transloco }}</span>
+          <span *ngIf="!submitting">{{ 'public.applicationForm.submitBtn' | transloco }}</span>
         </button>
       </div>
     </form>

@@ -19,6 +19,8 @@ import {
   MessageSquare,
   PhoneCall,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
@@ -38,7 +40,9 @@ import { MapModalComponent } from '../map-modal/map-modal.component';
     ApplicationModalComponent,
     ContactModalComponent,
     MapModalComponent,
+    TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './property-detail.component.html',
   styleUrls: ['./property-detail.component.css'],
 })
@@ -297,7 +301,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
       const addr = this.property.addresses[0];
       return `${addr.street_address}, ${addr.city}${addr.state ? ', ' + addr.state : ''}`;
     }
-    return 'Dirección no disponible';
+    return 'public.properties.locationNotAvailable';
   }
 
   getLocationForMap(): any {

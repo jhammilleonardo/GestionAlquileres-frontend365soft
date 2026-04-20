@@ -26,6 +26,7 @@ import {
   MessagePriorityLabels,
   MessageStatus,
 } from '../../../core/models/message.model';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-tenant-messages',
@@ -42,6 +43,7 @@ import {
     MatProgressSpinnerModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="messages-container">
@@ -50,8 +52,8 @@ import {
         <div class="header-content">
           <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
           <div>
-            <h1>Mensajes</h1>
-            <p>Comunícate con tu administrador</p>
+            <h1>{{ 'public.tenantMessages.title' | transloco }}</h1>
+            <p>{{ 'public.tenantMessages.subtitle' | transloco }}</p>
           </div>
         </div>
       </div>
@@ -60,11 +62,15 @@ import {
       <div class="stats-row">
         <mat-card class="stat-mini">
           <lucide-icon [img]="Inbox" [size]="20"></lucide-icon>
-          <span>{{ messageService.messages().length }} Total</span>
+          <span>{{
+            'public.tenantMessages.total' | transloco: { count: messageService.messages().length }
+          }}</span>
         </mat-card>
         <mat-card class="stat-mini unread">
           <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
-          <span>{{ messageService.unreadCount() }} Sin Leer</span>
+          <span>{{
+            'public.tenantMessages.unread' | transloco: { count: messageService.unreadCount() }
+          }}</span>
         </mat-card>
       </div>
 
@@ -92,10 +98,10 @@ import {
             } @else if (messageService.messages().length === 0) {
               <div class="empty-state">
                 <lucide-icon [img]="MessageSquare" [size]="48"></lucide-icon>
-                <h3>No hay mensajes</h3>
-                <p>Comienza una conversación con tu administrador</p>
+                <h3>{{ 'public.tenantMessages.noMessages' | transloco }}</h3>
+                <p>{{ 'public.tenantMessages.noMessagesDesc' | transloco }}</p>
                 <button mat-raised-button color="primary" (click)="showNewMessage()">
-                  Nuevo Mensaje
+                  {{ 'public.tenantMessages.newMessage' | transloco }}
                 </button>
               </div>
             } @else {
@@ -137,7 +143,7 @@ import {
               </button>
               <h2>
                 <lucide-icon [img]="Send" [size]="24"></lucide-icon>
-                Nuevo Mensaje
+                {{ 'public.tenantMessages.newMessage' | transloco }}
               </h2>
 
               @if (messageService.error()) {
@@ -149,23 +155,23 @@ import {
 
               <form [formGroup]="messageForm" (ngSubmit)="sendMessage()">
                 <mat-form-field appearance="outline">
-                  <mat-label>Asunto</mat-label>
+                  <mat-label>{{ 'public.tenantMessages.subject' | transloco }}</mat-label>
                   <input
                     matInput
                     formControlName="subject"
-                    placeholder="Escribe el asunto del mensaje"
+                    [placeholder]="'public.tenantMessages.subjectPlaceholder' | transloco"
                     required
                   />
                   @if (
                     messageForm.get('subject')?.hasError('required') &&
                     messageForm.get('subject')?.touched
                   ) {
-                    <mat-error>El asunto es requerido</mat-error>
+                    <mat-error>{{ 'public.tenantMessages.subjectRequired' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Prioridad</mat-label>
+                  <mat-label>{{ 'public.tenantMessages.priority' | transloco }}</mat-label>
                   <mat-select formControlName="priority" required>
                     @for (priority of priorities; track priority.value) {
                       <mat-option [value]="priority.value">
@@ -176,12 +182,12 @@ import {
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
-                  <mat-label>Mensaje</mat-label>
+                  <mat-label>{{ 'public.tenantMessages.message' | transloco }}</mat-label>
                   <textarea
                     matInput
                     formControlName="body"
                     rows="8"
-                    placeholder="Escribe tu mensaje aquí..."
+                    [placeholder]="'public.tenantMessages.messagePlaceholder' | transloco"
                     required
                   >
                   </textarea>
@@ -189,13 +195,13 @@ import {
                     messageForm.get('body')?.hasError('required') &&
                     messageForm.get('body')?.touched
                   ) {
-                    <mat-error>El mensaje es requerido</mat-error>
+                    <mat-error>{{ 'public.tenantMessages.messageRequired' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <div class="form-actions">
                   <button type="button" mat-stroked-button (click)="cancelNewMessage()">
-                    Cancelar
+                    {{ 'public.tenantMessages.cancel' | transloco }}
                   </button>
                   <button
                     type="submit"
@@ -204,7 +210,7 @@ import {
                     [disabled]="messageForm.invalid || messageService.isLoading()"
                   >
                     <lucide-icon [img]="Send" [size]="18"></lucide-icon>
-                    Enviar
+                    {{ 'public.tenantMessages.send' | transloco }}
                   </button>
                 </div>
               </form>
@@ -223,7 +229,10 @@ import {
                   <div>
                     <h2>{{ selectedMessage()!.subject }}</h2>
                     <p class="sender-name">
-                      De: {{ selectedMessage()!.sender_name }}
+                      {{
+                        'public.tenantMessages.from'
+                          | transloco: { name: selectedMessage()!.sender_name }
+                      }}
                       <span class="sender-role">({{ selectedMessage()!.sender_role }})</span>
                     </p>
                     <p class="date">{{ formatDateLong(selectedMessage()!.created_at) }}</p>
@@ -247,15 +256,15 @@ import {
 
               <!-- Reply Form -->
               <div class="reply-section">
-                <h3>Responder</h3>
+                <h3>{{ 'public.tenantMessages.reply' | transloco }}</h3>
                 <form [formGroup]="replyForm" (ngSubmit)="sendReply()">
                   <mat-form-field appearance="outline">
-                    <mat-label>Tu respuesta</mat-label>
+                    <mat-label>{{ 'public.tenantMessages.yourReply' | transloco }}</mat-label>
                     <textarea
                       matInput
                       formControlName="body"
                       rows="4"
-                      placeholder="Escribe tu respuesta..."
+                      [placeholder]="'public.tenantMessages.replyPlaceholder' | transloco"
                       required
                     >
                     </textarea>
@@ -269,7 +278,7 @@ import {
                       [disabled]="replyForm.invalid || messageService.isLoading()"
                     >
                       <lucide-icon [img]="Send" [size]="18"></lucide-icon>
-                      Enviar Respuesta
+                      {{ 'public.tenantMessages.sendReply' | transloco }}
                     </button>
                   </div>
                 </form>
@@ -278,8 +287,8 @@ import {
           } @else {
             <div class="no-selection">
               <lucide-icon [img]="MessageSquare" [size]="64"></lucide-icon>
-              <h3>Selecciona un mensaje</h3>
-              <p>Elige un mensaje de la lista para verlo</p>
+              <h3>{{ 'public.tenantMessages.selectMessage' | transloco }}</h3>
+              <p>{{ 'public.tenantMessages.selectMessageDesc' | transloco }}</p>
             </div>
           }
         </div>
@@ -826,6 +835,7 @@ export class TenantMessagesComponent implements OnInit {
 
   private fb = inject(FormBuilder);
   messageService = inject(TenantMessageService);
+  private translocoService = inject(TranslocoService);
 
   selectedMessage = signal<Message | null>(null);
   showNewMessageForm = signal(false);
@@ -899,7 +909,7 @@ export class TenantMessagesComponent implements OnInit {
         next: () => {
           this.messageForm.reset({ priority: MessagePriority.NORMAL });
           this.showNewMessageForm.set(false);
-          alert('Mensaje enviado exitosamente');
+          alert(this.translocoService.translate('public.tenantMessages.messageSentSuccess'));
         },
         error: (error) => {
           console.error('Error sending message:', error);
@@ -920,7 +930,7 @@ export class TenantMessagesComponent implements OnInit {
       .subscribe({
         next: () => {
           this.replyForm.reset();
-          alert('Respuesta enviada exitosamente');
+          alert(this.translocoService.translate('public.tenantMessages.replySentSuccess'));
         },
         error: (error) => {
           console.error('Error sending reply:', error);
@@ -933,24 +943,31 @@ export class TenantMessagesComponent implements OnInit {
     const diffMs = now.getTime() - date.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
+    if (diffDays === 0) return this.translocoService.translate('public.tenantMessages.today');
+    if (diffDays === 1) return this.translocoService.translate('public.tenantMessages.yesterday');
+    if (diffDays < 7)
+      return this.translocoService.translate('public.tenantMessages.daysAgo', { count: diffDays });
 
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-    });
+    return date.toLocaleDateString(
+      this.translocoService.getActiveLang() === 'es' ? 'es-ES' : 'en-US',
+      {
+        day: '2-digit',
+        month: 'short',
+      },
+    );
   }
 
   formatDateLong(date: Date): string {
-    return date.toLocaleDateString('es-ES', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return date.toLocaleDateString(
+      this.translocoService.getActiveLang() === 'es' ? 'es-ES' : 'en-US',
+      {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      },
+    );
   }
 }

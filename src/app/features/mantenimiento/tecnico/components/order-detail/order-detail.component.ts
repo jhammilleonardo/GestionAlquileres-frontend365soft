@@ -31,22 +31,31 @@ import {
   Lock,
   MessageSquare,
 } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { environment } from '../../../../../../environments/environment';
 import {
   MaintenanceRequest,
   MaintenanceStatus,
-  MaintenanceStatusLabels,
-  MaintenancePriorityLabels,
   MaintenanceMessage,
   CreateMessageDto,
 } from '../../../../../core/models/maintenance-request.model';
 import { MaintenanceService } from '../../../../../core/services/admin/maintenance.service';
+import { TenantDatePipe } from '../../../../../shared/pipes/tenant-date.pipe';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
+  providers: [provideTranslocoScope('tecnico')],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, MatButtonModule, MatProgressSpinnerModule, LucideAngularModule],
+  imports: [
+    FormsModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+  ],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
 })
@@ -59,6 +68,7 @@ export class OrderDetailComponent {
   // Services
   private maintenanceService = inject(MaintenanceService);
   private snackBar = inject(MatSnackBar);
+  private transloco = inject(TranslocoService);
   private destroyRef = inject(DestroyRef);
 
   // Icons
@@ -81,10 +91,6 @@ export class OrderDetailComponent {
   // Enums
   readonly MaintenanceStatus = MaintenanceStatus;
 
-  // Labels
-  readonly statusLabels = MaintenanceStatusLabels;
-  readonly priorityLabels = MaintenancePriorityLabels;
-
   // State
   messages = signal<MaintenanceMessage[]>([]);
   noteText = signal('');
@@ -101,7 +107,9 @@ export class OrderDetailComponent {
   });
 
   readonly advanceLabel = computed(() =>
-    this.request().status === MaintenanceStatus.NEW ? 'Iniciar trabajo' : 'Marcar completado',
+    this.request().status === MaintenanceStatus.NEW
+      ? this.transloco.translate('tecnico.startWork')
+      : this.transloco.translate('tecnico.markCompleted'),
   );
 
   readonly nextStatus = computed(() =>
@@ -141,8 +149,8 @@ export class OrderDetailComponent {
           this.isAdvancingStage.set(false);
           const label =
             updated.status === MaintenanceStatus.IN_PROGRESS
-              ? 'Orden iniciada'
-              : 'Orden completada';
+              ? this.transloco.translate('tecnico.orderStarted')
+              : this.transloco.translate('tecnico.orderCompleted');
           this.snackBar.open(label, undefined, {
             duration: 3000,
             panelClass: ['snack-success'],
@@ -151,9 +159,11 @@ export class OrderDetailComponent {
         },
         error: (err: { error?: { message?: string } }) => {
           this.isAdvancingStage.set(false);
-          this.snackBar.open(err.error?.message ?? 'Error al actualizar estado', 'Cerrar', {
-            duration: 4000,
-          });
+          this.snackBar.open(
+            err.error?.message ?? this.transloco.translate('tecnico.errorUpdateStatus'),
+            this.transloco.translate('common.close'),
+            { duration: 4000 },
+          );
         },
       });
   }
@@ -211,16 +221,18 @@ export class OrderDetailComponent {
             this.selectedFiles.set([]);
             this.previewUrls.set([]);
             this.isSendingNote.set(false);
-            this.snackBar.open('Nota enviada', undefined, {
+            this.snackBar.open(this.transloco.translate('tecnico.noteSent'), undefined, {
               duration: 2500,
               panelClass: ['snack-success'],
             });
           },
           error: (err: { error?: { message?: string } }) => {
             this.isSendingNote.set(false);
-            this.snackBar.open(err.error?.message ?? 'Error al enviar la nota', 'Cerrar', {
-              duration: 4000,
-            });
+            this.snackBar.open(
+              err.error?.message ?? this.transloco.translate('tecnico.errorSendNote'),
+              this.transloco.translate('common.close'),
+              { duration: 4000 },
+            );
           },
         });
     };
@@ -233,9 +245,11 @@ export class OrderDetailComponent {
           next: (attachments) => doSend(attachments.map((a) => a.file_url)),
           error: (err: { error?: { message?: string } }) => {
             this.isSendingNote.set(false);
-            this.snackBar.open(err.error?.message ?? 'Error al subir archivos', 'Cerrar', {
-              duration: 4000,
-            });
+            this.snackBar.open(
+              err.error?.message ?? this.transloco.translate('tecnico.errorUploadFiles'),
+              this.transloco.translate('common.close'),
+              { duration: 4000 },
+            );
           },
         });
     } else {
@@ -245,15 +259,6 @@ export class OrderDetailComponent {
 
   getFileUrl(url: string): string {
     return environment.apiUrl.replace(/\/$/, '') + url;
-  }
-
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   }
 
   isInternal(msg: MaintenanceMessage): boolean {

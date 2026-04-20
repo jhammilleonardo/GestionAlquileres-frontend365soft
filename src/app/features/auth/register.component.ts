@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import {
@@ -34,6 +34,8 @@ import {
   Globe,
 } from 'lucide-angular';
 import { catchError, tap } from 'rxjs';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -55,6 +57,7 @@ import { AuthService } from '../../core/services/auth.service';
     MatDialogModule,
     MatSelectModule,
     LucideAngularModule,
+    TranslocoModule,
   ],
   template: `
     <div class="register-page">
@@ -65,23 +68,23 @@ import { AuthService } from '../../core/services/auth.service';
             <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
           </div>
           <h1>365Soft</h1>
-          <h2>Panel de Administración</h2>
+          <h2>{{ 'auth.adminPanel' | transloco }}</h2>
           <p class="brand-tagline">
-            Únete a miles de administradores que gestionan sus propiedades de manera eficiente
+            {{ 'auth.registerTagline' | transloco }}
           </p>
 
           <div class="features">
             <div class="feature-item">
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-              <span>Configuración rápida en 5 minutos</span>
+              <span>{{ 'auth.regFeature1' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-              <span>Sin tarjeta de crédito requerida</span>
+              <span>{{ 'auth.regFeature2' | transloco }}</span>
             </div>
             <div class="feature-item">
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-              <span>Soporte técnico 24/7</span>
+              <span>{{ 'auth.regFeature3' | transloco }}</span>
             </div>
           </div>
         </div>
@@ -90,16 +93,38 @@ import { AuthService } from '../../core/services/auth.service';
       <!-- Right Side - Registration Form -->
       <div class="register-form-container">
         <div class="register-form-wrapper">
+          <div class="lang-toggle-row">
+            <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isSpanish()"
+                (click)="languageService.setLanguage('es')"
+                aria-label="Español"
+                title="Español"
+              >
+                ES
+              </button>
+              <button
+                class="lang-btn"
+                [class.active]="languageService.isEnglish()"
+                (click)="languageService.setLanguage('en')"
+                aria-label="English"
+                title="English"
+              >
+                EN
+              </button>
+            </div>
+          </div>
           <div class="form-header">
-            <h3>Crear Cuenta</h3>
-            <p>Comienza a gestionar tus propiedades hoy</p>
+            <h3>{{ 'auth.registerTitle' | transloco }}</h3>
+            <p>{{ 'auth.registerSubtitle' | transloco }}</p>
           </div>
 
           @if (successMessage()) {
             <div class="success-alert">
               <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
               <div class="alert-content">
-                <strong>¡Cuenta creada exitosamente!</strong>
+                <strong>{{ 'auth.accountCreated' | transloco }}</strong>
                 <span>{{ successMessage() }}</span>
               </div>
             </div>
@@ -109,7 +134,7 @@ import { AuthService } from '../../core/services/auth.service';
             <div class="error-alert">
               <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
               <div class="alert-content">
-                <strong>Error al crear la cuenta</strong>
+                <strong>{{ 'auth.accountError' | transloco }}</strong>
                 <span>{{ errorMessage() }}</span>
               </div>
             </div>
@@ -119,42 +144,42 @@ import { AuthService } from '../../core/services/auth.service';
             <!-- Step 1: Company Info -->
             <mat-step [stepControl]="companyForm">
               <form [formGroup]="companyForm" class="step-form">
-                <ng-template matStepLabel>Información de la Empresa</ng-template>
+                <ng-template matStepLabel>{{ 'auth.companyStep' | transloco }}</ng-template>
 
-                <h3 class="step-title">Datos de tu empresa</h3>
+                <h3 class="step-title">{{ 'auth.companyStepTitle' | transloco }}</h3>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>Nombre de la Empresa</mat-label>
+                  <mat-label>{{ 'auth.companyName' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="Building2" [size]="20"></lucide-icon>
                   <input
                     matInput
                     formControlName="company_name"
-                    placeholder="Ej: Inmobiliaria ABC"
+                    [placeholder]="'auth.companyNamePlaceholder' | transloco"
                     autocomplete="organization"
                   />
-                  <mat-hint>El identificador único se generará automáticamente</mat-hint>
+                  <mat-hint>{{ 'auth.companyNameHint' | transloco }}</mat-hint>
                   @if (
                     companyForm.get('company_name')?.hasError('required') &&
                     companyForm.get('company_name')?.touched
                   ) {
-                    <mat-error>Requerido</mat-error>
+                    <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>País de operación</mat-label>
+                  <mat-label>{{ 'auth.country' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="Globe" [size]="20"></lucide-icon>
                   <mat-select formControlName="country">
-                    @for (c of countries; track c.value) {
+                    @for (c of countries(); track c.value) {
                       <mat-option [value]="c.value">{{ c.label }}</mat-option>
                     }
                   </mat-select>
-                  <mat-hint>Define la moneda, zona horaria y métodos de pago por defecto</mat-hint>
+                  <mat-hint>{{ 'auth.countryHint' | transloco }}</mat-hint>
                   @if (
                     companyForm.get('country')?.hasError('required') &&
                     companyForm.get('country')?.touched
                   ) {
-                    <mat-error>Requerido</mat-error>
+                    <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
@@ -166,7 +191,7 @@ import { AuthService } from '../../core/services/auth.service';
                     [disabled]="companyForm.invalid"
                     class="next-btn"
                   >
-                    Siguiente
+                    {{ 'auth.next' | transloco }}
                     <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
                   </button>
                 </div>
@@ -176,31 +201,31 @@ import { AuthService } from '../../core/services/auth.service';
             <!-- Step 2: Admin Info -->
             <mat-step [stepControl]="adminForm">
               <form [formGroup]="adminForm" class="step-form">
-                <ng-template matStepLabel>Datos del Administrador</ng-template>
+                <ng-template matStepLabel>{{ 'auth.adminStep' | transloco }}</ng-template>
 
-                <h3 class="step-title">Tu información personal</h3>
+                <h3 class="step-title">{{ 'auth.adminStepTitle' | transloco }}</h3>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>Nombre Completo</mat-label>
+                  <mat-label>{{ 'auth.fullName' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
                   <input
                     matInput
                     formControlName="name"
-                    placeholder="Juan Pérez"
+                    [placeholder]="'auth.fullNamePlaceholder' | transloco"
                     autocomplete="name"
                   />
                   @if (
                     adminForm.get('name')?.hasError('required') && adminForm.get('name')?.touched
                   ) {
-                    <mat-error>Requerido</mat-error>
+                    <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                   }
                   @if (adminForm.get('name')?.hasError('minlength')) {
-                    <mat-error>Mínimo 2 caracteres</mat-error>
+                    <mat-error>{{ 'auth.minChars2' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>Correo Electrónico</mat-label>
+                  <mat-label>{{ 'auth.email' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
                   <input
                     matInput
@@ -212,21 +237,21 @@ import { AuthService } from '../../core/services/auth.service';
                   @if (
                     adminForm.get('email')?.hasError('required') && adminForm.get('email')?.touched
                   ) {
-                    <mat-error>Requerido</mat-error>
+                    <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                   }
                   @if (adminForm.get('email')?.hasError('email')) {
-                    <mat-error>Correo inválido</mat-error>
+                    <mat-error>{{ 'auth.emailInvalid' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>Teléfono (opcional)</mat-label>
+                  <mat-label>{{ 'auth.phoneOptional' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
                   <input
                     matInput
                     type="tel"
                     formControlName="phone"
-                    placeholder="+1 234 567 8900"
+                    [placeholder]="'auth.phonePlaceholder' | transloco"
                     autocomplete="tel"
                   />
                 </mat-form-field>
@@ -234,7 +259,7 @@ import { AuthService } from '../../core/services/auth.service';
                 <div class="step-actions">
                   <button mat-button matStepperPrevious class="back-btn">
                     <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
-                    Atrás
+                    {{ 'auth.back' | transloco }}
                   </button>
                   <button
                     mat-raised-button
@@ -243,7 +268,7 @@ import { AuthService } from '../../core/services/auth.service';
                     [disabled]="adminForm.invalid"
                     class="next-btn"
                   >
-                    Siguiente
+                    {{ 'auth.next' | transloco }}
                     <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
                   </button>
                 </div>
@@ -253,12 +278,12 @@ import { AuthService } from '../../core/services/auth.service';
             <!-- Step 3: Password -->
             <mat-step [stepControl]="passwordForm">
               <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="step-form">
-                <ng-template matStepLabel>Contraseña</ng-template>
+                <ng-template matStepLabel>{{ 'auth.passwordStep' | transloco }}</ng-template>
 
-                <h3 class="step-title">Crea tu contraseña</h3>
+                <h3 class="step-title">{{ 'auth.passwordStepTitle' | transloco }}</h3>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>Contraseña</mat-label>
+                  <mat-label>{{ 'auth.password' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
                   <input
                     matInput
@@ -276,20 +301,20 @@ import { AuthService } from '../../core/services/auth.service';
                   >
                     <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
                   </button>
-                  <mat-hint>Mínimo 6 caracteres</mat-hint>
+                  <mat-hint>{{ 'auth.passwordHint' | transloco }}</mat-hint>
                   @if (
                     passwordForm.get('password')?.hasError('required') &&
                     passwordForm.get('password')?.touched
                   ) {
-                    <mat-error>Requerido</mat-error>
+                    <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                   }
                   @if (passwordForm.get('password')?.hasError('minlength')) {
-                    <mat-error>Mínimo 6 caracteres</mat-error>
+                    <mat-error>{{ 'auth.minChars6' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="custom-field">
-                  <mat-label>Confirmar Contraseña</mat-label>
+                  <mat-label>{{ 'auth.confirmPassword' | transloco }}</mat-label>
                   <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
                   <input
                     matInput
@@ -314,28 +339,33 @@ import { AuthService } from '../../core/services/auth.service';
                     passwordForm.get('confirm_password')?.hasError('required') &&
                     passwordForm.get('confirm_password')?.touched
                   ) {
-                    <mat-error>Requerido</mat-error>
+                    <mat-error>{{ 'auth.required' | transloco }}</mat-error>
                   }
                   @if (
                     passwordForm.hasError('passwordMismatch') &&
                     passwordForm.get('confirm_password')?.touched
                   ) {
-                    <mat-error>Las contraseñas no coinciden</mat-error>
+                    <mat-error>{{ 'auth.passwordMismatch' | transloco }}</mat-error>
                   }
                 </mat-form-field>
 
                 <div class="terms-checkbox">
                   <mat-checkbox formControlName="acceptTerms" color="primary">
-                    Acepto los
-                    <a (click)="openTerms($event)" class="link">Términos y Condiciones</a> y la
-                    <a (click)="openPrivacy($event)" class="link">Política de Privacidad</a>
+                    {{ 'auth.acceptTerms' | transloco }}
+                    <a (click)="openTerms($event)" class="link">{{
+                      'auth.termsLink' | transloco
+                    }}</a>
+                    {{ 'auth.andThe' | transloco }}
+                    <a (click)="openPrivacy($event)" class="link">{{
+                      'auth.privacyLink' | transloco
+                    }}</a>
                   </mat-checkbox>
                 </div>
 
                 <div class="step-actions">
                   <button mat-button matStepperPrevious class="back-btn" type="button">
                     <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
-                    Atrás
+                    {{ 'auth.back' | transloco }}
                   </button>
                   <button
                     mat-raised-button
@@ -346,9 +376,9 @@ import { AuthService } from '../../core/services/auth.service';
                   >
                     @if (isLoading()) {
                       <mat-spinner diameter="20" color="accent"></mat-spinner>
-                      <span>Creando cuenta...</span>
+                      <span>{{ 'auth.creating' | transloco }}</span>
                     } @else {
-                      <span>Crear Cuenta</span>
+                      <span>{{ 'auth.createAccount' | transloco }}</span>
                     }
                   </button>
                 </div>
@@ -358,11 +388,13 @@ import { AuthService } from '../../core/services/auth.service';
 
           <div class="register-footer">
             <div class="help-links">
-              <a routerLink="/login" class="help-link">¿Ya tienes cuenta? Inicia Sesión</a>
+              <a routerLink="/login" class="help-link">{{
+                'auth.alreadyHaveAccount' | transloco
+              }}</a>
               <span class="separator">•</span>
-              <a (click)="goToTenantPortal()" class="help-link tenant-portal-link"
-                >Portal del Inquilino</a
-              >
+              <a (click)="goToTenantPortal()" class="help-link tenant-portal-link">{{
+                'auth.tenantPortal' | transloco
+              }}</a>
             </div>
           </div>
         </div>
@@ -492,6 +524,37 @@ import { AuthService } from '../../core/services/auth.service';
         max-width: 520px;
       }
 
+      .lang-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 24px;
+      }
+      .lang-toggle {
+        display: flex;
+        gap: 2px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 3px;
+      }
+      .lang-btn {
+        background: none;
+        border: none;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .lang-btn:hover {
+        color: #0f172a;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #2563eb;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      }
       .form-header {
         margin-bottom: 32px;
       }
@@ -789,10 +852,12 @@ export class RegisterComponent {
   readonly ArrowLeft = ArrowLeft;
   readonly Globe = Globe;
 
+  readonly languageService = inject(LanguageService);
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+  private transloco = inject(TranslocoService);
 
   showPassword = signal(false);
   showConfirmPassword = signal(false);
@@ -800,12 +865,27 @@ export class RegisterComponent {
   errorMessage = signal<string | null>(null);
   successMessage = signal<string | null>(null);
 
-  readonly countries = [
-    { value: 'BO', label: 'Bolivia (BOB)' },
-    { value: 'US', label: 'Estados Unidos (USD)' },
-    { value: 'GT', label: 'Guatemala (GTQ)' },
-    { value: 'HN', label: 'Honduras (HNL)' },
-  ];
+  private static readonly COUNTRY_LABELS: Record<string, Record<string, string>> = {
+    es: {
+      BO: 'Bolivia (BOB)',
+      US: 'Estados Unidos (USD)',
+      GT: 'Guatemala (GTQ)',
+      HN: 'Honduras (HNL)',
+    },
+    en: {
+      BO: 'Bolivia (BOB)',
+      US: 'United States (USD)',
+      GT: 'Guatemala (GTQ)',
+      HN: 'Honduras (HNL)',
+    },
+  };
+
+  readonly countries = computed(() => {
+    const labels =
+      RegisterComponent.COUNTRY_LABELS[this.languageService.currentLang()] ??
+      RegisterComponent.COUNTRY_LABELS['es'];
+    return ['BO', 'US', 'GT', 'HN'].map((code) => ({ value: code, label: labels[code] }));
+  });
 
   companyForm = this.fb.group({
     company_name: ['', Validators.required],
@@ -892,7 +972,7 @@ export class RegisterComponent {
       .pipe(
         tap((response) => {
           this.isLoading.set(false);
-          this.successMessage.set('¡Cuenta creada! Configurando tu espacio de trabajo...');
+          this.successMessage.set(this.transloco.translate('auth.accountCreatedMsg'));
           const slug = response.tenant.slug;
           setTimeout(() => {
             this.router.navigate(['/', slug, 'configuracion', 'inicio']);
@@ -901,7 +981,7 @@ export class RegisterComponent {
         catchError((error) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message || 'Error al crear la cuenta. Por favor, intenta nuevamente.',
+            error.error?.message || this.transloco.translate('auth.createAccountError'),
           );
           throw error;
         }),
@@ -914,10 +994,10 @@ export class RegisterComponent {
 @Component({
   selector: 'app-terms-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule, TranslocoModule],
   template: `
     <div class="dialog-container">
-      <h2 mat-dialog-title>Términos y Condiciones</h2>
+      <h2 mat-dialog-title>{{ 'auth.termsTitle' | transloco }}</h2>
       <mat-dialog-content>
         <div class="terms-content">
           <p class="last-updated">Última actualización: Febrero 8, 2026</p>
@@ -991,7 +1071,9 @@ export class RegisterComponent {
         </div>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-raised-button color="primary" mat-dialog-close>Cerrar</button>
+        <button mat-raised-button color="primary" mat-dialog-close>
+          {{ 'auth.close' | transloco }}
+        </button>
       </mat-dialog-actions>
     </div>
   `,
@@ -1059,10 +1141,10 @@ export class TermsDialogComponent {}
 @Component({
   selector: 'app-privacy-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule, TranslocoModule],
   template: `
     <div class="dialog-container">
-      <h2 mat-dialog-title>Política de Privacidad</h2>
+      <h2 mat-dialog-title>{{ 'auth.privacyTitle' | transloco }}</h2>
       <mat-dialog-content>
         <div class="privacy-content">
           <p class="last-updated">Última actualización: Febrero 8, 2026</p>
@@ -1181,7 +1263,9 @@ export class TermsDialogComponent {}
         </div>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-raised-button color="primary" mat-dialog-close>Cerrar</button>
+        <button mat-raised-button color="primary" mat-dialog-close>
+          {{ 'auth.close' | transloco }}
+        </button>
       </mat-dialog-actions>
     </div>
   `,

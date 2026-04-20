@@ -21,7 +21,9 @@ import {
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { LanguageService } from '../../../core/services/language.service';
 import { MenuOption } from '../../../core/models/user.model';
+import { TranslocoModule } from '@jsverse/transloco';
 
 const ICON_MAP: Record<string, LucideIconData> = {
   LayoutDashboard,
@@ -43,7 +45,7 @@ const ICON_MAP: Record<string, LucideIconData> = {
   selector: 'app-sidebar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule],
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule, TranslocoModule],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
 })
@@ -53,6 +55,7 @@ export class SidebarComponent {
   private router = inject(Router);
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
+  readonly languageService = inject(LanguageService);
 
   expanded = this.sidebarService.expanded;
   isMobileOpen = this.sidebarService.mobileOpen;

@@ -39,11 +39,12 @@ import {
   PaymentTypeLabels,
   PaymentMethodLabels,
   PaymentStatusColors,
-  Currency,
   CurrencyLabels,
-  CurrencySymbols,
 } from '../../../core/models/payment.model';
 import { MatDividerModule } from '@angular/material/divider';
+import { TranslocoModule } from '@jsverse/transloco';
+import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
 interface PaymentScheduleItem {
   label: string;
@@ -71,6 +72,9 @@ interface PaymentScheduleItem {
     MatTabsModule,
     MatDividerModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
   template: `
     <div class="payments-container">
@@ -79,14 +83,14 @@ interface PaymentScheduleItem {
         <div class="header-content">
           <lucide-icon [img]="CreditCard" [size]="32"></lucide-icon>
           <div>
-            <h1>Pagos</h1>
-            <p>Gestiona tus pagos y consulta tu historial</p>
+            <h1>{{ 'public.tenantPayments.title' | transloco }}</h1>
+            <p>{{ 'public.tenantPayments.subtitle' | transloco }}</p>
           </div>
         </div>
         <div class="header-actions">
           <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
             <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-            Registrar Pago
+            {{ 'public.tenantPayments.registerPayment' | transloco }}
           </button>
         </div>
       </div>
@@ -100,7 +104,7 @@ interface PaymentScheduleItem {
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_payments }}</div>
-              <div class="stat-label">Total Pagos</div>
+              <div class="stat-label">{{ 'public.tenantPayments.totalPayments' | transloco }}</div>
             </div>
           </mat-card>
 
@@ -110,9 +114,9 @@ interface PaymentScheduleItem {
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_pending }}</div>
-              <div class="stat-label">Pendientes</div>
+              <div class="stat-label">{{ 'public.tenantPayments.pending' | transloco }}</div>
               <p class="stat-amount">
-                {{ formatCurrency(stats.total_amount_pending, Currency.USD) }}
+                {{ stats.total_amount_pending | tenantCurrency }}
               </p>
             </div>
           </mat-card>
@@ -123,9 +127,9 @@ interface PaymentScheduleItem {
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_approved }}</div>
-              <div class="stat-label">Aprobados</div>
+              <div class="stat-label">{{ 'public.tenantPayments.approved' | transloco }}</div>
               <p class="stat-amount">
-                {{ formatCurrency(stats.total_amount_approved, Currency.USD) }}
+                {{ stats.total_amount_approved | tenantCurrency }}
               </p>
             </div>
           </mat-card>
@@ -136,7 +140,7 @@ interface PaymentScheduleItem {
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_rejected }}</div>
-              <div class="stat-label">Rechazados</div>
+              <div class="stat-label">{{ 'public.tenantPayments.rejected' | transloco }}</div>
             </div>
           </mat-card>
         </div>
@@ -147,15 +151,18 @@ interface PaymentScheduleItem {
       @if (contractService.isLoading()) {
         <mat-card class="calendar-card loading-cal">
           <mat-spinner diameter="28"></mat-spinner>
-          <span>Cargando calendario...</span>
+          <span>{{ 'public.tenantPayments.loadingCalendar' | transloco }}</span>
         </mat-card>
       } @else if (paymentSchedule().length > 0) {
         <mat-card class="calendar-card">
           <div class="calendar-header" (click)="calendarExpanded.set(!calendarExpanded())">
             <div class="calendar-title">
               <lucide-icon [img]="CalendarDays" [size]="20" class="cal-icon"></lucide-icon>
-              <h2>Calendario de Pagos</h2>
-              <span class="cal-badge">{{ paymentSchedule().length }} cuotas</span>
+              <h2>{{ 'public.tenantPayments.calendarTitle' | transloco }}</h2>
+              <span class="cal-badge">{{
+                'public.tenantPayments.installmentsCount'
+                  | transloco: { count: paymentSchedule().length }
+              }}</span>
             </div>
             <button mat-icon-button type="button" class="cal-toggle-btn">
               @if (calendarExpanded()) {
@@ -170,10 +177,22 @@ interface PaymentScheduleItem {
             <mat-divider></mat-divider>
 
             <div class="cal-legend">
-              <span class="legend-item paid"><span class="legend-dot"></span>Pagado</span>
-              <span class="legend-item current"><span class="legend-dot"></span>Este mes</span>
-              <span class="legend-item overdue"><span class="legend-dot"></span>Pendiente</span>
-              <span class="legend-item upcoming"><span class="legend-dot"></span>Próximo</span>
+              <span class="legend-item paid"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calPaid' | transloco }}</span
+              >
+              <span class="legend-item current"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calCurrent' | transloco }}</span
+              >
+              <span class="legend-item overdue"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calOverdue' | transloco }}</span
+              >
+              <span class="legend-item upcoming"
+                ><span class="legend-dot"></span
+                >{{ 'public.tenantPayments.calUpcoming' | transloco }}</span
+              >
             </div>
 
             <div class="cal-scroll-container">
@@ -181,7 +200,11 @@ interface PaymentScheduleItem {
                 @for (item of paymentSchedule(); track item.label) {
                   <div class="cal-item cal-{{ item.status }}">
                     <div class="cal-month">{{ item.label }}</div>
-                    <div class="cal-due">Vence día {{ item.dueDate.getDate() }}</div>
+                    <div class="cal-due">
+                      {{
+                        'public.tenantPayments.dueDayX' | transloco: { day: item.dueDate.getDate() }
+                      }}
+                    </div>
                     <div class="cal-amount">
                       {{ item.currency }}&nbsp;{{ item.amount | number: '1.2-2' }}
                     </div>
@@ -214,17 +237,17 @@ interface PaymentScheduleItem {
       @if (paymentService.isLoading()) {
         <div class="loading">
           <mat-spinner diameter="40"></mat-spinner>
-          <p>Cargando pagos...</p>
+          <p>{{ 'public.tenantPayments.loadingPayments' | transloco }}</p>
         </div>
       } @else if (paymentService.payments().length === 0) {
         <mat-card>
           <div class="empty-state">
             <lucide-icon [img]="CreditCard" [size]="64"></lucide-icon>
-            <h2>No hay pagos registrados</h2>
-            <p>Aún no tienes pagos en tu historial</p>
+            <h2>{{ 'public.tenantPayments.noPaymentsTitle' | transloco }}</h2>
+            <p>{{ 'public.tenantPayments.noPaymentsDesc' | transloco }}</p>
             <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
               <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-              Registrar Primer Pago
+              {{ 'public.tenantPayments.registerFirst' | transloco }}
             </button>
           </div>
         </mat-card>
@@ -234,25 +257,25 @@ interface PaymentScheduleItem {
             <table class="payments-table">
               <thead>
                 <tr>
-                  <th>Fecha</th>
-                  <th>Tipo</th>
-                  <th>Método</th>
-                  <th>Referencia</th>
-                  <th>Monto</th>
-                  <th>Moneda</th>
-                  <th>Estado</th>
+                  <th>{{ 'public.tenantPayments.colDate' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colType' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colMethod' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colRef' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colAmount' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colCurrency' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colStatus' | transloco }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (payment of paymentService.payments(); track payment.id) {
                   <tr>
-                    <td>{{ formatPaymentDate(payment.payment_date) }}</td>
+                    <td>{{ payment.payment_date | tenantDate }}</td>
                     <td>{{ paymentTypeLabels[payment.payment_type] }}</td>
                     <td>{{ paymentMethodLabels[payment.payment_method] }}</td>
                     <td>
                       <span class="reference">{{ payment.reference_number || '-' }}</span>
                     </td>
-                    <td class="amount">{{ formatCurrency(payment.amount, payment.currency) }}</td>
+                    <td class="amount">{{ payment.amount | tenantCurrency }}</td>
                     <td>{{ payment.currency || 'USD' }}</td>
                     <td>
                       <span
@@ -933,14 +956,11 @@ export class TenantPaymentsListComponent implements OnInit {
   paymentSchedule = this.paymentScheduleSignal.asReadonly();
 
   PaymentStatus = PaymentStatus;
-  Currency = Currency;
   paymentStatusLabels = PaymentStatusLabels;
   paymentTypeLabels = PaymentTypeLabels;
   paymentMethodLabels = PaymentMethodLabels;
   paymentStatusColors = PaymentStatusColors;
   currencyLabels = CurrencyLabels;
-  currencySymbols = CurrencySymbols;
-
   // URL para registrar nuevo pago
   nuevoPagoUrl = computed(() => this.slugService.buildUrl('/portal/pagos/nuevo'));
 
@@ -1028,25 +1048,6 @@ export class TenantPaymentsListComponent implements OnInit {
       cursor = new Date(year, month + 1, 1);
     }
     this.paymentScheduleSignal.set(items);
-  }
-
-  formatPaymentDate(date: Date | string): string {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  formatCurrency(amount: number | string, currency?: Currency): string {
-    const curr = currency || Currency.USD;
-    const symbol = CurrencySymbols[curr];
-    // Convert to number if it's a string (backend sometimes returns strings)
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    // Handle NaN or invalid values
-    if (isNaN(numAmount)) return `${symbol}0.00`;
-    return `${symbol}${numAmount.toFixed(2)}`;
   }
 
   getStatusColor(status: PaymentStatus): string {

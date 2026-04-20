@@ -1,0 +1,22 @@
+{
+  "title": "Settings",
+  "subtitle": "Customize your admin panel experience",
+  "saved": "Settings saved",
+  "notificationsSection": "Notifications",
+  "enableNotif": "Enable notifications",
+  "enableNotifDesc": "Receive alerts about payments, maintenance and contracts",
+  "updateInterval": "Update interval",
+  "updateIntervalDesc": "How often new notifications are checked",
+  "sec30": "30 seconds",
+  "min1": "1 minute",
+  "min5": "5 minutes",
+  "appearanceSection": "Appearance",
+  "compactMode": "Compact mode",
+  "compactModeDesc": "Reduce spacing between elements to see more content",
+  "accountSection": "Account",
+  "timezone": "Timezone",
+  "timezoneDesc": "Detected automatically from your browser",
+  "language": "Language",
+  "languageDesc": "Interface language",
+  "languageValue": "English"
+}

@@ -22,8 +22,12 @@ import {
   Zap,
   Mail,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope } from '@jsverse/transloco';
 import { ApplicationService } from '../../../../core/services/admin/application.service';
 import { Application, ApplicationStatus } from '../../../../core/models/application.model';
+import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
+import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 
 @Component({
   selector: 'app-application-detail',
@@ -37,7 +41,11 @@ import { Application, ApplicationStatus } from '../../../../core/models/applicat
     MatProgressSpinnerModule,
     MatTooltipModule,
     LucideAngularModule,
+    TranslocoModule,
+    TenantDatePipe,
+    TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope('solicitudes')],
   templateUrl: './application-detail.component.html',
   styleUrls: ['./application-detail.component.css'],
 })
@@ -102,19 +110,6 @@ export class ApplicationDetailComponent implements OnInit {
         return '#ef4444';
       default:
         return '#64748b';
-    }
-  }
-
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'PENDIENTE':
-        return 'Pendiente';
-      case 'APROBADA':
-        return 'Aprobada';
-      case 'RECHAZADA':
-        return 'Rechazada';
-      default:
-        return status;
     }
   }
 
