@@ -38,9 +38,9 @@
           <mat-label>{{ 'common.status' | transloco }}</mat-label>
           <mat-select [(ngModel)]="filters.status" (selectionChange)="applyFilters()">
             <mat-option [value]="undefined">{{ 'properties.allStatuses' | transloco }}</mat-option>
-            <mat-option *ngFor="let status of statusOptions" [value]="status">{{
-              status
-            }}</mat-option>
+            @for (status of statusOptions; track status) {
+              <mat-option [value]="status">{{ status }}</mat-option>
+            }
           </mat-select>
         </mat-form-field>
 
@@ -49,9 +49,9 @@
           <lucide-icon matIconPrefix [img]="Home" [size]="16"></lucide-icon>
           <mat-select [(ngModel)]="filters.property_type_id" (selectionChange)="applyFilters()">
             <mat-option [value]="undefined">{{ 'properties.allTypes' | transloco }}</mat-option>
-            <mat-option *ngFor="let type of propertyTypes()" [value]="type.id">{{
-              type.name
-            }}</mat-option>
+            @for (type of propertyTypes(); track type.id) {
+              <mat-option [value]="type.id">{{ type.name }}</mat-option>
+            }
           </mat-select>
         </mat-form-field>
       </div>
@@ -68,598 +68,633 @@
   </mat-card>
 
   <!-- Loading State -->
-  <div *ngIf="isListLoading()" class="loading-state">
-    <mat-progress-spinner mode="indeterminate" [diameter]="48"></mat-progress-spinner>
-    <p class="loading-text">{{ 'properties.loading' | transloco }}</p>
-  </div>
+  @if (isListLoading()) {
+    <div class="loading-state">
+      <mat-progress-spinner mode="indeterminate" [diameter]="48"></mat-progress-spinner>
+      <p class="loading-text">{{ 'properties.loading' | transloco }}</p>
+    </div>
+  }
 
   <!-- Empty State -->
-  <div *ngIf="!isListLoading() && properties().length === 0" class="empty-state">
-    <div class="empty-icon">
-      <lucide-icon [img]="Building2" [size]="40"></lucide-icon>
+  @if (!isListLoading() && properties().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <lucide-icon [img]="Building2" [size]="40"></lucide-icon>
+      </div>
+      <h3>{{ 'properties.empty' | transloco }}</h3>
+      <p>{{ 'properties.emptyHint' | transloco }}</p>
+      <button mat-flat-button color="primary" (click)="openCreateModal()">
+        <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+        {{ 'properties.addFirst' | transloco }}
+      </button>
     </div>
-    <h3>{{ 'properties.empty' | transloco }}</h3>
-    <p>{{ 'properties.emptyHint' | transloco }}</p>
-    <button mat-flat-button color="primary" (click)="openCreateModal()">
-      <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
-      {{ 'properties.addFirst' | transloco }}
-    </button>
-  </div>
+  }
 
   <!-- Properties Grid -->
-  <ng-container *ngIf="!isListLoading() && properties().length > 0">
+  @if (!isListLoading() && properties().length > 0) {
     <div class="properties-grid">
-      <div *ngFor="let property of properties()" class="property-card">
-        <!-- Image -->
-        <div class="card-image" (click)="viewPropertyDetail(property)">
-          <img
-            *ngIf="getPropertyImage(property)"
-            [src]="getPropertyImage(property)"
-            [alt]="property.title"
-            (load)="onImageLoad(property)"
-            (error)="onImageError(property, getPropertyImage(property))"
-          />
-          <div *ngIf="!getPropertyImage(property)" class="placeholder">
-            <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
+      @for (property of properties(); track property.id) {
+        <div class="property-card">
+          <!-- Image -->
+          <div class="card-image" (click)="viewPropertyDetail(property)">
+            @if (getPropertyImage(property)) {
+              <img
+                [src]="getPropertyImage(property)"
+                [alt]="property.title"
+                (load)="onImageLoad(property)"
+                (error)="onImageError(property, getPropertyImage(property))"
+              />
+            }
+            @if (!getPropertyImage(property)) {
+              <div class="placeholder">
+                <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
+              </div>
+            }
+
+            <!-- Status badge -->
+            <span [class]="'badge-status ' + getStatusBadgeKey(property.status)">
+              {{ property.status || 'N/A' }}
+            </span>
+
+            <!-- Active badge -->
+            <span [class]="'badge-active ' + (property.active ? 'active' : 'inactive')">
+              @if (property.active) {
+                <lucide-icon [img]="CheckCircle2" [size]="11"></lucide-icon>
+              }
+              @if (!property.active) {
+                <lucide-icon [img]="XCircle" [size]="11"></lucide-icon>
+              }
+              {{ (property.active ? 'common.active' : 'common.inactive') | transloco }}
+            </span>
           </div>
 
-          <!-- Status badge -->
-          <span [class]="'badge-status ' + getStatusBadgeKey(property.status)">
-            {{ property.status || 'N/A' }}
-          </span>
+          <!-- Content -->
+          <div class="card-content">
+            <p class="card-title" (click)="viewPropertyDetail(property)">{{ property.title }}</p>
 
-          <!-- Active badge -->
-          <span [class]="'badge-active ' + (property.active ? 'active' : 'inactive')">
-            <lucide-icon *ngIf="property.active" [img]="CheckCircle2" [size]="11"></lucide-icon>
-            <lucide-icon *ngIf="!property.active" [img]="XCircle" [size]="11"></lucide-icon>
-            {{ (property.active ? 'common.active' : 'common.inactive') | transloco }}
-          </span>
-        </div>
+            <div class="card-type">
+              <lucide-icon [img]="Home" [size]="14"></lucide-icon>
+              <span>{{
+                property.property_type?.name || property.property_type_name || 'N/A'
+              }}</span>
+              <span class="text-slate-400">•</span>
+              <span>{{
+                property.property_subtype?.name || property.property_subtype_name || 'N/A'
+              }}</span>
+            </div>
 
-        <!-- Content -->
-        <div class="card-content">
-          <p class="card-title" (click)="viewPropertyDetail(property)">{{ property.title }}</p>
+            <div class="card-address">
+              <lucide-icon [img]="MapPin" [size]="14"></lucide-icon>
+              <span class="line-clamp-2">{{ getPropertyAddress(property) }}</span>
+            </div>
 
-          <div class="card-type">
-            <lucide-icon [img]="Home" [size]="14"></lucide-icon>
-            <span>{{ property.property_type?.name || property.property_type_name || 'N/A' }}</span>
-            <span class="text-slate-400">•</span>
-            <span>{{
-              property.property_subtype?.name || property.property_subtype_name || 'N/A'
-            }}</span>
-          </div>
+            <div class="card-price">
+              <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
+              {{ getPropertyPrice(property) }}
+              <span class="per-month">{{ 'properties.monthlyPrice' | transloco }}</span>
+            </div>
 
-          <div class="card-address">
-            <lucide-icon [img]="MapPin" [size]="14"></lucide-icon>
-            <span class="line-clamp-2">{{ getPropertyAddress(property) }}</span>
-          </div>
-
-          <div class="card-price">
-            <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
-            {{ getPropertyPrice(property) }}
-            <span class="per-month">{{ 'properties.monthlyPrice' | transloco }}</span>
-          </div>
-
-          <div class="card-details">
-            <div class="detail-item">
-              <lucide-icon [img]="Maximize2" [size]="14"></lucide-icon>
-              <div>
-                <div class="detail-label">{{ 'properties.totalArea' | transloco }}</div>
-                <div class="detail-value">{{ getPropertyArea(property) }}</div>
+            <div class="card-details">
+              <div class="detail-item">
+                <lucide-icon [img]="Maximize2" [size]="14"></lucide-icon>
+                <div>
+                  <div class="detail-label">{{ 'properties.totalArea' | transloco }}</div>
+                  <div class="detail-value">{{ getPropertyArea(property) }}</div>
+                </div>
+              </div>
+              <div class="detail-item">
+                <lucide-icon [img]="BedDouble" [size]="14"></lucide-icon>
+                <div>
+                  <div class="detail-label">{{ 'properties.rooms' | transloco }}</div>
+                  <div class="detail-value">{{ property.bedrooms || 'N/A' }}</div>
+                </div>
               </div>
             </div>
-            <div class="detail-item">
-              <lucide-icon [img]="BedDouble" [size]="14"></lucide-icon>
-              <div>
-                <div class="detail-label">{{ 'properties.rooms' | transloco }}</div>
-                <div class="detail-value">{{ property.bedrooms || 'N/A' }}</div>
-              </div>
-            </div>
-          </div>
 
-          <div class="card-actions">
-            <button
-              mat-flat-button
-              color="primary"
-              class="btn-view"
-              (click)="viewPropertyDetail(property)"
-            >
-              <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-              {{ 'properties.viewDetail' | transloco }}
-            </button>
-            <div class="action-row">
+            <div class="card-actions">
               <button
-                mat-stroked-button
+                mat-flat-button
                 color="primary"
-                class="btn-edit"
-                (click)="openEditModal(property)"
+                class="btn-view"
+                (click)="viewPropertyDetail(property)"
               >
-                <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
-                {{ 'common.edit' | transloco }}
+                <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
+                {{ 'properties.viewDetail' | transloco }}
               </button>
-              <button
-                mat-icon-button
-                [color]="property.active ? 'warn' : 'primary'"
-                (click)="toggleStatus(property)"
-                [matTooltip]="
-                  (property.active ? 'common.deactivate' : 'common.activate') | transloco
-                "
-              >
-                <lucide-icon *ngIf="property.active" [img]="XCircle" [size]="20"></lucide-icon>
-                <lucide-icon
-                  *ngIf="!property.active"
-                  [img]="CheckCircle2"
-                  [size]="20"
-                ></lucide-icon>
-              </button>
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="deleteProperty(property)"
-                [matTooltip]="'common.delete' | transloco"
-              >
-                <lucide-icon [img]="Trash2" [size]="20"></lucide-icon>
-              </button>
+              <div class="action-row">
+                <button
+                  mat-stroked-button
+                  color="primary"
+                  class="btn-edit"
+                  (click)="openEditModal(property)"
+                >
+                  <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+                  {{ 'common.edit' | transloco }}
+                </button>
+                <button
+                  mat-icon-button
+                  [color]="property.active ? 'warn' : 'primary'"
+                  (click)="toggleStatus(property)"
+                  [matTooltip]="
+                    (property.active ? 'common.deactivate' : 'common.activate') | transloco
+                  "
+                >
+                  @if (property.active) {
+                    <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
+                  }
+                  @if (!property.active) {
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                  }
+                </button>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="deleteProperty(property)"
+                  [matTooltip]="'common.delete' | transloco"
+                >
+                  <lucide-icon [img]="Trash2" [size]="20"></lucide-icon>
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      }
     </div>
 
     <div class="results-summary">
       {{ 'properties.showing' | transloco: { count: properties().length } }}
     </div>
-  </ng-container>
+  }
 </div>
 
 <!-- Confirm Delete Dialog -->
-<div *ngIf="deleteConfirmProperty()" class="modal-overlay animate-fadeIn" (click)="cancelDelete()">
-  <div class="confirm-dialog animate-slideUp" (click)="$event.stopPropagation()">
-    <div class="confirm-icon">
-      <lucide-icon [img]="Trash2" [size]="28"></lucide-icon>
-    </div>
-    <h3>{{ 'properties.confirmDelete' | transloco }}</h3>
-    <p>
-      {{ 'properties.confirmDeleteMessage' | transloco }}
-      <strong>"{{ deleteConfirmProperty()?.title }}"</strong>?
-    </p>
-    <p class="confirm-warning">{{ 'common.irreversible' | transloco }}</p>
-    <div class="confirm-actions">
-      <button mat-stroked-button (click)="cancelDelete()">{{ 'common.cancel' | transloco }}</button>
-      <button mat-flat-button color="warn" (click)="confirmDelete()">
-        <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
-        {{ 'common.delete' | transloco }}
-      </button>
+@if (deleteConfirmProperty()) {
+  <div class="modal-overlay animate-fadeIn" (click)="cancelDelete()">
+    <div class="confirm-dialog animate-slideUp" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">
+        <lucide-icon [img]="Trash2" [size]="28"></lucide-icon>
+      </div>
+      <h3>{{ 'properties.confirmDelete' | transloco }}</h3>
+      <p>
+        {{ 'properties.confirmDeleteMessage' | transloco }}
+        <strong>"{{ deleteConfirmProperty()?.title }}"</strong>?
+      </p>
+      <p class="confirm-warning">{{ 'common.irreversible' | transloco }}</p>
+      <div class="confirm-actions">
+        <button mat-stroked-button (click)="cancelDelete()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button mat-flat-button color="warn" (click)="confirmDelete()">
+          <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+          {{ 'common.delete' | transloco }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
+}
 
 <!-- Modal -->
-<div *ngIf="showModal()" class="modal-overlay animate-fadeIn" (click)="closeModal()">
-  <div class="modal-container animate-slideUp" (click)="$event.stopPropagation()">
-    <!-- Header -->
-    <div class="modal-header">
-      <div class="modal-title">
-        <div class="modal-title-icon">
-          <lucide-icon [img]="Building2" [size]="22"></lucide-icon>
+@if (showModal()) {
+  <div class="modal-overlay animate-fadeIn" (click)="closeModal()">
+    <div class="modal-container animate-slideUp" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-title">
+          <div class="modal-title-icon">
+            <lucide-icon [img]="Building2" [size]="22"></lucide-icon>
+          </div>
+          <h2>{{ (modalMode === 'create' ? 'properties.new' : 'properties.edit') | transloco }}</h2>
         </div>
-        <h2>{{ (modalMode === 'create' ? 'properties.new' : 'properties.edit') | transloco }}</h2>
+        <button mat-icon-button class="btn-close" (click)="closeModal()">
+          <lucide-icon [img]="X" [size]="22"></lucide-icon>
+        </button>
       </div>
-      <button mat-icon-button class="btn-close" (click)="closeModal()">
-        <lucide-icon [img]="X" [size]="22"></lucide-icon>
-      </button>
-    </div>
 
-    <!-- Body -->
-    <div class="modal-body">
-      <form *ngIf="propertyForm" [formGroup]="propertyForm" novalidate>
-        <!-- Información Básica -->
-        <div class="form-section">
-          <div class="section-title">
-            <lucide-icon [img]="Home" [size]="18" class="text-blue-600"></lucide-icon>
-            <h3>{{ 'properties.basicInfo' | transloco }}</h3>
+      <!-- Body -->
+      <div class="modal-body">
+        <form [formGroup]="propertyForm" novalidate>
+          <!-- Información Básica -->
+          <div class="form-section">
+            <div class="section-title">
+              <lucide-icon [img]="Home" [size]="18" class="text-blue-600"></lucide-icon>
+              <h3>{{ 'properties.basicInfo' | transloco }}</h3>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="full-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'properties.title_field' | transloco }}</mat-label>
+                  <input
+                    matInput
+                    formControlName="title"
+                    [placeholder]="'properties.titlePlaceholder' | transloco"
+                  />
+                  @if (hasError('title')) {
+                    <mat-error>{{ 'common.required' | transloco }}</mat-error>
+                  }
+                  <mat-hint>{{ 'properties.titleHint' | transloco }}</mat-hint>
+                </mat-form-field>
+              </div>
+
+              <div class="full-width">
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'common.description' | transloco }}</mat-label>
+                  <textarea
+                    matInput
+                    formControlName="description"
+                    rows="3"
+                    [placeholder]="'properties.descriptionPlaceholder' | transloco"
+                  ></textarea>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.propertyType' | transloco }}</mat-label>
+                <mat-select
+                  formControlName="property_type_id"
+                  (selectionChange)="onPropertyTypeChange(+$event.value)"
+                >
+                  <mat-option value="">{{
+                    'properties.propertyTypePlaceholder' | transloco
+                  }}</mat-option>
+                  @for (type of propertyTypes(); track type.id) {
+                    <mat-option [value]="type.id">{{ type.name }}</mat-option>
+                  }
+                </mat-select>
+                @if (hasError('property_type_id')) {
+                  <mat-error>{{ 'common.required' | transloco }}</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.subtype' | transloco }}</mat-label>
+                <mat-select formControlName="property_subtype_id">
+                  <mat-option value="">{{
+                    'properties.subtypePlaceholder' | transloco
+                  }}</mat-option>
+                  @for (sub of filteredSubtypes(); track sub.id) {
+                    <mat-option [value]="sub.id">{{ sub.name }}</mat-option>
+                  }
+                </mat-select>
+                @if (hasError('property_subtype_id')) {
+                  <mat-error>{{ 'common.required' | transloco }}</mat-error>
+                }
+              </mat-form-field>
+
+              <div class="checkbox-simple full-width">
+                <input type="checkbox" formControlName="active" id="active" />
+                <label for="active">{{ 'properties.activeProperty' | transloco }}</label>
+              </div>
+            </div>
           </div>
 
-          <div class="form-grid-2">
-            <div class="full-width">
+          <!-- Imágenes -->
+          <div class="form-section">
+            <div class="section-title">
+              <lucide-icon [img]="LucideImage" [size]="18" class="text-pink-600"></lucide-icon>
+              <h3>{{ 'properties.images' | transloco }}</h3>
+              <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+            </div>
+
+            <p class="hint-text" style="margin-bottom: 12px">
+              {{ 'properties.imagesHint' | transloco }}
+            </p>
+            <input
+              type="file"
+              class="file-input"
+              (change)="onImagesSelected($event)"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              multiple
+            />
+
+            @if (selectedImages.length > 0) {
+              <div class="selected-images">
+                <p>
+                  {{ 'properties.imagesSelected' | transloco: { count: selectedImages.length } }}
+                </p>
+                <ul>
+                  @for (image of selectedImages; track image.name) {
+                    <li>{{ image.name }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            <p class="hint-text" style="margin-top: 10px">
+              {{ 'properties.imagesNote' | transloco }}
+            </p>
+          </div>
+
+          <!-- Información Financiera -->
+          <div class="form-section">
+            <div class="section-title">
+              <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
+              <h3>{{ 'properties.financialInfo' | transloco }}</h3>
+              <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+            </div>
+
+            <div class="form-grid-3">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'properties.title_field' | transloco }}</mat-label>
+                <mat-label>{{ 'properties.monthlyRent' | transloco }}</mat-label>
                 <input
                   matInput
-                  formControlName="title"
-                  [placeholder]="'properties.titlePlaceholder' | transloco"
+                  type="number"
+                  min="0"
+                  formControlName="monthly_rent"
+                  placeholder="2500"
                 />
-                <mat-error *ngIf="hasError('title')">{{ 'common.required' | transloco }}</mat-error>
-                <mat-hint>{{ 'properties.titleHint' | transloco }}</mat-hint>
               </mat-form-field>
-            </div>
 
-            <div class="full-width">
               <mat-form-field appearance="outline">
-                <mat-label>{{ 'common.description' | transloco }}</mat-label>
-                <textarea
+                <mat-label>{{ 'common.currency' | transloco }}</mat-label>
+                <mat-select formControlName="currency">
+                  <mat-option value="BOB"
+                    >BOB — {{ 'auth.countries.bolivia' | transloco }}</mat-option
+                  >
+                  <mat-option value="USD">USD — {{ 'auth.countries.usa' | transloco }}</mat-option>
+                  <mat-option value="EUR">EUR — Euro</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.deposit' | transloco }}</mat-label>
+                <input
                   matInput
-                  formControlName="description"
-                  rows="3"
-                  [placeholder]="'properties.descriptionPlaceholder' | transloco"
-                ></textarea>
+                  type="number"
+                  formControlName="security_deposit_amount"
+                  placeholder="3000"
+                />
               </mat-form-field>
             </div>
 
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.propertyType' | transloco }}</mat-label>
-              <mat-select
-                formControlName="property_type_id"
-                (selectionChange)="onPropertyTypeChange(+$event.value)"
+            <div class="subsection-title">
+              <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
+              {{ 'properties.bankAccount' | transloco }}
+              <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+            </div>
+            <div class="form-grid-3">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.accountNumber' | transloco }}</mat-label>
+                <input
+                  matInput
+                  formControlName="account_number"
+                  [placeholder]="'properties.accountNumberPlaceholder' | transloco"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.accountType' | transloco }}</mat-label>
+                <input
+                  matInput
+                  formControlName="account_type"
+                  [placeholder]="'properties.accountTypePlaceholder' | transloco"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.accountHolder' | transloco }}</mat-label>
+                <input matInput formControlName="account_holder_name" />
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Detalles de la Propiedad -->
+          <div class="form-section">
+            <div class="section-title">
+              <lucide-icon [img]="Maximize2" [size]="18" class="text-purple-600"></lucide-icon>
+              <h3>{{ 'properties.details' | transloco }}</h3>
+              <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+            </div>
+
+            <div class="form-grid-4">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.area' | transloco }}</mat-label>
+                <input matInput type="number" formControlName="square_meters" placeholder="85" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.bedrooms' | transloco }}</mat-label>
+                <input matInput type="number" formControlName="bedrooms" placeholder="3" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.bathrooms' | transloco }}</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  step="0.5"
+                  formControlName="bathrooms"
+                  placeholder="2"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.parking' | transloco }}</mat-label>
+                <input matInput type="number" formControlName="parking_spaces" placeholder="1" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.yearBuilt' | transloco }}</mat-label>
+                <input matInput type="number" formControlName="year_built" placeholder="2020" />
+              </mat-form-field>
+              <div class="checkbox-simple">
+                <input type="checkbox" formControlName="is_furnished" id="is_furnished" />
+                <label for="is_furnished">{{ 'properties.furnished' | transloco }}</label>
+              </div>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.latitude' | transloco }}</mat-label>
+                <lucide-icon matIconPrefix [img]="Globe" [size]="14"></lucide-icon>
+                <input
+                  matInput
+                  type="number"
+                  step="any"
+                  formControlName="latitude"
+                  placeholder="-16.5000"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.longitude' | transloco }}</mat-label>
+                <lucide-icon matIconPrefix [img]="Globe" [size]="14"></lucide-icon>
+                <input
+                  matInput
+                  type="number"
+                  step="any"
+                  formControlName="longitude"
+                  placeholder="-68.1500"
+                />
+              </mat-form-field>
+            </div>
+
+            <!-- Reglas -->
+            <div class="subsection-title">{{ 'properties.rules' | transloco }}</div>
+            <div class="form-grid-2">
+              <div
+                [class]="
+                  'checkbox-rule ' + (propertyForm.get('pets_allowed')?.value ? 'checked' : '')
+                "
               >
-                <mat-option value="">{{
-                  'properties.propertyTypePlaceholder' | transloco
-                }}</mat-option>
-                <mat-option *ngFor="let type of propertyTypes()" [value]="type.id">{{
-                  type.name
-                }}</mat-option>
-              </mat-select>
-              <mat-error *ngIf="hasError('property_type_id')">{{
-                'common.required' | transloco
-              }}</mat-error>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.subtype' | transloco }}</mat-label>
-              <mat-select formControlName="property_subtype_id">
-                <mat-option value="">{{ 'properties.subtypePlaceholder' | transloco }}</mat-option>
-                <mat-option *ngFor="let sub of filteredSubtypes()" [value]="sub.id">{{
-                  sub.name
-                }}</mat-option>
-              </mat-select>
-              <mat-error *ngIf="hasError('property_subtype_id')">{{
-                'common.required' | transloco
-              }}</mat-error>
-            </mat-form-field>
-
-            <div class="checkbox-simple full-width">
-              <input type="checkbox" formControlName="active" id="active" />
-              <label for="active">{{ 'properties.activeProperty' | transloco }}</label>
+                <input type="checkbox" formControlName="pets_allowed" id="pets_allowed" />
+                <label for="pets_allowed">
+                  <lucide-icon [img]="PawPrint" [size]="18"></lucide-icon>
+                  {{ 'properties.petsAllowed' | transloco }}
+                </label>
+              </div>
+              <div
+                [class]="
+                  'checkbox-rule ' + (propertyForm.get('smoking_allowed')?.value ? 'checked' : '')
+                "
+              >
+                <input type="checkbox" formControlName="smoking_allowed" id="smoking_allowed" />
+                <label for="smoking_allowed">
+                  <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+                  {{ 'properties.smokingAllowed' | transloco }}
+                </label>
+              </div>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.maxOccupants' | transloco }}</mat-label>
+                <lucide-icon matIconPrefix [img]="Users" [size]="14"></lucide-icon>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="max_occupants"
+                  min="1"
+                  placeholder="4"
+                />
+                <mat-hint>{{ 'properties.maxOccupantsPlaceholder' | transloco }}</mat-hint>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'properties.minContractMonths' | transloco }}</mat-label>
+                <lucide-icon matIconPrefix [img]="Calendar" [size]="14"></lucide-icon>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="min_lease_months"
+                  min="1"
+                  placeholder="6"
+                />
+                <mat-hint>{{ 'properties.minContractPlaceholder' | transloco }}</mat-hint>
+              </mat-form-field>
             </div>
           </div>
-        </div>
 
-        <!-- Imágenes -->
-        <div class="form-section">
-          <div class="section-title">
-            <lucide-icon [img]="LucideImage" [size]="18" class="text-pink-600"></lucide-icon>
-            <h3>{{ 'properties.images' | transloco }}</h3>
-            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
-          </div>
-
-          <p class="hint-text" style="margin-bottom: 12px">
-            {{ 'properties.imagesHint' | transloco }}
-          </p>
-          <input
-            type="file"
-            class="file-input"
-            (change)="onImagesSelected($event)"
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-            multiple
-          />
-
-          <div *ngIf="selectedImages.length > 0" class="selected-images">
-            <p>{{ 'properties.imagesSelected' | transloco: { count: selectedImages.length } }}</p>
-            <ul>
-              <li *ngFor="let image of selectedImages">{{ image.name }}</li>
-            </ul>
-          </div>
-
-          <p class="hint-text" style="margin-top: 10px">
-            {{ 'properties.imagesNote' | transloco }}
-          </p>
-        </div>
-
-        <!-- Información Financiera -->
-        <div class="form-section">
-          <div class="section-title">
-            <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
-            <h3>{{ 'properties.financialInfo' | transloco }}</h3>
-            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
-          </div>
-
-          <div class="form-grid-3">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.monthlyRent' | transloco }}</mat-label>
-              <input matInput type="number" formControlName="monthly_rent" placeholder="2500" />
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'common.currency' | transloco }}</mat-label>
-              <mat-select formControlName="currency">
-                <mat-option value="BOB"
-                  >BOB — {{ 'auth.countries.bolivia' | transloco }}</mat-option
-                >
-                <mat-option value="USD">USD — {{ 'auth.countries.usa' | transloco }}</mat-option>
-                <mat-option value="EUR">EUR — Euro</mat-option>
-              </mat-select>
-            </mat-form-field>
-
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.deposit' | transloco }}</mat-label>
-              <input
-                matInput
-                type="number"
-                formControlName="security_deposit_amount"
-                placeholder="3000"
-              />
-            </mat-form-field>
-          </div>
-
-          <div class="subsection-title">
-            <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
-            {{ 'properties.bankAccount' | transloco }}
-            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
-          </div>
-          <div class="form-grid-3">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.accountNumber' | transloco }}</mat-label>
-              <input
-                matInput
-                formControlName="account_number"
-                [placeholder]="'properties.accountNumberPlaceholder' | transloco"
-              />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.accountType' | transloco }}</mat-label>
-              <input
-                matInput
-                formControlName="account_type"
-                [placeholder]="'properties.accountTypePlaceholder' | transloco"
-              />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.accountHolder' | transloco }}</mat-label>
-              <input matInput formControlName="account_holder_name" />
-            </mat-form-field>
-          </div>
-        </div>
-
-        <!-- Detalles de la Propiedad -->
-        <div class="form-section">
-          <div class="section-title">
-            <lucide-icon [img]="Maximize2" [size]="18" class="text-purple-600"></lucide-icon>
-            <h3>{{ 'properties.details' | transloco }}</h3>
-            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
-          </div>
-
-          <div class="form-grid-4">
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.area' | transloco }}</mat-label>
-              <input matInput type="number" formControlName="square_meters" placeholder="85" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.bedrooms' | transloco }}</mat-label>
-              <input matInput type="number" formControlName="bedrooms" placeholder="3" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.bathrooms' | transloco }}</mat-label>
-              <input
-                matInput
-                type="number"
-                step="0.5"
-                formControlName="bathrooms"
-                placeholder="2"
-              />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.parking' | transloco }}</mat-label>
-              <input matInput type="number" formControlName="parking_spaces" placeholder="1" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.yearBuilt' | transloco }}</mat-label>
-              <input matInput type="number" formControlName="year_built" placeholder="2020" />
-            </mat-form-field>
-            <div class="checkbox-simple">
-              <input type="checkbox" formControlName="is_furnished" id="is_furnished" />
-              <label for="is_furnished">{{ 'properties.furnished' | transloco }}</label>
+          <!-- Dirección -->
+          <div class="form-section">
+            <div class="section-title">
+              <lucide-icon [img]="MapPin" [size]="18" class="text-red-600"></lucide-icon>
+              <h3>{{ 'properties.fullAddress' | transloco }}</h3>
             </div>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.latitude' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Globe" [size]="14"></lucide-icon>
-              <input
-                matInput
-                type="number"
-                step="any"
-                formControlName="latitude"
-                placeholder="-16.5000"
-              />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.longitude' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Globe" [size]="14"></lucide-icon>
-              <input
-                matInput
-                type="number"
-                step="any"
-                formControlName="longitude"
-                placeholder="-68.1500"
-              />
-            </mat-form-field>
-          </div>
 
-          <!-- Reglas -->
-          <div class="subsection-title">{{ 'properties.rules' | transloco }}</div>
-          <div class="form-grid-2">
-            <div
-              [class]="
-                'checkbox-rule ' + (propertyForm.get('pets_allowed')?.value ? 'checked' : '')
-              "
-            >
-              <input type="checkbox" formControlName="pets_allowed" id="pets_allowed" />
-              <label for="pets_allowed">
-                <lucide-icon [img]="PawPrint" [size]="18"></lucide-icon>
-                {{ 'properties.petsAllowed' | transloco }}
-              </label>
-            </div>
-            <div
-              [class]="
-                'checkbox-rule ' + (propertyForm.get('smoking_allowed')?.value ? 'checked' : '')
-              "
-            >
-              <input type="checkbox" formControlName="smoking_allowed" id="smoking_allowed" />
-              <label for="smoking_allowed">
-                <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
-                {{ 'properties.smokingAllowed' | transloco }}
-              </label>
-            </div>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.maxOccupants' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Users" [size]="14"></lucide-icon>
-              <input
-                matInput
-                type="number"
-                formControlName="max_occupants"
-                min="1"
-                placeholder="4"
-              />
-              <mat-hint>{{ 'properties.maxOccupantsPlaceholder' | transloco }}</mat-hint>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>{{ 'properties.minContractMonths' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Calendar" [size]="14"></lucide-icon>
-              <input
-                matInput
-                type="number"
-                formControlName="min_lease_months"
-                min="1"
-                placeholder="6"
-              />
-              <mat-hint>{{ 'properties.minContractPlaceholder' | transloco }}</mat-hint>
-            </mat-form-field>
-          </div>
-        </div>
-
-        <!-- Dirección -->
-        <div class="form-section">
-          <div class="section-title">
-            <lucide-icon [img]="MapPin" [size]="18" class="text-red-600"></lucide-icon>
-            <h3>{{ 'properties.fullAddress' | transloco }}</h3>
-          </div>
-
-          <div formArrayName="addresses">
-            <ng-container
-              *ngFor="let address of addresses.controls; let i = index; trackBy: trackByIndex"
-            >
-              <div [formGroupName]="i" class="form-grid-2">
-                <div class="full-width">
+            <div formArrayName="addresses">
+              @for (address of addresses.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="form-grid-2">
+                  <div class="full-width">
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ 'properties.fullAddress' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        formControlName="street_address"
+                        [placeholder]="'properties.fullAddressPlaceholder' | transloco"
+                      />
+                      @if (getAddressError(i, 'street_address')) {
+                        <mat-error>{{ 'common.required' | transloco }}</mat-error>
+                      }
+                    </mat-form-field>
+                  </div>
                   <mat-form-field appearance="outline">
-                    <mat-label>{{ 'properties.fullAddress' | transloco }}</mat-label>
-                    <input
-                      matInput
-                      formControlName="street_address"
-                      [placeholder]="'properties.fullAddressPlaceholder' | transloco"
-                    />
-                    <mat-error *ngIf="getAddressError(i, 'street_address')">{{
-                      'common.required' | transloco
-                    }}</mat-error>
+                    <mat-label>{{ 'properties.city' | transloco }}</mat-label>
+                    <input matInput formControlName="city" placeholder="Santa Cruz" />
+                    @if (getAddressError(i, 'city')) {
+                      <mat-error>{{ 'common.required' | transloco }}</mat-error>
+                    }
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'properties.state' | transloco }}</mat-label>
+                    <input matInput formControlName="state" placeholder="Santa Cruz de la Sierra" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'properties.zip' | transloco }}</mat-label>
+                    <input matInput formControlName="zip_code" placeholder="1001" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'properties.country' | transloco }}</mat-label>
+                    <input matInput formControlName="country" placeholder="Bolivia" />
+                    @if (getAddressError(i, 'country')) {
+                      <mat-error>{{ 'common.required' | transloco }}</mat-error>
+                    }
                   </mat-form-field>
                 </div>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'properties.city' | transloco }}</mat-label>
-                  <input matInput formControlName="city" placeholder="Santa Cruz" />
-                  <mat-error *ngIf="getAddressError(i, 'city')">{{
-                    'common.required' | transloco
-                  }}</mat-error>
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'properties.state' | transloco }}</mat-label>
-                  <input matInput formControlName="state" placeholder="Santa Cruz de la Sierra" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'properties.zip' | transloco }}</mat-label>
-                  <input matInput formControlName="zip_code" placeholder="1001" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'properties.country' | transloco }}</mat-label>
-                  <input matInput formControlName="country" placeholder="Bolivia" />
-                  <mat-error *ngIf="getAddressError(i, 'country')">{{
-                    'common.required' | transloco
-                  }}</mat-error>
-                </mat-form-field>
+              }
+            </div>
+          </div>
+
+          <!-- Propietario (solo en creación) -->
+          @if (modalMode === 'create') {
+            <div class="form-section">
+              <div class="section-title">
+                <lucide-icon [img]="Users" [size]="18" class="text-indigo-600"></lucide-icon>
+                <h3>{{ 'properties.ownerInfo' | transloco }}</h3>
+                <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
               </div>
-            </ng-container>
-          </div>
-        </div>
 
-        <!-- Propietario (solo en creación) -->
-        <div class="form-section" *ngIf="modalMode === 'create'">
-          <div class="section-title">
-            <lucide-icon [img]="Users" [size]="18" class="text-indigo-600"></lucide-icon>
-            <h3>{{ 'properties.ownerInfo' | transloco }}</h3>
-            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
-          </div>
-
-          <div formArrayName="new_owners">
-            <ng-container
-              *ngFor="let owner of owners.controls; let i = index; trackBy: trackByIndex"
-            >
-              <div [formGroupName]="i" class="form-grid-2">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'common.name' | transloco }}</mat-label>
-                  <input matInput formControlName="name" placeholder="Carlos González" />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'common.email' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="email"
-                    formControlName="primary_email"
-                    placeholder="carlos@example.com"
-                  />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'common.phone' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="tel"
-                    formControlName="phone_number"
-                    placeholder="+5912345678"
-                  />
-                </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'properties.ownerPercent' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    formControlName="ownership_percentage"
-                    min="0"
-                    max="100"
-                    placeholder="100"
-                  />
-                </mat-form-field>
+              <div formArrayName="new_owners">
+                @for (owner of owners.controls; track $index; let i = $index) {
+                  <div [formGroupName]="i" class="form-grid-2">
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ 'common.name' | transloco }}</mat-label>
+                      <input matInput formControlName="name" placeholder="Carlos González" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ 'common.email' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="email"
+                        formControlName="primary_email"
+                        placeholder="carlos@example.com"
+                      />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ 'common.phone' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="tel"
+                        formControlName="phone_number"
+                        placeholder="+5912345678"
+                      />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>{{ 'properties.ownerPercent' | transloco }}</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        formControlName="ownership_percentage"
+                        min="0"
+                        max="100"
+                        placeholder="100"
+                      />
+                    </mat-form-field>
+                  </div>
+                }
               </div>
-            </ng-container>
-          </div>
-        </div>
-      </form>
-    </div>
+            </div>
+          }
+        </form>
+      </div>
 
-    <!-- Footer -->
-    <div class="modal-footer">
-      <button mat-stroked-button type="button" (click)="closeModal()">
-        {{ 'common.cancel' | transloco }}
-      </button>
-      <button
-        mat-flat-button
-        color="primary"
-        type="button"
-        (click)="saveProperty()"
-        [disabled]="isSubmitting()"
-      >
-        <mat-progress-spinner
-          *ngIf="isSubmitting()"
-          mode="indeterminate"
-          [diameter]="16"
-        ></mat-progress-spinner>
-        <lucide-icon *ngIf="!isSubmitting()" [img]="CheckCircle2" [size]="16"></lucide-icon>
-        {{ getButtonText() }}
-      </button>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button mat-stroked-button type="button" (click)="closeModal()">
+          {{ 'common.cancel' | transloco }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="saveProperty()"
+          [disabled]="isSubmitting()"
+        >
+          @if (isSubmitting()) {
+            <mat-progress-spinner mode="indeterminate" [diameter]="16"></mat-progress-spinner>
+          }
+          @if (!isSubmitting()) {
+            <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
+          }
+          {{ getButtonText() }}
+        </button>
+      </div>
     </div>
   </div>
-</div>
+}

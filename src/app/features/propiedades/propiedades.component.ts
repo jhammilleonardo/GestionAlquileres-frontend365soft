@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   signal,
+  inject,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
@@ -117,6 +118,16 @@ export class PropiedadesComponent implements OnInit {
   readonly RefreshCw = RefreshCw;
   readonly AlertTriangle = AlertTriangle;
 
+  private propertyService = inject(PropertyService);
+  private authService = inject(AuthService);
+  private slugService = inject(SlugService);
+  private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private snackBar = inject(MatSnackBar);
+  private formatService = inject(FormatService);
+
   // Validation & confirmation state
   validationErrors = signal<string[]>([]);
   deleteConfirmProperty = signal<Property | null>(null);
@@ -126,6 +137,7 @@ export class PropiedadesComponent implements OnInit {
     title: 'Título',
     property_type_id: 'Tipo de Propiedad',
     property_subtype_id: 'Subtipo',
+    monthly_rent: 'Renta mensual',
   };
 
   private translateFieldKey(key: string): string {
@@ -149,7 +161,6 @@ export class PropiedadesComponent implements OnInit {
   filteredSubtypes = signal<PropertySubtype[]>([]);
   propertyImageMap = new Map<number, string>();
 
-  isLoading = signal(false); // Deprecated, split into isListLoading and isSubmitting
   isListLoading = signal(false);
   isSubmitting = signal(false);
   showModal = signal(false);
@@ -168,23 +179,9 @@ export class PropiedadesComponent implements OnInit {
     limit: 50,
   };
 
-  propertyForm: FormGroup;
+  propertyForm: FormGroup = this.createForm();
   PropertyStatus = PropertyStatus;
-  statusOptions = Object.values(PropertyStatus); // Para filtros de búsqueda
-
-  constructor(
-    private propertyService: PropertyService,
-    private authService: AuthService,
-    private slugService: SlugService,
-    private fb: FormBuilder,
-    private cdr: ChangeDetectorRef,
-    private router: Router,
-    private route: ActivatedRoute,
-    private snackBar: MatSnackBar,
-    private formatService: FormatService,
-  ) {
-    this.propertyForm = this.createForm();
-  }
+  statusOptions = Object.values(PropertyStatus);
 
   ngOnInit(): void {
     this.loadProperties();
@@ -217,7 +214,7 @@ export class PropiedadesComponent implements OnInit {
       property_subtype_id: ['', Validators.required],
       active: [true],
       // Financial fields
-      monthly_rent: [null],
+      monthly_rent: [null, [Validators.min(0)]],
       currency: ['BOB'],
       security_deposit_amount: [null],
       account_number: [''],
@@ -293,15 +290,14 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getAdminProperties(this.filters).subscribe({
       next: (data) => {
         this.properties.set(data);
-        // Pre-computar URLs de imágenes para evitar cálculos en cada ciclo de change detection
         this.propertyImageMap.clear();
         data.forEach((prop) => this.propertyImageMap.set(prop.id, this.buildImageUrl(prop)));
         this.isListLoading.set(false);
         this.cdr.markForCheck();
       },
-      error: (error) => {
-        console.error('❌ Error loading properties:', error);
+      error: () => {
         this.isListLoading.set(false);
+        this.snackBar.open('Error al cargar las propiedades', 'Cerrar', { duration: 5000 });
         this.cdr.markForCheck();
       },
     });
@@ -311,8 +307,16 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getPropertyTypes().subscribe({
       next: (types) => {
         this.propertyTypes.set(types);
+        this.cdr.markForCheck();
       },
-      error: (error) => console.error('❌ Error loading property types:', error),
+      error: () => {
+        this.snackBar.open(
+          'No se pudieron cargar los tipos de propiedad. Recarga la página.',
+          'Cerrar',
+          { duration: 8000 },
+        );
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -320,8 +324,14 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getPropertySubtypes().subscribe({
       next: (subtypes) => {
         this.propertySubtypes.set(subtypes);
+        this.cdr.markForCheck();
       },
-      error: (error) => console.error('❌ Error loading property subtypes:', error),
+      error: () => {
+        this.snackBar.open('No se pudieron cargar los subtipos de propiedad', 'Cerrar', {
+          duration: 5000,
+        });
+        this.cdr.markForCheck();
+      },
     });
   }
 
@@ -356,33 +366,17 @@ export class PropiedadesComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    console.log('🔵 openCreateModal called');
     this.modalMode = 'create';
     this.selectedProperty = null;
     this.filteredSubtypes.set([]);
-
-    // Cerrar modal primero si estaba abierto
     this.showModal.set(false);
-
-    // Recrear el formulario completamente para evitar problemas con FormArrays
     this.propertyForm = this.createForm();
-
-    console.log(
-      '✅ Form recreated - Addresses:',
-      this.addresses?.length,
-      'Owners:',
-      this.owners?.length,
-    );
-
-    // Pequeño delay para asegurar que el DOM esté listo
     setTimeout(() => {
       this.showModal.set(true);
-      console.log('✅ Modal opened');
     }, 10);
   }
 
   openEditModal(property: Property): void {
-    console.log('🔵 openEditModal called for property:', property.id);
     this.modalMode = 'edit';
     this.selectedProperty = property;
 
@@ -414,7 +408,7 @@ export class PropiedadesComponent implements OnInit {
       property_subtype_id: [p.property_subtype_id, Validators.required],
       active: [p.active],
       // Financial fields
-      monthly_rent: [p.monthly_rent ?? null],
+      monthly_rent: [p.monthly_rent ?? null, [Validators.min(0)]],
       currency: [p.currency || 'BOB'],
       security_deposit_amount: [p.security_deposit_amount ?? null],
       account_number: [p.account_number || ''],
@@ -458,10 +452,8 @@ export class PropiedadesComponent implements OnInit {
     // Cargar subtipos sin resetear el subtipo ya seleccionado
     this.onPropertyTypeChange(p.property_type_id, true);
 
-    // Pequeño delay para asegurar que el DOM esté listo
     setTimeout(() => {
       this.showModal.set(true);
-      console.log('✅ Edit modal opened with full data');
     }, 10);
   }
 
@@ -498,20 +490,11 @@ export class PropiedadesComponent implements OnInit {
         );
         this.selectedImages = this.selectedImages.filter((file) => !invalidFiles.includes(file));
       }
-
-      console.log('✅ Images selected:', this.selectedImages.length);
     }
   }
 
   saveProperty(): void {
-    console.log('🔵 saveProperty() ejecutado');
-
-    // Marcar todos los campos como touched para mostrar errores
     this.markFormGroupTouched(this.propertyForm);
-
-    // Mostrar estado del formulario
-    console.log('📋 Form valid:', this.propertyForm.valid);
-    console.log('📋 Form value:', this.propertyForm.value);
 
     if (this.propertyForm.invalid) {
       const errorKeys: string[] = [];
@@ -544,9 +527,6 @@ export class PropiedadesComponent implements OnInit {
     }
 
     this.validationErrors.set([]);
-
-    console.log('✅ Formulario válido, procediendo a enviar...');
-
     this.isSubmitting.set(true);
     const formValue = this.propertyForm.value;
 
@@ -575,9 +555,6 @@ export class PropiedadesComponent implements OnInit {
       return;
     }
 
-    console.log('✅ Validaciones pasadas, construyendo objeto JSON...');
-
-    // Construir objeto JSON con los campos que acepta el backend (CreatePropertyDto)
     const createDto: any = {
       title: formValue.title,
       property_type_id: property_type_id,
@@ -636,9 +613,6 @@ export class PropiedadesComponent implements OnInit {
       );
       if (validOwners.length > 0) createDto.new_owners = validOwners;
     }
-
-    console.log('📤 Enviando JSON:', createDto);
-    console.log('🚀 Enviando request...');
 
     // Para edición, copiar createDto sin campos exclusivos de create
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -812,12 +786,11 @@ export class PropiedadesComponent implements OnInit {
     return area ? `${area} m²` : 'N/A';
   }
 
-  onImageLoad(property: Property): void {
-    console.log('✅ Image loaded successfully for:', property.title);
-  }
+  onImageLoad(_property: Property): void {}
 
-  onImageError(property: Property, url: string): void {
-    console.error('❌ Error loading image for:', property.title, 'URL:', url);
+  onImageError(property: Property, _url: string): void {
+    this.propertyImageMap.delete(property.id);
+    this.cdr.markForCheck();
   }
 
   getStatusBadgeClass(status: PropertyStatus | undefined): string {

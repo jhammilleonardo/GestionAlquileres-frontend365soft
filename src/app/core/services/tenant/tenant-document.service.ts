@@ -4,6 +4,7 @@ import { Observable, tap, catchError, of } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { TenantDocument } from '../../models/document.model';
+import { SlugService } from '../slug.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,7 @@ import { TenantDocument } from '../../models/document.model';
 export class TenantDocumentService {
   private http = inject(HttpClient);
   private transloco = inject(TranslocoService);
+  private slugService = inject(SlugService);
 
   // Reactive state
   private documentsSignal = signal<TenantDocument[]>([]);
@@ -22,6 +24,11 @@ export class TenantDocumentService {
   isLoading = this.isLoadingSignal.asReadonly();
   error = this.errorSignal.asReadonly();
 
+  private buildTenantEndpoint(path: string): string {
+    const endpoint = this.slugService.buildApiEndpoint(`tenant/${path}`);
+    return `${environment.apiUrl}${endpoint}`;
+  }
+
   /**
    * Cargar todos los documentos del inquilino
    * NOTE: Requiere endpoint backend: GET /tenant/documents
@@ -31,7 +38,7 @@ export class TenantDocumentService {
     this.errorSignal.set(null);
 
     this.http
-      .get<TenantDocument[]>(`${environment.apiUrl}tenant/documents`)
+      .get<TenantDocument[]>(this.buildTenantEndpoint('documents'))
       .pipe(
         tap((documents) => {
           const parsedDocs = documents.map((d) => ({
@@ -57,7 +64,7 @@ export class TenantDocumentService {
    * Obtener un documento específico
    */
   getDocument(id: number): Observable<TenantDocument> {
-    return this.http.get<TenantDocument>(`${environment.apiUrl}/tenant/documents/${id}`).pipe(
+    return this.http.get<TenantDocument>(this.buildTenantEndpoint(`documents/${id}`)).pipe(
       tap((document) => {
         const parsedDoc = {
           ...document,
@@ -82,7 +89,7 @@ export class TenantDocumentService {
    * Descargar un documento
    */
   downloadDocument(documentId: number): Observable<Blob> {
-    return this.http.get(`${environment.apiUrl}/tenant/documents/${documentId}/download`, {
+    return this.http.get(this.buildTenantEndpoint(`documents/${documentId}/download`), {
       responseType: 'blob',
     });
   }
@@ -92,7 +99,7 @@ export class TenantDocumentService {
    */
   signDocument(documentId: number): Observable<TenantDocument> {
     return this.http
-      .post<TenantDocument>(`${environment.apiUrl}/tenant/documents/${documentId}/sign`, {})
+      .post<TenantDocument>(this.buildTenantEndpoint(`documents/${documentId}/sign`), {})
       .pipe(
         tap((document) => {
           const parsedDoc = {

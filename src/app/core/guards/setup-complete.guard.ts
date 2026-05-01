@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, type CanActivateFn } from '@angular/router';
-import { map, catchError, of } from 'rxjs';
+import { map, catchError, of, timeout } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TenantConfigService } from '../services/admin/tenant-config.service';
 
@@ -21,6 +21,7 @@ export const setupCompleteGuard: CanActivateFn = (route, _state) => {
   }
 
   return configService.getConfig(slug).pipe(
+    timeout(5000),
     map((config) => {
       if (config.setup_completed) {
         return true;
@@ -29,7 +30,7 @@ export const setupCompleteGuard: CanActivateFn = (route, _state) => {
       return false;
     }),
     catchError(() => {
-      // If config fetch fails, allow navigation — don't block the user
+      // If config fetch fails or times out, allow navigation — don't block the user
       return of(true);
     }),
   );

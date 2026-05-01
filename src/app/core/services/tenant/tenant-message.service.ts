@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
+import { SlugService } from '../slug.service';
 import {
   Message,
   MessageThread,
@@ -17,6 +18,12 @@ import {
 export class TenantMessageService {
   private http = inject(HttpClient);
   private transloco = inject(TranslocoService);
+  private slugService = inject(SlugService);
+
+  private buildTenantEndpoint(path: string): string {
+    const endpoint = this.slugService.buildApiEndpoint(`tenant/${path}`);
+    return `${environment.apiUrl}${endpoint}`;
+  }
 
   // Reactive state
   private messagesSignal = signal<Message[]>([]);
@@ -44,7 +51,7 @@ export class TenantMessageService {
     this.errorSignal.set(null);
 
     this.http
-      .get<Message[]>(`${environment.apiUrl}tenant/messages`)
+      .get<Message[]>(this.buildTenantEndpoint('messages'))
       .pipe(
         tap((messages) => {
           const parsedMessages = messages.map((m) => ({
@@ -73,7 +80,7 @@ export class TenantMessageService {
     this.errorSignal.set(null);
 
     this.http
-      .get<MessageThread[]>(`${environment.apiUrl}/tenant/message-threads`)
+      .get<MessageThread[]>(this.buildTenantEndpoint('message-threads'))
       .pipe(
         tap((threads) => {
           const parsedThreads = threads.map((t) => ({
@@ -102,7 +109,7 @@ export class TenantMessageService {
    * Obtener un mensaje específico
    */
   getMessage(id: number): Observable<Message> {
-    return this.http.get<Message>(`${environment.apiUrl}/tenant/messages/${id}`).pipe(
+    return this.http.get<Message>(this.buildTenantEndpoint(`messages/${id}`)).pipe(
       tap((message) => {
         const parsedMessage = {
           ...message,
@@ -129,7 +136,7 @@ export class TenantMessageService {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    return this.http.post<Message>(`${environment.apiUrl}/tenant/messages`, message).pipe(
+    return this.http.post<Message>(this.buildTenantEndpoint('messages'), message).pipe(
       tap((newMessage) => {
         const parsedMessage = {
           ...newMessage,
@@ -156,7 +163,7 @@ export class TenantMessageService {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    return this.http.post<Message>(`${environment.apiUrl}/tenant/messages/reply`, reply).pipe(
+    return this.http.post<Message>(this.buildTenantEndpoint('messages/reply'), reply).pipe(
       tap((newMessage) => {
         const parsedMessage = {
           ...newMessage,
@@ -180,7 +187,7 @@ export class TenantMessageService {
    * Marcar mensaje como leído
    */
   markAsRead(messageId: number): Observable<void> {
-    return this.http.put<void>(`${environment.apiUrl}/tenant/messages/${messageId}/read`, {}).pipe(
+    return this.http.put<void>(this.buildTenantEndpoint(`messages/${messageId}/read`), {}).pipe(
       tap(() => {
         this.messagesSignal.update((messages) =>
           messages.map((m) =>
@@ -199,21 +206,17 @@ export class TenantMessageService {
    * Archivar mensaje
    */
   archiveMessage(messageId: number): Observable<void> {
-    return this.http
-      .put<void>(`${environment.apiUrl}/tenant/messages/${messageId}/archive`, {})
-      .pipe(
-        tap(() => {
-          this.messagesSignal.update((messages) =>
-            messages.map((m) =>
-              m.id === messageId ? { ...m, status: MessageStatus.ARCHIVED } : m,
-            ),
-          );
-        }),
-        catchError((error) => {
-          console.error('Error archiving message:', error);
-          return of(undefined);
-        }),
-      );
+    return this.http.put<void>(this.buildTenantEndpoint(`messages/${messageId}/archive`), {}).pipe(
+      tap(() => {
+        this.messagesSignal.update((messages) =>
+          messages.map((m) => (m.id === messageId ? { ...m, status: MessageStatus.ARCHIVED } : m)),
+        );
+      }),
+      catchError((error) => {
+        console.error('Error archiving message:', error);
+        return of(undefined);
+      }),
+    );
   }
 
   /**

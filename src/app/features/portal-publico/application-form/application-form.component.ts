@@ -57,45 +57,30 @@ export class ApplicationFormComponent implements OnInit {
   employmentTypes = Object.values(EmploymentType);
 
   ngOnInit(): void {
-    console.log('📝 ApplicationFormComponent - ngOnInit iniciado');
-    console.log('📍 Ruta actual:', this.route.snapshot);
-
-    // Check if returning from login with pending form data
     this.route.queryParamMap.subscribe((params) => {
-      const restoreForm = params.get('restoreForm');
-      if (restoreForm === 'true') {
-        console.log('🔄 Restaurando formulario después del login');
+      if (params.get('restoreForm') === 'true') {
         this.restoreFormData();
       }
     });
 
-    // Get property ID from route params or query params
     this.route.paramMap.subscribe((params) => {
       const id = params.get('propertyId');
-      console.log('🔍 PropertyId de params:', id);
       if (id) {
         this.propertyId = Number(id);
         this.formData.property_id = this.propertyId;
-        console.log('✅ PropertyId establecido:', this.propertyId);
       }
     });
 
     this.route.queryParamMap.subscribe((params) => {
       const id = params.get('propertyId');
-      console.log('🔍 PropertyId de query params:', id);
       if (id && !this.propertyId) {
         this.propertyId = Number(id);
         this.formData.property_id = this.propertyId;
-        console.log('✅ PropertyId establecido desde query:', this.propertyId);
       }
     });
 
-    // If no property ID, redirect to properties list
     if (!this.propertyId) {
-      console.warn('⚠️ No propertyId encontrado, redirigiendo a propiedades');
       this.router.navigate(['../../propiedades'], { relativeTo: this.route });
-    } else {
-      console.log('✅ Formulario listo con propertyId:', this.propertyId);
     }
   }
 
@@ -198,7 +183,6 @@ export class ApplicationFormComponent implements OnInit {
 
     // Check if user is authenticated
     if (!this.authService.isAuthenticated()) {
-      console.log('🔒 Usuario no autenticado, guardando formulario y redirigiendo a login');
       this.saveFormData();
       this.redirectToLogin();
       return;
@@ -207,7 +191,48 @@ export class ApplicationFormComponent implements OnInit {
     this.submitting = true;
     this.error = null;
 
-    this.applicationService.createApplication(this.formData).subscribe({
+    const pd = this.formData.personal_data;
+    const cj = this.formData.employment_data.current_job;
+    const allRefs = [
+      ...this.formData.references.personal.map((r) => ({
+        name: r.name,
+        relationship: r.relationship,
+        phone: r.phone,
+      })),
+      ...this.formData.references.professional.map((r) => ({
+        name: r.name,
+        relationship: r.company,
+        phone: r.phone,
+      })),
+    ];
+
+    const payload: any = {
+      property_id: this.formData.property_id,
+      personal_data: {
+        full_name: pd.full_name,
+        phone: pd.phone,
+        identity_document: (pd as any).national_id || '',
+        current_address: (pd as any).current_address || '',
+      },
+      employment_data: {
+        employer_name: cj.company,
+        position: cj.position,
+        monthly_income: Number(cj.salary) || 0,
+        employment_duration: cj.start_date || '',
+        employer_phone: cj.supervisor_phone,
+      },
+      rental_history: this.formData.rental_history.map((h: any) => ({
+        previous_address: h.property_address || '',
+        previous_landlord_name: h.landlord_name || '',
+        previous_landlord_phone: h.landlord_phone || '',
+        previous_rent_amount: Number(h.monthly_rent) || 0,
+        reason_for_leaving: h.reason_for_leaving || '',
+      })),
+      references: allRefs,
+      additional_notes: this.formData.additional_notes || undefined,
+    };
+
+    this.applicationService.createApplication(payload).subscribe({
       next: (response) => {
         this.submitSuccess = true;
         this.submitting = false;
@@ -254,51 +279,29 @@ export class ApplicationFormComponent implements OnInit {
     }
   }
 
-  // Restore form data from localStorage
   private restoreFormData(): void {
     try {
       const savedData = localStorage.getItem(this.FORM_DATA_KEY);
       if (savedData) {
         const parsed = JSON.parse(savedData);
-        console.log('📥 Restaurando datos guardados:', parsed);
-
         this.formData = parsed.formData;
         this.propertyId = parsed.propertyId;
-
-        // Clear after restoring
         this.clearSavedFormData();
-
-        // Auto-submit after restoring
-        console.log('🚀 Enviando formulario automáticamente después del login');
-        setTimeout(() => {
-          this.onSubmit();
-        }, 500);
+        setTimeout(() => this.onSubmit(), 500);
       }
-    } catch (error) {
-      console.error('Error al restaurar formulario:', error);
+    } catch {
       this.clearSavedFormData();
     }
   }
 
-  // Clear saved form data
   private clearSavedFormData(): void {
-    try {
-      localStorage.removeItem(this.FORM_DATA_KEY);
-      console.log('🗑️ Datos guardados eliminados');
-    } catch (error) {
-      console.error('Error al limpiar formulario:', error);
-    }
+    localStorage.removeItem(this.FORM_DATA_KEY);
   }
 
-  // Redirect to login with return URL
   private redirectToLogin(): void {
     const slug = this.slugService.getSlug();
-    const currentUrl = this.router.url.split('?')[0]; // Remove query params
-
-    // Build login URL with return URL
+    const currentUrl = this.router.url.split('?')[0];
     const loginUrl = `/${slug}/login?returnUrl=${encodeURIComponent(currentUrl + '?restoreForm=true')}`;
-
-    console.log('🔐 Redirigiendo a login:', loginUrl);
     this.router.navigateByUrl(loginUrl);
   }
 

@@ -20,7 +20,7 @@ export class ApiHttpService {
     const httpParams = this.buildParams(params);
     const httpOptions = {
       params: httpParams,
-      headers: this.getHeaders(headers),
+      headers: this.getHeaders(headers, undefined, endpoint),
     };
 
     return this.http
@@ -33,7 +33,7 @@ export class ApiHttpService {
    */
   post<T>(endpoint: string, body: any, headers?: any): Observable<T> {
     const httpOptions = {
-      headers: this.getHeaders(headers, body),
+      headers: this.getHeaders(headers, body, endpoint),
     };
 
     return this.http
@@ -46,7 +46,7 @@ export class ApiHttpService {
    */
   put<T>(endpoint: string, body: any, headers?: any): Observable<T> {
     const httpOptions = {
-      headers: this.getHeaders(headers, body),
+      headers: this.getHeaders(headers, body, endpoint),
     };
 
     return this.http
@@ -59,7 +59,7 @@ export class ApiHttpService {
    */
   patch<T>(endpoint: string, body: any, headers?: any): Observable<T> {
     const httpOptions = {
-      headers: this.getHeaders(headers, body),
+      headers: this.getHeaders(headers, body, endpoint),
     };
 
     return this.http
@@ -72,7 +72,7 @@ export class ApiHttpService {
    */
   delete<T>(endpoint: string, headers?: any): Observable<T> {
     const httpOptions = {
-      headers: this.getHeaders(headers),
+      headers: this.getHeaders(headers, undefined, endpoint),
     };
 
     return this.http
@@ -102,7 +102,7 @@ export class ApiHttpService {
    * Get headers with default Content-Type and JWT token if available
    * Note: When body is FormData, Content-Type is omitted to let browser set it automatically with boundary
    */
-  private getHeaders(customHeaders?: any, body?: any): HttpHeaders {
+  private getHeaders(customHeaders?: any, body?: any, endpoint?: string): HttpHeaders {
     // Si el body es FormData, NO establecer Content-Type (el navegador lo hará automáticamente con boundary)
     const isFormData = body instanceof FormData;
 
@@ -114,11 +114,7 @@ export class ApiHttpService {
     }
 
     // Add JWT token if available (admin or tenant)
-    const token =
-      localStorage.getItem('admin_access_token') ||
-      sessionStorage.getItem('admin_access_token') ||
-      localStorage.getItem('tenant_access_token') ||
-      sessionStorage.getItem('tenant_access_token');
+    const token = this.getBestToken(endpoint);
     if (token) {
       headers = headers.set('Authorization', `Bearer ${token}`);
     }
@@ -132,11 +128,38 @@ export class ApiHttpService {
     return headers;
   }
 
+  private getBestToken(endpoint?: string): string | null {
+    const adminToken =
+      localStorage.getItem('admin_access_token') || sessionStorage.getItem('admin_access_token');
+    const tenantToken =
+      localStorage.getItem('tenant_access_token') || sessionStorage.getItem('tenant_access_token');
+
+    if (adminToken && !tenantToken) return adminToken;
+    if (tenantToken && !adminToken) return tenantToken;
+    if (!adminToken && !tenantToken) return null;
+
+    const currentPath = window?.location?.pathname || '';
+    const isTenantPortal = currentPath.includes('/portal');
+    const isAdminEndpoint = endpoint?.includes('/admin/');
+    const isTenantEndpoint = endpoint?.includes('/tenant/') || endpoint?.includes('/portal/');
+
+    if (isAdminEndpoint) return adminToken;
+    if (isTenantEndpoint || isTenantPortal) return tenantToken;
+    return adminToken;
+  }
+
   /**
    * Handle HTTP errors
    */
   private handleError(error: HttpErrorResponse): Observable<never> {
     let errorMessage = 'Ocurrió un error desconocido';
+    const backendMessageRaw = error.error?.message;
+    const backendMessage =
+      typeof backendMessageRaw === 'string'
+        ? backendMessageRaw
+        : Array.isArray(backendMessageRaw)
+          ? backendMessageRaw.join(', ')
+          : null;
 
     if (error.error instanceof ErrorEvent) {
       // Client-side error
@@ -145,12 +168,12 @@ export class ApiHttpService {
       // Server-side error
       if (error.status === 0) {
         errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+      } else if (backendMessage) {
+        errorMessage = backendMessage;
       } else if (error.status === 404) {
         errorMessage = 'Recurso no encontrado.';
       } else if (error.status === 500) {
         errorMessage = 'Error interno del servidor.';
-      } else if (error.error?.message) {
-        errorMessage = error.error.message;
       } else {
         errorMessage = `Error del servidor: ${error.status} - ${error.message}`;
       }
