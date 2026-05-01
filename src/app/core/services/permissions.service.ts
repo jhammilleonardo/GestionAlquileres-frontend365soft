@@ -30,6 +30,12 @@ export class PermissionsService {
   readonly role = computed(() => this.permissionsSignal()?.role ?? null);
 
   constructor() {
+    // Carga inmediata al iniciar el servicio (resuelve el caso de refresh de página,
+    // donde NavigationEnd ocurre DESPUÉS de que los guards necesitan los permisos)
+    this.fetchPermissions().subscribe((perms) => {
+      if (perms) this.permissionsSignal.set(perms);
+    });
+
     // Re-fetch en cada navegación para detectar cambios de permisos sin logout
     this.router.events
       .pipe(

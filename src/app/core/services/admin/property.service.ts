@@ -118,26 +118,13 @@ export class PropertyService {
    */
   getPropertyTypes(): Observable<PropertyType[]> {
     const endpoint = this.slugService.buildApiEndpoint('admin/property-types');
-    return this.apiHttp.get<PropertyType[]>(endpoint).pipe(
-      catchError((error) => {
-        console.error('Error loading property types:', error);
-        return of([]);
-      }),
-    );
+    return this.apiHttp.get<PropertyType[]>(endpoint);
   }
 
-  /**
-   * Obtener subtipos de propiedad
-   */
   getPropertySubtypes(typeId?: number): Observable<PropertySubtype[]> {
     const params = typeId ? { typeId } : {};
     const endpoint = this.slugService.buildApiEndpoint('admin/property-subtypes');
-    return this.apiHttp.get<PropertySubtype[]>(endpoint, params).pipe(
-      catchError((error) => {
-        console.error('Error loading property subtypes:', error);
-        return of([]);
-      }),
-    );
+    return this.apiHttp.get<PropertySubtype[]>(endpoint, params);
   }
 
   /**

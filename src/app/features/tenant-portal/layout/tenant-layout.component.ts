@@ -36,7 +36,7 @@ import { SlugService } from '../../../core/services/slug.service';
 import { ContractService } from '../../../core/services/admin/contract.service';
 import { TenantConfigService } from '../../../core/services/admin/tenant-config.service';
 import { FormatService } from '../../../core/services/format.service';
-import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 
 interface NavItem {
@@ -62,6 +62,7 @@ interface NavItem {
     LucideAngularModule,
     TranslocoModule,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
     <div class="tenant-layout">
       <!-- Header -->
