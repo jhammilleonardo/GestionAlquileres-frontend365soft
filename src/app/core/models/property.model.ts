@@ -114,7 +114,7 @@ export enum PropertyStatus {
   OCUPADO = 'OCUPADO',
   MANTENIMIENTO = 'MANTENIMIENTO',
   RESERVADO = 'RESERVADO',
-  INACTIVO = 'INACTIVO'
+  INACTIVO = 'INACTIVO',
 }
 
 // ==================== FILTERS ====================
@@ -130,12 +130,17 @@ export interface PropertyFilters {
   sort_order?: 'ASC' | 'DESC';
   page?: number;
   limit?: number;
+  min_price?: number;
+  max_price?: number;
+  bedrooms?: number;
 }
 
 export enum SortOption {
   CREATED_AT = 'created_at',
   UPDATED_AT = 'updated_at',
-  TITLE = 'title'
+  TITLE = 'title',
+  PRICE = 'monthly_rent',
+  AVAILABILITY = 'status',
 }
 
 // ==================== RENTAL APPLICATION ====================

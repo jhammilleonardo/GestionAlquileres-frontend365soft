@@ -68,7 +68,7 @@ import { SlugService } from '../../../core/services/slug.service';
             <lucide-icon [img]="Search" [size]="20"></lucide-icon>
             <input
               type="text"
-              [placeholder]="'tenantApplications.marketplace.searchPlaceholder' | transloco"
+              placeholder="Buscar por título, ciudad o dirección..."
               [value]="filters().search"
               (input)="updateFilter('search', $any($event.target).value)"
               class="search-input"
@@ -77,14 +77,12 @@ import { SlugService } from '../../../core/services/slug.service';
 
           <div class="filter-group">
             <mat-select
-              [placeholder]="'tenantApplications.marketplace.typePlaceholder' | transloco"
+              placeholder="Tipo de propiedad"
               [value]="filters().property_type_id"
               (selectionChange)="updateFilter('property_type_id', $event.value)"
               class="filter-select"
             >
-              <mat-option [value]="null">{{
-                'tenantApplications.marketplace.allTypes' | transloco
-              }}</mat-option>
+              <mat-option [value]="null">Todos los tipos</mat-option>
               @for (type of propertyTypes(); track type) {
                 <mat-option [value]="type">{{ type }}</mat-option>
               }
@@ -92,27 +90,56 @@ import { SlugService } from '../../../core/services/slug.service';
           </div>
 
           <div class="filter-group">
+            <div class="filter-input-wrapper">
+              <input
+                type="number"
+                placeholder="Precio Mínimo"
+                (change)="updateFilter('min_price', $any($event.target).value)"
+                class="custom-filter-input"
+              />
+            </div>
+          </div>
+          <div class="filter-group">
+            <div class="filter-input-wrapper">
+              <input
+                type="number"
+                placeholder="Precio Máximo"
+                (change)="updateFilter('max_price', $any($event.target).value)"
+                class="custom-filter-input"
+              />
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-input-wrapper">
+              <input
+                type="number"
+                placeholder="Habitaciones"
+                (change)="updateFilter('bedrooms', $any($event.target).value)"
+                class="custom-filter-input"
+              />
+            </div>
+          </div>
+
+          <div class="filter-group">
             <mat-select
-              [placeholder]="'tenantApplications.marketplace.sortBy' | transloco"
+              placeholder="Ordenar por"
               [value]="filters().sort_by"
               (selectionChange)="updateFilter('sort_by', $event.value)"
               class="filter-select"
             >
-              <mat-option value="created_at">{{
-                'tenantApplications.marketplace.recent' | transloco
-              }}</mat-option>
-              <mat-option value="price_asc">{{
-                'tenantApplications.marketplace.priceLow' | transloco
-              }}</mat-option>
-              <mat-option value="price_desc">{{
-                'tenantApplications.marketplace.priceHigh' | transloco
-              }}</mat-option>
-              <mat-option value="area">{{
-                'tenantApplications.marketplace.area' | transloco
-              }}</mat-option>
+              <mat-option value="created_at">Más recientes</mat-option>
+              <mat-option value="price_asc">Precio: de menor a mayor</mat-option>
+              <mat-option value="price_desc">Precio: de mayor a menor</mat-option>
+              <mat-option value="area">Mayor tamaño</mat-option>
             </mat-select>
           </div>
         </div>
+      </div>
+
+      <div style="margin-bottom: 20px; font-weight: 600; color: var(--mat-sys-on-surface-variant);">
+        Mostrando {{ paginatedProperties().length }} de
+        {{ filteredProperties().length }} propiedades disponibles
       </div>
 
       <!-- Properties Grid -->
@@ -134,14 +161,33 @@ import { SlugService } from '../../../core/services/slug.service';
         <div class="properties-grid">
           @for (property of paginatedProperties(); track property.id) {
             <mat-card class="property-card" (click)="selectProperty(property)">
-              <div class="property-image">
-                @if (property.first_image) {
-                  <img [src]="property.first_image" [alt]="property.title" />
+              <div class="property-image" style="position: relative;">
+                <button
+                  class="carousel-btn prev"
+                  (click)="prevImage($event, property)"
+                  *ngIf="hasMultipleImages(property)"
+                  style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"
+                >
+                  ‹
+                </button>
+
+                @if (getPropertyImageUrl(property)) {
+                  <img [src]="getPropertyImageUrl(property)" [alt]="property.title" />
                 } @else {
                   <div class="image-placeholder">
                     <lucide-icon [img]="Home" [size]="48"></lucide-icon>
                   </div>
                 }
+
+                <button
+                  class="carousel-btn next"
+                  (click)="nextImage($event, property)"
+                  *ngIf="hasMultipleImages(property)"
+                  style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"
+                >
+                  ›
+                </button>
+
                 <div class="property-price">
                   <span class="price-amount">{{ property.monthly_rent | tenantCurrency }}</span>
                   <span class="price-period">{{
@@ -316,6 +362,37 @@ import { SlugService } from '../../../core/services/slug.service';
         background: transparent;
         padding: 12px 8px;
         font-size: 0.9375rem;
+        color: var(--mat-sys-on-surface);
+        outline: none;
+      }
+
+      .filter-select {
+        height: 100%;
+        min-height: 52px;
+        padding: 0 16px;
+        border: 1px solid var(--mat-sys-outline);
+        border-radius: 8px;
+        background: var(--mat-sys-surface);
+        display: flex;
+        align-items: center;
+      }
+
+      .filter-input-wrapper {
+        height: 100%;
+        min-height: 52px;
+        border: 1px solid var(--mat-sys-outline);
+        border-radius: 8px;
+        background: var(--mat-sys-surface);
+        display: flex;
+        align-items: center;
+      }
+
+      .custom-filter-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        padding: 0 16px;
+        font-size: 1rem;
         color: var(--mat-sys-on-surface);
         outline: none;
       }
@@ -555,19 +632,108 @@ export class NewApplicationComponent implements OnInit {
   currentPage = signal(0);
   pageSize = signal(12);
 
+  propertyImagesIndex: { [propertyId: number]: number } = {};
+
+  getPropertyImageUrl(property: Property): string {
+    let imagePath: string | null = null;
+    const index = this.propertyImagesIndex[property.id] || 0;
+
+    if (property.images && Array.isArray(property.images) && property.images.length > index) {
+      imagePath = property.images[index];
+    } else if (
+      property.images &&
+      typeof property.images === 'object' &&
+      Object.keys(property.images).length > index
+    ) {
+      const keys = Object.keys(property.images);
+      imagePath = (property.images as any)[keys[index]];
+    } else if (property.first_image && index === 0) {
+      imagePath = property.first_image;
+    }
+
+    if (imagePath) {
+      if (imagePath.startsWith('http')) return imagePath;
+      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      return `http://localhost:3000${normalizedPath}`;
+    }
+
+    return '';
+  }
+
+  hasMultipleImages(property: Property): boolean {
+    if (property.images && Array.isArray(property.images)) {
+      return property.images.length > 1;
+    }
+    if (property.images && typeof property.images === 'object') {
+      return Object.keys(property.images).length > 1;
+    }
+    return false;
+  }
+
+  nextImage(event: Event, property: Property): void {
+    event.stopPropagation();
+    const current = this.propertyImagesIndex[property.id] || 0;
+    const length = Array.isArray(property.images)
+      ? property.images.length
+      : property.images
+        ? Object.keys(property.images).length
+        : 1;
+    this.propertyImagesIndex[property.id] = (current + 1) % length;
+  }
+
+  prevImage(event: Event, property: Property): void {
+    event.stopPropagation();
+    const current = this.propertyImagesIndex[property.id] || 0;
+    const length = Array.isArray(property.images)
+      ? property.images.length
+      : property.images
+        ? Object.keys(property.images).length
+        : 1;
+    this.propertyImagesIndex[property.id] = (current - 1 + length) % length;
+  }
+
   // Computed properties
   filteredProperties = computed(() => {
-    const props = this.allProperties();
+    let filtered = this.allProperties();
     const search = this.filters().search?.toLowerCase() || '';
 
-    if (!search) return props;
+    if (search) {
+      filtered = filtered.filter(
+        (p: Property) =>
+          p.title.toLowerCase().includes(search) ||
+          p.addresses?.[0]?.city.toLowerCase().includes(search) ||
+          p.addresses?.[0]?.street_address.toLowerCase().includes(search),
+      );
+    }
 
-    return props.filter(
-      (p: Property) =>
-        p.title.toLowerCase().includes(search) ||
-        p.addresses?.[0]?.city.toLowerCase().includes(search) ||
-        p.addresses?.[0]?.street_address.toLowerCase().includes(search),
-    );
+    if (this.filters().min_price) {
+      filtered = filtered.filter((p) => (p.monthly_rent || 0) >= this.filters().min_price!);
+    }
+
+    if (this.filters().max_price) {
+      filtered = filtered.filter((p) => (p.monthly_rent || 0) <= this.filters().max_price!);
+    }
+
+    if (this.filters().bedrooms) {
+      filtered = filtered.filter((p) => p.bedrooms === this.filters().bedrooms!);
+    }
+
+    // Sort logic
+    const sortBy = this.filters().sort_by as any;
+    if (sortBy === 'price_asc') {
+      filtered.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
+    } else if (sortBy === 'price_desc') {
+      filtered.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
+    } else if (sortBy === 'area') {
+      filtered.sort((a, b) => (b.square_meters || 0) - (a.square_meters || 0));
+    } else {
+      // Default created_at (descending)
+      filtered.sort(
+        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime(),
+      );
+    }
+
+    return filtered;
   });
 
   paginatedProperties = computed(() => {
@@ -598,6 +764,9 @@ export class NewApplicationComponent implements OnInit {
   }
 
   updateFilter(key: keyof PropertyFilters, value: any): void {
+    if (key === 'min_price' || key === 'max_price' || key === 'bedrooms') {
+      value = value !== '' ? Number(value) : undefined;
+    }
     this.filters.update((f) => ({ ...f, [key]: value }));
     this.currentPage.set(0);
     this.loadProperties();
@@ -608,6 +777,9 @@ export class NewApplicationComponent implements OnInit {
       status: PropertyStatus.DISPONIBLE,
       search: '',
       property_type_id: undefined,
+      min_price: undefined,
+      max_price: undefined,
+      bedrooms: undefined,
       sort_by: 'created_at' as any,
       sort_order: 'DESC' as 'ASC' | 'DESC',
     });

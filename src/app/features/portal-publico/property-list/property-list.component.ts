@@ -71,6 +71,9 @@ export class PropertyListComponent implements OnInit {
     property_subtype_id: undefined,
     city: '',
     country: '',
+    min_price: undefined,
+    max_price: undefined,
+    bedrooms: undefined,
     sort_by: SortOption.CREATED_AT,
     sort_order: 'DESC',
     page: 1,
@@ -78,11 +81,14 @@ export class PropertyListComponent implements OnInit {
   };
 
   sortOptions = [
-    { value: SortOption.CREATED_AT, label: 'public.properties.sortLatest' },
-    { value: SortOption.TITLE, label: 'public.properties.sortTitleAZ' },
+    { value: SortOption.CREATED_AT, label: 'Más recientes' },
+    { value: SortOption.PRICE, label: 'Precio', isPrice: true },
+    { value: SortOption.AVAILABILITY, label: 'Disponibilidad' },
+    { value: SortOption.TITLE, label: 'A-Z' },
   ];
 
   showFilters = false;
+  propertyImagesIndex: { [propertyId: number]: number } = {};
 
   // Lucide icons
   readonly Heart = Heart;
@@ -178,6 +184,14 @@ export class PropertyListComponent implements OnInit {
     this.loadProperties();
   }
 
+  onSortChange(): void {
+    if (this.filters.sort_by === SortOption.PRICE) {
+      // Toggle logic if we wanted, or assume default. Let's rely on radio/select order for now.
+      // Actually, the user can select 'ASC' or 'DESC' elsewhere or we create compound options.
+    }
+    this.applyFilters();
+  }
+
   clearFilters(): void {
     this.filters = {
       search: '',
@@ -186,12 +200,29 @@ export class PropertyListComponent implements OnInit {
       property_subtype_id: undefined,
       city: '',
       country: '',
+      min_price: undefined,
+      max_price: undefined,
+      bedrooms: undefined,
       sort_by: SortOption.CREATED_AT,
       sort_order: 'DESC',
       page: 1,
       limit: 20,
     };
     this.loadProperties();
+  }
+
+  // Paginación
+  get totalResults(): number {
+    return this.filteredProperties.length;
+  }
+
+  get visibleResultsStart(): number {
+    return (this.filters.page! - 1) * this.filters.limit! + 1;
+  }
+
+  get visibleResultsEnd(): number {
+    const end = this.filters.page! * this.filters.limit!;
+    return end > this.totalResults ? this.totalResults : end;
   }
 
   toggleFavorite(propertyId: number, event: Event): void {
@@ -238,11 +269,19 @@ export class PropertyListComponent implements OnInit {
    */
   getPropertyImageUrl(property: Property): string {
     let imagePath: string | null = null;
+    const index = this.propertyImagesIndex[property.id] || 0;
 
-    if (property.first_image) {
+    if (property.images && Array.isArray(property.images) && property.images.length > index) {
+      imagePath = property.images[index];
+    } else if (
+      property.images &&
+      typeof property.images === 'object' &&
+      Object.keys(property.images).length > index
+    ) {
+      const keys = Object.keys(property.images);
+      imagePath = (property.images as any)[keys[index]];
+    } else if (property.first_image && index === 0) {
       imagePath = property.first_image;
-    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      imagePath = property.images[0];
     }
 
     if (imagePath) {
@@ -252,6 +291,38 @@ export class PropertyListComponent implements OnInit {
     }
 
     return '';
+  }
+
+  hasMultipleImages(property: Property): boolean {
+    if (property.images && Array.isArray(property.images)) {
+      return property.images.length > 1;
+    }
+    if (property.images && typeof property.images === 'object') {
+      return Object.keys(property.images).length > 1;
+    }
+    return false;
+  }
+
+  nextImage(event: Event, property: Property): void {
+    event.stopPropagation();
+    const current = this.propertyImagesIndex[property.id] || 0;
+    const length = Array.isArray(property.images)
+      ? property.images.length
+      : property.images
+        ? Object.keys(property.images).length
+        : 1;
+    this.propertyImagesIndex[property.id] = (current + 1) % length;
+  }
+
+  prevImage(event: Event, property: Property): void {
+    event.stopPropagation();
+    const current = this.propertyImagesIndex[property.id] || 0;
+    const length = Array.isArray(property.images)
+      ? property.images.length
+      : property.images
+        ? Object.keys(property.images).length
+        : 1;
+    this.propertyImagesIndex[property.id] = (current - 1 + length) % length;
   }
 
   handleImageError(event: any): void {

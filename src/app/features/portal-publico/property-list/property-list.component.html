@@ -32,7 +32,8 @@
     <div class="filters-header">
       <div class="results-info">
         <h2>
-          {{ 'public.properties.availableCount' | transloco: { count: filteredProperties.length } }}
+          Mostrando {{ visibleResultsStart }} a {{ visibleResultsEnd }} de
+          {{ totalResults }} propiedades
         </h2>
       </div>
       <button mat-stroked-button color="primary" (click)="toggleFilters()">
@@ -48,7 +49,7 @@
     <div class="filters-panel" [class.active]="showFilters">
       <div class="filters-grid">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'public.properties.propertyType' | transloco }}</mat-label>
+          <mat-label>Tipo de alquiler</mat-label>
           <lucide-icon [img]="Home" matIconPrefix></lucide-icon>
           <mat-select [(ngModel)]="filters.property_type_id" (selectionChange)="applyFilters()">
             <mat-option [value]="undefined">{{
@@ -61,27 +62,44 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'public.properties.city' | transloco }}</mat-label>
-          <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
+          <mat-label>Precio mínimo</mat-label>
           <input
             matInput
-            type="text"
-            [(ngModel)]="filters.city"
+            type="number"
+            [(ngModel)]="filters.min_price"
             (change)="applyFilters()"
-            [placeholder]="'public.properties.cityPlaceholder' | transloco"
+            placeholder="Ej: 500"
           />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>{{ 'public.properties.country' | transloco }}</mat-label>
-          <lucide-icon [img]="MapPin" matIconPrefix></lucide-icon>
+          <mat-label>Precio máximo</mat-label>
           <input
             matInput
-            type="text"
-            [(ngModel)]="filters.country"
+            type="number"
+            [(ngModel)]="filters.max_price"
             (change)="applyFilters()"
-            [placeholder]="'public.properties.countryPlaceholder' | transloco"
+            placeholder="Ej: 2000"
           />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Habitaciones</mat-label>
+          <input
+            matInput
+            type="number"
+            [(ngModel)]="filters.bedrooms"
+            (change)="applyFilters()"
+            placeholder="Cualquiera"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Estado</mat-label>
+          <mat-select [(ngModel)]="filters.status" (selectionChange)="applyFilters()">
+            <mat-option value="Disponible">Disponible</mat-option>
+            <mat-option value="No Disponible">No Disponible</mat-option>
+          </mat-select>
         </mat-form-field>
       </div>
 
@@ -128,15 +146,34 @@
 
     <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
       <div class="glass-card" *ngFor="let property of filteredProperties">
-        <!-- Top Image Section -->
-        <div class="card-image-section" (click)="viewProperty(property.id)">
-          <img
-            [src]="getPropertyImageUrl(property)"
-            [alt]="property.title"
-            class="card-bg-img"
-            (error)="handleImageError($event)"
-          />
-          <div class="image-fade"></div>
+        <!-- Top Image Section with Carousel -->
+        <div class="card-image-section">
+          <!-- Simplified carousel representation -->
+          <div class="image-carousel">
+            <button
+              class="carousel-btn prev"
+              (click)="prevImage($event, property)"
+              *ngIf="hasMultipleImages(property)"
+            >
+              ‹
+            </button>
+            <img
+              [src]="getPropertyImageUrl(property)"
+              [alt]="property.title"
+              class="card-bg-img"
+              (error)="handleImageError($event)"
+              (click)="viewProperty(property.id)"
+              style="cursor: pointer"
+            />
+            <button
+              class="carousel-btn next"
+              (click)="nextImage($event, property)"
+              *ngIf="hasMultipleImages(property)"
+            >
+              ›
+            </button>
+          </div>
+          <div class="image-fade" (click)="viewProperty(property.id)"></div>
 
           <!-- Bookmark / Fav button top right -->
           <button
