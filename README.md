@@ -37,6 +37,22 @@ npm start
 
 4. Abrir el navegador en `http://localhost:4200/`
 
+## 🐳 Docker de producción (staging)
+
+Build multi-stage: Angular production build + Nginx como servidor de archivos estáticos.
+
+```bash
+docker build -t gestion-frontend:staging \
+  --build-arg NG_APP_API_URL=https://api-staging.tu-dominio.com/ \
+  --build-arg NG_APP_API_TIMEOUT=30000 \
+  --build-arg NG_APP_SENTRY_DSN= \
+  --build-arg NG_APP_SENTRY_ENV=staging .
+
+docker run --rm -p 8080:80 gestion-frontend:staging
+```
+
+La imagen sirve la SPA con fallback de rutas (`try_files ... /index.html`) y no expone source maps.
+
 ## 📁 Estructura del Proyecto
 
 ```
@@ -187,4 +203,3 @@ Este proyecto es propiedad de 365Soft.
 ---
 
 **Desarrollado por el equipo de 365Soft**
-
