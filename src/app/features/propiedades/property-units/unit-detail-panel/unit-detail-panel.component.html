@@ -1,0 +1,156 @@
+<div class="udp-panel">
+  <!-- Panel Header -->
+  <div class="udp-header">
+    <div class="udp-header-info">
+      <lucide-icon [img]="Building2" [size]="18"></lucide-icon>
+      <span class="udp-unit-number">Unidad {{ unit().unit_number }}</span>
+    </div>
+    <button mat-icon-button (click)="onClose()" aria-label="Cerrar panel">
+      <lucide-icon [img]="X" [size]="18"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- Status Badge -->
+  <div class="udp-status-row">
+    <span class="udp-status-badge" [ngClass]="statusConfig().cssClass">
+      {{ statusConfig().label }}
+    </span>
+    @if (unit().rental_type) {
+      <span class="udp-rental-type-badge">
+        <lucide-icon [img]="Tag" [size]="12"></lucide-icon>
+        {{ rentalTypeLabel() }}
+      </span>
+    }
+  </div>
+
+  <!-- Details Body -->
+  <div class="udp-body">
+    <!-- Identification -->
+    <div class="udp-section">
+      <div class="udp-section-label">Identificación</div>
+      <div class="udp-detail-grid">
+        @if (unit().floor !== undefined && unit().floor !== null) {
+          <div class="udp-detail-item">
+            <lucide-icon [img]="Layers" [size]="16" class="udp-detail-icon"></lucide-icon>
+            <div>
+              <div class="udp-detail-label">Piso</div>
+              <div class="udp-detail-value">{{ unit().floor }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Characteristics -->
+    <div class="udp-section">
+      <div class="udp-section-label">Características</div>
+      <div class="udp-detail-grid">
+        @if (unit().bedrooms !== undefined && unit().bedrooms !== null) {
+          <div class="udp-detail-item">
+            <lucide-icon [img]="BedDouble" [size]="16" class="udp-detail-icon"></lucide-icon>
+            <div>
+              <div class="udp-detail-label">Dormitorios</div>
+              <div class="udp-detail-value">{{ unit().bedrooms }}</div>
+            </div>
+          </div>
+        }
+        @if (unit().bathrooms !== undefined && unit().bathrooms !== null) {
+          <div class="udp-detail-item">
+            <lucide-icon [img]="Bath" [size]="16" class="udp-detail-icon"></lucide-icon>
+            <div>
+              <div class="udp-detail-label">Baños</div>
+              <div class="udp-detail-value">{{ unit().bathrooms }}</div>
+            </div>
+          </div>
+        }
+        @if (unit().square_meters) {
+          <div class="udp-detail-item">
+            <lucide-icon [img]="Maximize2" [size]="16" class="udp-detail-icon"></lucide-icon>
+            <div>
+              <div class="udp-detail-label">Superficie</div>
+              <div class="udp-detail-value">{{ unit().square_meters }} m²</div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Pricing -->
+    <div class="udp-section">
+      <div class="udp-section-label">Precios</div>
+      <div class="udp-prices">
+        @if (unit().price_per_month) {
+          <div class="udp-price-row">
+            <lucide-icon [img]="DollarSign" [size]="16" class="udp-detail-icon"></lucide-icon>
+            <div>
+              <div class="udp-detail-label">Precio mensual</div>
+              <div class="udp-price-value">{{ unit().price_per_month | tenantCurrency }}</div>
+            </div>
+          </div>
+        }
+        @if (unit().price_per_night) {
+          <div class="udp-price-row">
+            <lucide-icon [img]="Moon" [size]="16" class="udp-detail-icon"></lucide-icon>
+            <div>
+              <div class="udp-detail-label">Precio por noche</div>
+              <div class="udp-price-value">{{ unit().price_per_night | tenantCurrency }}</div>
+            </div>
+          </div>
+        }
+        @if (unit().deposit_amount) {
+          <div class="udp-price-row udp-price-row--deposit">
+            <div class="udp-detail-label">Depósito de garantía</div>
+            <div class="udp-detail-value">{{ unit().deposit_amount | tenantCurrency }}</div>
+          </div>
+        }
+        @if (!unit().price_per_month && !unit().price_per_night) {
+          <p class="udp-empty-text">Sin precio configurado</p>
+        }
+      </div>
+    </div>
+
+    <!-- Tenant / Contract info hint -->
+    @if (unit().status === UnitStatus.OCCUPIED) {
+      <mat-divider></mat-divider>
+      <div class="udp-section udp-occupied-hint">
+        <div class="udp-occupied-badge">
+          <span class="udp-occupied-dot"></span>
+          Unidad ocupada
+        </div>
+        <p class="udp-occupied-text">
+          Para ver el inquilino actual e historial de contratos, consulta el módulo
+          <strong>Contratos</strong>.
+        </p>
+      </div>
+    }
+  </div>
+
+  <!-- Panel Footer -->
+  <div class="udp-footer">
+    <a
+      [href]="publicCatalogUrl()"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="udp-catalog-link"
+      aria-label="Ver propiedad en catálogo público"
+    >
+      <lucide-icon [img]="ExternalLink" [size]="14"></lucide-icon>
+      Ver en catálogo público
+    </a>
+
+    <div class="udp-footer-actions">
+      <button mat-stroked-button color="warn" (click)="onDelete()" aria-label="Eliminar unidad">
+        <lucide-icon [img]="Trash2" [size]="15"></lucide-icon>
+        Eliminar
+      </button>
+      <button mat-flat-button color="primary" (click)="onEdit()" aria-label="Editar unidad">
+        <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+        Editar
+      </button>
+    </div>
+  </div>
+</div>

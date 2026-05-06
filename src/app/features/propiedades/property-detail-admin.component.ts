@@ -13,6 +13,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import {
   LucideAngularModule,
   ArrowLeft,
@@ -36,6 +37,7 @@ import {
   ChevronRight,
   FileText,
   Shield,
+  Building2,
 } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
@@ -44,6 +46,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { SlugService } from '../../core/services/slug.service';
 import { Property } from '../../core/models/property.model';
 import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
+import { PropertyUnitsComponent } from './property-units/property-units.component';
 
 @Component({
   selector: 'app-property-detail-admin',
@@ -57,9 +60,11 @@ import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
     MatChipsModule,
     MatDividerModule,
     MatSnackBarModule,
+    MatTabsModule,
     LucideAngularModule,
     TranslocoModule,
     TenantCurrencyPipe,
+    PropertyUnitsComponent,
   ],
   templateUrl: './property-detail-admin.component.html',
   styleUrls: ['./property-detail-admin.component.scss'],
@@ -89,10 +94,12 @@ export class PropertyDetailAdminComponent implements OnInit {
   readonly ChevronRight = ChevronRight;
   readonly FileText = FileText;
   readonly Shield = Shield;
+  readonly Building2 = Building2;
 
   property = signal<Property | null>(null);
   currentImageIndex = signal(0);
   isLoading = signal(true);
+  slug = signal('');
 
   constructor(
     private route: ActivatedRoute,
@@ -105,6 +112,7 @@ export class PropertyDetailAdminComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.slug.set(this.slugService.getSlug() ?? '');
     const propertyIdStr = this.route.snapshot.paramMap.get('id');
     if (propertyIdStr) {
       const propertyId = parseInt(propertyIdStr, 10);
