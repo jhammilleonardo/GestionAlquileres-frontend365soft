@@ -91,5 +91,55 @@
     "COMMERCIAL": "Local Comercial",
     "LAND": "Terreno",
     "OTHER": "Otro"
+  },
+  "units": {
+    "tabLabel": "Unidades",
+    "infoTabLabel": "Información",
+    "newUnit": "Nueva Unidad",
+    "editUnit": "Editar Unidad",
+    "loading": "Cargando unidades...",
+    "empty": "Sin unidades registradas",
+    "emptyHint": "Crea la primera unidad para esta propiedad",
+    "noResults": "Sin resultados para este filtro",
+    "created": "Unidad creada exitosamente",
+    "updated": "Unidad actualizada exitosamente",
+    "deleted": "Unidad eliminada",
+    "errorLoad": "Error al cargar las unidades",
+    "errorDelete": "Error al eliminar la unidad",
+    "unitNumber": "Número / Código *",
+    "floor": "Piso",
+    "bedrooms": "Dormitorios",
+    "bathrooms": "Baños",
+    "squareMeters": "Superficie (m²)",
+    "status": "Estado *",
+    "rentalType": "Tipo de Alquiler",
+    "pricePerMonth": "Precio Mensual",
+    "pricePerNight": "Precio por Noche",
+    "pricePerNightHint": "Solo para alquiler de corto plazo",
+    "depositAmount": "Depósito",
+    "identification": "Identificación",
+    "characteristics": "Características",
+    "priceAndRental": "Precio y Alquiler",
+    "viewPublicCatalog": "Ver en catálogo público",
+    "occupied": "Unidad ocupada",
+    "occupiedHint": "Para ver el inquilino e historial de contratos, consulta el módulo Contratos.",
+    "statuses": {
+      "available": "Disponible",
+      "occupied": "Ocupada",
+      "maintenance": "Mantenimiento",
+      "reserved": "Reservada"
+    },
+    "rentalTypes": {
+      "LONG_TERM": "Largo Plazo",
+      "SHORT_TERM": "Corto Plazo",
+      "BOTH": "Ambos"
+    },
+    "counters": {
+      "available": "Disponibles",
+      "occupied": "Ocupadas",
+      "maintenance": "Mantenimiento",
+      "reserved": "Reservadas",
+      "total": "Total"
+    }
   }
 }

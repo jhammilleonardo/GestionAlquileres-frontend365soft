@@ -91,5 +91,55 @@
     "COMMERCIAL": "Commercial Space",
     "LAND": "Land",
     "OTHER": "Other"
+  },
+  "units": {
+    "tabLabel": "Units",
+    "infoTabLabel": "Information",
+    "newUnit": "New Unit",
+    "editUnit": "Edit Unit",
+    "loading": "Loading units...",
+    "empty": "No units registered",
+    "emptyHint": "Create the first unit for this property",
+    "noResults": "No results for this filter",
+    "created": "Unit created successfully",
+    "updated": "Unit updated successfully",
+    "deleted": "Unit deleted",
+    "errorLoad": "Error loading units",
+    "errorDelete": "Error deleting unit",
+    "unitNumber": "Number / Code *",
+    "floor": "Floor",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "squareMeters": "Area (m²)",
+    "status": "Status *",
+    "rentalType": "Rental Type",
+    "pricePerMonth": "Monthly Price",
+    "pricePerNight": "Price per Night",
+    "pricePerNightHint": "For short-term rentals only",
+    "depositAmount": "Deposit",
+    "identification": "Identification",
+    "characteristics": "Characteristics",
+    "priceAndRental": "Price & Rental",
+    "viewPublicCatalog": "View in public catalog",
+    "occupied": "Unit occupied",
+    "occupiedHint": "To see the current tenant and contract history, check the Contracts module.",
+    "statuses": {
+      "available": "Available",
+      "occupied": "Occupied",
+      "maintenance": "Maintenance",
+      "reserved": "Reserved"
+    },
+    "rentalTypes": {
+      "LONG_TERM": "Long Term",
+      "SHORT_TERM": "Short Term",
+      "BOTH": "Both"
+    },
+    "counters": {
+      "available": "Available",
+      "occupied": "Occupied",
+      "maintenance": "Maintenance",
+      "reserved": "Reserved",
+      "total": "Total"
+    }
   }
 }
