@@ -9,7 +9,6 @@ import {
   PropertyFilters,
   RentalApplication,
   TenantInfo,
-  PaginatedResponse,
   SortOption,
 } from '../../models/property.model';
 import { ApiHttpService } from '../api-http.service';
@@ -54,7 +53,9 @@ export class PropertyService {
     return this.apiHttp.get<TenantInfo>(`tenants/slug/${tenantSlug}`);
   }
 
-  getFilteredProperties(filters: PropertyFilters): Observable<{ items: Property[]; total: number }> {
+  getFilteredProperties(
+    filters: PropertyFilters,
+  ): Observable<{ items: Property[]; total: number }> {
     const params: any = {};
 
     // Mapear filtros al formato del catálogo público
@@ -83,12 +84,13 @@ export class PropertyService {
     return this.apiHttp.get<any>(endpoint, params).pipe(
       map((response) => {
         // El backend puede devolver { data: [], total } o un arreglo directo
-        const items = response?.data || response?.items || (Array.isArray(response) ? response : []);
+        const items =
+          response?.data || response?.items || (Array.isArray(response) ? response : []);
         const total = response?.total !== undefined ? response.total : items.length;
-        
+
         return {
           items: items.map((p: any) => this.transformProperty(p)),
-          total: total
+          total: total,
         };
       }),
       catchError((error) => {
@@ -103,7 +105,7 @@ export class PropertyService {
    */
   getProperties(): Observable<Property[]> {
     return this.getFilteredProperties({ status: PropertyStatus.DISPONIBLE }).pipe(
-      map(result => result.items)
+      map((result) => result.items),
     );
   }
 
@@ -517,7 +519,6 @@ export class PropertyService {
       }),
     );
   }
-
 
   /**
    * Subir una imagen para una propiedad (admin) - multipart/form-data

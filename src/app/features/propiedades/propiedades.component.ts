@@ -759,7 +759,7 @@ export class PropiedadesComponent implements OnInit {
 
   onImageLoad(_property: Property): void {}
 
-  onImageError(property: Property, _url: string): void {
+  onImageError(_property: Property, _url: string): void {
     // Error loading image, handled by browser default or service helper fallback
     this.cdr.markForCheck();
   }
