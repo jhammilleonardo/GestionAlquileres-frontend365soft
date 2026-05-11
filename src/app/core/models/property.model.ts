@@ -71,6 +71,7 @@ export interface Property {
 export interface PropertyType {
   id: number;
   name: string;
+  code?: string;
   description?: string;
 }
 
@@ -126,13 +127,14 @@ export interface PropertyFilters {
   city?: string;
   country?: string;
   search?: string;
-  sort_by?: SortOption;
+  sort_by?: SortOption | string;
   sort_order?: 'ASC' | 'DESC';
   page?: number;
   limit?: number;
   min_price?: number;
   max_price?: number;
   bedrooms?: number;
+  rental_type?: 'short_term' | 'long_term' | 'any';
 }
 
 export enum SortOption {

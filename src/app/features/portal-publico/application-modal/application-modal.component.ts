@@ -55,7 +55,7 @@ export class ApplicationModalComponent {
         }
         this.isSubmitting = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error submitting application:', error);
         alert('Hubo un error al enviar la solicitud. Por favor intente nuevamente.');
         this.isSubmitting = false;

@@ -169,8 +169,8 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   // Helper para obtener imágenes como array seguro (con URL completa)
   getImagesArray(): string[] {
     if (!this.property?.images) return [];
-    const raw = Array.isArray(this.property.images) ? this.property.images : [];
-    return raw.map((img) => this.buildImageUrl(img));
+    const images = Array.isArray(this.property.images) ? this.property.images : [];
+    return images.map((_, i) => this.propertyService.getPropertyImageUrl(this.property!, i));
   }
 
   // Helper para verificar si tiene múltiples imágenes
@@ -180,21 +180,16 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
   // Helper para obtener imagen actual (con URL completa)
   getCurrentImage(): string {
-    const images = this.getImagesArray();
-    return images[this.currentImageIndex] || '';
+    if (!this.property) return '';
+    return this.propertyService.getPropertyImageUrl(this.property, this.currentImageIndex);
   }
 
   // Helper para obtener cantidad de imágenes
   getImagesCount(): number {
-    return this.getImagesArray().length;
-  }
-
-  /** Construye la URL completa de una imagen del backend */
-  private buildImageUrl(imagePath: string): string {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
-    const normalized = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `http://localhost:3000${normalized}`;
+    if (!this.property?.images) return 0;
+    return Array.isArray(this.property.images)
+      ? this.property.images.length
+      : Object.keys(this.property.images).length;
   }
 
   toggleFavorite(): void {
@@ -276,19 +271,28 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   }
 
   shareProperty(): void {
+    const url = window.location.href;
     if (navigator.share && this.property) {
       navigator
         .share({
           title: this.property.title,
           text: `Mira esta propiedad: ${this.property.title}`,
-          url: window.location.href,
+          url: url,
         })
-        .catch((err) => console.log('Error sharing:', err));
+        .catch((err) => {
+          console.log('Error sharing:', err);
+          this.copyToClipboard(url);
+        });
     } else {
-      // Fallback: copiar al portapapeles
-      navigator.clipboard.writeText(window.location.href);
-      alert('¡Enlace copiado al portapapeles!');
+      this.copyToClipboard(url);
     }
+  }
+
+  private copyToClipboard(text: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      // Usar snackbar o similar si está disponible, o un simple alert mejorado
+      alert('¡Enlace copiado al portapapeles!');
+    });
   }
 
   printProperty(): void {
@@ -297,11 +301,7 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
 
   // Helper methods para adaptar el formato del backend
   getPropertyAddress(): string {
-    if (this.property?.addresses && this.property.addresses.length > 0) {
-      const addr = this.property.addresses[0];
-      return `${addr.street_address}, ${addr.city}${addr.state ? ', ' + addr.state : ''}`;
-    }
-    return 'public.properties.locationNotAvailable';
+    return this.property ? this.propertyService.getPropertyAddress(this.property) : '';
   }
 
   getLocationForMap(): any {

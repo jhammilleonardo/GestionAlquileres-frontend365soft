@@ -159,7 +159,6 @@ export class PropiedadesComponent implements OnInit {
   propertyTypes = signal<PropertyType[]>([]);
   propertySubtypes = signal<PropertySubtype[]>([]);
   filteredSubtypes = signal<PropertySubtype[]>([]);
-  propertyImageMap = new Map<number, string>();
 
   isListLoading = signal(false);
   isSubmitting = signal(false);
@@ -290,8 +289,6 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getAdminProperties(this.filters).subscribe({
       next: (data) => {
         this.properties.set(data);
-        this.propertyImageMap.clear();
-        data.forEach((prop) => this.propertyImageMap.set(prop.id, this.buildImageUrl(prop)));
         this.isListLoading.set(false);
         this.cdr.markForCheck();
       },
@@ -744,52 +741,26 @@ export class PropiedadesComponent implements OnInit {
     }, 80);
   }
   getPropertyAddress(property: Property): string {
-    if (property && property.addresses && property.addresses.length > 0) {
-      const addr = property.addresses[0];
-      return `${addr.street_address || ''}, ${addr.city || ''}, ${addr.country || ''}`;
-    }
-    return 'Sin dirección';
-  }
-
-  /** Construye la URL de imagen de una propiedad (uso interno, llamar solo al cargar datos) */
-  private buildImageUrl(property: Property): string {
-    let imagePath: string | null = null;
-
-    if (property.first_image) {
-      imagePath = property.first_image;
-    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      imagePath = property.images[0];
-    }
-
-    if (imagePath) {
-      if (imagePath.startsWith('http')) return imagePath;
-      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-      return `http://localhost:3000${normalizedPath}`;
-    }
-
-    return '';
+    return this.propertyService.getPropertyAddress(property) || 'Sin dirección';
   }
 
   /** Retorna la URL de imagen pre-computada (seguro llamar desde template) */
   getPropertyImage(property: Property): string {
-    return this.propertyImageMap.get(property.id) ?? '';
+    return this.propertyService.getPropertyImageUrl(property);
   }
 
   getPropertyPrice(property: Property): string {
-    const price = property.monthly_rent || property.monthly_rent_amount;
-    if (price) return this.formatService.formatCurrency(price);
-    return 'N/A';
+    return this.propertyService.getPropertyPrice(property);
   }
 
   getPropertyArea(property: Property): string {
-    const area = property.square_meters || property.total_area;
-    return area ? `${area} m²` : 'N/A';
+    return this.propertyService.getPropertyArea(property);
   }
 
   onImageLoad(_property: Property): void {}
 
   onImageError(property: Property, _url: string): void {
-    this.propertyImageMap.delete(property.id);
+    // Error loading image, handled by browser default or service helper fallback
     this.cdr.markForCheck();
   }
 

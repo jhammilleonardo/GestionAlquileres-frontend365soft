@@ -1,5 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -66,7 +67,7 @@ export class PropertyListComponent implements OnInit {
 
   filters: PropertyFilters = {
     search: '',
-    status: PropertyStatus.DISPONIBLE,
+    status: undefined,
     property_type_id: undefined,
     property_subtype_id: undefined,
     city: '',
@@ -74,17 +75,16 @@ export class PropertyListComponent implements OnInit {
     min_price: undefined,
     max_price: undefined,
     bedrooms: undefined,
-    sort_by: SortOption.CREATED_AT,
+    sort_by: 'newest',
     sort_order: 'DESC',
     page: 1,
     limit: 20,
   };
 
   sortOptions = [
-    { value: SortOption.CREATED_AT, label: 'Más recientes' },
-    { value: SortOption.PRICE, label: 'Precio', isPrice: true },
-    { value: SortOption.AVAILABILITY, label: 'Disponibilidad' },
-    { value: SortOption.TITLE, label: 'A-Z' },
+    { value: 'newest', label: 'Más recientes' },
+    { value: 'price_asc', label: 'Precio: Menor a Mayor' },
+    { value: 'price_desc', label: 'Precio: Mayor a Menor' },
   ];
 
   showFilters = false;
@@ -110,37 +110,42 @@ export class PropertyListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // No cargar types desde admin en portal público - requiere autenticación
-    // this.loadPropertyTypes();
     this.loadFavorites();
-
-    // Wait for slug to be set before loading properties
     this.waitForSlugAndLoadProperties();
   }
 
-  /**
-   * Wait for the slug to be set in SlugService before loading properties
-   * This fixes the race condition where properties are loaded before the slug is available
-   */
   private waitForSlugAndLoadProperties(): void {
-    const slug = this.slugService.getSlug();
+    // Intento 1: Desde el servicio (si ya está)
+    let slug = this.slugService.getSlug();
 
-    if (slug) {
-      // Slug is already set, load properties immediately
-      console.log('PropertyListComponent - Slug ya disponible:', slug);
+    // Intento 2: Desde la URL directamente (lo más fiable)
+    if (!slug) {
+      const pathParts = window.location.pathname.split('/');
+      // En /inmobiliaria-prueba/publico/propiedades, el slug es el primer segmento
+      slug = pathParts[1];
+    }
+
+    if (slug && slug !== 'publico') {
+      console.log('PropertyListComponent - Slug detectado:', slug);
+      this.slugService.setSlug(slug);
+      
+      // Resetear filtros para asegurar visibilidad total inicial
+      this.filters = {
+        ...this.filters,
+        status: undefined,
+        search: '',
+        property_type_id: undefined,
+        property_subtype_id: undefined
+      };
+      
       this.loadProperties();
     } else {
-      // Slug not set yet, get it from the route and set it
-      console.log('PropertyListComponent - Esperando slug de la ruta...');
-      this.route.parent?.paramMap.subscribe((params) => {
-        const slugFromRoute = params.get('slug');
-        if (slugFromRoute) {
-          console.log('PropertyListComponent - Slug obtenido de ruta:', slugFromRoute);
-          this.slugService.setSlug(slugFromRoute);
-          // Wait a small amount for the slug to be set in the service
-          setTimeout(() => {
-            this.loadProperties();
-          }, 100);
+      // Intento 3: Suscripción reactiva como último recurso
+      this.route.paramMap.subscribe(params => {
+        const s = params.get('slug') || this.route.snapshot.parent?.paramMap.get('slug');
+        if (s) {
+          this.slugService.setSlug(s);
+          this.loadProperties();
         }
       });
     }
@@ -157,23 +162,127 @@ export class PropertyListComponent implements OnInit {
     });
   }
 
+  private http = inject(HttpClient);
+
+  private buildHttpParams(): any {
+    const params: any = {};
+    if (this.filters.search) params.search = this.filters.search;
+    
+    // Mapear ID de tipo al código que espera el backend
+    if (this.filters.property_type_id) {
+      const type = this.propertyTypes.find(t => t.id === this.filters.property_type_id);
+      if (type) {
+        params.type = type.code || type.name.toLowerCase();
+      }
+    }
+    if (this.filters.min_price !== undefined && this.filters.min_price !== null && (this.filters.min_price as any) !== '') {
+      params.min_price = Number(this.filters.min_price);
+    }
+    if (this.filters.max_price !== undefined && this.filters.max_price !== null && (this.filters.max_price as any) !== '') {
+      params.max_price = Number(this.filters.max_price);
+    }
+    if (this.filters.bedrooms !== undefined && this.filters.bedrooms !== null && (this.filters.bedrooms as any) !== '') {
+      params.bedrooms = Number(this.filters.bedrooms);
+    }
+    if (this.filters.city) params.city = this.filters.city;
+    if (this.filters.status) params.status = this.filters.status;
+    
+    // Sort mapping
+    if (this.filters.sort_by) {
+      params.sort = this.filters.sort_by;
+    }
+    
+    return params;
+  }
+
   loadProperties(): void {
     this.isLoading = true;
-    this.propertyService.getFilteredProperties(this.filters).subscribe({
-      next: (properties) => {
-        this.filteredProperties = properties;
+    
+    const slug = this.slugService.getSlug();
+    const url = `http://localhost:3000/${slug}/catalog/properties`;
+    const params = this.buildHttpParams();
+    
+    this.http.get<any>(url, { params }).subscribe({
+      next: (result: any) => {
+        const items = result.data || result.items || (Array.isArray(result) ? result : []);
+        
+        // Filtro de seguridad local ultra-robusto (con logs para depuración interna)
+        const filtered = items.filter((p: any) => {
+          // Robust parse for price
+          let propertyPrice = 0;
+          const rawPrice = p.monthly_rent || p.monthly_rent_amount || p.price;
+          if (typeof rawPrice === 'string') {
+            propertyPrice = Number(rawPrice.replace(/[^0-9.]/g, ''));
+          } else if (typeof rawPrice === 'number') {
+            propertyPrice = rawPrice;
+          }
+          
+          const propertyRooms = Number(p.bedrooms || p.rooms || 0);
+          
+          // Max price filter
+          if (this.filters.max_price !== undefined && this.filters.max_price !== null && (this.filters.max_price as any) !== '') {
+            if (propertyPrice > Number(this.filters.max_price)) return false;
+          }
+
+          // Min price filter
+          if (this.filters.min_price !== undefined && this.filters.min_price !== null && (this.filters.min_price as any) !== '') {
+            if (propertyPrice < Number(this.filters.min_price)) return false;
+          }
+
+          // Bedrooms filter
+          if (this.filters.bedrooms !== undefined && this.filters.bedrooms !== null && (this.filters.bedrooms as any) !== '') {
+            if (propertyRooms !== Number(this.filters.bedrooms)) return false;
+          }
+          
+          // Search filter (Local fallback)
+          if (this.filters.search) {
+            const searchLower = this.filters.search.toLowerCase();
+            const titleMatch = p.title?.toLowerCase().includes(searchLower);
+            const descMatch = p.description?.toLowerCase().includes(searchLower);
+            const addressMatch = p.addresses?.some((a: any) => a.street_address?.toLowerCase().includes(searchLower));
+            const cityMatch = p.city?.toLowerCase().includes(searchLower);
+            
+            if (!titleMatch && !descMatch && !addressMatch && !cityMatch) {
+              return false;
+            }
+          }
+          
+          return true;
+        });
+
+        // Crear una NUEVA referencia de array para forzar la actualización de Angular
+        const mappedResults = filtered.map((p: any) => ({
+          ...p,
+          images: Array.isArray(p.images) ? p.images.map((img: string) => 
+            img.startsWith('http') ? img : `http://localhost:3000${img.startsWith('/') ? '' : '/'}${img}`
+          ) : []
+        }));
+
+        this.filteredProperties = [...mappedResults];
         this.isLoading = false;
-        // Forzar detección de cambios para actualizar la vista
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
-      error: (error) => {
-        console.error('Error loading properties:', error);
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
+      error: (error: any) => {
+        console.error('Error en carga directa:', error);
+        // Reintentar con el servicio si falla el directo
+        this.propertyService.getProperties().subscribe({
+          next: (items: Property[]) => {
+            this.filteredProperties = items;
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => {
+            console.error('Error loading properties via service:', err);
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          }
+        });
+      }
     });
   }
 
+  // Favorites handling
   loadFavorites(): void {
     this.propertyService.favorites$.subscribe((favorites) => {
       this.favorites = favorites;

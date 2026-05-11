@@ -52,7 +52,7 @@ export class HomeComponent implements OnInit {
   isLoadingProperties = true;
 
   private router = inject(Router);
-  private propertyService = inject(PropertyService);
+  public propertyService = inject(PropertyService);
   private slugService = inject(SlugService);
 
   ngOnInit(): void {
@@ -68,8 +68,8 @@ export class HomeComponent implements OnInit {
       limit: 6,
     };
     this.propertyService.getFilteredProperties(filters).subscribe({
-      next: (properties) => {
-        this.featuredProperties = properties;
+      next: (result) => {
+        this.featuredProperties = result.items;
         this.isLoadingProperties = false;
       },
       error: () => {
@@ -79,25 +79,11 @@ export class HomeComponent implements OnInit {
   }
 
   getPropertyImageUrl(property: Property): string {
-    let imagePath: string | null = null;
-    if (property.first_image) {
-      imagePath = property.first_image;
-    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      imagePath = property.images[0];
-    }
-    if (imagePath) {
-      if (imagePath.startsWith('http')) return imagePath;
-      return `http://localhost:3000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
-    }
-    return '';
+    return this.propertyService.getPropertyImageUrl(property);
   }
 
   getPropertyAddress(property: Property): string {
-    if (property.addresses && property.addresses.length > 0) {
-      const addr = property.addresses[0];
-      return `${addr.street_address}, ${addr.city}`;
-    }
-    return 'Dirección no disponible';
+    return this.propertyService.getPropertyAddress(property);
   }
 
   viewProperty(propertyId: number): void {

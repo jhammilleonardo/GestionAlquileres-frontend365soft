@@ -67,7 +67,7 @@
             matInput
             type="number"
             [(ngModel)]="filters.min_price"
-            (change)="applyFilters()"
+            (input)="applyFilters()"
             placeholder="Ej: 500"
           />
         </mat-form-field>
@@ -78,7 +78,7 @@
             matInput
             type="number"
             [(ngModel)]="filters.max_price"
-            (change)="applyFilters()"
+            (input)="applyFilters()"
             placeholder="Ej: 2000"
           />
         </mat-form-field>
@@ -89,7 +89,7 @@
             matInput
             type="number"
             [(ngModel)]="filters.bedrooms"
-            (change)="applyFilters()"
+            (input)="applyFilters()"
             placeholder="Cualquiera"
           />
         </mat-form-field>
