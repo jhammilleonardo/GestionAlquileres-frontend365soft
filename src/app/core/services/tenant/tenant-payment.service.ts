@@ -1,9 +1,15 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpResponse } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
-import { Payment, PaymentStats, CreatePaymentDto, PaymentStatus } from '../../models/payment.model';
+import {
+  Payment,
+  PaymentStats,
+  CreatePaymentDto,
+  PaymentMethod,
+  PaymentStatus,
+} from '../../models/payment.model';
 import { SlugService } from '../slug.service';
 
 @Injectable({
@@ -126,6 +132,68 @@ export class TenantPaymentService {
         this.isLoadingSignal.set(false);
         throw error;
       }),
+    );
+  }
+
+  /**
+   * Registrar pago manual con comprobante.
+   * POST /:slug/tenant/payments multipart/form-data
+   */
+  createPaymentWithReceipt(
+    payment: CreatePaymentDto,
+    receipt?: File,
+  ): Observable<HttpEvent<Payment>> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    const formData = new FormData();
+    const formattedPayment = {
+      ...payment,
+      payment_date:
+        payment.payment_date instanceof Date
+          ? payment.payment_date.toISOString().split('T')[0]
+          : payment.payment_date,
+    };
+
+    Object.entries(formattedPayment).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') return;
+      formData.append(key, String(value));
+    });
+
+    if (receipt) {
+      formData.append('receipt', receipt);
+    }
+
+    return this.http
+      .post<Payment>(this.getBaseUrl(), formData, {
+        observe: 'events',
+        reportProgress: true,
+      })
+      .pipe(
+        tap((event) => {
+          if (event instanceof HttpResponse && event.body) {
+            this.paymentsSignal.update((payments) => [event.body as Payment, ...payments]);
+            this.isLoadingSignal.set(false);
+            this.loadStats();
+          }
+        }),
+        catchError((error) => {
+          this.errorSignal.set(
+            error.error?.message || this.transloco.translate('common.errors.registerPayment'),
+          );
+          this.isLoadingSignal.set(false);
+          throw error;
+        }),
+      );
+  }
+
+  /**
+   * Métodos habilitados en tenant_config.payment_methods.
+   * GET /:slug/tenant/payments/methods
+   */
+  getAvailablePaymentMethods(): Observable<Array<{ method: PaymentMethod; label: string }>> {
+    return this.http.get<Array<{ method: PaymentMethod; label: string }>>(
+      `${this.getBaseUrl()}/methods`,
     );
   }
 

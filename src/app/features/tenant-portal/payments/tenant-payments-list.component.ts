@@ -34,7 +34,9 @@ import {
 } from '../../../core/services/tenant/tenant-contract.service';
 import {
   PaymentStatus,
+  Payment,
   PaymentType,
+  PaymentMethod,
   PaymentStatusLabels,
   PaymentTypeLabels,
   PaymentMethodLabels,
@@ -42,7 +44,7 @@ import {
   CurrencyLabels,
 } from '../../../core/models/payment.model';
 import { MatDividerModule } from '@angular/material/divider';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
@@ -76,6 +78,7 @@ interface PaymentScheduleItem {
     TenantDatePipe,
     TenantCurrencyPipe,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
     <div class="payments-container">
       <!-- Header -->
@@ -88,10 +91,16 @@ interface PaymentScheduleItem {
           </div>
         </div>
         <div class="header-actions">
-          <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
-            <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-            {{ 'public.tenantPayments.registerPayment' | transloco }}
-          </button>
+          @if (hasPendingRent()) {
+            <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
+              <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+              {{ 'public.tenantPayments.registerPayment' | transloco }}
+            </button>
+          } @else {
+            <span class="no-pending-rent">
+              {{ 'public.tenantPayments.noPendingRent' | transloco }}
+            </span>
+          }
         </div>
       </div>
 
@@ -245,10 +254,12 @@ interface PaymentScheduleItem {
             <lucide-icon [img]="CreditCard" [size]="64"></lucide-icon>
             <h2>{{ 'public.tenantPayments.noPaymentsTitle' | transloco }}</h2>
             <p>{{ 'public.tenantPayments.noPaymentsDesc' | transloco }}</p>
-            <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
-              <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-              {{ 'public.tenantPayments.registerFirst' | transloco }}
-            </button>
+            @if (hasPendingRent()) {
+              <button mat-raised-button color="primary" [routerLink]="nuevoPagoUrl()">
+                <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+                {{ 'public.tenantPayments.registerFirst' | transloco }}
+              </button>
+            }
           </div>
         </mat-card>
       } @else {
@@ -264,14 +275,15 @@ interface PaymentScheduleItem {
                   <th>{{ 'public.tenantPayments.colAmount' | transloco }}</th>
                   <th>{{ 'public.tenantPayments.colCurrency' | transloco }}</th>
                   <th>{{ 'public.tenantPayments.colStatus' | transloco }}</th>
+                  <th>{{ 'public.tenantPayments.colDetails' | transloco }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (payment of paymentService.payments(); track payment.id) {
                   <tr>
                     <td>{{ payment.payment_date | tenantDate }}</td>
-                    <td>{{ paymentTypeLabels[payment.payment_type] }}</td>
-                    <td>{{ paymentMethodLabels[payment.payment_method] }}</td>
+                    <td>{{ getPaymentTypeLabel(payment.payment_type) }}</td>
+                    <td>{{ getPaymentMethodLabel(payment.payment_method) }}</td>
                     <td>
                       <span class="reference">{{ payment.reference_number || '-' }}</span>
                     </td>
@@ -283,8 +295,35 @@ interface PaymentScheduleItem {
                         [style.background-color]="getStatusColor(payment.status)"
                         style="color: white;"
                       >
-                        {{ paymentStatusLabels[payment.status] }}
+                        {{ getPaymentStatusLabel(payment.status) }}
                       </span>
+                    </td>
+                    <td class="payment-details-cell">
+                      @if (payment.status === PaymentStatus.PENDING) {
+                        <span class="pending-review">{{
+                          'public.tenantPayments.pendingReview' | transloco
+                        }}</span>
+                      }
+                      @if (payment.status === PaymentStatus.REJECTED) {
+                        <div class="rejection-box">
+                          <strong>{{ 'public.tenantPayments.rejectionReason' | transloco }}</strong>
+                          <span>{{ getRejectionReason(payment) }}</span>
+                          <button
+                            mat-stroked-button
+                            color="primary"
+                            [routerLink]="nuevoPagoUrl()"
+                            [queryParams]="{ retry: payment.id }"
+                          >
+                            {{ 'public.tenantPayments.retryPayment' | transloco }}
+                          </button>
+                        </div>
+                      }
+                      @if (
+                        payment.status !== PaymentStatus.PENDING &&
+                        payment.status !== PaymentStatus.REJECTED
+                      ) {
+                        <span class="details-empty">-</span>
+                      }
                     </td>
                   </tr>
                 }
@@ -321,6 +360,19 @@ interface PaymentScheduleItem {
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+
+      .no-pending-rent {
+        display: inline-flex;
+        align-items: center;
+        max-width: 280px;
+        color: #64748b;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+        font-weight: 600;
       }
 
       .header-content {
@@ -482,6 +534,49 @@ interface PaymentScheduleItem {
         font-size: 12px;
         font-weight: 500;
         display: inline-block;
+      }
+
+      .payment-details-cell {
+        min-width: 220px;
+      }
+
+      .pending-review {
+        color: #92400e;
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+
+      .rejection-box {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        max-width: 280px;
+        color: #7f1d1d;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      .rejection-box strong {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .rejection-box span {
+        font-size: 0.84rem;
+        line-height: 1.35;
+      }
+
+      .rejection-box button {
+        margin-top: 4px;
+      }
+
+      .details-empty {
+        color: #94a3b8;
+        font-weight: 600;
       }
 
       .status-badge.status-pending {
@@ -950,15 +1045,19 @@ export class TenantPaymentsListComponent implements OnInit {
   paymentService = inject(TenantPaymentService);
   contractService = inject(TenantContractService);
   private slugService = inject(SlugService);
+  private translocoService = inject(TranslocoService);
 
   calendarExpanded = signal(true);
   private paymentScheduleSignal = signal<PaymentScheduleItem[]>([]);
   paymentSchedule = this.paymentScheduleSignal.asReadonly();
+  hasPendingRent = computed(() =>
+    this.paymentSchedule().some((item) => item.status === 'current' || item.status === 'overdue'),
+  );
 
   PaymentStatus = PaymentStatus;
-  paymentStatusLabels = PaymentStatusLabels;
-  paymentTypeLabels = PaymentTypeLabels;
-  paymentMethodLabels = PaymentMethodLabels;
+  private paymentStatusLabels = PaymentStatusLabels;
+  private paymentTypeLabels = PaymentTypeLabels;
+  private paymentMethodLabels = PaymentMethodLabels;
   paymentStatusColors = PaymentStatusColors;
   currencyLabels = CurrencyLabels;
   // URL para registrar nuevo pago
@@ -975,6 +1074,7 @@ export class TenantPaymentsListComponent implements OnInit {
       const contract = this.contractService.currentContract();
       if (contract) {
         setTimeout(() => this.buildPaymentSchedule(contract), 200);
+        setTimeout(() => this.buildPaymentSchedule(contract), 900);
       } else if (this.contractService.isLoading()) {
         setTimeout(tryBuildCalendar, 300);
       }
@@ -988,6 +1088,16 @@ export class TenantPaymentsListComponent implements OnInit {
     const payDay = contract.payment_day || 1;
     const now = new Date();
     const existing = this.paymentService.payments();
+    const paidRentInstallments = existing.filter(
+      (payment) =>
+        payment.payment_type === PaymentType.RENT &&
+        (payment.status === PaymentStatus.APPROVED ||
+          payment.status === PaymentStatus.PENDING ||
+          payment.status === PaymentStatus.PROCESSING),
+    ).length;
+    const activeLang = this.translocoService.getActiveLang();
+    const monthLocale = activeLang.startsWith('en') ? 'en-US' : 'es-BO';
+    let assignedPaidInstallments = 0;
 
     const items: PaymentScheduleItem[] = [];
     let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
@@ -999,17 +1109,10 @@ export class TenantPaymentsListComponent implements OnInit {
       const lastDay = new Date(year, month + 1, 0).getDate();
       const dueDate = new Date(year, month, Math.min(payDay, lastDay));
 
-      const isPaid = existing.some((p) => {
-        const pd = new Date(p.payment_date as string);
-        return (
-          pd.getFullYear() === year &&
-          pd.getMonth() === month &&
-          p.payment_type === PaymentType.RENT &&
-          (p.status === PaymentStatus.APPROVED ||
-            p.status === PaymentStatus.PENDING ||
-            p.status === PaymentStatus.PROCESSING)
-        );
-      });
+      const isPaid = assignedPaidInstallments < paidRentInstallments;
+      if (isPaid) {
+        assignedPaidInstallments += 1;
+      }
 
       const isCurrent = now.getFullYear() === year && now.getMonth() === month;
       const isPastDue = dueDate < now && !isCurrent;
@@ -1019,19 +1122,19 @@ export class TenantPaymentsListComponent implements OnInit {
 
       if (isPaid) {
         status = 'paid';
-        statusLabel = 'Pagado';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calPaid');
       } else if (isCurrent) {
         status = 'current';
-        statusLabel = 'Este mes';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calCurrent');
       } else if (isPastDue) {
         status = 'overdue';
-        statusLabel = 'Pendiente';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calOverdue');
       } else {
         status = 'upcoming';
-        statusLabel = 'Próximo';
+        statusLabel = this.translocoService.translate('public.tenantPayments.calUpcoming');
       }
 
-      const raw = cursor.toLocaleDateString('es', { month: 'short', year: 'numeric' });
+      const raw = cursor.toLocaleDateString(monthLocale, { month: 'short', year: 'numeric' });
       items.push({
         label: raw.charAt(0).toUpperCase() + raw.slice(1),
         year,
@@ -1052,5 +1155,35 @@ export class TenantPaymentsListComponent implements OnInit {
 
   getStatusColor(status: PaymentStatus): string {
     return PaymentStatusColors[status];
+  }
+
+  getPaymentStatusLabel(status: PaymentStatus): string {
+    return this.translateOrFallback(
+      `public.tenantPayments.paymentStatus.${status}`,
+      this.paymentStatusLabels[status],
+    );
+  }
+
+  getPaymentTypeLabel(type: PaymentType): string {
+    return this.translateOrFallback(
+      `public.tenantPayments.paymentType.${type}`,
+      this.paymentTypeLabels[type],
+    );
+  }
+
+  getPaymentMethodLabel(method: PaymentMethod): string {
+    return this.translateOrFallback(
+      `public.tenantPayments.paymentMethod.${method}`,
+      this.paymentMethodLabels[method],
+    );
+  }
+
+  private translateOrFallback(key: string, fallback: string): string {
+    const translated = this.translocoService.translate(key);
+    return translated === key ? fallback : translated;
+  }
+
+  getRejectionReason(payment: Payment): string {
+    return payment.rejection_reason || payment.admin_notes || '-';
   }
 }
