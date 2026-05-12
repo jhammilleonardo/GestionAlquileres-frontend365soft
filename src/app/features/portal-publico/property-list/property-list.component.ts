@@ -1,6 +1,5 @@
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -47,6 +47,7 @@ import {
     MatFormFieldModule,
     MatSelectModule,
     MatProgressSpinnerModule,
+    MatPaginatorModule,
     MatChipsModule,
     MatIconModule,
     LucideAngularModule,
@@ -59,6 +60,7 @@ import {
 export class PropertyListComponent implements OnInit {
   properties: Property[] = [];
   filteredProperties: Property[] = [];
+  totalResultsCount = 0;
   favorites = new Set<number>();
   isLoading = true;
 
@@ -77,14 +79,16 @@ export class PropertyListComponent implements OnInit {
     bedrooms: undefined,
     sort_by: 'newest',
     sort_order: 'DESC',
+    rental_type: 'any',
     page: 1,
     limit: 20,
   };
 
   sortOptions = [
     { value: 'newest', label: 'Más recientes' },
-    { value: 'price_asc', label: 'Precio: Menor a Mayor' },
-    { value: 'price_desc', label: 'Precio: Mayor a Menor' },
+    { value: 'price_asc', label: 'Precio más bajo' },
+    { value: 'price_desc', label: 'Precio más alto' },
+    { value: 'available', label: 'Disponibilidad' },
   ];
 
   showFilters = false;
@@ -128,20 +132,20 @@ export class PropertyListComponent implements OnInit {
     if (slug && slug !== 'publico') {
       console.log('PropertyListComponent - Slug detectado:', slug);
       this.slugService.setSlug(slug);
-      
+
       // Resetear filtros para asegurar visibilidad total inicial
       this.filters = {
         ...this.filters,
         status: undefined,
         search: '',
         property_type_id: undefined,
-        property_subtype_id: undefined
+        property_subtype_id: undefined,
       };
-      
+
       this.loadProperties();
     } else {
       // Intento 3: Suscripción reactiva como último recurso
-      this.route.paramMap.subscribe(params => {
+      this.route.paramMap.subscribe((params) => {
         const s = params.get('slug') || this.route.snapshot.parent?.paramMap.get('slug');
         if (s) {
           this.slugService.setSlug(s);
@@ -162,123 +166,22 @@ export class PropertyListComponent implements OnInit {
     });
   }
 
-  private http = inject(HttpClient);
-
-  private buildHttpParams(): any {
-    const params: any = {};
-    if (this.filters.search) params.search = this.filters.search;
-    
-    // Mapear ID de tipo al código que espera el backend
-    if (this.filters.property_type_id) {
-      const type = this.propertyTypes.find(t => t.id === this.filters.property_type_id);
-      if (type) {
-        params.type = type.code || type.name.toLowerCase();
-      }
-    }
-    if (this.filters.min_price !== undefined && this.filters.min_price !== null && (this.filters.min_price as any) !== '') {
-      params.min_price = Number(this.filters.min_price);
-    }
-    if (this.filters.max_price !== undefined && this.filters.max_price !== null && (this.filters.max_price as any) !== '') {
-      params.max_price = Number(this.filters.max_price);
-    }
-    if (this.filters.bedrooms !== undefined && this.filters.bedrooms !== null && (this.filters.bedrooms as any) !== '') {
-      params.bedrooms = Number(this.filters.bedrooms);
-    }
-    if (this.filters.city) params.city = this.filters.city;
-    if (this.filters.status) params.status = this.filters.status;
-    
-    // Sort mapping
-    if (this.filters.sort_by) {
-      params.sort = this.filters.sort_by;
-    }
-    
-    return params;
-  }
-
   loadProperties(): void {
     this.isLoading = true;
-    
-    const slug = this.slugService.getSlug();
-    const url = `http://localhost:3000/${slug}/catalog/properties`;
-    const params = this.buildHttpParams();
-    
-    this.http.get<any>(url, { params }).subscribe({
-      next: (result: any) => {
-        const items = result.data || result.items || (Array.isArray(result) ? result : []);
-        
-        // Filtro de seguridad local ultra-robusto (con logs para depuración interna)
-        const filtered = items.filter((p: any) => {
-          // Robust parse for price
-          let propertyPrice = 0;
-          const rawPrice = p.monthly_rent || p.monthly_rent_amount || p.price;
-          if (typeof rawPrice === 'string') {
-            propertyPrice = Number(rawPrice.replace(/[^0-9.]/g, ''));
-          } else if (typeof rawPrice === 'number') {
-            propertyPrice = rawPrice;
-          }
-          
-          const propertyRooms = Number(p.bedrooms || p.rooms || 0);
-          
-          // Max price filter
-          if (this.filters.max_price !== undefined && this.filters.max_price !== null && (this.filters.max_price as any) !== '') {
-            if (propertyPrice > Number(this.filters.max_price)) return false;
-          }
 
-          // Min price filter
-          if (this.filters.min_price !== undefined && this.filters.min_price !== null && (this.filters.min_price as any) !== '') {
-            if (propertyPrice < Number(this.filters.min_price)) return false;
-          }
-
-          // Bedrooms filter
-          if (this.filters.bedrooms !== undefined && this.filters.bedrooms !== null && (this.filters.bedrooms as any) !== '') {
-            if (propertyRooms !== Number(this.filters.bedrooms)) return false;
-          }
-          
-          // Search filter (Local fallback)
-          if (this.filters.search) {
-            const searchLower = this.filters.search.toLowerCase();
-            const titleMatch = p.title?.toLowerCase().includes(searchLower);
-            const descMatch = p.description?.toLowerCase().includes(searchLower);
-            const addressMatch = p.addresses?.some((a: any) => a.street_address?.toLowerCase().includes(searchLower));
-            const cityMatch = p.city?.toLowerCase().includes(searchLower);
-            
-            if (!titleMatch && !descMatch && !addressMatch && !cityMatch) {
-              return false;
-            }
-          }
-          
-          return true;
-        });
-
-        // Crear una NUEVA referencia de array para forzar la actualización de Angular
-        const mappedResults = filtered.map((p: any) => ({
-          ...p,
-          images: Array.isArray(p.images) ? p.images.map((img: string) => 
-            img.startsWith('http') ? img : `http://localhost:3000${img.startsWith('/') ? '' : '/'}${img}`
-          ) : []
-        }));
-
-        this.filteredProperties = [...mappedResults];
+    this.propertyService.getProperties().subscribe({
+      next: (properties) => {
+        this.properties = properties;
+        this.applyLocalFilters();
         this.isLoading = false;
         this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
-      error: (error: any) => {
-        console.error('Error en carga directa:', error);
-        // Reintentar con el servicio si falla el directo
-        this.propertyService.getProperties().subscribe({
-          next: (items: Property[]) => {
-            this.filteredProperties = items;
-            this.isLoading = false;
-            this.cdr.detectChanges();
-          },
-          error: (err: any) => {
-            console.error('Error loading properties via service:', err);
-            this.isLoading = false;
-            this.cdr.detectChanges();
-          }
-        });
-      }
+      error: (error) => {
+        console.error('Error loading properties:', error);
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
     });
   }
 
@@ -290,7 +193,55 @@ export class PropertyListComponent implements OnInit {
   }
 
   applyFilters(): void {
-    this.loadProperties();
+    this.applyLocalFilters();
+  }
+
+  applyLocalFilters(): void {
+    let filtered = [...this.properties];
+
+    // Búsqueda por texto
+    if (this.filters.search) {
+      const search = this.filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title.toLowerCase().includes(search) || p.description?.toLowerCase().includes(search),
+      );
+    }
+
+    // Tipo de Alquiler
+    if (this.filters.rental_type && this.filters.rental_type !== 'any') {
+      filtered = filtered.filter((p: any) => p.rental_type === this.filters.rental_type);
+    }
+
+    // Precio mínimo
+    if (this.filters.min_price) {
+      filtered = filtered.filter((p) => {
+        const price = p.monthly_rent || p.monthly_rent_amount || 0;
+        return price >= this.filters.min_price!;
+      });
+    }
+
+    // Precio máximo
+    if (this.filters.max_price) {
+      filtered = filtered.filter((p) => {
+        const price = p.monthly_rent || p.monthly_rent_amount || 0;
+        return price <= this.filters.max_price!;
+      });
+    }
+
+    // Habitaciones
+    if (this.filters.bedrooms) {
+      filtered = filtered.filter((p) => p.bedrooms === this.filters.bedrooms);
+    }
+
+    this.filteredProperties = filtered;
+    this.totalResultsCount = filtered.length;
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.filters.page = event.pageIndex + 1;
+    this.filters.limit = event.pageSize;
+    this.applyFilters();
   }
 
   onSortChange(): void {
@@ -314,6 +265,7 @@ export class PropertyListComponent implements OnInit {
       bedrooms: undefined,
       sort_by: SortOption.CREATED_AT,
       sort_order: 'DESC',
+      rental_type: 'any',
       page: 1,
       limit: 20,
     };
@@ -322,7 +274,7 @@ export class PropertyListComponent implements OnInit {
 
   // Paginación
   get totalResults(): number {
-    return this.filteredProperties.length;
+    return this.totalResultsCount;
   }
 
   get visibleResultsStart(): number {
@@ -347,12 +299,20 @@ export class PropertyListComponent implements OnInit {
     this.showFilters = !this.showFilters;
   }
 
-  viewProperty(propertyId: number): void {
+  viewProperty(property: any): void {
+    const slug = this.slugService.getSlug();
+    const propSlug = property.slug || property.id;
+    if (slug) {
+      this.router.navigate(['/', slug, 'publico', 'propiedades', propSlug]);
+    } else {
+      this.router.navigate([propSlug], { relativeTo: this.route });
+    }
+  }
+
+  goToMap(): void {
     const slug = this.slugService.getSlug();
     if (slug) {
-      this.router.navigate(['/', slug, 'publico', 'propiedades', propertyId]);
-    } else {
-      this.router.navigate([propertyId], { relativeTo: this.route });
+      this.router.navigate(['/', slug, 'publico', 'mapa']);
     }
   }
 

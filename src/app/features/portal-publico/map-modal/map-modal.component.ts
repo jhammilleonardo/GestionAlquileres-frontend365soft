@@ -18,12 +18,32 @@ export class MapModalComponent {
 
   get openStreetMapUrl(): string {
     const { lat, lng } = this.location.coordinates;
-    return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`;
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+
+    // Default to Santa Cruz, Bolivia if invalid or zero
+    if (isNaN(latitude) || isNaN(longitude) || (latitude === 0 && longitude === 0)) {
+      const defaultLat = -17.7833;
+      const defaultLng = -63.1833;
+      return `https://www.openstreetmap.org/?mlat=${defaultLat}&mlon=${defaultLng}#map=15/${defaultLat}/${defaultLng}`;
+    }
+
+    return `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=15/${latitude}/${longitude}`;
   }
 
   get embedMapUrl(): string {
     const { lat, lng } = this.location.coordinates;
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01},${lat - 0.01},${lng + 0.01},${lat + 0.01}&layer=mapnik&marker=${lat},${lng}`;
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+
+    // Default to Santa Cruz, Bolivia if invalid or zero
+    if (isNaN(latitude) || isNaN(longitude) || (latitude === 0 && longitude === 0)) {
+      const defaultLat = -17.7833;
+      const defaultLng = -63.1833;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${defaultLng - 0.01},${defaultLat - 0.01},${defaultLng + 0.01},${defaultLat + 0.01}&layer=mapnik&marker=${defaultLat},${defaultLng}`;
+    }
+
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.01},${latitude - 0.01},${longitude + 0.01},${latitude + 0.01}&layer=mapnik&marker=${latitude},${longitude}`;
   }
 
   closeModal() {

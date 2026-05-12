@@ -160,6 +160,64 @@
         </div>
       </div>
 
+      <!-- Property Rules -->
+      <div class="section-card" *ngIf="property.property_rules">
+        <h2 class="section-title">Reglas de la Propiedad</h2>
+        <div class="rules-grid">
+          <div class="rule-item" *ngIf="property.property_rules.pets_allowed !== undefined">
+            <span class="rule-icon">{{ property.property_rules.pets_allowed ? '🐾' : '🚫' }}</span>
+            <span class="rule-text"
+              >Mascotas:
+              {{
+                property.property_rules.pets_allowed
+                  ? ('common.allowed' | transloco)
+                  : ('common.notAllowed' | transloco)
+              }}</span
+            >
+          </div>
+          <div class="rule-item" *ngIf="property.property_rules.smoking_allowed !== undefined">
+            <span class="rule-icon">{{
+              property.property_rules.smoking_allowed ? '🚬' : '🚭'
+            }}</span>
+            <span class="rule-text"
+              >Fumar:
+              {{
+                property.property_rules.smoking_allowed
+                  ? ('common.allowed' | transloco)
+                  : ('common.notAllowed' | transloco)
+              }}</span
+            >
+          </div>
+          <div class="rule-item" *ngIf="property.property_rules.max_occupants">
+            <span class="rule-icon">👥</span>
+            <span class="rule-text"
+              >Ocupantes máximos: {{ property.property_rules.max_occupants }}</span
+            >
+          </div>
+          <div class="rule-item" *ngIf="property.property_rules.min_lease_months">
+            <span class="rule-icon">📅</span>
+            <span class="rule-text"
+              >Contrato mínimo: {{ property.property_rules.min_lease_months }}
+              {{ 'common.months' | transloco }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Included Items / Services -->
+      <div
+        class="section-card"
+        *ngIf="property.included_items && property.included_items.length > 0"
+      >
+        <h2 class="section-title">Servicios Incluidos</h2>
+        <div class="amenities-grid">
+          <div class="amenity-item" *ngFor="let item of property.included_items">
+            <span class="amenity-icon">✓</span>
+            {{ item }}
+          </div>
+        </div>
+      </div>
+
       <!-- Property Details -->
       <div class="section-card">
         <h2 class="section-title">{{ 'public.propertyDetail.detailsTitle' | transloco }}</h2>

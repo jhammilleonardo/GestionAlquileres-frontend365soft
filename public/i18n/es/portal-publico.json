@@ -131,7 +131,13 @@
     "sendMessage": "Enviar Mensaje",
     "callNow": "Llamar Ahora",
     "scheduleTitle": "¿Quieres agendar una visita?",
-    "scheduleBtn": "Agendar Visita Presencial"
+    "scheduleBtn": "Agendar Visita Presencial",
+    "rules": "Reglas de la Propiedad",
+    "pets": "Mascotas",
+    "smoking": "Fumar",
+    "maxOccupants": "Ocupantes máximos",
+    "minLease": "Contrato mínimo",
+    "includedServices": "Servicios Incluidos"
   },
   "tenantRegister": {
     "heroTitle": "Crear Cuenta",

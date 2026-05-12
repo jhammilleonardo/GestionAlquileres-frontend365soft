@@ -65,7 +65,8 @@ export class PropertyService {
     if (filters.min_price) params.min_price = filters.min_price;
     if (filters.max_price) params.max_price = filters.max_price;
     if (filters.bedrooms) params.bedrooms = filters.bedrooms;
-    if (filters.rental_type) params.rental_type = filters.rental_type;
+    if (filters.rental_type && filters.rental_type !== 'any')
+      params.rental_type = filters.rental_type;
 
     // Mapear ordenamiento
     if (filters.sort_by === SortOption.PRICE) {
@@ -109,9 +110,6 @@ export class PropertyService {
     );
   }
 
-  /**
-   * Obtener detalle de una propiedad por ID (Público)
-   */
   getPropertyById(id: number): Observable<Property | undefined> {
     const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${id}`);
 
@@ -119,6 +117,21 @@ export class PropertyService {
       map((property) => this.transformProperty(property)),
       catchError((error) => {
         console.error(`Error loading property ${id}:`, error);
+        return of(undefined);
+      }),
+    );
+  }
+
+  /**
+   * Obtener detalle de una propiedad por Slug (Público)
+   */
+  getPropertyBySlug(slug: string): Observable<Property | undefined> {
+    const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${slug}`);
+
+    return this.apiHttp.get<Property>(endpoint).pipe(
+      map((property) => this.transformProperty(property)),
+      catchError((error) => {
+        console.error(`Error loading property ${slug}:`, error);
         return of(undefined);
       }),
     );

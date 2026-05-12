@@ -3,13 +3,16 @@
   <header class="map-header">
     <div class="header-content">
       <div class="title-section">
-        <h1 class="map-title">{{ 'public.properties.propertyMap' | transloco }}</h1>
-        <p class="map-subtitle">{{ 'public.properties.mapDescription' | transloco }}</p>
+        <h1 class="map-title">Mapa de Propiedades</h1>
+        <p class="map-subtitle">Encuentra tu próximo hogar en el mapa</p>
       </div>
       <div class="actions-section">
-        <a routerLink="/publico/propiedades" class="btn-list-view">
+        <a
+          [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades']"
+          class="btn-list-view"
+        >
           <lucide-icon [img]="List" class="btn-icon"></lucide-icon>
-          {{ 'public.properties.listView' | transloco }}
+          Ver en Lista
         </a>
       </div>
     </div>
@@ -20,19 +23,23 @@
     <div id="map-container" class="map-container">
       <div *ngIf="isLoading" class="map-loader">
         <div class="spinner"></div>
-        <p>{{ 'public.common.loading' | transloco }}...</p>
+        <p>Cargando...</p>
       </div>
     </div>
 
     <!-- Properties Overlay (Optional, for quick preview) -->
     <aside class="properties-sidebar" *ngIf="!isLoading && properties.length > 0">
       <div class="sidebar-header">
-        <h2>{{ properties.length }} {{ 'public.properties.results' | transloco }}</h2>
+        <h2>{{ properties.length }} Resultados</h2>
       </div>
       <div class="sidebar-list">
-        <div *ngFor="let prop of properties" class="sidebar-item" [routerLink]="['/publico/propiedades', prop.id]">
+        <div
+          *ngFor="let prop of properties"
+          class="sidebar-item"
+          [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades', prop.id]"
+        >
           <div class="item-img-container">
-            <img [src]="propertyService.getPropertyImageUrl(prop)" [alt]="prop.title">
+            <img [src]="propertyService.getPropertyImageUrl(prop)" [alt]="prop.title" />
           </div>
           <div class="item-info">
             <h4 class="item-title">{{ prop.title }}</h4>

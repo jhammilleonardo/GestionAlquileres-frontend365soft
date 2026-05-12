@@ -16,12 +16,16 @@ export const PORTAL_PUBLICO_ROUTES: Routes = [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
       { path: 'inicio', component: HomeComponent },
       { path: 'propiedades', component: PropertyListComponent },
-      { path: 'propiedades/:id', component: PropertyDetailComponent },
-      { path: 'mapa', loadComponent: () => import('./property-map/property-map.component').then(m => m.PropertyMapComponent) },
+      { path: 'propiedades/:propertySlug', component: PropertyDetailComponent },
+      {
+        path: 'mapa',
+        loadComponent: () =>
+          import('./property-map/property-map.component').then((m) => m.PropertyMapComponent),
+      },
       { path: 'solicitud/:propertyId', component: ApplicationFormComponent },
       { path: 'nosotros', component: AboutComponent },
       { path: 'contacto', component: ContactComponent },
-      { path: 'faq', component: FaqComponent }
-    ]
-  }
+      { path: 'faq', component: FaqComponent },
+    ],
+  },
 ];

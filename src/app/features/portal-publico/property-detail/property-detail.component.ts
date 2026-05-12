@@ -128,18 +128,23 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
             this.slugService.setSlug(slug);
           }
 
-          const idStr = params.get('id');
-          const propertyId = idStr ? parseInt(idStr, 10) : NaN;
+          const propertySlug = params.get('propertySlug');
 
-          if (isNaN(propertyId)) {
+          if (propertySlug) {
+            // Si es un número, asumimos que es el ID para mantener compatibilidad
+            const id = parseInt(propertySlug, 10);
+            if (!isNaN(id) && propertySlug === id.toString()) {
+              this.checkFavoriteStatus(id);
+              return this.propertyService.getPropertyById(id);
+            }
+            // De lo contrario, buscar por slug
+            return this.propertyService.getPropertyBySlug(propertySlug);
+          } else {
             this.isLoading = false;
             this.hasError = true;
             this.cdr.detectChanges();
             return of(undefined);
           }
-
-          this.checkFavoriteStatus(propertyId);
-          return this.propertyService.getPropertyById(propertyId);
         }),
       )
       .subscribe({

@@ -36,28 +36,31 @@
           {{ totalResults }} propiedades
         </h2>
       </div>
-      <button mat-stroked-button color="primary" (click)="toggleFilters()">
-        <lucide-icon [img]="showFilters ? X : Settings"></lucide-icon>
-        {{
-          showFilters
-            ? ('public.properties.hideFilters' | transloco)
-            : ('public.properties.showFilters' | transloco)
-        }}
-      </button>
+      <div class="header-actions" style="display: flex; gap: 1rem">
+        <button mat-stroked-button color="primary" (click)="goToMap()">
+          <lucide-icon [img]="MapPin"></lucide-icon>
+          Ver en Mapa
+        </button>
+        <button mat-stroked-button color="primary" (click)="toggleFilters()">
+          <lucide-icon [img]="showFilters ? X : Settings"></lucide-icon>
+          {{
+            showFilters
+              ? ('public.properties.hideFilters' | transloco)
+              : ('public.properties.showFilters' | transloco)
+          }}
+        </button>
+      </div>
     </div>
 
     <div class="filters-panel" [class.active]="showFilters">
       <div class="filters-grid">
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
-          <mat-label>Tipo de alquiler</mat-label>
+          <mat-label>Tipo de Alquiler</mat-label>
           <lucide-icon [img]="Home" matIconPrefix></lucide-icon>
-          <mat-select [(ngModel)]="filters.property_type_id" (selectionChange)="applyFilters()">
-            <mat-option [value]="undefined">{{
-              'public.properties.allTypes' | transloco
-            }}</mat-option>
-            <mat-option *ngFor="let type of propertyTypes" [value]="type.id">{{
-              type.name
-            }}</mat-option>
+          <mat-select [(ngModel)]="filters.rental_type" (selectionChange)="applyFilters()">
+            <mat-option value="any">Cualquiera</mat-option>
+            <mat-option value="short_term">Corto Plazo</mat-option>
+            <mat-option value="long_term">Largo Plazo</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -117,10 +120,10 @@
 
     <div class="sort-container">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'public.properties.sortBy' | transloco }}</mat-label>
+        <mat-label>Ordenar por</mat-label>
         <mat-select [(ngModel)]="filters.sort_by" (selectionChange)="applyFilters()">
           <mat-option *ngFor="let option of sortOptions" [value]="option.value">
-            {{ option.label | transloco }}
+            {{ option.label }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -145,7 +148,11 @@
     </div>
 
     <div *ngIf="!isLoading && filteredProperties.length > 0" class="properties-grid">
-      <div class="glass-card" *ngFor="let property of filteredProperties">
+      <div
+        class="glass-card"
+        *ngFor="let property of filteredProperties"
+        (click)="viewProperty(property)"
+      >
         <!-- Top Image Section with Carousel -->
         <div class="card-image-section">
           <!-- Simplified carousel representation -->
@@ -162,8 +169,6 @@
               [alt]="property.title"
               class="card-bg-img"
               (error)="handleImageError($event)"
-              (click)="viewProperty(property.id)"
-              style="cursor: pointer"
             />
             <button
               class="carousel-btn next"
@@ -173,7 +178,7 @@
               ›
             </button>
           </div>
-          <div class="image-fade" (click)="viewProperty(property.id)"></div>
+          <div class="image-fade"></div>
 
           <!-- Bookmark / Fav button top right -->
           <button
@@ -190,7 +195,7 @@
         <div class="card-content">
           <!-- Title and Subtitle -->
           <div class="info-section">
-            <div class="main-info" (click)="viewProperty(property.id)">
+            <div class="main-info">
               <h3 class="title">{{ property.title }}</h3>
               <p class="subtitle" *ngIf="getPropertyAddress(property)">
                 {{ getPropertyAddress(property) }}
@@ -246,12 +251,25 @@
               </div>
             </div>
 
-            <button class="btn-action" (click)="viewProperty(property.id)">
+            <button class="btn-action" (click)="viewProperty(property)">
               {{ 'public.properties.viewDetails' | transloco }}
             </button>
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container" *ngIf="!isLoading && totalResults > 0">
+      <mat-paginator
+        [length]="totalResults"
+        [pageSize]="filters.limit"
+        [pageIndex]="(filters.page || 1) - 1"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPageChange($event)"
+        aria-label="Select page"
+      >
+      </mat-paginator>
     </div>
   </div>
 </div>
