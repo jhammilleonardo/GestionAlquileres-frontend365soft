@@ -36,11 +36,11 @@ import { SlugService } from '../../../core/services/slug.service';
 import { ContractService } from '../../../core/services/admin/contract.service';
 import { TenantConfigService } from '../../../core/services/admin/tenant-config.service';
 import { FormatService } from '../../../core/services/format.service';
-import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
+import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   route: string;
   icon: any;
 }
@@ -236,7 +236,7 @@ interface NavItem {
                 (click)="onNavItemClick()"
               >
                 <lucide-icon [img]="item.icon" [size]="20"></lucide-icon>
-                <span class="nav-label">{{ item.label }}</span>
+                <span class="nav-label">{{ item.labelKey | transloco }}</span>
               </a>
             }
           </nav>
@@ -818,7 +818,6 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
   private slugService = inject(SlugService);
   private tenantConfigService = inject(TenantConfigService);
   private formatService = inject(FormatService);
-  private translocoService = inject(TranslocoService);
 
   sidebarCollapsed = false;
   isNotificationsDropdownOpen = false;
@@ -836,17 +835,17 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
       // SIDEBAR PRE-CONTRATO (simplificado)
       return [
         {
-          label: this.translocoService.translate('public.tenantLayout.navHome'),
+          labelKey: 'public.tenantLayout.navHome',
           route: this.slugService.buildUrl('/portal/home'),
           icon: this.Home,
         },
         {
-          label: this.translocoService.translate('public.tenantLayout.navNewApp'),
+          labelKey: 'public.tenantLayout.navNewApp',
           route: this.slugService.buildUrl('/portal/new-application'),
           icon: this.Plus,
         },
         {
-          label: this.translocoService.translate('public.tenantLayout.navMyApp'),
+          labelKey: 'public.tenantLayout.navMyApp',
           route: this.slugService.buildUrl('/portal/my-applications'),
           icon: this.FileEdit,
         },
@@ -856,32 +855,32 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
     // SIDEBAR COMPLETO (con contrato)
     return [
       {
-        label: this.translocoService.translate('public.tenantLayout.navHome'),
+        labelKey: 'public.tenantLayout.navHome',
         route: this.slugService.buildUrl('/portal/dashboard'),
         icon: this.Home,
       },
       {
-        label: this.translocoService.translate('public.tenantLayout.navMaintenance'),
+        labelKey: 'public.tenantLayout.navMaintenance',
         route: this.slugService.buildUrl('/portal/mantenimiento'),
         icon: this.Wrench,
       },
       {
-        label: this.translocoService.translate('public.tenantLayout.navPayments'),
+        labelKey: 'public.tenantLayout.navPayments',
         route: this.slugService.buildUrl('/portal/pagos'),
         icon: this.CreditCard,
       },
       {
-        label: this.translocoService.translate('public.tenantLayout.navDocuments'),
+        labelKey: 'public.tenantLayout.navDocuments',
         route: this.slugService.buildUrl('/portal/documentos'),
         icon: this.FileText,
       },
       {
-        label: 'Notificaciones',
+        labelKey: 'public.tenantLayout.notifications',
         route: this.slugService.buildUrl('/portal/notificaciones'),
         icon: this.Bell,
       },
       {
-        label: 'Mensajes',
+        labelKey: 'public.tenantMessages.title',
         route: this.slugService.buildUrl('/portal/mensajes'),
         icon: this.MessageSquare,
       },
@@ -895,9 +894,6 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
   configuracionUrl = computed(() => this.slugService.buildUrl('/portal/configuracion'));
 
   ngOnInit(): void {
-    console.log('[TenantLayout] ===== ngOnInit START =====');
-    console.log('[TenantLayout] Current URL:', this.router.url);
-
     // Initialize sidebar state based on screen size
     if (typeof window !== 'undefined') {
       this.sidebarCollapsed = window.innerWidth <= 768;
@@ -905,19 +901,15 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
 
     // Check if user has contracts by querying the contract service directly
     const currentUser = this.authService.currentUser();
-    console.log('[TenantLayout] Current user:', currentUser);
-    console.log('[TenantLayout] Has contract in user object?', !!currentUser?.contract);
 
     if (currentUser) {
       // Solo redirigir al dashboard desde la página pre-contrato (/portal/home).
       // En cualquier otra ruta del portal el usuario ya tiene acceso válido.
       const isOnPreContractHome = /\/portal\/home(\/|$|\?)/.test(this.router.url);
       if (isOnPreContractHome) {
-        console.log('[TenantLayout] On pre-contract home, checking contracts...');
         this.contractService.hasAnyContracts().subscribe({
           next: (contracts) => {
             if (contracts && contracts.length > 0) {
-              console.log('[TenantLayout] User has contracts, redirecting to dashboard');
               this.slugService.navigateTo(['portal', 'dashboard']);
             }
           },
@@ -941,7 +933,6 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
 
     // Start polling (1 minute)
     this.notificationService.startPolling(60000);
-    console.log('[TenantLayout] ===== ngOnInit END =====');
   }
 
   ngOnDestroy(): void {

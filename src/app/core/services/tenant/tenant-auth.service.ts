@@ -81,7 +81,6 @@ export class TenantAuthService {
       .post<LoginResponse>(`${environment.apiUrl}auth/${slug}/login`, { email, password })
       .pipe(
         tap((response) => {
-          console.log('[TenantAuthService] Login response received:', response);
           // Store token and initial user data immediately
           localStorage.setItem(this.TOKEN_KEY, response.access_token);
           const normalizedUser = this.normalizeUserData(response.user);
@@ -92,7 +91,6 @@ export class TenantAuthService {
         // This prevents double navigation (caller navigates only after user data is complete)
         switchMap(() => this.refreshUserData()),
         tap(() => {
-          console.log('[TenantAuthService] User data refreshed after login');
           this.isLoadingSignal.set(false);
         }),
         catchError((error) => {
@@ -174,21 +172,17 @@ export class TenantAuthService {
   refreshUserData(): Observable<TenantUser | null> {
     const token = this.getToken();
     if (!token) {
-      console.log('[TenantAuthService] No token found');
       return of(null);
     }
 
-    console.log('[TenantAuthService] Refreshing user data from auth/me');
     return this.http
       .get<any>(`${environment.apiUrl}auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .pipe(
         tap((user) => {
-          console.log('[TenantAuthService] User data received:', user);
           if (user) {
             const normalizedUser = this.normalizeUserData(user);
-            console.log('[TenantAuthService] Normalized user data:', normalizedUser);
             this.currentUserSignal.set(normalizedUser);
             this.saveUserToStorage(normalizedUser);
           }
@@ -241,7 +235,6 @@ export class TenantAuthService {
    * Backend returns userId but we expect id, tenantSlug vs tenant_slug, etc.
    */
   private normalizeUserData(user: any): TenantUser {
-    console.log('[TenantAuthService] normalizeUserData - Input:', user);
     const normalized = {
       id: user.userId || user.id,
       userId: user.userId || user.id, // Keep both for compatibility
@@ -253,8 +246,6 @@ export class TenantAuthService {
       tenantSlug: user.tenantSlug || user.tenant_slug, // Keep both
       contract: user.contract,
     };
-    console.log('[TenantAuthService] normalizeUserData - Output:', normalized);
-    console.log('[TenantAuthService] Has contract?', !!normalized.contract);
     return normalized;
   }
 
@@ -262,17 +253,10 @@ export class TenantAuthService {
    * Set session after successful login
    */
   private setSession(response: LoginResponse): void {
-    console.log('[TenantAuthService] setSession - Response user:', response.user);
     localStorage.setItem(this.TOKEN_KEY, response.access_token);
     const normalizedUser = this.normalizeUserData(response.user);
-    console.log('[TenantAuthService] setSession - Normalized user:', normalizedUser);
-    console.log('[TenantAuthService] setSession - Has contract?', !!normalizedUser.contract);
     this.saveUserToStorage(normalizedUser);
     this.currentUserSignal.set(normalizedUser);
-    console.log(
-      '[TenantAuthService] setSession - currentUserSignal set to:',
-      this.currentUserSignal(),
-    );
   }
 
   /**

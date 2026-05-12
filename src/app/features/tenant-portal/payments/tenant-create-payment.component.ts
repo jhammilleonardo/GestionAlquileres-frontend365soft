@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { HttpEventType } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatCardModule } from '@angular/material/card';
@@ -11,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import {
   LucideAngularModule,
@@ -28,6 +30,11 @@ import {
   XCircle,
   Clock,
   Download,
+  FileCheck2,
+  Trash2,
+  Upload,
+  ZoomIn,
+  ZoomOut,
   CalendarDays,
   ChevronDown,
   ChevronUp,
@@ -36,7 +43,6 @@ import {
 } from 'lucide-angular';
 import { TenantPaymentService } from '../../../core/services/tenant/tenant-payment.service';
 import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
-import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { TenantContractService } from '../../../core/services/tenant/tenant-contract.service';
 import {
@@ -80,6 +86,7 @@ interface PaymentScheduleItem {
     MatDatepickerModule,
     MatNativeDateModule,
     MatProgressSpinnerModule,
+    MatProgressBarModule,
     MatDividerModule,
     LucideAngularModule,
     TranslocoModule,
@@ -839,13 +846,83 @@ interface PaymentScheduleItem {
               </div>
             }
 
-            <!-- Sección 3: Notas (solo métodos no-QR) -->
+            <!-- Sección 3: Comprobante y notas (solo métodos no-QR) -->
             @if (!isQrMethod()) {
               <div class="form-section last">
                 <div class="section-title">
                   <span class="section-title-accent"></span>
                   <lucide-icon [img]="FileText" [size]="15"></lucide-icon>
-                  {{ 'public.tenantCreatePayment.additionalNotes' | transloco }}
+                  {{ 'public.tenantCreatePayment.receiptSection' | transloco }}
+                </div>
+
+                <div class="receipt-upload-panel" [class.invalid]="receiptError()">
+                  <input
+                    #receiptInput
+                    type="file"
+                    class="hidden-file-input"
+                    accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                    (change)="onReceiptSelected($event)"
+                  />
+
+                  @if (!selectedReceipt()) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      class="receipt-upload-button"
+                      (click)="receiptInput.click()"
+                    >
+                      <lucide-icon [img]="Upload" [size]="20"></lucide-icon>
+                      {{ 'public.tenantCreatePayment.uploadReceipt' | transloco }}
+                    </button>
+                    <p class="receipt-hint">
+                      {{ 'public.tenantCreatePayment.receiptHint' | transloco }}
+                    </p>
+                  } @else {
+                    <div class="receipt-preview">
+                      <div class="receipt-preview-media">
+                        @if (receiptPreviewKind() === 'image' && receiptPreviewSafeUrl()) {
+                          <button
+                            type="button"
+                            class="receipt-preview-trigger"
+                            (click)="openReceiptModal()"
+                            [attr.aria-label]="
+                              'public.tenantCreatePayment.openReceiptModal' | transloco
+                            "
+                          >
+                            <img
+                              [src]="receiptPreviewSafeUrl()!"
+                              [attr.alt]="'public.tenantCreatePayment.receiptImageAlt' | transloco"
+                            />
+                          </button>
+                        } @else {
+                          <div class="pdf-preview">
+                            <lucide-icon [img]="FileCheck2" [size]="36"></lucide-icon>
+                            <span>PDF</span>
+                          </div>
+                        }
+                      </div>
+                      <div class="receipt-preview-info">
+                        <strong>{{ selectedReceipt()!.name }}</strong>
+                        <span>{{ formatFileSize(selectedReceipt()!.size) }}</span>
+                        <button mat-button type="button" (click)="receiptInput.click()">
+                          {{ 'public.tenantCreatePayment.changeReceipt' | transloco }}
+                        </button>
+                      </div>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        class="remove-receipt"
+                        (click)="removeReceipt()"
+                        [attr.aria-label]="'public.tenantCreatePayment.removeReceipt' | transloco"
+                      >
+                        <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
+                      </button>
+                    </div>
+                  }
+
+                  @if (receiptError()) {
+                    <p class="receipt-error">{{ receiptError() }}</p>
+                  }
                 </div>
 
                 <mat-form-field appearance="outline" class="full-width">
@@ -868,7 +945,9 @@ interface PaymentScheduleItem {
                   type="submit"
                   mat-raised-button
                   color="primary"
-                  [disabled]="paymentForm.invalid || paymentService.isLoading()"
+                  [disabled]="
+                    paymentForm.invalid || paymentService.isLoading() || !selectedReceipt()
+                  "
                 >
                   @if (paymentService.isLoading()) {
                     <mat-spinner diameter="20"></mat-spinner>
@@ -887,9 +966,81 @@ interface PaymentScheduleItem {
                   {{ 'public.tenantCreatePayment.cancel' | transloco }}
                 </button>
               </div>
+
+              @if (paymentService.isLoading() && uploadProgress() > 0) {
+                <div class="upload-progress">
+                  <mat-progress-bar
+                    mode="determinate"
+                    [value]="uploadProgress()"
+                  ></mat-progress-bar>
+                  <span>{{ uploadProgress() }}%</span>
+                </div>
+              }
             }
           </form>
         </mat-card>
+      }
+
+      @if (isReceiptModalOpen() && receiptPreviewSafeUrl()) {
+        <div class="receipt-modal-backdrop" (click)="closeReceiptModal()">
+          <div
+            class="receipt-modal"
+            role="dialog"
+            aria-modal="true"
+            [attr.aria-label]="'public.tenantCreatePayment.receiptModalTitle' | transloco"
+            (click)="$event.stopPropagation()"
+          >
+            <div class="receipt-modal-header">
+              <strong>{{ 'public.tenantCreatePayment.receiptModalTitle' | transloco }}</strong>
+              <div class="receipt-modal-actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="zoomOutReceipt()"
+                  [disabled]="receiptZoom() <= minReceiptZoom"
+                  [attr.aria-label]="'public.tenantCreatePayment.zoomOut' | transloco"
+                >
+                  <lucide-icon [img]="ZoomOut" [size]="18"></lucide-icon>
+                </button>
+                <span class="receipt-modal-zoom">{{ (receiptZoom() * 100).toFixed(0) }}%</span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="zoomInReceipt()"
+                  [disabled]="receiptZoom() >= maxReceiptZoom"
+                  [attr.aria-label]="'public.tenantCreatePayment.zoomIn' | transloco"
+                >
+                  <lucide-icon [img]="ZoomIn" [size]="18"></lucide-icon>
+                </button>
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="receipt-modal-reset"
+                  (click)="resetReceiptZoom()"
+                >
+                  {{ 'public.tenantCreatePayment.zoomReset' | transloco }}
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  (click)="closeReceiptModal()"
+                  [attr.aria-label]="'public.tenantCreatePayment.closeReceiptModal' | transloco"
+                >
+                  <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="receipt-modal-body" (wheel)="onReceiptModalWheel($event)">
+              <img
+                class="receipt-modal-image"
+                [src]="receiptPreviewSafeUrl()!"
+                [style.transform]="'scale(' + receiptZoom() + ')'"
+                [attr.alt]="'public.tenantCreatePayment.receiptImageAlt' | transloco"
+              />
+            </div>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -1355,6 +1506,190 @@ interface PaymentScheduleItem {
         margin-bottom: 0;
       }
 
+      .hidden-file-input {
+        display: none;
+      }
+
+      .receipt-upload-panel {
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 18px;
+        background: #f8fafc;
+      }
+
+      .receipt-upload-panel.invalid {
+        border-color: #ef4444;
+        background: #fff1f2;
+      }
+
+      .receipt-upload-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .receipt-hint,
+      .receipt-error {
+        margin: 10px 0 0;
+        font-size: 0.82rem;
+      }
+
+      .receipt-hint {
+        color: #64748b;
+      }
+
+      .receipt-error {
+        color: #dc2626;
+        font-weight: 600;
+      }
+
+      .receipt-preview {
+        display: grid;
+        grid-template-columns: 96px 1fr auto;
+        gap: 14px;
+        align-items: center;
+      }
+
+      .receipt-preview-media {
+        width: 96px;
+        height: 72px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .receipt-preview-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .receipt-preview-trigger {
+        border: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        cursor: zoom-in;
+        background: transparent;
+      }
+
+      .pdf-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      .receipt-preview-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+      }
+
+      .receipt-preview-info strong {
+        color: #1e293b;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .receipt-preview-info span {
+        color: #64748b;
+        font-size: 0.82rem;
+      }
+
+      .receipt-preview-info button {
+        width: fit-content;
+        padding: 0;
+      }
+
+      .remove-receipt {
+        color: #dc2626;
+      }
+
+      .receipt-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.78);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        z-index: 1200;
+      }
+
+      .receipt-modal {
+        width: min(980px, 96vw);
+        max-height: 92vh;
+        height: auto;
+        background: #0f172a;
+        border-radius: 14px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        overflow: hidden;
+      }
+
+      .receipt-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-bottom: 1px solid #334155;
+        background: #f8fafc;
+      }
+
+      .receipt-modal-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .receipt-modal-zoom {
+        min-width: 52px;
+        text-align: center;
+        font-size: 0.83rem;
+        color: #334155;
+        font-weight: 700;
+      }
+
+      .receipt-modal-reset {
+        height: 34px;
+      }
+
+      .receipt-modal-body {
+        overflow: auto;
+        max-height: calc(92vh - 62px);
+        padding: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #0f172a;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+
+      .receipt-modal-image {
+        display: block;
+        max-width: 100%;
+        width: auto;
+        max-height: calc(92vh - 92px);
+        object-fit: contain;
+        transform-origin: top left;
+        transition: transform 160ms ease-in-out;
+        border-radius: 8px;
+      }
+
       .form-actions {
         display: flex;
         gap: 12px;
@@ -1368,6 +1703,17 @@ interface PaymentScheduleItem {
         display: flex;
         align-items: center;
         gap: 8px;
+      }
+
+      .upload-progress {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        margin-top: 16px;
+        color: #475569;
+        font-size: 0.82rem;
+        font-weight: 700;
       }
 
       /* ─── Page Header ─── */
@@ -1467,6 +1813,54 @@ interface PaymentScheduleItem {
         .qr-pending-chip {
           margin-left: 0;
         }
+
+        .receipt-modal-backdrop {
+          padding: 10px;
+        }
+
+        .receipt-modal {
+          width: 100%;
+          height: auto;
+          max-height: calc(100dvh - 20px);
+          border-radius: 12px;
+        }
+
+        .receipt-modal-header {
+          padding: 10px;
+          gap: 8px;
+        }
+
+        .receipt-modal-header strong {
+          font-size: 0.95rem;
+        }
+
+        .receipt-modal-actions {
+          width: 100%;
+          justify-content: space-between;
+          gap: 4px;
+        }
+
+        .receipt-modal-zoom {
+          min-width: 46px;
+          font-size: 0.8rem;
+        }
+
+        .receipt-modal-reset {
+          height: 32px;
+          min-width: 96px;
+          padding: 0 10px;
+          line-height: 1.1;
+          font-size: 0.78rem;
+        }
+
+        .receipt-modal-body {
+          max-height: calc(100dvh - 120px);
+          padding: 6px;
+        }
+
+        .receipt-modal-image {
+          max-height: calc(100dvh - 140px);
+        }
       }
 
       @media (max-width: 480px) {
@@ -1488,6 +1882,43 @@ interface PaymentScheduleItem {
 
         .back-btn {
           margin-right: 4px;
+        }
+
+        .receipt-modal-backdrop {
+          padding: 8px;
+        }
+
+        .receipt-modal {
+          height: auto;
+          max-height: calc(100dvh - 16px);
+          border-radius: 10px;
+        }
+
+        .receipt-modal-header {
+          padding: 8px;
+        }
+
+        .receipt-modal-header strong {
+          font-size: 0.88rem;
+        }
+
+        .receipt-modal-actions {
+          gap: 2px;
+        }
+
+        .receipt-modal-reset {
+          min-width: 84px;
+          font-size: 0.72rem;
+          padding: 0 8px;
+        }
+
+        .receipt-modal-body {
+          max-height: calc(100dvh - 112px);
+          padding: 4px;
+        }
+
+        .receipt-modal-image {
+          max-height: calc(100dvh - 124px);
         }
       }
 
@@ -1851,6 +2282,11 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
   readonly XCircle = XCircle;
   readonly Clock = Clock;
   readonly Download = Download;
+  readonly FileCheck2 = FileCheck2;
+  readonly Trash2 = Trash2;
+  readonly Upload = Upload;
+  readonly ZoomIn = ZoomIn;
+  readonly ZoomOut = ZoomOut;
   readonly CalendarDays = CalendarDays;
   readonly ChevronDown = ChevronDown;
   readonly ChevronUp = ChevronUp;
@@ -1858,13 +2294,12 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
   readonly TriangleAlert = TriangleAlert;
 
   private fb = inject(FormBuilder);
-  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private slugService = inject(SlugService);
   private sanitizer = inject(DomSanitizer);
   paymentService = inject(TenantPaymentService);
   qrService = inject(TenantQrPaymentService);
   contractService = inject(TenantContractService);
-  private tenantAuthService = inject(TenantAuthService);
   private translocoService = inject(TranslocoService);
   private formatService = inject(FormatService);
 
@@ -1873,7 +2308,17 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
   qrPolling = signal(false);
   qrCancelling = signal(false);
   qrError = signal<string | null>(null);
+  selectedReceipt = signal<File | null>(null);
+  receiptError = signal<string | null>(null);
+  receiptPreviewKind = signal<'image' | 'pdf' | null>(null);
+  isReceiptModalOpen = signal(false);
+  receiptZoom = signal(1);
+  readonly minReceiptZoom = 1;
+  readonly maxReceiptZoom = 8;
+  uploadProgress = signal(0);
+  retryPaymentId = signal<number | null>(null);
   private qrPollTimer?: ReturnType<typeof setInterval>;
+  private receiptObjectUrl = signal<string | null>(null);
 
   calendarExpanded = signal(true);
   private paymentScheduleSignal = signal<PaymentScheduleItem[]>([]);
@@ -1895,6 +2340,12 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
       ? qr.qr_image
       : `data:image/png;base64,${qr.qr_image}`;
     return this.sanitizer.bypassSecurityTrustUrl(src);
+  });
+
+  receiptPreviewSafeUrl = computed<SafeUrl | null>(() => {
+    const url = this.receiptObjectUrl();
+    if (!url) return null;
+    return this.sanitizer.bypassSecurityTrustUrl(url);
   });
 
   paymentTypes = Object.keys(PaymentType).map((key) => ({
@@ -1934,10 +2385,12 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.qrService.clearActiveQr();
+    this.loadAvailablePaymentMethods();
     if (!this.contractService.currentContract()) {
       this.contractService.loadCurrentContract();
     }
     this.paymentService.loadPayments();
+    this.loadRetryPayment();
 
     // Cuando el contrato está disponible, pre-rellenar monto, moneda y construir calendario
     const tryPrefill = () => {
@@ -1970,6 +2423,16 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
     const payDay = contract.payment_day || 1;
     const now = new Date();
     const existing = this.paymentService.payments();
+    const paidRentInstallments = existing.filter(
+      (payment) =>
+        payment.payment_type === PaymentType.RENT &&
+        (payment.status === PaymentStatus.APPROVED ||
+          payment.status === PaymentStatus.PENDING ||
+          payment.status === PaymentStatus.PROCESSING),
+    ).length;
+    const activeLang = this.translocoService.getActiveLang();
+    const monthLocale = activeLang.startsWith('en') ? 'en-US' : 'es-BO';
+    let assignedPaidInstallments = 0;
 
     const items: PaymentScheduleItem[] = [];
     let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
@@ -1981,17 +2444,10 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
       const lastDay = new Date(year, month + 1, 0).getDate();
       const dueDate = new Date(year, month, Math.min(payDay, lastDay));
 
-      const isPaid = existing.some((p) => {
-        const pd = new Date(p.payment_date as string);
-        return (
-          pd.getFullYear() === year &&
-          pd.getMonth() === month &&
-          p.payment_type === PaymentType.RENT &&
-          (p.status === PaymentStatus.APPROVED ||
-            p.status === PaymentStatus.PENDING ||
-            p.status === PaymentStatus.PROCESSING)
-        );
-      });
+      const isPaid = assignedPaidInstallments < paidRentInstallments;
+      if (isPaid) {
+        assignedPaidInstallments += 1;
+      }
 
       const isCurrent = now.getFullYear() === year && now.getMonth() === month;
       const isPastDue = dueDate < now && !isCurrent;
@@ -2013,7 +2469,7 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
         statusLabel = this.translocoService.translate('public.tenantPayments.calUpcoming');
       }
 
-      const raw = cursor.toLocaleDateString('es', { month: 'short', year: 'numeric' });
+      const raw = cursor.toLocaleDateString(monthLocale, { month: 'short', year: 'numeric' });
       items.push({
         label: raw.charAt(0).toUpperCase() + raw.slice(1),
         year,
@@ -2034,6 +2490,7 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopPolling();
+    this.revokeReceiptObjectUrl();
   }
 
   private normalizeCurrency(value?: string): Currency | null {
@@ -2044,10 +2501,69 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
 
   private normalizePaymentMethod(value?: string): PaymentMethod | null {
     if (!value) return null;
-    const upper = value.toUpperCase();
+    const upper = value.trim().toUpperCase();
+    const aliases: Record<string, PaymentMethod> = {
+      TRANSFERENCIA: PaymentMethod.TRANSFER,
+      TRANSFERENCIA_BANCARIA: PaymentMethod.TRANSFER,
+      TRANSFER_BANK: PaymentMethod.TRANSFER,
+      QR: PaymentMethod.QR_MC4,
+      QR_ACCL: PaymentMethod.QR_MC4,
+      QR_MC4: PaymentMethod.QR_MC4,
+      EFECTIVO: PaymentMethod.CASH,
+      TARJETA: PaymentMethod.CREDIT_CARD,
+    };
+    if (aliases[upper]) return aliases[upper];
     return Object.values(PaymentMethod).includes(upper as PaymentMethod)
       ? (upper as PaymentMethod)
       : null;
+  }
+
+  private loadAvailablePaymentMethods(): void {
+    this.paymentService.getAvailablePaymentMethods().subscribe({
+      next: (methods) => {
+        const allowed = methods
+          .map((method) => ({
+            value: this.normalizePaymentMethod(method.method),
+            label: method.label,
+          }))
+          .filter((method): method is { value: PaymentMethod; label: string } => !!method.value);
+
+        if (allowed.length === 0) return;
+
+        this.paymentMethods = allowed;
+        const current = this.paymentForm.get('payment_method')?.value;
+        if (!current || !allowed.some((method) => method.value === current)) {
+          this.paymentForm.patchValue({ payment_method: allowed[0].value });
+        }
+      },
+      error: (error) => {
+        console.error('Error loading tenant payment methods:', error);
+      },
+    });
+  }
+
+  private loadRetryPayment(): void {
+    const retryParam = this.route.snapshot.queryParamMap.get('retry');
+    const retryId = retryParam ? Number(retryParam) : NaN;
+    if (!Number.isFinite(retryId) || retryId <= 0) return;
+
+    this.paymentService.getPayment(retryId).subscribe({
+      next: (payment) => {
+        if (payment.status !== PaymentStatus.REJECTED) return;
+        this.retryPaymentId.set(payment.id);
+        this.paymentForm.patchValue({
+          payment_type: payment.payment_type,
+          amount: payment.amount,
+          currency: payment.currency,
+          payment_method: payment.payment_method,
+          payment_date: new Date(),
+          reference_number: payment.reference_number || '',
+          check_number: payment.check_number || '',
+          notes: payment.notes || '',
+        });
+      },
+      error: (error) => console.error('Error loading payment retry data:', error),
+    });
   }
 
   currencySymbol(code: string): string {
@@ -2056,6 +2572,91 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
 
   formatDate(iso: string): string {
     return this.formatService.formatDateTime(iso);
+  }
+
+  onReceiptSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    input.value = '';
+    this.receiptError.set(null);
+
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      this.removeReceipt();
+      this.receiptError.set(
+        this.translocoService.translate('public.tenantCreatePayment.receiptTypeError'),
+      );
+      return;
+    }
+
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      this.removeReceipt();
+      this.receiptError.set(
+        this.translocoService.translate('public.tenantCreatePayment.receiptSizeError'),
+      );
+      return;
+    }
+
+    this.revokeReceiptObjectUrl();
+    this.receiptObjectUrl.set(URL.createObjectURL(file));
+    this.selectedReceipt.set(file);
+    this.receiptPreviewKind.set(file.type === 'application/pdf' ? 'pdf' : 'image');
+  }
+
+  removeReceipt(): void {
+    this.closeReceiptModal();
+    this.revokeReceiptObjectUrl();
+    this.selectedReceipt.set(null);
+    this.receiptPreviewKind.set(null);
+    this.uploadProgress.set(0);
+  }
+
+  openReceiptModal(): void {
+    if (this.receiptPreviewKind() !== 'image' || !this.receiptPreviewSafeUrl()) return;
+    this.receiptZoom.set(1);
+    this.isReceiptModalOpen.set(true);
+  }
+
+  closeReceiptModal(): void {
+    this.isReceiptModalOpen.set(false);
+    this.receiptZoom.set(1);
+  }
+
+  zoomInReceipt(): void {
+    this.receiptZoom.update((value) => Math.min(this.maxReceiptZoom, +(value + 0.5).toFixed(2)));
+  }
+
+  zoomOutReceipt(): void {
+    this.receiptZoom.update((value) => Math.max(this.minReceiptZoom, +(value - 0.5).toFixed(2)));
+  }
+
+  resetReceiptZoom(): void {
+    this.receiptZoom.set(1);
+  }
+
+  onReceiptModalWheel(event: WheelEvent): void {
+    event.preventDefault();
+    if (event.deltaY < 0) {
+      this.zoomInReceipt();
+      return;
+    }
+    this.zoomOutReceipt();
+  }
+
+  formatFileSize(size: number): string {
+    if (size < 1024 * 1024) return `${Math.max(1, Math.round(size / 1024))} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private revokeReceiptObjectUrl(): void {
+    const currentUrl = this.receiptObjectUrl();
+    if (currentUrl) {
+      URL.revokeObjectURL(currentUrl);
+      this.receiptObjectUrl.set(null);
+    }
   }
 
   onSubmit(): void {
@@ -2067,28 +2668,46 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
       this.paymentForm.markAllAsTouched();
       return;
     }
+    if (!this.selectedReceipt()) {
+      this.receiptError.set(
+        this.translocoService.translate('public.tenantCreatePayment.receiptRequired'),
+      );
+      return;
+    }
 
     const formValue = this.paymentForm.value;
     this.paymentService
-      .createPayment({
-        payment_type: formValue.payment_type!,
-        amount: formValue.amount!,
-        currency: formValue.currency ?? Currency.USD,
-        payment_method: formValue.payment_method!,
-        payment_date: formValue.payment_date!,
-        reference_number: formValue.reference_number || undefined,
-        check_number: formValue.check_number || undefined,
-        notes: formValue.notes || undefined,
-        // Campos específicos por método de pago
-        card_last_4_digits: formValue.card_last_4_digits || undefined,
-        card_holder_name: formValue.card_holder_name || undefined,
-        card_expiry: formValue.card_expiry || undefined,
-        bank_name: formValue.bank_name || undefined,
-        bank_account_last_4: formValue.bank_account_last_4 || undefined,
-        received_by: formValue.received_by || undefined,
-      })
+      .createPaymentWithReceipt(
+        {
+          payment_type: formValue.payment_type!,
+          amount: formValue.amount!,
+          currency: formValue.currency ?? Currency.USD,
+          payment_method: formValue.payment_method!,
+          payment_date: formValue.payment_date!,
+          reference_number: formValue.reference_number || undefined,
+          check_number: formValue.check_number || undefined,
+          notes: formValue.notes || undefined,
+          // Campos específicos por método de pago
+          card_last_4_digits: formValue.card_last_4_digits || undefined,
+          card_holder_name: formValue.card_holder_name || undefined,
+          card_expiry: formValue.card_expiry || undefined,
+          bank_name: formValue.bank_name || undefined,
+          bank_account_last_4: formValue.bank_account_last_4 || undefined,
+          received_by: formValue.received_by || undefined,
+          parent_payment_id: this.retryPaymentId() || undefined,
+        },
+        this.selectedReceipt()!,
+      )
       .subscribe({
-        next: () => this.success.set(true),
+        next: (event) => {
+          if (event.type === HttpEventType.UploadProgress && event.total) {
+            this.uploadProgress.set(Math.round((100 * event.loaded) / event.total));
+          }
+          if (event.type === HttpEventType.Response) {
+            this.uploadProgress.set(100);
+            this.success.set(true);
+          }
+        },
         error: (err) => console.error('Error creando pago:', err),
       });
   }
@@ -2183,6 +2802,9 @@ export class TenantCreatePaymentComponent implements OnInit, OnDestroy {
     this.stopPolling();
     this.qrService.clearActiveQr();
     this.qrError.set(null);
+    this.receiptError.set(null);
+    this.removeReceipt();
+    this.retryPaymentId.set(null);
     this.paymentForm.reset({
       payment_type: PaymentType.RENT,
       currency: Currency.USD,
