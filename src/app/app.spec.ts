@@ -12,7 +12,14 @@ describe('App', () => {
           translocoConfig: { availableLangs: ['es'], defaultLang: 'es' },
         }),
       ],
-    }).compileComponents();
+    })
+      .overrideComponent(App, {
+        set: {
+          template: '<router-outlet />',
+          styles: [],
+        },
+      })
+      .compileComponents();
   });
 
   it('should create the app', () => {
