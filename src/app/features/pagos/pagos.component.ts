@@ -1,6 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,16 +7,17 @@ import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDatepickerModule, MatDatepicker } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   LucideAngularModule,
   DollarSign,
@@ -34,6 +34,7 @@ import {
   Download,
   Trash2,
   ExternalLink,
+  Minus,
 } from 'lucide-angular';
 import { startWith, debounceTime, switchMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
@@ -85,6 +86,7 @@ import {
     MatAutocompleteModule,
     MatProgressBarModule,
     MatCheckboxModule,
+    MatSnackBarModule,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
@@ -94,7 +96,7 @@ import {
   templateUrl: './pagos.component.html',
   styleUrl: './pagos.component.scss',
 })
-export class PagosComponent implements OnInit {
+export class PagosComponent implements OnInit, OnDestroy {
   // Icons
   readonly DollarSign = DollarSign;
   readonly TrendingUp = TrendingUp;
@@ -110,10 +112,10 @@ export class PagosComponent implements OnInit {
   readonly Download = Download;
   readonly Trash2 = Trash2;
   readonly ExternalLink = ExternalLink;
+  readonly Minus = Minus;
 
   private fb = inject(FormBuilder);
-  private router = inject(Router);
-  private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
   paymentService = inject(PaymentService);
   tenantUserService = inject(TenantUserService);
   contractService = inject(ContractService);
@@ -123,6 +125,16 @@ export class PagosComponent implements OnInit {
   showFilters = signal(false);
   showCreateForm = signal(false);
   selectedPayment = signal<Payment | null>(null);
+  selectedProofPayment = signal<Payment | null>(null);
+  rejectionPayment = signal<Payment | null>(null);
+  proofObjectUrl = signal<string | null>(null);
+  proofMimeType = signal<string | null>(null);
+  proofLoadError = signal<string | null>(null);
+  proofLoading = signal(false);
+  proofZoom = signal(1);
+  private readonly proofZoomStep = 0.2;
+  private readonly proofZoomMin = 1;
+  private readonly proofZoomMax = 2;
 
   // Bulk selection
   selectedIds = signal<number[]>([]);
@@ -134,6 +146,36 @@ export class PagosComponent implements OnInit {
       .filter((p) => p.status === PaymentStatus.PENDING)
       .map((p) => p.id),
   );
+
+  pendingPayments = computed(() =>
+    this.paymentService.payments().filter((p) => p.status === PaymentStatus.PENDING),
+  );
+
+  pendingFilters = signal<{ propertyId?: number; dateFrom?: Date; dateTo?: Date }>({});
+
+  pendingPropertyOptions = computed(() => {
+    const options = new Map<number, string>();
+    this.pendingPayments().forEach((payment) => {
+      options.set(payment.property_id, this.getPropertyName(payment));
+    });
+
+    return [...options.entries()]
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  });
+
+  filteredPendingPayments = computed(() => {
+    const filters = this.pendingFilters();
+    return this.pendingPayments().filter((payment) => {
+      if (filters.propertyId && payment.property_id !== filters.propertyId) return false;
+
+      const registeredAt = this.getRegisteredDate(payment);
+      if (filters.dateFrom && registeredAt < this.startOfDay(filters.dateFrom)) return false;
+      if (filters.dateTo && registeredAt > this.endOfDay(filters.dateTo)) return false;
+
+      return true;
+    });
+  });
 
   // Create payment state
   tenantSearchControl = new FormControl('');
@@ -178,6 +220,16 @@ export class PagosComponent implements OnInit {
     currency: [''],
     date_from: [null as Date | null],
     date_to: [null as Date | null],
+  });
+
+  pendingFilterForm = this.fb.group({
+    property_id: [null as number | null],
+    date_from: [null as Date | null],
+    date_to: [null as Date | null],
+  });
+
+  rejectForm = this.fb.group({
+    reason: ['', [Validators.required, Validators.maxLength(400)]],
   });
 
   // Create payment form (sin IDs manuales)
@@ -226,6 +278,10 @@ export class PagosComponent implements OnInit {
   ngOnInit(): void {
     this.loadData();
     this.setupTenantSearch();
+  }
+
+  ngOnDestroy(): void {
+    this.cleanupProofObjectUrl();
   }
 
   /**
@@ -283,6 +339,28 @@ export class PagosComponent implements OnInit {
     this.activeFilters.set({});
     this.selectedIds.set([]);
     this.paymentService.loadPayments();
+  }
+
+  applyPendingFilters(): void {
+    const formValue = this.pendingFilterForm.value;
+    this.pendingFilters.set({
+      propertyId: formValue.property_id ?? undefined,
+      dateFrom: formValue.date_from ?? undefined,
+      dateTo: formValue.date_to ?? undefined,
+    });
+  }
+
+  clearPendingFilters(): void {
+    this.pendingFilterForm.reset();
+    this.pendingFilters.set({});
+  }
+
+  openDatepicker(datepicker: MatDatepicker<Date>, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!datepicker.opened) {
+      datepicker.open();
+    }
   }
 
   // =====================
@@ -400,10 +478,64 @@ export class PagosComponent implements OnInit {
   }
 
   openProof(payment: Payment): void {
-    const url = this.getProofUrl(payment);
-    if (url) {
-      window.open(url, '_blank');
-    }
+    if (!this.getProofUrl(payment)) return;
+    this.selectedProofPayment.set(payment);
+    this.proofLoading.set(true);
+    this.proofLoadError.set(null);
+    this.proofZoom.set(1);
+    this.cleanupProofObjectUrl();
+
+    this.paymentService.downloadProof(payment).subscribe({
+      next: (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
+        this.proofObjectUrl.set(objectUrl);
+        this.proofMimeType.set(blob.type || null);
+        this.proofLoading.set(false);
+      },
+      error: (error: { message?: string }) => {
+        this.proofLoading.set(false);
+        this.proofLoadError.set(error.message || 'No se pudo cargar el comprobante');
+      },
+    });
+  }
+
+  closeProof(): void {
+    this.selectedProofPayment.set(null);
+    this.proofLoading.set(false);
+    this.proofLoadError.set(null);
+    this.proofZoom.set(1);
+    this.cleanupProofObjectUrl();
+  }
+
+  isProofPdf(payment: Payment): boolean {
+    const mimeType = this.proofMimeType()?.toLowerCase() ?? '';
+    if (mimeType.includes('pdf')) return true;
+    const proofFile = payment.proof_file?.toLowerCase() ?? '';
+    return proofFile.endsWith('.pdf');
+  }
+
+  zoomInProof(): void {
+    this.proofZoom.update((zoom) =>
+      Math.min(Number((zoom + this.proofZoomStep).toFixed(2)), this.proofZoomMax),
+    );
+  }
+
+  zoomOutProof(): void {
+    this.proofZoom.update((zoom) =>
+      Math.max(Number((zoom - this.proofZoomStep).toFixed(2)), this.proofZoomMin),
+    );
+  }
+
+  resetProofZoom(): void {
+    this.proofZoom.set(1);
+  }
+
+  canZoomInProof(): boolean {
+    return this.proofZoom() < this.proofZoomMax;
+  }
+
+  canZoomOutProof(): boolean {
+    return this.proofZoom() > this.proofZoomMin;
   }
 
   viewPaymentDetail(payment: Payment): void {
@@ -412,53 +544,66 @@ export class PagosComponent implements OnInit {
 
   approvePayment(payment: Payment): void {
     const tenantName = this.getTenantName(payment);
-    if (
-      confirm(
-        `¿Aprobar el pago de ${this.formatCurrency(payment.amount, payment.currency)} de ${tenantName}?`,
-      )
-    ) {
-      this.paymentService
-        .updatePaymentStatus(payment.id, {
-          status: PaymentStatus.APPROVED,
-          admin_notes: 'Pago aprobado por administrador',
-        })
-        .subscribe({
-          next: () => {
-            console.log('Pago aprobado exitosamente');
-            this.loadData();
-          },
-          error: (error) => {
-            console.error('Error al aprobar pago:', error);
-            alert(
-              `Error al aprobar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
-            );
-          },
-        });
-    }
+    this.paymentService
+      .updatePaymentStatus(payment.id, {
+        status: PaymentStatus.APPROVED,
+        admin_notes: 'Pago aprobado por administrador',
+      })
+      .subscribe({
+        next: () => {
+          this.rejectionPayment.set(null);
+          this.snackBar.open(`Pago de ${tenantName} aprobado`, 'Cerrar', { duration: 3500 });
+        },
+        error: (error) => {
+          console.error('Error al aprobar pago:', error);
+          alert(
+            `Error al aprobar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
+          );
+        },
+      });
   }
 
   rejectPayment(payment: Payment): void {
-    const reason = prompt('¿Por qué rechazas este pago?');
-    if (reason !== null) {
-      this.paymentService
-        .updatePaymentStatus(payment.id, {
-          status: PaymentStatus.REJECTED,
-          admin_notes: reason || 'Pago rechazado',
-          rejection_reason: reason || 'Rechazado por administrador',
-        })
-        .subscribe({
-          next: () => {
-            console.log('Pago rechazado');
-            this.loadData();
-          },
-          error: (error) => {
-            console.error('Error al rechazar pago:', error);
-            alert(
-              `Error al rechazar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
-            );
-          },
-        });
+    this.rejectionPayment.set(payment);
+    this.rejectForm.reset({ reason: '' });
+  }
+
+  submitRejectPayment(): void {
+    const payment = this.rejectionPayment();
+    if (!payment) return;
+
+    if (this.rejectForm.invalid) {
+      this.rejectForm.markAllAsTouched();
+      return;
     }
+
+    const reason = this.rejectForm.controls.reason.value?.trim() ?? '';
+    const tenantName = this.getTenantName(payment);
+
+    this.paymentService
+      .updatePaymentStatus(payment.id, {
+        status: PaymentStatus.REJECTED,
+        admin_notes: reason,
+        rejection_reason: reason,
+      })
+      .subscribe({
+        next: () => {
+          this.rejectionPayment.set(null);
+          this.rejectForm.reset({ reason: '' });
+          this.snackBar.open(`Pago de ${tenantName} rechazado`, 'Cerrar', { duration: 3500 });
+        },
+        error: (error) => {
+          console.error('Error al rechazar pago:', error);
+          alert(
+            `Error al rechazar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
+          );
+        },
+      });
+  }
+
+  closeRejectDialog(): void {
+    this.rejectionPayment.set(null);
+    this.rejectForm.reset({ reason: '' });
   }
 
   deletePayment(payment: Payment): void {
@@ -624,6 +769,20 @@ export class PagosComponent implements OnInit {
     return payment.property?.title || `ID ${payment.property_id}`;
   }
 
+  getUnitName(payment: Payment): string {
+    const metadataUnit = payment.metadata?.['unit_number'];
+    return (
+      payment.unit?.unit_number ||
+      payment.contract?.unit?.unit_number ||
+      (metadataUnit ? metadataUnit.toString() : '') ||
+      'N/A'
+    );
+  }
+
+  getRegisteredDate(payment: Payment): Date {
+    return this.parseDate(payment.created_at) ?? this.parseDate(payment.payment_date) ?? new Date();
+  }
+
   getStatusLabel(status: PaymentStatus): string {
     return PaymentStatusLabels[status];
   }
@@ -638,5 +797,32 @@ export class PagosComponent implements OnInit {
 
   getMethodLabel(method: PaymentMethod): string {
     return PaymentMethodLabels[method];
+  }
+
+  private parseDate(dateValue?: string | Date): Date | null {
+    if (!dateValue) return null;
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private startOfDay(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  }
+
+  private endOfDay(date: Date): Date {
+    const normalized = new Date(date);
+    normalized.setHours(23, 59, 59, 999);
+    return normalized;
+  }
+
+  private cleanupProofObjectUrl(): void {
+    const currentObjectUrl = this.proofObjectUrl();
+    if (currentObjectUrl) {
+      URL.revokeObjectURL(currentObjectUrl);
+    }
+    this.proofObjectUrl.set(null);
+    this.proofMimeType.set(null);
   }
 }

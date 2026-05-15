@@ -1,4 +1,11 @@
-import { Component, inject, computed, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  computed,
+  DestroyRef,
+  ChangeDetectionStrategy,
+  effect,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import {
   LucideAngularModule,
@@ -24,6 +31,8 @@ import { SlugService } from '../../../core/services/slug.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { MenuOption } from '../../../core/models/user.model';
 import { TranslocoModule } from '@jsverse/transloco';
+import { PaymentService } from '../../../core/services/admin/payment.service';
+import { PermissionsService } from '../../../core/services/permissions.service';
 
 const ICON_MAP: Record<string, LucideIconData> = {
   LayoutDashboard,
@@ -55,6 +64,8 @@ export class SidebarComponent {
   private router = inject(Router);
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
+  private paymentService = inject(PaymentService);
+  private permissionsService = inject(PermissionsService);
   readonly languageService = inject(LanguageService);
 
   expanded = this.sidebarService.expanded;
@@ -62,10 +73,15 @@ export class SidebarComponent {
 
   /** Items filtrados por permisos + slug prefijado en la ruta */
   menuOptions = computed<MenuOption[]>(() =>
-    this.sidebarService.menuItems().map((option) => ({
-      ...option,
-      route: this.slugService.buildUrl(option.route),
-    })),
+    this.sidebarService.menuItems().map((option) => {
+      const pending = this.paymentService.stats()?.total_pending ?? 0;
+      const badgeCount = option.module === 'payments' && pending > 0 ? pending : undefined;
+      return {
+        ...option,
+        badgeCount,
+        route: this.slugService.buildUrl(option.route),
+      };
+    }),
   );
 
   constructor() {
@@ -81,10 +97,21 @@ export class SidebarComponent {
       window.removeEventListener('resize', onResize);
       document.body.style.overflow = '';
     });
+
+    effect(() => {
+      const role = this.permissionsService.role();
+      if (!role || role === 'INQUILINO' || role === 'TECNICO') return;
+      this.paymentService.loadStats();
+    });
   }
 
   getIconComponent(iconName: string): LucideIconData {
     return ICON_MAP[iconName] ?? Settings;
+  }
+
+  formatBadgeCount(count?: number): string {
+    if (!count) return '';
+    return count > 99 ? '99+' : count.toString();
   }
 
   logout(): void {

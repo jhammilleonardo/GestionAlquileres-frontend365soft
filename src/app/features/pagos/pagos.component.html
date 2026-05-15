@@ -134,15 +134,29 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'payments.dateFrom' | transloco }}</mat-label>
-            <input matInput [matDatepicker]="pickerFrom" formControlName="date_from" />
+            <input
+              matInput
+              [matDatepicker]="pickerFrom"
+              formControlName="date_from"
+              [placeholder]="'payments.dateFrom' | transloco"
+              [attr.aria-label]="'payments.dateFrom' | transloco"
+              readonly
+              (click)="openDatepicker(pickerFrom, $event)"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="pickerFrom"></mat-datepicker-toggle>
             <mat-datepicker #pickerFrom></mat-datepicker>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
-            <mat-label>{{ 'payments.dateTo' | transloco }}</mat-label>
-            <input matInput [matDatepicker]="pickerTo" formControlName="date_to" />
+            <input
+              matInput
+              [matDatepicker]="pickerTo"
+              formControlName="date_to"
+              [placeholder]="'payments.dateTo' | transloco"
+              [attr.aria-label]="'payments.dateTo' | transloco"
+              readonly
+              (click)="openDatepicker(pickerTo, $event)"
+            />
             <mat-datepicker-toggle matIconSuffix [for]="pickerTo"></mat-datepicker-toggle>
             <mat-datepicker #pickerTo></mat-datepicker>
           </mat-form-field>
@@ -159,6 +173,128 @@
       </form>
     </mat-card>
   }
+
+  <mat-card class="pending-approval-card">
+    <div class="pending-header">
+      <h2>{{ 'payments.pendingApprovalTitle' | transloco }}</h2>
+      <span class="pending-badge">{{ pendingPayments().length }}</span>
+    </div>
+
+    <form
+      class="pending-filters"
+      [formGroup]="pendingFilterForm"
+      (ngSubmit)="applyPendingFilters()"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'common.property' | transloco }}</mat-label>
+        <mat-select formControlName="property_id">
+          <mat-option [value]="null">{{ 'common.all' | transloco }}</mat-option>
+          @for (option of pendingPropertyOptions(); track option.id) {
+            <mat-option [value]="option.id">{{ option.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          [matDatepicker]="pendingDateFromPicker"
+          formControlName="date_from"
+          [placeholder]="'payments.dateFrom' | transloco"
+          [attr.aria-label]="'payments.dateFrom' | transloco"
+          readonly
+          (click)="openDatepicker(pendingDateFromPicker, $event)"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="pendingDateFromPicker"></mat-datepicker-toggle>
+        <mat-datepicker #pendingDateFromPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <input
+          matInput
+          [matDatepicker]="pendingDateToPicker"
+          formControlName="date_to"
+          [placeholder]="'payments.dateTo' | transloco"
+          [attr.aria-label]="'payments.dateTo' | transloco"
+          readonly
+          (click)="openDatepicker(pendingDateToPicker, $event)"
+        />
+        <mat-datepicker-toggle matIconSuffix [for]="pendingDateToPicker"></mat-datepicker-toggle>
+        <mat-datepicker #pendingDateToPicker></mat-datepicker>
+      </mat-form-field>
+
+      <div class="pending-filter-actions">
+        <button type="button" mat-stroked-button (click)="clearPendingFilters()">
+          {{ 'common.clearFilters' | transloco }}
+        </button>
+        <button type="submit" mat-raised-button color="primary">
+          {{ 'common.applyFilters' | transloco }}
+        </button>
+      </div>
+    </form>
+
+    @if (filteredPendingPayments().length === 0) {
+      <div class="pending-empty">
+        <lucide-icon [img]="CheckCircle2" [size]="26"></lucide-icon>
+        <span>{{ 'payments.noPendingApproval' | transloco }}</span>
+      </div>
+    } @else {
+      <div class="pending-cards">
+        @for (payment of filteredPendingPayments(); track payment.id) {
+          <mat-card class="pending-item-card">
+            <div class="pending-item-header">
+              <span>#{{ payment.id }}</span>
+              <mat-chip
+                [style.background-color]="getStatusColor(payment.status)"
+                style="color: white"
+              >
+                {{ getStatusLabel(payment.status) }}
+              </mat-chip>
+            </div>
+
+            <div class="pending-item-content">
+              <p>
+                <strong>{{ 'payments.tenant' | transloco }}:</strong> {{ getTenantName(payment) }}
+              </p>
+              <p>
+                <strong>{{ 'common.property' | transloco }}:</strong> {{ getPropertyName(payment) }}
+              </p>
+              <p>
+                <strong>{{ 'payments.unit' | transloco }}:</strong> {{ getUnitName(payment) }}
+              </p>
+              <p>
+                <strong>{{ 'common.amount' | transloco }}:</strong>
+                {{ formatCurrency(payment.amount, payment.currency) }}
+              </p>
+              <p>
+                <strong>{{ 'payments.method' | transloco }}:</strong>
+                {{ getMethodLabel(payment.payment_method) }}
+              </p>
+              <p>
+                <strong>{{ 'payments.registeredAt' | transloco }}:</strong>
+                {{ getRegisteredDate(payment) | tenantDate }}
+              </p>
+            </div>
+
+            <div class="pending-item-actions">
+              @if (payment.proof_file) {
+                <button mat-stroked-button color="primary" (click)="openProof(payment)">
+                  <lucide-icon [img]="ExternalLink" [size]="18"></lucide-icon>
+                  {{ 'payments.viewReceipt' | transloco }}
+                </button>
+              }
+              <button mat-raised-button color="primary" (click)="approvePayment(payment)">
+                {{ 'common.approve' | transloco }}
+              </button>
+              <button mat-raised-button color="warn" (click)="rejectPayment(payment)">
+                {{ 'common.reject' | transloco }}
+              </button>
+            </div>
+          </mat-card>
+        }
+      </div>
+    }
+  </mat-card>
 
   <!-- Bulk Action Bar -->
   @if (selectedIds().length > 0) {
@@ -246,7 +382,7 @@
 
           <!-- Property Column -->
           <ng-container matColumnDef="property">
-            <th mat-header-cell *matHeaderCellDef>{{ 'properties.title' | transloco }}</th>
+            <th mat-header-cell *matHeaderCellDef>{{ 'common.property' | transloco }}</th>
             <td mat-cell *matCellDef="let payment">{{ getPropertyName(payment) }}</td>
           </ng-container>
 
@@ -313,7 +449,7 @@
                     mat-icon-button
                     color="primary"
                     (click)="approvePayment(payment)"
-                    [matTooltip]="'payments.approved' | transloco"
+                    [matTooltip]="'common.approve' | transloco"
                   >
                     <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
                   </button>
@@ -321,7 +457,7 @@
                     mat-icon-button
                     color="warn"
                     (click)="rejectPayment(payment)"
-                    [matTooltip]="'payments.rejected' | transloco"
+                    [matTooltip]="'common.reject' | transloco"
                   >
                     <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
                   </button>
@@ -369,7 +505,7 @@
             </div>
 
             <div class="detail-item">
-              <label>{{ 'properties.title' | transloco }}:</label>
+              <label>{{ 'common.property' | transloco }}:</label>
               <p>{{ getPropertyName(payment) }}</p>
             </div>
 
@@ -471,6 +607,118 @@
           <button mat-stroked-button (click)="selectedPayment.set(null)">
             {{ 'common.close' | transloco }}
           </button>
+        </div>
+      </mat-card>
+    </div>
+  }
+
+  @if (selectedProofPayment(); as payment) {
+    <div class="modal-overlay" (click)="closeProof()">
+      <mat-card class="detail-modal proof-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ 'payments.receipt' | transloco }}</h2>
+          <button
+            mat-icon-button
+            [attr.aria-label]="'common.close' | transloco"
+            (click)="closeProof()"
+          >
+            <lucide-icon [img]="X" [size]="20"></lucide-icon>
+          </button>
+        </div>
+        <div class="proof-content">
+          @if (proofLoading()) {
+            <div class="proof-loading">
+              <mat-spinner diameter="36"></mat-spinner>
+            </div>
+          } @else if (proofLoadError()) {
+            <p class="proof-error" aria-live="polite">{{ proofLoadError() }}</p>
+          } @else if (proofObjectUrl() && isProofPdf(payment)) {
+            <object class="proof-pdf" [data]="proofObjectUrl()" type="application/pdf"></object>
+          } @else {
+            <div class="proof-toolbar">
+              <div class="zoom-controls">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  type="button"
+                  [disabled]="!canZoomOutProof()"
+                  (click)="zoomOutProof()"
+                  aria-label="Alejar comprobante"
+                >
+                  <lucide-icon [img]="Minus" [size]="16"></lucide-icon>
+                </button>
+                <span class="zoom-value">{{ (proofZoom() * 100).toFixed(0) }}%</span>
+                <button
+                  mat-icon-button
+                  color="primary"
+                  type="button"
+                  [disabled]="!canZoomInProof()"
+                  (click)="zoomInProof()"
+                  aria-label="Acercar comprobante"
+                >
+                  <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+                </button>
+              </div>
+              <button
+                mat-button
+                color="primary"
+                class="zoom-reset-btn"
+                type="button"
+                (click)="resetProofZoom()"
+              >
+                {{ 'payments.resetZoom' | transloco }}
+              </button>
+            </div>
+            <div class="proof-image-wrap">
+              <img
+                class="proof-image"
+                [src]="proofObjectUrl()"
+                [alt]="'payments.receipt' | transloco"
+                [style.width.%]="proofZoom() * 100"
+              />
+            </div>
+          }
+        </div>
+      </mat-card>
+    </div>
+  }
+
+  @if (rejectionPayment(); as payment) {
+    <div class="modal-overlay" (click)="closeRejectDialog()">
+      <mat-card class="detail-modal reject-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ 'payments.rejectPaymentTitle' | transloco: { id: payment.id } }}</h2>
+          <button
+            mat-icon-button
+            [attr.aria-label]="'common.close' | transloco"
+            (click)="closeRejectDialog()"
+          >
+            <lucide-icon [img]="X" [size]="20"></lucide-icon>
+          </button>
+        </div>
+        <div class="modal-content">
+          <form [formGroup]="rejectForm" (ngSubmit)="submitRejectPayment()">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ 'payments.rejectionReason' | transloco }}</mat-label>
+              <textarea matInput rows="4" formControlName="reason"></textarea>
+              <mat-hint>{{ 'payments.rejectionReasonHint' | transloco }}</mat-hint>
+              @if (
+                rejectForm.controls.reason.hasError('required') &&
+                rejectForm.controls.reason.touched
+              ) {
+                <mat-error aria-live="polite">{{ 'common.required' | transloco }}</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="modal-actions">
+              <button type="button" mat-stroked-button (click)="closeRejectDialog()">
+                {{ 'common.cancel' | transloco }}
+              </button>
+              <button type="submit" mat-raised-button color="warn">
+                {{ 'common.reject' | transloco }}
+              </button>
+            </div>
+          </form>
         </div>
       </mat-card>
     </div>

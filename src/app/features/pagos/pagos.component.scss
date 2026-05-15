@@ -249,6 +249,90 @@
     }
   }
 
+  .pending-approval-card {
+    padding: 20px;
+    margin-bottom: 24px;
+
+    .pending-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+
+      h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+    }
+
+    .pending-badge {
+      background: #ef4444;
+      color: #fff;
+      border-radius: 999px;
+      min-width: 26px;
+      height: 26px;
+      padding: 0 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .pending-filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .pending-filter-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pending-empty {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #475569;
+      padding: 10px 0;
+    }
+
+    .pending-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .pending-item-card {
+      padding: 14px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .pending-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .pending-item-content p {
+      margin: 0 0 8px;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .pending-item-actions {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  }
+
   // Modal
   .modal-overlay {
     position: fixed;
@@ -371,7 +455,9 @@
         color: #1e40af;
         line-height: 1.4;
 
-        .card-banner-icon { flex-shrink: 0; }
+        .card-banner-icon {
+          flex-shrink: 0;
+        }
       }
 
       .form-row {
@@ -426,6 +512,109 @@
           color: #10b981;
           font-weight: 600;
         }
+      }
+    }
+
+    .proof-modal {
+      max-width: 900px;
+      width: min(900px, calc(100vw - 24px));
+      overflow-y: hidden;
+
+      .proof-content {
+        padding: 16px;
+      }
+
+      .proof-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+
+        .zoom-controls {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .zoom-value {
+          min-width: 60px;
+          text-align: center;
+          font-weight: 700;
+          color: #1e293b;
+          font-variant-numeric: tabular-nums;
+        }
+
+        .zoom-controls button[mat-icon-button] {
+          width: 36px;
+          height: 36px;
+        }
+
+        .zoom-controls lucide-icon {
+          color: #1d4ed8;
+        }
+
+        .zoom-reset-btn {
+          color: #1d4ed8 !important;
+          font-weight: 600;
+        }
+      }
+
+      .proof-image-wrap {
+        max-height: calc(90vh - 220px);
+        overflow: auto;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 8px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .proof-image {
+        width: 100%;
+        max-width: none;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        border-radius: 8px;
+        background: #f8fafc;
+      }
+
+      .proof-pdf {
+        width: 100%;
+        height: 75vh;
+        border: none;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .proof-loading {
+        width: 100%;
+        min-height: 240px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .proof-error {
+        margin: 0;
+        color: #dc2626;
+        font-weight: 500;
+      }
+    }
+
+    .reject-modal {
+      max-width: 540px;
+
+      .full-width {
+        width: 100%;
+        display: block;
       }
     }
   }
@@ -500,11 +689,23 @@
       }
     }
 
+    .pending-approval-card {
+      .pending-filter-actions {
+        grid-column: 1 / -1;
+      }
+
+      .pending-item-actions button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
     .table-card {
       .payments-table {
         font-size: 0.875rem;
 
-        th, td {
+        th,
+        td {
           padding: 12px 8px;
         }
       }
@@ -542,6 +743,38 @@
       .create-payment-modal {
         .form-row {
           grid-template-columns: 1fr;
+        }
+      }
+
+      .proof-modal {
+        .proof-toolbar {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 8px;
+
+          .zoom-controls {
+            width: 100%;
+            justify-content: center;
+            gap: 12px;
+          }
+
+          .zoom-controls button[mat-icon-button] {
+            width: 34px;
+            height: 34px;
+          }
+
+          .zoom-value {
+            min-width: 52px;
+            font-size: 0.9rem;
+          }
+
+          .zoom-reset-btn {
+            align-self: center;
+          }
+        }
+
+        .proof-image-wrap {
+          max-height: calc(100vh - 230px);
         }
       }
     }

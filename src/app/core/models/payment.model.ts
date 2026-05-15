@@ -150,6 +150,7 @@ export interface Payment {
   tenant_id: number;
   contract_id: number;
   property_id: number;
+  unit_id?: number;
 
   // Financiero
   amount: number;
@@ -205,6 +206,7 @@ export interface Payment {
   // Relaciones
   contract?: ContractReference;
   property?: PropertyReference;
+  unit?: UnitReference;
   tenant?: TenantReference;
 }
 
@@ -214,6 +216,7 @@ export interface ContractReference {
   start_date: string;
   end_date: string;
   status: string;
+  unit?: UnitReference;
 }
 
 export interface PropertyReference {
@@ -228,6 +231,12 @@ export interface TenantReference {
   first_name?: string;
   last_name?: string;
   email: string;
+}
+
+export interface UnitReference {
+  id: number;
+  unit_number: string;
+  name?: string;
 }
 
 export interface PaymentStats {

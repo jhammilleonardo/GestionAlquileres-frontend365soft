@@ -33,6 +33,11 @@
             @if (expanded()) {
               <span class="nav-label">{{ option.label | transloco }}</span>
             }
+            @if (option.badgeCount) {
+              <span class="nav-badge" aria-label="Pending payments">
+                {{ formatBadgeCount(option.badgeCount) }}
+              </span>
+            }
           </a>
         </li>
       }
