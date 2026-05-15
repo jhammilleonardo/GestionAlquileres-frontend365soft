@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, throwError } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import {
@@ -317,8 +317,34 @@ export class PaymentService {
    * Construir URL completa para ver el comprobante de pago
    */
   getProofUrl(payment: Payment): string | null {
-    if (!payment.proof_file) return null;
-    return `${environment.apiUrl}/storage/${payment.proof_file}`;
+    const proofFile = payment.proof_file?.trim();
+    if (!proofFile) return null;
+
+    if (/^https?:\/\//i.test(proofFile)) {
+      return proofFile;
+    }
+
+    const normalizedProofPath = proofFile.replace(/\\/g, '/').replace(/^\/+/, '');
+    const baseUrl = environment.apiUrl.replace(/\/+$/, '');
+
+    if (normalizedProofPath.startsWith('storage/')) {
+      return `${baseUrl}/${normalizedProofPath}`;
+    }
+
+    return `${baseUrl}/storage/${normalizedProofPath}`;
+  }
+
+  /**
+   * Descargar comprobante como Blob para poder renderizar archivos privados
+   * protegidos por JWT (la solicitud sí pasa por el interceptor de auth).
+   */
+  downloadProof(payment: Payment): Observable<Blob> {
+    const proofUrl = this.getProofUrl(payment);
+    if (!proofUrl) {
+      return throwError(() => new Error('Comprobante no disponible'));
+    }
+
+    return this.http.get(proofUrl, { responseType: 'blob' });
   }
 
   /**

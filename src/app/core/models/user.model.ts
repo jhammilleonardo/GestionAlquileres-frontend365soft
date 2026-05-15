@@ -16,5 +16,7 @@ export interface MenuOption {
   route: string;
   /** Clave del módulo en el backend. Si es undefined, el item es siempre visible. */
   module?: string;
+  /** Badge opcional para mostrar contadores (ej. pagos pendientes). */
+  badgeCount?: number;
   children?: MenuOption[];
 }
