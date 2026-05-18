@@ -18,6 +18,13 @@ import {
   Phone,
   MessageSquare,
   PhoneCall,
+  AlertTriangle,
+  PawPrint,
+  Ban,
+  Cigarette,
+  CigaretteOff,
+  Users,
+  Calendar,
 } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
@@ -60,6 +67,13 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   readonly Phone = Phone;
   readonly MessageSquare = MessageSquare;
   readonly PhoneCall = PhoneCall;
+  readonly AlertTriangle = AlertTriangle;
+  readonly PawPrint = PawPrint;
+  readonly Ban = Ban;
+  readonly Cigarette = Cigarette;
+  readonly CigaretteOff = CigaretteOff;
+  readonly Users = Users;
+  readonly Calendar = Calendar;
 
   property: Property | null = null;
   currentImageIndex = 0;
@@ -310,16 +324,25 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   }
 
   getLocationForMap(): any {
-    if (this.property?.latitude && this.property?.longitude) {
-      return {
-        coordinates: {
-          lat: this.property.latitude,
-          lng: this.property.longitude,
-        },
-        address: this.getPropertyAddress(),
-      };
-    }
-    return null;
+    return {
+      coordinates: {
+        lat: this.property?.latitude || 0,
+        lng: this.property?.longitude || 0,
+      },
+      address: this.getPropertyAddress(),
+      city:
+        this.property?.addresses && this.property.addresses.length > 0
+          ? this.property.addresses[0].city
+          : '',
+      state:
+        this.property?.addresses && this.property.addresses.length > 0
+          ? this.property.addresses[0].state
+          : '',
+      zipCode:
+        this.property?.addresses && this.property.addresses.length > 0
+          ? this.property.addresses[0].zip_code
+          : '',
+    };
   }
 
   getOwnerName(): string {

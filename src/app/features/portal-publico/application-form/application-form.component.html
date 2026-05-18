@@ -1,7 +1,9 @@
 <div class="application-form-container">
   <!-- Success State -->
   <div *ngIf="submitSuccess" class="success-state">
-    <div class="success-icon">🎉</div>
+    <div class="success-icon">
+      <lucide-icon [img]="CheckCircle2" [size]="64" style="color: #10b981"></lucide-icon>
+    </div>
     <h1>{{ 'public.applicationForm.successTitle' | transloco }}</h1>
     <p>{{ 'public.applicationForm.successMsg' | transloco }}</p>
     <p>{{ 'public.applicationForm.redirectMsg' | transloco }}</p>
@@ -17,7 +19,13 @@
 
     <!-- Error Alert -->
     <div *ngIf="error" class="error-alert">
-      <span class="error-icon">⚠️</span>
+      <span class="error-icon">
+        <lucide-icon
+          [img]="AlertTriangle"
+          [size]="18"
+          style="color: #ef4444; margin-right: 0.5rem; display: inline-flex; align-items: center"
+        ></lucide-icon>
+      </span>
       <span>{{ error }}</span>
     </div>
 
