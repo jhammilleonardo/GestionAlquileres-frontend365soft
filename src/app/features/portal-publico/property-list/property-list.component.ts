@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import {
@@ -46,6 +47,7 @@ import {
     MatFormFieldModule,
     MatSelectModule,
     MatProgressSpinnerModule,
+    MatPaginatorModule,
     MatChipsModule,
     MatIconModule,
     LucideAngularModule,
@@ -58,6 +60,7 @@ import {
 export class PropertyListComponent implements OnInit {
   properties: Property[] = [];
   filteredProperties: Property[] = [];
+  totalResultsCount = 0;
   favorites = new Set<number>();
   isLoading = true;
 
@@ -66,23 +69,30 @@ export class PropertyListComponent implements OnInit {
 
   filters: PropertyFilters = {
     search: '',
-    status: PropertyStatus.DISPONIBLE,
+    status: undefined,
     property_type_id: undefined,
     property_subtype_id: undefined,
     city: '',
     country: '',
-    sort_by: SortOption.CREATED_AT,
+    min_price: undefined,
+    max_price: undefined,
+    bedrooms: undefined,
+    sort_by: 'newest',
     sort_order: 'DESC',
+    rental_type: 'any',
     page: 1,
     limit: 20,
   };
 
   sortOptions = [
-    { value: SortOption.CREATED_AT, label: 'public.properties.sortLatest' },
-    { value: SortOption.TITLE, label: 'public.properties.sortTitleAZ' },
+    { value: 'newest', label: 'Más recientes' },
+    { value: 'price_asc', label: 'Precio más bajo' },
+    { value: 'price_desc', label: 'Precio más alto' },
+    { value: 'available', label: 'Disponibilidad' },
   ];
 
   showFilters = false;
+  propertyImagesIndex: { [propertyId: number]: number } = {};
 
   // Lucide icons
   readonly Heart = Heart;
@@ -104,37 +114,42 @@ export class PropertyListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // No cargar types desde admin en portal público - requiere autenticación
-    // this.loadPropertyTypes();
     this.loadFavorites();
-
-    // Wait for slug to be set before loading properties
     this.waitForSlugAndLoadProperties();
   }
 
-  /**
-   * Wait for the slug to be set in SlugService before loading properties
-   * This fixes the race condition where properties are loaded before the slug is available
-   */
   private waitForSlugAndLoadProperties(): void {
-    const slug = this.slugService.getSlug();
+    // Intento 1: Desde el servicio (si ya está)
+    let slug = this.slugService.getSlug();
 
-    if (slug) {
-      // Slug is already set, load properties immediately
-      console.log('PropertyListComponent - Slug ya disponible:', slug);
+    // Intento 2: Desde la URL directamente (lo más fiable)
+    if (!slug) {
+      const pathParts = window.location.pathname.split('/');
+      // En /inmobiliaria-prueba/publico/propiedades, el slug es el primer segmento
+      slug = pathParts[1];
+    }
+
+    if (slug && slug !== 'publico') {
+      console.log('PropertyListComponent - Slug detectado:', slug);
+      this.slugService.setSlug(slug);
+
+      // Resetear filtros para asegurar visibilidad total inicial
+      this.filters = {
+        ...this.filters,
+        status: undefined,
+        search: '',
+        property_type_id: undefined,
+        property_subtype_id: undefined,
+      };
+
       this.loadProperties();
     } else {
-      // Slug not set yet, get it from the route and set it
-      console.log('PropertyListComponent - Esperando slug de la ruta...');
-      this.route.parent?.paramMap.subscribe((params) => {
-        const slugFromRoute = params.get('slug');
-        if (slugFromRoute) {
-          console.log('PropertyListComponent - Slug obtenido de ruta:', slugFromRoute);
-          this.slugService.setSlug(slugFromRoute);
-          // Wait a small amount for the slug to be set in the service
-          setTimeout(() => {
-            this.loadProperties();
-          }, 100);
+      // Intento 3: Suscripción reactiva como último recurso
+      this.route.paramMap.subscribe((params) => {
+        const s = params.get('slug') || this.route.snapshot.parent?.paramMap.get('slug');
+        if (s) {
+          this.slugService.setSlug(s);
+          this.loadProperties();
         }
       });
     }
@@ -153,11 +168,13 @@ export class PropertyListComponent implements OnInit {
 
   loadProperties(): void {
     this.isLoading = true;
-    this.propertyService.getFilteredProperties(this.filters).subscribe({
+
+    this.propertyService.getProperties().subscribe({
       next: (properties) => {
-        this.filteredProperties = properties;
+        this.properties = properties;
+        this.applyLocalFilters();
         this.isLoading = false;
-        // Forzar detección de cambios para actualizar la vista
+        this.cdr.markForCheck();
         this.cdr.detectChanges();
       },
       error: (error) => {
@@ -168,6 +185,7 @@ export class PropertyListComponent implements OnInit {
     });
   }
 
+  // Favorites handling
   loadFavorites(): void {
     this.propertyService.favorites$.subscribe((favorites) => {
       this.favorites = favorites;
@@ -175,7 +193,63 @@ export class PropertyListComponent implements OnInit {
   }
 
   applyFilters(): void {
-    this.loadProperties();
+    this.applyLocalFilters();
+  }
+
+  applyLocalFilters(): void {
+    let filtered = [...this.properties];
+
+    // Búsqueda por texto
+    if (this.filters.search) {
+      const search = this.filters.search.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title.toLowerCase().includes(search) || p.description?.toLowerCase().includes(search),
+      );
+    }
+
+    // Tipo de Alquiler
+    if (this.filters.rental_type && this.filters.rental_type !== 'any') {
+      filtered = filtered.filter((p: any) => p.rental_type === this.filters.rental_type);
+    }
+
+    // Precio mínimo
+    if (this.filters.min_price) {
+      filtered = filtered.filter((p) => {
+        const price = p.monthly_rent || p.monthly_rent_amount || 0;
+        return price >= this.filters.min_price!;
+      });
+    }
+
+    // Precio máximo
+    if (this.filters.max_price) {
+      filtered = filtered.filter((p) => {
+        const price = p.monthly_rent || p.monthly_rent_amount || 0;
+        return price <= this.filters.max_price!;
+      });
+    }
+
+    // Habitaciones
+    if (this.filters.bedrooms) {
+      filtered = filtered.filter((p) => p.bedrooms === this.filters.bedrooms);
+    }
+
+    this.filteredProperties = filtered;
+    this.totalResultsCount = filtered.length;
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.filters.page = event.pageIndex + 1;
+    this.filters.limit = event.pageSize;
+    this.applyFilters();
+  }
+
+  onSortChange(): void {
+    if (this.filters.sort_by === SortOption.PRICE) {
+      // Toggle logic if we wanted, or assume default. Let's rely on radio/select order for now.
+      // Actually, the user can select 'ASC' or 'DESC' elsewhere or we create compound options.
+    }
+    this.applyFilters();
   }
 
   clearFilters(): void {
@@ -186,12 +260,30 @@ export class PropertyListComponent implements OnInit {
       property_subtype_id: undefined,
       city: '',
       country: '',
+      min_price: undefined,
+      max_price: undefined,
+      bedrooms: undefined,
       sort_by: SortOption.CREATED_AT,
       sort_order: 'DESC',
+      rental_type: 'any',
       page: 1,
       limit: 20,
     };
     this.loadProperties();
+  }
+
+  // Paginación
+  get totalResults(): number {
+    return this.totalResultsCount;
+  }
+
+  get visibleResultsStart(): number {
+    return (this.filters.page! - 1) * this.filters.limit! + 1;
+  }
+
+  get visibleResultsEnd(): number {
+    const end = this.filters.page! * this.filters.limit!;
+    return end > this.totalResults ? this.totalResults : end;
   }
 
   toggleFavorite(propertyId: number, event: Event): void {
@@ -207,12 +299,20 @@ export class PropertyListComponent implements OnInit {
     this.showFilters = !this.showFilters;
   }
 
-  viewProperty(propertyId: number): void {
+  viewProperty(property: any): void {
+    const slug = this.slugService.getSlug();
+    const propSlug = property.slug || property.id;
+    if (slug) {
+      this.router.navigate(['/', slug, 'publico', 'propiedades', propSlug]);
+    } else {
+      this.router.navigate([propSlug], { relativeTo: this.route });
+    }
+  }
+
+  goToMap(): void {
     const slug = this.slugService.getSlug();
     if (slug) {
-      this.router.navigate(['/', slug, 'publico', 'propiedades', propertyId]);
-    } else {
-      this.router.navigate([propertyId], { relativeTo: this.route });
+      this.router.navigate(['/', slug, 'publico', 'mapa']);
     }
   }
 
@@ -238,11 +338,19 @@ export class PropertyListComponent implements OnInit {
    */
   getPropertyImageUrl(property: Property): string {
     let imagePath: string | null = null;
+    const index = this.propertyImagesIndex[property.id] || 0;
 
-    if (property.first_image) {
+    if (property.images && Array.isArray(property.images) && property.images.length > index) {
+      imagePath = property.images[index];
+    } else if (
+      property.images &&
+      typeof property.images === 'object' &&
+      Object.keys(property.images).length > index
+    ) {
+      const keys = Object.keys(property.images);
+      imagePath = (property.images as any)[keys[index]];
+    } else if (property.first_image && index === 0) {
       imagePath = property.first_image;
-    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
-      imagePath = property.images[0];
     }
 
     if (imagePath) {
@@ -252,6 +360,38 @@ export class PropertyListComponent implements OnInit {
     }
 
     return '';
+  }
+
+  hasMultipleImages(property: Property): boolean {
+    if (property.images && Array.isArray(property.images)) {
+      return property.images.length > 1;
+    }
+    if (property.images && typeof property.images === 'object') {
+      return Object.keys(property.images).length > 1;
+    }
+    return false;
+  }
+
+  nextImage(event: Event, property: Property): void {
+    event.stopPropagation();
+    const current = this.propertyImagesIndex[property.id] || 0;
+    const length = Array.isArray(property.images)
+      ? property.images.length
+      : property.images
+        ? Object.keys(property.images).length
+        : 1;
+    this.propertyImagesIndex[property.id] = (current + 1) % length;
+  }
+
+  prevImage(event: Event, property: Property): void {
+    event.stopPropagation();
+    const current = this.propertyImagesIndex[property.id] || 0;
+    const length = Array.isArray(property.images)
+      ? property.images.length
+      : property.images
+        ? Object.keys(property.images).length
+        : 1;
+    this.propertyImagesIndex[property.id] = (current - 1 + length) % length;
   }
 
   handleImageError(event: any): void {

@@ -256,6 +256,7 @@
   flex-direction: column;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   height: 480px;
+  cursor: pointer;
 }
 .glass-card:hover {
   transform: translateY(-8px);
@@ -447,6 +448,22 @@
 .btn-action:hover {
   background: #1f2937;
   transform: scale(1.03);
+}
+
+/* ============ PAGINATION ============ */
+.pagination-container {
+  margin-top: 3.5rem;
+  margin-bottom: 3.5rem;
+  background: white;
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.05);
+  border: 1px solid #bfdbfe;
+  overflow: hidden;
+  padding: 0.5rem 1rem;
+}
+
+.pagination-container ::ng-deep .mat-mdc-paginator {
+  background: transparent !important;
 }
 
 /* ============ RESPONSIVE ============ */

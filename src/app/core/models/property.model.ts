@@ -71,6 +71,7 @@ export interface Property {
 export interface PropertyType {
   id: number;
   name: string;
+  code?: string;
   description?: string;
 }
 
@@ -114,7 +115,7 @@ export enum PropertyStatus {
   OCUPADO = 'OCUPADO',
   MANTENIMIENTO = 'MANTENIMIENTO',
   RESERVADO = 'RESERVADO',
-  INACTIVO = 'INACTIVO'
+  INACTIVO = 'INACTIVO',
 }
 
 // ==================== FILTERS ====================
@@ -126,16 +127,22 @@ export interface PropertyFilters {
   city?: string;
   country?: string;
   search?: string;
-  sort_by?: SortOption;
+  sort_by?: SortOption | string;
   sort_order?: 'ASC' | 'DESC';
   page?: number;
   limit?: number;
+  min_price?: number;
+  max_price?: number;
+  bedrooms?: number;
+  rental_type?: 'short_term' | 'long_term' | 'any';
 }
 
 export enum SortOption {
   CREATED_AT = 'created_at',
   UPDATED_AT = 'updated_at',
-  TITLE = 'title'
+  TITLE = 'title',
+  PRICE = 'monthly_rent',
+  AVAILABILITY = 'status',
 }
 
 // ==================== RENTAL APPLICATION ====================

@@ -6,7 +6,9 @@
 
 <!-- Error State -->
 <div class="error-container" *ngIf="!isLoading && hasError">
-  <div class="error-icon">⚠️</div>
+  <div class="error-icon">
+    <lucide-icon [img]="AlertTriangle" [size]="48" style="color: #ef4444"></lucide-icon>
+  </div>
   <h2>{{ 'public.propertyDetail.errorTitle' | transloco }}</h2>
   <p>{{ 'public.propertyDetail.errorSubtitle' | transloco }}</p>
   <a routerLink="../" class="btn-back">← {{ 'public.propertyDetail.backToList' | transloco }}</a>
@@ -29,7 +31,9 @@
       </ng-container>
       <ng-template #noImage>
         <div class="no-image-placeholder">
-          <span class="placeholder-icon">🏠</span>
+          <span class="placeholder-icon">
+            <lucide-icon [img]="Home" [size]="48" style="color: #9ca3af"></lucide-icon>
+          </span>
           <p>{{ 'public.propertyDetail.noImages' | transloco }}</p>
         </div>
       </ng-template>
@@ -156,6 +160,82 @@
           <div class="amenity-item" *ngFor="let amenity of property.amenities">
             <span class="amenity-icon">✓</span>
             {{ amenity }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Property Rules -->
+      <div class="section-card" *ngIf="property.property_rules">
+        <h2 class="section-title">Reglas de la Propiedad</h2>
+        <div class="rules-grid">
+          <div class="rule-item" *ngIf="property.property_rules.pets_allowed !== undefined">
+            <span
+              class="rule-icon-lucide"
+              [class.allowed]="property.property_rules.pets_allowed"
+              [class.not-allowed]="!property.property_rules.pets_allowed"
+            >
+              <lucide-icon
+                [img]="property.property_rules.pets_allowed ? PawPrint : Ban"
+              ></lucide-icon>
+            </span>
+            <span class="rule-text"
+              >Mascotas:
+              {{
+                property.property_rules.pets_allowed
+                  ? ('common.allowed' | transloco)
+                  : ('common.notAllowed' | transloco)
+              }}</span
+            >
+          </div>
+          <div class="rule-item" *ngIf="property.property_rules.smoking_allowed !== undefined">
+            <span
+              class="rule-icon-lucide"
+              [class.allowed]="property.property_rules.smoking_allowed"
+              [class.not-allowed]="!property.property_rules.smoking_allowed"
+            >
+              <lucide-icon
+                [img]="property.property_rules.smoking_allowed ? Cigarette : CigaretteOff"
+              ></lucide-icon>
+            </span>
+            <span class="rule-text"
+              >Fumar:
+              {{
+                property.property_rules.smoking_allowed
+                  ? ('common.allowed' | transloco)
+                  : ('common.notAllowed' | transloco)
+              }}</span
+            >
+          </div>
+          <div class="rule-item" *ngIf="property.property_rules.max_occupants">
+            <span class="rule-icon-lucide neutral">
+              <lucide-icon [img]="Users"></lucide-icon>
+            </span>
+            <span class="rule-text"
+              >Ocupantes máximos: {{ property.property_rules.max_occupants }}</span
+            >
+          </div>
+          <div class="rule-item" *ngIf="property.property_rules.min_lease_months">
+            <span class="rule-icon-lucide neutral">
+              <lucide-icon [img]="Calendar"></lucide-icon>
+            </span>
+            <span class="rule-text"
+              >Contrato mínimo: {{ property.property_rules.min_lease_months }}
+              {{ 'common.months' | transloco }}</span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Included Items / Services -->
+      <div
+        class="section-card"
+        *ngIf="property.included_items && property.included_items.length > 0"
+      >
+        <h2 class="section-title">Servicios Incluidos</h2>
+        <div class="amenities-grid">
+          <div class="amenity-item" *ngFor="let item of property.included_items">
+            <span class="amenity-icon">✓</span>
+            {{ item }}
           </div>
         </div>
       </div>

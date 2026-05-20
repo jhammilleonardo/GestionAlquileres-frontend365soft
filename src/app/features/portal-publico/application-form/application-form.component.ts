@@ -14,16 +14,19 @@ import {
 } from '../../../core/models/application.model';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
+import { LucideAngularModule, AlertTriangle, CheckCircle2 } from 'lucide-angular';
 
 @Component({
   selector: 'app-application-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslocoModule],
+  imports: [CommonModule, FormsModule, TranslocoModule, LucideAngularModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './application-form.component.html',
   styleUrls: ['./application-form.component.css'],
 })
 export class ApplicationFormComponent implements OnInit {
+  readonly AlertTriangle = AlertTriangle;
+  readonly CheckCircle2 = CheckCircle2;
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private applicationService = inject(ApplicationService);

@@ -500,8 +500,8 @@ export class ContractCreateComponent implements OnInit {
 
     // Cargar propiedades disponibles
     this.propertyService.getFilteredProperties({ status: 'DISPONIBLE' }).subscribe({
-      next: (properties) => {
-        this.availableProperties.set(properties);
+      next: (result) => {
+        this.availableProperties.set(result.items);
         this.isLoadingProperties.set(false);
       },
       error: (error) => {

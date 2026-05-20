@@ -1,0 +1,52 @@
+<div class="map-view-container">
+  <!-- Header -->
+  <header class="map-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h1 class="map-title">Mapa de Propiedades</h1>
+        <p class="map-subtitle">Encuentra tu próximo hogar en el mapa</p>
+      </div>
+      <div class="actions-section">
+        <a
+          [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades']"
+          class="btn-list-view"
+        >
+          <lucide-icon [img]="List" class="btn-icon"></lucide-icon>
+          Ver en Lista
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Map Area -->
+  <main class="map-main">
+    <div id="map-container" class="map-container">
+      <div *ngIf="isLoading" class="map-loader">
+        <div class="spinner"></div>
+        <p>Cargando...</p>
+      </div>
+    </div>
+
+    <!-- Properties Overlay (Optional, for quick preview) -->
+    <aside class="properties-sidebar" *ngIf="!isLoading && properties.length > 0">
+      <div class="sidebar-header">
+        <h2>{{ properties.length }} Resultados</h2>
+      </div>
+      <div class="sidebar-list">
+        <div
+          *ngFor="let prop of properties"
+          class="sidebar-item"
+          [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades', prop.id]"
+        >
+          <div class="item-img-container">
+            <img [src]="propertyService.getPropertyImageUrl(prop)" [alt]="prop.title" />
+          </div>
+          <div class="item-info">
+            <h4 class="item-title">{{ prop.title }}</h4>
+            <p class="item-price">{{ propertyService.getPropertyPrice(prop) }}</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
