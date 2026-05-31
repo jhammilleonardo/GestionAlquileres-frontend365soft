@@ -2,7 +2,7 @@
   <!-- ── HEADER ── -->
   <div class="rd-header">
     <div class="rd-header-left">
-      <button mat-icon-button (click)="close()" class="rd-back-btn">
+      <button type="button" (click)="close()" class="rd-back-btn">
         <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
       </button>
       <div>
@@ -14,24 +14,20 @@
       </div>
     </div>
     <div class="rd-header-actions">
-      <button mat-stroked-button color="warn" (click)="delete()" class="btn-delete">
+      <app-button appearance="destructive" size="s" (clicked)="delete()" class="btn-delete">
         <lucide-icon [img]="X" [size]="15"></lucide-icon>
         {{ 'common.delete' | transloco }}
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="save()"
-        [disabled]="isUpdating()"
+      </app-button>
+      <app-button
+        appearance="primary"
+        size="s"
+        (clicked)="save()"
+        [loading]="isUpdating()"
         class="btn-save"
       >
-        @if (isUpdating()) {
-          <mat-spinner diameter="14"></mat-spinner>
-        } @else {
-          <lucide-icon [img]="Settings" [size]="15"></lucide-icon>
-        }
+        <lucide-icon [img]="Settings" [size]="15"></lucide-icon>
         {{ 'common.saveChanges' | transloco }}
-      </button>
+      </app-button>
     </div>
   </div>
 
@@ -96,7 +92,7 @@
           </span>
         </div>
 
-        <mat-divider></mat-divider>
+        <div class="rd-divider"></div>
 
         <!-- Description -->
         <div class="cc-section">
@@ -115,7 +111,7 @@
           <div class="cc-desc">{{ request.description }}</div>
         </div>
 
-        <mat-divider></mat-divider>
+        <div class="rd-divider"></div>
 
         <!-- Information -->
         <div class="cc-section">
@@ -191,10 +187,35 @@
                 </div>
               </div>
             }
+            @if (request.vendor_id) {
+              <div class="meta-card">
+                <div class="meta-icon assigned">
+                  <lucide-icon [img]="Wrench" [size]="15"></lucide-icon>
+                </div>
+                <div class="meta-text">
+                  <span class="meta-lbl">{{ 'maintenance.externalVendor' | transloco }}</span>
+                  <span class="meta-val">
+                    {{ request.vendor_name || getVendorName(request.vendor_id) }}
+                    @if (request.vendor_rating) {
+                      <span class="vendor-rated">
+                        @for (s of stars; track s) {
+                          <lucide-icon
+                            [img]="Star"
+                            [size]="12"
+                            class="star"
+                            [class.filled]="s <= request.vendor_rating"
+                          />
+                        }
+                      </span>
+                    }
+                  </span>
+                </div>
+              </div>
+            }
           </div>
         </div>
 
-        <mat-divider></mat-divider>
+        <div class="rd-divider"></div>
 
         <!-- Management -->
         <div class="cc-section">
@@ -205,44 +226,47 @@
             <span class="cc-label">{{ 'maintenance.management' | transloco }}</span>
           </div>
           <div class="mgmt-grid">
-            <mat-form-field appearance="outline" class="mf">
-              <mat-label>{{ 'common.status' | transloco }}</mat-label>
-              <mat-select [(ngModel)]="request.status" (ngModelChange)="updateStatus($event)">
-                @for (s of getStatusValues(); track s) {
-                  <mat-option [value]="s">{{ 'maintenance.status.' + s | transloco }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="mf">
-              <mat-label>{{ 'maintenance.priorityLabel' | transloco }}</mat-label>
-              <mat-select [(ngModel)]="request.priority" (ngModelChange)="updatePriority($event)">
-                @for (p of getPriorityValues(); track p) {
-                  <mat-option [value]="p">{{ 'maintenance.priority.' + p | transloco }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="mf">
-              <mat-label>{{ 'maintenance.assignTo' | transloco }}</mat-label>
-              <mat-select
-                [value]="request.assigned_to"
-                (selectionChange)="onStaffAssignment($event.value)"
-              >
-                <mat-option [value]="null">{{ 'maintenance.unassigned' | transloco }}</mat-option>
-                @for (staff of staffMembers; track staff.id) {
-                  <mat-option [value]="staff.id">{{ staff.name }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="mf">
-              <mat-label>{{ 'maintenance.dueDate' | transloco }}</mat-label>
-              <input matInput type="date" [(ngModel)]="dueDateString" />
-            </mat-form-field>
+            <app-select
+              class="mf"
+              [label]="'common.status' | transloco"
+              [options]="statusOptions"
+              [(ngModel)]="request.status"
+              (valueChanged)="updateStatus($event!)"
+            />
+            <app-select
+              class="mf"
+              [label]="'maintenance.priorityLabel' | transloco"
+              [options]="priorityOptions"
+              [(ngModel)]="request.priority"
+              (valueChanged)="updatePriority($event!)"
+            />
+            <app-select
+              class="mf"
+              [label]="'maintenance.assignTo' | transloco"
+              [placeholder]="'maintenance.unassigned' | transloco"
+              [options]="staffOptions"
+              [ngModel]="request.assigned_to"
+              (valueChanged)="onStaffAssignment($event)"
+            />
+            <app-select
+              class="mf"
+              [label]="'maintenance.assignVendor' | transloco"
+              [placeholder]="'maintenance.selectVendor' | transloco"
+              [options]="vendorOptions()"
+              [ngModel]="request.vendor_id"
+              (valueChanged)="onVendorAssignment($event)"
+            />
+            <app-date-picker
+              class="mf"
+              [label]="'maintenance.dueDate' | transloco"
+              [(ngModel)]="dueDateString"
+            />
           </div>
         </div>
 
         <!-- Access -->
         @if (request.request_type === 'MAINTENANCE') {
-          <mat-divider></mat-divider>
+          <div class="rd-divider"></div>
           <div class="cc-section last">
             <div class="section-header">
               <div class="section-icon-wrap access-icon">
@@ -291,7 +315,7 @@
         <div class="conv-messages" #msgContainer (scroll)="onMessagesScroll($event)">
           @if (isLoadingMessages()) {
             <div class="conv-center">
-              <mat-spinner diameter="26"></mat-spinner>
+              <app-loading-state [label]="'common.loading' | transloco" />
             </div>
           } @else if (messages().length === 0) {
             <div class="conv-center empty">
@@ -450,12 +474,12 @@
 
         <div class="send-row">
           <div class="send-row-left">
-            <mat-checkbox [ngModel]="isInternalNote()" (ngModelChange)="isInternalNote.set($event)">
+            <app-checkbox [ngModel]="isInternalNote()" (ngModelChange)="isInternalNote.set($event)">
               <span class="check-lbl">
                 <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
                 {{ 'maintenance.staffOnly' | transloco }}
               </span>
-            </mat-checkbox>
+            </app-checkbox>
             <button
               class="attach-btn"
               type="button"
@@ -469,20 +493,65 @@
               }
             </button>
           </div>
-          <button
+          <app-button
+            appearance="primary"
+            size="s"
             class="send-btn"
-            (click)="addMessage()"
+            (clicked)="addMessage()"
             [disabled]="!newMessage() || isSendingMessage()"
+            [loading]="isSendingMessage()"
           >
-            @if (isSendingMessage()) {
-              <mat-spinner diameter="14"></mat-spinner>
-            } @else {
-              <lucide-icon [img]="Send" [size]="14"></lucide-icon>
-            }
+            <lucide-icon [img]="Send" [size]="14"></lucide-icon>
             {{ 'common.send' | transloco }}
-          </button>
+          </app-button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Calificación del proveedor al cerrar la orden -->
+<app-dialog
+  [open]="ratingDialogOpen()"
+  [title]="'maintenance.rateVendorTitle' | transloco"
+  (closed)="closeRatingDialog()"
+>
+  <div class="rating-dialog">
+    <p class="rating-intro">
+      {{ 'maintenance.rateVendorIntro' | transloco: { name: request.vendor_name || '' } }}
+    </p>
+    <div
+      class="rating-stars"
+      role="radiogroup"
+      [attr.aria-label]="'maintenance.rating' | transloco"
+    >
+      @for (s of stars; track s) {
+        <button
+          type="button"
+          class="rating-star-btn"
+          [class.filled]="s <= ratingValue()"
+          [attr.aria-label]="s + ''"
+          (click)="setRating(s)"
+        >
+          <lucide-icon [img]="Star" [size]="28" />
+        </button>
+      }
+    </div>
+    <textarea
+      class="rating-comment"
+      rows="3"
+      [placeholder]="'maintenance.ratingCommentPlaceholder' | transloco"
+      [value]="ratingComment()"
+      (input)="ratingComment.set($any($event.target).value)"
+    ></textarea>
+  </div>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeRatingDialog()">
+      {{ 'common.skip' | transloco }}
+    </app-button>
+    <app-button [disabled]="ratingSaving() || ratingValue() < 1" (clicked)="submitRating()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

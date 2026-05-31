@@ -4,34 +4,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-}
-
-/* ─── Header ──────────────────────────────────────────────── */
-.page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem 0.75rem;
-  flex-shrink: 0;
-  gap: 1rem;
-
-  @media (max-width: 640px) {
-    padding: 1rem;
-    flex-wrap: wrap;
-  }
-}
-
-.header-title {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-
-  h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-    color: var(--mat-sys-on-surface);
-  }
+  padding: var(--app-space-6);
 }
 
 .header-actions {
@@ -53,11 +26,11 @@
   flex: 1;
   overflow-y: auto;
   min-width: 0;
-  padding: 0 1.5rem 1.5rem;
+  padding: 0 0 1.5rem;
   transition: margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   @media (max-width: 640px) {
-    padding: 0 1rem 1rem;
+    padding: 0 0 1rem;
   }
 }
 
@@ -76,7 +49,7 @@
   top: 64px;
   bottom: 0;
   width: 360px;
-  border-left: 1px solid var(--mat-sys-outline-variant);
+  border-left: 1px solid var(--app-color-border);
   z-index: 100;
   overflow: hidden;
 
@@ -99,34 +72,45 @@
   }
 }
 
-/* ─── States ──────────────────────────────────────────────── */
-.loading-state,
-.empty-state,
-.error-state {
+.state-shell {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
   padding: 3rem 1rem;
-  color: var(--mat-sys-on-surface-variant);
-  text-align: center;
-}
-
-.empty-icon {
-  opacity: 0.3;
 }
 
 /* ─── Table ───────────────────────────────────────────────── */
 .table-container {
   overflow-x: auto;
-  border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 12px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
 }
 
 .employees-table {
   width: 100%;
   min-width: 400px;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid var(--app-color-border);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    background: var(--app-color-surface-muted);
+    color: var(--app-color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
 }
 
 .col-avatar {
@@ -143,8 +127,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
+  background: var(--app-color-primary-soft);
+  color: var(--app-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -155,12 +139,12 @@
 .cell-name {
   font-weight: 500;
   font-size: 0.875rem;
-  color: var(--mat-sys-on-surface);
+  color: var(--app-color-text);
 }
 
 .cell-sub {
   font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   margin-top: 0.1rem;
 }
 
@@ -180,8 +164,8 @@
   }
 
   &.inactive {
-    background: var(--mat-sys-error-container);
-    color: var(--mat-sys-on-error-container);
+    background: color-mix(in srgb, var(--app-color-danger) 12%, transparent);
+    color: var(--app-color-danger);
   }
 }
 
@@ -190,20 +174,35 @@
   transition: background 0.15s ease;
 
   &:hover {
-    background: var(--mat-sys-surface-container-low);
+    background: var(--app-color-surface-muted);
   }
 
   &.row-selected {
-    background: var(--mat-sys-primary-container);
+    background: var(--app-color-primary-soft);
 
     &:hover {
-      background: var(--mat-sys-primary-container);
+      background: var(--app-color-primary-soft);
     }
   }
 }
 
-button.selected {
-  color: var(--mat-sys-primary);
+.icon-button {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+
+  &:hover,
+  &.selected {
+    background: var(--app-color-primary-soft);
+    color: var(--app-color-primary);
+  }
 }
 
 /* ─── Responsive visibility ───────────────────────────────── */

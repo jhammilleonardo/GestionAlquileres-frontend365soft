@@ -1,0 +1,72 @@
+:host {
+  display: block;
+}
+
+.payment-table {
+  width: 100%;
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--app-color-border, #dbe3ef);
+  padding: 0.8rem 0.9rem;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+th {
+  background: var(--app-color-surface-muted, #f8fafc);
+  color: var(--app-color-text-muted, #64748b);
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+td {
+  color: var(--app-color-text, #0f172a);
+  font-size: 0.875rem;
+}
+
+tbody tr {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: var(--app-color-primary-soft, #eff6ff);
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--app-color-primary, #2563eb);
+  cursor: pointer;
+}
+
+.payment-table__select {
+  width: 42px;
+  text-align: center;
+}
+
+.payment-table__amount {
+  text-align: right;
+}
+
+.payment-table__actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  width: 100%;
+}

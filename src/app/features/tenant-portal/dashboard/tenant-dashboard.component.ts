@@ -1,10 +1,5 @@
-import { Component, inject, OnInit, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import {
   LucideAngularModule,
   Wrench,
@@ -22,32 +17,34 @@ import {
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { TenantMaintenanceService } from '../../../core/services/tenant/tenant-maintenance.service';
 import { TenantPaymentService } from '../../../core/services/tenant/tenant-payment.service';
-import { TenantMessageService } from '../../../core/services/tenant/tenant-message.service';
+import { InternalMessageService } from '../../../core/services/internal-message.service';
 import { TenantDocumentService } from '../../../core/services/tenant/tenant-document.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
   MaintenanceStatusLabels,
   MaintenancePriorityLabels,
+  MaintenanceStatus,
 } from '../../../core/models/maintenance-request.model';
-import { PaymentStatusLabels } from '../../../core/models/payment.model';
+import { PaymentStatus, PaymentStatusLabels } from '../../../core/models/payment.model';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
+import {
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../../shared/ui/status-badge/status-badge.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-dashboard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
-    MatCardModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
     TenantCurrencyPipe,
+    AppStatusBadgeComponent,
   ],
   template: `
     <div class="dashboard-container">
@@ -61,7 +58,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
       <!-- Property Card -->
       @if (authService.currentUser()?.contract) {
-        <mat-card class="property-card">
+        <section class="property-card">
           <div class="property-header">
             <lucide-icon [img]="Home" [size]="24"></lucide-icon>
             <span>{{ 'public.tenantDashboard.myProperty' | transloco }}</span>
@@ -81,7 +78,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
               </span>
             </div>
           </div>
-        </mat-card>
+        </section>
       }
 
       <!-- Stats Grid -->
@@ -130,7 +127,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
               <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
             </div>
             <div class="stat-content">
-              <div class="stat-value">{{ messageService.unreadCount() }}</div>
+              <div class="stat-value">{{ messageService.unread() }}</div>
               <div class="stat-label">
                 {{ 'public.tenantDashboard.unreadMessages' | transloco }}
               </div>
@@ -152,7 +149,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
       <div class="dashboard-grid">
         <!-- Recent Maintenance Requests -->
-        <mat-card class="recent-requests">
+        <section class="recent-requests">
           <div class="card-header">
             <h3>{{ 'public.tenantDashboard.recentRequests' | transloco }}</h3>
             <a [routerLink]="mantenimientoUrl()" class="view-all">
@@ -185,18 +182,19 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
                     <span class="title">{{ request.title }}</span>
                   </div>
                   <div class="request-status">
-                    <span class="status-badge" [class]="'status-' + request.status.toLowerCase()">
-                      {{ statusLabels[request.status] }}
-                    </span>
+                    <app-status-badge
+                      [label]="statusLabels[request.status]"
+                      [tone]="getMaintenanceStatusTone(request.status)"
+                    />
                   </div>
                 </a>
               }
             </div>
           }
-        </mat-card>
+        </section>
 
         <!-- Recent Payments -->
-        <mat-card class="recent-payments">
+        <section class="recent-payments">
           <div class="card-header">
             <h3>{{ 'public.tenantDashboard.recentPayments' | transloco }}</h3>
             <a [routerLink]="pagosUrl()" class="view-all">
@@ -227,21 +225,15 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
                     <span class="date">{{ payment.payment_date | tenantDate }}</span>
                     <span class="amount">{{ payment.amount | tenantCurrency }}</span>
                   </div>
-                  <mat-chip-set>
-                    <mat-chip
-                      [style.background]="getPaymentChipBg(payment.status)"
-                      [style.color]="getPaymentChipColor(payment.status)"
-                      [style.font-weight]="'700'"
-                      [style.font-size]="'11px'"
-                    >
-                      {{ paymentStatusLabels[payment.status] || payment.status }}
-                    </mat-chip>
-                  </mat-chip-set>
+                  <app-status-badge
+                    [label]="paymentStatusLabels[payment.status] || payment.status"
+                    [tone]="getPaymentStatusTone(payment.status)"
+                  />
                 </div>
               }
             </div>
           }
-        </mat-card>
+        </section>
       </div>
 
       <!-- Quick Actions -->
@@ -287,12 +279,12 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .welcome-content h1 {
         font-size: 1.75rem;
         font-weight: 700;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         margin: 0 0 4px;
       }
 
       .welcome-content p {
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         margin: 0;
       }
 
@@ -317,20 +309,20 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
       .alert-content h3 {
         margin: 0 0 4px;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         font-size: 1rem;
       }
 
       .alert-content p {
         margin: 0;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
       }
 
       .property-card {
         margin-bottom: 24px;
         padding: 20px;
-        background: var(--mat-sys-primary);
-        color: var(--mat-sys-on-primary);
+        background: var(--app-color-primary);
+        color: #fff;
       }
 
       .property-header {
@@ -462,7 +454,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .card-header h3 {
         font-size: 1.1rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         margin: 0;
       }
 
@@ -470,7 +462,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
         display: flex;
         align-items: center;
         gap: 4px;
-        color: var(--mat-sys-primary);
+        color: var(--app-color-primary);
         text-decoration: none;
         font-size: 14px;
         font-weight: 500;
@@ -485,7 +477,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .empty-state {
         text-align: center;
         padding: 40px;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
       }
 
       .empty-state lucide-icon {
@@ -503,7 +495,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
         justify-content: space-between;
         align-items: center;
         padding: 12px 0;
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        border-bottom: 1px solid var(--app-color-border);
         text-decoration: none;
         transition: background 0.2s;
       }
@@ -513,7 +505,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       }
 
       .request-item:hover {
-        background: var(--mat-sys-surface-container-low);
+        background: var(--app-color-surface-muted);
         margin: 0 -20px;
         padding: 12px 20px;
       }
@@ -527,42 +519,12 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .ticket {
         font-size: 12px;
         font-family: monospace;
-        color: var(--mat-sys-primary);
+        color: var(--app-color-primary);
       }
 
       .title {
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         font-weight: 500;
-      }
-
-      .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 12px;
-        border-radius: 9999px;
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .status-badge.status-new {
-        background: #dbeafe;
-        color: #1e40af;
-      }
-      .status-badge.status-in_progress {
-        background: #bfdbfe;
-        color: #1d4ed8;
-      }
-      .status-badge.status-completed {
-        background: #1d4ed8;
-        color: #fff;
-      }
-      .status-badge.status-deferred {
-        background: #e0e7ff;
-        color: #3730a3;
-      }
-      .status-badge.status-closed {
-        background: #f1f5f9;
-        color: #475569;
       }
 
       .payments-list {
@@ -575,7 +537,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
         justify-content: space-between;
         align-items: center;
         padding: 12px 0;
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        border-bottom: 1px solid var(--app-color-border);
       }
 
       .payment-item:last-child {
@@ -590,11 +552,11 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 
       .payment-info .date {
         font-size: 12px;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
       }
 
       .payment-info .amount {
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         font-weight: 600;
         font-size: 15px;
       }
@@ -602,7 +564,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .quick-actions h3 {
         font-size: 1.1rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         margin: 0 0 16px;
       }
 
@@ -618,17 +580,17 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
         align-items: center;
         gap: 12px;
         padding: 24px;
-        background: var(--mat-sys-surface);
+        background: var(--app-color-surface);
         border-radius: 12px;
-        border: 1px solid var(--mat-sys-outline-variant);
+        border: 1px solid var(--app-color-border);
         text-decoration: none;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         transition: all 0.2s;
       }
 
       .action-card:hover {
-        border-color: var(--mat-sys-primary);
-        color: var(--mat-sys-primary);
+        border-color: var(--app-color-primary);
+        color: var(--app-color-primary);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
@@ -689,8 +651,8 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .skeleton-card {
         padding: 20px;
         border-radius: 12px;
-        background: var(--mat-sys-surface);
-        border: 1px solid var(--mat-sys-outline-variant);
+        background: var(--app-color-surface);
+        border: 1px solid var(--app-color-border);
       }
 
       .skeleton-line {
@@ -722,7 +684,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
       .skeleton-request-item,
       .skeleton-payment-item {
         padding: 12px 0;
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        border-bottom: 1px solid var(--app-color-border);
       }
 
       .skeleton-request-item:last-child,
@@ -816,7 +778,7 @@ import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
     `,
   ],
 })
-export class TenantDashboardComponent implements OnInit {
+export class TenantDashboardComponent {
   readonly Wrench = Wrench;
   readonly CheckCircle2 = CheckCircle2;
   readonly Clock = Clock;
@@ -832,7 +794,7 @@ export class TenantDashboardComponent implements OnInit {
   authService = inject(TenantAuthService);
   maintenanceService = inject(TenantMaintenanceService);
   paymentService = inject(TenantPaymentService);
-  messageService = inject(TenantMessageService);
+  messageService = inject(InternalMessageService);
   documentService = inject(TenantDocumentService);
   private slugService = inject(SlugService);
 
@@ -852,42 +814,39 @@ export class TenantDashboardComponent implements OnInit {
     return this.slugService.buildUrl(`/portal/mantenimiento/${requestId}`);
   }
 
-  getPaymentChipBg(status: string): string {
-    const map: Record<string, string> = {
-      PENDING: '#fef3c7',
-      PROCESSING: '#dbeafe',
-      APPROVED: '#d1fae5',
-      REJECTED: '#fee2e2',
-      FAILED: '#fee2e2',
-      REFUNDED: '#e0e7ff',
-      REVERSED: '#f1f5f9',
-      DISPUTED: '#fde68a',
+  getMaintenanceStatusTone(status: MaintenanceStatus): AppStatusTone {
+    const tones: Record<MaintenanceStatus, AppStatusTone> = {
+      [MaintenanceStatus.NEW]: 'info',
+      [MaintenanceStatus.IN_PROGRESS]: 'warning',
+      [MaintenanceStatus.COMPLETED]: 'success',
+      [MaintenanceStatus.DEFERRED]: 'neutral',
+      [MaintenanceStatus.CLOSED]: 'neutral',
     };
-    return map[status] ?? '#f1f5f9';
+
+    return tones[status] ?? 'neutral';
   }
 
-  getPaymentChipColor(status: string): string {
-    const map: Record<string, string> = {
-      PENDING: '#92400e',
-      PROCESSING: '#1e40af',
-      APPROVED: '#065f46',
-      REJECTED: '#991b1b',
-      FAILED: '#991b1b',
-      REFUNDED: '#3730a3',
-      REVERSED: '#475569',
-      DISPUTED: '#78350f',
+  getPaymentStatusTone(status: PaymentStatus): AppStatusTone {
+    const tones: Record<PaymentStatus, AppStatusTone> = {
+      [PaymentStatus.PENDING]: 'warning',
+      [PaymentStatus.PROCESSING]: 'info',
+      [PaymentStatus.APPROVED]: 'success',
+      [PaymentStatus.REJECTED]: 'danger',
+      [PaymentStatus.FAILED]: 'danger',
+      [PaymentStatus.REFUNDED]: 'info',
+      [PaymentStatus.REVERSED]: 'neutral',
+      [PaymentStatus.DISPUTED]: 'warning',
     };
-    return map[status] ?? '#475569';
+
+    return tones[status] ?? 'neutral';
   }
 
-  ngOnInit(): void {
+  constructor() {
     this.maintenanceService.loadMyRequests();
     this.maintenanceService.loadStats();
     this.paymentService.loadPayments();
     this.paymentService.loadStats();
-    // TODO: Implementar endpoints de mensajes y documentos en el backend
-    // this.messageService.loadMessages();
-    // this.documentService.loadDocuments();
+    this.messageService.refreshUnread().subscribe({ error: () => undefined });
   }
 
   getFirstName(): string {

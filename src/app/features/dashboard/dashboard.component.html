@@ -1,15 +1,171 @@
 <div class="dashboard">
   @if (accessDenied()) {
     <div class="access-denied-banner" role="alert">
-      <span>⚠️</span>
+      <lucide-icon [img]="AlertTriangle" [size]="18" />
       <span>{{ 'dashboard.accessDenied' | transloco }}</span>
     </div>
   }
 
-  <h1>{{ 'dashboard.title' | transloco }}</h1>
-  <p>{{ 'dashboard.welcome' | transloco }}</p>
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'dashboard.title' | transloco"
+    [description]="'dashboard.welcome' | transloco"
+  >
+    <div actions class="header-actions">
+      <app-button appearance="secondary" [disabled]="isLoading()" (clicked)="refresh()">
+        <lucide-icon [img]="RefreshCw" [size]="16" />
+        {{ 'dashboard.refresh' | transloco }}
+      </app-button>
+      <app-button (clicked)="goToPublicProperties()">
+        {{ 'dashboard.viewPublicPortal' | transloco }}
+        <lucide-icon [img]="ExternalLink" [size]="16" />
+      </app-button>
+    </div>
+  </app-page-header>
 
-  <button class="btn-public-view" (click)="goToPublicProperties()">
-    {{ 'dashboard.viewPublicPortal' | transloco }}
-  </button>
+  @if (isLoading()) {
+    <app-loading-state [label]="'dashboard.loading' | transloco" />
+  } @else {
+    <div class="kpi-grid">
+      <!-- Ocupación -->
+      <article
+        class="kpi-card"
+        role="button"
+        tabindex="0"
+        (click)="goToOccupancy()"
+        (keyup.enter)="goToOccupancy()"
+      >
+        <div class="kpi-icon-wrap occupancy">
+          <lucide-icon [img]="TrendingUp" [size]="20" />
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ kpis().occupancyRateValue ?? 0 | percent: '1.0-0' }}</span>
+          <span class="kpi-label">{{ 'dashboard.occupancyRate' | transloco }}</span>
+          <app-status-badge
+            [label]="
+              (kpis().occupiedUnits ?? 0) +
+              ' / ' +
+              (kpis().totalUnits ?? 0) +
+              ' ' +
+              ('dashboard.units' | transloco)
+            "
+            [tone]="getOccupancyTone()"
+          />
+        </div>
+      </article>
+
+      <!-- Ingresos del mes -->
+      <article
+        class="kpi-card"
+        role="button"
+        tabindex="0"
+        (click)="goToIncome()"
+        (keyup.enter)="goToIncome()"
+      >
+        <div class="kpi-icon-wrap income">
+          <lucide-icon [img]="BadgeDollarSign" [size]="20" />
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ kpis().monthlyIncome ?? 0 | number: '1.0-0' }}</span>
+          <span class="kpi-label">{{ 'dashboard.monthlyIncome' | transloco }}</span>
+          @if (incomeTrend(); as trend) {
+            <span class="kpi-trend" [class.up]="trend.up" [class.down]="!trend.up">
+              <lucide-icon [img]="trend.up ? ArrowUpRight : ArrowDownRight" [size]="14" />
+              {{ trend.pct | number: '1.0-1' }}% {{ 'dashboard.vsPrevMonth' | transloco }}
+            </span>
+          }
+        </div>
+      </article>
+
+      <!-- Pagos pendientes de aprobación -->
+      <article
+        class="kpi-card"
+        role="button"
+        tabindex="0"
+        (click)="goToPendingPayments()"
+        (keyup.enter)="goToPendingPayments()"
+      >
+        <div class="kpi-icon-wrap pending">
+          <lucide-icon [img]="ClipboardList" [size]="20" />
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ kpis().pendingPaymentsCount ?? 0 }}</span>
+          <span class="kpi-label">{{ 'dashboard.pendingPayments' | transloco }}</span>
+          @if (hasDelinquency()) {
+            <app-status-badge
+              [label]="(kpis().delinquentCount ?? 0) + ' ' + ('dashboard.delinquent' | transloco)"
+              tone="danger"
+            />
+          } @else if ((kpis().pendingPaymentsCount ?? 0) > 0) {
+            <app-status-badge
+              [label]="'dashboard.pendingReview' | transloco"
+              [tone]="getPendingPaymentsTone()"
+            />
+          }
+        </div>
+      </article>
+
+      <!-- Mantenimiento activo -->
+      <article
+        class="kpi-card"
+        role="button"
+        tabindex="0"
+        (click)="goToMaintenance()"
+        (keyup.enter)="goToMaintenance()"
+      >
+        <div class="kpi-icon-wrap maintenance">
+          <lucide-icon [img]="Wrench" [size]="20" />
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ kpis().activeMaintenanceCount ?? 0 }}</span>
+          <span class="kpi-label">{{ 'dashboard.activeMaintenance' | transloco }}</span>
+          <app-status-badge
+            [label]="
+              (kpis().activeMaintenanceCount ?? 0) === 0
+                ? ('dashboard.upToDate' | transloco)
+                : ('dashboard.withRequests' | transloco)
+            "
+            [tone]="getMaintenanceTone()"
+          />
+        </div>
+      </article>
+
+      <!-- Contratos por vencer -->
+      <article
+        class="kpi-card"
+        role="button"
+        tabindex="0"
+        (click)="goToExpiringContracts()"
+        (keyup.enter)="goToExpiringContracts()"
+      >
+        <div class="kpi-icon-wrap expiring">
+          <lucide-icon [img]="AlertTriangle" [size]="20" />
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ kpis().expiringContracts ?? 0 }}</span>
+          <span class="kpi-label">{{ 'dashboard.expiringContracts' | transloco }}</span>
+          @if ((kpis().expiringContracts ?? 0) > 0) {
+            <app-status-badge [label]="'dashboard.next30Days' | transloco" tone="warning" />
+          }
+        </div>
+      </article>
+
+      <!-- Propiedades disponibles -->
+      <article
+        class="kpi-card"
+        role="button"
+        tabindex="0"
+        (click)="goToAvailableProperties()"
+        (keyup.enter)="goToAvailableProperties()"
+      >
+        <div class="kpi-icon-wrap available">
+          <lucide-icon [img]="Building2" [size]="20" />
+        </div>
+        <div class="kpi-body">
+          <span class="kpi-value">{{ kpis().availableUnits ?? 0 }}</span>
+          <span class="kpi-label">{{ 'dashboard.availableProperties' | transloco }}</span>
+        </div>
+      </article>
+    </div>
+  }
 </div>

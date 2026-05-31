@@ -1,244 +1,261 @@
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatStepperModule } from '@angular/material/stepper';
-import { StepperSelectionEvent } from '@angular/cdk/stepper';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { LucideAngularModule, ArrowLeft, CheckCircle2 } from 'lucide-angular';
-import { FormBuilder, FormGroup, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
-import { merge, debounceTime } from 'rxjs';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
-import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
+import { debounceTime, merge } from 'rxjs';
 import { ApplicationService } from '../../../core/services/admin/application.service';
 import { PropertyService } from '../../../core/services/admin/property.service';
-import { SlugService } from '../../../core/services/slug.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { Property } from '../../../core/models/property.model';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
-// Subcomponentes (steps)
+import { CreateApplicationDto } from '../../../core/models/application.model';
+import {
+  AppButtonComponent,
+  AppLoadingStateComponent,
+  AppPageHeaderComponent,
+  AppStepperComponent,
+  ToastService,
+} from '../../../shared/ui';
 import { Step1PersonalInfoComponent } from './steps/step-1-personal-info.component';
 import { Step2EmploymentHistoryComponent } from './steps/step-2-employment-history.component';
 import { Step3PreviewSubmitComponent } from './steps/step-3-preview-submit.component';
 
+interface WizardDraft {
+  personalInfo?: Record<string, unknown>;
+  employmentHistory?: {
+    current_job?: Record<string, unknown>;
+    previous_job?: Record<string, unknown>;
+    rental_history?: RentalHistoryDraft[];
+  };
+}
+
+interface RentalHistoryDraft {
+  property_address?: string;
+  landlord_name?: string;
+  landlord_phone?: string;
+  monthly_rent?: number | string;
+  start_date?: string | Date;
+  end_date?: string | Date;
+  reason_for_leaving?: string;
+}
+
+interface PersonalReferenceDraft {
+  name?: string;
+  relationship?: string;
+  phone?: string;
+  email?: string;
+}
+
+interface ApplicationPayload {
+  property_id: number;
+  personal_data: {
+    full_name: string;
+    phone: string;
+    identity_document: string;
+    current_address: string;
+  };
+  employment_data: {
+    employer_name: string;
+    position: string;
+    monthly_income: number;
+    employment_duration: string;
+    employer_phone: string;
+  };
+  rental_history: Array<{
+    previous_address: string;
+    previous_landlord_name: string;
+    previous_landlord_phone: string;
+    previous_rent_amount: number;
+    reason_for_leaving: string;
+  }>;
+  references: Array<{
+    name: string;
+    relationship: string;
+    phone: string;
+    email?: string;
+  }>;
+}
+
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-application-wizard',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     ReactiveFormsModule,
-    MatButtonModule,
-    MatCardModule,
-    MatStepperModule,
-    MatProgressSpinnerModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppStepperComponent,
     Step1PersonalInfoComponent,
     Step2EmploymentHistoryComponent,
     Step3PreviewSubmitComponent,
   ],
   providers: [provideTranslocoScope('rentalApp')],
   template: `
-    <div class="application-wizard">
-      <!-- Header -->
-      <div class="page-header">
-        <button mat-button class="back-btn" (click)="goBack()">
-          <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-          <span>{{ 'rentalApp.back' | transloco }}</span>
-        </button>
+    <section class="application-wizard">
+      <app-button appearance="outline" size="s" (clicked)="goBack()">
+        <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+        {{ 'rentalApp.back' | transloco }}
+      </app-button>
 
-        <div class="header-content">
-          <div class="header-icon">
-            <lucide-icon [img]="CheckCircle2" [size]="28"></lucide-icon>
-          </div>
-          <div class="header-text">
-            <h1>{{ 'rentalApp.title' | transloco }}</h1>
-            @if (property()) {
-              <p class="subtitle">{{ property()!.title }}</p>
-            }
-          </div>
-        </div>
-      </div>
+      <app-page-header
+        class="wizard-header"
+        [eyebrow]="'tenantApplications.marketplace.title' | transloco"
+        [title]="'rentalApp.title' | transloco"
+        [description]="property()?.title || null"
+      />
 
-      <!-- Loading State -->
       @if (isLoadingProperty()) {
-        <div class="loading-state">
-          <mat-spinner diameter="48"></mat-spinner>
-          <p>{{ 'rentalApp.loading' | transloco }}</p>
+        <div class="state-box">
+          <app-loading-state [label]="'rentalApp.loading' | transloco" />
         </div>
+      } @else if (property()) {
+        <section class="wizard-panel">
+          <app-stepper [steps]="stepLabels()" [currentIndex]="currentStep()" />
+
+          @if (currentStep() === 0) {
+            <app-step-1-personal-info
+              [formGroup]="personalInfoForm"
+              (isValid)="personalInfoValid.set($event)"
+            />
+          } @else if (currentStep() === 1) {
+            <app-step-2-employment-history
+              [formGroup]="employmentHistoryForm"
+              (isValid)="employmentHistoryValid.set($event)"
+            />
+          } @else if (property(); as selectedProperty) {
+            <app-step-3-preview-submit
+              [property]="selectedProperty"
+              [personalInfo]="personalInfoForm.value"
+              [employmentHistory]="employmentHistoryForm.value"
+              [rentalHistory]="employmentHistoryForm.get('rental_history')?.value || []"
+              [isSubmitting]="isSubmitting()"
+              (submit)="submitApplication()"
+              (editStep)="goToStep($event)"
+            />
+          }
+
+          <footer class="wizard-actions">
+            <app-button
+              appearance="outline"
+              [disabled]="currentStep() === 0 || isSubmitting()"
+              (clicked)="previousStep()"
+            >
+              <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+              {{ 'rentalApp.previous' | transloco }}
+            </app-button>
+
+            @if (currentStep() < 2) {
+              <app-button appearance="primary" [disabled]="!canGoNext()" (clicked)="nextStep()">
+                {{ 'rentalApp.next' | transloco }}
+                <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+              </app-button>
+            } @else {
+              <app-button
+                appearance="primary"
+                [loading]="isSubmitting()"
+                [disabled]="isSubmitting()"
+                (clicked)="submitApplication()"
+              >
+                <lucide-icon [img]="CheckCircle2" [size]="18"></lucide-icon>
+                {{ 'rentalApp.submitBtn' | transloco }}
+              </app-button>
+            }
+          </footer>
+        </section>
       }
-
-      <!-- Wizard -->
-      @if (!isLoadingProperty() && property()) {
-        <mat-card class="wizard-card">
-          <mat-stepper
-            [linear]="true"
-            [selectedIndex]="currentStep()"
-            (selectionChange)="onStepChange($event)"
-            class="application-stepper"
-          >
-            <!-- Step 1: Información Personal -->
-            <mat-step [stepControl]="personalInfoForm">
-              <ng-template matStepLabel>{{ 'rentalApp.step1Label' | transloco }}</ng-template>
-              <app-step-1-personal-info
-                [formGroup]="personalInfoForm"
-                (isValid)="personalInfoValid.set($event)"
-              >
-              </app-step-1-personal-info>
-            </mat-step>
-
-            <!-- Step 2: Historial Laboral -->
-            <mat-step [stepControl]="employmentHistoryForm">
-              <ng-template matStepLabel>{{ 'rentalApp.step2Label' | transloco }}</ng-template>
-              <app-step-2-employment-history
-                [formGroup]="employmentHistoryForm"
-                (isValid)="employmentHistoryValid.set($event)"
-              >
-              </app-step-2-employment-history>
-            </mat-step>
-
-            <!-- Step 3: Previsualización y Envío -->
-            <mat-step>
-              <ng-template matStepLabel>{{ 'rentalApp.step3Label' | transloco }}</ng-template>
-              <app-step-3-preview-submit
-                [property]="property()!"
-                [personalInfo]="personalInfoForm.value"
-                [employmentHistory]="employmentHistoryForm.value"
-                [rentalHistory]="employmentHistoryForm.get('rental_history')?.value || []"
-                [isSubmitting]="isSubmitting()"
-                (submit)="submitApplication()"
-                (editStep)="goToStep($event)"
-              >
-              </app-step-3-preview-submit>
-            </mat-step>
-          </mat-stepper>
-        </mat-card>
-      }
-    </div>
+    </section>
   `,
-  styles: [
-    `
-      .application-wizard {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 24px;
+  styles: `
+    .application-wizard {
+      display: grid;
+      gap: var(--app-space-4);
+      max-inline-size: 980px;
+      margin-inline: auto;
+    }
+
+    .wizard-header {
+      margin-block-start: var(--app-space-2);
+    }
+
+    .state-box {
+      display: grid;
+      min-block-size: 20rem;
+      place-items: center;
+    }
+
+    .wizard-panel {
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      box-shadow: var(--app-shadow-sm);
+      padding: var(--app-space-5);
+    }
+
+    .wizard-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+      border-top: 1px solid var(--app-color-border);
+      margin-block-start: var(--app-space-5);
+      padding-block-start: var(--app-space-4);
+    }
+
+    @media (max-width: 640px) {
+      .wizard-panel {
+        padding: var(--app-space-4);
       }
 
-      .page-header {
-        margin-bottom: 32px;
+      .wizard-actions {
+        flex-direction: column-reverse;
       }
 
-      .back-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 16px;
-        color: var(--mat-sys-on-surface-variant);
-        font-weight: 500;
+      .wizard-actions app-button {
+        inline-size: 100%;
       }
-
-      .back-btn:hover {
-        background: var(--mat-sys-surface-container-low);
-      }
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .header-icon {
-        width: 56px;
-        height: 56px;
-        background: var(--mat-sys-primary-container);
-        color: var(--mat-sys-on-primary-container);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .header-text h1 {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--mat-sys-on-surface);
-      }
-
-      .subtitle {
-        margin: 4px 0 0;
-        font-size: 1rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .loading-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 64px 24px;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .wizard-card {
-        border: 1px solid var(--mat-sys-outline-variant);
-        overflow: hidden;
-      }
-
-      .application-stepper {
-        padding: 24px;
-      }
-
-      @media (max-width: 768px) {
-        .application-wizard {
-          padding: 16px;
-        }
-
-        .header-content {
-          flex-direction: column;
-          text-align: center;
-        }
-
-        .application-stepper {
-          padding: 16px;
-        }
-      }
-    `,
-  ],
+    }
+  `,
 })
 export class ApplicationWizardComponent implements OnInit {
-  readonly ArrowLeft = ArrowLeft;
-  readonly CheckCircle2 = CheckCircle2;
+  protected readonly ArrowLeft = ArrowLeft;
+  protected readonly ArrowRight = ArrowRight;
+  protected readonly CheckCircle2 = CheckCircle2;
 
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
-  private authService = inject(TenantAuthService);
-  private applicationService = inject(ApplicationService);
-  private propertyService = inject(PropertyService);
-  private slugService = inject(SlugService);
-  private intentionService = inject(ApplicationIntentionService);
-  private destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(TenantAuthService);
+  private readonly applicationService = inject(ApplicationService);
+  private readonly propertyService = inject(PropertyService);
+  private readonly slugService = inject(SlugService);
+  private readonly intentionService = inject(ApplicationIntentionService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
-  // Signals
-  currentStep = signal(0);
-  property = signal<Property | null>(null);
-  isLoadingProperty = signal(false);
-  isSubmitting = signal(false);
+  protected readonly currentStep = signal(0);
+  protected readonly property = signal<Property | null>(null);
+  protected readonly isLoadingProperty = signal(false);
+  protected readonly isSubmitting = signal(false);
+  protected readonly personalInfoValid = signal(false);
+  protected readonly employmentHistoryValid = signal(false);
 
-  // Step validation
-  personalInfoValid = signal(false);
-  employmentHistoryValid = signal(false);
+  protected personalInfoForm!: FormGroup;
+  protected employmentHistoryForm!: FormGroup;
 
-  // Forms
-  personalInfoForm!: FormGroup;
-  employmentHistoryForm!: FormGroup;
-
-  // Draft persistence
   private readonly DRAFT_PREFIX = 'wizard_draft_';
 
   private get draftKey(): string {
@@ -246,27 +263,61 @@ export class ApplicationWizardComponent implements OnInit {
     return `${this.DRAFT_PREFIX}${propertyId}`;
   }
 
+  protected stepLabels(): readonly string[] {
+    return [
+      this.translocoService.translate('rentalApp.step1Label'),
+      this.translocoService.translate('rentalApp.step2Label'),
+      this.translocoService.translate('rentalApp.step3Label'),
+    ];
+  }
+
   ngOnInit(): void {
     this.initializeForms();
     this.restoreDraft();
-    this.loadProperty(); // prefillUserData() runs here and overwrites readonly fields
+    this.loadProperty();
     this.setupAutosave();
   }
 
+  protected canGoNext(): boolean {
+    if (this.currentStep() === 0) return this.personalInfoForm.valid;
+    if (this.currentStep() === 1) return this.employmentHistoryForm.valid;
+    return false;
+  }
+
+  protected nextStep(): void {
+    if (!this.canGoNext()) {
+      if (this.currentStep() === 0) this.personalInfoForm.markAllAsTouched();
+      if (this.currentStep() === 1) this.employmentHistoryForm.markAllAsTouched();
+      return;
+    }
+
+    this.currentStep.update((step) => Math.min(2, step + 1));
+  }
+
+  protected previousStep(): void {
+    this.currentStep.update((step) => Math.max(0, step - 1));
+  }
+
+  protected goToStep(stepIndex: number): void {
+    this.currentStep.set(Math.max(0, Math.min(2, stepIndex)));
+  }
+
+  protected goBack(): void {
+    this.slugService.navigateTo(['portal', 'new-application']);
+  }
+
   private initializeForms(): void {
-    // Personal Info Form
     this.personalInfoForm = this.fb.group({
       full_name: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)]],
-      email: ['', [Validators.email]], // No requerido cuando está autenticado
+      email: ['', [Validators.email]],
       birth_date: ['', [Validators.required]],
       national_id: ['', [Validators.required, Validators.minLength(8)]],
-      current_address: [''], // Campo opcional para dirección actual
+      current_address: [''],
       marital_status: ['soltero', [Validators.required]],
       number_of_dependents: [0, [Validators.required, Validators.min(0)]],
     });
 
-    // Employment History Form
     this.employmentHistoryForm = this.fb.group({
       current_job: this.fb.group({
         company: ['', [Validators.required]],
@@ -301,14 +352,12 @@ export class ApplicationWizardComponent implements OnInit {
     this.isLoadingProperty.set(true);
 
     this.propertyService
-      .getPropertyById(+propertyId)
+      .getPropertyById(Number(propertyId))
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (property) => {
           this.property.set(property || null);
           this.isLoadingProperty.set(false);
-
-          // Pre-fill form with user data if available
           this.prefillUserData();
         },
         error: () => {
@@ -330,20 +379,6 @@ export class ApplicationWizardComponent implements OnInit {
     }
   }
 
-  onStepChange(event: StepperSelectionEvent): void {
-    this.currentStep.set(event.selectedIndex);
-  }
-
-  goToStep(stepIndex: number): void {
-    this.currentStep.set(stepIndex);
-  }
-
-  goBack(): void {
-    this.slugService.navigateTo(['portal', 'new-application']);
-  }
-
-  // ─── Draft persistence ───────────────────────────────────────────────────
-
   private setupAutosave(): void {
     merge(this.personalInfoForm.valueChanges, this.employmentHistoryForm.valueChanges)
       .pipe(debounceTime(400), takeUntilDestroyed(this.destroyRef))
@@ -351,7 +386,7 @@ export class ApplicationWizardComponent implements OnInit {
   }
 
   private saveDraft(): void {
-    const draft = {
+    const draft: WizardDraft = {
       personalInfo: this.personalInfoForm.getRawValue(),
       employmentHistory: this.employmentHistoryForm.getRawValue(),
     };
@@ -363,49 +398,34 @@ export class ApplicationWizardComponent implements OnInit {
     if (!saved) return;
 
     try {
-      const draft = JSON.parse(saved);
+      const draft = JSON.parse(saved) as WizardDraft;
 
       if (draft.personalInfo) {
-        const pi = draft.personalInfo;
         this.personalInfoForm.patchValue({
-          ...pi,
-          birth_date: pi.birth_date ? new Date(pi.birth_date) : null,
+          ...draft.personalInfo,
+          birth_date: this.toDateInput(draft.personalInfo['birth_date']),
         });
       }
 
       if (draft.employmentHistory) {
-        const emp = draft.employmentHistory;
+        const employment = draft.employmentHistory;
 
         this.employmentHistoryForm.patchValue({
           current_job: {
-            ...(emp.current_job || {}),
-            start_date: emp.current_job?.start_date ? new Date(emp.current_job.start_date) : null,
+            ...(employment.current_job || {}),
+            start_date: this.toDateInput(employment.current_job?.['start_date']),
           },
           previous_job: {
-            ...(emp.previous_job || {}),
-            end_date: emp.previous_job?.end_date ? new Date(emp.previous_job.end_date) : null,
+            ...(employment.previous_job || {}),
+            end_date: this.toDateInput(employment.previous_job?.['end_date']),
           },
         });
 
-        // Restore rental_history FormArray
-        if (emp.rental_history?.length) {
+        if (employment.rental_history?.length) {
           const rentalArray = this.employmentHistoryForm.get('rental_history') as FormArray;
           rentalArray.clear();
-          emp.rental_history.forEach((item: any) => {
-            rentalArray.push(
-              this.fb.group({
-                property_address: [item.property_address || '', Validators.required],
-                landlord_name: [item.landlord_name || '', Validators.required],
-                landlord_phone: [
-                  item.landlord_phone || '',
-                  [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)],
-                ],
-                monthly_rent: [item.monthly_rent || '', [Validators.required, Validators.min(0)]],
-                start_date: [item.start_date ? new Date(item.start_date) : '', Validators.required],
-                end_date: [item.end_date ? new Date(item.end_date) : ''],
-                reason_for_leaving: [item.reason_for_leaving || ''],
-              }),
-            );
+          employment.rental_history.forEach((item) => {
+            rentalArray.push(this.createRentalHistoryGroup(item));
           });
         }
       }
@@ -418,10 +438,9 @@ export class ApplicationWizardComponent implements OnInit {
     sessionStorage.removeItem(this.draftKey);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-
-  submitApplication(): void {
-    if (!this.property()) return;
+  protected submitApplication(): void {
+    const property = this.property();
+    if (!property) return;
 
     const currentUser = this.authService.currentUser();
     if (!currentUser) {
@@ -431,59 +450,44 @@ export class ApplicationWizardComponent implements OnInit {
 
     this.isSubmitting.set(true);
 
-    const personalInfo = this.personalInfoForm.value;
-    const employmentInfo = this.employmentHistoryForm.value;
+    const personalInfo = this.personalInfoForm.getRawValue();
+    const employmentInfo = this.employmentHistoryForm.getRawValue();
     const currentJob = employmentInfo.current_job;
     const rentalHistory = employmentInfo.rental_history || [];
-    const personalRefs = employmentInfo.personal_references || [];
+    const personalRefs = (employmentInfo.personal_references || []) as PersonalReferenceDraft[];
 
-    // Mapear referencias personales al formato del API
-    const personalReferences = personalRefs.map((ref: any) => ({
-      name: ref.name || '',
-      relationship: ref.relationship || '',
-      phone: ref.phone || '',
-      email: ref.email || undefined,
-    }));
-
-    // Datos en el formato que REALMENTE espera el backend
-    // NOTA: El backend usa una estructura diferente a la documentación
-    const applicationData: any = {
-      property_id: this.property()!.id,
-      // Datos personales - campos planos según el backend
+    const payload: ApplicationPayload = {
+      property_id: property.id,
       personal_data: {
         full_name: personalInfo.full_name || currentUser.name,
         phone: personalInfo.phone || currentUser.phone || '',
-        // NO enviamos email, birth_date, national_id, marital_status, number_of_dependents
-        // porque el backend dice que "should not exist" en personal_data.property
-        // El backend obtiene estos datos del token JWT
         identity_document: personalInfo.national_id || '',
         current_address: personalInfo.current_address || '',
       },
-      // Datos laborales - campos planos según el backend
       employment_data: {
         employer_name: currentJob?.company || '',
         position: currentJob?.position || '',
         monthly_income: Number(currentJob?.salary) || 0,
         employment_duration: currentJob?.start_date || '',
         employer_phone: currentJob?.supervisor_phone || '',
-        // NOTA: No enviamos current_job porque el backend dice "should not exist"
       },
-      // Historial de alquiler - mapeado a los nombres que espera el backend
-      rental_history: rentalHistory.map((history: any) => ({
+      rental_history: rentalHistory.map((history: RentalHistoryDraft) => ({
         previous_address: history.property_address || '',
         previous_landlord_name: history.landlord_name || '',
         previous_landlord_phone: history.landlord_phone || '',
         previous_rent_amount: Number(history.monthly_rent) || 0,
         reason_for_leaving: history.reason_for_leaving || '',
-        // NOTA: No enviamos property_address, landlord_name, etc.
-        // porque el backend dice "should not exist"
       })),
-      // Referencias - debe ser un array según el backend
-      references: personalReferences.length > 0 ? personalReferences : [],
+      references: personalRefs.map((reference) => ({
+        name: reference.name || '',
+        relationship: reference.relationship || '',
+        phone: reference.phone || '',
+        email: reference.email || undefined,
+      })),
     };
 
     this.applicationService
-      .createApplication(applicationData)
+      .createApplication(payload as unknown as CreateApplicationDto)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -492,10 +496,33 @@ export class ApplicationWizardComponent implements OnInit {
           this.clearDraft();
           this.slugService.navigateTo(['portal', 'home']);
         },
-        error: (error) => {
+        error: () => {
           this.isSubmitting.set(false);
-          console.error('Error submitting application:', error);
+          this.toast.error(this.translocoService.translate('rentalApp.submitError'));
         },
       });
+  }
+
+  private createRentalHistoryGroup(item: RentalHistoryDraft = {}): FormGroup {
+    return this.fb.group({
+      property_address: [item.property_address || '', Validators.required],
+      landlord_name: [item.landlord_name || '', Validators.required],
+      landlord_phone: [
+        item.landlord_phone || '',
+        [Validators.required, Validators.pattern(/^[+]?[\d\s-()]+$/)],
+      ],
+      monthly_rent: [item.monthly_rent || '', [Validators.required, Validators.min(0)]],
+      start_date: [this.toDateInput(item.start_date), Validators.required],
+      end_date: [this.toDateInput(item.end_date)],
+      reason_for_leaving: [item.reason_for_leaving || ''],
+    });
+  }
+
+  private toDateInput(value: unknown): string {
+    if (!value) return '';
+    if (value instanceof Date) return value.toISOString().slice(0, 10);
+    if (typeof value === 'string') return value.slice(0, 10);
+    if (typeof value === 'number') return new Date(value).toISOString().slice(0, 10);
+    return '';
   }
 }

@@ -1,21 +1,9 @@
-import { Component, computed, signal, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, computed, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PermissionsService } from '../../core/services/permissions.service';
 import { TecnicoMantenimientoComponent } from './tecnico/tecnico-mantenimiento.component';
 import { ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatCardModule } from '@angular/material/card';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDividerModule } from '@angular/material/divider';
 import {
   LucideAngularModule,
   Search,
@@ -31,6 +19,7 @@ import {
   Calendar,
   TrendingUp,
   MessageSquare,
+  type LucideIconData,
 } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
@@ -46,35 +35,42 @@ import {
   MaintenanceCategoryLabels,
 } from '../../core/models/maintenance-request.model';
 import { RequestDetailComponent } from './components/request-detail.component';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
+import { AppDialogComponent } from '../../shared/ui/dialog/dialog.component';
+import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { AppSelectComponent, AppSelectOption } from '../../shared/ui/select/select.component';
+import {
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../shared/ui/status-badge/status-badge.component';
+import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-mantenimiento',
   standalone: true,
   imports: [
-    CommonModule,
+    NgClass,
     FormsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatBadgeModule,
-    MatCardModule,
-    MatMenuModule,
-    MatDialogModule,
-    MatTooltipModule,
-    MatDividerModule,
     LucideAngularModule,
+    RequestDetailComponent,
     TecnicoMantenimientoComponent,
     TranslocoModule,
     TenantDatePipe,
+    AppButtonComponent,
+    AppDialogComponent,
+    AppPageHeaderComponent,
+    AppSelectComponent,
+    AppStatusBadgeComponent,
+    AppTextFieldComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'mantenimiento', alias: 'maintenance' })],
   templateUrl: './mantenimiento.component.html',
   styleUrl: './mantenimiento.component.scss',
 })
-export class MantenimientoComponent implements OnInit {
+export class MantenimientoComponent {
   private permissionsService = inject(PermissionsService);
   readonly isTecnico = computed(() => this.permissionsService.role() === 'TECNICO');
   // Icons
@@ -107,13 +103,29 @@ export class MantenimientoComponent implements OnInit {
   selectedStatus = signal<MaintenanceStatus | 'all'>('all');
   selectedPriority = signal<MaintenancePriority | 'all'>('all');
   selectedCategory = signal<MaintenanceCategory | 'all'>('all');
+  selectedRequest = signal<MaintenanceRequest | null>(null);
 
   // Services
   private maintenanceService = inject(MaintenanceService);
-  private dialog = inject(MatDialog);
   private route = inject(ActivatedRoute);
+  private confirmDialog = inject(ConfirmDialogService);
+  private toast = inject(ToastService);
+  readonly priorityOptions: readonly AppSelectOption<MaintenancePriority | 'all'>[] = [
+    { value: 'all', label: 'Todas' },
+    ...this.getPriorityValues().map((priority) => ({
+      value: priority,
+      label: MaintenancePriorityLabels[priority],
+    })),
+  ];
+  readonly categoryOptions: readonly AppSelectOption<MaintenanceCategory | 'all'>[] = [
+    { value: 'all', label: 'Todas' },
+    ...this.getCategoryValues().map((category) => ({
+      value: category,
+      label: MaintenanceCategoryLabels[category],
+    })),
+  ];
 
-  ngOnInit(): void {
+  constructor() {
     // Load data when component initializes
     // This ensures the slug is already set by the authGuard
     this.maintenanceService.loadAllRequests();
@@ -126,14 +138,7 @@ export class MantenimientoComponent implements OnInit {
         if (!isNaN(id)) {
           this.maintenanceService.getRequestById(id).subscribe({
             next: (request) => {
-              this.dialog.open(RequestDetailComponent, {
-                width: '1200px',
-                maxWidth: '96vw',
-                height: '90vh',
-                maxHeight: '90vh',
-                data: { request },
-                panelClass: 'request-detail-dialog-panel',
-              });
+              this.selectedRequest.set(request);
             },
             error: () => {
               /* Silently ignore if not found */
@@ -196,36 +201,32 @@ export class MantenimientoComponent implements OnInit {
   }
 
   openRequestForm(): void {
-    // TODO: Implementar formulario de nueva solicitud
-    console.log('Abrir formulario de nueva solicitud');
+    this.toast.info('El formulario de nueva solicitud se implementa en el flujo correspondiente.');
   }
 
   viewRequestDetails(request: MaintenanceRequest): void {
-    const dialogRef = this.dialog.open(RequestDetailComponent, {
-      width: '1200px',
-      maxWidth: '96vw',
-      height: '90vh',
-      maxHeight: '90vh',
-      data: { request },
-      panelClass: 'request-detail-dialog-panel',
-    });
+    this.selectedRequest.set(request);
+  }
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result?.deleted) {
-        // Request was deleted, no need to do anything as service already updated
-      }
-      // Dialog automatically updates the service, so changes are reflected
-    });
+  closeRequestDetails(): void {
+    this.selectedRequest.set(null);
+  }
+
+  onRequestChanged(request: MaintenanceRequest): void {
+    this.selectedRequest.set(request);
+  }
+
+  onRequestDeleted(): void {
+    this.selectedRequest.set(null);
   }
 
   updateRequestStatus(request: MaintenanceRequest, newStatus: MaintenanceStatus): void {
     this.maintenanceService.updateStatus(request.id, newStatus).subscribe({
       next: () => {
-        console.log('Status updated successfully');
+        this.toast.success('Estado actualizado');
       },
-      error: (error) => {
-        console.error('Error updating status:', error);
-        alert('Error al actualizar el estado de la solicitud');
+      error: () => {
+        this.toast.error('Error al actualizar el estado de la solicitud');
       },
     });
   }
@@ -233,26 +234,48 @@ export class MantenimientoComponent implements OnInit {
   updateRequestPriority(request: MaintenanceRequest, newPriority: MaintenancePriority): void {
     this.maintenanceService.updatePriority(request.id, newPriority).subscribe({
       next: () => {
-        console.log('Priority updated successfully');
+        this.toast.success('Prioridad actualizada');
       },
-      error: (error) => {
-        console.error('Error updating priority:', error);
-        alert('Error al actualizar la prioridad de la solicitud');
+      error: () => {
+        this.toast.error('Error al actualizar la prioridad de la solicitud');
       },
     });
   }
 
-  deleteRequest(request: MaintenanceRequest): void {
-    if (confirm(`¿Estás seguro de eliminar la solicitud "${request.title}"?`)) {
-      this.maintenanceService.deleteRequest(request.id).subscribe({
-        next: () => {
-          console.log('Request deleted successfully');
-        },
-        error: (error) => {
-          console.error('Error deleting request:', error);
-          alert('Error al eliminar la solicitud');
-        },
-      });
+  async deleteRequest(request: MaintenanceRequest): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Eliminar solicitud',
+      message: `¿Eliminar la solicitud "${request.title}"? Esta accion no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.maintenanceService.deleteRequest(request.id).subscribe({
+      next: () => {
+        this.toast.success('Solicitud eliminada');
+      },
+      error: () => {
+        this.toast.error('Error al eliminar la solicitud');
+      },
+    });
+  }
+
+  getStatusTone(status: MaintenanceStatus): AppStatusTone {
+    switch (status) {
+      case MaintenanceStatus.COMPLETED:
+      case MaintenanceStatus.CLOSED:
+        return 'success';
+      case MaintenanceStatus.IN_PROGRESS:
+        return 'info';
+      case MaintenanceStatus.DEFERRED:
+        return 'warning';
+      case MaintenanceStatus.NEW:
+      default:
+        return 'neutral';
     }
   }
 
@@ -286,7 +309,7 @@ export class MantenimientoComponent implements OnInit {
     }
   }
 
-  getCategoryIcon(_category: MaintenanceCategory): any {
+  getCategoryIcon(_category: MaintenanceCategory): LucideIconData {
     // Return appropriate icon based on category
     return this.Wrench; // Default icon for now
   }

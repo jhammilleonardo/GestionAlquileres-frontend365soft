@@ -1,14 +1,14 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Mail, Phone, MapPin, Send } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideAngularModule, TranslocoModule],
+  imports: [FormsModule, LucideAngularModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './contact.component.html',
   styleUrls: ['./contact.component.css'],

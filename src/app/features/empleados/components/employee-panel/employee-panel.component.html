@@ -13,7 +13,7 @@
       </div>
     </div>
     <button
-      mat-icon-button
+      type="button"
       (click)="panelClosed.emit()"
       [attr.aria-label]="'employees.panel.closeAria' | transloco"
       class="close-btn"
@@ -62,86 +62,92 @@
       <div class="permission-row" [class.disabled]="!perm.can_view && perm.module !== mod.key">
         <span class="module-name">{{ mod.label }}</span>
 
-        <mat-slide-toggle
-          class="action-toggle"
-          [checked]="perm.can_view"
-          (change)="toggleAction(mod.key, 'can_view', $event.checked)"
-          [attr.aria-label]="'employees.panel.viewAria' | transloco: { module: mod.label }"
-          color="primary"
-        ></mat-slide-toggle>
+        <label class="toggle-cell">
+          <input
+            type="checkbox"
+            class="toggle-input"
+            [checked]="perm.can_view"
+            (change)="toggleActionFromEvent(mod.key, 'can_view', $event)"
+            [attr.aria-label]="'employees.panel.viewAria' | transloco: { module: mod.label }"
+          />
+          <span class="toggle-track" aria-hidden="true"></span>
+        </label>
 
-        <mat-slide-toggle
-          class="action-toggle"
-          [checked]="perm.can_create"
-          [disabled]="!perm.can_view"
-          (change)="toggleAction(mod.key, 'can_create', $event.checked)"
-          [attr.aria-label]="'employees.panel.createAria' | transloco: { module: mod.label }"
-          color="primary"
-        ></mat-slide-toggle>
+        <label class="toggle-cell">
+          <input
+            type="checkbox"
+            class="toggle-input"
+            [checked]="perm.can_create"
+            [disabled]="!perm.can_view"
+            (change)="toggleActionFromEvent(mod.key, 'can_create', $event)"
+            [attr.aria-label]="'employees.panel.createAria' | transloco: { module: mod.label }"
+          />
+          <span class="toggle-track" aria-hidden="true"></span>
+        </label>
 
-        <mat-slide-toggle
-          class="action-toggle"
-          [checked]="perm.can_edit"
-          [disabled]="!perm.can_view"
-          (change)="toggleAction(mod.key, 'can_edit', $event.checked)"
-          [attr.aria-label]="'employees.panel.editAria' | transloco: { module: mod.label }"
-          color="primary"
-        ></mat-slide-toggle>
+        <label class="toggle-cell">
+          <input
+            type="checkbox"
+            class="toggle-input"
+            [checked]="perm.can_edit"
+            [disabled]="!perm.can_view"
+            (change)="toggleActionFromEvent(mod.key, 'can_edit', $event)"
+            [attr.aria-label]="'employees.panel.editAria' | transloco: { module: mod.label }"
+          />
+          <span class="toggle-track" aria-hidden="true"></span>
+        </label>
 
-        <mat-slide-toggle
-          class="action-toggle"
-          [checked]="perm.can_delete"
-          [disabled]="!perm.can_view"
-          (change)="toggleAction(mod.key, 'can_delete', $event.checked)"
-          [attr.aria-label]="'employees.panel.deleteAria' | transloco: { module: mod.label }"
-          color="warn"
-        ></mat-slide-toggle>
+        <label class="toggle-cell">
+          <input
+            type="checkbox"
+            class="toggle-input"
+            [checked]="perm.can_delete"
+            [disabled]="!perm.can_view"
+            (change)="toggleActionFromEvent(mod.key, 'can_delete', $event)"
+            [attr.aria-label]="'employees.panel.deleteAria' | transloco: { module: mod.label }"
+          />
+          <span class="toggle-track danger" aria-hidden="true"></span>
+        </label>
       </div>
     }
   </div>
 
   <!-- Acciones -->
   <div class="panel-actions">
-    <button
-      mat-flat-button
-      color="primary"
-      (click)="savePermissions()"
+    <app-button
+      (clicked)="savePermissions()"
       [disabled]="isSaving()"
-      class="save-btn"
+      [loading]="isSaving()"
+      [fullWidth]="true"
       [attr.aria-label]="'employees.panel.savePermissions' | transloco"
     >
-      @if (isSaving()) {
-        <mat-spinner diameter="18"></mat-spinner>
-        <span>{{ 'employees.panel.saving' | transloco }}</span>
-      } @else {
-        {{ 'employees.panel.savePermissions' | transloco }}
-      }
-    </button>
+      {{ 'employees.panel.savePermissions' | transloco }}
+    </app-button>
 
     @if (employee().is_active) {
-      <button
-        mat-stroked-button
-        color="warn"
-        (click)="openDeactivateDialog()"
+      <app-button
+        appearance="destructive"
+        (clicked)="openDeactivateDialog()"
         [disabled]="isTogglingStatus()"
+        [loading]="isTogglingStatus()"
+        [fullWidth]="true"
         [attr.aria-label]="'employees.panel.deactivate' | transloco"
-        class="status-btn"
       >
         <lucide-icon [img]="UserXIcon" [size]="16" aria-hidden="true"></lucide-icon>
         {{ 'employees.panel.deactivate' | transloco }}
-      </button>
+      </app-button>
     } @else {
-      <button
-        mat-stroked-button
-        color="primary"
-        (click)="activate()"
+      <app-button
+        appearance="outline"
+        (clicked)="activate()"
         [disabled]="isTogglingStatus()"
+        [loading]="isTogglingStatus()"
+        [fullWidth]="true"
         [attr.aria-label]="'employees.panel.activate' | transloco"
-        class="status-btn"
       >
         <lucide-icon [img]="UserCheckIcon" [size]="16" aria-hidden="true"></lucide-icon>
         {{ 'employees.panel.activate' | transloco }}
-      </button>
+      </app-button>
     }
   </div>
 </div>

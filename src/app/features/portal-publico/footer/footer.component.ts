@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import {
   LucideAngularModule,
   Home,
@@ -16,9 +15,10 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-footer',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslocoModule],
+  imports: [LucideAngularModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './footer.component.html',
   styleUrls: ['./footer.component.css'],

@@ -1,18 +1,13 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { switchMap } from 'rxjs';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import {
   LucideAngularModule,
   ArrowLeft,
@@ -39,32 +34,39 @@ import {
   ApproveApplicationDto,
   ApproveApplicationResponse,
 } from '../../../../core/models/application.model';
+import {
+  AppButtonComponent,
+  AppCheckboxComponent,
+  AppDatePickerComponent,
+  AppLoadingStateComponent,
+  AppSelectComponent,
+  AppSelectOption,
+  AppTextFieldComponent,
+  AppTextareaComponent,
+} from '../../../../shared/ui';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-approve-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatSlideToggleModule,
-    MatProgressSpinnerModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     LucideAngularModule,
     TranslocoModule,
     TenantCurrencyPipe,
+    AppButtonComponent,
+    AppCheckboxComponent,
+    AppDatePickerComponent,
+    AppLoadingStateComponent,
+    AppSelectComponent,
+    AppTextFieldComponent,
+    AppTextareaComponent,
   ],
   providers: [provideTranslocoScope('solicitudes')],
   templateUrl: './approve-dialog.component.html',
   styleUrls: ['./approve-dialog.component.css'],
 })
-export class ApproveDialogComponent implements OnInit {
+export class ApproveDialogComponent {
   // Icons
   readonly ArrowLeft = ArrowLeft;
   readonly CheckCircle2 = CheckCircle2;
@@ -86,11 +88,13 @@ export class ApproveDialogComponent implements OnInit {
   private applicationService = inject(ApplicationService);
   private cdr = inject(ChangeDetectorRef);
 
-  loading = false;
-  submitting = false;
-  error: string | null = null;
-  success = false;
-  contractGenerated: ApproveApplicationResponse['contract_generated'] | null = null;
+  readonly loading = signal(false);
+  readonly submitting = signal(false);
+  readonly error = signal<string | null>(null);
+  readonly success = signal(false);
+  readonly contractGenerated = signal<ApproveApplicationResponse['contract_generated'] | null>(
+    null,
+  );
 
   formData: ApproveApplicationDto = {
     monthly_rent: 0,
@@ -113,13 +117,23 @@ export class ApproveDialogComponent implements OnInit {
     'Limpieza',
     'Seguridad',
   ];
+  readonly currencyOptions: AppSelectOption<string>[] = [
+    { value: 'BOB', label: 'BOB - Bolivia' },
+    { value: 'USD', label: 'USD - USA' },
+    { value: 'EUR', label: 'EUR - Euro' },
+  ];
+  readonly accountTypeOptions: AppSelectOption<string>[] = [
+    { value: '', label: 'Seleccionar' },
+    { value: 'Ahorros', label: 'Ahorros' },
+    { value: 'Corriente', label: 'Corriente' },
+  ];
 
-  ngOnInit(): void {
+  constructor() {
     const app$ = this.route.paramMap.pipe(
       switchMap((params) => {
         const id = Number(params.get('id'));
         if (!id) {
-          this.error = 'ID de solicitud no válido';
+          this.error.set('ID de solicitud no válido');
           throw new Error('Invalid ID');
         }
         return this.applicationService.getApplicationById(id);
@@ -131,31 +145,31 @@ export class ApproveDialogComponent implements OnInit {
         this.formData.monthly_rent = app.employment_data.monthly_income;
         this.cdr.detectChanges();
       },
-      error: (err: any) => {
-        this.error = err.error?.message || 'Error al cargar la solicitud';
+      error: (err: { error?: { message?: string }; message?: string }) => {
+        this.error.set(err.error?.message ?? err.message ?? 'Error al cargar la solicitud');
       },
     });
   }
 
   onSubmit(): void {
-    if (this.submitting) return;
-    this.submitting = true;
-    this.error = null;
+    if (this.submitting()) return;
+    this.submitting.set(true);
+    this.error.set(null);
 
     const applicationId = Number(this.route.snapshot.paramMap.get('id'));
 
-    this.applicationService.approveApplication(applicationId, this.formData).subscribe({
+    this.applicationService.approveApplication(applicationId, this.buildPayload()).subscribe({
       next: (response: ApproveApplicationResponse) => {
-        this.success = true;
-        this.contractGenerated = response.contract_generated;
-        this.submitting = false;
+        this.success.set(true);
+        this.contractGenerated.set(response.contract_generated);
+        this.submitting.set(false);
         setTimeout(() => {
           this.router.navigate(['../../'], { relativeTo: this.route });
         }, 3000);
       },
-      error: (err: any) => {
-        this.error = err.error?.message || 'Error al aprobar la solicitud';
-        this.submitting = false;
+      error: (err: { error?: { message?: string }; message?: string }) => {
+        this.error.set(err.error?.message ?? err.message ?? 'Error al aprobar la solicitud');
+        this.submitting.set(false);
       },
     });
   }
@@ -178,5 +192,32 @@ export class ApproveDialogComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['../'], { relativeTo: this.route });
+  }
+
+  private buildPayload(): ApproveApplicationDto {
+    return {
+      ...this.formData,
+      monthly_rent: Number(this.formData.monthly_rent) || 0,
+      deposit_amount:
+        this.formData.deposit_amount === undefined
+          ? undefined
+          : Number(this.formData.deposit_amount) || 0,
+      payment_day:
+        this.formData.payment_day === undefined ? undefined : Number(this.formData.payment_day),
+      late_fee_percentage:
+        this.formData.late_fee_percentage === undefined
+          ? undefined
+          : Number(this.formData.late_fee_percentage) || 0,
+      grace_days:
+        this.formData.grace_days === undefined ? undefined : Number(this.formData.grace_days) || 0,
+      renewal_notice_days:
+        this.formData.renewal_notice_days === undefined
+          ? undefined
+          : Number(this.formData.renewal_notice_days) || 0,
+      auto_increase_percentage:
+        this.formData.auto_increase_percentage === undefined
+          ? undefined
+          : Number(this.formData.auto_increase_percentage) || 0,
+    };
   }
 }

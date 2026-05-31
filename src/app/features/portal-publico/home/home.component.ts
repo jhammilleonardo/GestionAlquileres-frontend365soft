@@ -1,23 +1,23 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
-  LucideAngularModule,
-  Home,
-  Search,
-  CheckCircle,
-  Star,
   ArrowRight,
+  Bath,
+  BedDouble,
+  Car,
+  CheckCircle,
+  Heart,
+  Home,
+  LucideAngularModule,
   MapPin,
   Maximize,
-  Heart,
-  BedDouble,
-  Bath,
-  Car,
+  Search,
+  Star,
 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
+
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import {
@@ -30,12 +30,13 @@ import {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatButtonModule, LucideAngularModule, TranslocoModule],
+  imports: [RouterModule, DecimalPipe, LucideAngularModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent {
   readonly Home = Home;
   readonly Search = Search;
   readonly CheckCircle = CheckCircle;
@@ -48,14 +49,15 @@ export class HomeComponent implements OnInit {
   readonly Bath = Bath;
   readonly Car = Car;
 
-  featuredProperties: Property[] = [];
-  isLoadingProperties = true;
+  readonly featuredProperties = signal<Property[]>([]);
+  readonly isLoadingProperties = signal(true);
 
-  private router = inject(Router);
-  private propertyService = inject(PropertyService);
-  private slugService = inject(SlugService);
+  private readonly router = inject(Router);
+  private readonly propertyService = inject(PropertyService);
+  private readonly slugService = inject(SlugService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  ngOnInit(): void {
+  constructor() {
     this.loadFeaturedProperties();
   }
 
@@ -67,33 +69,32 @@ export class HomeComponent implements OnInit {
       page: 1,
       limit: 6,
     };
-    this.propertyService.getFilteredProperties(filters).subscribe({
-      next: (properties) => {
-        this.featuredProperties = properties;
-        this.isLoadingProperties = false;
-      },
-      error: () => {
-        this.isLoadingProperties = false;
-      },
-    });
+    this.propertyService
+      .getFilteredProperties(filters)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (properties) => {
+          this.featuredProperties.set(properties);
+          this.isLoadingProperties.set(false);
+        },
+        error: () => this.isLoadingProperties.set(false),
+      });
   }
 
   getPropertyImageUrl(property: Property): string {
     let imagePath: string | null = null;
     if (property.first_image) {
       imagePath = property.first_image;
-    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+    } else if (Array.isArray(property.images) && property.images.length) {
       imagePath = property.images[0];
     }
-    if (imagePath) {
-      if (imagePath.startsWith('http')) return imagePath;
-      return `http://localhost:3000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
-    }
-    return '';
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    return `http://localhost:3000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
   }
 
   getPropertyAddress(property: Property): string {
-    if (property.addresses && property.addresses.length > 0) {
+    if (property.addresses?.length) {
       const addr = property.addresses[0];
       return `${addr.street_address}, ${addr.city}`;
     }
@@ -102,29 +103,21 @@ export class HomeComponent implements OnInit {
 
   viewProperty(propertyId: number): void {
     const slug = this.slugService.getSlug();
-    if (slug) {
-      this.router.navigate(['/', slug, 'publico', 'propiedades', propertyId]);
-    }
+    if (slug) void this.router.navigate(['/', slug, 'publico', 'propiedades', propertyId]);
   }
 
-  navigateToProperties() {
+  navigateToProperties(): void {
     const slug = this.slugService.getSlug();
-    if (slug) {
-      this.router.navigate(['/', slug, 'publico', 'propiedades']);
-    }
+    if (slug) void this.router.navigate(['/', slug, 'publico', 'propiedades']);
   }
 
-  navigateToContact() {
+  navigateToContact(): void {
     const slug = this.slugService.getSlug();
-    if (slug) {
-      this.router.navigate(['/', slug, 'publico', 'contacto']);
-    }
+    if (slug) void this.router.navigate(['/', slug, 'publico', 'contacto']);
   }
 
-  navigateToAbout() {
+  navigateToAbout(): void {
     const slug = this.slugService.getSlug();
-    if (slug) {
-      this.router.navigate(['/', slug, 'publico', 'nosotros']);
-    }
+    if (slug) void this.router.navigate(['/', slug, 'publico', 'nosotros']);
   }
 }

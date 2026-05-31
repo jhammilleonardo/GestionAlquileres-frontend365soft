@@ -1,99 +1,84 @@
-<h2 mat-dialog-title>{{ 'employees.dialog.title' | transloco }}</h2>
+<form class="employee-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
 
-<mat-dialog-content>
-  <form [formGroup]="form" id="create-employee-form" novalidate>
-    @if (errorMessage()) {
-      <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  <div class="field-group">
+    <app-text-field
+      formControlName="name"
+      [label]="'employees.dialog.fullName' | transloco"
+      [placeholder]="'employees.dialog.namePlaceholder' | transloco"
+      autocomplete="off"
+    ></app-text-field>
+    @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+      <p class="field-error">{{ 'employees.dialog.nameRequired' | transloco }}</p>
+    } @else if (form.controls.name.hasError('minlength') && form.controls.name.touched) {
+      <p class="field-error">{{ 'employees.dialog.nameMinLength' | transloco }}</p>
     }
+  </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>{{ 'employees.dialog.fullName' | transloco }}</mat-label>
-      <input
-        matInput
-        formControlName="name"
-        [placeholder]="'employees.dialog.namePlaceholder' | transloco"
-        autocomplete="off"
-        aria-describedby="name-error"
-      />
-      @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-        <mat-error id="name-error">{{ 'employees.dialog.nameRequired' | transloco }}</mat-error>
-      } @else if (form.controls.name.hasError('minlength') && form.controls.name.touched) {
-        <mat-error id="name-error">{{ 'employees.dialog.nameMinLength' | transloco }}</mat-error>
-      }
-    </mat-form-field>
+  <div class="field-group">
+    <app-text-field
+      formControlName="email"
+      type="email"
+      [label]="'common.email' | transloco"
+      [placeholder]="'employees.dialog.emailPlaceholder' | transloco"
+      autocomplete="off"
+    ></app-text-field>
+    @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+      <p class="field-error">{{ 'employees.dialog.emailRequired' | transloco }}</p>
+    } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
+      <p class="field-error">{{ 'employees.dialog.emailInvalid' | transloco }}</p>
+    }
+  </div>
 
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>{{ 'common.email' | transloco }}</mat-label>
-      <input
-        matInput
-        formControlName="email"
-        type="email"
-        [placeholder]="'employees.dialog.emailPlaceholder' | transloco"
-        autocomplete="off"
-        aria-describedby="email-error"
-      />
-      @if (form.controls.email.hasError('required') && form.controls.email.touched) {
-        <mat-error id="email-error">{{ 'employees.dialog.emailRequired' | transloco }}</mat-error>
-      } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
-        <mat-error id="email-error">{{ 'employees.dialog.emailInvalid' | transloco }}</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>{{ 'employees.dialog.tempPassword' | transloco }}</mat-label>
-      <input
-        matInput
+  <div class="field-group">
+    <div class="password-row">
+      <app-text-field
         formControlName="password"
         [type]="showPassword() ? 'text' : 'password'"
+        [label]="'employees.dialog.tempPassword' | transloco"
         autocomplete="new-password"
-        aria-describedby="password-error"
-      />
-      <button
-        mat-icon-button
-        matSuffix
-        type="button"
-        (click)="showPassword.set(!showPassword())"
-        [attr.aria-label]="
+      ></app-text-field>
+      <app-button
+        appearance="outline"
+        size="s"
+        [ariaLabel]="
           (showPassword() ? 'employees.dialog.hidePassword' : 'employees.dialog.showPassword')
             | transloco
         "
+        (clicked)="showPassword.set(!showPassword())"
       >
-        <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-      </button>
-      @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-        <mat-error id="password-error">{{
-          'employees.dialog.passwordRequired' | transloco
-        }}</mat-error>
-      } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
-        <mat-error id="password-error">{{
-          'employees.dialog.passwordMinLength' | transloco
-        }}</mat-error>
-      }
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>{{ 'employees.dialog.phoneOptional' | transloco }}</mat-label>
-      <input matInput formControlName="phone" type="tel" placeholder="+591 70000000" />
-    </mat-form-field>
-  </form>
-</mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button mat-button type="button" (click)="cancel()" [disabled]="isLoading()">
-    {{ 'common.cancel' | transloco }}
-  </button>
-  <button
-    mat-flat-button
-    color="primary"
-    type="button"
-    (click)="submit()"
-    [disabled]="isLoading()"
-    [attr.aria-label]="'employees.dialog.create' | transloco"
-  >
-    @if (isLoading()) {
-      <mat-spinner diameter="20"></mat-spinner>
-    } @else {
-      {{ 'employees.dialog.create' | transloco }}
+        {{
+          (showPassword() ? 'employees.dialog.hidePassword' : 'employees.dialog.showPassword')
+            | transloco
+        }}
+      </app-button>
+    </div>
+    @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+      <p class="field-error">{{ 'employees.dialog.passwordRequired' | transloco }}</p>
+    } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
+      <p class="field-error">{{ 'employees.dialog.passwordMinLength' | transloco }}</p>
     }
-  </button>
-</mat-dialog-actions>
+  </div>
+
+  <app-text-field
+    formControlName="phone"
+    type="tel"
+    [label]="'employees.dialog.phoneOptional' | transloco"
+    placeholder="+591 70000000"
+  ></app-text-field>
+
+  <div class="dialog-actions">
+    <app-button appearance="outline" type="button" [disabled]="isLoading()" (clicked)="cancel()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button
+      type="submit"
+      [loading]="isLoading()"
+      [ariaLabel]="'employees.dialog.create' | transloco"
+    >
+      {{ 'employees.dialog.create' | transloco }}
+    </app-button>
+  </div>
+</form>

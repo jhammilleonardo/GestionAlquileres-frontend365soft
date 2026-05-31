@@ -1,22 +1,18 @@
 import {
-  Component,
-  inject,
-  OnInit,
-  OnDestroy,
   AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
   ElementRef,
-  ViewChildren,
   QueryList,
+  ViewChildren,
+  inject,
+  signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { NgClass } from '@angular/common';
 import {
   LucideAngularModule,
+  type LucideIconData,
   Bell,
   Check,
   Trash2,
@@ -38,20 +34,24 @@ import { provideTranslocoScope } from '@jsverse/transloco';
 import { NotificationService, Notification } from '../../core/services/admin/notification.service';
 import { SlugService } from '../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
+import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
 
 type NotificationFilter = 'all' | 'unread' | 'read';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-notifications',
   standalone: true,
   imports: [
-    CommonModule,
+    NgClass,
     RouterModule,
-    MatButtonModule,
-    MatIconModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
     LucideAngularModule,
     TranslocoModule,
   ],
@@ -59,12 +59,13 @@ type NotificationFilter = 'all' | 'unread' | 'read';
   templateUrl: './notifications.component.html',
   styleUrl: './notifications.component.scss',
 })
-export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class NotificationsComponent implements AfterViewInit {
   private notificationService = inject(NotificationService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
+  private confirmDialog = inject(ConfirmDialogService);
 
   @ViewChildren('notifCard') notifCards!: QueryList<ElementRef>;
 
@@ -76,8 +77,8 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
   unreadCount = this.notificationService.unreadCount;
 
   // State
-  currentFilter: NotificationFilter = 'all';
-  highlightedId: number | null = null;
+  readonly currentFilter = signal<NotificationFilter>('all');
+  readonly highlightedId = signal<number | null>(null);
 
   // Lucide icons
   readonly Bell = Bell;
@@ -96,53 +97,47 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
   readonly BellOff = BellOff;
   readonly ArrowUpRight = ArrowUpRight;
 
-  ngOnInit(): void {
-    // Leer highlight param antes de cargar
+  constructor() {
     const highlightParam = this.route.snapshot.queryParamMap.get('highlight');
-    if (highlightParam) {
-      this.highlightedId = Number(highlightParam);
-    }
-
+    if (highlightParam) this.highlightedId.set(Number(highlightParam));
     this.loadNotifications();
     this.loadStats();
     this.notificationService.startPolling(60000);
+    this.destroyRef.onDestroy(() => this.notificationService.stopPolling());
   }
 
   ngAfterViewInit(): void {
-    if (this.highlightedId) {
+    if (this.highlightedId()) {
       // Esperar que Angular renderice las tarjetas
-      this.notifCards.changes.subscribe(() => {
-        this.scrollToHighlighted();
-      });
+      this.notifCards.changes
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.scrollToHighlighted());
       // Intentar inmediatamente también (por si ya estaban renderizadas)
       setTimeout(() => this.scrollToHighlighted(), 300);
     }
   }
 
   private scrollToHighlighted(): void {
-    if (!this.highlightedId) return;
+    const highlightedId = this.highlightedId();
+    if (!highlightedId) return;
     const card = this.notifCards.find(
-      (el) => el.nativeElement.getAttribute('data-id') === String(this.highlightedId),
+      (el) => el.nativeElement.getAttribute('data-id') === String(highlightedId),
     );
     if (card) {
       card.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       // Quitar el highlight después de 3 segundos
       setTimeout(() => {
-        this.highlightedId = null;
+        this.highlightedId.set(null);
       }, 3000);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.notificationService.stopPolling();
   }
 
   loadNotifications(): void {
     const options: { is_read?: boolean; limit?: number } = { limit: 50 };
 
-    if (this.currentFilter === 'unread') {
+    if (this.currentFilter() === 'unread') {
       options.is_read = false;
-    } else if (this.currentFilter === 'read') {
+    } else if (this.currentFilter() === 'read') {
       options.is_read = true;
     }
 
@@ -154,7 +149,7 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   setFilter(filter: NotificationFilter): void {
-    this.currentFilter = filter;
+    this.currentFilter.set(filter);
     this.loadNotifications();
   }
 
@@ -172,9 +167,17 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
     this.notificationService.markAllAsRead().subscribe();
   }
 
-  deleteNotification(id: number, event: Event): void {
+  async deleteNotification(id: number, event: Event): Promise<void> {
     event.stopPropagation();
-    if (confirm('¿Eliminar esta notificación?')) {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Eliminar notificación',
+      message: '¿Eliminar esta notificación?',
+      confirmLabel: 'Eliminar',
+      cancelLabel: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
       this.notificationService.deleteNotification(id).subscribe();
     }
   }
@@ -196,35 +199,35 @@ export class NotificationsComponent implements OnInit, AfterViewInit, OnDestroy 
 
     if (eventType.includes('maintenance')) {
       const requestId = notification.metadata?.['maintenance_request_id'];
-      this.router.navigate(['/', slug, 'mantenimiento'], {
+      void this.router.navigate(['/', slug, 'mantenimiento'], {
         queryParams: requestId ? { open: requestId } : {},
       });
     } else if (eventType.includes('property')) {
       const propertyId = notification.metadata?.['property_id'];
       if (propertyId) {
-        this.router.navigate(['/', slug, 'propiedades', propertyId]);
+        void this.router.navigate(['/', slug, 'propiedades', propertyId]);
       }
     } else if (eventType.includes('user')) {
       const userId = notification.metadata?.['user_id'];
       if (userId) {
-        this.router.navigate(['/', slug, 'inquilinos', userId]);
+        void this.router.navigate(['/', slug, 'inquilinos', userId]);
       }
     } else if (eventType.includes('contract')) {
       const contractId = notification.metadata?.['contract_id'];
       if (contractId) {
-        this.router.navigate(['/', slug, 'contratos', contractId]);
+        void this.router.navigate(['/', slug, 'contratos', contractId]);
       }
     } else if (eventType.includes('payment')) {
       const paymentId = notification.metadata?.['payment_id'];
       if (paymentId) {
-        this.router.navigate(['/', slug, 'pagos'], { queryParams: { id: paymentId } });
+        void this.router.navigate(['/', slug, 'pagos'], { queryParams: { id: paymentId } });
       } else {
-        this.router.navigate(['/', slug, 'pagos']);
+        void this.router.navigate(['/', slug, 'pagos']);
       }
     }
   }
 
-  getNotificationIcon(eventType: string): any {
+  getNotificationIcon(eventType: string): LucideIconData {
     if (eventType.includes('maintenance')) return Wrench;
     if (eventType.includes('property')) return Home;
     if (eventType.includes('user')) return User;

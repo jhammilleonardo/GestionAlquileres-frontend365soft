@@ -1,304 +1,365 @@
-<!-- Loading State -->
-<div class="loading-container" *ngIf="isLoading">
-  <div class="spinner"></div>
-  <p>{{ 'public.propertyDetail.loading' | transloco }}</p>
-</div>
-
-<!-- Error State -->
-<div class="error-container" *ngIf="!isLoading && hasError">
-  <div class="error-icon">⚠️</div>
-  <h2>{{ 'public.propertyDetail.errorTitle' | transloco }}</h2>
-  <p>{{ 'public.propertyDetail.errorSubtitle' | transloco }}</p>
-  <a routerLink="../" class="btn-back">← {{ 'public.propertyDetail.backToList' | transloco }}</a>
-</div>
-
-<!-- Property Detail -->
-<div class="property-detail-container" *ngIf="!isLoading && !hasError && property">
-  <!-- Back Button -->
-  <div class="back-navigation">
-    <a routerLink="../" class="back-btn">
-      ← {{ 'public.propertyDetail.backToList' | transloco }}
-    </a>
+@if (isLoading()) {
+  <div class="loading-container">
+    <div class="spinner"></div>
+    <p>{{ 'public.propertyDetail.loading' | transloco }}</p>
   </div>
-
-  <!-- Image Gallery -->
-  <div class="image-gallery">
-    <div class="main-image-container">
-      <ng-container *ngIf="getImagesCount() > 0; else noImage">
-        <img [src]="getCurrentImage()" [alt]="property.title" class="main-image" />
-      </ng-container>
-      <ng-template #noImage>
-        <div class="no-image-placeholder">
-          <span class="placeholder-icon">🏠</span>
-          <p>{{ 'public.propertyDetail.noImages' | transloco }}</p>
-        </div>
-      </ng-template>
-
-      <button class="nav-btn prev-btn" (click)="previousImage()" *ngIf="hasMultipleImages()">
-        ‹
-      </button>
-      <button class="nav-btn next-btn" (click)="nextImage()" *ngIf="hasMultipleImages()">›</button>
-
-      <div class="image-counter" *ngIf="getImagesCount() > 0">
-        {{ currentImageIndex + 1 }} / {{ getImagesCount() }}
-      </div>
-    </div>
-
-    <div class="thumbnail-gallery" *ngIf="hasMultipleImages()">
-      <img
-        *ngFor="let image of getImagesArray(); let i = index"
-        [src]="image"
-        [alt]="'public.propertyDetail.imageNumber' | transloco: { num: i + 1 }"
-        [class.active]="i === currentImageIndex"
-        (click)="selectImage(i)"
-        class="thumbnail"
-      />
-    </div>
+} @else if (hasError()) {
+  <div class="error-container">
+    <div class="error-icon">⚠️</div>
+    <h2>{{ 'public.propertyDetail.errorTitle' | transloco }}</h2>
+    <p>{{ 'public.propertyDetail.errorSubtitle' | transloco }}</p>
+    <a routerLink="../" class="btn-back">← {{ 'public.propertyDetail.backToList' | transloco }}</a>
   </div>
-
-  <!-- Property Header -->
-  <div class="property-header-new">
-    <div class="header-main-info">
-      <div class="title-area">
-        <h1 class="prop-title">{{ property.title }}</h1>
-        <div class="prop-location">
-          <lucide-icon [img]="MapPin" class="loc-icon-small"></lucide-icon>
-          {{ getPropertyAddress() }}
-        </div>
-      </div>
-
-      <div class="tags-pill-detail" *ngIf="getPropertyTypeName()">
-        <div class="tag-icons-detail">
-          <div class="t-icon-circle-detail bg-blue">
-            <lucide-icon [img]="Home" class="t-icon-detail"></lucide-icon>
-          </div>
-          <div class="t-icon-circle-detail bg-orange" *ngIf="getPropertySubtypeName()">
-            <lucide-icon [img]="MapPin" class="t-icon-detail"></lucide-icon>
-          </div>
-        </div>
-        <span>{{ getPropertyTypeName() }}</span>
-      </div>
+} @else if (property(); as prop) {
+  <div class="property-detail-container">
+    <!-- Back Button -->
+    <div class="back-navigation">
+      <a routerLink="../" class="back-btn">
+        ← {{ 'public.propertyDetail.backToList' | transloco }}
+      </a>
     </div>
 
-    <div class="header-side-info">
-      <div class="price-section-new" *ngIf="property.monthly_rent || property.monthly_rent_amount">
-        <span class="price-value"
-          >{{ property.currency || 'BOB' }}
-          {{ property.monthly_rent || property.monthly_rent_amount | number: '1.0-0' }}</span
-        >
-        <span class="price-label">{{ 'public.propertyDetail.perMonth' | transloco }}</span>
+    <!-- Image Gallery -->
+    <div class="image-gallery">
+      <div class="main-image-container">
+        @if (getImagesCount() > 0) {
+          <img [src]="getCurrentImage()" [alt]="prop.title" class="main-image" />
+        } @else {
+          <div class="no-image-placeholder">
+            <span class="placeholder-icon">🏠</span>
+            <p>{{ 'public.propertyDetail.noImages' | transloco }}</p>
+          </div>
+        }
+
+        @if (hasMultipleImages()) {
+          <button type="button" class="nav-btn prev-btn" (click)="previousImage()">‹</button>
+          <button type="button" class="nav-btn next-btn" (click)="nextImage()">›</button>
+        }
+
+        @if (getImagesCount() > 0) {
+          <div class="image-counter">{{ currentImageIndex() + 1 }} / {{ getImagesCount() }}</div>
+        }
       </div>
 
-      <div class="header-actions-new">
-        <button class="action-btn-new" (click)="toggleFavorite()" [class.active]="isFavorite">
-          <lucide-icon
-            [img]="Heart"
-            class="btn-icon-detail"
-            [style.fill]="isFavorite ? '#ef4444' : 'none'"
-          ></lucide-icon>
-        </button>
-        <button class="action-btn-new" (click)="shareProperty()">
-          <lucide-icon [img]="Share2" class="btn-icon-detail"></lucide-icon>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <div class="content-layout">
-    <!-- Left Column -->
-    <div class="main-content">
-      <!-- Quick Stats New -->
-      <div class="quick-stats-grid">
-        <div class="stat-card-new" *ngIf="property.square_meters || property.total_area">
-          <div class="stat-icon-wrap"><lucide-icon [img]="Maximize"></lucide-icon></div>
-          <div class="stat-info-new">
-            <span class="stat-val-new">{{ property.square_meters || property.total_area }}m²</span>
-            <span class="stat-lab-new">{{ 'public.propertyDetail.totalArea' | transloco }}</span>
-          </div>
+      @if (hasMultipleImages()) {
+        <div class="thumbnail-gallery">
+          @for (image of getImagesArray(); track image; let i = $index) {
+            <img
+              [src]="image"
+              [alt]="'public.propertyDetail.imageNumber' | transloco: { num: i + 1 }"
+              [class.active]="i === currentImageIndex()"
+              (click)="selectImage(i)"
+              class="thumbnail"
+            />
+          }
         </div>
-
-        <div class="stat-card-new" *ngIf="property.bedrooms">
-          <div class="stat-icon-wrap"><lucide-icon [img]="Bed"></lucide-icon></div>
-          <div class="stat-info-new">
-            <span class="stat-val-new">{{ property.bedrooms }}</span>
-            <span class="stat-lab-new">{{ 'public.propertyDetail.bedrooms' | transloco }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card-new" *ngIf="property.bathrooms">
-          <div class="stat-icon-wrap"><lucide-icon [img]="Bath"></lucide-icon></div>
-          <div class="stat-info-new">
-            <span class="stat-val-new">{{ property.bathrooms }}</span>
-            <span class="stat-lab-new">{{ 'public.propertyDetail.bathrooms' | transloco }}</span>
-          </div>
-        </div>
-
-        <div class="stat-card-new" *ngIf="property.parking_spaces">
-          <div class="stat-icon-wrap"><lucide-icon [img]="Car"></lucide-icon></div>
-          <div class="stat-info-new">
-            <span class="stat-val-new">{{ property.parking_spaces }}</span>
-            <span class="stat-lab-new">{{ 'public.propertyDetail.parking' | transloco }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Description -->
-      <div class="section-card">
-        <h2 class="section-title">{{ 'public.propertyDetail.description' | transloco }}</h2>
-        <p class="description-text">{{ property.description }}</p>
-      </div>
-
-      <!-- Amenities -->
-      <div class="section-card">
-        <h2 class="section-title">{{ 'public.propertyDetail.amenities' | transloco }}</h2>
-        <div class="amenities-grid">
-          <div class="amenity-item" *ngFor="let amenity of property.amenities">
-            <span class="amenity-icon">✓</span>
-            {{ amenity }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Property Details -->
-      <div class="section-card">
-        <h2 class="section-title">{{ 'public.propertyDetail.detailsTitle' | transloco }}</h2>
-        <div class="details-grid">
-          <div class="detail-row">
-            <span class="detail-label">{{ 'public.propertyDetail.propType' | transloco }}</span>
-            <span class="detail-value">{{ getPropertyTypeName() }}</span>
-          </div>
-          <div class="detail-row" *ngIf="getPropertySubtypeName()">
-            <span class="detail-label">{{ 'public.propertyDetail.propSubtype' | transloco }}</span>
-            <span class="detail-value">{{ getPropertySubtypeName() }}</span>
-          </div>
-          <div class="detail-row" *ngIf="property.monthly_rent || property.monthly_rent_amount">
-            <span class="detail-label">{{ 'public.propertyDetail.monthlyRent' | transloco }}</span>
-            <span class="detail-value"
-              >{{ property.currency || 'BOB' }}
-              {{ property.monthly_rent || property.monthly_rent_amount | number: '1.0-0' }}</span
-            >
-          </div>
-          <div class="detail-row" *ngIf="property.security_deposit_amount">
-            <span class="detail-label">{{
-              'public.propertyDetail.depositAmount' | transloco
-            }}</span>
-            <span class="detail-value"
-              >{{ property.currency || 'BOB' }}
-              {{ property.security_deposit_amount | number: '1.0-0' }}</span
-            >
-          </div>
-          <div class="detail-row" *ngIf="property.year_built">
-            <span class="detail-label">{{ 'public.propertyDetail.yearBuilt' | transloco }}</span>
-            <span class="detail-value">{{ property.year_built }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="detail-label">{{ 'public.propertyDetail.furnished' | transloco }}</span>
-            <span class="detail-value">{{
-              property.is_furnished ? ('common.yes' | transloco) : ('common.no' | transloco)
-            }}</span>
-          </div>
-          <div class="detail-row" *ngIf="property.availability_date">
-            <span class="detail-label">{{
-              'public.propertyDetail.availableFrom' | transloco
-            }}</span>
-            <span class="detail-value">{{ property.availability_date | date: 'dd/MM/yyyy' }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Map Section -->
-      <div class="section-card-map">
-        <h2 class="section-title-new">{{ 'public.propertyDetail.location' | transloco }}</h2>
-        <div class="map-placeholder-new">
-          <div class="map-overlay-new">
-            <div class="map-info-new">
-              <lucide-icon [img]="MapPin" class="map-icon-big"></lucide-icon>
-              <p class="map-address-new">{{ getPropertyAddress() }}</p>
-              <button class="btn-view-map-new" (click)="openMapModal()">
-                {{ 'public.propertyDetail.viewMap' | transloco }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      }
     </div>
 
-    <!-- Right Column - Contact Card -->
-    <div class="sidebar-new">
-      <div class="contact-card-premium sticky-sidebar">
-        <h3 class="contact-title-new">{{ 'public.propertyDetail.interestedTitle' | transloco }}</h3>
-        <p class="contact-subtitle-new">
-          {{ 'public.propertyDetail.interestedSubtitle' | transloco }}
-        </p>
-
-        <div class="contact-info-list">
-          <div class="contact-item-new" *ngIf="getOwnerName()">
-            <div class="contact-icon-new blue-bg"><lucide-icon [img]="User"></lucide-icon></div>
-            <div class="contact-text-new">
-              <span class="contact-label-new">{{ 'public.propertyDetail.owner' | transloco }}</span>
-              <span class="contact-value-new">{{ getOwnerName() }}</span>
-            </div>
-          </div>
-
-          <div class="contact-item-new" *ngIf="getOwnerEmail()">
-            <div class="contact-icon-new green-bg"><lucide-icon [img]="Mail"></lucide-icon></div>
-            <div class="contact-text-new">
-              <span class="contact-label-new">{{ 'public.propertyDetail.email' | transloco }}</span>
-              <span class="contact-value-new">{{ getOwnerEmail() }}</span>
-            </div>
-          </div>
-
-          <div class="contact-item-new" *ngIf="getOwnerPhone()">
-            <div class="contact-icon-new orange-bg"><lucide-icon [img]="Phone"></lucide-icon></div>
-            <div class="contact-text-new">
-              <span class="contact-label-new">{{ 'public.propertyDetail.phone' | transloco }}</span>
-              <span class="contact-value-new">{{ getOwnerPhone() }}</span>
-            </div>
+    <!-- Property Header -->
+    <div class="property-header-new">
+      <div class="header-main-info">
+        <div class="title-area">
+          <h1 class="prop-title">{{ prop.title }}</h1>
+          <div class="prop-location">
+            <lucide-icon [img]="MapPin" class="loc-icon-small" />
+            {{ getPropertyAddress() }}
           </div>
         </div>
 
-        <div class="cta-actions-new">
-          <button class="btn-apply-now" (click)="openApplicationModal()">
-            {{ 'public.propertyDetail.applyNow' | transloco }}
-          </button>
-          <button class="btn-message-now" (click)="openContactModal()">
-            <lucide-icon [img]="MessageSquare" class="btn-icon-small"></lucide-icon>
-            {{ 'public.propertyDetail.sendMessage' | transloco }}
-          </button>
-          <button class="btn-call-now">
-            <lucide-icon [img]="PhoneCall" class="btn-icon-small"></lucide-icon>
-            {{ 'public.propertyDetail.callNow' | transloco }}
-          </button>
-        </div>
+        @if (getPropertyTypeName()) {
+          <div class="tags-pill-detail">
+            <div class="tag-icons-detail">
+              <div class="t-icon-circle-detail bg-blue">
+                <lucide-icon [img]="Home" class="t-icon-detail" />
+              </div>
+              @if (getPropertySubtypeName()) {
+                <div class="t-icon-circle-detail bg-orange">
+                  <lucide-icon [img]="MapPin" class="t-icon-detail" />
+                </div>
+              }
+            </div>
+            <span>{{ getPropertyTypeName() }}</span>
+          </div>
+        }
+      </div>
 
-        <div class="schedule-section-new">
-          <div class="divider-new"></div>
-          <p class="schedule-text-new">{{ 'public.propertyDetail.scheduleTitle' | transloco }}</p>
-          <button class="btn-schedule-new">
-            {{ 'public.propertyDetail.scheduleBtn' | transloco }}
+      <div class="header-side-info">
+        @if (prop.monthly_rent || prop.monthly_rent_amount) {
+          <div class="price-section-new">
+            <span class="price-value">
+              {{ prop.currency || 'BOB' }}
+              {{ prop.monthly_rent || prop.monthly_rent_amount | number: '1.0-0' }}
+            </span>
+            <span class="price-label">{{ 'public.propertyDetail.perMonth' | transloco }}</span>
+          </div>
+        }
+
+        <div class="header-actions-new">
+          <button
+            type="button"
+            class="action-btn-new"
+            [class.active]="isFavorite()"
+            (click)="toggleFavorite()"
+          >
+            <lucide-icon
+              [img]="Heart"
+              class="btn-icon-detail"
+              [style.fill]="isFavorite() ? '#ef4444' : 'none'"
+            />
+          </button>
+          <button type="button" class="action-btn-new" (click)="shareProperty()">
+            <lucide-icon [img]="Share2" class="btn-icon-detail" />
           </button>
         </div>
       </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="content-layout">
+      <!-- Left Column -->
+      <div class="main-content">
+        <!-- Quick Stats -->
+        <div class="quick-stats-grid">
+          @if (prop.square_meters || prop.total_area) {
+            <div class="stat-card-new">
+              <div class="stat-icon-wrap"><lucide-icon [img]="Maximize" /></div>
+              <div class="stat-info-new">
+                <span class="stat-val-new">{{ prop.square_meters || prop.total_area }}m²</span>
+                <span class="stat-lab-new">{{
+                  'public.propertyDetail.totalArea' | transloco
+                }}</span>
+              </div>
+            </div>
+          }
+          @if (prop.bedrooms) {
+            <div class="stat-card-new">
+              <div class="stat-icon-wrap"><lucide-icon [img]="Bed" /></div>
+              <div class="stat-info-new">
+                <span class="stat-val-new">{{ prop.bedrooms }}</span>
+                <span class="stat-lab-new">{{ 'public.propertyDetail.bedrooms' | transloco }}</span>
+              </div>
+            </div>
+          }
+          @if (prop.bathrooms) {
+            <div class="stat-card-new">
+              <div class="stat-icon-wrap"><lucide-icon [img]="Bath" /></div>
+              <div class="stat-info-new">
+                <span class="stat-val-new">{{ prop.bathrooms }}</span>
+                <span class="stat-lab-new">{{
+                  'public.propertyDetail.bathrooms' | transloco
+                }}</span>
+              </div>
+            </div>
+          }
+          @if (prop.parking_spaces) {
+            <div class="stat-card-new">
+              <div class="stat-icon-wrap"><lucide-icon [img]="Car" /></div>
+              <div class="stat-info-new">
+                <span class="stat-val-new">{{ prop.parking_spaces }}</span>
+                <span class="stat-lab-new">{{ 'public.propertyDetail.parking' | transloco }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Description -->
+        <div class="section-card">
+          <h2 class="section-title">{{ 'public.propertyDetail.description' | transloco }}</h2>
+          <p class="description-text">{{ prop.description }}</p>
+        </div>
+
+        <!-- Amenities -->
+        @if (prop.amenities?.length) {
+          <div class="section-card">
+            <h2 class="section-title">{{ 'public.propertyDetail.amenities' | transloco }}</h2>
+            <div class="amenities-grid">
+              @for (amenity of prop.amenities; track amenity) {
+                <div class="amenity-item">
+                  <span class="amenity-icon">✓</span>
+                  {{ amenity }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Property Details -->
+        <div class="section-card">
+          <h2 class="section-title">{{ 'public.propertyDetail.detailsTitle' | transloco }}</h2>
+          <div class="details-grid">
+            <div class="detail-row">
+              <span class="detail-label">{{ 'public.propertyDetail.propType' | transloco }}</span>
+              <span class="detail-value">{{ getPropertyTypeName() }}</span>
+            </div>
+            @if (getPropertySubtypeName()) {
+              <div class="detail-row">
+                <span class="detail-label">{{
+                  'public.propertyDetail.propSubtype' | transloco
+                }}</span>
+                <span class="detail-value">{{ getPropertySubtypeName() }}</span>
+              </div>
+            }
+            @if (prop.monthly_rent || prop.monthly_rent_amount) {
+              <div class="detail-row">
+                <span class="detail-label">{{
+                  'public.propertyDetail.monthlyRent' | transloco
+                }}</span>
+                <span class="detail-value">
+                  {{ prop.currency || 'BOB' }}
+                  {{ prop.monthly_rent || prop.monthly_rent_amount | number: '1.0-0' }}
+                </span>
+              </div>
+            }
+            @if (prop.security_deposit_amount) {
+              <div class="detail-row">
+                <span class="detail-label">{{
+                  'public.propertyDetail.depositAmount' | transloco
+                }}</span>
+                <span class="detail-value">
+                  {{ prop.currency || 'BOB' }} {{ prop.security_deposit_amount | number: '1.0-0' }}
+                </span>
+              </div>
+            }
+            @if (prop.year_built) {
+              <div class="detail-row">
+                <span class="detail-label">{{
+                  'public.propertyDetail.yearBuilt' | transloco
+                }}</span>
+                <span class="detail-value">{{ prop.year_built }}</span>
+              </div>
+            }
+            <div class="detail-row">
+              <span class="detail-label">{{ 'public.propertyDetail.furnished' | transloco }}</span>
+              <span class="detail-value">{{
+                prop.is_furnished ? ('common.yes' | transloco) : ('common.no' | transloco)
+              }}</span>
+            </div>
+            @if (prop.availability_date) {
+              <div class="detail-row">
+                <span class="detail-label">{{
+                  'public.propertyDetail.availableFrom' | transloco
+                }}</span>
+                <span class="detail-value">{{ prop.availability_date | date: 'dd/MM/yyyy' }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Map Section -->
+        <div class="section-card-map">
+          <h2 class="section-title-new">{{ 'public.propertyDetail.location' | transloco }}</h2>
+          <div class="map-placeholder-new">
+            <div class="map-overlay-new">
+              <div class="map-info-new">
+                <lucide-icon [img]="MapPin" class="map-icon-big" />
+                <p class="map-address-new">{{ getPropertyAddress() }}</p>
+                <button type="button" class="btn-view-map-new" (click)="openMapModal()">
+                  {{ 'public.propertyDetail.viewMap' | transloco }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Disponibilidad corto plazo -->
+        @if (shortTermUnit(); as unit) {
+          <div class="section-card-map">
+            <h2 class="section-title-new">{{ 'public.availability.title' | transloco }}</h2>
+            <app-availability-calendar
+              [propertyId]="property()!.id"
+              [unitId]="unit.id"
+              [pricePerNight]="unit.price_per_night ?? 0"
+              [cleaningFee]="unit.cleaning_fee ?? 0"
+              [minNights]="unit.min_nights ?? 1"
+              [currency]="property()?.currency ?? 'USD'"
+            />
+          </div>
+        }
+      </div>
+
+      <!-- Right Column - Contact Card -->
+      <div class="sidebar-new">
+        <div class="contact-card-premium sticky-sidebar">
+          <h3 class="contact-title-new">
+            {{ 'public.propertyDetail.interestedTitle' | transloco }}
+          </h3>
+          <p class="contact-subtitle-new">
+            {{ 'public.propertyDetail.interestedSubtitle' | transloco }}
+          </p>
+
+          <div class="contact-info-list">
+            @if (getOwnerName()) {
+              <div class="contact-item-new">
+                <div class="contact-icon-new blue-bg"><lucide-icon [img]="User" /></div>
+                <div class="contact-text-new">
+                  <span class="contact-label-new">{{
+                    'public.propertyDetail.owner' | transloco
+                  }}</span>
+                  <span class="contact-value-new">{{ getOwnerName() }}</span>
+                </div>
+              </div>
+            }
+            @if (getOwnerEmail()) {
+              <div class="contact-item-new">
+                <div class="contact-icon-new green-bg"><lucide-icon [img]="Mail" /></div>
+                <div class="contact-text-new">
+                  <span class="contact-label-new">{{
+                    'public.propertyDetail.email' | transloco
+                  }}</span>
+                  <span class="contact-value-new">{{ getOwnerEmail() }}</span>
+                </div>
+              </div>
+            }
+            @if (getOwnerPhone()) {
+              <div class="contact-item-new">
+                <div class="contact-icon-new orange-bg"><lucide-icon [img]="Phone" /></div>
+                <div class="contact-text-new">
+                  <span class="contact-label-new">{{
+                    'public.propertyDetail.phone' | transloco
+                  }}</span>
+                  <span class="contact-value-new">{{ getOwnerPhone() }}</span>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="cta-actions-new">
+            <button type="button" class="btn-apply-now" (click)="openApplicationModal()">
+              {{ 'public.propertyDetail.applyNow' | transloco }}
+            </button>
+            <button type="button" class="btn-message-now" (click)="openContactModal()">
+              <lucide-icon [img]="MessageSquare" class="btn-icon-small" />
+              {{ 'public.propertyDetail.sendMessage' | transloco }}
+            </button>
+            <button type="button" class="btn-call-now">
+              <lucide-icon [img]="PhoneCall" class="btn-icon-small" />
+              {{ 'public.propertyDetail.callNow' | transloco }}
+            </button>
+          </div>
+
+          <div class="schedule-section-new">
+            <div class="divider-new"></div>
+            <p class="schedule-text-new">{{ 'public.propertyDetail.scheduleTitle' | transloco }}</p>
+            <button type="button" class="btn-schedule-new">
+              {{ 'public.propertyDetail.scheduleBtn' | transloco }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
+}
 
 <!-- Modals -->
-<app-application-modal
-  *ngIf="showApplicationModal && property"
-  [property]="property"
-  (close)="closeApplicationModal()"
-></app-application-modal>
+@if (showApplicationModal() && property()) {
+  <app-application-modal [property]="property()!" (close)="closeApplicationModal()" />
+}
 
-<app-contact-modal
-  *ngIf="showContactModal && property"
-  [property]="property"
-  (close)="closeContactModal()"
-></app-contact-modal>
+@if (showContactModal() && property()) {
+  <app-contact-modal [property]="property()!" (close)="closeContactModal()" />
+}
 
-<app-map-modal
-  *ngIf="showMapModal && property"
-  [location]="getLocationForMap()"
-  (close)="closeMapModal()"
-></app-map-modal>
+@if (showMapModal()) {
+  <app-map-modal [location]="getLocationForMap()" (close)="closeMapModal()" />
+}

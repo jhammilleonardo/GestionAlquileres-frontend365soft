@@ -1,163 +1,128 @@
 <div class="page-wrapper">
-  <!-- ── Header ─────────────────────────────────────────────── -->
-  <div class="page-header">
-    <div class="header-title">
-      <lucide-icon [img]="UserCogIcon" [size]="22" aria-hidden="true"></lucide-icon>
-      <h1>{{ 'employees.title' | transloco }}</h1>
-    </div>
-    <div class="header-actions">
-      <button
-        mat-icon-button
-        (click)="loadEmployees()"
+  <app-page-header
+    [eyebrow]="'sidebar.menu.employees' | transloco"
+    [title]="'employees.title' | transloco"
+    [description]="'employees.subtitle' | transloco"
+  >
+    <div actions class="header-actions">
+      <app-button
+        appearance="outline"
+        size="s"
         [disabled]="isLoading()"
-        [matTooltip]="'employees.reload' | transloco"
-        [attr.aria-label]="'employees.reloadAria' | transloco"
+        [ariaLabel]="'employees.reloadAria' | transloco"
+        (clicked)="loadEmployees()"
       >
-        <lucide-icon [img]="RefreshCwIcon" [size]="18" aria-hidden="true"></lucide-icon>
-      </button>
-      <button
-        mat-flat-button
-        color="primary"
-        (click)="openCreateDialog()"
-        [attr.aria-label]="'employees.createAria' | transloco"
+        <lucide-icon [img]="RefreshCwIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        <span>{{ 'employees.reload' | transloco }}</span>
+      </app-button>
+
+      <app-button
+        size="s"
+        [ariaLabel]="'employees.createAria' | transloco"
+        (clicked)="openCreateDialog()"
       >
         <lucide-icon [img]="UserPlusIcon" [size]="16" aria-hidden="true"></lucide-icon>
         <span>{{ 'employees.new' | transloco }}</span>
-      </button>
+      </app-button>
     </div>
-  </div>
+  </app-page-header>
 
-  <!-- ── Layout: tabla + panel ──────────────────────────────── -->
   <div class="content-layout" [class.panel-open]="isPanelOpen()">
-    <!-- Tabla -->
     <div class="table-section">
       @if (isLoading()) {
-        <div
-          class="loading-state"
-          role="status"
-          [attr.aria-label]="'employees.loading' | transloco"
-        >
-          <mat-spinner diameter="40"></mat-spinner>
+        <div class="state-shell">
+          <app-loading-state [label]="'employees.loading' | transloco"></app-loading-state>
         </div>
       } @else if (errorMessage()) {
-        <div class="error-state" role="alert">
-          <p>{{ errorMessage() }}</p>
-          <button mat-stroked-button (click)="loadEmployees()">
+        <app-empty-state [title]="'common.error' | transloco" [description]="errorMessage()">
+          <lucide-icon icon [img]="UserCogIcon" [size]="28" aria-hidden="true"></lucide-icon>
+          <app-button actions appearance="outline" (clicked)="loadEmployees()">
             {{ 'common.refresh' | transloco }}
-          </button>
-        </div>
+          </app-button>
+        </app-empty-state>
       } @else if (employees().length === 0) {
-        <div class="empty-state">
-          <lucide-icon
-            [img]="UserCogIcon"
-            [size]="48"
-            aria-hidden="true"
-            class="empty-icon"
-          ></lucide-icon>
-          <p>{{ 'employees.empty' | transloco }}</p>
-          <button mat-flat-button color="primary" (click)="openCreateDialog()">
+        <app-empty-state
+          [title]="'employees.empty' | transloco"
+          [description]="'employees.emptyDescription' | transloco"
+        >
+          <lucide-icon icon [img]="UserCogIcon" [size]="28" aria-hidden="true"></lucide-icon>
+          <app-button actions (clicked)="openCreateDialog()">
             {{ 'employees.createFirst' | transloco }}
-          </button>
-        </div>
+          </app-button>
+        </app-empty-state>
       } @else {
         <div
           class="table-container"
           role="region"
           [attr.aria-label]="'employees.title' | transloco"
         >
-          <table mat-table [dataSource]="employees()" class="employees-table">
-            <!-- Avatar + Nombre -->
-            <ng-container matColumnDef="avatar">
-              <th mat-header-cell *matHeaderCellDef class="col-avatar" scope="col"></th>
-              <td mat-cell *matCellDef="let row" class="col-avatar">
-                <div class="avatar" aria-hidden="true">{{ getInitials(row.name) }}</div>
-              </td>
-            </ng-container>
-
-            <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef scope="col">{{ 'common.name' | transloco }}</th>
-              <td mat-cell *matCellDef="let row">
-                <div class="cell-name">{{ row.name }}</div>
-                <div class="cell-sub mobile-only">{{ row.email }}</div>
-              </td>
-            </ng-container>
-
-            <!-- Email -->
-            <ng-container matColumnDef="email">
-              <th mat-header-cell *matHeaderCellDef scope="col" class="hide-mobile">
-                {{ 'common.email' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row" class="hide-mobile">{{ row.email }}</td>
-            </ng-container>
-
-            <!-- Estado -->
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef scope="col">
-                {{ 'common.status' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row">
-                <span
-                  class="status-chip"
-                  [class.active]="row.is_active"
-                  [class.inactive]="!row.is_active"
-                >
-                  {{ (row.is_active ? 'common.active' : 'common.inactive') | transloco }}
-                </span>
-              </td>
-            </ng-container>
-
-            <!-- Última conexión -->
-            <ng-container matColumnDef="lastConnection">
-              <th mat-header-cell *matHeaderCellDef scope="col" class="hide-tablet">
-                {{ 'employees.lastConnection' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let row" class="hide-tablet">
-                {{ row.last_connection | tenantDate }}
-              </td>
-            </ng-container>
-
-            <!-- Acciones -->
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef scope="col" class="col-actions"></th>
-              <td mat-cell *matCellDef="let row" class="col-actions">
-                <button
-                  mat-icon-button
+          <table class="employees-table">
+            <thead>
+              <tr>
+                <th class="col-avatar" scope="col"></th>
+                <th scope="col">{{ 'common.name' | transloco }}</th>
+                <th scope="col" class="hide-mobile">{{ 'common.email' | transloco }}</th>
+                <th scope="col">{{ 'common.status' | transloco }}</th>
+                <th scope="col" class="hide-tablet">
+                  {{ 'employees.lastConnection' | transloco }}
+                </th>
+                <th scope="col" class="col-actions">{{ 'common.actions' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of employees(); track row.id) {
+                <tr
+                  class="clickable-row"
+                  [class.row-selected]="selectedEmployee()?.id === row.id"
+                  [attr.aria-selected]="selectedEmployee()?.id === row.id"
                   (click)="selectEmployee(row)"
-                  [class.selected]="selectedEmployee()?.id === row.id"
-                  [attr.aria-label]="
-                    'employees.viewPermissionsAria' | transloco: { name: row.name }
-                  "
-                  [attr.aria-pressed]="selectedEmployee()?.id === row.id"
-                  [matTooltip]="'employees.managePermissions' | transloco"
                 >
-                  <lucide-icon [img]="UserCogIcon" [size]="18" aria-hidden="true"></lucide-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr
-              mat-row
-              *matRowDef="let row; columns: displayedColumns"
-              (click)="selectEmployee(row)"
-              [class.row-selected]="selectedEmployee()?.id === row.id"
-              [attr.aria-selected]="selectedEmployee()?.id === row.id"
-              role="row"
-              class="clickable-row"
-            ></tr>
+                  <td class="col-avatar">
+                    <div class="avatar" aria-hidden="true">{{ getInitials(row.name) }}</div>
+                  </td>
+                  <td>
+                    <div class="cell-name">{{ row.name }}</div>
+                    <div class="cell-sub mobile-only">{{ row.email }}</div>
+                  </td>
+                  <td class="hide-mobile">{{ row.email }}</td>
+                  <td>
+                    <span
+                      class="status-chip"
+                      [class.active]="row.is_active"
+                      [class.inactive]="!row.is_active"
+                    >
+                      {{ (row.is_active ? 'common.active' : 'common.inactive') | transloco }}
+                    </span>
+                  </td>
+                  <td class="hide-tablet">{{ row.last_connection | tenantDate }}</td>
+                  <td class="col-actions">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [class.selected]="selectedEmployee()?.id === row.id"
+                      [attr.aria-label]="
+                        'employees.viewPermissionsAria' | transloco: { name: row.name }
+                      "
+                      [attr.aria-pressed]="selectedEmployee()?.id === row.id"
+                      (click)="selectEmployee(row); $event.stopPropagation()"
+                    >
+                      <lucide-icon [img]="UserCogIcon" [size]="18" aria-hidden="true"></lucide-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
           </table>
         </div>
       }
     </div>
 
-    <!-- Panel lateral -->
     @if (isPanelOpen() && selectedEmployee()) {
       <div
         class="panel-section"
         role="region"
         [attr.aria-label]="'employees.panel.permissions' | transloco"
       >
-        <!-- Backdrop en mobile -->
         <div class="panel-backdrop" (click)="closePanel()" aria-hidden="true"></div>
         <app-employee-panel
           [employee]="selectedEmployee()!"
@@ -168,4 +133,16 @@
       </div>
     }
   </div>
+
+  <app-dialog
+    [open]="isCreateDialogOpen()"
+    [title]="'employees.dialog.title' | transloco"
+    [showFooter]="false"
+    (closed)="closeCreateDialog()"
+  >
+    <app-create-employee-dialog
+      (dialogClosed)="closeCreateDialog()"
+      (employeeCreated)="onEmployeeCreated($event)"
+    ></app-create-employee-dialog>
+  </app-dialog>
 </div>

@@ -1,195 +1,126 @@
-import { Component, inject } from '@angular/core';
-import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { LucideAngularModule, CheckCircle, FileText } from 'lucide-angular';
-import { Contract } from '../../../core/services/tenant/tenant-contract.service';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { FormatService } from '../../../core/services/format.service';
-
-export interface SigningSuccessDialogData {
-  contract: Contract;
-}
+import { CheckCircle, FileText } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
+import { Contract } from '../../../core/services/tenant/tenant-contract.service';
+import { AppButtonComponent, AppDialogComponent } from '../../../shared/ui';
 
 @Component({
   selector: 'app-signing-success-dialog',
   standalone: true,
-  imports: [MatDialogModule, MatButtonModule, LucideAngularModule, TranslocoModule],
+  imports: [LucideAngularModule, TranslocoModule, AppButtonComponent, AppDialogComponent],
   template: `
-    <div class="success-dialog-container">
-      <div class="success-icon">
-        <lucide-icon [img]="CheckCircle" [size]="64"></lucide-icon>
-      </div>
-      <h2 class="success-title">{{ 'public.signingSuccess.title' | transloco }}</h2>
-      <p class="success-message">
-        {{ 'public.signingSuccess.message' | transloco }}
-      </p>
+    <app-dialog
+      [open]="open()"
+      [title]="'public.signingSuccess.title' | transloco"
+      [closeOnBackdrop]="false"
+      (closed)="closed.emit()"
+    >
+      <div class="success-content">
+        <div class="success-icon">
+          <lucide-icon [img]="CheckCircle" [size]="58"></lucide-icon>
+        </div>
 
-      <div class="contract-info">
-        <div class="info-row">
-          <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
-          <span class="info-label">{{ 'public.signingSuccess.contractNumber' | transloco }}</span>
-          <span class="info-value">{{ data.contract.contract_number }}</span>
+        <p class="success-message">{{ 'public.signingSuccess.message' | transloco }}</p>
+
+        @if (contract(); as c) {
+          <div class="contract-info">
+            <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
+            <span>{{ 'public.signingSuccess.contractNumber' | transloco }}</span>
+            <strong>{{ c.contract_number }}</strong>
+          </div>
+        }
+
+        <div class="success-details">
+          <p>{{ 'public.signingSuccess.storageMessage' | transloco }}</p>
         </div>
       </div>
 
-      <div class="success-details">
-        <p class="detail-item">
-          <strong>{{ 'public.signingSuccess.signingDateLabel' | transloco }}</strong>
-          {{ signingDate }}
-        </p>
-        <p class="detail-item">
-          {{ 'public.signingSuccess.storageMessage' | transloco }}
-        </p>
-      </div>
-
-      <div class="dialog-actions">
-        <button mat-raised-button color="primary" (click)="onClose()" class="close-btn">
+      <div dialog-actions>
+        <app-button appearance="primary" (clicked)="closed.emit()">
           {{ 'public.signingSuccess.understood' | transloco }}
-        </button>
+        </app-button>
       </div>
-    </div>
+    </app-dialog>
   `,
-  styles: [
-    `
-      .success-dialog-container {
-        padding: 32px 24px;
-        text-align: center;
-      }
+  styles: `
+    :host {
+      --app-dialog-width: 460px;
+    }
 
-      .success-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: white;
-        margin-bottom: 20px;
-        animation: scaleIn 0.3s ease-out;
-      }
+    .success-content {
+      display: grid;
+      justify-items: center;
+      gap: var(--app-space-4);
+      text-align: center;
+    }
 
-      @keyframes scaleIn {
-        from {
-          transform: scale(0);
-          opacity: 0;
-        }
-        to {
-          transform: scale(1);
-          opacity: 1;
-        }
-      }
+    .success-icon {
+      display: inline-grid;
+      place-items: center;
+      inline-size: 5rem;
+      block-size: 5rem;
+      border-radius: 50%;
+      background: var(--tui-status-positive);
+      color: #fff;
+    }
 
-      .success-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 12px 0;
-      }
+    .success-message {
+      max-inline-size: 28rem;
+      margin: 0;
+      color: var(--app-color-text-muted);
+      line-height: 1.6;
+    }
 
-      .success-message {
-        font-size: 1rem;
-        color: #64748b;
-        margin: 0 0 24px 0;
-        line-height: 1.6;
-      }
+    .contract-info {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: var(--app-space-2);
+      inline-size: 100%;
+      border-radius: var(--app-radius-md);
+      background: var(--app-color-surface-muted);
+      padding: var(--app-space-3);
+      text-align: start;
+    }
 
-      .contract-info {
-        background: #f8fafc;
-        border-radius: 10px;
-        padding: 16px;
-        margin-bottom: 20px;
-        text-align: left;
-      }
+    .contract-info span {
+      color: var(--app-color-text-muted);
+      font-weight: 650;
+    }
 
-      .info-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.95rem;
-      }
+    .contract-info strong {
+      color: var(--app-color-text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 800;
+    }
 
-      .info-row lucide-icon {
-        color: var(--mat-sys-primary);
-      }
+    .success-details {
+      border-radius: var(--app-radius-md);
+      background: var(--tui-status-positive-pale);
+      color: var(--tui-status-positive);
+      padding: var(--app-space-3);
+      text-align: start;
+    }
 
-      .info-label {
-        color: #64748b;
-        font-weight: 500;
-      }
+    .success-details p {
+      margin: 0;
+      line-height: 1.5;
+    }
 
-      .info-value {
-        color: #1e293b;
-        font-weight: 600;
-        font-family: monospace;
-      }
-
-      .success-details {
-        background: #ecfdf5;
-        border-left: 4px solid #10b981;
-        border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 24px;
-        text-align: left;
-      }
-
-      .detail-item {
-        margin: 0 0 8px 0;
-        font-size: 0.9rem;
-        color: #065f46;
-        line-height: 1.5;
-      }
-
-      .detail-item:last-child {
-        margin-bottom: 0;
-      }
-
-      .detail-item strong {
-        color: #047857;
-        font-weight: 600;
-      }
-
-      .dialog-actions {
-        display: flex;
-        justify-content: center;
-      }
-
-      .close-btn {
-        min-width: 150px;
-        padding: 12px 32px;
-        font-size: 1rem;
-        font-weight: 600;
-      }
-
-      @media (max-width: 600px) {
-        .success-dialog-container {
-          padding: 24px 16px;
-        }
-
-        .success-title {
-          font-size: 1.25rem;
-        }
-
-        .success-message {
-          font-size: 0.95rem;
-        }
-      }
-    `,
-  ],
+    [dialog-actions] {
+      display: flex;
+      justify-content: center;
+    }
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SigningSuccessDialogComponent {
-  readonly CheckCircle = CheckCircle;
-  readonly FileText = FileText;
+  readonly open = input(false);
+  readonly contract = input<Contract | null>(null);
+  readonly closed = output<void>();
 
-  private dialogRef: MatDialogRef<SigningSuccessDialogComponent> = inject(
-    MatDialogRef<SigningSuccessDialogComponent>,
-  );
-  readonly data = inject<SigningSuccessDialogData>(MAT_DIALOG_DATA);
-  private formatService = inject(FormatService);
-
-  signingDate = this.formatService.formatDateTime(new Date());
-
-  onClose(): void {
-    this.dialogRef.close(true);
-  }
+  protected readonly CheckCircle = CheckCircle;
+  protected readonly FileText = FileText;
 }

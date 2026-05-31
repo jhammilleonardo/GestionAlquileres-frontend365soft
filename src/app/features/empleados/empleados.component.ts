@@ -7,13 +7,6 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { LucideAngularModule, UserPlus, RefreshCw, UserCog } from 'lucide-angular';
 import { catchError, EMPTY } from 'rxjs';
 import { EmployeesService } from '../../core/services/admin/employees.service';
@@ -24,6 +17,12 @@ import { provideTranslocoScope } from '@jsverse/transloco';
 import { EmployeePanelComponent } from './components/employee-panel/employee-panel.component';
 import { CreateEmployeeDialogComponent } from './components/create-employee-dialog/create-employee-dialog.component';
 import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { AppDialogComponent } from '../../shared/ui/dialog/dialog.component';
+import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
+import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
+import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-empleados',
@@ -31,15 +30,16 @@ import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
   providers: [provideTranslocoScope({ scope: 'empleados', alias: 'employees' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    MatTableModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
     LucideAngularModule,
     TranslocoModule,
     EmployeePanelComponent,
+    CreateEmployeeDialogComponent,
     TenantDatePipe,
+    AppButtonComponent,
+    AppDialogComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
   ],
   templateUrl: './empleados.component.html',
   styleUrl: './empleados.component.scss',
@@ -47,10 +47,9 @@ import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
 export class EmpleadosComponent {
   private employeesService = inject(EmployeesService);
   private slugService = inject(SlugService);
-  private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
   private transloco = inject(TranslocoService);
   private destroyRef = inject(DestroyRef);
+  private toast = inject(ToastService);
 
   // Icons
   readonly UserPlusIcon = UserPlus;
@@ -62,10 +61,9 @@ export class EmpleadosComponent {
   selectedEmployee = signal<Employee | null>(null);
   isLoading = signal(true);
   errorMessage = signal<string | null>(null);
+  isCreateDialogOpen = signal(false);
 
   isPanelOpen = computed(() => this.selectedEmployee() !== null);
-
-  readonly displayedColumns = ['avatar', 'name', 'email', 'status', 'lastConnection', 'actions'];
 
   constructor() {
     this.loadEmployees();
@@ -116,20 +114,19 @@ export class EmpleadosComponent {
   }
 
   openCreateDialog(): void {
-    const ref = this.dialog.open(CreateEmployeeDialogComponent, {
-      width: '480px',
-      maxWidth: '95vw',
-    });
+    this.isCreateDialogOpen.set(true);
+  }
 
-    ref.afterClosed().subscribe((newEmployee: Employee | null) => {
-      if (!newEmployee) return;
-      this.employees.update((list) => [...list, newEmployee]);
-      this.snackBar.open(
-        this.transloco.translate('employees.createdSuccess', { name: newEmployee.name }),
-        undefined,
-        { duration: 3000, panelClass: ['snack-success'] },
-      );
-    });
+  closeCreateDialog(): void {
+    this.isCreateDialogOpen.set(false);
+  }
+
+  onEmployeeCreated(newEmployee: Employee): void {
+    this.employees.update((list) => [...list, newEmployee]);
+    this.isCreateDialogOpen.set(false);
+    this.toast.success(
+      this.transloco.translate('employees.createdSuccess', { name: newEmployee.name }),
+    );
   }
 
   getInitials(name: string): string {

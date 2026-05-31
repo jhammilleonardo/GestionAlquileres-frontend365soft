@@ -16,16 +16,16 @@
 
     <div class="header-actions">
       @if (unreadCount() > 0) {
-        <button class="action-btn secondary" (click)="markAllAsRead()" mat-button>
+        <app-button appearance="secondary" size="s" (clicked)="markAllAsRead()">
           <lucide-icon [img]="Check" [size]="16"></lucide-icon>
           <span>{{ 'notifications.markAllRead' | transloco }}</span>
-        </button>
+        </app-button>
       }
 
-      <button class="action-btn" (click)="refresh()" mat-button>
+      <app-button appearance="primary" size="s" (clicked)="refresh()">
         <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
         <span>{{ 'notifications.refresh' | transloco }}</span>
-      </button>
+      </app-button>
     </div>
   </div>
 
@@ -34,7 +34,7 @@
     <div class="filter-tabs">
       <button
         class="filter-tab"
-        [class.active]="currentFilter === 'all'"
+        [class.active]="currentFilter() === 'all'"
         (click)="setFilter('all')"
       >
         {{ 'notifications.all' | transloco }}
@@ -43,7 +43,7 @@
 
       <button
         class="filter-tab"
-        [class.active]="currentFilter === 'unread'"
+        [class.active]="currentFilter() === 'unread'"
         (click)="setFilter('unread')"
       >
         {{ 'notifications.unread' | transloco }}
@@ -52,7 +52,7 @@
 
       <button
         class="filter-tab"
-        [class.active]="currentFilter === 'read'"
+        [class.active]="currentFilter() === 'read'"
         (click)="setFilter('read')"
       >
         {{ 'notifications.read' | transloco }}
@@ -66,8 +66,13 @@
     <div class="error-message">
       <lucide-icon [img]="Bell" [size]="16"></lucide-icon>
       <span>{{ error() }}</span>
-      <button (click)="clearError()" mat-icon-button>
-        <mat-icon>close</mat-icon>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="clearError()"
+        [attr.aria-label]="'common.close' | transloco"
+      >
+        <lucide-icon [img]="BellOff" [size]="16"></lucide-icon>
       </button>
     </div>
   }
@@ -75,30 +80,25 @@
   <!-- Loading State -->
   @if (isLoading()) {
     <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>{{ 'notifications.loading' | transloco }}</p>
+      <app-loading-state [label]="'notifications.loading' | transloco" />
     </div>
   }
 
   <!-- Empty State -->
   @if (!isLoading() && notifications().length === 0) {
-    <div class="empty-state">
-      <div class="empty-icon-wrapper">
-        <lucide-icon [img]="BellOff" [size]="40"></lucide-icon>
-      </div>
-      <h2>{{ 'notifications.empty' | transloco }}</h2>
-      <p>
-        @if (currentFilter === 'unread') {
-          {{ 'notifications.emptyUnread' | transloco }}
-        } @else {
-          {{ 'notifications.emptyAll' | transloco }}
-        }
-      </p>
-      <button class="action-btn" (click)="refresh()" mat-button>
+    <app-empty-state
+      [title]="'notifications.empty' | transloco"
+      [description]="
+        currentFilter() === 'unread'
+          ? ('notifications.emptyUnread' | transloco)
+          : ('notifications.emptyAll' | transloco)
+      "
+    >
+      <app-button actions appearance="secondary" (clicked)="refresh()">
         <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
         <span>{{ 'notifications.refresh' | transloco }}</span>
-      </button>
-    </div>
+      </app-button>
+    </app-empty-state>
   }
 
   <!-- Notifications List -->
@@ -109,7 +109,7 @@
           #notifCard
           class="notification-card"
           [class.unread]="!notification.is_read"
-          [class.highlighted]="highlightedId === notification.id"
+          [class.highlighted]="highlightedId() === notification.id"
           [attr.data-id]="notification.id"
           (click)="handleNotificationClick(notification)"
         >
@@ -176,8 +176,7 @@
               <button
                 class="icon-btn"
                 (click)="markAsRead(notification.id, $event)"
-                mat-icon-button
-                [matTooltip]="'notifications.markRead' | transloco"
+                [title]="'notifications.markRead' | transloco"
               >
                 <lucide-icon [img]="Check" [size]="16"></lucide-icon>
               </button>
@@ -186,8 +185,7 @@
             <button
               class="icon-btn delete-btn"
               (click)="deleteNotification(notification.id, $event)"
-              mat-icon-button
-              [matTooltip]="'notifications.delete' | transloco"
+              [title]="'notifications.delete' | transloco"
             >
               <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
             </button>

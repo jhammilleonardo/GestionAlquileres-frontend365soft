@@ -1,806 +1,499 @@
-import { Component, inject, computed, OnInit, signal } from '@angular/core';
-import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatTabsModule } from '@angular/material/tabs';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
-  LucideAngularModule,
-  FileEdit,
-  Clock,
-  CheckCircle2,
-  XCircle,
   AlertCircle,
-  Plus,
+  CheckCircle2,
+  Clock,
   Eye,
+  FileEdit,
   FileSignature,
+  Plus,
+  XCircle,
 } from 'lucide-angular';
-import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
-import { SlugService } from '../../../core/services/slug.service';
+import { LucideAngularModule } from 'lucide-angular';
 import { ApplicationService } from '../../../core/services/admin/application.service';
+import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationListItem, ApplicationStatus } from '../../../core/models/application.model';
+import {
+  AppButtonComponent,
+  AppEmptyStateComponent,
+  AppLoadingStateComponent,
+  AppPageHeaderComponent,
+  AppStatusBadgeComponent,
+  AppStatusTone,
+  AppTabsComponent,
+  AppTabOption,
+  ToastService,
+} from '../../../shared/ui';
+
+type ApplicationsTab = 'all' | 'pending' | 'approved' | 'rejected';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-my-applications',
   standalone: true,
   imports: [
-    CommonModule,
-    MatButtonModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatTabsModule,
+    FormsModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppStatusBadgeComponent,
+    AppTabsComponent,
   ],
   providers: [provideTranslocoScope('rentalApp')],
   template: `
-    <div class="my-applications">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <lucide-icon [img]="FileEdit" [size]="28"></lucide-icon>
-          </div>
-          <div class="header-text">
-            <h1>{{ 'tenantApplications.title' | transloco }}</h1>
-            <p class="subtitle">{{ 'tenantApplications.subtitle' | transloco }}</p>
-          </div>
-        </div>
-        <button
-          mat-raised-button
-          color="primary"
-          class="new-app-btn"
-          (click)="goToNewApplication()"
-        >
-          <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-          <span>{{ 'tenantApplications.newApplication' | transloco }}</span>
-        </button>
-      </div>
+    <section class="applications-page">
+      <app-page-header
+        [eyebrow]="'tenantApplications.headerEyebrow' | transloco"
+        [title]="'tenantApplications.title' | transloco"
+        [description]="'tenantApplications.subtitle' | transloco"
+      >
+        <app-button actions appearance="primary" (clicked)="goToNewApplication()">
+          <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+          {{ 'tenantApplications.newApplication' | transloco }}
+        </app-button>
+      </app-page-header>
 
-      <!-- Loading State -->
       @if (isLoading()) {
-        <div class="loading-state">
-          <mat-spinner diameter="48"></mat-spinner>
-          <p>{{ 'tenantApplications.loading' | transloco }}</p>
+        <div class="state-box">
+          <app-loading-state [label]="'tenantApplications.loading' | transloco" />
         </div>
+      } @else {
+        <app-tabs
+          class="applications-tabs"
+          [(ngModel)]="activeTab"
+          [tabs]="tabs()"
+          [ariaLabel]="'tenantApplications.title' | transloco"
+        />
+
+        @if (selectedApplications().length === 0) {
+          <app-empty-state [title]="emptyTitle()" [description]="emptyDescription()">
+            <lucide-icon icon [img]="emptyIcon()" [size]="28"></lucide-icon>
+            @if (activeTab === 'all') {
+              <app-button actions appearance="primary" (clicked)="goToNewApplication()">
+                {{ 'tenantApplications.empty.action' | transloco }}
+              </app-button>
+            }
+          </app-empty-state>
+        } @else {
+          <div class="applications-grid">
+            @for (application of selectedApplications(); track application.id) {
+              <article class="application-card" [class]="cardClass(application.status)">
+                <header class="application-card__header">
+                  <div>
+                    <h2>{{ application.property_title }}</h2>
+                    <p>{{ 'tenantApplications.card.id' | transloco: { id: application.id } }}</p>
+                  </div>
+                  <app-status-badge
+                    [label]="'tenantApplications.status.' + application.status | transloco"
+                    [tone]="statusTone(application.status)"
+                  />
+                </header>
+
+                <div class="application-card__body">
+                  <div class="detail-row" [class]="statusClass(application.status)">
+                    <lucide-icon [img]="statusIcon(application.status)" [size]="16"></lucide-icon>
+                    <span>{{ statusMessage(application.status) }}</span>
+                  </div>
+
+                  <div class="detail-row">
+                    <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
+                    <span>
+                      {{
+                        'tenantApplications.card.sent'
+                          | transloco: { date: formatDate(application.created_at) }
+                      }}
+                    </span>
+                  </div>
+
+                  @if (
+                    application.status === ApplicationStatus.RECHAZADA && application.admin_feedback
+                  ) {
+                    <div class="feedback-box">
+                      <strong>{{ 'tenantApplications.card.feedbackLabel' | transloco }}</strong>
+                      <p>{{ application.admin_feedback }}</p>
+                    </div>
+                  }
+
+                  <dl class="applicant-info">
+                    <div>
+                      <dt>{{ 'tenantApplications.card.nameLabel' | transloco }}</dt>
+                      <dd>{{ application.personal_data.full_name }}</dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'tenantApplications.card.phoneLabel' | transloco }}</dt>
+                      <dd>{{ application.personal_data.phone }}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <footer class="application-card__actions">
+                  <app-button appearance="outline" size="s" (clicked)="viewDetails(application.id)">
+                    <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
+                    {{ 'tenantApplications.card.viewDetails' | transloco }}
+                  </app-button>
+
+                  @if (application.status === ApplicationStatus.PENDIENTE) {
+                    <app-button appearance="primary" size="s" (clicked)="goToNewApplication()">
+                      <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+                      {{ 'tenantApplications.newApplication' | transloco }}
+                    </app-button>
+                  }
+
+                  @if (application.status === ApplicationStatus.APROBADA) {
+                    <app-button appearance="primary" size="s" (clicked)="goToContracts()">
+                      <lucide-icon [img]="FileSignature" [size]="16"></lucide-icon>
+                      {{ 'tenantApplications.card.signContract' | transloco }}
+                    </app-button>
+                  }
+                </footer>
+              </article>
+            }
+          </div>
+        }
       }
-
-      <!-- Content -->
-      @if (!isLoading()) {
-        <!-- Tabs para filtrar por estado -->
-        <mat-tab-group
-          class="status-tabs"
-          [selectedIndex]="selectedTab()"
-          (selectedTabChange)="onTabChange($event)"
-        >
-          <!-- Todas -->
-          <mat-tab [label]="'tenantApplications.tabs.all' | transloco">
-            <ng-template matTabContent>
-              <div class="tab-content">
-                @if (applications().length === 0) {
-                  <div class="empty-state">
-                    <lucide-icon [img]="FileEdit" [size]="64" class="empty-icon"></lucide-icon>
-                    <h3>{{ 'tenantApplications.empty.title' | transloco }}</h3>
-                    <p>{{ 'tenantApplications.empty.desc' | transloco }}</p>
-                    <button mat-flat-button color="primary" (click)="goToNewApplication()">
-                      {{ 'tenantApplications.empty.action' | transloco }}
-                    </button>
-                  </div>
-                } @else {
-                  <div class="applications-grid">
-                    @for (app of applications(); track app.id) {
-                      <mat-card
-                        class="application-card"
-                        [class]="'status-' + app.status.toLowerCase()"
-                      >
-                        <div class="card-header">
-                          <div class="property-info">
-                            <h3 class="property-title">{{ app.property_title }}</h3>
-                            <div class="application-id">
-                              {{ 'tenantApplications.card.id' | transloco: { id: app.id } }}
-                            </div>
-                          </div>
-                          <span [class]="'status-chip status-' + app.status.toLowerCase()">
-                            {{ 'tenantApplications.status.' + app.status | transloco }}
-                          </span>
-                        </div>
-
-                        <mat-card-content>
-                          <div class="application-details">
-                            <div class="detail-row">
-                              <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-                              <span>{{
-                                'tenantApplications.card.sent'
-                                  | transloco: { date: formatDate(app.created_at) }
-                              }}</span>
-                            </div>
-
-                            @if (app.status === ApplicationStatus.PENDIENTE) {
-                              <div class="detail-row pending">
-                                <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
-                                <span>{{
-                                  'tenantApplications.card.waitingReview' | transloco
-                                }}</span>
-                              </div>
-                            } @else if (app.status === ApplicationStatus.APROBADA) {
-                              <div class="detail-row approved">
-                                <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                                <span>
-                                  <strong>{{
-                                    'tenantApplications.card.approvedTitleLabel' | transloco
-                                  }}</strong>
-                                  {{ 'tenantApplications.card.approvedTitleRest' | transloco }}
-                                </span>
-                              </div>
-                            } @else if (app.status === ApplicationStatus.RECHAZADA) {
-                              <div class="detail-row rejected">
-                                <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
-                                <span>{{
-                                  'tenantApplications.card.rejectedTitle' | transloco
-                                }}</span>
-                              </div>
-                              @if (app.admin_feedback) {
-                                <div class="feedback-box">
-                                  <strong>{{
-                                    'tenantApplications.card.feedbackLabel' | transloco
-                                  }}</strong>
-                                  <p>{{ app.admin_feedback }}</p>
-                                </div>
-                              }
-                            }
-
-                            <div class="applicant-info">
-                              <div class="info-item">
-                                <span class="label">{{
-                                  'tenantApplications.card.nameLabel' | transloco
-                                }}</span>
-                                <span class="value">{{ app.personal_data.full_name }}</span>
-                              </div>
-                              <div class="info-item">
-                                <span class="label">{{
-                                  'tenantApplications.card.phoneLabel' | transloco
-                                }}</span>
-                                <span class="value">{{ app.personal_data.phone }}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </mat-card-content>
-
-                        <mat-card-actions class="card-actions">
-                          <button mat-stroked-button color="primary" (click)="viewDetails(app.id)">
-                            <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                            {{ 'tenantApplications.card.viewDetails' | transloco }}
-                          </button>
-
-                          @if (app.status === ApplicationStatus.PENDIENTE) {
-                            <button mat-flat-button color="primary" (click)="goToNewApplication()">
-                              <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-                              {{ 'tenantApplications.newApplication' | transloco }}
-                            </button>
-                          }
-
-                          @if (app.status === ApplicationStatus.APROBADA) {
-                            <button mat-flat-button color="primary" (click)="goToContracts()">
-                              <lucide-icon [img]="FileSignature" [size]="16"></lucide-icon>
-                              {{ 'tenantApplications.card.signContract' | transloco }}
-                            </button>
-                          }
-                        </mat-card-actions>
-                      </mat-card>
-                    }
-                  </div>
-                }
-              </div>
-            </ng-template>
-          </mat-tab>
-
-          <!-- Pendientes -->
-          <mat-tab [label]="'tenantApplications.tabs.pending' | transloco">
-            <ng-template matTabContent>
-              <div class="tab-content">
-                @if (pendingApplications().length === 0) {
-                  <div class="empty-state">
-                    <lucide-icon [img]="Clock" [size]="64" class="empty-icon"></lucide-icon>
-                    <h3>{{ 'tenantApplications.empty.noPending' | transloco }}</h3>
-                  </div>
-                } @else {
-                  <div class="applications-grid">
-                    @for (app of pendingApplications(); track app.id) {
-                      <mat-card class="application-card status-pendiente">
-                        <div class="card-header">
-                          <div class="property-info">
-                            <h3 class="property-title">{{ app.property_title }}</h3>
-                            <div class="application-id">
-                              {{ 'tenantApplications.card.id' | transloco: { id: app.id } }}
-                            </div>
-                          </div>
-                          <span class="status-chip status-pendiente">{{
-                            'tenantApplications.status.PENDIENTE' | transloco
-                          }}</span>
-                        </div>
-
-                        <mat-card-content>
-                          <div class="application-details">
-                            <div class="detail-row pending">
-                              <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
-                              <span>{{ 'tenantApplications.card.waitingReview' | transloco }}</span>
-                            </div>
-                            <div class="detail-row">
-                              <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-                              <span>{{
-                                'tenantApplications.card.sent'
-                                  | transloco: { date: formatDate(app.created_at) }
-                              }}</span>
-                            </div>
-                          </div>
-                        </mat-card-content>
-
-                        <mat-card-actions class="card-actions">
-                          <button mat-stroked-button color="primary" (click)="viewDetails(app.id)">
-                            <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                            {{ 'tenantApplications.card.viewDetails' | transloco }}
-                          </button>
-                        </mat-card-actions>
-                      </mat-card>
-                    }
-                  </div>
-                }
-              </div>
-            </ng-template>
-          </mat-tab>
-
-          <!-- Aprobadas -->
-          <mat-tab [label]="'tenantApplications.tabs.approved' | transloco">
-            <ng-template matTabContent>
-              <div class="tab-content">
-                @if (approvedApplications().length === 0) {
-                  <div class="empty-state">
-                    <lucide-icon [img]="CheckCircle2" [size]="64" class="empty-icon"></lucide-icon>
-                    <h3>{{ 'tenantApplications.empty.noApproved' | transloco }}</h3>
-                  </div>
-                } @else {
-                  <div class="applications-grid">
-                    @for (app of approvedApplications(); track app.id) {
-                      <mat-card class="application-card status-aprobada">
-                        <div class="card-header">
-                          <div class="property-info">
-                            <h3 class="property-title">{{ app.property_title }}</h3>
-                            <div class="application-id">
-                              {{ 'tenantApplications.card.id' | transloco: { id: app.id } }}
-                            </div>
-                          </div>
-                          <span class="status-chip status-aprobada">{{
-                            'tenantApplications.status.APROBADA' | transloco
-                          }}</span>
-                        </div>
-
-                        <mat-card-content>
-                          <div class="application-details">
-                            <div class="detail-row approved">
-                              <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                              <span>
-                                <strong>{{
-                                  'tenantApplications.card.approvedTitleLabel' | transloco
-                                }}</strong>
-                                {{ 'tenantApplications.card.approvedTitleRest' | transloco }}
-                              </span>
-                            </div>
-                            <div class="detail-row">
-                              <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-                              <span>{{
-                                'tenantApplications.card.sent'
-                                  | transloco: { date: formatDate(app.created_at) }
-                              }}</span>
-                            </div>
-                          </div>
-                        </mat-card-content>
-
-                        <mat-card-actions class="card-actions">
-                          <button mat-stroked-button color="primary" (click)="viewDetails(app.id)">
-                            <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                            {{ 'tenantApplications.card.viewDetails' | transloco }}
-                          </button>
-                          <button mat-flat-button color="primary" (click)="goToContracts()">
-                            <lucide-icon [img]="FileSignature" [size]="16"></lucide-icon>
-                            {{ 'tenantApplications.card.signContract' | transloco }}
-                          </button>
-                        </mat-card-actions>
-                      </mat-card>
-                    }
-                  </div>
-                }
-              </div>
-            </ng-template>
-          </mat-tab>
-
-          <!-- Rechazadas -->
-          <mat-tab [label]="'tenantApplications.tabs.rejected' | transloco">
-            <ng-template matTabContent>
-              <div class="tab-content">
-                @if (rejectedApplications().length === 0) {
-                  <div class="empty-state">
-                    <lucide-icon [img]="XCircle" [size]="64" class="empty-icon"></lucide-icon>
-                    <h3>{{ 'tenantApplications.empty.noRejected' | transloco }}</h3>
-                  </div>
-                } @else {
-                  <div class="applications-grid">
-                    @for (app of rejectedApplications(); track app.id) {
-                      <mat-card class="application-card status-rechazada">
-                        <div class="card-header">
-                          <div class="property-info">
-                            <h3 class="property-title">{{ app.property_title }}</h3>
-                            <div class="application-id">
-                              {{ 'tenantApplications.card.id' | transloco: { id: app.id } }}
-                            </div>
-                          </div>
-                          <span class="status-chip status-rechazada">{{
-                            'tenantApplications.status.RECHAZADA' | transloco
-                          }}</span>
-                        </div>
-
-                        <mat-card-content>
-                          <div class="application-details">
-                            <div class="detail-row rejected">
-                              <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
-                              <span>{{ 'tenantApplications.card.rejectedTitle' | transloco }}</span>
-                            </div>
-                            <div class="detail-row">
-                              <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
-                              <span>{{
-                                'tenantApplications.card.sent'
-                                  | transloco: { date: formatDate(app.created_at) }
-                              }}</span>
-                            </div>
-                            @if (app.admin_feedback) {
-                              <div class="feedback-box">
-                                <strong>{{
-                                  'tenantApplications.card.feedbackLabel' | transloco
-                                }}</strong>
-                                <p>{{ app.admin_feedback }}</p>
-                              </div>
-                            }
-                          </div>
-                        </mat-card-content>
-
-                        <mat-card-actions class="card-actions">
-                          <button mat-stroked-button color="primary" (click)="viewDetails(app.id)">
-                            <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                            {{ 'tenantApplications.card.viewDetails' | transloco }}
-                          </button>
-                          <button mat-flat-button color="primary" (click)="goToNewApplication()">
-                            <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-                            {{ 'tenantApplications.newApplication' | transloco }}
-                          </button>
-                        </mat-card-actions>
-                      </mat-card>
-                    }
-                  </div>
-                }
-              </div>
-            </ng-template>
-          </mat-tab>
-        </mat-tab-group>
-      }
-    </div>
+    </section>
   `,
-  styles: [
-    `
-      .my-applications {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 24px;
-      }
+  styles: `
+    .applications-page {
+      max-inline-size: 1240px;
+      margin-inline: auto;
+    }
 
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 32px;
-        flex-wrap: wrap;
-        gap: 16px;
-      }
+    .applications-tabs {
+      margin-block-end: var(--app-space-5);
+    }
 
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
+    .state-box {
+      display: grid;
+      min-block-size: 20rem;
+      place-items: center;
+    }
 
-      .header-icon {
-        width: 56px;
-        height: 56px;
-        background: var(--mat-sys-primary-container);
-        color: var(--mat-sys-on-primary-container);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+    .applications-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
+      gap: var(--app-space-4);
+    }
 
-      .header-text h1 {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--mat-sys-on-surface);
-      }
+    .application-card {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: var(--app-space-4);
+      border: 1px solid var(--app-color-border);
+      border-inline-start-width: 4px;
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      box-shadow: var(--app-shadow-sm);
+      padding: var(--app-space-4);
+    }
 
-      .subtitle {
-        margin: 4px 0 0;
-        font-size: 1rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
+    .application-card.status-pendiente {
+      border-inline-start-color: var(--tui-status-warning);
+    }
 
-      .new-app-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        height: 48px;
-        padding: 0 24px;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-      }
+    .application-card.status-aprobada {
+      border-inline-start-color: var(--tui-status-positive);
+    }
 
-      .loading-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 64px 24px;
-        color: var(--mat-sys-on-surface-variant);
-      }
+    .application-card.status-rechazada {
+      border-inline-start-color: var(--tui-status-negative);
+    }
 
-      .status-tabs {
-        margin-bottom: 24px;
-      }
+    .application-card__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+    }
 
-      .tab-content {
-        padding: 24px 0;
-      }
+    .application-card h2,
+    .application-card p,
+    .applicant-info,
+    .applicant-info dd {
+      margin: 0;
+    }
 
-      .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 64px 24px;
-        text-align: center;
-      }
+    .application-card h2 {
+      color: var(--app-color-text);
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
 
-      .empty-icon {
-        color: var(--mat-sys-outline-variant);
-        opacity: 0.3;
-      }
+    .application-card__header p {
+      margin-block-start: 0.25rem;
+      color: var(--app-color-text-muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
 
-      .empty-state h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
-      }
+    .application-card__body {
+      display: grid;
+      gap: var(--app-space-3);
+    }
 
-      .applications-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-        gap: 24px;
-      }
+    .detail-row {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      color: var(--app-color-text-muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
 
-      .application-card {
-        border: 1px solid var(--mat-sys-outline-variant);
-        transition: all 0.2s;
-      }
+    .detail-row.pending {
+      color: var(--tui-status-warning);
+      font-weight: 700;
+    }
 
-      .application-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
+    .detail-row.approved {
+      color: var(--tui-status-positive);
+      font-weight: 700;
+    }
 
-      .application-card.status-pendiente {
-        border-left: 4px solid #f59e0b;
-      }
+    .detail-row.rejected {
+      color: var(--tui-status-negative);
+      font-weight: 700;
+    }
 
-      .application-card.status-aprobada {
-        border-left: 4px solid #10b981;
-      }
+    .feedback-box {
+      border-radius: var(--app-radius-md);
+      background: var(--tui-status-negative-pale);
+      color: var(--tui-status-negative);
+      padding: var(--app-space-3);
+    }
 
-      .application-card.status-rechazada {
-        border-left: 4px solid #ef4444;
-      }
+    .feedback-box strong {
+      display: block;
+      margin-block-end: var(--app-space-1);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
 
-      .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding: 20px 24px 16px;
-        gap: 12px;
-      }
+    .feedback-box p {
+      line-height: 1.45;
+    }
 
-      .property-info {
-        flex: 1;
-      }
+    .applicant-info {
+      display: grid;
+      gap: var(--app-space-2);
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-3);
+    }
 
-      .property-title {
-        margin: 0 0 4px;
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
-        line-height: 1.4;
-      }
+    .applicant-info div {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+    }
 
-      .application-id {
-        font-size: 0.8125rem;
-        color: var(--mat-sys-on-surface-variant);
-        font-family: monospace;
-      }
+    .applicant-info dt {
+      color: var(--app-color-text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
 
-      .status-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 36px;
-        padding: 0 24px;
-        border-radius: 9999px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        letter-spacing: 0.0892857143em;
-        text-transform: uppercase;
-        white-space: nowrap;
-        border: none;
-        line-height: 1;
-        flex-shrink: 0;
-      }
+    .applicant-info dd {
+      color: var(--app-color-text);
+      font-size: 0.88rem;
+      font-weight: 750;
+      text-align: end;
+    }
 
-      .status-chip.status-pendiente {
-        background: #1d4ed8;
-        color: #ffffff;
-      }
-
-      .status-chip.status-aprobada {
-        background: #10b981;
-        color: #ffffff;
-      }
-
-      .status-chip.status-rechazada {
-        background: #b91c1c;
-        color: #ffffff;
-      }
-
-      mat-card-content {
-        padding: 0 24px 20px;
-      }
-
-      .application-details {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .detail-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9375rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .detail-row.pending {
-        color: #92400e;
-        font-weight: 500;
-      }
-
-      .detail-row.approved {
-        color: #065f46;
-        font-weight: 500;
-      }
-
-      .detail-row.rejected {
-        color: #991b1b;
-        font-weight: 500;
-      }
-
-      .feedback-box {
-        margin-top: 12px;
-        padding: 12px;
-        background: #fee2e2;
-        border-radius: 8px;
-        border-left: 3px solid #ef4444;
-      }
-
-      .feedback-box strong {
-        display: block;
-        font-size: 0.875rem;
-        color: #991b1b;
-        margin-bottom: 4px;
-      }
-
-      .feedback-box p {
-        margin: 0;
-        font-size: 0.875rem;
-        color: #7f1d1d;
-        line-height: 1.4;
-      }
-
-      .applicant-info {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid var(--mat-sys-outline-variant);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .info-item {
-        display: flex;
-        gap: 8px;
-        font-size: 0.875rem;
-      }
-
-      .info-item .label {
-        color: var(--mat-sys-on-surface-variant);
-        font-weight: 500;
-      }
-
-      .info-item .value {
-        color: var(--mat-sys-on-surface);
-      }
-
-      .card-actions {
-        padding: 16px 24px;
-        display: flex;
-        gap: 12px;
-        flex-wrap: wrap;
-      }
-
-      .card-actions button {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      @media (max-width: 768px) {
-        .my-applications {
-          padding: 16px;
-        }
-
-        .page-header {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .new-app-btn {
-          width: 100%;
-          justify-content: center;
-        }
-
-        .applications-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .card-header {
-          flex-direction: column;
-        }
-
-        .status-chip {
-          align-self: flex-start;
-        }
-      }
-    `,
-  ],
+    .application-card__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--app-space-2);
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-3);
+    }
+  `,
 })
-export class MyApplicationsComponent implements OnInit {
-  readonly FileEdit = FileEdit;
-  readonly Clock = Clock;
-  readonly CheckCircle2 = CheckCircle2;
-  readonly XCircle = XCircle;
-  readonly AlertCircle = AlertCircle;
-  readonly Plus = Plus;
-  readonly Eye = Eye;
-  readonly FileSignature = FileSignature;
-  readonly ApplicationStatus = ApplicationStatus;
+export class MyApplicationsComponent {
+  protected readonly FileEdit = FileEdit;
+  protected readonly Clock = Clock;
+  protected readonly CheckCircle2 = CheckCircle2;
+  protected readonly XCircle = XCircle;
+  protected readonly AlertCircle = AlertCircle;
+  protected readonly Plus = Plus;
+  protected readonly Eye = Eye;
+  protected readonly FileSignature = FileSignature;
+  protected readonly ApplicationStatus = ApplicationStatus;
 
-  private router = inject(Router);
-  private slugService = inject(SlugService);
-  private authService = inject(TenantAuthService);
-  private applicationService = inject(ApplicationService);
-  private translocoService = inject(TranslocoService);
+  private readonly slugService = inject(SlugService);
+  private readonly applicationService = inject(ApplicationService);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
-  // Signals - Managing state locally
-  isLoading = signal(false);
-  applications = signal<ApplicationListItem[]>([]);
-  selectedTab = signal(0);
+  protected readonly isLoading = signal(false);
+  protected readonly applications = signal<ApplicationListItem[]>([]);
+  protected activeTab: ApplicationsTab = 'all';
 
-  // Computed properties for filtering
-  pendingApplications = computed(() =>
-    this.applications().filter(
-      (app: ApplicationListItem) => app.status === ApplicationStatus.PENDIENTE,
-    ),
+  protected readonly pendingApplications = computed(() =>
+    this.applications().filter((application) => application.status === ApplicationStatus.PENDIENTE),
   );
 
-  approvedApplications = computed(() =>
-    this.applications().filter(
-      (app: ApplicationListItem) => app.status === ApplicationStatus.APROBADA,
-    ),
+  protected readonly approvedApplications = computed(() =>
+    this.applications().filter((application) => application.status === ApplicationStatus.APROBADA),
   );
 
-  rejectedApplications = computed(() =>
-    this.applications().filter(
-      (app: ApplicationListItem) => app.status === ApplicationStatus.RECHAZADA,
-    ),
+  protected readonly rejectedApplications = computed(() =>
+    this.applications().filter((application) => application.status === ApplicationStatus.RECHAZADA),
   );
 
-  ngOnInit(): void {
+  protected selectedApplications(): ApplicationListItem[] {
+    if (this.activeTab === 'pending') return this.pendingApplications();
+    if (this.activeTab === 'approved') return this.approvedApplications();
+    if (this.activeTab === 'rejected') return this.rejectedApplications();
+    return this.applications();
+  }
+
+  protected readonly tabs = computed<readonly AppTabOption<ApplicationsTab>[]>(() => [
+    {
+      label: this.translocoService.translate('tenantApplications.tabs.all'),
+      value: 'all',
+      badge: this.applications().length,
+    },
+    {
+      label: this.translocoService.translate('tenantApplications.tabs.pending'),
+      value: 'pending',
+      badge: this.pendingApplications().length,
+    },
+    {
+      label: this.translocoService.translate('tenantApplications.tabs.approved'),
+      value: 'approved',
+      badge: this.approvedApplications().length,
+    },
+    {
+      label: this.translocoService.translate('tenantApplications.tabs.rejected'),
+      value: 'rejected',
+      badge: this.rejectedApplications().length,
+    },
+  ]);
+
+  constructor() {
     this.loadApplications();
   }
 
-  loadApplications(): void {
+  protected loadApplications(): void {
     this.isLoading.set(true);
     this.applicationService.getMyApplications().subscribe({
-      next: (apps) => {
-        this.applications.set(apps);
+      next: (applications) => {
+        this.applications.set(applications);
         this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);
+        this.toast.error(this.translocoService.translate('tenantApplications.loadError'));
       },
     });
   }
 
-  onTabChange(event: any): void {
-    this.selectedTab.set(event.index);
-  }
-
-  goToNewApplication(): void {
+  protected goToNewApplication(): void {
     this.slugService.navigateTo(['portal', 'new-application']);
   }
 
-  goToContracts(): void {
+  protected goToContracts(): void {
     this.slugService.navigateTo(['portal', 'documentos', 'contratos']);
   }
 
-  viewDetails(applicationId: number): void {
-    // Por ahora, solo mostramos un alert
-    // TODO: Implementar vista de detalles
-    alert(`Ver detalles de la solicitud #${applicationId}`);
+  protected viewDetails(applicationId: number): void {
+    this.toast.info(
+      this.translocoService.translate('tenantApplications.detailsPending', {
+        id: applicationId,
+      }),
+    );
   }
 
-  getStatusLabel(status: ApplicationStatus): string {
-    return this.translocoService.translate('tenantApplications.status.' + status);
+  protected statusTone(status: ApplicationStatus): AppStatusTone {
+    if (status === ApplicationStatus.APROBADA) return 'success';
+    if (status === ApplicationStatus.RECHAZADA) return 'danger';
+    return 'warning';
   }
 
-  getStatusColor(status: ApplicationStatus): string {
-    switch (status) {
-      case ApplicationStatus.PENDIENTE:
-        return 'warn';
-      case ApplicationStatus.APROBADA:
-        return 'primary';
-      case ApplicationStatus.RECHAZADA:
-        return 'accent';
-      default:
-        return 'primary';
+  protected statusClass(status: ApplicationStatus): string {
+    if (status === ApplicationStatus.APROBADA) return 'approved';
+    if (status === ApplicationStatus.RECHAZADA) return 'rejected';
+    return 'pending';
+  }
+
+  protected cardClass(status: ApplicationStatus): string {
+    return `status-${status.toLowerCase()}`;
+  }
+
+  protected statusIcon(status: ApplicationStatus): typeof AlertCircle {
+    if (status === ApplicationStatus.APROBADA) return CheckCircle2;
+    if (status === ApplicationStatus.RECHAZADA) return XCircle;
+    return AlertCircle;
+  }
+
+  protected statusMessage(status: ApplicationStatus): string {
+    if (status === ApplicationStatus.APROBADA) {
+      return `${this.translocoService.translate(
+        'tenantApplications.card.approvedTitleLabel',
+      )} ${this.translocoService.translate('tenantApplications.card.approvedTitleRest')}`;
     }
+
+    if (status === ApplicationStatus.RECHAZADA) {
+      return this.translocoService.translate('tenantApplications.card.rejectedTitle');
+    }
+
+    return this.translocoService.translate('tenantApplications.card.waitingReview');
   }
 
-  formatDate(dateString: string): string {
+  protected emptyIcon(): typeof FileEdit {
+    if (this.activeTab === 'pending') return Clock;
+    if (this.activeTab === 'approved') return CheckCircle2;
+    if (this.activeTab === 'rejected') return XCircle;
+    return FileEdit;
+  }
+
+  protected emptyTitle(): string {
+    if (this.activeTab === 'pending') {
+      return this.translocoService.translate('tenantApplications.empty.noPending');
+    }
+    if (this.activeTab === 'approved') {
+      return this.translocoService.translate('tenantApplications.empty.noApproved');
+    }
+    if (this.activeTab === 'rejected') {
+      return this.translocoService.translate('tenantApplications.empty.noRejected');
+    }
+    return this.translocoService.translate('tenantApplications.empty.title');
+  }
+
+  protected emptyDescription(): string | null {
+    return this.activeTab === 'all'
+      ? this.translocoService.translate('tenantApplications.empty.desc')
+      : null;
+  }
+
+  protected formatDate(dateString: string): string {
     const date = new Date(dateString);
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 0)
+    if (diffDays === 0) {
       return this.translocoService.translate('tenantApplications.relativeDate.today');
-    if (diffDays === 1)
+    }
+    if (diffDays === 1) {
       return this.translocoService.translate('tenantApplications.relativeDate.yesterday');
-    if (diffDays < 7)
+    }
+    if (diffDays < 7) {
       return this.translocoService.translate('tenantApplications.relativeDate.daysAgo', {
         count: diffDays,
       });
-    if (diffDays < 30)
+    }
+    if (diffDays < 30) {
       return this.translocoService.translate('tenantApplications.relativeDate.weeksAgo', {
         count: Math.floor(diffDays / 7),
       });
+    }
 
     const locale = this.translocoService.getActiveLang() === 'es' ? 'es-ES' : 'en-US';
     return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });

@@ -1,7 +1,12 @@
 <article class="order-detail">
   <!-- Header -->
   <header class="detail-header">
-    <button mat-icon-button (click)="closed.emit()" [attr.aria-label]="'tecnico.back' | transloco">
+    <button
+      type="button"
+      class="icon-button"
+      (click)="closed.emit()"
+      [attr.aria-label]="'tecnico.back' | transloco"
+    >
       <lucide-icon [img]="ArrowLeftIcon" size="20" />
     </button>
     <div class="header-info">
@@ -55,24 +60,21 @@
     <!-- Advance stage -->
     @if (canAdvance()) {
       <section class="section-card advance-section">
-        <button
-          mat-flat-button
+        <app-button
+          appearance="primary"
+          [fullWidth]="true"
           class="advance-btn"
-          [attr.data-status]="request().status"
           [disabled]="isAdvancingStage()"
-          (click)="advanceStage()"
+          [loading]="isAdvancingStage()"
+          (clicked)="advanceStage()"
         >
-          @if (isAdvancingStage()) {
-            <mat-spinner diameter="18" />
-          } @else {
-            <lucide-icon
-              [img]="request().status === MaintenanceStatus.NEW ? PlayIcon : CheckCheckIcon"
-              size="18"
-              aria-hidden="true"
-            />
-          }
+          <lucide-icon
+            [img]="request().status === MaintenanceStatus.NEW ? PlayIcon : CheckCheckIcon"
+            size="18"
+            aria-hidden="true"
+          />
           {{ advanceLabel() }}
-        </button>
+        </app-button>
       </section>
     }
 
@@ -99,7 +101,7 @@
 
       @if (isLoadingMessages()) {
         <div class="loading-center">
-          <mat-spinner diameter="28" />
+          <app-loading-state [label]="'tecnico.loading' | transloco" />
         </div>
       } @else if (messages().length === 0) {
         <p class="empty-messages">{{ 'tecnico.noNotes' | transloco }}</p>
@@ -152,7 +154,7 @@
               }
               <button
                 class="remove-file-btn"
-                mat-icon-button
+                type="button"
                 (click)="removeFile($index)"
                 [attr.aria-label]="'tecnico.removeFileAria' | transloco: { n: $index + 1 }"
               >
@@ -167,7 +169,7 @@
         class="note-textarea"
         [placeholder]="'tecnico.notePlaceholder' | transloco"
         [value]="noteText()"
-        (input)="noteText.set($any($event.target).value)"
+        (input)="updateNoteText($event)"
         rows="3"
         [attr.aria-label]="'tecnico.addNote' | transloco"
       ></textarea>
@@ -195,19 +197,15 @@
         </label>
 
         <!-- Send button -->
-        <button
-          mat-flat-button
-          color="primary"
+        <app-button
+          appearance="primary"
           [disabled]="!noteText().trim() || isSendingNote()"
-          (click)="sendNote()"
+          [loading]="isSendingNote()"
+          (clicked)="sendNote()"
         >
-          @if (isSendingNote()) {
-            <mat-spinner diameter="16" />
-          } @else {
-            <lucide-icon [img]="SendIcon" size="16" aria-hidden="true" />
-          }
+          <lucide-icon [img]="SendIcon" size="16" aria-hidden="true" />
           {{ 'tecnico.send' | transloco }}
-        </button>
+        </app-button>
       </div>
     </section>
   </div>

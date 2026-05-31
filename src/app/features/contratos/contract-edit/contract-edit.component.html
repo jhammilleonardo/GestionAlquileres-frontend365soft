@@ -1,0 +1,303 @@
+<div class="contract-edit-container">
+  <!-- Header -->
+  <div class="page-header">
+    <app-button appearance="flat" (clicked)="goBack()">
+      <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
+      {{ 'common.back' | transloco }}
+    </app-button>
+    <h1>{{ 'contracts.edit.titlePrefix' | transloco }} {{ contractNumber() }}</h1>
+  </div>
+
+  <!-- Alerta de solo borradores -->
+  @if (currentContract() && currentContract()!.status !== ContractStatus.BORRADOR) {
+    <section class="warning-card">
+      <lucide-icon [img]="AlertCircle" [size]="24" class="warning-icon"></lucide-icon>
+      <div class="warning-content">
+        <h3>{{ 'contracts.edit.notEditable' | transloco }}</h3>
+        <p>
+          {{
+            'contracts.edit.notEditableMsg'
+              | transloco: { status: ('contracts.status.' + currentContract()!.status | transloco) }
+          }}
+        </p>
+        <app-button appearance="destructive" (clicked)="goBack()">
+          {{ 'common.back' | transloco }}
+        </app-button>
+      </div>
+    </section>
+  } @else if (isLoading()) {
+    <div class="loading-container">
+      <app-loading-state [label]="'contracts.detail.loading' | transloco" />
+    </div>
+  } @else if (currentContract()) {
+    <section class="form-card">
+      <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
+        <!-- Información Básica -->
+        <div class="form-section">
+          <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
+
+          <div class="info-readonly">
+            <div class="info-item">
+              <label>{{ 'contracts.edit.tenantLabel' | transloco }}</label>
+              <span>{{
+                currentContract()!.tenant?.name || currentContract()!.tenant_name || 'N/A'
+              }}</span>
+            </div>
+            <div class="info-item">
+              <label>{{ 'contracts.edit.propertyLabel' | transloco }}</label>
+              <span>{{
+                currentContract()!.property?.title || currentContract()!.property_title || 'N/A'
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Fechas -->
+          <div class="form-row">
+            <div>
+              <app-date-picker
+                formControlName="start_date"
+                [label]="'contracts.create.startDate' | transloco"
+              />
+              @if (hasError('start_date')) {
+                <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
+              }
+            </div>
+
+            <div>
+              <app-date-picker
+                formControlName="end_date"
+                [label]="'contracts.create.endDate' | transloco"
+              />
+              @if (hasError('end_date')) {
+                <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
+              }
+            </div>
+
+            <app-date-picker
+              formControlName="key_delivery_date"
+              [label]="'contracts.create.keyDelivery' | transloco"
+            />
+          </div>
+
+          <!-- Alquiler -->
+          <div class="form-row">
+            <div>
+              <app-text-field
+                type="number"
+                formControlName="monthly_rent"
+                [label]="'contracts.create.monthlyRent' | transloco"
+              />
+              @if (hasError('monthly_rent')) {
+                <p class="field-error">{{ 'contracts.create.amountRequired' | transloco }}</p>
+              }
+            </div>
+
+            <app-text-field
+              type="number"
+              formControlName="payment_day"
+              [label]="'contracts.create.paymentDay' | transloco"
+            />
+          </div>
+
+          <!-- Método de pago -->
+          <app-text-field
+            class="full-width"
+            formControlName="payment_method"
+            [label]="'contracts.create.paymentMethod' | transloco"
+          />
+        </div>
+
+        <!-- Condiciones de Pago -->
+        <div class="form-section">
+          <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
+
+          <div class="form-row">
+            <app-text-field
+              type="number"
+              formControlName="late_fee_percentage"
+              [label]="'contracts.create.lateFee' | transloco"
+              placeholder="5"
+            />
+
+            <app-text-field
+              type="number"
+              formControlName="grace_days"
+              [label]="'contracts.create.graceDays' | transloco"
+              placeholder="3"
+            />
+          </div>
+        </div>
+
+        <!-- Servicios Incluidos -->
+        <div class="form-section">
+          <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
+          <div class="services-grid">
+            @for (service of serviceOptions; track service) {
+              <label class="service-option">
+                <input
+                  type="checkbox"
+                  [checked]="isServiceSelected(service)"
+                  (change)="toggleService(service, $event)"
+                />
+                <span>{{ service }}</span>
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- Responsabilidades -->
+        <div class="form-section">
+          <h2>{{ 'contracts.edit.responsibilities' | transloco }}</h2>
+
+          <app-textarea
+            class="full-width textarea-field"
+            formControlName="tenant_responsibilities"
+            [label]="'contracts.detail.tenantResp' | transloco"
+            [minRows]="3"
+          />
+          <p class="field-hint">{{ 'contracts.edit.tenantRespHint' | transloco }}</p>
+
+          <app-textarea
+            class="full-width textarea-field"
+            formControlName="owner_responsibilities"
+            [label]="'contracts.detail.ownerResp' | transloco"
+            [minRows]="3"
+          />
+          <p class="field-hint">{{ 'contracts.edit.ownerRespHint' | transloco }}</p>
+        </div>
+
+        <!-- Prohibiciones y Reglas -->
+        <div class="form-section">
+          <h2>{{ 'contracts.edit.prohibAndRules' | transloco }}</h2>
+
+          <app-textarea
+            class="full-width textarea-field"
+            formControlName="prohibitions"
+            [label]="'contracts.detail.prohibitions' | transloco"
+            [minRows]="2"
+          />
+          <p class="field-hint">{{ 'contracts.edit.prohibitionsHint' | transloco }}</p>
+
+          <app-textarea
+            class="full-width textarea-field"
+            formControlName="coexistence_rules"
+            [label]="'contracts.detail.coexistenceRules' | transloco"
+            [minRows]="2"
+          />
+          <p class="field-hint">{{ 'contracts.edit.coexistenceHint' | transloco }}</p>
+        </div>
+
+        <!-- Términos del Contrato -->
+        <div class="form-section">
+          <h2>{{ 'contracts.edit.contractTerms' | transloco }}</h2>
+
+          <div class="form-row">
+            <div class="full-width">
+              <app-textarea
+                formControlName="renewal_terms"
+                [label]="'contracts.edit.renewalTerms' | transloco"
+                [minRows]="2"
+              />
+              <p class="field-hint">{{ 'contracts.edit.renewalTermsHint' | transloco }}</p>
+            </div>
+          </div>
+
+          <app-textarea
+            class="full-width textarea-field"
+            formControlName="termination_terms"
+            [label]="'contracts.edit.terminationTerms' | transloco"
+            [minRows]="2"
+          />
+          <p class="field-hint">{{ 'contracts.edit.terminationHint' | transloco }}</p>
+
+          <div class="form-row">
+            <label class="service-option">
+              <input type="checkbox" formControlName="auto_renew" />
+              <span>{{ 'contracts.edit.autoRenew' | transloco }}</span>
+            </label>
+
+            <app-text-field
+              type="number"
+              formControlName="renewal_notice_days"
+              [label]="'contracts.edit.noticeDays' | transloco"
+            />
+
+            <app-text-field
+              type="number"
+              formControlName="auto_increase_percentage"
+              [label]="'contracts.edit.annualIncrease' | transloco"
+            />
+          </div>
+
+          <app-text-field
+            class="full-width"
+            formControlName="jurisdiction"
+            [label]="'contracts.detail.jurisdiction' | transloco"
+          />
+        </div>
+
+        <!-- Datos Bancarios -->
+        <div class="form-section">
+          <h2>{{ 'contracts.detail.bankData' | transloco }}</h2>
+
+          <app-text-field
+            class="full-width"
+            formControlName="bank_name"
+            [label]="'contracts.edit.bankName' | transloco"
+          />
+
+          <div class="form-row">
+            <app-select
+              formControlName="bank_account_type"
+              [label]="'contracts.edit.accountType' | transloco"
+              [placeholder]="'contracts.edit.selectPlaceholder' | transloco"
+              [options]="bankAccountOptions"
+            />
+
+            <app-text-field
+              formControlName="bank_account_number"
+              [label]="'contracts.edit.accountNumber' | transloco"
+            />
+          </div>
+
+          <app-text-field
+            class="full-width"
+            formControlName="bank_account_holder"
+            [label]="'contracts.edit.accountHolder' | transloco"
+          />
+        </div>
+
+        <!-- Errores -->
+        @if (errorMessage()) {
+          <div class="error-message">
+            <lucide-icon [img]="AlertCircle" [size]="18" class="error-icon"></lucide-icon>
+            {{ errorMessage() }}
+          </div>
+        }
+
+        <!-- Acciones -->
+        <div class="form-actions">
+          <app-button
+            type="submit"
+            [disabled]="contractForm.invalid || isSubmitting"
+            [loading]="isSubmitting"
+          >
+            @if (!isSubmitting) {
+              <lucide-icon [img]="Save" [size]="18"></lucide-icon>
+            }
+            {{ (isSubmitting ? 'common.saving' : 'common.saveChanges') | transloco }}
+          </app-button>
+          <app-button
+            type="button"
+            appearance="outline"
+            (clicked)="goBack()"
+            [disabled]="isSubmitting"
+          >
+            <lucide-icon [img]="X" [size]="18"></lucide-icon>
+            {{ 'common.cancel' | transloco }}
+          </app-button>
+        </div>
+      </form>
+    </section>
+  }
+</div>

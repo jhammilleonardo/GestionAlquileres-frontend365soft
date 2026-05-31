@@ -115,9 +115,12 @@
             </div>
 
             <button type="submit" class="btn-submit" [disabled]="isSubmitting">
-              <lucide-icon [img]="Send" *ngIf="!isSubmitting"></lucide-icon>
-              <span *ngIf="!isSubmitting">{{ 'public.contact.sendBtn' | transloco }}</span>
-              <span *ngIf="isSubmitting">{{ 'public.contact.sending' | transloco }}</span>
+              @if (!isSubmitting) {
+                <lucide-icon [img]="Send"></lucide-icon>
+                <span>{{ 'public.contact.sendBtn' | transloco }}</span>
+              } @else {
+                <span>{{ 'public.contact.sending' | transloco }}</span>
+              }
             </button>
           </form>
 

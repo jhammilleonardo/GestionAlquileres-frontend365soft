@@ -1,10 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ApplicationService } from '../../../core/services/admin/application.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
 import {
   CreateApplicationDto,
   PersonalData,
@@ -15,28 +16,57 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
+interface ApplicationPayload {
+  property_id: number;
+  personal_data: {
+    full_name: string;
+    phone: string;
+    identity_document: string;
+    current_address: string;
+  };
+  employment_data: {
+    employer_name: string;
+    position: string;
+    monthly_income: number;
+    employment_duration: string;
+    employer_phone: string;
+  };
+  rental_history: {
+    previous_address: string;
+    previous_landlord_name: string;
+    previous_landlord_phone: string;
+    previous_rent_amount: number;
+    reason_for_leaving: string;
+  }[];
+  references: { name: string; relationship: string; phone: string }[];
+  additional_notes?: string;
+}
+
 @Component({
   selector: 'app-application-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslocoModule],
+  imports: [FormsModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './application-form.component.html',
   styleUrls: ['./application-form.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApplicationFormComponent implements OnInit {
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private applicationService = inject(ApplicationService);
-  private authService = inject(AuthService);
-  private slugService = inject(SlugService);
-  private translocoService = inject(TranslocoService);
+export class ApplicationFormComponent {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly applicationService = inject(ApplicationService);
+  private readonly authService = inject(AuthService);
+  private readonly slugService = inject(SlugService);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly FORM_DATA_KEY = 'pending_application_form';
 
-  propertyId: number = 0;
-  submitting = false;
-  submitSuccess = false;
-  error: string | null = null;
+  readonly propertyId = signal(0);
+  readonly submitting = signal(false);
+  readonly submitSuccess = signal(false);
+  readonly error = signal<string | null>(null);
 
   // Form data
   formData: CreateApplicationDto = {
@@ -56,31 +86,29 @@ export class ApplicationFormComponent implements OnInit {
   maritalStatuses = Object.values(MaritalStatus);
   employmentTypes = Object.values(EmploymentType);
 
-  ngOnInit(): void {
-    this.route.queryParamMap.subscribe((params) => {
-      if (params.get('restoreForm') === 'true') {
-        this.restoreFormData();
-      }
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      if (params.get('restoreForm') === 'true') this.restoreFormData();
     });
 
-    this.route.paramMap.subscribe((params) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('propertyId');
       if (id) {
-        this.propertyId = Number(id);
-        this.formData.property_id = this.propertyId;
+        this.propertyId.set(Number(id));
+        this.formData.property_id = Number(id);
       }
     });
 
-    this.route.queryParamMap.subscribe((params) => {
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const id = params.get('propertyId');
-      if (id && !this.propertyId) {
-        this.propertyId = Number(id);
-        this.formData.property_id = this.propertyId;
+      if (id && !this.propertyId()) {
+        this.propertyId.set(Number(id));
+        this.formData.property_id = Number(id);
       }
     });
 
-    if (!this.propertyId) {
-      this.router.navigate(['../../propiedades'], { relativeTo: this.route });
+    if (!this.propertyId()) {
+      void this.router.navigate(['../../propiedades'], { relativeTo: this.route });
     }
   }
 
@@ -188,8 +216,8 @@ export class ApplicationFormComponent implements OnInit {
       return;
     }
 
-    this.submitting = true;
-    this.error = null;
+    this.submitting.set(true);
+    this.error.set(null);
 
     const pd = this.formData.personal_data;
     const cj = this.formData.employment_data.current_job;
@@ -206,76 +234,78 @@ export class ApplicationFormComponent implements OnInit {
       })),
     ];
 
-    const payload: any = {
+    const payload: ApplicationPayload = {
       property_id: this.formData.property_id,
       personal_data: {
         full_name: pd.full_name,
         phone: pd.phone,
-        identity_document: (pd as any).national_id || '',
-        current_address: (pd as any).current_address || '',
+        identity_document: (pd as PersonalData & { national_id?: string }).national_id ?? '',
+        current_address: (pd as PersonalData & { current_address?: string }).current_address ?? '',
       },
       employment_data: {
         employer_name: cj.company,
         position: cj.position,
         monthly_income: Number(cj.salary) || 0,
-        employment_duration: cj.start_date || '',
+        employment_duration: cj.start_date ?? '',
         employer_phone: cj.supervisor_phone,
       },
-      rental_history: this.formData.rental_history.map((h: any) => ({
-        previous_address: h.property_address || '',
-        previous_landlord_name: h.landlord_name || '',
-        previous_landlord_phone: h.landlord_phone || '',
+      rental_history: this.formData.rental_history.map((h) => ({
+        previous_address: h.property_address ?? '',
+        previous_landlord_name: h.landlord_name ?? '',
+        previous_landlord_phone: h.landlord_phone ?? '',
         previous_rent_amount: Number(h.monthly_rent) || 0,
-        reason_for_leaving: h.reason_for_leaving || '',
+        reason_for_leaving: h.reason_for_leaving ?? '',
       })),
       references: allRefs,
       additional_notes: this.formData.additional_notes || undefined,
     };
 
-    this.applicationService.createApplication(payload).subscribe({
-      next: (response) => {
-        this.submitSuccess = true;
-        this.submitting = false;
+    this.applicationService
+      .createApplication(payload as unknown as CreateApplicationDto)
+      .subscribe({
+        next: (response) => {
+          this.submitSuccess.set(true);
+          this.submitting.set(false);
+          this.clearSavedFormData();
+          setTimeout(() => {
+            void this.router.navigate(['../../registro'], {
+              relativeTo: this.route,
+              queryParams: { application: 'success', applicationId: response.id },
+            });
+          }, 3000);
+        },
+        error: (err: { error?: { message?: string } }) => {
+          this.error.set(
+            err.error?.message ??
+              this.translocoService.translate('public.applicationForm.errSubmit'),
+          );
+          this.submitting.set(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      });
+  }
 
-        // Clear saved form data
-        this.clearSavedFormData();
-
-        // Redirect to login/register after showing success message
-        setTimeout(() => {
-          this.router.navigate(['../../registro'], {
-            relativeTo: this.route,
-            queryParams: { application: 'success', applicationId: response.id },
-          });
-        }, 3000);
-      },
-      error: (err: any) => {
-        this.error =
-          err.error?.message || this.translocoService.translate('public.applicationForm.errSubmit');
-        this.submitting = false;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      },
+  async cancel(): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.translocoService.translate('public.applicationForm.msgCancel'),
+      message: '',
+      confirmLabel: this.translocoService.translate('common.confirm'),
     });
+    if (!confirmed) return;
+    this.clearSavedFormData();
+    void this.router.navigate(['../../propiedades'], { relativeTo: this.route });
   }
 
-  cancel(): void {
-    if (confirm(this.translocoService.translate('public.applicationForm.msgCancel'))) {
-      this.clearSavedFormData();
-      this.router.navigate(['../../propiedades'], { relativeTo: this.route });
-    }
-  }
-
-  // Save form data to localStorage
   private saveFormData(): void {
     try {
       const dataToSave = {
         formData: this.formData,
-        propertyId: this.propertyId,
+        propertyId: this.propertyId(),
         timestamp: new Date().toISOString(),
       };
       localStorage.setItem(this.FORM_DATA_KEY, JSON.stringify(dataToSave));
-      console.log('💾 Datos del formulario guardados en localStorage');
-    } catch (error) {
-      console.error('Error al guardar formulario:', error);
+    } catch {
+      // localStorage not available — continue silently
     }
   }
 
@@ -285,7 +315,7 @@ export class ApplicationFormComponent implements OnInit {
       if (savedData) {
         const parsed = JSON.parse(savedData);
         this.formData = parsed.formData;
-        this.propertyId = parsed.propertyId;
+        this.propertyId.set(parsed.propertyId);
         this.clearSavedFormData();
         setTimeout(() => this.onSubmit(), 500);
       }
@@ -309,14 +339,14 @@ export class ApplicationFormComponent implements OnInit {
   validatePersonalData(): boolean {
     const pd = this.formData.personal_data;
     if (!pd.full_name || !pd.phone || !pd.email || !pd.birth_date || !pd.national_id) {
-      this.error = this.translocoService.translate('public.applicationForm.errPersonal');
+      this.error.set(this.translocoService.translate('public.applicationForm.errPersonal'));
       return false;
     }
     if (!pd.email.includes('@')) {
-      this.error = this.translocoService.translate('public.applicationForm.errEmail');
+      this.error.set(this.translocoService.translate('public.applicationForm.errEmail'));
       return false;
     }
-    this.error = null;
+    this.error.set(null);
     return true;
   }
 
@@ -330,40 +360,36 @@ export class ApplicationFormComponent implements OnInit {
       !cj.supervisor_name ||
       !cj.supervisor_phone
     ) {
-      this.error = this.translocoService.translate('public.applicationForm.errWork');
+      this.error.set(this.translocoService.translate('public.applicationForm.errWork'));
       return false;
     }
     if (cj.salary <= 0) {
-      this.error = this.translocoService.translate('public.applicationForm.errSalary');
+      this.error.set(this.translocoService.translate('public.applicationForm.errSalary'));
       return false;
     }
-    this.error = null;
+    this.error.set(null);
     return true;
   }
 
   validateReferences(): boolean {
     const refs = this.formData.references;
     if (refs.personal.length === 0 && refs.professional.length === 0) {
-      this.error = this.translocoService.translate('public.applicationForm.errRefMissing');
+      this.error.set(this.translocoService.translate('public.applicationForm.errRefMissing'));
       return false;
     }
-
-    // Validate that all references have required fields
     for (const ref of refs.personal) {
       if (!ref.name || !ref.relationship || !ref.phone) {
-        this.error = this.translocoService.translate('public.applicationForm.errRefPersonal');
+        this.error.set(this.translocoService.translate('public.applicationForm.errRefPersonal'));
         return false;
       }
     }
-
     for (const ref of refs.professional) {
       if (!ref.name || !ref.company || !ref.position || !ref.phone) {
-        this.error = this.translocoService.translate('public.applicationForm.errRefProf');
+        this.error.set(this.translocoService.translate('public.applicationForm.errRefProf'));
         return false;
       }
     }
-
-    this.error = null;
+    this.error.set(null);
     return true;
   }
 }

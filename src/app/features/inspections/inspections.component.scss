@@ -1,0 +1,132 @@
+.inspections-page {
+  display: grid;
+  gap: var(--app-space-5, 1.25rem);
+  padding: var(--app-space-6, 1.5rem);
+  color: var(--app-color-text);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  background: var(--app-color-surface);
+}
+
+.inspections-table,
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+
+  th,
+  td {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--app-color-border);
+    font-size: 0.88rem;
+  }
+
+  th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--app-color-text-muted);
+    background: var(--app-color-surface-muted, #f8fafc);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.clickable {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--app-color-surface-muted, #f8fafc);
+  }
+}
+
+.actions-col {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.inspection-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.form-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--app-color-text-muted);
+}
+
+[dialog-actions] {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* ── Comparativo ── */
+.compare-body {
+  display: grid;
+  gap: 1rem;
+  min-width: min(560px, 80vw);
+}
+
+.compare-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.compare-table tr.changed {
+  background: #fef2f2;
+}
+
+.compare-table td.worse {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.area-chip {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--app-color-primary-soft, #eff6ff);
+  color: var(--app-color-primary, #2563eb);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .inspections-page {
+    padding: var(--app-space-4, 1rem);
+  }
+  .compare-selects {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,23 +1,14 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { Location } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   LucideAngularModule,
   Home,
-  Mail,
-  Lock,
   Eye,
   EyeOff,
   AlertCircle,
-  CheckCircle2,
   Shield,
   CalendarDays,
   FileText,
@@ -25,26 +16,27 @@ import {
 } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
-import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
+import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
+import {
+  AppButtonComponent,
+  AppCheckboxComponent,
+  AppTextFieldComponent,
+} from '../../../shared/ui';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-login',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
-    MatCheckboxModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppCheckboxComponent,
+    AppTextFieldComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
@@ -119,76 +111,72 @@ import { LanguageService } from '../../../core/services/language.service';
           }
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantLogin.emailLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
-              <input
-                matInput
-                type="email"
+            <div class="field-block">
+              <app-text-field
                 formControlName="email"
-                [placeholder]="'public.tenantLogin.emailPlaceholder' | transloco"
                 autocomplete="email"
+                label="{{ 'public.tenantLogin.emailLabel' | transloco }}"
+                [placeholder]="'public.tenantLogin.emailPlaceholder' | transloco"
+                type="email"
               />
               @if (
                 loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched
               ) {
-                <mat-error>{{ 'public.tenantLogin.emailRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantLogin.emailRequired' | transloco }}</p>
               }
               @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
-                <mat-error>{{ 'public.tenantLogin.emailInvalid' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantLogin.emailInvalid' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantLogin.passwordLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-              <input
-                matInput
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="password"
-                [placeholder]="'public.tenantLogin.passwordPlaceholder' | transloco"
-                autocomplete="current-password"
-              />
-              <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                (click)="togglePassword()"
-                tabindex="-1"
-              >
-                <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
-              </button>
+            <div class="field-block">
+              <div class="password-row">
+                <app-text-field
+                  formControlName="password"
+                  autocomplete="current-password"
+                  label="{{ 'public.tenantLogin.passwordLabel' | transloco }}"
+                  [placeholder]="'public.tenantLogin.passwordPlaceholder' | transloco"
+                  [type]="showPassword() ? 'text' : 'password'"
+                />
+                <button
+                  class="password-toggle"
+                  type="button"
+                  (click)="togglePassword()"
+                  [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                >
+                  <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
+                </button>
+              </div>
               @if (
                 loginForm.get('password')?.hasError('required') &&
                 loginForm.get('password')?.touched
               ) {
-                <mat-error>{{ 'public.tenantLogin.passwordRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantLogin.passwordRequired' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
             <div class="form-options">
-              <mat-checkbox formControlName="rememberMe" color="primary">
+              <app-checkbox formControlName="rememberMe">
                 {{ 'public.tenantLogin.rememberMe' | transloco }}
-              </mat-checkbox>
-              <a href="#" class="forgot-link">{{
+              </app-checkbox>
+              <a routerLink="/forgot-password" class="forgot-link">{{
                 'public.tenantLogin.forgotPassword' | transloco
               }}</a>
             </div>
 
-            <button
-              mat-raised-button
-              color="primary"
+            <app-button
               type="submit"
               class="submit-btn"
+              [fullWidth]="true"
+              [loading]="authService.isLoading()"
               [disabled]="loginForm.invalid || authService.isLoading()"
             >
-              @if (authService.isLoading()) {
-                <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>{{ 'public.tenantLogin.submittingBtn' | transloco }}</span>
-              } @else {
-                <span>{{ 'public.tenantLogin.submitBtn' | transloco }}</span>
-              }
-            </button>
+              {{
+                authService.isLoading()
+                  ? ('public.tenantLogin.submittingBtn' | transloco)
+                  : ('public.tenantLogin.submitBtn' | transloco)
+              }}
+            </app-button>
           </form>
 
           <div class="form-footer">
@@ -197,7 +185,7 @@ import { LanguageService } from '../../../core/services/language.service';
               <span>{{ 'public.tenantLogin.sslBadge' | transloco }}</span>
             </div>
             <div class="help-links">
-              @if (slug) {
+              @if (slug(); as slug) {
                 <a [routerLink]="['/', slug, 'register']" class="help-link">{{
                   'public.tenantLogin.registerLink' | transloco
                 }}</a>
@@ -419,9 +407,41 @@ import { LanguageService } from '../../../core/services/language.service';
         flex-direction: column;
       }
 
-      .custom-field {
-        width: 100%;
+      .field-block {
         margin-bottom: 16px;
+      }
+
+      .field-error {
+        margin: 0.4rem 0 0;
+        font-size: 0.875rem;
+        color: #dc2626;
+      }
+
+      .password-row {
+        position: relative;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        z-index: 2;
+        display: inline-flex;
+        width: 2.25rem;
+        height: 2.25rem;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: #64748b;
+        cursor: pointer;
+        transform: translateY(-50%);
+      }
+
+      .password-toggle:hover {
+        background: #f1f5f9;
+        color: #0f172a;
       }
 
       .form-options {
@@ -429,11 +449,6 @@ import { LanguageService } from '../../../core/services/language.service';
         align-items: center;
         justify-content: space-between;
         margin-bottom: 24px;
-      }
-
-      .form-options ::ng-deep .mat-mdc-checkbox {
-        font-size: 0.875rem;
-        color: #475569;
       }
 
       .forgot-link {
@@ -450,21 +465,6 @@ import { LanguageService } from '../../../core/services/language.service';
 
       .submit-btn {
         width: 100%;
-        height: 52px;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        text-transform: none;
-        letter-spacing: 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-      }
-
-      .submit-btn:not(:disabled):hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       .form-footer {
@@ -550,14 +550,11 @@ import { LanguageService } from '../../../core/services/language.service';
     `,
   ],
 })
-export class TenantLoginComponent implements OnInit {
+export class TenantLoginComponent {
   readonly Home = Home;
-  readonly Mail = Mail;
-  readonly Lock = Lock;
   readonly Eye = Eye;
   readonly EyeOff = EyeOff;
   readonly AlertCircle = AlertCircle;
-  readonly CheckCircle2 = CheckCircle2;
   readonly Shield = Shield;
   readonly CalendarDays = CalendarDays;
   readonly FileText = FileText;
@@ -570,10 +567,10 @@ export class TenantLoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private location = inject(Location);
   private intentionService = inject(ApplicationIntentionService);
-  private translocoService = inject(TranslocoService);
+  private destroyRef = inject(DestroyRef);
 
   showPassword = signal(false);
-  slug: string | null = null;
+  readonly slug = signal<string | null>(null);
 
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -581,16 +578,16 @@ export class TenantLoginComponent implements OnInit {
     rememberMe: [false],
   });
 
-  ngOnInit(): void {
+  constructor() {
     // Obtener el slug de la URL — leerlo en ngOnInit (no en constructor)
     // para asegurar que los params heredados estén disponibles
     // con paramsInheritanceStrategy: 'always'
-    this.slug = this.route.snapshot.paramMap.get('slug');
+    this.slug.set(this.route.snapshot.paramMap.get('slug'));
 
     // Fallback: extraer slug directamente de la URL del router si paramMap retorna null
     // Esto cubre el caso donde el componente está lazy-loaded en rutas profundamente anidadas
     // Formato de URL esperado: /:slug/login  o  /:slug/portal/login
-    if (!this.slug) {
+    if (!this.slug()) {
       const urlSegments = this.router.url.split('?')[0].split('/').filter(Boolean);
       if (urlSegments.length >= 1) {
         const potentialSlug = urlSegments[0];
@@ -604,16 +601,16 @@ export class TenantLoginComponent implements OnInit {
           'publico',
         ];
         if (!reservedPaths.includes(potentialSlug)) {
-          this.slug = potentialSlug;
+          this.slug.set(potentialSlug);
         }
       }
     }
 
     // Suscribirse a cambios de params para manejar reactivación del componente
-    this.route.paramMap.subscribe((params) => {
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const routeSlug = params.get('slug');
       if (routeSlug) {
-        this.slug = routeSlug;
+        this.slug.set(routeSlug);
       }
     });
   }
@@ -623,7 +620,8 @@ export class TenantLoginComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.loginForm.invalid || !this.slug) {
+    const slug = this.slug();
+    if (this.loginForm.invalid || !slug) {
       this.loginForm.markAllAsTouched();
       return;
     }
@@ -631,18 +629,18 @@ export class TenantLoginComponent implements OnInit {
     const { email, password } = this.loginForm.value;
     this.authService.clearError();
 
-    this.authService.login(this.slug, email!, password!).subscribe({
+    this.authService.login(slug, email!, password!).subscribe({
       next: () => {
         // Verificar si hay una intención de aplicación guardada
         if (this.intentionService.hasIntention()) {
           // Hay intención -> Redirigir al formulario de aplicación
-          this.intentionService.navigateToApplication(this.slug!);
+          this.intentionService.navigateToApplication(slug);
         } else {
           // No hay intención -> Usar returnUrl o dashboard por defecto
           const returnUrl =
-            this.route.snapshot.queryParams['returnUrl'] || `/${this.slug}/portal/home`;
+            this.route.snapshot.queryParamMap.get('returnUrl') ?? `/${slug}/portal/home`;
           // Usar replaceUrl para que el login no quede en el historial del navegador
-          this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
+          void this.router.navigateByUrl(returnUrl, { replaceUrl: true }).then(() => {
             // Limpiar cualquier query param de returnUrl del estado del navegador
             // Esto asegura que el historial no tenga entradas con ?returnUrl=...
             const cleanUrl = returnUrl.split('?')[0]; // Remover query params

@@ -1,0 +1,148 @@
+<div class="audit-page">
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'audit.title' | transloco"
+    [description]="'audit.subtitle' | transloco"
+  >
+    <span actions class="readonly-chip">
+      <lucide-icon [img]="ShieldCheck" [size]="14" /> {{ 'audit.readonly' | transloco }}
+    </span>
+  </app-page-header>
+
+  <form class="filters" [formGroup]="filterForm">
+    <app-select
+      formControlName="action"
+      [label]="'audit.actionLabel' | transloco"
+      [placeholder]="'audit.allActions' | transloco"
+      [options]="actionOptions"
+    />
+    <app-text-field formControlName="entity_type" [label]="'audit.entity' | transloco" />
+    <app-text-field formControlName="user_id" [label]="'audit.user' | transloco" />
+    <app-date-picker formControlName="from" [label]="'audit.from' | transloco" />
+    <app-date-picker formControlName="to" [label]="'audit.to' | transloco" />
+    <div class="filter-actions">
+      <app-button size="s" (clicked)="applyFilters()">{{ 'common.apply' | transloco }}</app-button>
+      <app-button size="s" appearance="secondary" (clicked)="clearFilters()">
+        {{ 'common.clear' | transloco }}
+      </app-button>
+    </div>
+  </form>
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'audit.loading' | transloco" />
+  } @else if (logs().length === 0) {
+    <app-empty-state [title]="'audit.empty' | transloco" />
+  } @else {
+    <div class="table-wrapper">
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th>{{ 'audit.date' | transloco }}</th>
+            <th>{{ 'audit.user' | transloco }}</th>
+            <th>{{ 'audit.actionLabel' | transloco }}</th>
+            <th>{{ 'audit.entity' | transloco }}</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (log of logs(); track log.id) {
+            <tr>
+              <td>{{ log.timestamp | date: 'short' }}</td>
+              <td>{{ log.user_id ?? '—' }}</td>
+              <td>
+                <app-status-badge
+                  [label]="'audit.action.' + log.action | transloco"
+                  [tone]="actionTone(log.action)"
+                />
+              </td>
+              <td>{{ log.entity_type }} #{{ log.entity_id }}</td>
+              <td class="actions-col">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [attr.aria-label]="'audit.viewDetail' | transloco"
+                  (click)="openDetail(log)"
+                >
+                  <lucide-icon [img]="Eye" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="audit-footer">
+      <span class="count">{{ logs().length }} / {{ total() }}</span>
+      @if (hasMore()) {
+        <app-button appearance="secondary" [disabled]="loadingMore()" (clicked)="loadMore()">
+          {{ 'audit.loadMore' | transloco }}
+        </app-button>
+      }
+    </div>
+  }
+</div>
+
+<!-- Detalle: valores antes/después -->
+<app-dialog
+  [open]="selected() !== null"
+  [title]="'audit.detailTitle' | transloco"
+  (closed)="closeDetail()"
+>
+  @if (selected(); as log) {
+    <div class="detail">
+      <div class="detail-meta">
+        <span
+          ><strong>{{ 'audit.actionLabel' | transloco }}:</strong>
+          {{ 'audit.action.' + log.action | transloco }}</span
+        >
+        <span
+          ><strong>{{ 'audit.entity' | transloco }}:</strong> {{ log.entity_type }} #{{
+            log.entity_id
+          }}</span
+        >
+        <span
+          ><strong>{{ 'audit.user' | transloco }}:</strong> {{ log.user_id ?? '—' }}</span
+        >
+        <span
+          ><strong>{{ 'audit.date' | transloco }}:</strong>
+          {{ log.timestamp | date: 'medium' }}</span
+        >
+        @if (log.ip_address) {
+          <span><strong>IP:</strong> {{ log.ip_address }}</span>
+        }
+      </div>
+
+      @if (diffRows().length === 0) {
+        <p class="no-diff">{{ 'audit.noChanges' | transloco }}</p>
+      } @else {
+        <div class="table-wrapper">
+          <table class="diff-table">
+            <thead>
+              <tr>
+                <th>{{ 'audit.field' | transloco }}</th>
+                <th>{{ 'audit.before' | transloco }}</th>
+                <th>{{ 'audit.after' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of diffRows(); track row.key) {
+                <tr [class.changed]="row.changed">
+                  <td>{{ row.key }}</td>
+                  <td class="val-before">{{ row.before }}</td>
+                  <td class="val-after">{{ row.after }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeDetail()">{{
+      'common.close' | transloco
+    }}</app-button>
+  </div>
+</app-dialog>

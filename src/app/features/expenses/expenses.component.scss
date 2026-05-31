@@ -1,0 +1,293 @@
+.accounting-page {
+  display: grid;
+  gap: var(--app-space-5, 1.25rem);
+  padding: var(--app-space-6, 1.5rem);
+  color: var(--app-color-text);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--app-space-2, 0.5rem);
+  flex-wrap: wrap;
+}
+
+/* ── Balance ── */
+.balance-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  padding: 1.1rem 1.4rem;
+}
+
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+.balance-label {
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--app-color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.balance-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.balance-item.income .balance-value {
+  color: #16a34a;
+}
+.balance-item.expense .balance-value {
+  color: #dc2626;
+}
+.balance-item.net.positive .balance-value {
+  color: #16a34a;
+}
+.balance-item.net.negative .balance-value {
+  color: #dc2626;
+}
+
+.balance-op {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--app-color-text-muted);
+}
+
+/* ── Gráfico ── */
+.chart-card {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  padding: 1.1rem 1.4rem;
+}
+
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.78rem;
+}
+
+.legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  &::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  &.income::before {
+    background: #16a34a;
+  }
+  &.expense::before {
+    background: #dc2626;
+  }
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  height: 160px;
+  margin-top: 1rem;
+}
+
+.chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  gap: 6px;
+}
+
+.bar-pair {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  width: 100%;
+}
+
+.bar {
+  width: 14px;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s;
+
+  &.income {
+    background: #16a34a;
+  }
+  &.expense {
+    background: #dc2626;
+  }
+}
+
+.bar-label {
+  font-size: 0.72rem;
+  color: var(--app-color-text-muted);
+  text-transform: capitalize;
+}
+
+/* ── Filtros ── */
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ── Tabla ── */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  background: var(--app-color-surface);
+}
+
+.expenses-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+
+  th,
+  td {
+    padding: 0.7rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--app-color-border);
+    font-size: 0.88rem;
+  }
+
+  th {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--app-color-text-muted);
+    background: var(--app-color-surface-muted, #f8fafc);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .desc-cell {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.cat-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--app-color-primary-soft, #eff6ff);
+  color: var(--app-color-primary, #2563eb);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.actions-col {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    background: var(--app-color-surface-muted, #f1f5f9);
+    color: var(--app-color-text);
+  }
+
+  &.danger:hover {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+}
+
+/* ── Formulario ── */
+.expense-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+[dialog-actions] {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .accounting-page {
+    padding: var(--app-space-4, 1rem);
+  }
+  .balance-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .balance-op {
+    text-align: center;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

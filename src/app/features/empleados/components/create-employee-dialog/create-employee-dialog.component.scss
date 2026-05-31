@@ -1,26 +1,54 @@
-.full-width {
-  width: 100%;
-  margin-bottom: 0.5rem;
+.employee-form {
+  display: grid;
+  gap: var(--app-space-4);
+  min-width: min(440px, calc(100vw - 3rem));
+}
+
+.field-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.password-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--app-space-2);
+}
+
+.field-error {
+  margin: 0;
+  color: var(--app-color-danger);
+  font-size: 0.8125rem;
 }
 
 .error-banner {
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
   padding: 0.75rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+  border: 1px solid color-mix(in srgb, var(--app-color-danger) 30%, transparent);
+  border-radius: var(--app-radius-md);
+  background: color-mix(in srgb, var(--app-color-danger) 10%, transparent);
+  color: var(--app-color-danger);
   font-size: 0.875rem;
 }
 
-mat-dialog-content {
-  padding-top: 0.5rem !important;
-  min-width: min(440px, 90vw);
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--app-space-2);
+  padding-top: var(--app-space-2);
 }
 
-mat-dialog-actions {
-  padding: 1rem 1.5rem 1.5rem;
-}
+@media (max-width: 520px) {
+  .employee-form {
+    min-width: 0;
+  }
 
-mat-spinner {
-  display: inline-block;
+  .password-row,
+  .dialog-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .dialog-actions {
+    display: grid;
+  }
 }

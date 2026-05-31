@@ -1,17 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
 import { LucideAngularModule, ArrowLeft, Save, X, AlertCircle } from 'lucide-angular';
 import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../../core/services/slug.service';
@@ -24,525 +13,33 @@ import {
   SERVICE_OPTIONS,
   BANK_ACCOUNT_TYPES,
 } from '../../../core/models/contract.model';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
+import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
+import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
+import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.component';
+import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-contract-edit',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatProgressSpinnerModule,
-    MatCheckboxModule,
-    MatIconModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppDatePickerComponent,
+    AppLoadingStateComponent,
+    AppSelectComponent,
+    AppTextareaComponent,
+    AppTextFieldComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
-  template: `
-    <div class="contract-edit-container">
-      <!-- Header -->
-      <div class="page-header">
-        <button mat-button class="back-button" (click)="goBack()">
-          <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
-          {{ 'common.back' | transloco }}
-        </button>
-        <h1>{{ 'contracts.edit.titlePrefix' | transloco }} {{ contractNumber() }}</h1>
-      </div>
-
-      <!-- Alerta de solo borradores -->
-      @if (currentContract() && currentContract()!.status !== ContractStatus.BORRADOR) {
-        <mat-card class="warning-card">
-          <lucide-icon [img]="AlertCircle" [size]="24" class="warning-icon"></lucide-icon>
-          <div class="warning-content">
-            <h3>{{ 'contracts.edit.notEditable' | transloco }}</h3>
-            <p>
-              {{
-                'contracts.edit.notEditableMsg'
-                  | transloco
-                    : { status: ('contracts.status.' + currentContract()!.status | transloco) }
-              }}
-            </p>
-            <button mat-raised-button color="warn" (click)="goBack()">
-              {{ 'common.back' | transloco }}
-            </button>
-          </div>
-        </mat-card>
-      } @else if (isLoading()) {
-        <div class="loading-container">
-          <mat-spinner diameter="50"></mat-spinner>
-          <p>{{ 'contracts.detail.loading' | transloco }}</p>
-        </div>
-      } @else if (currentContract()) {
-        <mat-card class="form-card">
-          <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
-            <!-- Información Básica -->
-            <div class="form-section">
-              <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
-
-              <div class="info-readonly">
-                <div class="info-item">
-                  <label>{{ 'contracts.edit.tenantLabel' | transloco }}</label>
-                  <span>{{
-                    currentContract()!.tenant?.name || currentContract()!.tenant_name || 'N/A'
-                  }}</span>
-                </div>
-                <div class="info-item">
-                  <label>{{ 'contracts.edit.propertyLabel' | transloco }}</label>
-                  <span>{{
-                    currentContract()!.property?.title || currentContract()!.property_title || 'N/A'
-                  }}</span>
-                </div>
-              </div>
-
-              <!-- Fechas -->
-              <div class="form-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.startDate' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    [matDatepicker]="startDatePicker"
-                    formControlName="start_date"
-                    required
-                  />
-                  <mat-datepicker-toggle
-                    matIconSuffix
-                    [for]="startDatePicker"
-                  ></mat-datepicker-toggle>
-                  <mat-datepicker #startDatePicker></mat-datepicker>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.endDate' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    [matDatepicker]="endDatePicker"
-                    formControlName="end_date"
-                    required
-                  />
-                  <mat-datepicker-toggle
-                    matIconSuffix
-                    [for]="endDatePicker"
-                  ></mat-datepicker-toggle>
-                  <mat-datepicker #endDatePicker></mat-datepicker>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.keyDelivery' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    [matDatepicker]="keyDatePicker"
-                    formControlName="key_delivery_date"
-                  />
-                  <mat-datepicker-toggle
-                    matIconSuffix
-                    [for]="keyDatePicker"
-                  ></mat-datepicker-toggle>
-                  <mat-datepicker #keyDatePicker></mat-datepicker>
-                </mat-form-field>
-              </div>
-
-              <!-- Alquiler -->
-              <div class="form-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.monthlyRent' | transloco }}</mat-label>
-                  <input matInput type="number" formControlName="monthly_rent" required />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.paymentDay' | transloco }}</mat-label>
-                  <input matInput type="number" min="1" max="31" formControlName="payment_day" />
-                </mat-form-field>
-              </div>
-
-              <!-- Método de pago -->
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'contracts.create.paymentMethod' | transloco }}</mat-label>
-                <input matInput formControlName="payment_method" />
-              </mat-form-field>
-            </div>
-
-            <!-- Condiciones de Pago -->
-            <div class="form-section">
-              <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
-
-              <div class="form-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.lateFee' | transloco }}</mat-label>
-                  <input
-                    matInput
-                    type="number"
-                    formControlName="late_fee_percentage"
-                    placeholder="5"
-                  />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.create.graceDays' | transloco }}</mat-label>
-                  <input matInput type="number" formControlName="grace_days" placeholder="3" />
-                </mat-form-field>
-              </div>
-            </div>
-
-            <!-- Servicios Incluidos -->
-            <div class="form-section">
-              <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
-              <div class="services-grid">
-                @for (service of serviceOptions; track service) {
-                  <mat-checkbox
-                    [checked]="isServiceSelected(service)"
-                    (change)="toggleService(service, $event)"
-                  >
-                    {{ service }}
-                  </mat-checkbox>
-                }
-              </div>
-            </div>
-
-            <!-- Responsabilidades -->
-            <div class="form-section">
-              <h2>{{ 'contracts.edit.responsibilities' | transloco }}</h2>
-
-              <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>{{ 'contracts.detail.tenantResp' | transloco }}</mat-label>
-                <textarea matInput formControlName="tenant_responsibilities" rows="3"></textarea>
-                <mat-hint>{{ 'contracts.edit.tenantRespHint' | transloco }}</mat-hint>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>{{ 'contracts.detail.ownerResp' | transloco }}</mat-label>
-                <textarea matInput formControlName="owner_responsibilities" rows="3"></textarea>
-                <mat-hint>{{ 'contracts.edit.ownerRespHint' | transloco }}</mat-hint>
-              </mat-form-field>
-            </div>
-
-            <!-- Prohibiciones y Reglas -->
-            <div class="form-section">
-              <h2>{{ 'contracts.edit.prohibAndRules' | transloco }}</h2>
-
-              <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>{{ 'contracts.detail.prohibitions' | transloco }}</mat-label>
-                <textarea matInput formControlName="prohibitions" rows="2"></textarea>
-                <mat-hint>{{ 'contracts.edit.prohibitionsHint' | transloco }}</mat-hint>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>{{ 'contracts.detail.coexistenceRules' | transloco }}</mat-label>
-                <textarea matInput formControlName="coexistence_rules" rows="2"></textarea>
-                <mat-hint>{{ 'contracts.edit.coexistenceHint' | transloco }}</mat-hint>
-              </mat-form-field>
-            </div>
-
-            <!-- Términos del Contrato -->
-            <div class="form-section">
-              <h2>{{ 'contracts.edit.contractTerms' | transloco }}</h2>
-
-              <div class="form-row">
-                <mat-form-field appearance="outline" class="full-width">
-                  <mat-label>{{ 'contracts.edit.renewalTerms' | transloco }}</mat-label>
-                  <textarea matInput formControlName="renewal_terms" rows="2"></textarea>
-                  <mat-hint>{{ 'contracts.edit.renewalTermsHint' | transloco }}</mat-hint>
-                </mat-form-field>
-              </div>
-
-              <mat-form-field appearance="outline" class="full-width textarea-field">
-                <mat-label>{{ 'contracts.edit.terminationTerms' | transloco }}</mat-label>
-                <textarea matInput formControlName="termination_terms" rows="2"></textarea>
-                <mat-hint>{{ 'contracts.edit.terminationHint' | transloco }}</mat-hint>
-              </mat-form-field>
-
-              <div class="form-row">
-                <mat-checkbox formControlName="auto_renew">
-                  {{ 'contracts.edit.autoRenew' | transloco }}
-                </mat-checkbox>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.edit.noticeDays' | transloco }}</mat-label>
-                  <input matInput type="number" formControlName="renewal_notice_days" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.edit.annualIncrease' | transloco }}</mat-label>
-                  <input matInput type="number" formControlName="auto_increase_percentage" />
-                </mat-form-field>
-              </div>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'contracts.detail.jurisdiction' | transloco }}</mat-label>
-                <input matInput formControlName="jurisdiction" />
-              </mat-form-field>
-            </div>
-
-            <!-- Datos Bancarios -->
-            <div class="form-section">
-              <h2>{{ 'contracts.detail.bankData' | transloco }}</h2>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'contracts.edit.bankName' | transloco }}</mat-label>
-                <input matInput formControlName="bank_name" />
-              </mat-form-field>
-
-              <div class="form-row">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.edit.accountType' | transloco }}</mat-label>
-                  <mat-select formControlName="bank_account_type">
-                    <mat-option value="">{{
-                      'contracts.edit.selectPlaceholder' | transloco
-                    }}</mat-option>
-                    @for (option of bankAccountTypes; track option.value) {
-                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'contracts.edit.accountNumber' | transloco }}</mat-label>
-                  <input matInput formControlName="bank_account_number" />
-                </mat-form-field>
-              </div>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'contracts.edit.accountHolder' | transloco }}</mat-label>
-                <input matInput formControlName="bank_account_holder" />
-              </mat-form-field>
-            </div>
-
-            <!-- Errores -->
-            @if (errorMessage()) {
-              <div class="error-message">
-                <mat-icon class="error-icon">error_outline</mat-icon>
-                {{ errorMessage() }}
-              </div>
-            }
-
-            <!-- Acciones -->
-            <div class="form-actions">
-              <button
-                type="submit"
-                mat-raised-button
-                color="primary"
-                [disabled]="contractForm.invalid || isSubmitting"
-              >
-                @if (isSubmitting) {
-                  <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
-                  {{ 'common.saving' | transloco }}
-                } @else {
-                  <lucide-icon [img]="Save" [size]="18"></lucide-icon>
-                  {{ 'common.saveChanges' | transloco }}
-                }
-              </button>
-              <button type="button" mat-stroked-button (click)="goBack()" [disabled]="isSubmitting">
-                <lucide-icon [img]="X" [size]="18"></lucide-icon>
-                {{ 'common.cancel' | transloco }}
-              </button>
-            </div>
-          </form>
-        </mat-card>
-      }
-    </div>
-  `,
-  styles: [
-    `
-      .contract-edit-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 24px;
-      }
-
-      .page-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-
-      .back-button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .page-header h1 {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 600;
-      }
-
-      .warning-card {
-        padding: 24px;
-        display: flex;
-        gap: 16px;
-        align-items: flex-start;
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-      }
-
-      .warning-icon {
-        color: #ffc107;
-        flex-shrink: 0;
-      }
-
-      .warning-content h3 {
-        margin: 0 0 8px;
-        color: #856404;
-      }
-
-      .warning-content p {
-        margin: 0 0 16px;
-        color: #856404;
-      }
-
-      .loading-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 40px;
-        gap: 16px;
-      }
-
-      .form-card {
-        padding: 24px;
-      }
-
-      .form-section {
-        margin-bottom: 32px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
-      }
-
-      .form-section:last-of-type {
-        border-bottom: none;
-      }
-
-      .form-section h2 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin: 0 0 16px;
-        color: var(--mat-sys-primary);
-      }
-
-      .full-width {
-        width: 100%;
-      }
-
-      .form-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-bottom: 16px;
-      }
-
-      .services-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 12px;
-      }
-
-      .info-readonly {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        padding: 16px;
-        background: var(--mat-sys-surface-container-low);
-        border-radius: 8px;
-        margin-bottom: 16px;
-      }
-
-      .info-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .info-item label {
-        font-size: 12px;
-        color: var(--mat-sys-on-surface-variant);
-        font-weight: 500;
-      }
-
-      .info-item span {
-        font-weight: 500;
-      }
-
-      .textarea-field {
-        margin-bottom: 16px;
-      }
-
-      .error-message {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 16px;
-        background: #fee;
-        border-left: 4px solid #f44;
-        border-radius: 4px;
-        margin-bottom: 16px;
-        color: #c33;
-      }
-
-      .error-icon {
-        color: #f44;
-      }
-
-      .form-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-        padding-top: 16px;
-        border-top: 1px solid var(--mat-sys-outline-variant);
-      }
-
-      .form-actions button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .button-spinner {
-        display: inline-flex;
-      }
-
-      @media (max-width: 768px) {
-        .contract-edit-container {
-          padding: 16px;
-        }
-
-        .page-header {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .form-row {
-          grid-template-columns: 1fr;
-        }
-
-        .services-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .info-readonly {
-          grid-template-columns: 1fr;
-        }
-
-        .form-actions {
-          flex-direction: column;
-        }
-
-        .form-actions button {
-          width: 100%;
-        }
-      }
-    `,
-  ],
+  templateUrl: './contract-edit.component.html',
+  styleUrl: './contract-edit.component.scss',
 })
-export class ContractEditComponent implements OnInit {
+export class ContractEditComponent {
   readonly ArrowLeft = ArrowLeft;
   readonly Save = Save;
   readonly X = X;
@@ -569,6 +66,7 @@ export class ContractEditComponent implements OnInit {
   // Opciones
   serviceOptions = SERVICE_OPTIONS;
   bankAccountTypes = BANK_ACCOUNT_TYPES;
+  readonly bankAccountOptions: readonly AppSelectOption<string>[] = BANK_ACCOUNT_TYPES;
 
   constructor() {
     this.contractForm = this.fb.group({
@@ -596,9 +94,6 @@ export class ContractEditComponent implements OnInit {
       bank_account_holder: [''],
       included_services: [[]],
     });
-  }
-
-  ngOnInit(): void {
     const contractId = this.route.snapshot.paramMap.get('id');
     if (contractId) {
       this.loadContract(parseInt(contractId));
@@ -671,11 +166,12 @@ export class ContractEditComponent implements OnInit {
     return services.includes(service);
   }
 
-  toggleService(service: string, event: any): void {
+  toggleService(service: string, event: Event): void {
     const services = (this.contractForm.get('included_services')?.value as string[]) || [];
     const index = services.indexOf(service);
+    const checked = (event.target as HTMLInputElement).checked;
 
-    if (event.checked) {
+    if (checked) {
       if (index === -1) {
         services.push(service);
       }
@@ -686,6 +182,11 @@ export class ContractEditComponent implements OnInit {
     }
 
     this.contractForm.patchValue({ included_services: services });
+  }
+
+  hasError(controlName: string): boolean {
+    const control = this.contractForm.get(controlName);
+    return Boolean(control?.invalid && control?.touched);
   }
 
   onSubmit(): void {
@@ -707,7 +208,7 @@ export class ContractEditComponent implements OnInit {
     this.errorMessage.set(null);
 
     const contractId = this.currentContract()!.id;
-    const formData = this.contractForm.value;
+    const formData = this.contractForm.getRawValue();
 
     // Obtener servicios seleccionados
     const selectedServices = (this.contractForm.get('included_services')?.value as string[]) || [];
@@ -752,11 +253,9 @@ export class ContractEditComponent implements OnInit {
         const contractUrl = this.slugService.buildUrl(`/contratos/${contract.id}`);
         this.router.navigateByUrl(contractUrl);
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.isSubmitting = false;
-        this.errorMessage.set(
-          error.error?.message || this.transloco.translate('contracts.edit.updateError'),
-        );
+        this.errorMessage.set(this.resolveErrorMessage(error));
       },
     });
   }
@@ -766,10 +265,31 @@ export class ContractEditComponent implements OnInit {
     this.router.navigateByUrl(contractUrl);
   }
 
-  private formatDate(date: Date): string {
+  private formatDate(date: Date | string): string {
+    if (typeof date === 'string') {
+      return date.slice(0, 10);
+    }
+
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private resolveErrorMessage(error: unknown): string {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
+    ) {
+      return (error as { error: { message: string } }).error.message;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return this.transloco.translate('contracts.edit.updateError');
   }
 }

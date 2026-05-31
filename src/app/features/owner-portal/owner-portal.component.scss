@@ -1,0 +1,225 @@
+.owner-page {
+  display: grid;
+  gap: var(--app-space-5, 1.25rem);
+  padding: var(--app-space-6, 1.5rem);
+  color: var(--app-color-text);
+}
+
+.kpi-grid {
+  display: grid;
+  gap: var(--app-space-4, 1rem);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kpi {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  display: grid;
+  gap: var(--app-space-2, 0.5rem);
+  padding: var(--app-space-4, 1rem);
+
+  span {
+    color: var(--app-color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 650;
+  }
+
+  strong {
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2, 0.5rem);
+
+  button {
+    background: var(--app-color-surface);
+    border: 1px solid var(--app-color-border);
+    border-radius: var(--app-radius-md, 10px);
+    color: var(--app-color-text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 650;
+    padding: 0.6rem 0.9rem;
+  }
+
+  button.active {
+    background: var(--app-color-primary);
+    border-color: var(--app-color-primary);
+    color: #fff;
+  }
+}
+
+/* ── Cards de propiedades ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.info-card {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  padding: 1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.info-card__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    flex: 1;
+  }
+}
+
+.info-card__body {
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--app-color-text-muted);
+    font-size: 0.82rem;
+    margin: 0;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.86rem;
+  }
+}
+
+/* ── Listas (liquidaciones, mantenimiento, contratos) ── */
+.record-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+
+  &--column {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+}
+
+.record-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.record-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.record-sub {
+  color: var(--app-color-text-muted);
+  font-size: 0.82rem;
+}
+
+.record-amount {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Timeline de etapas ── */
+.stage-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  position: relative;
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--app-color-border);
+    z-index: 0;
+  }
+
+  &.done .stage-dot {
+    background: #16a34a;
+  }
+
+  &.done:not(:last-child)::after {
+    background: #16a34a;
+  }
+}
+
+.stage-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--app-color-border-strong, #c6d1dc);
+  z-index: 1;
+  box-shadow: 0 0 0 2px var(--app-color-surface);
+}
+
+.stage-name {
+  font-size: 0.62rem;
+  color: var(--app-color-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .owner-page {
+    padding: var(--app-space-4, 1rem);
+  }
+  .record-item {
+    flex-wrap: wrap;
+  }
+  .stage-name {
+    display: none;
+  }
+}

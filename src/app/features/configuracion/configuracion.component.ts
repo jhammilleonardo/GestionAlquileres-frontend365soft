@@ -1,15 +1,14 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { LucideAngularModule, Settings, Bell, Palette, Globe, CheckCircle2 } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
+import {
+  AppCheckboxComponent,
+  AppPageHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption,
+} from '../../shared/ui';
 
 interface AdminSettings {
   notifications_enabled: boolean;
@@ -26,33 +25,24 @@ const DEFAULT_SETTINGS: AdminSettings = {
 };
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-configuracion',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatDividerModule,
-    MatSelectModule,
-    MatFormFieldModule,
-    MatSlideToggleModule,
     LucideAngularModule,
     TranslocoModule,
+    AppCheckboxComponent,
+    AppPageHeaderComponent,
+    AppSelectComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'configuracion', alias: 'config' })],
   template: `
     <div class="config-container">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <lucide-icon [img]="Settings" [size]="32"></lucide-icon>
-          <div>
-            <h1>{{ 'config.title' | transloco }}</h1>
-            <p>{{ 'config.subtitle' | transloco }}</p>
-          </div>
-        </div>
-      </div>
+      <app-page-header
+        [title]="'config.title' | transloco"
+        [description]="'config.subtitle' | transloco"
+      />
 
       @if (savedSuccess()) {
         <div class="save-alert">
@@ -62,24 +52,23 @@ const DEFAULT_SETTINGS: AdminSettings = {
       }
 
       <div class="sections-grid">
-        <!-- Notificaciones -->
-        <mat-card class="section-card">
+        <section class="section-card">
           <div class="section-title">
             <lucide-icon [img]="Bell" [size]="20"></lucide-icon>
             <h2>{{ 'config.notificationsSection' | transloco }}</h2>
           </div>
-          <mat-divider></mat-divider>
 
           <div class="setting-row">
             <div class="setting-info">
               <span class="setting-label">{{ 'config.enableNotif' | transloco }}</span>
               <span class="setting-desc">{{ 'config.enableNotifDesc' | transloco }}</span>
             </div>
-            <mat-slide-toggle
+            <app-checkbox
               [(ngModel)]="settings.notifications_enabled"
-              (change)="saveSettings()"
+              (ngModelChange)="saveSettings()"
             >
-            </mat-slide-toggle>
+              {{ 'config.enableNotif' | transloco }}
+            </app-checkbox>
           </div>
 
           <div class="setting-row" [class.disabled]="!settings.notifications_enabled">
@@ -87,45 +76,38 @@ const DEFAULT_SETTINGS: AdminSettings = {
               <span class="setting-label">{{ 'config.updateInterval' | transloco }}</span>
               <span class="setting-desc">{{ 'config.updateIntervalDesc' | transloco }}</span>
             </div>
-            <mat-form-field appearance="outline" class="interval-select">
-              <mat-select
-                [(ngModel)]="settings.polling_interval"
-                [disabled]="!settings.notifications_enabled"
-                (selectionChange)="saveSettings()"
-              >
-                <mat-option [value]="30000">{{ 'config.sec30' | transloco }}</mat-option>
-                <mat-option [value]="60000">{{ 'config.min1' | transloco }}</mat-option>
-                <mat-option [value]="300000">{{ 'config.min5' | transloco }}</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <app-select
+              class="interval-select"
+              [(ngModel)]="settings.polling_interval"
+              [options]="pollingOptions"
+              [disabled]="!settings.notifications_enabled"
+              (ngModelChange)="saveSettings()"
+            />
           </div>
-        </mat-card>
+        </section>
 
-        <!-- Apariencia -->
-        <mat-card class="section-card">
+        <section class="section-card">
           <div class="section-title">
             <lucide-icon [img]="Palette" [size]="20"></lucide-icon>
             <h2>{{ 'config.appearanceSection' | transloco }}</h2>
           </div>
-          <mat-divider></mat-divider>
 
           <div class="setting-row">
             <div class="setting-info">
               <span class="setting-label">{{ 'config.compactMode' | transloco }}</span>
               <span class="setting-desc">{{ 'config.compactModeDesc' | transloco }}</span>
             </div>
-            <mat-slide-toggle [(ngModel)]="settings.compact_mode" (change)="saveSettings()">
-            </mat-slide-toggle>
+            <app-checkbox [(ngModel)]="settings.compact_mode" (ngModelChange)="saveSettings()">
+              {{ 'config.compactMode' | transloco }}
+            </app-checkbox>
           </div>
-        </mat-card>
+        </section>
 
-        <!-- Cuenta -->
-        <mat-card class="section-card">
+        <section class="section-card">
           <div class="section-title">
             <lucide-icon [img]="Globe" [size]="20"></lucide-icon>
             <h2>{{ 'config.accountSection' | transloco }}</h2>
           </div>
-          <mat-divider></mat-divider>
 
           <div class="setting-row readonly">
             <div class="setting-info">
@@ -142,7 +124,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
             </div>
             <span class="setting-value">{{ 'config.languageValue' | transloco }}</span>
           </div>
-        </mat-card>
+        </section>
       </div>
     </div>
   `,
@@ -153,37 +135,14 @@ const DEFAULT_SETTINGS: AdminSettings = {
         margin: 0 auto;
       }
 
-      .page-header {
-        margin-bottom: 24px;
-      }
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .header-content h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
-
-      .header-content p {
-        color: #64748b;
-        margin: 0;
-        font-size: 14px;
-      }
-
       .save-alert {
         display: flex;
         align-items: center;
         gap: 10px;
         padding: 12px 16px;
-        background: #d1fae5;
-        color: #047857;
-        border-radius: 8px;
+        background: var(--app-color-success-soft);
+        color: var(--app-color-success);
+        border-radius: var(--app-radius-md);
         margin-bottom: 20px;
         font-size: 14px;
       }
@@ -196,26 +155,27 @@ const DEFAULT_SETTINGS: AdminSettings = {
 
       .section-card {
         padding: 24px;
+        border: 1px solid var(--app-color-border);
+        border-radius: var(--app-radius-lg);
+        background: var(--app-color-surface);
+        box-shadow: var(--app-shadow-sm);
       }
 
       .section-title {
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--app-color-border);
       }
 
       .section-title h2 {
         font-size: 1rem;
         font-weight: 700;
-        color: #1e293b;
+        color: var(--app-color-text);
         margin: 0;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      mat-divider {
-        margin-bottom: 16px;
+        letter-spacing: 0;
       }
 
       .setting-row {
@@ -224,7 +184,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
         justify-content: space-between;
         gap: 16px;
         padding: 12px 0;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--app-color-border);
       }
 
       .setting-row:last-child {
@@ -239,7 +199,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
       .setting-row.readonly .setting-value {
         font-size: 14px;
         font-weight: 600;
-        color: #475569;
+        color: var(--app-color-text);
         white-space: nowrap;
       }
 
@@ -253,12 +213,12 @@ const DEFAULT_SETTINGS: AdminSettings = {
       .setting-label {
         font-size: 14px;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--app-color-text);
       }
 
       .setting-desc {
         font-size: 12px;
-        color: #94a3b8;
+        color: var(--app-color-text-muted);
       }
 
       .interval-select {
@@ -279,7 +239,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
     `,
   ],
 })
-export class ConfiguracionComponent implements OnInit {
+export class ConfiguracionComponent {
   readonly Settings = Settings;
   readonly Bell = Bell;
   readonly Palette = Palette;
@@ -287,10 +247,15 @@ export class ConfiguracionComponent implements OnInit {
   readonly CheckCircle2 = CheckCircle2;
 
   settings: AdminSettings = { ...DEFAULT_SETTINGS };
+  pollingOptions: readonly AppSelectOption<number>[] = [
+    { label: '30 segundos', value: 30000 },
+    { label: '1 minuto', value: 60000 },
+    { label: '5 minutos', value: 300000 },
+  ];
   savedSuccess = signal(false);
   timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  ngOnInit(): void {
+  constructor() {
     this.loadSettings();
   }
 
@@ -310,8 +275,8 @@ export class ConfiguracionComponent implements OnInit {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings));
       this.savedSuccess.set(true);
       setTimeout(() => this.savedSuccess.set(false), 2000);
-    } catch (e) {
-      console.error('Error saving settings:', e);
+    } catch {
+      this.savedSuccess.set(false);
     }
   }
 }

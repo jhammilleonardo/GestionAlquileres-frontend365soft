@@ -1,0 +1,437 @@
+<div class="contract-detail-container">
+  <!-- Header -->
+  <div class="page-header">
+    <app-button appearance="flat" (clicked)="goBack()">
+      <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
+      {{ 'contracts.detail.back' | transloco }}
+    </app-button>
+    <div class="header-title">
+      <h1>{{ 'contracts.detail.titlePrefix' | transloco }} {{ contractNumber() }}</h1>
+      @if (currentContract()) {
+        <span class="status-badge" [class]="getStatusClass(currentContract()!.status)">
+          {{ 'contracts.status.' + currentContract()!.status | transloco }}
+        </span>
+      }
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-container">
+      <app-loading-state [label]="'contracts.detail.loading' | transloco" />
+    </div>
+  } @else if (currentContract()) {
+    <div class="content-grid">
+      <!-- Columna Principal -->
+      <div class="main-column">
+        <!-- Información de Propiedad e Inquilino -->
+        <section class="info-card">
+          <div class="card-header">
+            <h3>{{ 'contracts.detail.contractInfo' | transloco }}</h3>
+          </div>
+
+          <!-- Propiedad -->
+          <div class="info-section">
+            <div class="section-label">{{ 'common.property' | transloco }}</div>
+            <div class="section-content">
+              <h4>{{ currentContract()!.property?.title }}</h4>
+              @if (
+                currentContract()!.property?.addresses &&
+                (currentContract()!.property?.addresses?.length ?? 0) > 0
+              ) {
+                <p class="address">
+                  {{ currentContract()!.property?.addresses?.[0]?.street_address }},
+                  {{ currentContract()!.property?.addresses?.[0]?.city }}
+                  @if (currentContract()!.property?.addresses?.[0]?.state) {
+                    , {{ currentContract()!.property?.addresses?.[0]?.state }}
+                  }
+                </p>
+              }
+            </div>
+          </div>
+
+          <hr />
+
+          <!-- Inquilino -->
+          <div class="info-section">
+            <div class="section-label">{{ 'contracts.detail.tenantLabel' | transloco }}</div>
+            <div class="section-content">
+              <h4>{{ currentContract()!.tenant?.name }}</h4>
+              <p class="contact">
+                <lucide-icon [img]="Mail" [size]="16"></lucide-icon>
+                {{ currentContract()!.tenant?.email }}
+              </p>
+              @if (currentContract()!.tenant?.phone) {
+                <p class="contact">
+                  <lucide-icon [img]="Phone" [size]="16"></lucide-icon>
+                  {{ currentContract()!.tenant?.phone }}
+                </p>
+              }
+            </div>
+          </div>
+
+          <hr />
+
+          <!-- Fechas -->
+          <div class="info-section">
+            <div class="section-label">{{ 'contracts.detail.dates' | transloco }}</div>
+            <div class="dates-grid">
+              <div class="date-item">
+                <span class="label">{{ 'contracts.detail.startLabel' | transloco }}</span>
+                <span class="value">{{ currentContract()!.start_date | tenantDate }}</span>
+              </div>
+              <div class="date-item">
+                <span class="label">{{ 'contracts.detail.endLabel' | transloco }}</span>
+                <span class="value">{{ currentContract()!.end_date | tenantDate }}</span>
+              </div>
+              @if (currentContract()!.key_delivery_date) {
+                <div class="date-item">
+                  <span class="label">{{ 'contracts.detail.keyDeliveryLabel' | transloco }}</span>
+                  <span class="value">{{ currentContract()!.key_delivery_date | tenantDate }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <hr />
+
+          <!-- Alquiler -->
+          <div class="info-section">
+            <div class="section-label">{{ 'contracts.detail.rentLabel' | transloco }}</div>
+            <div class="rent-info">
+              <div class="rent-amount">
+                {{ currentContract()!.monthly_rent | tenantCurrency }}
+              </div>
+              <div class="rent-details">
+                @if (currentContract()!.payment_day) {
+                  <span
+                    >{{ 'contracts.detail.paymentDayLabel' | transloco }}
+                    {{ currentContract()!.payment_day }}</span
+                  >
+                }
+                @if (currentContract()!.deposit_amount) {
+                  <span
+                    >{{ 'contracts.detail.depositLabel' | transloco }}
+                    {{ currentContract()!.deposit_amount | tenantCurrency }}</span
+                  >
+                }
+                @if (currentContract()!.payment_method) {
+                  <span
+                    >{{ 'contracts.detail.methodLabel' | transloco }}
+                    {{ currentContract()!.payment_method }}</span
+                  >
+                }
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Condiciones -->
+        @if (hasConditions()) {
+          <section class="info-card">
+            <div class="card-header">
+              <h3>{{ 'contracts.detail.paymentConditions' | transloco }}</h3>
+            </div>
+
+            <div class="conditions-list">
+              @if (currentContract()!.late_fee_percentage) {
+                <div class="condition-item">
+                  <lucide-icon [img]="TrendingUp" [size]="16"></lucide-icon>
+                  <span
+                    >{{ 'contracts.detail.lateFeeLabel' | transloco }}
+                    {{ currentContract()!.late_fee_percentage }}%</span
+                  >
+                </div>
+              }
+              @if (currentContract()!.grace_days) {
+                <div class="condition-item">
+                  <lucide-icon [img]="Clock" [size]="16"></lucide-icon>
+                  <span
+                    >{{ 'contracts.detail.graceDaysLabel' | transloco }}
+                    {{ currentContract()!.grace_days }}</span
+                  >
+                </div>
+              }
+              @if (currentContract()!.auto_renew !== undefined) {
+                <div class="condition-item">
+                  <lucide-icon [img]="Repeat" [size]="16"></lucide-icon>
+                  <span
+                    >{{ 'contracts.detail.autoRenewLabel' | transloco }}
+                    {{
+                      currentContract()!.auto_renew
+                        ? ('common.yes' | transloco)
+                        : ('common.no' | transloco)
+                    }}</span
+                  >
+                </div>
+              }
+              @if (currentContract()!.renewal_notice_days) {
+                <div class="condition-item">
+                  <lucide-icon [img]="Bell" [size]="16"></lucide-icon>
+                  <span
+                    >{{ 'contracts.detail.renewalNoticeLabel' | transloco }}
+                    {{ currentContract()!.renewal_notice_days }}
+                    {{ 'contracts.detail.days' | transloco }}</span
+                  >
+                </div>
+              }
+              @if (currentContract()!.auto_increase_percentage) {
+                <div class="condition-item">
+                  <lucide-icon [img]="LineChart" [size]="16"></lucide-icon>
+                  <span
+                    >{{ 'contracts.detail.autoIncreaseLabel' | transloco }}
+                    {{ currentContract()!.auto_increase_percentage }}%</span
+                  >
+                </div>
+              }
+            </div>
+
+            @if (
+              currentContract()!.included_services &&
+              (currentContract()!.included_services?.length ?? 0) > 0
+            ) {
+              <hr />
+              <div class="services-section">
+                <div class="section-label">
+                  {{ 'contracts.detail.includedServices' | transloco }}
+                </div>
+                <div class="services-list">
+                  @for (service of currentContract()!.included_services; track service) {
+                    <span class="service-tag">{{ service }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        }
+      </div>
+
+      <!-- Columna Secundaria -->
+      <div class="side-column">
+        <!-- Acciones -->
+        <section class="actions-card">
+          <div class="card-header">
+            <h3>{{ 'contracts.detail.actions' | transloco }}</h3>
+          </div>
+
+          <!-- Banner: pendiente de firma del inquilino -->
+          @if (canActivate()) {
+            <div class="pending-sign-banner">
+              <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+              <div>
+                <strong>{{ 'contracts.detail.pendingSign' | transloco }}</strong>
+                <p>{{ 'contracts.detail.pendingSignDesc' | transloco }}</p>
+              </div>
+            </div>
+          }
+
+          <div class="actions-list">
+            <app-button class="action-button" (clicked)="downloadPDF()">
+              <lucide-icon [img]="Download" [size]="18"></lucide-icon>
+              {{ 'contracts.detail.viewPdf' | transloco }}
+              <span class="button-hint">{{ 'contracts.detail.newTab' | transloco }}</span>
+            </app-button>
+
+            @if (canEdit()) {
+              <app-button appearance="outline" class="action-button" (clicked)="editContract()">
+                <lucide-icon [img]="Edit" [size]="18"></lucide-icon>
+                {{ 'contracts.detail.edit' | transloco }}
+              </app-button>
+            }
+
+            @if (canRenew()) {
+              <app-button appearance="outline" class="action-button" (clicked)="renewContract()">
+                <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
+                {{ 'contracts.detail.renew' | transloco }}
+              </app-button>
+            }
+
+            @if (canFinalize()) {
+              <app-button
+                appearance="destructive"
+                class="action-button warn"
+                (clicked)="finalizeContract()"
+              >
+                <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+                {{ 'contracts.detail.finalize' | transloco }}
+              </app-button>
+            }
+          </div>
+        </section>
+
+        <!-- Términos -->
+        @if (hasTerms()) {
+          <section class="info-card">
+            <div class="card-header">
+              <h3>{{ 'contracts.detail.terms' | transloco }}</h3>
+            </div>
+
+            @if (currentContract()!.tenant_responsibilities) {
+              <div class="term-section">
+                <div class="term-label">{{ 'contracts.detail.tenantResp' | transloco }}</div>
+                <p class="term-text">{{ currentContract()!.tenant_responsibilities }}</p>
+              </div>
+            }
+
+            @if (currentContract()!.owner_responsibilities) {
+              <div class="term-section">
+                <div class="term-label">{{ 'contracts.detail.ownerResp' | transloco }}</div>
+                <p class="term-text">{{ currentContract()!.owner_responsibilities }}</p>
+              </div>
+            }
+
+            @if (currentContract()!.prohibitions) {
+              <div class="term-section">
+                <div class="term-label">{{ 'contracts.detail.prohibitions' | transloco }}</div>
+                <p class="term-text">{{ currentContract()!.prohibitions }}</p>
+              </div>
+            }
+
+            @if (currentContract()!.coexistence_rules) {
+              <div class="term-section">
+                <div class="term-label">
+                  {{ 'contracts.detail.coexistenceRules' | transloco }}
+                </div>
+                <p class="term-text">{{ currentContract()!.coexistence_rules }}</p>
+              </div>
+            }
+
+            @if (currentContract()!.renewal_terms) {
+              <div class="term-section">
+                <div class="term-label">{{ 'contracts.detail.renewal' | transloco }}</div>
+                <p class="term-text">{{ currentContract()!.renewal_terms }}</p>
+              </div>
+            }
+
+            @if (currentContract()!.termination_terms) {
+              <div class="term-section">
+                <div class="term-label">{{ 'contracts.detail.termination' | transloco }}</div>
+                <p class="term-text">{{ currentContract()!.termination_terms }}</p>
+              </div>
+            }
+
+            @if (currentContract()!.jurisdiction) {
+              <hr />
+              <div class="term-section">
+                <div class="term-label">{{ 'contracts.detail.jurisdiction' | transloco }}</div>
+                <p class="term-text">{{ currentContract()!.jurisdiction }}</p>
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Datos Bancarios -->
+        @if (hasBankInfo()) {
+          <section class="info-card">
+            <div class="card-header">
+              <h3>{{ 'contracts.detail.bankData' | transloco }}</h3>
+            </div>
+
+            <div class="bank-info">
+              @if (currentContract()!.bank_name) {
+                <div class="bank-item">
+                  <span class="bank-label">{{ 'contracts.detail.bankLabel' | transloco }}</span>
+                  <span class="bank-value">{{ currentContract()!.bank_name }}</span>
+                </div>
+              }
+              @if (currentContract()!.bank_account_type) {
+                <div class="bank-item">
+                  <span class="bank-label">{{ 'contracts.detail.bankType' | transloco }}</span>
+                  <span class="bank-value">{{ currentContract()!.bank_account_type }}</span>
+                </div>
+              }
+              @if (currentContract()!.bank_account_number) {
+                <div class="bank-item">
+                  <span class="bank-label">{{ 'contracts.detail.bankAccount' | transloco }}</span>
+                  <span class="bank-value">{{ currentContract()!.bank_account_number }}</span>
+                </div>
+              }
+              @if (currentContract()!.bank_account_holder) {
+                <div class="bank-item">
+                  <span class="bank-label">{{ 'contracts.detail.bankHolder' | transloco }}</span>
+                  <span class="bank-value">{{ currentContract()!.bank_account_holder }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- Firmas -->
+        @if (hasSignatures()) {
+          <section class="info-card">
+            <div class="card-header">
+              <h3>{{ 'contracts.detail.signatures' | transloco }}</h3>
+            </div>
+
+            <div class="signatures-list">
+              @if (currentContract()!.owner_signature_date) {
+                <div class="signature-item">
+                  <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+                  <div>
+                    <div class="sig-label">{{ 'contracts.detail.adminSig' | transloco }}</div>
+                    <div class="sig-date">
+                      {{ currentContract()!.owner_signature_date | tenantDate: true }}
+                    </div>
+                  </div>
+                </div>
+              }
+              @if (currentContract()!.tenant_signature_date) {
+                <div class="signature-item">
+                  <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+                  <div>
+                    <div class="sig-label">{{ 'contracts.detail.tenantSig' | transloco }}</div>
+                    <div class="sig-date">
+                      {{ currentContract()!.tenant_signature_date | tenantDate: true }}
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        @if (history().length > 1) {
+          <section class="detail-section history-section">
+            <h2 class="section-title">
+              <lucide-icon [img]="Clock" [size]="18"></lucide-icon>
+              {{ 'contracts.detail.historyTitle' | transloco }}
+            </h2>
+            <ol class="contract-timeline">
+              @for (item of history(); track item.id) {
+                <li
+                  class="timeline-item"
+                  [class.is-current]="isCurrentInHistory(item)"
+                  [attr.data-tone]="getStatusTone(item.status)"
+                  role="button"
+                  tabindex="0"
+                  (click)="viewHistoryContract(item)"
+                  (keyup.enter)="viewHistoryContract(item)"
+                >
+                  <span class="timeline-dot"></span>
+                  <div class="timeline-body">
+                    <div class="timeline-head">
+                      <strong>{{ item.contract_number }}</strong>
+                      <span class="timeline-badge" [attr.data-tone]="getStatusTone(item.status)">
+                        {{ 'contracts.status.' + item.status | transloco }}
+                      </span>
+                      @if (isCurrentInHistory(item)) {
+                        <span class="timeline-current">{{
+                          'contracts.detail.historyCurrent' | transloco
+                        }}</span>
+                      }
+                    </div>
+                    <div class="timeline-meta">
+                      <span
+                        >{{ item.start_date | tenantDate }} — {{ item.end_date | tenantDate }}</span
+                      >
+                      <span>{{ item.monthly_rent | tenantCurrency }}</span>
+                    </div>
+                  </div>
+                </li>
+              }
+            </ol>
+          </section>
+        }
+      </div>
+    </div>
+  }
+</div>

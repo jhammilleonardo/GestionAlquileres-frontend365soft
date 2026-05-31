@@ -1,0 +1,130 @@
+@if (isLoading()) {
+  <app-loading-state [label]="'inspections.loading' | transloco" />
+} @else if (inspection(); as insp) {
+  <div class="detail-page">
+    <header class="detail-header">
+      <button
+        type="button"
+        class="back-btn"
+        (click)="back()"
+        [attr.aria-label]="'common.back' | transloco"
+      >
+        <lucide-icon [img]="ArrowLeft" [size]="20" />
+      </button>
+      <div class="detail-title">
+        <h1>
+          {{ insp.property_title }}
+          @if (insp.unit_number) {
+            · {{ insp.unit_number }}
+          }
+        </h1>
+        <div class="detail-sub">
+          <span>{{ 'inspections.type.' + insp.type | transloco }}</span>
+          <span>{{ insp.scheduled_date.slice(0, 10) }}</span>
+          <app-status-badge
+            [label]="'inspections.status.' + insp.status | transloco"
+            [tone]="
+              insp.status === 'completed'
+                ? 'success'
+                : insp.status === 'in_progress'
+                  ? 'warning'
+                  : 'info'
+            "
+          />
+        </div>
+      </div>
+      <div class="detail-actions">
+        <app-button appearance="secondary" size="s" (clicked)="downloadPdf()">
+          <lucide-icon [img]="FileText" [size]="15" />
+          {{ 'inspections.pdf' | transloco }}
+        </app-button>
+      </div>
+    </header>
+
+    <!-- Checklist por áreas -->
+    @for (group of groupedItems(); track group.area) {
+      <section class="area-section">
+        <h2 class="area-title">{{ 'inspections.area.' + group.area | transloco }}</h2>
+        <div class="items">
+          @for (item of group.items; track item.id ?? item.item_name) {
+            <article class="item-card">
+              <div class="item-head">
+                <strong>{{ item.item_name }}</strong>
+                <app-status-badge
+                  [label]="'inspections.condition.' + item.condition | transloco"
+                  [tone]="conditionTone(item.condition)"
+                />
+              </div>
+
+              <div class="condition-options" role="radiogroup">
+                @for (cond of conditions; track cond) {
+                  <button
+                    type="button"
+                    class="cond-btn"
+                    [class.active]="item.condition === cond"
+                    [attr.data-cond]="cond"
+                    [disabled]="isCompleted()"
+                    (click)="setCondition(item, cond)"
+                  >
+                    {{ 'inspections.condition.' + cond | transloco }}
+                  </button>
+                }
+              </div>
+
+              <textarea
+                class="item-notes"
+                rows="2"
+                [placeholder]="'inspections.notesPlaceholder' | transloco"
+                [value]="item.notes ?? ''"
+                [disabled]="isCompleted()"
+                (input)="setNotes(item, $any($event.target).value)"
+              ></textarea>
+
+              @if (item.photos && item.photos.length > 0) {
+                <div class="item-photos">
+                  @for (photo of item.photos; track photo) {
+                    <a [href]="photoUrl(photo)" target="_blank" rel="noopener" class="item-photo">
+                      <img [src]="photoUrl(photo)" alt="foto" loading="lazy" />
+                    </a>
+                  }
+                </div>
+              }
+
+              @if (!isCompleted()) {
+                <label class="photo-upload">
+                  <lucide-icon [img]="Camera" [size]="16" />
+                  {{
+                    uploadingItemId() === item.id
+                      ? ('inspections.uploading' | transloco)
+                      : ('inspections.addPhoto' | transloco)
+                  }}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    [disabled]="uploadingItemId() === item.id"
+                    (change)="onPhotoSelected(item, $event)"
+                  />
+                </label>
+              }
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    @if (!isCompleted()) {
+      <div class="detail-footer">
+        <app-button appearance="secondary" [disabled]="saving()" (clicked)="save(false)">
+          <lucide-icon [img]="Save" [size]="16" />
+          {{ 'inspections.saveDraft' | transloco }}
+        </app-button>
+        <app-button [disabled]="saving()" (clicked)="save(true)">
+          <lucide-icon [img]="CheckCircle2" [size]="16" />
+          {{ 'inspections.complete' | transloco }}
+        </app-button>
+      </div>
+    }
+  </div>
+}

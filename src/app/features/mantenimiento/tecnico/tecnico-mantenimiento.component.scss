@@ -9,7 +9,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: var(--mat-sys-surface);
+  background: var(--app-color-surface);
 
   /* On desktop, overlay only the content area */
   @media (min-width: 1024px) {
@@ -35,7 +35,29 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1rem 0.75rem;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--app-color-border);
+}
+
+.refresh-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--app-radius-md);
+  color: var(--app-color-text);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  min-block-size: 36px;
+  min-inline-size: 36px;
+
+  &:hover {
+    background: var(--app-color-surface-muted);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
 }
 
 .header-title {
@@ -47,7 +69,7 @@
     font-size: 1.1rem;
     font-weight: 700;
     margin: 0;
-    color: var(--mat-sys-on-surface);
+    color: var(--app-color-text);
   }
 }
 
@@ -73,15 +95,15 @@
     background: transparent;
     cursor: pointer;
     font-size: 0.875rem;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-color-text-muted);
     border-bottom: 2px solid transparent;
     transition: all 0.15s;
     white-space: nowrap;
     font-family: inherit;
 
     &.active {
-      color: var(--mat-sys-primary);
-      border-bottom-color: var(--mat-sys-primary);
+      color: var(--app-color-primary);
+      border-bottom-color: var(--app-color-primary);
       font-weight: 600;
     }
   }
@@ -97,8 +119,8 @@
   border-radius: 99px;
   font-size: 0.7rem;
   font-weight: 700;
-  background: var(--mat-sys-surface-container-high);
-  color: var(--mat-sys-on-surface-variant);
+  background: var(--app-color-surface);
+  color: var(--app-color-text-muted);
 
   &--new {
     background: #dbeafe;
@@ -128,12 +150,6 @@
   justify-content: center;
   padding: 3rem 1rem;
   gap: 1rem;
-
-  p {
-    font-size: 0.875rem;
-    color: var(--mat-sys-on-surface-variant);
-    margin: 0;
-  }
 }
 
 .empty-state {
@@ -143,7 +159,7 @@
   justify-content: center;
   padding: 3rem 1rem;
   gap: 1rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   text-align: center;
 
   p {
@@ -166,8 +182,8 @@ ul[role='list'] {
   width: 100%;
   display: flex;
   align-items: stretch;
-  background: var(--mat-sys-surface-container-low);
-  border: 1px solid var(--mat-sys-outline-variant);
+  background: var(--app-color-surface-muted);
+  border: 1px solid var(--app-color-border);
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
@@ -179,14 +195,14 @@ ul[role='list'] {
 
   &:hover,
   &:focus-visible {
-    background: var(--mat-sys-surface-container);
+    background: var(--app-color-surface-muted);
     box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
-    outline: 2px solid var(--mat-sys-primary);
+    outline: 2px solid var(--app-color-primary);
     outline-offset: 2px;
   }
 
   &:active {
-    background: var(--mat-sys-surface-container-high);
+    background: var(--app-color-surface);
   }
 }
 
@@ -223,14 +239,14 @@ ul[role='list'] {
 .ticket {
   font-size: 0.7rem;
   font-family: monospace;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
 }
 
 .order-title {
   font-size: 0.9rem;
   font-weight: 600;
   margin: 0 0 0.3rem;
-  color: var(--mat-sys-on-surface);
+  color: var(--app-color-text);
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -242,7 +258,7 @@ ul[role='list'] {
   align-items: center;
   gap: 0.3rem;
   font-size: 0.775rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   margin-bottom: 0.4rem;
   overflow: hidden;
 
@@ -289,7 +305,7 @@ ul[role='list'] {
 .priority-label {
   font-size: 0.65rem;
   font-weight: 500;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
 
   &[data-priority='HIGH'] {
     color: #dc2626;
@@ -306,7 +322,7 @@ ul[role='list'] {
 }
 
 .chevron {
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   align-self: center;
   margin-right: 0.5rem;
   flex-shrink: 0;

@@ -1,153 +1,141 @@
-import { Component, inject, OnInit, computed } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTabsModule } from '@angular/material/tabs';
 import {
-  LucideAngularModule,
-  FileText,
-  Download,
-  Eye,
+  AlertTriangle,
   CheckCircle2,
   Clock,
-  AlertTriangle,
+  Download,
+  Eye,
   FileCheck,
-  FileSignature,
+  FileText,
 } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import { TenantDocumentService } from '../../../core/services/tenant/tenant-document.service';
 import { FormatService } from '../../../core/services/format.service';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import {
-  TenantDocument,
-  DocumentTypeLabels,
+  AppButtonComponent,
+  AppEmptyStateComponent,
+  AppLoadingStateComponent,
+  AppPageHeaderComponent,
+  AppStatusBadgeComponent,
+  AppTabsComponent,
+  AppTabOption,
+  ConfirmDialogService,
+  ToastService,
+} from '../../../shared/ui';
+import {
+  DocumentStatus,
   DocumentType,
+  DocumentTypeLabels,
+  TenantDocument,
 } from '../../../core/models/document.model';
 import { TenantContractListComponent } from './tenant-contract-list.component';
 
+type TenantDocumentsTab = 'documents' | 'contracts';
+
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-documents',
   standalone: true,
   imports: [
-    CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTabsModule,
+    FormsModule,
     LucideAngularModule,
     TranslocoModule,
     TenantContractListComponent,
     TenantDatePipe,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppStatusBadgeComponent,
+    AppTabsComponent,
   ],
   template: `
-    <div class="documents-container">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
-          <div>
-            <h1>{{ 'tenantDocuments.title' | transloco }}</h1>
-            <p>{{ 'tenantDocuments.subtitle' | transloco }}</p>
-          </div>
-        </div>
-      </div>
+    <section class="documents-page">
+      <app-page-header
+        [eyebrow]="'tenantDocuments.headerEyebrow' | transloco"
+        [title]="'tenantDocuments.title' | transloco"
+        [description]="'tenantDocuments.subtitle' | transloco"
+      />
 
-      <!-- Tabs Navigation -->
-      <mat-tab-group class="docs-tabs" mat-stretch-tabs animationDuration="0ms">
-        <!-- Tab: Documentos Generales -->
-        <mat-tab [label]="'tenantDocuments.tabDocs' | transloco">
-          <ng-template matTabContent>
-            <!-- Stats -->
-            <div class="stats-row">
-              <mat-chip-listbox>
-                <mat-chip-option>
-                  {{ 'tenantDocuments.all' | transloco }} ({{ documentService.documents().length }})
-                </mat-chip-option>
-                <mat-chip-option>
-                  {{ 'tenantDocuments.pendingSignature' | transloco }} ({{
-                    pendingSignatureCount()
-                  }})
-                </mat-chip-option>
-              </mat-chip-listbox>
+      <app-tabs
+        class="documents-page__tabs"
+        [(ngModel)]="activeTab"
+        [tabs]="tabs()"
+        [ariaLabel]="'tenantDocuments.title' | transloco"
+      />
+
+      @if (activeTab === 'documents') {
+        <section class="documents-section">
+          <div class="documents-toolbar">
+            <div class="summary-chip">
+              <span>{{ 'tenantDocuments.all' | transloco }}</span>
+              <strong>{{ documentService.documents().length }}</strong>
             </div>
+            <div class="summary-chip summary-chip--warning">
+              <span>{{ 'tenantDocuments.pendingSignature' | transloco }}</span>
+              <strong>{{ pendingSignatureCount() }}</strong>
+            </div>
+          </div>
 
-            <!-- Loading -->
-            @if (documentService.isLoading()) {
-              <div class="documents-grid">
-                @for (i of [1, 2, 3, 4, 5, 6]; track i) {
-                  <mat-card class="skeleton-document-card">
-                    <!-- ... skeleton content ... -->
-                    <div class="skeleton-doc-header">
-                      <div class="skeleton-doc-icon"></div>
-                      <div class="skeleton-badge"></div>
+          @if (documentService.isLoading()) {
+            <div class="state-box">
+              <app-loading-state [label]="'tenantDocuments.loading' | transloco" />
+            </div>
+          } @else if (documentService.documents().length === 0) {
+            <app-empty-state
+              [title]="'tenantDocuments.noDocsTitle' | transloco"
+              [description]="'tenantDocuments.noDocsDesc' | transloco"
+            >
+              <lucide-icon icon [img]="FileText" [size]="28"></lucide-icon>
+            </app-empty-state>
+          } @else {
+            <div class="documents-grid">
+              @for (doc of documentService.documents(); track doc.id) {
+                <article class="document-card">
+                  <header class="document-card__header">
+                    <div class="document-icon">
+                      <lucide-icon [img]="FileText" [size]="26"></lucide-icon>
                     </div>
-                    <div class="skeleton-line title"></div>
-                    <div class="skeleton-line medium"></div>
-                    <div class="skeleton-line"></div>
-                    <div class="skeleton-meta">
-                      <div class="skeleton-line short"></div>
-                      <div class="skeleton-line short"></div>
-                    </div>
-                    <div class="skeleton-actions">
-                      <div class="skeleton-btn"></div>
-                      <div class="skeleton-btn"></div>
-                    </div>
-                  </mat-card>
-                }
-              </div>
-            }
+                    <app-status-badge
+                      [label]="documentTypeLabel(doc.document_type)"
+                      [tone]="documentStatusTone(doc)"
+                    />
+                  </header>
 
-            <!-- Empty State -->
-            @else if (documentService.documents().length === 0) {
-              <div class="empty-state">
-                <lucide-icon [img]="FileText" [size]="64"></lucide-icon>
-                <h2>{{ 'tenantDocuments.noDocsTitle' | transloco }}</h2>
-                <p>{{ 'tenantDocuments.noDocsDesc' | transloco }}</p>
-              </div>
-            }
-
-            <!-- Documents Grid -->
-            @else {
-              <div class="documents-grid">
-                @for (doc of documentService.documents(); track doc.id) {
-                  <mat-card class="document-card">
-                    <div class="document-header">
-                      <div class="document-icon">
-                        <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
-                      </div>
-                      <div class="document-type">
-                        {{ 'tenantDocuments.type.' + doc.document_type | transloco }}
-                      </div>
-                    </div>
-
-                    <h3 class="document-title">{{ doc.title }}</h3>
+                  <div class="document-card__body">
+                    <h2>{{ doc.title }}</h2>
 
                     @if (doc.description) {
-                      <p class="document-description">{{ doc.description }}</p>
+                      <p>{{ doc.description }}</p>
                     }
 
-                    <div class="document-meta">
-                      <div class="meta-item">
-                        <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                        {{ doc.uploaded_at | tenantDate }}
+                    <dl class="document-meta">
+                      <div>
+                        <dt>
+                          <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
+                          {{ 'tenantDocuments.uploadedAt' | transloco }}
+                        </dt>
+                        <dd>{{ doc.uploaded_at | tenantDate }}</dd>
                       </div>
-                      <div class="meta-item">
-                        {{ formatFileSize(doc.file_size) }}
+                      <div>
+                        <dt>{{ 'tenantDocuments.fileSize' | transloco }}</dt>
+                        <dd>{{ formatFileSize(doc.file_size) }}</dd>
                       </div>
-                    </div>
+                    </dl>
 
-                    <!-- Signature Status -->
                     @if (doc.requires_signature) {
-                      <div class="signature-status" [class.signed]="doc.is_signed">
+                      <div class="signature-state" [class.signature-state--signed]="doc.is_signed">
                         @if (doc.is_signed) {
                           <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
-                          <span>{{
-                            'tenantDocuments.signedOn'
-                              | transloco: { date: formatDate(doc.signed_at!) }
-                          }}</span>
+                          <span>
+                            {{
+                              'tenantDocuments.signedOn'
+                                | transloco: { date: formatDate(doc.signed_at!) }
+                            }}
+                          </span>
                         } @else {
                           <lucide-icon [img]="AlertTriangle" [size]="16"></lucide-icon>
                           <span>{{ 'tenantDocuments.requiresSignature' | transloco }}</span>
@@ -155,409 +143,216 @@ import { TenantContractListComponent } from './tenant-contract-list.component';
                       </div>
                     }
 
-                    <!-- Expiration Warning -->
                     @if (doc.expires_at && isExpiringSoon(doc.expires_at)) {
                       <div class="expiration-warning">
                         <lucide-icon [img]="AlertTriangle" [size]="14"></lucide-icon>
-                        <span>{{
-                          'tenantDocuments.expiresOn'
-                            | transloco: { date: formatDate(doc.expires_at) }
-                        }}</span>
+                        <span>
+                          {{
+                            'tenantDocuments.expiresOn'
+                              | transloco: { date: formatDate(doc.expires_at) }
+                          }}
+                        </span>
                       </div>
                     }
+                  </div>
 
-                    <!-- Actions -->
-                    <div class="document-actions">
-                      <button mat-stroked-button (click)="viewDocument(doc)" class="action-btn">
-                        <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
-                        {{ 'tenantDocuments.view' | transloco }}
-                      </button>
-                      <button mat-stroked-button (click)="downloadDocument(doc)" class="action-btn">
-                        <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-                        {{ 'tenantDocuments.download' | transloco }}
-                      </button>
-                      @if (doc.requires_signature && !doc.is_signed) {
-                        <button
-                          mat-raised-button
-                          color="primary"
-                          (click)="signDocument(doc)"
-                          class="action-btn"
-                        >
-                          <lucide-icon [img]="FileCheck" [size]="16"></lucide-icon>
-                          {{ 'tenantDocuments.sign' | transloco }}
-                        </button>
-                      }
-                    </div>
-                  </mat-card>
-                }
-              </div>
-            }
-          </ng-template>
-        </mat-tab>
+                  <footer class="document-actions">
+                    <app-button appearance="outline" size="s" (clicked)="viewDocument(doc)">
+                      <lucide-icon [img]="Eye" [size]="16"></lucide-icon>
+                      {{ 'tenantDocuments.view' | transloco }}
+                    </app-button>
 
-        <!-- Tab: Contratos -->
-        <mat-tab [label]="'tenantDocuments.tabContracts' | transloco">
-          <ng-template matTabContent>
-            <app-tenant-contract-list></app-tenant-contract-list>
-          </ng-template>
-        </mat-tab>
-      </mat-tab-group>
-    </div>
+                    <app-button appearance="outline" size="s" (clicked)="downloadDocument(doc)">
+                      <lucide-icon [img]="Download" [size]="16"></lucide-icon>
+                      {{ 'tenantDocuments.download' | transloco }}
+                    </app-button>
+
+                    @if (doc.requires_signature && !doc.is_signed) {
+                      <app-button appearance="primary" size="s" (clicked)="signDocument(doc)">
+                        <lucide-icon [img]="FileCheck" [size]="16"></lucide-icon>
+                        {{ 'tenantDocuments.sign' | transloco }}
+                      </app-button>
+                    }
+                  </footer>
+                </article>
+              }
+            </div>
+          }
+        </section>
+      } @else {
+        <app-tenant-contract-list />
+      }
+    </section>
   `,
-  styles: [
-    `
-      .documents-container {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
+  styles: `
+    .documents-page {
+      max-inline-size: 1180px;
+      margin-inline: auto;
+    }
 
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 16px;
-      }
+    .documents-page__tabs {
+      margin-block-end: var(--app-space-5);
+    }
 
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
+    .documents-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--app-space-2);
+      margin-block-end: var(--app-space-5);
+    }
 
-      .header-content h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      min-block-size: 2.25rem;
+      padding: 0 var(--app-space-3);
+      border: 1px solid var(--app-color-border);
+      border-radius: 999px;
+      background: var(--app-color-surface);
+      color: var(--app-color-text-muted);
+      font-size: 0.875rem;
+      font-weight: 650;
+    }
 
-      .header-content p {
-        color: #64748b;
-        margin: 0;
-      }
+    .summary-chip strong {
+      color: var(--app-color-text);
+      font-weight: 800;
+    }
 
-      .docs-tabs {
-        margin-bottom: 24px;
-      }
+    .summary-chip--warning {
+      background: var(--tui-status-warning-pale);
+      color: var(--tui-status-warning);
+      border-color: transparent;
+    }
 
-      .docs-tabs ::ng-deep .mat-mdc-tab-header {
-        border-bottom: 2px solid #e2e8f0;
-      }
+    .state-box {
+      display: grid;
+      min-block-size: 18rem;
+      place-items: center;
+    }
 
-      .docs-tabs ::ng-deep .mat-mdc-tab {
-        color: #64748b;
-        font-weight: 500;
-      }
+    .documents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+      gap: var(--app-space-4);
+    }
 
-      .docs-tabs ::ng-deep .mat-mdc-tab.mdc-tab--active {
-        color: var(--mat-sys-primary);
-        font-weight: 600;
-      }
+    .document-card {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: var(--app-space-4);
+      min-block-size: 100%;
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      box-shadow: var(--app-shadow-sm);
+      padding: var(--app-space-4);
+    }
 
-      .stats-row {
-        margin-bottom: 24px;
-      }
+    .document-card__header,
+    .document-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+    }
 
-      .loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 60px;
-        color: #64748b;
-      }
+    .document-icon {
+      display: inline-grid;
+      place-items: center;
+      inline-size: 2.75rem;
+      block-size: 2.75rem;
+      border-radius: var(--app-radius-md);
+      background: var(--tui-status-info-pale);
+      color: var(--tui-status-info);
+    }
 
-      .loading p {
-        margin-top: 16px;
-      }
+    .document-card__body h2 {
+      margin: 0;
+      color: var(--app-color-text);
+      font-size: 1.05rem;
+      font-weight: 780;
+      line-height: 1.25;
+    }
 
-      .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #64748b;
-      }
+    .document-card__body p {
+      margin: var(--app-space-2) 0 0;
+      color: var(--app-color-text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
 
-      .empty-state lucide-icon {
-        opacity: 0.5;
-        margin-bottom: 16px;
-      }
+    .document-meta {
+      display: grid;
+      gap: var(--app-space-2);
+      margin: var(--app-space-4) 0 0;
+    }
 
-      .empty-state h2 {
-        color: #1e293b;
-        margin: 0 0 8px;
-      }
+    .document-meta div {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+      border-bottom: 1px solid var(--app-color-border);
+      padding-block-end: var(--app-space-2);
+    }
 
-      .empty-state p {
-        margin: 0;
-      }
+    .document-meta dt,
+    .document-meta dd {
+      margin: 0;
+      font-size: 0.82rem;
+    }
 
-      .documents-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 16px;
-      }
+    .document-meta dt {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--app-space-1);
+      color: var(--app-color-text-muted);
+      font-weight: 650;
+    }
 
-      .document-card {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-      }
+    .document-meta dd {
+      color: var(--app-color-text);
+      font-weight: 700;
+      text-align: end;
+    }
 
-      .document-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
-      }
+    .signature-state,
+    .expiration-warning {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      margin-block-start: var(--app-space-3);
+      border-radius: var(--app-radius-md);
+      padding: var(--app-space-2) var(--app-space-3);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
 
-      .document-icon {
-        width: 56px;
-        height: 56px;
-        background: var(--mat-sys-primary-container);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--mat-sys-primary);
-      }
+    .signature-state {
+      background: var(--tui-status-warning-pale);
+      color: var(--tui-status-warning);
+    }
 
-      .document-type {
-        padding: 4px 12px;
-        background: #f1f5f9;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #64748b;
-      }
+    .signature-state--signed {
+      background: var(--tui-status-positive-pale);
+      color: var(--tui-status-positive);
+    }
 
-      .document-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0 0 8px;
-      }
+    .expiration-warning {
+      background: var(--tui-status-negative-pale);
+      color: var(--tui-status-negative);
+    }
 
-      .document-description {
-        color: #64748b;
-        font-size: 14px;
-        line-height: 1.5;
-        margin: 0 0 16px;
-      }
-
-      .document-meta {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 16px;
-      }
-
-      .meta-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 12px;
-        color: #64748b;
-      }
-
-      .signature-status {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 500;
-        margin-bottom: 12px;
-      }
-
-      .signature-status.signed {
-        background: #d1fae5;
-        color: #047857;
-      }
-
-      .signature-status:not(.signed) {
-        background: #fef3c7;
-        color: #b45309;
-      }
-
-      .expiration-warning {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 12px;
-        background: #fee2e2;
-        color: #dc2626;
-        border-radius: 6px;
-        font-size: 12px;
-        margin-bottom: 12px;
-      }
-
-      .document-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: auto;
-        padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
-      }
-
-      .action-btn {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        font-size: 13px;
-      }
-
-      /* Skeleton Loaders */
-      @keyframes shimmer {
-        0% {
-          background-position: -1000px 0;
-        }
-        100% {
-          background-position: 1000px 0;
-        }
-      }
-
-      .skeleton-document-card {
-        padding: 24px;
-      }
-
-      .skeleton-doc-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 16px;
-      }
-
-      .skeleton-doc-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-      }
-
-      .skeleton-badge {
-        width: 80px;
-        height: 24px;
-        border-radius: 20px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-      }
-
-      .skeleton-line {
-        height: 16px;
-        border-radius: 4px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-        margin-bottom: 12px;
-      }
-
-      .skeleton-line.title {
-        height: 20px;
-        width: 70%;
-      }
-
-      .skeleton-line.short {
-        width: 40%;
-      }
-
-      .skeleton-line.medium {
-        width: 80%;
-      }
-
-      .skeleton-meta {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 16px;
-      }
-
-      .skeleton-actions {
-        display: flex;
-        gap: 8px;
-        padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
-      }
-
-      .skeleton-btn {
-        flex: 1;
-        height: 36px;
-        border-radius: 4px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
-      }
-
-      @media (max-width: 768px) {
-        .documents-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .page-header {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .header-content h1 {
-          font-size: 1.35rem;
-        }
-
-        .stats-row {
-          overflow-x: auto;
-        }
-      }
-
-      @media (max-width: 600px) {
-        .document-card {
-          padding: 20px;
-        }
-
-        .document-actions {
-          flex-direction: column;
-        }
-
-        .action-btn {
-          width: 100%;
-        }
-
-        .document-meta {
-          flex-wrap: wrap;
-        }
-      }
-
-      @media (max-width: 420px) {
-        .header-content {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .header-content lucide-icon {
-          display: none;
-        }
-
-        .document-card {
-          padding: 16px;
-        }
-
-        .document-icon {
-          width: 48px;
-          height: 48px;
-        }
-
-        .document-title {
-          font-size: 1rem;
-        }
-      }
-    `,
-  ],
+    .document-actions {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-3);
+    }
+  `,
 })
-export class TenantDocumentsComponent implements OnInit {
+export class TenantDocumentsComponent {
   readonly FileText = FileText;
   readonly Download = Download;
   readonly Eye = Eye;
@@ -565,76 +360,105 @@ export class TenantDocumentsComponent implements OnInit {
   readonly Clock = Clock;
   readonly AlertTriangle = AlertTriangle;
   readonly FileCheck = FileCheck;
-  readonly FileSignature = FileSignature;
 
-  documentService = inject(TenantDocumentService);
-  translocoService = inject(TranslocoService);
-  private formatService = inject(FormatService);
+  protected readonly documentService = inject(TenantDocumentService);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly formatService = inject(FormatService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly toast = inject(ToastService);
 
-  documentTypeLabels = DocumentTypeLabels;
+  protected activeTab: TenantDocumentsTab = 'documents';
 
-  pendingSignatureCount = computed(
+  protected readonly pendingSignatureCount = computed(
     () =>
-      this.documentService.documents().filter((d) => d.requires_signature && !d.is_signed).length,
+      this.documentService.documents().filter((document) => {
+        return document.requires_signature && !document.is_signed;
+      }).length,
   );
 
-  ngOnInit(): void {
+  protected readonly tabs = computed<readonly AppTabOption<TenantDocumentsTab>[]>(() => [
+    {
+      label: this.translocoService.translate('tenantDocuments.tabDocs'),
+      value: 'documents',
+      badge: this.documentService.documents().length,
+    },
+    {
+      label: this.translocoService.translate('tenantDocuments.tabContracts'),
+      value: 'contracts',
+    },
+  ]);
+
+  constructor() {
     this.documentService.loadDocuments();
   }
 
-  getCountByType(type: DocumentType): number {
-    return this.documentService.documents().filter((d) => d.document_type === type).length;
+  protected viewDocument(document: TenantDocument): void {
+    window.open(document.file_url, '_blank', 'noopener,noreferrer');
   }
 
-  viewDocument(doc: TenantDocument): void {
-    window.open(doc.file_url, '_blank');
-  }
-
-  downloadDocument(doc: TenantDocument): void {
-    this.documentService.downloadDocument(doc.id).subscribe({
+  protected downloadDocument(document: TenantDocument): void {
+    this.documentService.downloadDocument(document.id).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
+        const link = window.document.createElement('a');
         link.href = url;
-        link.download = doc.file_name;
+        link.download = document.file_name;
         link.click();
         window.URL.revokeObjectURL(url);
       },
-      error: (error) => {
-        console.error('Error downloading document:', error);
-        alert(this.translocoService.translate('tenantDocuments.downloadError'));
+      error: () => {
+        this.toast.error(this.translocoService.translate('tenantDocuments.downloadError'));
       },
     });
   }
 
-  signDocument(doc: TenantDocument): void {
-    const confirmMsg = this.translocoService.translate('tenantDocuments.confirmSign', {
-      title: doc.title,
+  protected async signDocument(document: TenantDocument): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.translocoService.translate('tenantDocuments.sign'),
+      message: this.translocoService.translate('tenantDocuments.confirmSign', {
+        title: document.title,
+      }),
+      confirmLabel: this.translocoService.translate('tenantDocuments.sign'),
+      cancelLabel: this.translocoService.translate('common.cancel'),
     });
-    if (confirm(confirmMsg)) {
-      this.documentService.signDocument(doc.id).subscribe({
-        next: () => {
-          alert(this.translocoService.translate('tenantDocuments.signSuccess'));
-        },
-        error: (error) => {
-          console.error('Error signing document:', error);
-          alert(this.translocoService.translate('tenantDocuments.signError'));
-        },
-      });
-    }
+
+    if (!confirmed) return;
+
+    this.documentService.signDocument(document.id).subscribe({
+      next: () => {
+        this.toast.success(this.translocoService.translate('tenantDocuments.signSuccess'));
+      },
+      error: () => {
+        this.toast.error(this.translocoService.translate('tenantDocuments.signError'));
+      },
+    });
   }
 
-  formatDate(date: Date): string {
+  protected documentTypeLabel(type: DocumentType): string {
+    const translated = this.translocoService.translate(`tenantDocuments.type.${type}`);
+    return translated === `tenantDocuments.type.${type}` ? DocumentTypeLabels[type] : translated;
+  }
+
+  protected documentStatusTone(
+    document: TenantDocument,
+  ): 'neutral' | 'info' | 'success' | 'warning' | 'danger' {
+    if (document.status === DocumentStatus.EXPIRED) return 'danger';
+    if (document.requires_signature && !document.is_signed) return 'warning';
+    if (document.is_signed) return 'success';
+    return 'info';
+  }
+
+  protected formatDate(date: Date): string {
     return this.formatService.formatDate(date);
   }
 
-  formatFileSize(bytes: number): string {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  protected formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  isExpiringSoon(date: Date): boolean {
+  protected isExpiringSoon(date: Date): boolean {
     const now = new Date();
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     return date <= thirtyDaysFromNow && date >= now;

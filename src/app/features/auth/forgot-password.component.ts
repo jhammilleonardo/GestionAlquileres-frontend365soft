@@ -1,39 +1,29 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   LucideAngularModule,
   Building2,
-  Mail,
   AlertCircle,
   CheckCircle2,
   ArrowLeft,
 } from 'lucide-angular';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../core/services/language.service';
-import { HttpClient } from '@angular/common/http';
+import { AppButtonComponent, AppTextFieldComponent } from '../../shared/ui';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-forgot-password',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
     FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppTextFieldComponent,
   ],
   template: `
     <div class="forgot-page">
@@ -90,41 +80,35 @@ import { HttpClient } from '@angular/common/http';
 
         @if (!successMessage()) {
           <form [formGroup]="forgotForm" (ngSubmit)="onSubmit()" class="forgot-form">
-            <div class="form-group">
-              <label class="form-label">{{ 'auth.email' | transloco }}</label>
-              <mat-form-field appearance="outline" class="custom-field">
-                <input
-                  matInput
-                  type="email"
-                  formControlName="email"
-                  placeholder="correo@ejemplo.com"
-                  autocomplete="email"
-                />
-                @if (
-                  forgotForm.get('email')?.hasError('required') && forgotForm.get('email')?.touched
-                ) {
-                  <mat-error>{{ 'auth.required' | transloco }}</mat-error>
-                }
-                @if (forgotForm.get('email')?.hasError('email')) {
-                  <mat-error>{{ 'auth.emailInvalid' | transloco }}</mat-error>
-                }
-              </mat-form-field>
+            <div class="field-block">
+              <app-text-field
+                formControlName="email"
+                autocomplete="email"
+                label="{{ 'auth.email' | transloco }}"
+                placeholder="correo@ejemplo.com"
+                type="email"
+              />
+              @if (
+                forgotForm.get('email')?.hasError('required') && forgotForm.get('email')?.touched
+              ) {
+                <p class="field-error">{{ 'auth.required' | transloco }}</p>
+              }
+              @if (forgotForm.get('email')?.hasError('email') && forgotForm.get('email')?.touched) {
+                <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
+              }
             </div>
 
-            <button
-              mat-raised-button
-              color="primary"
+            <app-button
               type="submit"
               class="submit-btn"
+              [fullWidth]="true"
+              [loading]="isLoading()"
               [disabled]="forgotForm.invalid || isLoading()"
             >
-              @if (isLoading()) {
-                <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>{{ 'auth.sending' | transloco }}</span>
-              } @else {
-                <span>{{ 'auth.sendInstructions' | transloco }}</span>
-              }
-            </button>
+              {{
+                isLoading() ? ('auth.sending' | transloco) : ('auth.sendInstructions' | transloco)
+              }}
+            </app-button>
           </form>
         }
 
@@ -277,31 +261,18 @@ import { HttpClient } from '@angular/common/http';
         margin-bottom: 24px;
       }
 
-      .form-group {
+      .field-block {
         margin-bottom: 24px;
       }
 
-      .form-label {
-        display: block;
+      .field-error {
+        margin: 0.4rem 0 0;
         font-size: 0.875rem;
-        font-weight: 600;
-        color: #334155;
-        margin-bottom: 8px;
-      }
-
-      .custom-field {
-        width: 100%;
+        color: #dc2626;
       }
 
       .submit-btn {
         width: 100%;
-        height: 52px;
-        font-size: 1rem;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
       }
 
       .forgot-footer {
@@ -338,15 +309,12 @@ import { HttpClient } from '@angular/common/http';
 })
 export class ForgotPasswordComponent {
   readonly Building2 = Building2;
-  readonly Mail = Mail;
   readonly AlertCircle = AlertCircle;
   readonly CheckCircle2 = CheckCircle2;
   readonly ArrowLeft = ArrowLeft;
 
   readonly languageService = inject(LanguageService);
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
-  private router = inject(Router);
   private transloco = inject(TranslocoService);
 
   isLoading = signal(false);

@@ -1,73 +1,69 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import {
-  LucideAngularModule,
-  Bell,
-  Check,
-  Trash2,
-  Filter,
-  RefreshCw,
-  Wrench,
-  Home,
-  FileText,
-  CreditCard,
-  Hash,
-  MapPin,
-  Tag,
-  BellOff,
   ArrowUpRight,
+  Bell,
+  BellOff,
+  Check,
+  CreditCard,
+  FileText,
+  Filter,
+  Hash,
+  Home,
+  LucideAngularModule,
+  MapPin,
+  RefreshCw,
+  Tag,
+  Trash2,
+  Wrench,
 } from 'lucide-angular';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import {
-  TenantNotificationService,
   TenantNotification,
+  TenantNotificationService,
 } from '../../../core/services/tenant/tenant-notification.service';
 import { SlugService } from '../../../core/services/slug.service';
-import { DestroyRef } from '@angular/core';
-import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 
 type NotificationFilter = 'all' | 'unread' | 'read';
+
+type LucideIcon = typeof Bell;
 
 @Component({
   selector: 'app-tenant-notifications',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterModule,
-    MatButtonModule,
-    MatIconModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
   ],
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './tenant-notifications.component.html',
   styleUrl: './tenant-notifications.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TenantNotificationsComponent implements OnInit, OnDestroy {
-  private notificationService = inject(TenantNotificationService);
-  private router = inject(Router);
-  private slugService = inject(SlugService);
-  private destroyRef = inject(DestroyRef);
-  private translocoService = inject(TranslocoService);
+export class TenantNotificationsComponent {
+  private readonly notificationService = inject(TenantNotificationService);
+  private readonly router = inject(Router);
+  private readonly slugService = inject(SlugService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
 
-  // Signals
-  notifications = this.notificationService.notifications;
-  stats = this.notificationService.stats;
-  isLoading = this.notificationService.isLoading;
-  error = this.notificationService.error;
-  unreadCount = this.notificationService.unreadCount;
+  readonly notifications = this.notificationService.notifications;
+  readonly stats = this.notificationService.stats;
+  readonly isLoading = this.notificationService.isLoading;
+  readonly error = this.notificationService.error;
+  readonly unreadCount = this.notificationService.unreadCount;
 
-  // State
-  currentFilter: NotificationFilter = 'all';
+  readonly currentFilter = signal<NotificationFilter>('all');
 
-  // Lucide icons
   readonly Bell = Bell;
   readonly Check = Check;
   readonly Trash2 = Trash2;
@@ -83,27 +79,22 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
   readonly BellOff = BellOff;
   readonly ArrowUpRight = ArrowUpRight;
 
-  ngOnInit(): void {
+  constructor() {
     this.loadNotifications();
     this.loadStats();
-
-    // Start polling (1 minute)
     this.notificationService.startPolling(60000);
+    this.destroyRef.onDestroy(() => this.notificationService.stopPolling());
   }
 
-  ngOnDestroy(): void {
-    this.notificationService.stopPolling();
+  get readCount(): number {
+    return (this.stats()?.total ?? 0) - (this.stats()?.unread ?? 0);
   }
 
   loadNotifications(): void {
     const options: { is_read?: boolean; limit?: number } = { limit: 50 };
-
-    if (this.currentFilter === 'unread') {
-      options.is_read = false;
-    } else if (this.currentFilter === 'read') {
-      options.is_read = true;
-    }
-
+    const filter = this.currentFilter();
+    if (filter === 'unread') options.is_read = false;
+    else if (filter === 'read') options.is_read = true;
     this.notificationService.loadNotifications(options);
   }
 
@@ -112,7 +103,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
   }
 
   setFilter(filter: NotificationFilter): void {
-    this.currentFilter = filter;
+    this.currentFilter.set(filter);
     this.loadNotifications();
   }
 
@@ -130,36 +121,37 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     this.notificationService.markAllAsRead().subscribe();
   }
 
-  deleteNotification(id: number, event: Event): void {
+  async deleteNotification(id: number, event: Event): Promise<void> {
     event.stopPropagation();
-    if (confirm(this.translocoService.translate('public.tenantNotifications.confirmDelete'))) {
-      this.notificationService.deleteNotification(id).subscribe();
-    }
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.translocoService.translate('public.tenantNotifications.deleteTitle'),
+      message: this.translocoService.translate('public.tenantNotifications.confirmDelete'),
+      confirmLabel: this.translocoService.translate('common.delete'),
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+    this.notificationService.deleteNotification(id).subscribe();
   }
 
   handleNotificationClick(notification: TenantNotification): void {
-    // Mark as read
     if (!notification.is_read) {
       this.notificationService.markAsRead(notification.id).subscribe();
     }
-
-    // Navigate based on event type
     this.navigateToRelatedPage(notification);
   }
 
   navigateToRelatedPage(notification: TenantNotification): void {
-    const eventType = notification.event_type;
-
-    if (eventType.includes('maintenance')) {
+    const type = notification.event_type;
+    if (type.includes('maintenance')) {
       this.slugService.navigateTo(['portal', 'mantenimiento']);
-    } else if (eventType.includes('contract')) {
+    } else if (type.includes('contract')) {
       this.slugService.navigateTo(['portal', 'documentos']);
-    } else if (eventType.includes('payment')) {
+    } else if (type.includes('payment')) {
       this.slugService.navigateTo(['portal', 'pagos']);
     }
   }
 
-  getNotificationIcon(eventType: string): any {
+  getNotificationIcon(eventType: string): LucideIcon {
     if (eventType.includes('maintenance')) return Wrench;
     if (eventType.includes('contract')) return FileText;
     if (eventType.includes('payment')) return CreditCard;
@@ -181,7 +173,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
   }
 
   getNotificationTypeLabel(eventType: string): string {
-    const types: { [key: string]: string } = {
+    const types: Record<string, string> = {
       'maintenance.request.created': 'public.tenantNotifications.types.maintenanceCreated',
       'maintenance.status.changed': 'public.tenantNotifications.types.maintenanceUpdated',
       'maintenance.message.received': 'public.tenantNotifications.types.maintenanceMessage',
@@ -195,7 +187,7 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
       'payment.rejected': 'public.tenantNotifications.types.paymentRejected',
     };
     return this.translocoService.translate(
-      types[eventType] || 'public.tenantNotifications.types.default',
+      types[eventType] ?? 'public.tenantNotifications.types.default',
     );
   }
 
@@ -205,25 +197,25 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
+    const t = (k: string, p?: Record<string, number>) => this.translocoService.translate(k, p);
 
-    if (minutes < 1) return this.translocoService.translate('public.tenantNotifications.now');
+    if (minutes < 1) return t('public.tenantNotifications.now');
     if (minutes < 60)
-      return this.translocoService.translate(
+      return t(
         minutes !== 1
           ? 'public.tenantNotifications.minutesAgoPlural'
           : 'public.tenantNotifications.minutesAgo',
         { count: minutes },
       );
     if (hours < 24)
-      return this.translocoService.translate(
+      return t(
         hours !== 1
           ? 'public.tenantNotifications.hoursAgoPlural'
           : 'public.tenantNotifications.hoursAgo',
         { count: hours },
       );
-    if (days === 1) return this.translocoService.translate('public.tenantNotifications.yesterday');
-    if (days < 7)
-      return this.translocoService.translate('public.tenantNotifications.daysAgo', { count: days });
+    if (days === 1) return t('public.tenantNotifications.yesterday');
+    if (days < 7) return t('public.tenantNotifications.daysAgo', { count: days });
     return new Date(date).toLocaleDateString(
       this.translocoService.getActiveLang() === 'es' ? 'es-ES' : 'en-US',
       {
@@ -236,11 +228,5 @@ export class TenantNotificationsComponent implements OnInit, OnDestroy {
 
   clearError(): void {
     this.notificationService.clearError();
-  }
-
-  get readCount(): number {
-    const total = this.stats()?.total || 0;
-    const unread = this.stats()?.unread || 0;
-    return total - unread;
   }
 }

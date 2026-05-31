@@ -1,13 +1,13 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { LucideAngularModule, HelpCircle, ChevronDown, ChevronUp } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-faq',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslocoModule],
+  imports: [LucideAngularModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './faq.component.html',
   styleUrls: ['./faq.component.css'],

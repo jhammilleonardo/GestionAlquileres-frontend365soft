@@ -1,398 +1,181 @@
 <div class="application-form-container">
-  <!-- Success State -->
-  <div *ngIf="submitSuccess" class="success-state">
-    <div class="success-icon">🎉</div>
-    <h1>{{ 'public.applicationForm.successTitle' | transloco }}</h1>
-    <p>{{ 'public.applicationForm.successMsg' | transloco }}</p>
-    <p>{{ 'public.applicationForm.redirectMsg' | transloco }}</p>
-  </div>
-
-  <!-- Form -->
-  <div *ngIf="!submitSuccess" class="form-wrapper">
-    <!-- Header -->
-    <div class="form-header">
-      <h1>{{ 'public.applicationForm.title' | transloco }}</h1>
-      <p class="form-subtitle">{{ 'public.applicationForm.subtitle' | transloco }}</p>
+  @if (submitSuccess()) {
+    <!-- Success State -->
+    <div class="success-state">
+      <div class="success-icon">🎉</div>
+      <h1>{{ 'public.applicationForm.successTitle' | transloco }}</h1>
+      <p>{{ 'public.applicationForm.successMsg' | transloco }}</p>
+      <p>{{ 'public.applicationForm.redirectMsg' | transloco }}</p>
     </div>
-
-    <!-- Error Alert -->
-    <div *ngIf="error" class="error-alert">
-      <span class="error-icon">⚠️</span>
-      <span>{{ error }}</span>
-    </div>
-
-    <form (ngSubmit)="onSubmit()" class="application-form">
-      <!-- SECTION 1: Personal Data -->
-      <div class="form-section">
-        <h2>{{ 'public.applicationForm.personalSection' | transloco }}</h2>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="full_name">{{ 'public.applicationForm.fullName' | transloco }}</label>
-            <input
-              type="text"
-              id="full_name"
-              class="form-control"
-              [(ngModel)]="formData.personal_data.full_name"
-              name="full_name"
-              required
-              [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="national_id">{{ 'public.applicationForm.nationalId' | transloco }}</label>
-            <input
-              type="text"
-              id="national_id"
-              class="form-control"
-              [(ngModel)]="formData.personal_data.national_id"
-              name="national_id"
-              required
-              [placeholder]="'public.applicationForm.nationalIdPlace' | transloco"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="email">{{ 'public.applicationForm.email' | transloco }}</label>
-            <input
-              type="email"
-              id="email"
-              class="form-control"
-              [(ngModel)]="formData.personal_data.email"
-              name="email"
-              required
-              [placeholder]="'public.applicationForm.emailPlace' | transloco"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="phone">{{ 'public.applicationForm.phone' | transloco }}</label>
-            <input
-              type="tel"
-              id="phone"
-              class="form-control"
-              [(ngModel)]="formData.personal_data.phone"
-              name="phone"
-              required
-              [placeholder]="'public.applicationForm.phonePlace' | transloco"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="birth_date">{{ 'public.applicationForm.birthDate' | transloco }}</label>
-            <input
-              type="date"
-              id="birth_date"
-              class="form-control"
-              [(ngModel)]="formData.personal_data.birth_date"
-              name="birth_date"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="marital_status">{{
-              'public.applicationForm.maritalStatus' | transloco
-            }}</label>
-            <select
-              id="marital_status"
-              class="form-control"
-              [(ngModel)]="formData.personal_data.marital_status"
-              name="marital_status"
-            >
-              <option *ngFor="let status of maritalStatuses" [value]="status">
-                {{ status }}
-                <!-- We could map this to translations, but keeping simple for now -->
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="number_of_dependents">{{
-            'public.applicationForm.dependents' | transloco
-          }}</label>
-          <input
-            type="number"
-            id="number_of_dependents"
-            class="form-control"
-            [(ngModel)]="formData.personal_data.number_of_dependents"
-            name="number_of_dependents"
-            min="0"
-            value="0"
-          />
-          <small class="form-hint">{{ 'public.applicationForm.dependentsHint' | transloco }}</small>
-        </div>
+  } @else {
+    <!-- Form -->
+    <div class="form-wrapper">
+      <!-- Header -->
+      <div class="form-header">
+        <h1>{{ 'public.applicationForm.title' | transloco }}</h1>
+        <p class="form-subtitle">{{ 'public.applicationForm.subtitle' | transloco }}</p>
       </div>
 
-      <!-- SECTION 2: Employment Data -->
-      <div class="form-section">
-        <h2>{{ 'public.applicationForm.workSection' | transloco }}</h2>
-        <p class="section-hint">{{ 'public.applicationForm.workHint' | transloco }}</p>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="company">{{ 'public.applicationForm.company' | transloco }}</label>
-            <input
-              type="text"
-              id="company"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.company"
-              name="company"
-              required
-              [placeholder]="'public.applicationForm.companyPlace' | transloco"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="position">{{ 'public.applicationForm.position' | transloco }}</label>
-            <input
-              type="text"
-              id="position"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.position"
-              name="position"
-              required
-              [placeholder]="'public.applicationForm.positionPlace' | transloco"
-            />
-          </div>
+      <!-- Error Alert -->
+      @if (error()) {
+        <div class="error-alert">
+          <span class="error-icon">⚠️</span>
+          <span>{{ error() }}</span>
         </div>
+      }
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="salary">{{ 'public.applicationForm.salary' | transloco }}</label>
-            <input
-              type="number"
-              id="salary"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.salary"
-              name="salary"
-              required
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="currency">{{ 'public.applicationForm.currency' | transloco }}</label>
-            <select
-              id="currency"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.currency"
-              name="currency"
-            >
-              <option value="BOB">BOB</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="start_date">{{ 'public.applicationForm.startDate' | transloco }}</label>
-            <input
-              type="date"
-              id="start_date"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.start_date"
-              name="start_date"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="employment_type">{{
-              'public.applicationForm.employmentType' | transloco
-            }}</label>
-            <select
-              id="employment_type"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.employment_type"
-              name="employment_type"
-            >
-              <option *ngFor="let type of employmentTypes" [value]="type">
-                {{ type }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="supervisor_name">{{
-              'public.applicationForm.supervisorName' | transloco
-            }}</label>
-            <input
-              type="text"
-              id="supervisor_name"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.supervisor_name"
-              name="supervisor_name"
-              required
-              [placeholder]="'public.applicationForm.supervisorNamePlace' | transloco"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="supervisor_phone">{{
-              'public.applicationForm.supervisorPhone' | transloco
-            }}</label>
-            <input
-              type="tel"
-              id="supervisor_phone"
-              class="form-control"
-              [(ngModel)]="formData.employment_data.current_job.supervisor_phone"
-              name="supervisor_phone"
-              required
-              [placeholder]="'public.applicationForm.supervisorPhonePlace' | transloco"
-            />
-          </div>
-        </div>
-
-        <!-- Previous Job (Optional) -->
-        <div class="subsection">
-          <h3>{{ 'public.applicationForm.prevJobTitle' | transloco }}</h3>
+      <form (ngSubmit)="onSubmit()" class="application-form">
+        <!-- SECTION 1: Personal Data -->
+        <div class="form-section">
+          <h2>{{ 'public.applicationForm.personalSection' | transloco }}</h2>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="prev_company">{{
-                'public.applicationForm.prevCompany' | transloco
-              }}</label>
+              <label for="full_name">{{ 'public.applicationForm.fullName' | transloco }}</label>
               <input
                 type="text"
-                id="prev_company"
+                id="full_name"
                 class="form-control"
-                [(ngModel)]="previousJob.company"
-                name="prev_company"
-                [placeholder]="'public.applicationForm.prevCompany' | transloco"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="prev_position">{{
-                'public.applicationForm.prevPosition' | transloco
-              }}</label>
-              <input
-                type="text"
-                id="prev_position"
-                class="form-control"
-                [(ngModel)]="previousJob.position"
-                name="prev_position"
-                [placeholder]="'public.applicationForm.prevPosition' | transloco"
-              />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="prev_salary">{{ 'public.applicationForm.prevSalary' | transloco }}</label>
-              <input
-                type="number"
-                id="prev_salary"
-                class="form-control"
-                [(ngModel)]="previousJob.salary"
-                name="prev_salary"
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="prev_end_date">{{
-                'public.applicationForm.prevEndDate' | transloco
-              }}</label>
-              <input
-                type="date"
-                id="prev_end_date"
-                class="form-control"
-                [(ngModel)]="previousJob.end_date"
-                name="prev_end_date"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SECTION 3: Rental History (Optional) -->
-      <div class="form-section">
-        <h2>{{ 'public.applicationForm.rentalSection' | transloco }}</h2>
-        <p class="section-hint">{{ 'public.applicationForm.rentalHint' | transloco }}</p>
-
-        <div *ngIf="formData.rental_history.length === 0" class="empty-state">
-          <p>{{ 'public.applicationForm.rentalEmpty' | transloco }}</p>
-          <button type="button" class="btn btn-secondary" (click)="addRentalHistory()">
-            {{ 'public.applicationForm.addRentalBtn' | transloco }}
-          </button>
-        </div>
-
-        <div *ngFor="let history of formData.rental_history; let i = index" class="history-card">
-          <div class="card-header">
-            <h4>{{ 'public.applicationForm.residenceNumber' | transloco: { number: i + 1 } }}</h4>
-            <button
-              type="button"
-              class="btn-remove"
-              (click)="removeRentalHistory(i)"
-              title="Eliminar"
-            >
-              {{ 'public.applicationForm.deleteBtn' | transloco }}
-            </button>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'public.applicationForm.propertyAddress' | transloco }}</label>
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="history.property_address"
-                name="address_{{ i }}"
-                required
-                [placeholder]="'public.applicationForm.propertyAddressPlace' | transloco"
-              />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'public.applicationForm.landlordName' | transloco }}</label>
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="history.landlord_name"
-                name="landlord_{{ i }}"
+                [(ngModel)]="formData.personal_data.full_name"
+                name="full_name"
                 required
                 [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
               />
             </div>
 
             <div class="form-group">
-              <label>{{ 'public.applicationForm.landlordPhone' | transloco }}</label>
+              <label for="national_id">{{ 'public.applicationForm.nationalId' | transloco }}</label>
               <input
-                type="tel"
+                type="text"
+                id="national_id"
                 class="form-control"
-                [(ngModel)]="history.landlord_phone"
-                name="landlord_phone_{{ i }}"
+                [(ngModel)]="formData.personal_data.national_id"
+                name="national_id"
                 required
-                placeholder="+591..."
+                [placeholder]="'public.applicationForm.nationalIdPlace' | transloco"
               />
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>{{ 'public.applicationForm.rentAmount' | transloco }}</label>
+              <label for="email">{{ 'public.applicationForm.email' | transloco }}</label>
+              <input
+                type="email"
+                id="email"
+                class="form-control"
+                [(ngModel)]="formData.personal_data.email"
+                name="email"
+                required
+                [placeholder]="'public.applicationForm.emailPlace' | transloco"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">{{ 'public.applicationForm.phone' | transloco }}</label>
+              <input
+                type="tel"
+                id="phone"
+                class="form-control"
+                [(ngModel)]="formData.personal_data.phone"
+                name="phone"
+                required
+                [placeholder]="'public.applicationForm.phonePlace' | transloco"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="birth_date">{{ 'public.applicationForm.birthDate' | transloco }}</label>
+              <input
+                type="date"
+                id="birth_date"
+                class="form-control"
+                [(ngModel)]="formData.personal_data.birth_date"
+                name="birth_date"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="marital_status">{{
+                'public.applicationForm.maritalStatus' | transloco
+              }}</label>
+              <select
+                id="marital_status"
+                class="form-control"
+                [(ngModel)]="formData.personal_data.marital_status"
+                name="marital_status"
+              >
+                @for (status of maritalStatuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="number_of_dependents">{{
+              'public.applicationForm.dependents' | transloco
+            }}</label>
+            <input
+              type="number"
+              id="number_of_dependents"
+              class="form-control"
+              [(ngModel)]="formData.personal_data.number_of_dependents"
+              name="number_of_dependents"
+              min="0"
+              value="0"
+            />
+            <small class="form-hint">{{
+              'public.applicationForm.dependentsHint' | transloco
+            }}</small>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Employment Data -->
+        <div class="form-section">
+          <h2>{{ 'public.applicationForm.workSection' | transloco }}</h2>
+          <p class="section-hint">{{ 'public.applicationForm.workHint' | transloco }}</p>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="company">{{ 'public.applicationForm.company' | transloco }}</label>
+              <input
+                type="text"
+                id="company"
+                class="form-control"
+                [(ngModel)]="formData.employment_data.current_job.company"
+                name="company"
+                required
+                [placeholder]="'public.applicationForm.companyPlace' | transloco"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="position">{{ 'public.applicationForm.position' | transloco }}</label>
+              <input
+                type="text"
+                id="position"
+                class="form-control"
+                [(ngModel)]="formData.employment_data.current_job.position"
+                name="position"
+                required
+                [placeholder]="'public.applicationForm.positionPlace' | transloco"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="salary">{{ 'public.applicationForm.salary' | transloco }}</label>
               <input
                 type="number"
+                id="salary"
                 class="form-control"
-                [(ngModel)]="history.monthly_rent"
-                name="rent_{{ i }}"
+                [(ngModel)]="formData.employment_data.current_job.salary"
+                name="salary"
                 required
                 min="0"
                 step="0.01"
@@ -401,272 +184,506 @@
             </div>
 
             <div class="form-group">
-              <label>{{ 'public.applicationForm.startDate' | transloco }}</label>
-              <input
-                type="date"
+              <label for="currency">{{ 'public.applicationForm.currency' | transloco }}</label>
+              <select
+                id="currency"
                 class="form-control"
-                [(ngModel)]="history.start_date"
-                name="start_date_{{ i }}"
-                required
-              />
+                [(ngModel)]="formData.employment_data.current_job.currency"
+                name="currency"
+              >
+                <option value="BOB">BOB</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+              </select>
             </div>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>{{ 'public.applicationForm.endDate' | transloco }}</label>
+              <label for="start_date">{{ 'public.applicationForm.startDate' | transloco }}</label>
               <input
                 type="date"
+                id="start_date"
                 class="form-control"
-                [(ngModel)]="history.end_date"
-                name="end_date_{{ i }}"
+                [(ngModel)]="formData.employment_data.current_job.start_date"
+                name="start_date"
+                required
               />
-              <small class="form-hint">{{
-                'public.applicationForm.endDateHint' | transloco
-              }}</small>
             </div>
 
             <div class="form-group">
-              <label>{{ 'public.applicationForm.leaveReason' | transloco }}</label>
+              <label for="employment_type">{{
+                'public.applicationForm.employmentType' | transloco
+              }}</label>
+              <select
+                id="employment_type"
+                class="form-control"
+                [(ngModel)]="formData.employment_data.current_job.employment_type"
+                name="employment_type"
+              >
+                @for (type of employmentTypes; track type) {
+                  <option [value]="type">{{ type }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="supervisor_name">{{
+                'public.applicationForm.supervisorName' | transloco
+              }}</label>
               <input
                 type="text"
+                id="supervisor_name"
                 class="form-control"
-                [(ngModel)]="history.reason_for_leaving"
-                name="reason_{{ i }}"
-                [placeholder]="'public.applicationForm.leaveReasonPlace' | transloco"
+                [(ngModel)]="formData.employment_data.current_job.supervisor_name"
+                name="supervisor_name"
+                required
+                [placeholder]="'public.applicationForm.supervisorNamePlace' | transloco"
               />
-            </div>
-          </div>
-        </div>
-
-        <button
-          *ngIf="formData.rental_history.length > 0"
-          type="button"
-          class="btn btn-secondary btn-full"
-          (click)="addRentalHistory()"
-        >
-          {{ 'public.applicationForm.addAnotherRentalBtn' | transloco }}
-        </button>
-      </div>
-
-      <!-- SECTION 4: References -->
-      <div class="form-section">
-        <h2>{{ 'public.applicationForm.refSection' | transloco }}</h2>
-        <p class="section-hint">{{ 'public.applicationForm.refHint' | transloco }}</p>
-
-        <!-- Personal References -->
-        <div class="subsection">
-          <h3>{{ 'public.applicationForm.personalRefTitle' | transloco }}</h3>
-          <p class="section-hint">{{ 'public.applicationForm.personalRefHint' | transloco }}</p>
-
-          <div
-            *ngFor="let ref of formData.references.personal; let i = index"
-            class="reference-card"
-          >
-            <div class="card-header">
-              <h4>
-                {{ 'public.applicationForm.personalRefNumber' | transloco: { number: i + 1 } }}
-              </h4>
-              <button
-                type="button"
-                class="btn-remove"
-                (click)="removePersonalReference(i)"
-                title="Eliminar"
-              >
-                {{ 'public.applicationForm.deleteBtn' | transloco }}
-              </button>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.fullName' | transloco }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="ref.name"
-                  name="pers_name_{{ i }}"
-                  required
-                  [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.relationship' | transloco }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="ref.relationship"
-                  name="pers_rel_{{ i }}"
-                  required
-                  [placeholder]="'public.applicationForm.relationshipPlace' | transloco"
-                />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.phone' | transloco }}</label>
-                <input
-                  type="tel"
-                  class="form-control"
-                  [(ngModel)]="ref.phone"
-                  name="pers_phone_{{ i }}"
-                  required
-                  placeholder="+591..."
-                />
-              </div>
-
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.email' | transloco }}</label>
-                <input
-                  type="email"
-                  class="form-control"
-                  [(ngModel)]="ref.email"
-                  name="pers_email_{{ i }}"
-                  [placeholder]="'public.applicationForm.emailPlace' | transloco"
-                />
-              </div>
-            </div>
-          </div>
-
-          <button type="button" class="btn btn-secondary btn-full" (click)="addPersonalReference()">
-            {{ 'public.applicationForm.addPersonalRefBtn' | transloco }}
-          </button>
-        </div>
-
-        <!-- Professional References -->
-        <div class="subsection">
-          <h3>{{ 'public.applicationForm.profRefTitle' | transloco }}</h3>
-          <p class="section-hint">{{ 'public.applicationForm.profRefHint' | transloco }}</p>
-
-          <div
-            *ngFor="let ref of formData.references.professional; let i = index"
-            class="reference-card"
-          >
-            <div class="card-header">
-              <h4>{{ 'public.applicationForm.profRefNumber' | transloco: { number: i + 1 } }}</h4>
-              <button
-                type="button"
-                class="btn-remove"
-                (click)="removeProfessionalReference(i)"
-                title="Eliminar"
-              >
-                {{ 'public.applicationForm.deleteBtn' | transloco }}
-              </button>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.fullName' | transloco }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="ref.name"
-                  name="prof_name_{{ i }}"
-                  required
-                  [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.company' | transloco }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="ref.company"
-                  name="prof_company_{{ i }}"
-                  required
-                  [placeholder]="'public.applicationForm.companyPlace' | transloco"
-                />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.position' | transloco }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="ref.position"
-                  name="prof_position_{{ i }}"
-                  required
-                  [placeholder]="'public.applicationForm.positionPlace' | transloco"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>{{ 'public.applicationForm.phone' | transloco }}</label>
-                <input
-                  type="tel"
-                  class="form-control"
-                  [(ngModel)]="ref.phone"
-                  name="prof_phone_{{ i }}"
-                  required
-                  placeholder="+591..."
-                />
-              </div>
             </div>
 
             <div class="form-group">
-              <label>{{ 'public.applicationForm.email' | transloco }}</label>
+              <label for="supervisor_phone">{{
+                'public.applicationForm.supervisorPhone' | transloco
+              }}</label>
               <input
-                type="email"
+                type="tel"
+                id="supervisor_phone"
                 class="form-control"
-                [(ngModel)]="ref.email"
-                name="prof_email_{{ i }}"
-                [placeholder]="'public.applicationForm.emailPlace' | transloco"
+                [(ngModel)]="formData.employment_data.current_job.supervisor_phone"
+                name="supervisor_phone"
+                required
+                [placeholder]="'public.applicationForm.supervisorPhonePlace' | transloco"
               />
             </div>
           </div>
 
-          <button
-            type="button"
-            class="btn btn-secondary btn-full"
-            (click)="addProfessionalReference()"
-          >
-            {{ 'public.applicationForm.addProfRefBtn' | transloco }}
+          <!-- Previous Job (Optional) -->
+          <div class="subsection">
+            <h3>{{ 'public.applicationForm.prevJobTitle' | transloco }}</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="prev_company">{{
+                  'public.applicationForm.prevCompany' | transloco
+                }}</label>
+                <input
+                  type="text"
+                  id="prev_company"
+                  class="form-control"
+                  [(ngModel)]="previousJob.company"
+                  name="prev_company"
+                  [placeholder]="'public.applicationForm.prevCompany' | transloco"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="prev_position">{{
+                  'public.applicationForm.prevPosition' | transloco
+                }}</label>
+                <input
+                  type="text"
+                  id="prev_position"
+                  class="form-control"
+                  [(ngModel)]="previousJob.position"
+                  name="prev_position"
+                  [placeholder]="'public.applicationForm.prevPosition' | transloco"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="prev_salary">{{
+                  'public.applicationForm.prevSalary' | transloco
+                }}</label>
+                <input
+                  type="number"
+                  id="prev_salary"
+                  class="form-control"
+                  [(ngModel)]="previousJob.salary"
+                  name="prev_salary"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="prev_end_date">{{
+                  'public.applicationForm.prevEndDate' | transloco
+                }}</label>
+                <input
+                  type="date"
+                  id="prev_end_date"
+                  class="form-control"
+                  [(ngModel)]="previousJob.end_date"
+                  name="prev_end_date"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Rental History (Optional) -->
+        <div class="form-section">
+          <h2>{{ 'public.applicationForm.rentalSection' | transloco }}</h2>
+          <p class="section-hint">{{ 'public.applicationForm.rentalHint' | transloco }}</p>
+
+          @if (formData.rental_history.length === 0) {
+            <div class="empty-state">
+              <p>{{ 'public.applicationForm.rentalEmpty' | transloco }}</p>
+              <button type="button" class="btn btn-secondary" (click)="addRentalHistory()">
+                {{ 'public.applicationForm.addRentalBtn' | transloco }}
+              </button>
+            </div>
+          }
+
+          @for (history of formData.rental_history; track $index; let i = $index) {
+            <div class="history-card">
+              <div class="card-header">
+                <h4>
+                  {{ 'public.applicationForm.residenceNumber' | transloco: { number: i + 1 } }}
+                </h4>
+                <button
+                  type="button"
+                  class="btn-remove"
+                  (click)="removeRentalHistory(i)"
+                  title="Eliminar"
+                >
+                  {{ 'public.applicationForm.deleteBtn' | transloco }}
+                </button>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.propertyAddress' | transloco }}</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="history.property_address"
+                    name="address_{{ i }}"
+                    required
+                    [placeholder]="'public.applicationForm.propertyAddressPlace' | transloco"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.landlordName' | transloco }}</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="history.landlord_name"
+                    name="landlord_{{ i }}"
+                    required
+                    [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.landlordPhone' | transloco }}</label>
+                  <input
+                    type="tel"
+                    class="form-control"
+                    [(ngModel)]="history.landlord_phone"
+                    name="landlord_phone_{{ i }}"
+                    required
+                    placeholder="+591..."
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.rentAmount' | transloco }}</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="history.monthly_rent"
+                    name="rent_{{ i }}"
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.startDate' | transloco }}</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    [(ngModel)]="history.start_date"
+                    name="start_date_{{ i }}"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.endDate' | transloco }}</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    [(ngModel)]="history.end_date"
+                    name="end_date_{{ i }}"
+                  />
+                  <small class="form-hint">{{
+                    'public.applicationForm.endDateHint' | transloco
+                  }}</small>
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.leaveReason' | transloco }}</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    [(ngModel)]="history.reason_for_leaving"
+                    name="reason_{{ i }}"
+                    [placeholder]="'public.applicationForm.leaveReasonPlace' | transloco"
+                  />
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (formData.rental_history.length > 0) {
+            <button type="button" class="btn btn-secondary btn-full" (click)="addRentalHistory()">
+              {{ 'public.applicationForm.addAnotherRentalBtn' | transloco }}
+            </button>
+          }
+        </div>
+
+        <!-- SECTION 4: References -->
+        <div class="form-section">
+          <h2>{{ 'public.applicationForm.refSection' | transloco }}</h2>
+          <p class="section-hint">{{ 'public.applicationForm.refHint' | transloco }}</p>
+
+          <!-- Personal References -->
+          <div class="subsection">
+            <h3>{{ 'public.applicationForm.personalRefTitle' | transloco }}</h3>
+            <p class="section-hint">{{ 'public.applicationForm.personalRefHint' | transloco }}</p>
+
+            @for (ref of formData.references.personal; track $index; let i = $index) {
+              <div class="reference-card">
+                <div class="card-header">
+                  <h4>
+                    {{ 'public.applicationForm.personalRefNumber' | transloco: { number: i + 1 } }}
+                  </h4>
+                  <button
+                    type="button"
+                    class="btn-remove"
+                    (click)="removePersonalReference(i)"
+                    title="Eliminar"
+                  >
+                    {{ 'public.applicationForm.deleteBtn' | transloco }}
+                  </button>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.fullName' | transloco }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="ref.name"
+                      name="pers_name_{{ i }}"
+                      required
+                      [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.relationship' | transloco }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="ref.relationship"
+                      name="pers_rel_{{ i }}"
+                      required
+                      [placeholder]="'public.applicationForm.relationshipPlace' | transloco"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.phone' | transloco }}</label>
+                    <input
+                      type="tel"
+                      class="form-control"
+                      [(ngModel)]="ref.phone"
+                      name="pers_phone_{{ i }}"
+                      required
+                      placeholder="+591..."
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.email' | transloco }}</label>
+                    <input
+                      type="email"
+                      class="form-control"
+                      [(ngModel)]="ref.email"
+                      name="pers_email_{{ i }}"
+                      [placeholder]="'public.applicationForm.emailPlace' | transloco"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+
+            <button
+              type="button"
+              class="btn btn-secondary btn-full"
+              (click)="addPersonalReference()"
+            >
+              {{ 'public.applicationForm.addPersonalRefBtn' | transloco }}
+            </button>
+          </div>
+
+          <!-- Professional References -->
+          <div class="subsection">
+            <h3>{{ 'public.applicationForm.profRefTitle' | transloco }}</h3>
+            <p class="section-hint">{{ 'public.applicationForm.profRefHint' | transloco }}</p>
+
+            @for (ref of formData.references.professional; track $index; let i = $index) {
+              <div class="reference-card">
+                <div class="card-header">
+                  <h4>
+                    {{ 'public.applicationForm.profRefNumber' | transloco: { number: i + 1 } }}
+                  </h4>
+                  <button
+                    type="button"
+                    class="btn-remove"
+                    (click)="removeProfessionalReference(i)"
+                    title="Eliminar"
+                  >
+                    {{ 'public.applicationForm.deleteBtn' | transloco }}
+                  </button>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.fullName' | transloco }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="ref.name"
+                      name="prof_name_{{ i }}"
+                      required
+                      [placeholder]="'public.applicationForm.fullNamePlace' | transloco"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.company' | transloco }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="ref.company"
+                      name="prof_company_{{ i }}"
+                      required
+                      [placeholder]="'public.applicationForm.companyPlace' | transloco"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.position' | transloco }}</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      [(ngModel)]="ref.position"
+                      name="prof_position_{{ i }}"
+                      required
+                      [placeholder]="'public.applicationForm.positionPlace' | transloco"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>{{ 'public.applicationForm.phone' | transloco }}</label>
+                    <input
+                      type="tel"
+                      class="form-control"
+                      [(ngModel)]="ref.phone"
+                      name="prof_phone_{{ i }}"
+                      required
+                      placeholder="+591..."
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>{{ 'public.applicationForm.email' | transloco }}</label>
+                  <input
+                    type="email"
+                    class="form-control"
+                    [(ngModel)]="ref.email"
+                    name="prof_email_{{ i }}"
+                    [placeholder]="'public.applicationForm.emailPlace' | transloco"
+                  />
+                </div>
+              </div>
+            }
+
+            <button
+              type="button"
+              class="btn btn-secondary btn-full"
+              (click)="addProfessionalReference()"
+            >
+              {{ 'public.applicationForm.addProfRefBtn' | transloco }}
+            </button>
+          </div>
+        </div>
+
+        <!-- SECTION 5: Additional Notes -->
+        <div class="form-section">
+          <h2>{{ 'public.applicationForm.notesSection' | transloco }}</h2>
+          <p class="section-hint">{{ 'public.applicationForm.notesHint' | transloco }}</p>
+
+          <div class="form-group">
+            <textarea
+              class="form-control"
+              [(ngModel)]="formData.additional_notes"
+              name="additional_notes"
+              rows="5"
+              [placeholder]="'public.applicationForm.notesPlace' | transloco"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+          <p>{{ 'public.applicationForm.infoBoxTitle' | transloco }}</p>
+          <ul>
+            <li>{{ 'public.applicationForm.info1' | transloco }}</li>
+            <li>{{ 'public.applicationForm.info2' | transloco }}</li>
+            <li>{{ 'public.applicationForm.info3' | transloco }}</li>
+            <li>{{ 'public.applicationForm.info4' | transloco }}</li>
+          </ul>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" (click)="cancel()">
+            {{ 'public.applicationForm.cancelBtn' | transloco }}
+          </button>
+
+          <button type="submit" class="btn btn-success" [disabled]="submitting()">
+            @if (submitting()) {
+              <span>{{ 'public.applicationForm.submittingBtn' | transloco }}</span>
+            } @else {
+              <span>{{ 'public.applicationForm.submitBtn' | transloco }}</span>
+            }
           </button>
         </div>
-      </div>
-
-      <!-- SECTION 5: Additional Notes -->
-      <div class="form-section">
-        <h2>{{ 'public.applicationForm.notesSection' | transloco }}</h2>
-        <p class="section-hint">{{ 'public.applicationForm.notesHint' | transloco }}</p>
-
-        <div class="form-group">
-          <textarea
-            class="form-control"
-            [(ngModel)]="formData.additional_notes"
-            name="additional_notes"
-            rows="5"
-            [placeholder]="'public.applicationForm.notesPlace' | transloco"
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- Info Box -->
-      <div class="info-box">
-        <p>{{ 'public.applicationForm.infoBoxTitle' | transloco }}</p>
-        <ul>
-          <li>{{ 'public.applicationForm.info1' | transloco }}</li>
-          <li>{{ 'public.applicationForm.info2' | transloco }}</li>
-          <li>{{ 'public.applicationForm.info3' | transloco }}</li>
-          <li>{{ 'public.applicationForm.info4' | transloco }}</li>
-        </ul>
-      </div>
-
-      <!-- Form Actions -->
-      <div class="form-actions">
-        <button type="button" class="btn btn-outline" (click)="cancel()">
-          {{ 'public.applicationForm.cancelBtn' | transloco }}
-        </button>
-
-        <button type="submit" class="btn btn-success" [disabled]="submitting">
-          <span *ngIf="submitting">{{ 'public.applicationForm.submittingBtn' | transloco }}</span>
-          <span *ngIf="!submitting">{{ 'public.applicationForm.submitBtn' | transloco }}</span>
-        </button>
-      </div>
-    </form>
-  </div>
+      </form>
+    </div>
+  }
 </div>

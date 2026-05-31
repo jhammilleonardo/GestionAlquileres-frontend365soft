@@ -10,9 +10,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   LucideAngularModule,
   ArrowLeft,
@@ -42,6 +39,9 @@ import {
 } from '../../../../../core/models/maintenance-request.model';
 import { MaintenanceService } from '../../../../../core/services/admin/maintenance.service';
 import { TenantDatePipe } from '../../../../../shared/pipes/tenant-date.pipe';
+import { AppButtonComponent } from '../../../../../shared/ui/button/button.component';
+import { AppLoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
+import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-order-detail',
@@ -50,8 +50,8 @@ import { TenantDatePipe } from '../../../../../shared/pipes/tenant-date.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     FormsModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
+    AppButtonComponent,
+    AppLoadingStateComponent,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
@@ -67,7 +67,7 @@ export class OrderDetailComponent {
 
   // Services
   private maintenanceService = inject(MaintenanceService);
-  private snackBar = inject(MatSnackBar);
+  private toast = inject(ToastService);
   private transloco = inject(TranslocoService);
   private destroyRef = inject(DestroyRef);
 
@@ -151,18 +151,13 @@ export class OrderDetailComponent {
             updated.status === MaintenanceStatus.IN_PROGRESS
               ? this.transloco.translate('tecnico.orderStarted')
               : this.transloco.translate('tecnico.orderCompleted');
-          this.snackBar.open(label, undefined, {
-            duration: 3000,
-            panelClass: ['snack-success'],
-          });
+          this.toast.success(label);
           this.statusAdvanced.emit(updated);
         },
         error: (err: { error?: { message?: string } }) => {
           this.isAdvancingStage.set(false);
-          this.snackBar.open(
+          this.toast.error(
             err.error?.message ?? this.transloco.translate('tecnico.errorUpdateStatus'),
-            this.transloco.translate('common.close'),
-            { duration: 4000 },
           );
         },
       });
@@ -221,17 +216,12 @@ export class OrderDetailComponent {
             this.selectedFiles.set([]);
             this.previewUrls.set([]);
             this.isSendingNote.set(false);
-            this.snackBar.open(this.transloco.translate('tecnico.noteSent'), undefined, {
-              duration: 2500,
-              panelClass: ['snack-success'],
-            });
+            this.toast.success(this.transloco.translate('tecnico.noteSent'));
           },
           error: (err: { error?: { message?: string } }) => {
             this.isSendingNote.set(false);
-            this.snackBar.open(
+            this.toast.error(
               err.error?.message ?? this.transloco.translate('tecnico.errorSendNote'),
-              this.transloco.translate('common.close'),
-              { duration: 4000 },
             );
           },
         });
@@ -245,16 +235,18 @@ export class OrderDetailComponent {
           next: (attachments) => doSend(attachments.map((a) => a.file_url)),
           error: (err: { error?: { message?: string } }) => {
             this.isSendingNote.set(false);
-            this.snackBar.open(
+            this.toast.error(
               err.error?.message ?? this.transloco.translate('tecnico.errorUploadFiles'),
-              this.transloco.translate('common.close'),
-              { duration: 4000 },
             );
           },
         });
     } else {
       doSend([]);
     }
+  }
+
+  updateNoteText(event: Event): void {
+    this.noteText.set((event.target as HTMLTextAreaElement).value);
   }
 
   getFileUrl(url: string): string {

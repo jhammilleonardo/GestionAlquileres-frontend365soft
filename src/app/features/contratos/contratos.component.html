@@ -1,0 +1,285 @@
+<div class="contracts-container">
+  <!-- ── Page Header ── -->
+  <app-page-header
+    [title]="'contracts.title' | transloco"
+    [description]="'contracts.subtitle' | transloco"
+  >
+    <app-button actions class="create-button" (clicked)="facade.createContract()">
+      <lucide-icon [img]="Plus" [size]="17"></lucide-icon>
+      {{ 'contracts.new' | transloco }}
+    </app-button>
+  </app-page-header>
+
+  @if (facade.isLoading() && facade.contracts().length === 0) {
+    <div class="loading-container">
+      <app-loading-state [label]="'contracts.loading' | transloco" />
+    </div>
+  } @else {
+    <!-- ── Métricas ── -->
+    @if (facade.dashboard()) {
+      <div class="dashboard-grid">
+        <article class="metric-card total">
+          <div class="metric-content">
+            <div class="metric-icon-wrap">
+              <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value">{{ facade.dashboard()!.total_contracts }}</span>
+              <span class="metric-label">{{ 'contracts.totalContracts' | transloco }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="metric-card active">
+          <div class="metric-content">
+            <div class="metric-icon-wrap">
+              <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value">{{ facade.dashboard()!.active_contracts }}</span>
+              <span class="metric-label">{{ 'contracts.activeContracts' | transloco }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="metric-card draft">
+          <div class="metric-content">
+            <div class="metric-icon-wrap">
+              <lucide-icon [img]="Pencil" [size]="20"></lucide-icon>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value">{{ facade.dashboard()!.draft_contracts }}</span>
+              <span class="metric-label">{{ 'contracts.draftContracts' | transloco }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="metric-card revenue">
+          <div class="metric-content">
+            <div class="metric-icon-wrap">
+              <lucide-icon [img]="DollarSign" [size]="20"></lucide-icon>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value">{{
+                facade.dashboard()!.monthly_revenue | tenantCurrency
+              }}</span>
+              <span class="metric-label">{{ 'contracts.monthlyRevenue' | transloco }}</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="metric-card avg">
+          <div class="metric-content">
+            <div class="metric-icon-wrap">
+              <lucide-icon [img]="TrendingUp" [size]="20"></lucide-icon>
+            </div>
+            <div class="metric-body">
+              <span class="metric-value">{{ facade.dashboard()!.avg_rent | tenantCurrency }}</span>
+              <span class="metric-label">{{ 'contracts.avgRent' | transloco }}</span>
+            </div>
+          </div>
+        </article>
+
+        @if (facade.dashboard()!.contracts_expiring_soon > 0) {
+          <article class="metric-card warning">
+            <div class="metric-content">
+              <div class="metric-icon-wrap">
+                <lucide-icon [img]="AlertTriangle" [size]="20"></lucide-icon>
+              </div>
+              <div class="metric-body">
+                <span class="metric-value">{{ facade.dashboard()!.contracts_expiring_soon }}</span>
+                <span class="metric-label">{{ 'contracts.expiringSoon' | transloco }}</span>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <!-- ── Filtros ── -->
+    <section class="filters-card">
+      <div class="filters-content">
+        <app-text-field
+          class="search-field"
+          [(ngModel)]="facade.searchTermValue"
+          [label]="'contracts.search' | transloco"
+          [placeholder]="'contracts.searchPlaceholder' | transloco"
+          type="search"
+          autocomplete="off"
+        />
+
+        <app-select
+          class="status-field"
+          [(ngModel)]="facade.statusFilterValue"
+          [label]="'contracts.statusFilter' | transloco"
+          [options]="statusFilterOptions"
+          (ngModelChange)="facade.onStatusChange($event)"
+        />
+
+        @if (facade.hasActiveFilters()) {
+          <app-button appearance="flat" (clicked)="facade.clearFilters()" class="clear-btn">
+            <lucide-icon [img]="X" [size]="14"></lucide-icon>
+            {{ 'contracts.clear' | transloco }}
+          </app-button>
+        }
+
+        <span class="filters-spacer"></span>
+
+        <app-button
+          appearance="flat"
+          [ariaLabel]="'contracts.refresh' | transloco"
+          (clicked)="facade.loadContracts()"
+        >
+          <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
+        </app-button>
+      </div>
+    </section>
+
+    <!-- ── Tabla de Contratos ── -->
+    <section class="contracts-card">
+      <header class="contracts-card-header">
+        <div class="ch-title">
+          <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+          <span>{{ 'contracts.listTitle' | transloco }}</span>
+        </div>
+        <span class="contracts-count">
+          {{ facade.filteredContracts().length }} contrato{{
+            facade.filteredContracts().length !== 1 ? 's' : ''
+          }}
+        </span>
+      </header>
+
+      <div class="p0">
+        @if (facade.isLoading() && facade.contracts().length === 0) {
+          <div class="loading-container">
+            <app-loading-state [label]="'contracts.loading' | transloco" />
+          </div>
+        } @else if (facade.filteredContracts().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">
+              <lucide-icon [img]="FileText" [size]="30"></lucide-icon>
+            </div>
+            <p class="empty-title">{{ 'contracts.emptyTitle' | transloco }}</p>
+            <span class="empty-sub">{{ 'contracts.emptySub' | transloco }}</span>
+            <app-button (clicked)="facade.createContract()" class="create-button">
+              <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+              {{ 'contracts.createFirst' | transloco }}
+            </app-button>
+          </div>
+        } @else {
+          <div class="table-scroll-wrap">
+            <div class="contracts-table">
+              <!-- Header -->
+              <div class="table-header">
+                <div class="cell col-contract">{{ 'contracts.colNumber' | transloco }}</div>
+                <div class="cell col-tenant">{{ 'contracts.colTenant' | transloco }}</div>
+                <div class="cell col-property">{{ 'contracts.colProperty' | transloco }}</div>
+                <div class="cell col-dates">{{ 'contracts.colDates' | transloco }}</div>
+                <div class="cell col-rent">{{ 'contracts.colRent' | transloco }}</div>
+                <div class="cell col-status">{{ 'contracts.colStatus' | transloco }}</div>
+                <div class="cell col-actions">{{ 'contracts.colActions' | transloco }}</div>
+              </div>
+
+              <!-- Rows -->
+              @for (contract of facade.filteredContracts(); track contract.id) {
+                <div class="table-row">
+                  <div class="cell col-contract">
+                    <span class="contract-num">{{ contract.contract_number }}</span>
+                  </div>
+
+                  <div class="cell col-tenant">
+                    <div class="tenant-row">
+                      <div class="tenant-avatar">
+                        {{
+                          (contract.tenant?.name || contract.tenant_name || 'I')
+                            .charAt(0)
+                            .toUpperCase()
+                        }}
+                      </div>
+                      <div class="tenant-info">
+                        <span class="tenant-name">{{
+                          contract.tenant?.name || contract.tenant_name || 'N/A'
+                        }}</span>
+                        <span class="tenant-email">{{
+                          contract.tenant?.email || contract.tenant_email || ''
+                        }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="cell col-property">
+                    <div class="property-row">
+                      <lucide-icon [img]="Home" [size]="13" class="prop-icon"></lucide-icon>
+                      <span class="property-title">{{
+                        contract.property?.title || contract.property_title || 'N/A'
+                      }}</span>
+                    </div>
+                  </div>
+
+                  <div class="cell col-dates">
+                    <div class="date-stack">
+                      <span class="date-from">{{ contract.start_date | tenantDate }}</span>
+                      <span class="date-to">{{ contract.end_date | tenantDate }}</span>
+                    </div>
+                  </div>
+
+                  <div class="cell col-rent">
+                    <span class="rent-amount">{{ contract.monthly_rent | tenantCurrency }}</span>
+                  </div>
+
+                  <div class="cell col-status">
+                    <app-status-badge
+                      [label]="'contracts.status.' + contract.status | transloco"
+                      [tone]="getStatusTone(contract.status)"
+                    />
+                  </div>
+
+                  <div class="cell col-actions">
+                    <div class="action-group">
+                      <a
+                        class="action-btn view-btn"
+                        [routerLink]="facade.buildDetailUrl(contract.id)"
+                        [attr.aria-label]="'contracts.tooltipView' | transloco"
+                      >
+                        <lucide-icon [img]="Eye" [size]="15"></lucide-icon>
+                      </a>
+                      @if (contract.status === ContractStatus.BORRADOR) {
+                        <a
+                          class="action-btn edit-btn"
+                          [routerLink]="facade.buildEditUrl(contract.id)"
+                          [attr.aria-label]="'contracts.tooltipEdit' | transloco"
+                        >
+                          <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+                        </a>
+                      }
+                      <button
+                        type="button"
+                        class="action-btn download-btn"
+                        (click)="facade.downloadPDF(contract.id)"
+                        [attr.aria-label]="'contracts.tooltipDownload' | transloco"
+                      >
+                        <lucide-icon [img]="Download" [size]="15"></lucide-icon>
+                      </button>
+                      @if (contract.status === ContractStatus.ACTIVO) {
+                        <button
+                          type="button"
+                          class="action-btn renew-btn"
+                          (click)="facade.renewContract(contract.id)"
+                          [attr.aria-label]="'contracts.tooltipRenew' | transloco"
+                        >
+                          <lucide-icon [img]="RotateCcw" [size]="15"></lucide-icon>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+            <!-- /contracts-table -->
+          </div>
+          <!-- /table-scroll-wrap -->
+        }
+      </div>
+    </section>
+  }
+</div>

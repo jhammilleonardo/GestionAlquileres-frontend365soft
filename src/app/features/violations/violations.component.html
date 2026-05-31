@@ -1,0 +1,189 @@
+<div class="violations-page">
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'violations.title' | transloco"
+    [description]="'violations.subtitle' | transloco"
+  >
+    <app-button actions (clicked)="openCreate()">
+      <lucide-icon [img]="Plus" [size]="16" />
+      {{ 'violations.new' | transloco }}
+    </app-button>
+  </app-page-header>
+
+  <!-- Filtros -->
+  <form class="filters" [formGroup]="filterForm">
+    <app-select
+      formControlName="property_id"
+      [label]="'violations.property' | transloco"
+      [placeholder]="'common.all' | transloco"
+      [options]="propertyOptions()"
+    />
+    <app-select
+      formControlName="status"
+      [label]="'violations.statusLabel' | transloco"
+      [placeholder]="'violations.allStatuses' | transloco"
+      [options]="statusFilterOptions"
+    />
+    <app-select
+      formControlName="type"
+      [label]="'violations.typeLabel' | transloco"
+      [placeholder]="'violations.allTypes' | transloco"
+      [options]="typeFilterOptions"
+    />
+    <div class="filter-actions">
+      <app-button size="s" (clicked)="applyFilters()">{{ 'common.apply' | transloco }}</app-button>
+      <app-button size="s" appearance="secondary" (clicked)="clearFilters()">
+        {{ 'common.clear' | transloco }}
+      </app-button>
+    </div>
+  </form>
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'violations.loading' | transloco" />
+  } @else if (violations().length === 0) {
+    <app-empty-state [title]="'violations.empty' | transloco" />
+  } @else {
+    <div class="violation-list">
+      @for (v of violations(); track v.id) {
+        <article class="violation-card">
+          <div class="vc-head">
+            <div class="vc-title">
+              <strong>{{ 'violations.type.' + v.type | transloco }}</strong>
+              <app-status-badge
+                [label]="'violations.status.' + v.status | transloco"
+                [tone]="statusTone(v.status)"
+              />
+            </div>
+            <span class="vc-date">{{ v.created_at | slice: 0 : 10 }}</span>
+          </div>
+
+          <p class="vc-desc">{{ v.description }}</p>
+
+          <div class="vc-meta">
+            <span
+              >{{ v.property_title }}
+              @if (v.unit_number) {
+                · {{ v.unit_number }}
+              }
+            </span>
+            <span>{{ v.tenant_name }}</span>
+          </div>
+
+          @if (v.evidence_photos.length > 0) {
+            <div class="vc-photos">
+              @for (photo of v.evidence_photos; track photo) {
+                <a [href]="photoUrl(photo)" target="_blank" rel="noopener" class="vc-photo">
+                  <img [src]="photoUrl(photo)" alt="evidencia" loading="lazy" />
+                </a>
+              }
+            </div>
+          }
+
+          @if (v.resolved_notes) {
+            <p class="vc-resolved">
+              <lucide-icon [img]="CheckCircle2" [size]="13" /> {{ v.resolved_notes }}
+            </p>
+          }
+
+          <div class="vc-actions">
+            @if (!isResolved(v)) {
+              <app-button
+                size="s"
+                appearance="secondary"
+                [disabled]="busyId() === v.id"
+                (clicked)="notify(v)"
+              >
+                <lucide-icon [img]="Bell" [size]="14" />
+                {{ 'violations.notify' | transloco }}
+              </app-button>
+            }
+            <app-button
+              size="s"
+              appearance="secondary"
+              [disabled]="busyId() === v.id"
+              (clicked)="downloadPdf(v)"
+            >
+              <lucide-icon [img]="FileText" [size]="14" />
+              {{ 'violations.pdf' | transloco }}
+            </app-button>
+            @if (!isResolved(v)) {
+              <app-button size="s" (clicked)="openResolve(v)">
+                <lucide-icon [img]="CheckCircle2" [size]="14" />
+                {{ 'violations.resolve' | transloco }}
+              </app-button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+<!-- Crear violación -->
+<app-dialog
+  [open]="dialogOpen()"
+  [title]="'violations.createTitle' | transloco"
+  (closed)="closeDialog()"
+>
+  <form [formGroup]="form" class="violation-form" (ngSubmit)="save()">
+    <app-select
+      formControlName="property_id"
+      [label]="'violations.property' | transloco"
+      [placeholder]="'violations.selectProperty' | transloco"
+      [options]="propertyOptions()"
+    />
+    <app-select
+      formControlName="tenant_id"
+      [label]="'violations.tenant' | transloco"
+      [placeholder]="'violations.selectTenant' | transloco"
+      [options]="tenantOptions()"
+    />
+    <app-select
+      formControlName="type"
+      [label]="'violations.typeLabel' | transloco"
+      [options]="typeOptions"
+    />
+    <app-textarea formControlName="description" [label]="'violations.description' | transloco" />
+    <app-file-upload
+      [label]="'violations.uploadEvidence' | transloco"
+      [hint]="'violations.uploadHint' | transloco"
+      accept="image/*,application/pdf"
+      [multiple]="true"
+      (filesSelected)="onFilesSelected($event)"
+    />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeDialog()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="save()">{{
+      'common.save' | transloco
+    }}</app-button>
+  </div>
+</app-dialog>
+
+<!-- Resolver violación -->
+<app-dialog
+  [open]="resolveDialogOpen()"
+  [title]="'violations.resolveTitle' | transloco"
+  (closed)="closeResolve()"
+>
+  <div class="resolve-form">
+    <p>{{ 'violations.resolveIntro' | transloco }}</p>
+    <textarea
+      class="resolve-comment"
+      rows="3"
+      [placeholder]="'violations.resolveCommentPlaceholder' | transloco"
+      [value]="resolveNotes()"
+      (input)="resolveNotes.set($any($event.target).value)"
+    ></textarea>
+  </div>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeResolve()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button (clicked)="confirmResolve()">{{ 'violations.resolve' | transloco }}</app-button>
+  </div>
+</app-dialog>

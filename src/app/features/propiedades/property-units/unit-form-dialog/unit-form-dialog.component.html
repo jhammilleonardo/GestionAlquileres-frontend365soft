@@ -1,128 +1,141 @@
-<div class="ufd-container">
-  <!-- Header -->
-  <div class="ufd-header">
-    <div class="ufd-header-left">
-      <lucide-icon [img]="Building2" [size]="20"></lucide-icon>
-      <h2 class="ufd-title">
-        {{ isEditMode() ? 'Editar Unidad' : 'Nueva Unidad' }}
-      </h2>
-    </div>
-    <button mat-icon-button (click)="onCancel()" aria-label="Cerrar">
-      <lucide-icon [img]="X" [size]="20"></lucide-icon>
-    </button>
-  </div>
-
-  <!-- Form -->
+<app-dialog
+  [open]="open()"
+  [title]="isEditMode() ? 'Editar Unidad' : 'Nueva Unidad'"
+  [showFooter]="false"
+  [closeOnBackdrop]="!isSaving()"
+  (closed)="onCancel()"
+>
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="ufd-form">
+    <div class="ufd-heading">
+      <lucide-icon [img]="Building2" [size]="20"></lucide-icon>
+      <div>
+        <p class="ufd-kicker">Propiedad</p>
+        <h3>{{ isEditMode() ? 'Actualizar datos de la unidad' : 'Registrar nueva unidad' }}</h3>
+      </div>
+    </div>
+
     <div class="ufd-body">
-      <!-- Identificación -->
       <div class="ufd-section-title">Identificación</div>
       <div class="ufd-row ufd-row--3">
-        <mat-form-field appearance="outline" class="ufd-full">
-          <mat-label>Número / Código *</mat-label>
-          <input matInput formControlName="unit_number" placeholder="Ej: 2A, 301, PH-1" />
-          @if (isFieldInvalid('unit_number')) {
-            <mat-error aria-live="polite">El número de unidad es requerido</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Piso</mat-label>
-          <input matInput type="number" formControlName="floor" placeholder="0" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Estado *</mat-label>
-          <mat-select formControlName="status">
-            @for (opt of statusOptions; track opt.value) {
-              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+        <app-text-field
+          class="ufd-full"
+          label="Número / Código *"
+          placeholder="Ej: 2A, 301, PH-1"
+          formControlName="unit_number"
+        />
+        <app-text-field label="Piso" type="number" placeholder="0" formControlName="floor" />
+        <app-select
+          label="Estado *"
+          [options]="statusOptions"
+          [required]="true"
+          formControlName="status"
+        />
       </div>
+      @if (isFieldInvalid('unit_number')) {
+        <p class="ufd-error" aria-live="polite">El número de unidad es requerido</p>
+      }
 
-      <!-- Características -->
       <div class="ufd-section-title">Características</div>
       <div class="ufd-row ufd-row--3">
-        <mat-form-field appearance="outline">
-          <mat-label>Dormitorios</mat-label>
-          <input matInput type="number" formControlName="bedrooms" placeholder="0" />
-          @if (isFieldInvalid('bedrooms')) {
-            <mat-error aria-live="polite">Valor mínimo: 0</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Baños</mat-label>
-          <input matInput type="number" formControlName="bathrooms" placeholder="0" />
-          @if (isFieldInvalid('bathrooms')) {
-            <mat-error aria-live="polite">Valor mínimo: 0</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Superficie (m²)</mat-label>
-          <input matInput type="number" formControlName="square_meters" placeholder="0" />
-          @if (isFieldInvalid('square_meters')) {
-            <mat-error aria-live="polite">Valor mínimo: 1</mat-error>
-          }
-        </mat-form-field>
+        <app-text-field
+          label="Dormitorios"
+          type="number"
+          placeholder="0"
+          formControlName="bedrooms"
+        />
+        <app-text-field label="Baños" type="number" placeholder="0" formControlName="bathrooms" />
+        <app-text-field
+          label="Superficie (m²)"
+          type="number"
+          placeholder="0"
+          formControlName="square_meters"
+        />
       </div>
+      @if (isFieldInvalid('bedrooms') || isFieldInvalid('bathrooms')) {
+        <p class="ufd-error" aria-live="polite">Dormitorios y baños no pueden ser negativos.</p>
+      }
+      @if (isFieldInvalid('square_meters')) {
+        <p class="ufd-error" aria-live="polite">La superficie debe ser mayor o igual a 1.</p>
+      }
 
-      <!-- Precios -->
       <div class="ufd-section-title">Precio y Alquiler</div>
       <div class="ufd-row ufd-row--3">
-        <mat-form-field appearance="outline">
-          <mat-label>Tipo de Alquiler</mat-label>
-          <mat-select formControlName="rental_type">
-            <mat-option [value]="null">Sin especificar</mat-option>
-            @for (opt of rentalTypeOptions; track opt.value) {
-              <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Precio Mensual</mat-label>
-          <input matInput type="number" formControlName="price_per_month" placeholder="0.00" />
-          @if (isFieldInvalid('price_per_month')) {
-            <mat-error aria-live="polite">Valor mínimo: 0</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Depósito</mat-label>
-          <input matInput type="number" formControlName="deposit_amount" placeholder="0.00" />
-          @if (isFieldInvalid('deposit_amount')) {
-            <mat-error aria-live="polite">Valor mínimo: 0</mat-error>
-          }
-        </mat-form-field>
+        <app-select
+          label="Tipo de Alquiler"
+          placeholder="Sin especificar"
+          [options]="rentalTypeOptions"
+          formControlName="rental_type"
+        />
+        <app-text-field
+          label="Precio Mensual"
+          type="number"
+          placeholder="0.00"
+          formControlName="price_per_month"
+        />
+        <app-text-field
+          label="Depósito"
+          type="number"
+          placeholder="0.00"
+          formControlName="deposit_amount"
+        />
       </div>
 
-      <!-- Precio por noche (corto plazo) -->
       <div class="ufd-row ufd-row--2">
-        <mat-form-field appearance="outline">
-          <mat-label>Precio por Noche</mat-label>
-          <input matInput type="number" formControlName="price_per_night" placeholder="0.00" />
-          <mat-hint>Solo para alquiler de corto plazo</mat-hint>
-          @if (isFieldInvalid('price_per_night')) {
-            <mat-error aria-live="polite">Valor mínimo: 0</mat-error>
-          }
-        </mat-form-field>
+        <app-text-field
+          label="Precio por Noche"
+          type="number"
+          placeholder="0.00"
+          formControlName="price_per_night"
+        />
+        <app-text-field
+          label="Tarifa de limpieza"
+          type="number"
+          placeholder="0.00"
+          formControlName="cleaning_fee"
+        />
       </div>
+      <p class="ufd-help">Configuración de alquiler de corto plazo:</p>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field
+          label="Mín. noches"
+          type="number"
+          placeholder="1"
+          formControlName="min_nights"
+        />
+        <app-text-field
+          label="Máx. noches"
+          type="number"
+          placeholder="30"
+          formControlName="max_nights"
+        />
+      </div>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field label="Hora check-in" placeholder="15:00" formControlName="checkin_time" />
+        <app-text-field
+          label="Hora check-out"
+          placeholder="11:00"
+          formControlName="checkout_time"
+        />
+      </div>
+      @if (
+        isFieldInvalid('price_per_month') ||
+        isFieldInvalid('price_per_night') ||
+        isFieldInvalid('deposit_amount')
+      ) {
+        <p class="ufd-error" aria-live="polite">Los importes no pueden ser negativos.</p>
+      }
     </div>
 
-    <!-- Footer -->
     <div class="ufd-footer">
-      <button mat-stroked-button type="button" (click)="onCancel()">Cancelar</button>
-      <button mat-flat-button color="primary" type="submit" [disabled]="isSaving()">
-        @if (isSaving()) {
-          <mat-progress-spinner diameter="18" mode="indeterminate" color="accent" />
-        } @else {
+      <app-button type="button" appearance="outline" [disabled]="isSaving()" (clicked)="onCancel()">
+        Cancelar
+      </app-button>
+      <app-button type="submit" [loading]="isSaving()">
+        @if (!isSaving()) {
           <lucide-icon [img]="Save" [size]="16"></lucide-icon>
         }
         {{ isEditMode() ? 'Guardar Cambios' : 'Crear Unidad' }}
-      </button>
+      </app-button>
     </div>
   </form>
-</div>
+</app-dialog>

@@ -1,23 +1,13 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatTableModule } from '@angular/material/table';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule, MatDatepicker } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   LucideAngularModule,
   DollarSign,
@@ -42,10 +32,27 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { PaymentService } from '../../core/services/admin/payment.service';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
+import { AdminTenantUser } from '../../core/models/tenant-user.model';
 import { ContractService, Contract } from '../../core/services/admin/contract.service';
 import { FormatService } from '../../core/services/format.service';
 import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
+import { AppDatePickerComponent } from '../../shared/ui/date-picker/date-picker.component';
+import { AppDialogComponent } from '../../shared/ui/dialog/dialog.component';
+import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
+import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { AppSelectComponent, AppSelectOption } from '../../shared/ui/select/select.component';
+import {
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../shared/ui/status-badge/status-badge.component';
+import { AppTextareaComponent } from '../../shared/ui/textarea/textarea.component';
+import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
+import { PaymentTableComponent } from './components/payment-table/payment-table.component';
+import { PaymentStatsComponent } from './components/payment-stats/payment-stats.component';
 import {
   Payment,
   PaymentStatus,
@@ -68,35 +75,30 @@ import {
   selector: 'app-pagos',
   standalone: true,
   imports: [
-    CommonModule,
+    AsyncPipe,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatTableModule,
-    MatChipsModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatInputModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    MatTooltipModule,
-    MatAutocompleteModule,
-    MatProgressBarModule,
-    MatCheckboxModule,
-    MatSnackBarModule,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
     TenantCurrencyPipe,
+    AppButtonComponent,
+    AppDatePickerComponent,
+    AppDialogComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppSelectComponent,
+    AppStatusBadgeComponent,
+    AppTextareaComponent,
+    AppTextFieldComponent,
+    PaymentTableComponent,
+    PaymentStatsComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'pagos', alias: 'payments' })],
   templateUrl: './pagos.component.html',
   styleUrl: './pagos.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PagosComponent implements OnInit, OnDestroy {
+export class PagosComponent {
   // Icons
   readonly DollarSign = DollarSign;
   readonly TrendingUp = TrendingUp;
@@ -114,12 +116,14 @@ export class PagosComponent implements OnInit, OnDestroy {
   readonly ExternalLink = ExternalLink;
   readonly Minus = Minus;
 
-  private fb = inject(FormBuilder);
-  private snackBar = inject(MatSnackBar);
-  paymentService = inject(PaymentService);
-  tenantUserService = inject(TenantUserService);
-  contractService = inject(ContractService);
-  private formatService = inject(FormatService);
+  private readonly fb = inject(FormBuilder);
+  private readonly toast = inject(ToastService);
+  private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly paymentService = inject(PaymentService);
+  readonly tenantUserService = inject(TenantUserService);
+  readonly contractService = inject(ContractService);
+  private readonly formatService = inject(FormatService);
 
   // State
   showFilters = signal(false);
@@ -179,8 +183,8 @@ export class PagosComponent implements OnInit, OnDestroy {
 
   // Create payment state
   tenantSearchControl = new FormControl('');
-  filteredTenants$: Observable<any[]> = of([]);
-  selectedTenant = signal<any>(null);
+  filteredTenants$: Observable<AdminTenantUser[]> = of([]);
+  selectedTenant = signal<AdminTenantUser | null>(null);
   availableContracts = signal<Contract[]>([]);
   selectedContract = signal<Contract | null>(null);
   loadingContracts = signal(false);
@@ -196,6 +200,38 @@ export class PagosComponent implements OnInit, OnDestroy {
   CurrencyLabels = CurrencyLabels;
   CurrencySymbols = CurrencySymbols;
   PaymentStatusColors = PaymentStatusColors;
+
+  // Select options for filters/forms
+  readonly statusOptions: AppSelectOption[] = Object.values(PaymentStatus).map((v) => ({
+    value: v,
+    label: PaymentStatusLabels[v] ?? v,
+  }));
+  readonly typeOptions: AppSelectOption[] = Object.values(PaymentType).map((v) => ({
+    value: v,
+    label: PaymentTypeLabels[v] ?? v,
+  }));
+  readonly methodOptions: AppSelectOption[] = Object.values(PaymentMethod).map((v) => ({
+    value: v,
+    label: PaymentMethodLabels[v] ?? v,
+  }));
+  readonly currencyOptions: AppSelectOption[] = Object.values(Currency).map((v) => ({
+    value: v,
+    label: `${CurrencySymbols[v] ?? ''} ${CurrencyLabels[v] ?? v}`,
+  }));
+
+  readonly pendingPropertySelectOptions = computed<AppSelectOption<number>[]>(() =>
+    this.pendingPropertyOptions().map((o) => ({ value: o.id, label: o.name })),
+  );
+
+  getStatusTone(status: PaymentStatus): AppStatusTone {
+    const map: Record<string, AppStatusTone> = {
+      PENDING: 'warning',
+      APPROVED: 'success',
+      REJECTED: 'danger',
+      CANCELLED: 'neutral',
+    };
+    return map[status] ?? 'neutral';
+  }
 
   // Table columns
   displayedColumns: string[] = [
@@ -275,13 +311,10 @@ export class PagosComponent implements OnInit, OnDestroy {
     return this.paymentService.payments().reduce((sum, p) => sum + p.amount, 0);
   });
 
-  ngOnInit(): void {
+  constructor() {
     this.loadData();
     this.setupTenantSearch();
-  }
-
-  ngOnDestroy(): void {
-    this.cleanupProofObjectUrl();
+    this.destroyRef.onDestroy(() => this.cleanupProofObjectUrl());
   }
 
   /**
@@ -355,14 +388,6 @@ export class PagosComponent implements OnInit, OnDestroy {
     this.pendingFilters.set({});
   }
 
-  openDatepicker(datepicker: MatDatepicker<Date>, event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!datepicker.opened) {
-      datepicker.open();
-    }
-  }
-
   // =====================
   // Bulk Selection
   // =====================
@@ -393,40 +418,49 @@ export class PagosComponent implements OnInit, OnDestroy {
     return this.paymentService.payments().some((p) => p.status === PaymentStatus.PENDING);
   }
 
-  executeBulkAction(action: 'approve' | 'reject' | 'delete'): void {
+  async executeBulkAction(action: 'approve' | 'reject' | 'delete'): Promise<void> {
     const ids = this.selectedIds();
     if (ids.length === 0) return;
 
     const labels: Record<string, string> = {
-      approve: 'aprobar',
-      reject: 'rechazar',
-      delete: 'eliminar',
+      approve: 'Aprobar',
+      reject: 'Rechazar',
+      delete: 'Eliminar',
     };
-
-    if (
-      !confirm(
-        `¿${labels[action].charAt(0).toUpperCase() + labels[action].slice(1)} ${ids.length} pago(s) seleccionado(s)?`,
-      )
-    ) {
-      return;
-    }
+    const verb = labels[action];
 
     let adminNotes: string | undefined;
+
     if (action === 'reject') {
-      const reason = prompt('Motivo de rechazo (opcional):');
-      if (reason === null) return; // Cancelled
-      adminNotes = reason || 'Rechazado en acción masiva';
+      const result = await this.confirmDialog.open({
+        title: `${verb} ${ids.length} pago(s)`,
+        message: `¿${verb} ${ids.length} pago(s) seleccionado(s)?`,
+        confirmLabel: verb,
+        variant: 'danger',
+        input: { label: 'Motivo de rechazo (opcional)', placeholder: 'Motivo...' },
+      });
+      if (!result.confirmed) return;
+      adminNotes = result.value || 'Rechazado en acción masiva';
+    } else {
+      const confirmed = await this.confirmDialog.confirm({
+        title: `${verb} ${ids.length} pago(s)`,
+        message: `¿${verb} ${ids.length} pago(s) seleccionado(s)?`,
+        confirmLabel: verb,
+        variant: action === 'delete' ? 'danger' : 'default',
+      });
+      if (!confirmed) return;
     }
 
     const payload: BulkPaymentActionDto = { ids, action, admin_notes: adminNotes };
     this.paymentService.bulkAction(payload).subscribe({
       next: (result) => {
         this.selectedIds.set([]);
-        alert(`Acción completada: ${result.processed} procesados, ${result.errors} errores`);
+        this.toast.success(
+          `Acción completada: ${result.processed} procesados, ${result.errors} errores`,
+        );
       },
-      error: (error) => {
-        console.error('Error en acción masiva:', error);
-        alert(`Error: ${error?.error?.message || 'Error del servidor'}`);
+      error: (_e: { error?: { message?: string } }) => {
+        this.toast.error(`Error: ${_e?.error?.message || 'Error del servidor'}`);
       },
     });
   }
@@ -449,7 +483,6 @@ export class PagosComponent implements OnInit, OnDestroy {
         window.URL.revokeObjectURL(url);
       },
       error: (error) => {
-        console.error('Error exportando CSV:', error);
         let msg = `Error ${error.status || ''}: `;
         if (error.error instanceof Blob) {
           void (error.error as Blob).text().then((text) => {
@@ -459,11 +492,11 @@ export class PagosComponent implements OnInit, OnDestroy {
             } catch {
               msg += 'Error del servidor';
             }
-            alert('Error al exportar el CSV\n' + msg);
+            this.toast.error('Error al exportar el CSV\n' + msg);
           });
         } else {
           msg += error.error?.message || error.message || 'Error desconocido';
-          alert('Error al exportar el CSV\n' + msg);
+          this.toast.error('Error al exportar el CSV\n' + msg);
         }
       },
     });
@@ -552,12 +585,11 @@ export class PagosComponent implements OnInit, OnDestroy {
       .subscribe({
         next: () => {
           this.rejectionPayment.set(null);
-          this.snackBar.open(`Pago de ${tenantName} aprobado`, 'Cerrar', { duration: 3500 });
+          this.toast.success(`Pago de ${tenantName} aprobado`);
         },
-        error: (error) => {
-          console.error('Error al aprobar pago:', error);
-          alert(
-            `Error al aprobar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
+        error: (_e) => {
+          this.toast.error(
+            `Error al aprobar el pago: ${_e?.error?.message || _e?.message || 'Error del servidor'}`,
           );
         },
       });
@@ -590,12 +622,11 @@ export class PagosComponent implements OnInit, OnDestroy {
         next: () => {
           this.rejectionPayment.set(null);
           this.rejectForm.reset({ reason: '' });
-          this.snackBar.open(`Pago de ${tenantName} rechazado`, 'Cerrar', { duration: 3500 });
+          this.toast.error(`Pago de ${tenantName} rechazado`);
         },
-        error: (error) => {
-          console.error('Error al rechazar pago:', error);
-          alert(
-            `Error al rechazar el pago: ${error?.error?.message || error?.message || 'Error del servidor'}`,
+        error: (_e) => {
+          this.toast.error(
+            `Error al rechazar el pago: ${_e?.error?.message || _e?.message || 'Error del servidor'}`,
           );
         },
       });
@@ -606,24 +637,25 @@ export class PagosComponent implements OnInit, OnDestroy {
     this.rejectForm.reset({ reason: '' });
   }
 
-  deletePayment(payment: Payment): void {
-    if (confirm(`¿Eliminar el pago de ${payment.amount} BOB? Esta acción no se puede deshacer.`)) {
-      this.paymentService.deletePayment(payment.id).subscribe({
-        next: () => {
-          console.log('Pago eliminado');
-        },
-        error: (error) => {
-          console.error('Error al eliminar pago:', error);
-          alert('Error al eliminar el pago');
-        },
-      });
-    }
+  async deletePayment(payment: Payment): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Eliminar pago',
+      message: `¿Eliminar el pago de ${payment.amount} BOB? Esta acción no se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    this.paymentService.deletePayment(payment.id).subscribe({
+      next: () => this.toast.success('Pago eliminado'),
+      error: () => this.toast.error('Error al eliminar el pago'),
+    });
   }
 
   /**
    * Cuando selecciona un inquilino del autocomplete
    */
-  onTenantSelected(tenant: any): void {
+  onTenantSelected(tenant: AdminTenantUser): void {
     this.selectedTenant.set(tenant);
     this.selectedContract.set(null);
     this.availableContracts.set([]);
@@ -635,10 +667,9 @@ export class PagosComponent implements OnInit, OnDestroy {
         this.availableContracts.set(contracts);
         this.loadingContracts.set(false);
       },
-      error: (error) => {
-        console.error('Error loading contracts:', error);
+      error: (_e) => {
         this.loadingContracts.set(false);
-        alert('Error al cargar los contratos del inquilino');
+        this.toast.error('Error al cargar los contratos del inquilino');
       },
     });
   }
@@ -653,7 +684,7 @@ export class PagosComponent implements OnInit, OnDestroy {
   /**
    * Display function para el autocomplete
    */
-  displayTenantFn(tenant: any): string {
+  displayTenantFn(tenant: AdminTenantUser | null): string {
     return tenant ? `${tenant.name} (${tenant.email})` : '';
   }
 
@@ -693,12 +724,12 @@ export class PagosComponent implements OnInit, OnDestroy {
     const contract = this.selectedContract();
 
     if (!tenant || !contract) {
-      alert('Debes seleccionar un inquilino y un contrato');
+      this.toast.error('Debes seleccionar un inquilino y un contrato');
       return;
     }
 
     if (this.createPaymentForm.invalid) {
-      alert('Por favor completa todos los campos requeridos');
+      this.toast.error('Por favor completa todos los campos requeridos');
       return;
     }
 
@@ -731,13 +762,11 @@ export class PagosComponent implements OnInit, OnDestroy {
 
     this.paymentService.createPaymentAsAdmin(payload).subscribe({
       next: () => {
-        console.log('Pago creado exitosamente');
         this.closeCreateForm();
-        alert('Pago creado exitosamente');
+        this.toast.error('Pago creado exitosamente');
       },
-      error: (error) => {
-        console.error('Error al crear pago:', error);
-        alert(error.error?.message || 'Error al crear el pago');
+      error: (_e) => {
+        this.toast.error(_e.error?.message || 'Error al crear el pago');
       },
     });
   }
@@ -771,11 +800,9 @@ export class PagosComponent implements OnInit, OnDestroy {
 
   getUnitName(payment: Payment): string {
     const metadataUnit = payment.metadata?.['unit_number'];
+    const metadataUnitStr = typeof metadataUnit === 'string' ? metadataUnit : '';
     return (
-      payment.unit?.unit_number ||
-      payment.contract?.unit?.unit_number ||
-      (metadataUnit ? metadataUnit.toString() : '') ||
-      'N/A'
+      payment.unit?.unit_number || payment.contract?.unit?.unit_number || metadataUnitStr || 'N/A'
     );
   }
 

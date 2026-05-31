@@ -1,0 +1,215 @@
+<div class="accounting-page">
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'accounting.title' | transloco"
+    [description]="'accounting.subtitle' | transloco"
+  >
+    <div actions class="header-actions">
+      <app-button
+        appearance="secondary"
+        [disabled]="expenses().length === 0"
+        (clicked)="exportCsv()"
+      >
+        <lucide-icon [img]="Download" [size]="16" />
+        {{ 'accounting.exportExcel' | transloco }}
+      </app-button>
+      <app-button (clicked)="openCreate()">
+        <lucide-icon [img]="Plus" [size]="16" />
+        {{ 'accounting.new' | transloco }}
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <!-- Balance del período -->
+  <div class="balance-card">
+    <div class="balance-item income">
+      <span class="balance-label">{{ 'accounting.periodIncome' | transloco }}</span>
+      <strong class="balance-value">{{ totalIncome() | number: '1.0-0' }}</strong>
+    </div>
+    <span class="balance-op">−</span>
+    <div class="balance-item expense">
+      <span class="balance-label">{{ 'accounting.periodExpenses' | transloco }}</span>
+      <strong class="balance-value">{{ totalExpenses() | number: '1.0-0' }}</strong>
+    </div>
+    <span class="balance-op">=</span>
+    <div
+      class="balance-item net"
+      [class.positive]="netResult() >= 0"
+      [class.negative]="netResult() < 0"
+    >
+      <span class="balance-label">
+        {{ 'accounting.netResult' | transloco }}
+        <lucide-icon [img]="netResult() >= 0 ? TrendingUp : TrendingDown" [size]="14" />
+      </span>
+      <strong class="balance-value">{{ netResult() | number: '1.0-0' }}</strong>
+    </div>
+  </div>
+
+  <!-- Gráfico ingresos vs gastos (6 meses) -->
+  @if (chartBars().length > 0) {
+    <div class="chart-card">
+      <div class="chart-head">
+        <h3>{{ 'accounting.chartTitle' | transloco }}</h3>
+        <div class="chart-legend">
+          <span class="legend income">{{ 'accounting.income' | transloco }}</span>
+          <span class="legend expense">{{ 'accounting.expenses' | transloco }}</span>
+        </div>
+      </div>
+      <div class="chart-bars">
+        @for (bar of chartBars(); track bar.label) {
+          <div class="chart-col">
+            <div class="bar-pair">
+              <span
+                class="bar income"
+                [style.height.%]="bar.incomeHeight"
+                [attr.title]="bar.income | number: '1.0-0'"
+              ></span>
+              <span
+                class="bar expense"
+                [style.height.%]="bar.expenseHeight"
+                [attr.title]="bar.expenses | number: '1.0-0'"
+              ></span>
+            </div>
+            <span class="bar-label">{{ bar.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Filtros -->
+  <form class="filters" [formGroup]="filterForm">
+    <app-select
+      formControlName="property_id"
+      [label]="'accounting.property' | transloco"
+      [placeholder]="'common.all' | transloco"
+      [options]="propertyOptions()"
+    />
+    <app-select
+      formControlName="category"
+      [label]="'accounting.categoryLabel' | transloco"
+      [placeholder]="'accounting.allCategories' | transloco"
+      [options]="categoryOptions"
+    />
+    <app-date-picker formControlName="from" [label]="'accounting.from' | transloco" />
+    <app-date-picker formControlName="to" [label]="'accounting.to' | transloco" />
+    <div class="filter-actions">
+      <app-button size="s" (clicked)="applyFilters()">{{ 'common.apply' | transloco }}</app-button>
+      <app-button size="s" appearance="secondary" (clicked)="clearFilters()">
+        {{ 'common.clear' | transloco }}
+      </app-button>
+    </div>
+  </form>
+
+  <!-- Tabla de gastos -->
+  @if (isLoading()) {
+    <app-loading-state [label]="'accounting.loading' | transloco" />
+  } @else if (expenses().length === 0) {
+    <app-empty-state [title]="'accounting.empty' | transloco" />
+  } @else {
+    <div class="table-wrapper">
+      <table class="expenses-table">
+        <thead>
+          <tr>
+            <th>{{ 'accounting.date' | transloco }}</th>
+            <th>{{ 'accounting.categoryLabel' | transloco }}</th>
+            <th>{{ 'accounting.vendor' | transloco }}</th>
+            <th>{{ 'accounting.description' | transloco }}</th>
+            <th class="num">{{ 'accounting.amount' | transloco }}</th>
+            <th class="actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (expense of expenses(); track expense.id) {
+            <tr>
+              <td>{{ expense.date }}</td>
+              <td>
+                <span class="cat-chip">{{ categoryLabel(expense.category) }}</span>
+              </td>
+              <td>{{ expense.vendor_name || '—' }}</td>
+              <td class="desc-cell">{{ expense.description || '—' }}</td>
+              <td class="num">{{ expense.amount | number: '1.2-2' }} {{ expense.currency }}</td>
+              <td class="actions-col">
+                @if (expense.receipt_url) {
+                  <a
+                    class="icon-btn"
+                    [href]="expense.receipt_url"
+                    target="_blank"
+                    rel="noopener"
+                    [attr.aria-label]="'accounting.viewReceipt' | transloco"
+                  >
+                    <lucide-icon [img]="Receipt" [size]="16" />
+                  </a>
+                }
+                <button
+                  type="button"
+                  class="icon-btn"
+                  [attr.aria-label]="'common.edit' | transloco"
+                  (click)="openEdit(expense)"
+                >
+                  <lucide-icon [img]="Pencil" [size]="16" />
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn danger"
+                  [attr.aria-label]="'common.delete' | transloco"
+                  (click)="deleteExpense(expense)"
+                >
+                  <lucide-icon [img]="Trash2" [size]="16" />
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Formulario crear / editar gasto -->
+<app-dialog
+  [open]="dialogOpen()"
+  [title]="(editingId() ? 'accounting.editTitle' : 'accounting.createTitle') | transloco"
+  (closed)="closeDialog()"
+>
+  <form [formGroup]="form" class="expense-form" (ngSubmit)="save()">
+    <app-select
+      formControlName="property_id"
+      [label]="'accounting.property' | transloco"
+      [placeholder]="'accounting.selectProperty' | transloco"
+      [options]="propertyOptions()"
+    />
+    <div class="form-row">
+      <app-select
+        formControlName="category"
+        [label]="'accounting.categoryLabel' | transloco"
+        [options]="categoryOptions"
+      />
+      <app-text-field
+        formControlName="amount"
+        [label]="'accounting.amount' | transloco"
+        type="number"
+      />
+    </div>
+    <div class="form-row">
+      <app-date-picker formControlName="date" [label]="'accounting.date' | transloco" />
+      <app-select
+        formControlName="vendor_id"
+        [label]="'accounting.vendor' | transloco"
+        [placeholder]="'accounting.selectVendor' | transloco"
+        [options]="vendorOptions()"
+      />
+    </div>
+    <app-text-field formControlName="receipt_url" [label]="'accounting.receiptUrl' | transloco" />
+    <app-textarea formControlName="description" [label]="'accounting.description' | transloco" />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeDialog()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="save()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

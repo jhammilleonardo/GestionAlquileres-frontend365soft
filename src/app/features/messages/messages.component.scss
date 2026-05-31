@@ -1,0 +1,233 @@
+.messages-page {
+  display: grid;
+  gap: var(--app-space-4, 1rem);
+  padding: var(--app-space-6, 1.5rem);
+  color: var(--app-color-text);
+  height: 100%;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.messenger {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+  min-height: 60vh;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  overflow: hidden;
+  background: var(--app-color-surface);
+}
+
+/* ── Bandeja ── */
+.thread-list {
+  border-right: 1px solid var(--app-color-border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.thread-item {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-bottom: 1px solid var(--app-color-border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+
+  &:hover {
+    background: var(--app-color-surface-muted, #f8fafc);
+  }
+
+  &.active {
+    background: var(--app-color-primary-soft, #eff6ff);
+  }
+}
+
+.thread-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--app-color-primary, #2563eb);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.thread-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.thread-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.thread-badge {
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.thread-preview {
+  display: block;
+  color: var(--app-color-text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Conversación ── */
+.conversation {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.conversation-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--app-color-text-muted);
+}
+
+.conversation-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--app-color-border);
+
+  .back-btn {
+    display: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--app-color-text-muted);
+  }
+}
+
+.conversation-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bubble-row {
+  display: flex;
+
+  &.mine {
+    justify-content: flex-end;
+  }
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 12px;
+  background: var(--app-color-surface-muted, #f1f5f9);
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+  }
+}
+
+.bubble-row.mine .bubble {
+  background: var(--app-color-primary, #2563eb);
+  color: #fff;
+}
+
+.bubble-time {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.composer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--app-color-border);
+
+  textarea {
+    flex: 1;
+    border: 1px solid var(--app-color-border);
+    border-radius: 10px;
+    padding: 0.55rem 0.75rem;
+    font: inherit;
+    resize: none;
+  }
+}
+
+/* ── Diálogos ── */
+.compose-form {
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(420px, 80vw);
+}
+
+.compose-body {
+  width: 100%;
+  border: 1px solid var(--app-color-border);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.broadcast-hint {
+  margin: 0;
+  color: var(--app-color-text-muted);
+  font-size: 0.85rem;
+}
+
+[dialog-actions] {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .messages-page {
+    padding: var(--app-space-3, 0.75rem);
+  }
+  .messenger {
+    grid-template-columns: 1fr;
+  }
+  .messenger.thread-open .thread-list {
+    display: none;
+  }
+  .messenger:not(.thread-open) .conversation {
+    display: none;
+  }
+  .conversation-header .back-btn {
+    display: inline-flex;
+  }
+}

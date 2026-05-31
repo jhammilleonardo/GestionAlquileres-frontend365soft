@@ -1,13 +1,13 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { LucideAngularModule, Users, Target, Award, Heart } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, TranslocoModule],
+  imports: [LucideAngularModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './about.component.html',
   styleUrls: ['./about.component.css'],

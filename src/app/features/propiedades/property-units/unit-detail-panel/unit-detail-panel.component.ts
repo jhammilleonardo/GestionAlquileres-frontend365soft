@@ -1,7 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDividerModule } from '@angular/material/divider';
+import { NgClass } from '@angular/common';
 import {
   LucideAngularModule,
   X,
@@ -19,17 +17,12 @@ import {
 } from 'lucide-angular';
 import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { Unit, UnitStatus, RentalType } from '../../../../core/models/unit.model';
+import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
 
 @Component({
   selector: 'app-unit-detail-panel',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatButtonModule,
-    MatDividerModule,
-    LucideAngularModule,
-    TenantCurrencyPipe,
-  ],
+  imports: [NgClass, LucideAngularModule, TenantCurrencyPipe, AppButtonComponent],
   templateUrl: './unit-detail-panel.component.html',
   styleUrls: ['./unit-detail-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

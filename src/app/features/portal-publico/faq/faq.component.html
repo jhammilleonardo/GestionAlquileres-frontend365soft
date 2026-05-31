@@ -27,17 +27,19 @@
       </div>
 
       <div class="faq-list">
-        <div *ngFor="let faq of faqs; let i = index" class="faq-item" [class.active]="faq.isOpen">
-          <div class="faq-question" (click)="toggleFaq(i)">
-            <h3>{{ faq.question | transloco }}</h3>
-            <div class="faq-toggle">
-              <lucide-icon [img]="faq.isOpen ? ChevronUp : ChevronDown"></lucide-icon>
+        @for (faq of faqs; track faq.question; let i = $index) {
+          <div class="faq-item" [class.active]="faq.isOpen">
+            <div class="faq-question" (click)="toggleFaq(i)">
+              <h3>{{ faq.question | transloco }}</h3>
+              <div class="faq-toggle">
+                <lucide-icon [img]="faq.isOpen ? ChevronUp : ChevronDown"></lucide-icon>
+              </div>
+            </div>
+            <div class="faq-answer" [class.active]="faq.isOpen">
+              <p>{{ faq.answer | transloco }}</p>
             </div>
           </div>
-          <div class="faq-answer" [class.active]="faq.isOpen">
-            <p>{{ faq.answer | transloco }}</p>
-          </div>
-        </div>
+        }
       </div>
 
       <!-- Contact CTA -->

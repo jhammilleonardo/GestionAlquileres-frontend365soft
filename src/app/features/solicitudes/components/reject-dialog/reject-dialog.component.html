@@ -1,27 +1,22 @@
-<div class="reject-container">
-  <!-- Success -->
-  <div *ngIf="success" class="state-box success-box">
-    <div class="state-icon-wrapper success">
-      <lucide-icon [img]="CheckCircle2" [size]="64"></lucide-icon>
+<section class="reject-container">
+  @if (success()) {
+    <div class="state-box success-box">
+      <div class="state-icon-wrapper success">
+        <lucide-icon [img]="CheckCircle2" [size]="64"></lucide-icon>
+      </div>
+      <h2>{{ 'solicitudes.reject.successTitle' | transloco }}</h2>
+      <p>{{ 'solicitudes.reject.successMessage' | transloco }}</p>
+      <div class="redirect-notice">
+        <app-loading-state [label]="'solicitudes.reject.redirecting' | transloco" />
+      </div>
     </div>
-    <h2>{{ 'solicitudes.reject.successTitle' | transloco }}</h2>
-    <p>{{ 'solicitudes.reject.successMessage' | transloco }}</p>
-    <div class="redirect-notice">
-      <mat-spinner diameter="16" color="primary"></mat-spinner>
-      <span>{{ 'solicitudes.reject.redirecting' | transloco }}</span>
-    </div>
-  </div>
-
-  <!-- Form -->
-  <ng-container *ngIf="!success">
-    <!-- Back Button -->
-    <button mat-button class="back-btn" (click)="cancel()">
-      <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
+  } @else {
+    <app-button appearance="flat" (clicked)="cancel()">
+      <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
       {{ 'solicitudes.reject.backToDetails' | transloco }}
-    </button>
+    </app-button>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <header class="page-header">
       <div class="header-icon-wrap">
         <lucide-icon [img]="XCircle" [size]="32"></lucide-icon>
       </div>
@@ -29,15 +24,15 @@
         <h1>{{ 'solicitudes.reject.title' | transloco }}</h1>
         <p>{{ 'solicitudes.reject.subtitle' | transloco }}</p>
       </div>
-    </div>
+    </header>
 
-    <!-- Error Alert -->
-    <div *ngIf="error" class="error-alert">
-      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
-      <span>{{ error }}</span>
-    </div>
+    @if (error()) {
+      <div class="error-alert">
+        <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+        <span>{{ error() }}</span>
+      </div>
+    }
 
-    <!-- Warning Notice -->
     <div class="warning-notice">
       <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
       <p>
@@ -47,99 +42,80 @@
     </div>
 
     <form (ngSubmit)="onSubmit()" class="reject-form">
-      <!-- Razones Comunes -->
-      <mat-card class="section-card">
-        <mat-card-content>
-          <div class="section-header">
-            <div class="section-icon-wrapper amber">
-              <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
-            </div>
-            <h2>{{ 'solicitudes.reject.commonReasons' | transloco }}</h2>
+      <article class="section-card">
+        <div class="section-header">
+          <div class="section-icon-wrapper amber">
+            <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
           </div>
-          <p class="section-hint">{{ 'solicitudes.reject.commonReasonsHint' | transloco }}</p>
-          <div class="reasons-grid">
+          <h2>{{ 'solicitudes.reject.commonReasons' | transloco }}</h2>
+        </div>
+        <p class="section-hint">{{ 'solicitudes.reject.commonReasonsHint' | transloco }}</p>
+        <div class="reasons-grid">
+          @for (key of commonReasonKeys; track key) {
             <button
               type="button"
               class="reason-chip"
-              *ngFor="let key of commonReasonKeys"
               (click)="selectReason(key)"
               [class.active]="formData.admin_feedback === (key | transloco)"
             >
               {{ key | transloco }}
             </button>
+          }
+        </div>
+      </article>
+
+      <article class="section-card">
+        <div class="section-header">
+          <div class="section-icon-wrapper red">
+            <lucide-icon [img]="XCircle" [size]="24"></lucide-icon>
           </div>
-        </mat-card-content>
-      </mat-card>
+          <h2>{{ 'solicitudes.reject.rejectMessage' | transloco }}</h2>
+        </div>
 
-      <!-- Mensaje -->
-      <mat-card class="section-card">
-        <mat-card-content>
-          <div class="section-header">
-            <div class="section-icon-wrapper red">
-              <lucide-icon [img]="XCircle" [size]="24"></lucide-icon>
-            </div>
-            <h2>{{ 'solicitudes.reject.rejectMessage' | transloco }}</h2>
+        <app-textarea
+          [(ngModel)]="formData.admin_feedback"
+          name="admin_feedback"
+          [label]="'solicitudes.reject.rejectReason' | transloco"
+          [placeholder]="'solicitudes.reject.rejectReasonPlaceholder' | transloco"
+          [minRows]="6"
+          [maxRows]="10"
+        />
+        <p class="field-hint">{{ 'solicitudes.reject.rejectReasonHint' | transloco }}</p>
+      </article>
+
+      <article class="section-card tips-card">
+        <div class="section-header">
+          <div class="section-icon-wrapper blue">
+            <lucide-icon [img]="Lightbulb" [size]="24"></lucide-icon>
           </div>
+          <h2>{{ 'solicitudes.reject.tipsTitle' | transloco }}</h2>
+        </div>
+        <ul class="tips-list">
+          <li>{{ 'solicitudes.reject.tip1' | transloco }}</li>
+          <li>{{ 'solicitudes.reject.tip2' | transloco }}</li>
+          <li>{{ 'solicitudes.reject.tip3' | transloco }}</li>
+          <li>{{ 'solicitudes.reject.tip4' | transloco }}</li>
+        </ul>
+      </article>
 
-          <mat-form-field appearance="outline" class="full-width form-field">
-            <mat-label>{{ 'solicitudes.reject.rejectReason' | transloco }}</mat-label>
-            <textarea
-              matInput
-              [(ngModel)]="formData.admin_feedback"
-              name="admin_feedback"
-              rows="6"
-              required
-              [placeholder]="'solicitudes.reject.rejectReasonPlaceholder' | transloco"
-            ></textarea>
-            <mat-hint>{{ 'solicitudes.reject.rejectReasonHint' | transloco }}</mat-hint>
-          </mat-form-field>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Tips -->
-      <mat-card class="section-card tips-card">
-        <mat-card-content>
-          <div class="section-header">
-            <div class="section-icon-wrapper blue">
-              <lucide-icon [img]="Lightbulb" [size]="24"></lucide-icon>
-            </div>
-            <h2>{{ 'solicitudes.reject.tipsTitle' | transloco }}</h2>
-          </div>
-          <ul class="tips-list">
-            <li>{{ 'solicitudes.reject.tip1' | transloco }}</li>
-            <li>{{ 'solicitudes.reject.tip2' | transloco }}</li>
-            <li>{{ 'solicitudes.reject.tip3' | transloco }}</li>
-            <li>{{ 'solicitudes.reject.tip4' | transloco }}</li>
-          </ul>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Actions -->
       <div class="form-actions">
-        <button type="button" mat-stroked-button class="cancel-btn" (click)="cancel()">
+        <app-button type="button" appearance="flat" (clicked)="cancel()">
           {{ 'common.cancel' | transloco }}
-        </button>
-        <button
+        </app-button>
+        <app-button
           type="submit"
-          mat-flat-button
-          color="warn"
-          class="submit-btn"
-          [disabled]="submitting || !formData.admin_feedback.trim()"
+          appearance="destructive"
+          [loading]="submitting()"
+          [disabled]="submitting() || !formData.admin_feedback.trim()"
         >
-          <mat-spinner *ngIf="submitting" diameter="20" color="accent"></mat-spinner>
-          <lucide-icon
-            *ngIf="!submitting"
-            [img]="XCircle"
-            [size]="20"
-            class="btn-icon"
-          ></lucide-icon>
-          <span>{{
-            submitting
+          <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
+          {{
+            submitting()
               ? ('solicitudes.reject.processing' | transloco)
               : ('solicitudes.reject.rejectButton' | transloco)
-          }}</span>
-        </button>
+          }}
+        </app-button>
       </div>
     </form>
-  </ng-container>
-</div>
+  }
+</section>
