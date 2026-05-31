@@ -73,8 +73,8 @@ export class HomeComponent {
       .getFilteredProperties(filters)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (properties) => {
-          this.featuredProperties.set(properties);
+        next: (result) => {
+          this.featuredProperties.set(result.items);
           this.isLoadingProperties.set(false);
         },
         error: () => this.isLoadingProperties.set(false),

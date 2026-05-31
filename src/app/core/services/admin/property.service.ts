@@ -10,7 +10,7 @@ import {
   PropertyOwner,
   RentalApplication,
   TenantInfo,
-  PaginatedResponse,
+  SortOption,
 } from '../../models/property.model';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
@@ -55,30 +55,59 @@ export class PropertyService {
   }
 
   /**
-   * Obtener propiedades disponibles con filtros
+   * Obtener propiedades del catálogo público con filtros, orden y paginación.
    */
-  getFilteredProperties(filters: PropertyFilters): Observable<Property[]> {
+  getFilteredProperties(
+    filters: PropertyFilters,
+  ): Observable<{ items: Property[]; total: number }> {
     const params: Record<string, string | number> = {};
 
-    // Mapear filtros al formato del backend
+    // Mapear filtros al formato del catálogo público
     if (filters.status) params['status'] = filters.status;
-    if (filters.property_type_id) params['property_type_id'] = filters.property_type_id;
-    if (filters.property_subtype_id) params['property_subtype_id'] = filters.property_subtype_id;
     if (filters.city) params['city'] = filters.city;
     if (filters.country) params['country'] = filters.country;
     if (filters.search) params['search'] = filters.search;
-    if (filters.sort_by) params['sort_by'] = filters.sort_by;
-    if (filters.sort_order) params['sort_order'] = filters.sort_order;
+    if (filters.min_price) params['min_price'] = filters.min_price;
+    if (filters.max_price) params['max_price'] = filters.max_price;
+    if (filters.bedrooms) params['bedrooms'] = filters.bedrooms;
+    if (filters.rental_type && filters.rental_type !== 'any')
+      params['rental_type'] = filters.rental_type;
+
+    // Mapear ordenamiento
+    if (filters.sort_by === SortOption.PRICE) {
+      params['sort'] = filters.sort_order === 'ASC' ? 'price_asc' : 'price_desc';
+    } else if (filters.sort_by === SortOption.CREATED_AT) {
+      params['sort'] = 'newest';
+    } else if (filters.sort_by === SortOption.AVAILABILITY) {
+      params['sort'] = 'available';
+    }
+
     if (filters.page) params['page'] = filters.page;
     if (filters.limit) params['limit'] = filters.limit;
 
     const endpoint = this.slugService.buildApiEndpoint('catalog/properties');
 
-    return this.apiClient.get<PaginatedResponse<Property>>(endpoint, { params }).pipe(
-      map((response) => response.items.map((p) => this.transformProperty(p))),
-      catchError((_e) => {
-        return of([]);
-      }),
+    return (
+      this.apiClient
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .get<any>(endpoint, { params })
+        .pipe(
+          map((response) => {
+            // El backend puede devolver { data: [], total } o un arreglo directo
+            const items =
+              response?.data || response?.items || (Array.isArray(response) ? response : []);
+            const total = response?.total !== undefined ? response.total : items.length;
+
+            return {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              items: items.map((p: any) => this.transformProperty(p)),
+              total,
+            };
+          }),
+          catchError(() => {
+            return of({ items: [], total: 0 });
+          }),
+        )
     );
   }
 
@@ -86,18 +115,31 @@ export class PropertyService {
    * Obtener todas las propiedades disponibles
    */
   getProperties(): Observable<Property[]> {
-    return this.getFilteredProperties({ status: PropertyStatus.DISPONIBLE });
+    return this.getFilteredProperties({ status: PropertyStatus.DISPONIBLE }).pipe(
+      map((result) => result.items),
+    );
   }
 
-  /**
-   * Obtener detalle de una propiedad por ID
-   */
   getPropertyById(id: number): Observable<Property | undefined> {
     const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${id}`);
 
     return this.apiClient.get<Property>(endpoint).pipe(
       map((property) => this.transformProperty(property)),
       catchError((_e) => {
+        return of(undefined);
+      }),
+    );
+  }
+
+  /**
+   * Obtener detalle de una propiedad por Slug (Público)
+   */
+  getPropertyBySlug(slug: string): Observable<Property | undefined> {
+    const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${slug}`);
+
+    return this.apiClient.get<Property>(endpoint).pipe(
+      map((property) => this.transformProperty(property)),
+      catchError(() => {
         return of(undefined);
       }),
     );
@@ -118,6 +160,17 @@ export class PropertyService {
   }
 
   /**
+   * Enviar contacto de interés para una propiedad
+   */
+  submitPropertyContact(
+    propertyId: number,
+    contactData: { name: string; email: string; phone: string; message: string },
+  ): Observable<any> {
+    const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${propertyId}/contact`);
+    return this.apiClient.post(endpoint, contactData);
+  }
+
+  /**
    * Enviar solicitud de alquiler
    */
   submitApplication(
@@ -125,13 +178,11 @@ export class PropertyService {
   ): Observable<{ success: boolean; message: string }> {
     // TODO: Implementar endpoint para enviar solicitudes
     // Por ahora retornamos un Observable simulado
-
     return of({
       success: true,
       message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.',
     }).pipe(
-      map((response) => response),
-      catchError((_e) => {
+      catchError(() => {
         return of({
           success: false,
           message: 'Error al enviar la solicitud. Por favor intente nuevamente.',
@@ -348,6 +399,73 @@ export class PropertyService {
     } catch {
       /* ignore storage errors */
     }
+  }
+
+  // ==================== SHARED HELPERS ====================
+
+  /**
+   * Construye la URL completa de una imagen de propiedad.
+   */
+  getPropertyImageUrl(property: Property, index: number = 0): string {
+    let imagePath: string | null = null;
+
+    if (property.images && Array.isArray(property.images) && property.images.length > index) {
+      imagePath = property.images[index];
+    } else if (
+      property.images &&
+      typeof property.images === 'object' &&
+      Object.keys(property.images).length > index
+    ) {
+      const keys = Object.keys(property.images);
+      imagePath = (property.images as any)[keys[index]];
+    } else if (property.first_image && index === 0) {
+      imagePath = property.first_image;
+    }
+
+    if (imagePath) {
+      if (imagePath.startsWith('http')) return imagePath;
+      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      // Usar host del backend
+      return `http://localhost:3000${normalizedPath}`;
+    }
+
+    return '';
+  }
+
+  /**
+   * Formatea la dirección completa de una propiedad.
+   */
+  getPropertyAddress(property: Property): string {
+    if (property.addresses && property.addresses.length > 0) {
+      const addr = property.addresses[0];
+      return `${addr.street_address}, ${addr.city}${addr.state ? ', ' + addr.state : ''}`;
+    }
+    return '';
+  }
+
+  /**
+   * Obtiene el nombre legible del tipo de propiedad.
+   */
+  getPropertyTypeName(property: Property): string {
+    return property.property_type?.name || 'N/A';
+  }
+
+  /**
+   * Obtiene el área formateada.
+   */
+  getPropertyArea(property: Property): string {
+    const area = property.square_meters || property.total_area;
+    return area ? `${area} m²` : 'N/A';
+  }
+
+  /**
+   * Obtiene el precio formateado con moneda.
+   */
+  getPropertyPrice(property: Property): string {
+    const price = property.monthly_rent || property.monthly_rent_amount;
+    if (!price) return 'N/A';
+    const currency = property.currency || 'BOB';
+    return `${currency} ${price.toLocaleString()}`;
   }
 
   // ==================== ADMIN CRUD METHODS ====================

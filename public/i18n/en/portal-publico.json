@@ -131,7 +131,13 @@
     "sendMessage": "Send Message",
     "callNow": "Call Now",
     "scheduleTitle": "Want to schedule a visit?",
-    "scheduleBtn": "Schedule In-Person Visit"
+    "scheduleBtn": "Schedule In-Person Visit",
+    "rules": "Property Rules",
+    "pets": "Pets",
+    "smoking": "Smoking",
+    "maxOccupants": "Max Occupants",
+    "minLease": "Min Lease",
+    "includedServices": "Included Services"
   },
   "tenantRegister": {
     "heroTitle": "Create Account",

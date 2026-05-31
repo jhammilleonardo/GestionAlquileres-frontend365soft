@@ -111,8 +111,8 @@ export class PropertyListComponent {
       .getFilteredProperties(filters)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (properties) => {
-          this.filteredProperties.set(properties);
+        next: (result) => {
+          this.filteredProperties.set(result.items);
           this.isLoading.set(false);
         },
         error: () => this.isLoading.set(false),
