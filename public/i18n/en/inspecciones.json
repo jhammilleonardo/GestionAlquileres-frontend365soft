@@ -1,0 +1,62 @@
+{
+  "title": "Inspections",
+  "subtitle": "Visual documentation of property conditions",
+  "new": "New inspection",
+  "compare": "Compare",
+  "loading": "Loading inspections...",
+  "empty": "No inspections recorded",
+  "property": "Property",
+  "selectProperty": "Select property...",
+  "typeLabel": "Type",
+  "statusLabel": "Status",
+  "allStatuses": "All statuses",
+  "date": "Date",
+  "inspector": "Inspector",
+  "selectInspector": "Assign inspector...",
+  "open": "Open",
+  "createTitle": "New inspection",
+  "created": "Inspection created",
+  "saveError": "Could not save",
+  "checklistHint": "A checklist grouped by areas will be generated for you to complete.",
+  "compareTitle": "Compare move-in vs move-out",
+  "selectInspection": "Select inspection...",
+  "runCompare": "Compare",
+  "compareError": "Could not compare",
+  "noCompareData": "No data to compare",
+  "item": "Item",
+  "notesPlaceholder": "Observations...",
+  "addPhoto": "Add photo",
+  "uploading": "Uploading...",
+  "photosUploaded": "Photos uploaded",
+  "photoError": "Could not upload photos",
+  "saveDraft": "Save draft",
+  "complete": "Complete inspection",
+  "completed": "Inspection completed",
+  "saved": "Changes saved",
+  "pdf": "PDF",
+  "pdfError": "Could not generate the PDF",
+  "type": {
+    "move_in": "Move-in",
+    "move_out": "Move-out",
+    "periodic": "Periodic"
+  },
+  "status": {
+    "scheduled": "Scheduled",
+    "in_progress": "In progress",
+    "completed": "Completed"
+  },
+  "condition": {
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor",
+    "damaged": "Damaged"
+  },
+  "area": {
+    "living_room": "Living room",
+    "kitchen": "Kitchen",
+    "bathroom": "Bathroom",
+    "bedroom": "Bedroom",
+    "exterior": "Exterior",
+    "other": "Other"
+  }
+}

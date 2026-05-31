@@ -1,18 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PropertyService } from './property.service';
-import { ApiHttpService } from '../api-http.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 
 describe('PropertyService Helpers', () => {
   let service: PropertyService;
-  let apiHttpMock: any;
+  let apiClientMock: any;
   let slugServiceMock: any;
 
   beforeEach(() => {
-    apiHttpMock = {
+    apiClientMock = {
       get: vi.fn(),
       post: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
     };
     slugServiceMock = {
       buildApiEndpoint: vi.fn((path) => `soft-prueba/${path}`),
@@ -22,7 +24,7 @@ describe('PropertyService Helpers', () => {
     TestBed.configureTestingModule({
       providers: [
         PropertyService,
-        { provide: ApiHttpService, useValue: apiHttpMock },
+        { provide: ApiClientService, useValue: apiClientMock },
         { provide: SlugService, useValue: slugServiceMock },
       ],
     });

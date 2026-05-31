@@ -86,8 +86,8 @@ export const adminLoginGuard: CanActivateFn = (_route, _state) => {
       try {
         const user = JSON.parse(userJson) as { tenant_slug?: string };
         userSlug = user.tenant_slug ?? null;
-      } catch (e) {
-        console.error('Error parsing user data', e);
+      } catch {
+        /* ignore parse errors */
       }
     }
 

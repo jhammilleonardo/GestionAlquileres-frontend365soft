@@ -1,68 +1,45 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { SafePipe } from '../../../shared/pipes/safe.pipe';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
-import { LucideAngularModule, MapPin, Map, Building2, Mailbox, X } from 'lucide-angular';
+
+export interface MapLocation {
+  coordinates: { lat: number; lng: number };
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-map-modal',
   standalone: true,
-  imports: [CommonModule, SafePipe, TranslocoModule, LucideAngularModule],
+  imports: [SafePipe, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './map-modal.component.html',
   styleUrls: ['./map-modal.component.css'],
 })
 export class MapModalComponent {
-  @Input() location: any;
-  @Output() close = new EventEmitter<void>();
-
-  readonly MapPin = MapPin;
-  readonly Map = Map;
-  readonly Building2 = Building2;
-  readonly Mailbox = Mailbox;
-  readonly X = X;
+  readonly location = input<MapLocation | null>(null);
+  readonly close = output<void>();
 
   get openStreetMapUrl(): string {
-    if (!this.location || !this.location.coordinates) {
-      const defaultLat = -17.7833;
-      const defaultLng = -63.1833;
-      return `https://www.openstreetmap.org/?mlat=${defaultLat}&mlon=${defaultLng}#map=15/${defaultLat}/${defaultLng}`;
+    const coords = this.location()?.coordinates;
+    if (!coords) {
+      return '';
     }
-
-    const { lat, lng } = this.location.coordinates;
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lng);
-
-    // Default to Santa Cruz, Bolivia if invalid or zero
-    if (isNaN(latitude) || isNaN(longitude) || (latitude === 0 && longitude === 0)) {
-      const defaultLat = -17.7833;
-      const defaultLng = -63.1833;
-      return `https://www.openstreetmap.org/?mlat=${defaultLat}&mlon=${defaultLng}#map=15/${defaultLat}/${defaultLng}`;
-    }
-
-    return `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}#map=15/${latitude}/${longitude}`;
+    const { lat, lng } = coords;
+    return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`;
   }
 
   get embedMapUrl(): string {
-    if (!this.location || !this.location.coordinates) {
-      const defaultLat = -17.7833;
-      const defaultLng = -63.1833;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${defaultLng - 0.01},${defaultLat - 0.01},${defaultLng + 0.01},${defaultLat + 0.01}&layer=mapnik&marker=${defaultLat},${defaultLng}`;
+    const coords = this.location()?.coordinates;
+    if (!coords) {
+      return '';
     }
-
-    const { lat, lng } = this.location.coordinates;
-    const latitude = parseFloat(lat);
-    const longitude = parseFloat(lng);
-
-    // Default to Santa Cruz, Bolivia if invalid or zero
-    if (isNaN(latitude) || isNaN(longitude) || (latitude === 0 && longitude === 0)) {
-      const defaultLat = -17.7833;
-      const defaultLng = -63.1833;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${defaultLng - 0.01},${defaultLat - 0.01},${defaultLng + 0.01},${defaultLat + 0.01}&layer=mapnik&marker=${defaultLat},${defaultLng}`;
-    }
-
-    return `https://www.openstreetmap.org/export/embed.html?bbox=${longitude - 0.01},${latitude - 0.01},${longitude + 0.01},${latitude + 0.01}&layer=mapnik&marker=${latitude},${longitude}`;
+    const { lat, lng } = coords;
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.01},${lat - 0.01},${lng + 0.01},${lat + 0.01}&layer=mapnik&marker=${lat},${lng}`;
   }
 
   closeModal() {
@@ -70,26 +47,6 @@ export class MapModalComponent {
   }
 
   openInNewTab() {
-    if (!this.location) return;
-
-    let query = '';
-    if (this.location.coordinates) {
-      const lat = parseFloat(this.location.coordinates.lat);
-      const lng = parseFloat(this.location.coordinates.lng);
-      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-        query = `${lat},${lng}`;
-      }
-    }
-
-    if (!query && this.location.address) {
-      query = encodeURIComponent(this.location.address);
-    }
-
-    if (query) {
-      window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
-    } else {
-      // Default to Santa Cruz, Bolivia
-      window.open('https://www.google.com/maps/search/?api=1&query=-17.7833,-63.1833', '_blank');
-    }
+    window.open(this.openStreetMapUrl, '_blank');
   }
 }

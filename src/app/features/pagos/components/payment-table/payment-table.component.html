@@ -1,0 +1,92 @@
+<div class="payment-table" role="region" [attr.aria-label]="'payments.title' | transloco">
+  <table>
+    <thead>
+      <tr>
+        <th class="payment-table__select">
+          @if (pendingPaymentIds().length > 0) {
+            <input
+              type="checkbox"
+              [checked]="allPendingSelected()"
+              [indeterminate]="somePendingSelected()"
+              [attr.aria-label]="'payments.pending' | transloco"
+              (change)="selectAllToggled.emit($any($event.target).checked)"
+            />
+          }
+        </th>
+        <th>ID</th>
+        <th>{{ 'payments.tenant' | transloco }}</th>
+        <th>{{ 'common.property' | transloco }}</th>
+        <th class="payment-table__amount">{{ 'common.amount' | transloco }}</th>
+        <th>{{ 'common.currency' | transloco }}</th>
+        <th>{{ 'common.type' | transloco }}</th>
+        <th>{{ 'payments.method' | transloco }}</th>
+        <th>{{ 'common.date' | transloco }}</th>
+        <th>{{ 'common.status' | transloco }}</th>
+        <th class="payment-table__actions">{{ 'common.actions' | transloco }}</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (payment of payments(); track payment.id) {
+        <tr (click)="rowSelected.emit(payment)">
+          <td class="payment-table__select">
+            @if (payment.status === PaymentStatus.PENDING) {
+              <input
+                type="checkbox"
+                [checked]="isSelected(payment.id)"
+                [attr.aria-label]="'payments.selected' | transloco: { count: 1 }"
+                (click)="stopAndToggleSelection($event, payment)"
+              />
+            }
+          </td>
+          <td>#{{ payment.id }}</td>
+          <td>{{ getTenantName(payment) }}</td>
+          <td>{{ getPropertyName(payment) }}</td>
+          <td class="payment-table__amount">
+            <strong>{{ payment.amount | tenantCurrency }}</strong>
+          </td>
+          <td>{{ resolveCurrency(payment.currency) }}</td>
+          <td>{{ getTypeLabel(payment.payment_type) }}</td>
+          <td>{{ getMethodLabel(payment.payment_method) }}</td>
+          <td>{{ payment.payment_date | tenantDate }}</td>
+          <td>
+            <app-status-badge
+              [label]="getStatusLabel(payment.status)"
+              [tone]="getStatusTone(payment.status)"
+            />
+          </td>
+          <td>
+            <div class="payment-table__actions">
+              @if (payment.status === PaymentStatus.PENDING) {
+                <app-button
+                  appearance="flat"
+                  size="s"
+                  [ariaLabel]="'common.approve' | transloco"
+                  (clicked)="stopAndApprove($event, payment)"
+                >
+                  <lucide-icon [img]="CheckCircle2" [size]="18" />
+                </app-button>
+                <app-button
+                  appearance="flat"
+                  size="s"
+                  [ariaLabel]="'common.reject' | transloco"
+                  (clicked)="stopAndReject($event, payment)"
+                >
+                  <lucide-icon [img]="XCircle" [size]="18" />
+                </app-button>
+              }
+              <app-button
+                appearance="flat"
+                size="s"
+                [ariaLabel]="'properties.viewDetail' | transloco"
+                (clicked)="$event.stopPropagation(); rowSelected.emit(payment)"
+              >
+                <lucide-icon [img]="Eye" [size]="18" />
+              </app-button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

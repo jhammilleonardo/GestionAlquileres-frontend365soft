@@ -46,6 +46,9 @@ Thumbs.db
 #claude
 claude_code_zai_env.sh
 CLAUDE.md
-/docs
 .claude/
 .agents
+
+# Playwright
+test-results/
+playwright-report/

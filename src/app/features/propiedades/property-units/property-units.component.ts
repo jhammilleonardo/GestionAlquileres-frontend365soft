@@ -1,20 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  signal,
-  computed,
-  inject,
-  OnInit,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { Component, ChangeDetectionStrategy, input, signal, computed, inject } from '@angular/core';
 import {
   LucideAngularModule,
   Plus,
@@ -29,32 +13,35 @@ import {
   RefreshCw,
 } from 'lucide-angular';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
+import { NgClass } from '@angular/common';
 import { UnitService } from '../../../core/services/admin/unit.service';
 import { Unit, UnitStatus } from '../../../core/models/unit.model';
 import { UnitFormDialogComponent } from './unit-form-dialog/unit-form-dialog.component';
 import { UnitDetailPanelComponent } from './unit-detail-panel/unit-detail-panel.component';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
+import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-property-units',
   standalone: true,
   imports: [
-    CommonModule,
-    MatTableModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatProgressSpinnerModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatTooltipModule,
+    NgClass,
     LucideAngularModule,
     TenantCurrencyPipe,
     UnitDetailPanelComponent,
+    UnitFormDialogComponent,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
   ],
   templateUrl: './property-units.component.html',
   styleUrls: ['./property-units.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropertyUnitsComponent implements OnInit {
+export class PropertyUnitsComponent {
   readonly Plus = Plus;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
@@ -72,26 +59,16 @@ export class PropertyUnitsComponent implements OnInit {
   propertySlug = input.required<string>();
 
   private unitService = inject(UnitService);
-  private dialog = inject(MatDialog);
-  private snackBar = inject(MatSnackBar);
+  private confirmDialog = inject(ConfirmDialogService);
+  private toast = inject(ToastService);
 
   units = signal<Unit[]>([]);
   isLoading = signal(true);
   selectedUnit = signal<Unit | null>(null);
   statusFilter = signal<UnitStatus | 'all'>('all');
   confirmingDeleteId = signal<number | null>(null);
-
-  displayedColumns = [
-    'unit_number',
-    'floor',
-    'bedrooms',
-    'bathrooms',
-    'square_meters',
-    'rental_type',
-    'price',
-    'status',
-    'actions',
-  ];
+  formDialogOpen = signal(false);
+  formDialogUnit = signal<Unit | null>(null);
 
   counters = computed(() => {
     const all = this.units();
@@ -110,7 +87,7 @@ export class PropertyUnitsComponent implements OnInit {
     return this.units().filter((u) => u.status === filter);
   });
 
-  ngOnInit(): void {
+  constructor() {
     this.loadUnits();
   }
 
@@ -129,41 +106,40 @@ export class PropertyUnitsComponent implements OnInit {
       },
       error: () => {
         this.isLoading.set(false);
-        this.snackBar.open('Error al cargar las unidades', 'Cerrar', { duration: 3000 });
+        this.toast.error('Error al cargar las unidades');
       },
     });
   }
 
   openCreateDialog(): void {
-    const ref = this.dialog.open(UnitFormDialogComponent, {
-      data: { propertyId: this.propertyId() },
-      panelClass: 'unit-form-dialog-panel',
-      disableClose: true,
-    });
-
-    ref.afterClosed().subscribe((unit?: Unit) => {
-      if (unit) {
-        this.units.update((prev) => [...prev, unit]);
-        this.selectedUnit.set(unit);
-        this.snackBar.open('Unidad creada exitosamente', 'Cerrar', { duration: 3000 });
-      }
-    });
+    this.formDialogUnit.set(null);
+    this.formDialogOpen.set(true);
   }
 
   openEditDialog(unit: Unit): void {
-    const ref = this.dialog.open(UnitFormDialogComponent, {
-      data: { propertyId: this.propertyId(), unit },
-      panelClass: 'unit-form-dialog-panel',
-      disableClose: true,
+    this.formDialogUnit.set(unit);
+    this.formDialogOpen.set(true);
+  }
+
+  closeFormDialog(): void {
+    this.formDialogOpen.set(false);
+    this.formDialogUnit.set(null);
+  }
+
+  handleUnitSaved(unit: Unit): void {
+    const wasEdit = Boolean(this.formDialogUnit());
+
+    this.units.update((prev) => {
+      if (!wasEdit) {
+        return [...prev, unit];
+      }
+
+      return prev.map((current) => (current.id === unit.id ? unit : current));
     });
 
-    ref.afterClosed().subscribe((updated?: Unit) => {
-      if (updated) {
-        this.units.update((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
-        this.selectedUnit.set(updated);
-        this.snackBar.open('Unidad actualizada exitosamente', 'Cerrar', { duration: 3000 });
-      }
-    });
+    this.selectedUnit.set(unit);
+    this.closeFormDialog();
+    this.toast.success(wasEdit ? 'Unidad actualizada exitosamente' : 'Unidad creada exitosamente');
   }
 
   selectUnit(unit: Unit): void {
@@ -174,7 +150,17 @@ export class PropertyUnitsComponent implements OnInit {
     this.selectedUnit.set(null);
   }
 
-  deleteUnit(unit: Unit): void {
+  async deleteUnit(unit: Unit): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Eliminar unidad',
+      message: `Esta accion eliminara la unidad ${unit.unit_number}. No se puede deshacer.`,
+      confirmLabel: 'Eliminar',
+      cancelLabel: 'Cancelar',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
     this.confirmingDeleteId.set(unit.id);
     this.unitService.remove(this.propertyId(), unit.id).subscribe({
       next: () => {
@@ -183,12 +169,11 @@ export class PropertyUnitsComponent implements OnInit {
           this.selectedUnit.set(null);
         }
         this.confirmingDeleteId.set(null);
-        this.snackBar.open('Unidad eliminada', 'Cerrar', { duration: 3000 });
+        this.toast.success('Unidad eliminada');
       },
-      error: (err: any) => {
+      error: (error: unknown) => {
         this.confirmingDeleteId.set(null);
-        const msg = err?.error?.message ?? 'Error al eliminar la unidad';
-        this.snackBar.open(msg, 'Cerrar', { duration: 5000 });
+        this.toast.error(this.resolveErrorMessage(error, 'Error al eliminar la unidad'));
       },
     });
   }
@@ -211,5 +196,22 @@ export class PropertyUnitsComponent implements OnInit {
       BOTH: 'Ambos',
     };
     return labels[type] ?? type;
+  }
+
+  private resolveErrorMessage(error: unknown, fallback: string): string {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
+    ) {
+      return (error as { error: { message: string } }).error.message;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return fallback;
   }
 }

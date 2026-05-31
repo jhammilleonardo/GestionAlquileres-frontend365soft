@@ -4,7 +4,7 @@
     <div class="header-left">
       <h1 class="page-title">
         <div class="title-icon-wrapper">
-          <lucide-icon [img]="Bell" [size]="22"></lucide-icon>
+          <lucide-icon [img]="Bell" [size]="22" />
           @if (unreadCount() > 0) {
             <span class="title-badge">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
           }
@@ -16,16 +16,15 @@
 
     <div class="header-actions">
       @if (unreadCount() > 0) {
-        <button class="action-btn secondary" (click)="markAllAsRead()" mat-button>
-          <lucide-icon [img]="Check" [size]="16"></lucide-icon>
-          <span>{{ 'public.tenantNotifications.markAllRead' | transloco }}</span>
-        </button>
+        <app-button appearance="secondary" size="s" (clicked)="markAllAsRead()">
+          <lucide-icon [img]="Check" [size]="16" />
+          {{ 'public.tenantNotifications.markAllRead' | transloco }}
+        </app-button>
       }
-
-      <button class="action-btn" (click)="refresh()" mat-button>
-        <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-        <span>{{ 'public.tenantNotifications.refresh' | transloco }}</span>
-      </button>
+      <app-button appearance="secondary" size="s" (clicked)="refresh()">
+        <lucide-icon [img]="RefreshCw" [size]="16" />
+        {{ 'public.tenantNotifications.refresh' | transloco }}
+      </app-button>
     </div>
   </div>
 
@@ -33,8 +32,9 @@
   <div class="filters-section">
     <div class="filter-tabs">
       <button
+        type="button"
         class="filter-tab"
-        [class.active]="currentFilter === 'all'"
+        [class.active]="currentFilter() === 'all'"
         (click)="setFilter('all')"
       >
         {{ 'public.tenantNotifications.filterAll' | transloco }}
@@ -42,8 +42,9 @@
       </button>
 
       <button
+        type="button"
         class="filter-tab"
-        [class.active]="currentFilter === 'unread'"
+        [class.active]="currentFilter() === 'unread'"
         (click)="setFilter('unread')"
       >
         {{ 'public.tenantNotifications.filterUnread' | transloco }}
@@ -51,8 +52,9 @@
       </button>
 
       <button
+        type="button"
         class="filter-tab"
-        [class.active]="currentFilter === 'read'"
+        [class.active]="currentFilter() === 'read'"
         (click)="setFilter('read')"
       >
         {{ 'public.tenantNotifications.filterRead' | transloco }}
@@ -63,75 +65,54 @@
 
   <!-- Error Message -->
   @if (error()) {
-    <div class="error-message">
-      <lucide-icon [img]="Bell" [size]="16"></lucide-icon>
+    <div class="error-message" role="alert">
+      <lucide-icon [img]="Bell" [size]="16" />
       <span>{{ error() }}</span>
-      <button (click)="clearError()" mat-icon-button>
-        <mat-icon>close</mat-icon>
+      <button type="button" class="icon-btn" (click)="clearError()" aria-label="Cerrar error">
+        <lucide-icon [img]="Trash2" [size]="16" />
       </button>
     </div>
   }
 
-  <!-- Loading State -->
   @if (isLoading()) {
-    <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>{{ 'public.tenantNotifications.loading' | transloco }}</p>
-    </div>
-  }
-
-  <!-- Empty State -->
-  @if (!isLoading() && notifications().length === 0) {
-    <div class="empty-state">
-      <div class="empty-icon-wrapper">
-        <lucide-icon [img]="BellOff" [size]="40"></lucide-icon>
-      </div>
-      <h2>{{ 'public.tenantNotifications.emptyTitle' | transloco }}</h2>
-      <p>
-        @if (currentFilter === 'unread') {
-          {{ 'public.tenantNotifications.emptyUnread' | transloco }}
-        } @else {
-          {{ 'public.tenantNotifications.emptyAll' | transloco }}
-        }
-      </p>
-      <button class="action-btn" (click)="refresh()" mat-button>
-        <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-        <span>{{ 'public.tenantNotifications.refresh' | transloco }}</span>
-      </button>
-    </div>
-  }
-
-  <!-- Notifications List -->
-  @if (!isLoading() && notifications().length > 0) {
+    <app-loading-state [label]="'public.tenantNotifications.loading' | transloco" />
+  } @else if (notifications().length === 0) {
+    <app-empty-state
+      [title]="'public.tenantNotifications.emptyTitle' | transloco"
+      [description]="
+        currentFilter() === 'unread'
+          ? ('public.tenantNotifications.emptyUnread' | transloco)
+          : ('public.tenantNotifications.emptyAll' | transloco)
+      "
+    />
+  } @else {
     <div class="notifications-list">
       @for (notification of notifications(); track notification.id) {
         <div
           class="notification-card"
           [class.unread]="!notification.is_read"
+          role="button"
+          tabindex="0"
           (click)="handleNotificationClick(notification)"
+          (keydown.enter)="handleNotificationClick(notification)"
         >
-          <!-- Left: Icon -->
           <div class="notification-icon-wrapper">
             <div
               class="notification-icon"
-              [ngClass]="getNotificationIconClass(notification.event_type)"
+              [class]="getNotificationIconClass(notification.event_type)"
             >
-              <lucide-icon
-                [img]="getNotificationIcon(notification.event_type)"
-                [size]="20"
-              ></lucide-icon>
+              <lucide-icon [img]="getNotificationIcon(notification.event_type)" [size]="20" />
             </div>
             @if (!notification.is_read) {
               <div class="unread-indicator"></div>
             }
           </div>
 
-          <!-- Center: Content -->
           <div class="notification-content">
             <div class="notification-header-row">
               <span
                 class="notification-type"
-                [ngClass]="getNotificationTypeBadgeClass(notification.event_type)"
+                [class]="getNotificationTypeBadgeClass(notification.event_type)"
               >
                 {{ getNotificationTypeLabel(notification.event_type) }}
               </span>
@@ -147,13 +128,13 @@
               <div class="notification-metadata">
                 @if (notification.metadata.ticket_number) {
                   <span class="metadata-tag">
-                    <lucide-icon [img]="Hash" [size]="12"></lucide-icon>
+                    <lucide-icon [img]="Hash" [size]="12" />
                     {{ notification.metadata.ticket_number }}
                   </span>
                 }
                 @if (notification.metadata.property_title) {
                   <span class="metadata-tag">
-                    <lucide-icon [img]="MapPin" [size]="12"></lucide-icon>
+                    <lucide-icon [img]="MapPin" [size]="12" />
                     {{ notification.metadata.property_title }}
                   </span>
                 }
@@ -161,30 +142,27 @@
             }
           </div>
 
-          <!-- Right: Actions -->
           <div class="notification-actions">
             @if (!notification.is_read) {
               <button
+                type="button"
                 class="icon-btn"
+                [title]="'public.tenantNotifications.markAsReadTitle' | transloco"
                 (click)="markAsRead(notification.id, $event)"
-                mat-icon-button
-                [matTooltip]="'public.tenantNotifications.markAsReadTitle' | transloco"
               >
-                <lucide-icon [img]="Check" [size]="16"></lucide-icon>
+                <lucide-icon [img]="Check" [size]="16" />
               </button>
             }
-
             <button
+              type="button"
               class="icon-btn delete-btn"
+              [title]="'public.tenantNotifications.deleteTitle' | transloco"
               (click)="deleteNotification(notification.id, $event)"
-              mat-icon-button
-              [matTooltip]="'public.tenantNotifications.deleteTitle' | transloco"
             >
-              <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+              <lucide-icon [img]="Trash2" [size]="16" />
             </button>
-
             <div class="nav-arrow">
-              <lucide-icon [img]="ArrowUpRight" [size]="14"></lucide-icon>
+              <lucide-icon [img]="ArrowUpRight" [size]="14" />
             </div>
           </div>
         </div>

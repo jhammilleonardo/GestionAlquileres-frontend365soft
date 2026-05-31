@@ -1,611 +1,519 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTabsModule } from '@angular/material/tabs';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
-  LucideAngularModule,
-  User,
-  Mail,
-  Phone,
-  Lock,
-  CheckCircle2,
-  AlertCircle,
-  Home,
-  FileText,
-  Calendar,
-} from 'lucide-angular';
-import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+  AbstractControl,
+  FormBuilder,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
+import { AlertCircle, CheckCircle2, FileText, Home, User } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+import {
+  AppButtonComponent,
+  AppPageHeaderComponent,
+  AppStatusBadgeComponent,
+  AppTabsComponent,
+  AppTabOption,
+  AppTextFieldComponent,
+} from '../../../shared/ui';
+
+type TenantProfileTab = 'personal' | 'password';
+
+function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
+  const newPassword = control.get('new_password')?.value;
+  const confirmPassword = control.get('confirm_password')?.value;
+
+  if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+    return { passwordMismatch: true };
+  }
+
+  return null;
+}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-profile',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    MatTabsModule,
-    MatTabsModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppPageHeaderComponent,
+    AppStatusBadgeComponent,
+    AppTabsComponent,
+    AppTextFieldComponent,
   ],
   template: `
-    <div class="profile-container">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <lucide-icon [img]="User" [size]="32"></lucide-icon>
-          <div>
-            <h1>{{ 'public.tenantProfile.title' | transloco }}</h1>
-            <p>{{ 'public.tenantProfile.subtitle' | transloco }}</p>
-          </div>
-        </div>
-      </div>
+    <section class="profile-page">
+      <app-page-header
+        [eyebrow]="'public.tenantProfile.role' | transloco"
+        [title]="'public.tenantProfile.title' | transloco"
+        [description]="'public.tenantProfile.subtitle' | transloco"
+      />
 
-      <!-- Profile Card -->
       @if (authService.currentUser(); as user) {
         <div class="profile-grid">
-          <!-- User Info Card -->
-          <mat-card class="info-card">
+          <aside class="profile-card">
             <div class="user-avatar">
-              <lucide-icon [img]="User" [size]="48"></lucide-icon>
+              <lucide-icon [img]="User" [size]="46"></lucide-icon>
             </div>
+
             <h2>{{ user.name }}</h2>
-            <p class="user-email">{{ user.email }}</p>
-            <div class="user-role">{{ 'public.tenantProfile.role' | transloco }}</div>
+            <p>{{ user.email }}</p>
+            <app-status-badge [label]="'public.tenantProfile.role' | transloco" tone="info" />
 
             @if (user.contract) {
-              <mat-divider style="margin: 16px 0;"></mat-divider>
-              <div class="contract-info">
+              <section class="contract-summary">
                 <h3>{{ 'public.tenantProfile.contractInfo' | transloco }}</h3>
-                <div class="info-item">
+                <div class="summary-row">
                   <lucide-icon [img]="Home" [size]="16"></lucide-icon>
                   <span>{{ user.contract.property_title }}</span>
                 </div>
-                <div class="info-item">
+                <div class="summary-row">
                   <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
                   <span>{{ user.contract.contract_number }}</span>
                 </div>
-                <div class="status-badge" [class]="'status-' + user.contract.status.toLowerCase()">
-                  {{ user.contract.status }}
-                </div>
-              </div>
+                <app-status-badge
+                  [label]="user.contract.status"
+                  [tone]="contractTone(user.contract.status)"
+                />
+              </section>
             }
-          </mat-card>
+          </aside>
 
-          <!-- Forms -->
-          <div class="forms-container">
-            <mat-tab-group>
-              <!-- Personal Info Tab -->
-              <mat-tab [label]="'public.tenantProfile.tabPersonalInfo' | transloco">
-                <mat-card class="form-card">
-                  @if (updateSuccess()) {
-                    <div class="success-alert">
-                      <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                      <span>{{ 'public.tenantProfile.profileUpdated' | transloco }}</span>
-                    </div>
+          <section class="profile-forms">
+            <app-tabs
+              [(ngModel)]="activeTab"
+              [tabs]="tabs"
+              [ariaLabel]="'public.tenantProfile.title' | transloco"
+            />
+
+            @if (activeTab === 'personal') {
+              <article class="form-panel">
+                @if (updateSuccess()) {
+                  <div class="alert alert--success">
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                    <span>{{ 'public.tenantProfile.profileUpdated' | transloco }}</span>
+                  </div>
+                }
+
+                @if (updateError()) {
+                  <div class="alert alert--error">
+                    <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+                    <span>{{ updateError() }}</span>
+                  </div>
+                }
+
+                <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+                  <app-text-field
+                    formControlName="name"
+                    [label]="'public.tenantProfile.fullName' | transloco"
+                    placeholder="Juan Perez"
+                    autocomplete="name"
+                  />
+                  @if (
+                    profileForm.controls.name.hasError('required') &&
+                    profileForm.controls.name.touched
+                  ) {
+                    <p class="field-error">{{ 'public.tenantProfile.nameRequired' | transloco }}</p>
                   }
 
-                  @if (updateError()) {
-                    <div class="error-alert">
-                      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
-                      <span>{{ updateError() }}</span>
-                    </div>
+                  <app-text-field
+                    formControlName="email"
+                    type="email"
+                    [label]="'public.tenantProfile.email' | transloco"
+                    placeholder="correo@ejemplo.com"
+                    autocomplete="email"
+                  />
+                  @if (
+                    profileForm.controls.email.hasError('required') &&
+                    profileForm.controls.email.touched
+                  ) {
+                    <p class="field-error">
+                      {{ 'public.tenantProfile.emailRequired' | transloco }}
+                    </p>
+                  }
+                  @if (
+                    profileForm.controls.email.hasError('email') &&
+                    profileForm.controls.email.touched
+                  ) {
+                    <p class="field-error">{{ 'public.tenantProfile.emailInvalid' | transloco }}</p>
                   }
 
-                  <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'public.tenantProfile.fullName' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
-                      <input matInput formControlName="name" placeholder="Juan Pérez" required />
-                      @if (
-                        profileForm.get('name')?.hasError('required') &&
-                        profileForm.get('name')?.touched
-                      ) {
-                        <mat-error>{{ 'public.tenantProfile.nameRequired' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
+                  <app-text-field
+                    formControlName="phone"
+                    type="tel"
+                    [label]="'public.tenantProfile.phone' | transloco"
+                    placeholder="+591 70000000"
+                    autocomplete="tel"
+                  />
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'public.tenantProfile.email' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        type="email"
-                        formControlName="email"
-                        placeholder="correo@ejemplo.com"
-                        required
-                      />
-                      @if (
-                        profileForm.get('email')?.hasError('required') &&
-                        profileForm.get('email')?.touched
-                      ) {
-                        <mat-error>{{
-                          'public.tenantProfile.emailRequired' | transloco
-                        }}</mat-error>
-                      }
-                      @if (profileForm.get('email')?.hasError('email')) {
-                        <mat-error>{{ 'public.tenantProfile.emailInvalid' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
+                  <footer class="form-actions">
+                    <app-button
+                      type="button"
+                      appearance="outline"
+                      [disabled]="isUpdating()"
+                      (clicked)="resetProfileForm()"
+                    >
+                      {{ 'public.tenantProfile.cancel' | transloco }}
+                    </app-button>
+                    <app-button
+                      type="submit"
+                      appearance="primary"
+                      [disabled]="profileForm.invalid || !profileForm.dirty || isUpdating()"
+                      [loading]="isUpdating()"
+                    >
+                      {{
+                        isUpdating()
+                          ? ('public.tenantProfile.updating' | transloco)
+                          : ('public.tenantProfile.saveChanges' | transloco)
+                      }}
+                    </app-button>
+                  </footer>
+                </form>
+              </article>
+            } @else {
+              <article class="form-panel">
+                @if (passwordSuccess()) {
+                  <div class="alert alert--success">
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                    <span>{{ 'public.tenantProfile.passwordUpdated' | transloco }}</span>
+                  </div>
+                }
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'public.tenantProfile.phone' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Phone" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        type="tel"
-                        formControlName="phone"
-                        placeholder="+1 234 567 8900"
-                      />
-                    </mat-form-field>
+                @if (passwordError()) {
+                  <div class="alert alert--error">
+                    <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+                    <span>{{ passwordError() }}</span>
+                  </div>
+                }
 
-                    <div class="form-actions">
-                      <button
-                        type="button"
-                        mat-stroked-button
-                        (click)="resetProfileForm()"
-                        [disabled]="isUpdating()"
-                      >
-                        {{ 'public.tenantProfile.cancel' | transloco }}
-                      </button>
-                      <button
-                        type="submit"
-                        mat-raised-button
-                        color="primary"
-                        [disabled]="profileForm.invalid || !profileForm.dirty || isUpdating()"
-                      >
-                        @if (isUpdating()) {
-                          <mat-spinner diameter="20"></mat-spinner>
-                          {{ 'public.tenantProfile.updating' | transloco }}
-                        } @else {
-                          {{ 'public.tenantProfile.saveChanges' | transloco }}
-                        }
-                      </button>
-                    </div>
-                  </form>
-                </mat-card>
-              </mat-tab>
-
-              <!-- Password Tab -->
-              <mat-tab [label]="'public.tenantProfile.tabPassword' | transloco">
-                <mat-card class="form-card">
-                  @if (passwordSuccess()) {
-                    <div class="success-alert">
-                      <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                      <span>{{ 'public.tenantProfile.passwordUpdated' | transloco }}</span>
-                    </div>
+                <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
+                  <app-text-field
+                    formControlName="current_password"
+                    type="password"
+                    [label]="'public.tenantProfile.currentPassword' | transloco"
+                    autocomplete="current-password"
+                  />
+                  @if (
+                    passwordForm.controls.current_password.hasError('required') &&
+                    passwordForm.controls.current_password.touched
+                  ) {
+                    <p class="field-error">
+                      {{ 'public.tenantProfile.currentPasswordRequired' | transloco }}
+                    </p>
                   }
 
-                  @if (passwordError()) {
-                    <div class="error-alert">
-                      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
-                      <span>{{ passwordError() }}</span>
-                    </div>
+                  <app-text-field
+                    formControlName="new_password"
+                    type="password"
+                    [label]="'public.tenantProfile.newPassword' | transloco"
+                    autocomplete="new-password"
+                  />
+                  @if (
+                    passwordForm.controls.new_password.hasError('required') &&
+                    passwordForm.controls.new_password.touched
+                  ) {
+                    <p class="field-error">
+                      {{ 'public.tenantProfile.newPasswordRequired' | transloco }}
+                    </p>
+                  }
+                  @if (
+                    passwordForm.controls.new_password.hasError('minlength') &&
+                    passwordForm.controls.new_password.touched
+                  ) {
+                    <p class="field-error">{{ 'public.tenantProfile.min8Chars' | transloco }}</p>
                   }
 
-                  <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{
-                        'public.tenantProfile.currentPassword' | transloco
-                      }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-                      <input matInput type="password" formControlName="current_password" required />
-                      @if (
-                        passwordForm.get('current_password')?.hasError('required') &&
-                        passwordForm.get('current_password')?.touched
-                      ) {
-                        <mat-error>{{
-                          'public.tenantProfile.currentPasswordRequired' | transloco
-                        }}</mat-error>
-                      }
-                    </mat-form-field>
+                  <app-text-field
+                    formControlName="confirm_password"
+                    type="password"
+                    [label]="'public.tenantProfile.confirmNewPassword' | transloco"
+                    autocomplete="new-password"
+                  />
+                  @if (
+                    passwordForm.controls.confirm_password.hasError('required') &&
+                    passwordForm.controls.confirm_password.touched
+                  ) {
+                    <p class="field-error">
+                      {{ 'public.tenantProfile.confirmRequired' | transloco }}
+                    </p>
+                  }
+                  @if (
+                    passwordForm.hasError('passwordMismatch') &&
+                    passwordForm.controls.confirm_password.touched
+                  ) {
+                    <p class="field-error">
+                      {{ 'public.tenantProfile.passwordsMismatch' | transloco }}
+                    </p>
+                  }
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'public.tenantProfile.newPassword' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-                      <input matInput type="password" formControlName="new_password" required />
-                      @if (
-                        passwordForm.get('new_password')?.hasError('required') &&
-                        passwordForm.get('new_password')?.touched
-                      ) {
-                        <mat-error>{{
-                          'public.tenantProfile.newPasswordRequired' | transloco
-                        }}</mat-error>
-                      }
-                      @if (passwordForm.get('new_password')?.hasError('minlength')) {
-                        <mat-error>{{ 'public.tenantProfile.min8Chars' | transloco }}</mat-error>
-                      }
-                      <mat-hint>{{ 'public.tenantProfile.min8Chars' | transloco }}</mat-hint>
-                    </mat-form-field>
+                  <p class="field-hint">{{ 'public.tenantProfile.min8Chars' | transloco }}</p>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{
-                        'public.tenantProfile.confirmNewPassword' | transloco
-                      }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-                      <input matInput type="password" formControlName="confirm_password" required />
-                      @if (
-                        passwordForm.get('confirm_password')?.hasError('required') &&
-                        passwordForm.get('confirm_password')?.touched
-                      ) {
-                        <mat-error>{{
-                          'public.tenantProfile.confirmRequired' | transloco
-                        }}</mat-error>
-                      }
-                      @if (
-                        passwordForm.hasError('passwordMismatch') &&
-                        passwordForm.get('confirm_password')?.touched
-                      ) {
-                        <mat-error>{{
-                          'public.tenantProfile.passwordsMismatch' | transloco
-                        }}</mat-error>
-                      }
-                    </mat-form-field>
-
-                    <div class="form-actions">
-                      <button
-                        type="button"
-                        mat-stroked-button
-                        (click)="resetPasswordForm()"
-                        [disabled]="isUpdatingPassword()"
-                      >
-                        {{ 'public.tenantProfile.cancel' | transloco }}
-                      </button>
-                      <button
-                        type="submit"
-                        mat-raised-button
-                        color="primary"
-                        [disabled]="passwordForm.invalid || isUpdatingPassword()"
-                      >
-                        @if (isUpdatingPassword()) {
-                          <mat-spinner diameter="20"></mat-spinner>
-                          {{ 'public.tenantProfile.updating' | transloco }}
-                        } @else {
-                          {{ 'public.tenantProfile.changePasswordBtn' | transloco }}
-                        }
-                      </button>
-                    </div>
-                  </form>
-                </mat-card>
-              </mat-tab>
-            </mat-tab-group>
-          </div>
+                  <footer class="form-actions">
+                    <app-button
+                      type="button"
+                      appearance="outline"
+                      [disabled]="isUpdatingPassword()"
+                      (clicked)="resetPasswordForm()"
+                    >
+                      {{ 'public.tenantProfile.cancel' | transloco }}
+                    </app-button>
+                    <app-button
+                      type="submit"
+                      appearance="primary"
+                      [disabled]="passwordForm.invalid || isUpdatingPassword()"
+                      [loading]="isUpdatingPassword()"
+                    >
+                      {{
+                        isUpdatingPassword()
+                          ? ('public.tenantProfile.updating' | transloco)
+                          : ('public.tenantProfile.changePasswordBtn' | transloco)
+                      }}
+                    </app-button>
+                  </footer>
+                </form>
+              </article>
+            }
+          </section>
         </div>
       }
-    </div>
+    </section>
   `,
-  styles: [
-    `
-      .profile-container {
-        max-width: 1200px;
-        margin: 0 auto;
-      }
+  styles: `
+    .profile-page {
+      max-inline-size: 1160px;
+      margin-inline: auto;
+    }
 
-      .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 16px;
-      }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: var(--app-space-5);
+      align-items: start;
+    }
 
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
+    .profile-card,
+    .form-panel {
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      box-shadow: var(--app-shadow-sm);
+    }
 
-      .header-content h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
+    .profile-card {
+      display: grid;
+      justify-items: center;
+      padding: var(--app-space-6);
+      text-align: center;
+    }
 
-      .header-content p {
-        color: #64748b;
-        margin: 0;
-      }
+    .user-avatar {
+      display: inline-grid;
+      place-items: center;
+      inline-size: 6rem;
+      block-size: 6rem;
+      border-radius: 50%;
+      background: var(--app-color-primary);
+      color: #fff;
+      margin-block-end: var(--app-space-4);
+    }
 
+    .profile-card h2 {
+      margin: 0;
+      color: var(--app-color-text);
+      font-size: 1.25rem;
+      font-weight: 820;
+      line-height: 1.25;
+    }
+
+    .profile-card p {
+      margin: 0.25rem 0 var(--app-space-3);
+      color: var(--app-color-text-muted);
+      overflow-wrap: anywhere;
+    }
+
+    .contract-summary {
+      display: grid;
+      justify-items: start;
+      inline-size: 100%;
+      gap: var(--app-space-2);
+      margin-block-start: var(--app-space-5);
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-4);
+      text-align: start;
+    }
+
+    .contract-summary h3 {
+      margin: 0 0 var(--app-space-1);
+      color: var(--app-color-text);
+      font-size: 0.82rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .summary-row {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      color: var(--app-color-text-muted);
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .profile-forms {
+      display: grid;
+      gap: var(--app-space-4);
+      min-inline-size: 0;
+    }
+
+    .form-panel {
+      padding: var(--app-space-6);
+    }
+
+    form {
+      display: grid;
+      gap: var(--app-space-3);
+    }
+
+    .alert {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      border-radius: var(--app-radius-md);
+      margin-block-end: var(--app-space-4);
+      padding: var(--app-space-3);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .alert--success {
+      background: var(--tui-status-positive-pale);
+      color: var(--tui-status-positive);
+    }
+
+    .alert--error {
+      background: var(--tui-status-negative-pale);
+      color: var(--tui-status-negative);
+    }
+
+    .field-error,
+    .field-hint {
+      margin: -0.35rem 0 0;
+      font-size: 0.78rem;
+    }
+
+    .field-error {
+      color: var(--tui-status-negative);
+      font-weight: 700;
+    }
+
+    .field-hint {
+      color: var(--app-color-text-muted);
+    }
+
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: var(--app-space-2);
+      border-top: 1px solid var(--app-color-border);
+      margin-block-start: var(--app-space-2);
+      padding-block-start: var(--app-space-4);
+    }
+
+    @media (max-width: 980px) {
       .profile-grid {
-        display: grid;
-        grid-template-columns: 320px 1fr;
-        gap: 24px;
+        grid-template-columns: 1fr;
       }
+    }
 
-      .info-card {
-        padding: 32px;
-        text-align: center;
-        height: fit-content;
-      }
-
-      .user-avatar {
-        width: 96px;
-        height: 96px;
-        border-radius: 50%;
-        background: var(--mat-sys-primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        margin: 0 auto 16px;
-      }
-
-      .info-card h2 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
-
-      .user-email {
-        color: #64748b;
-        margin: 0 0 12px;
-      }
-
-      .user-role {
-        display: inline-block;
-        padding: 4px 16px;
-        background: var(--mat-sys-primary-container);
-        color: var(--mat-sys-primary);
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-      }
-
-      .contract-info {
-        text-align: left;
-      }
-
-      .contract-info h3 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0 0 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .info-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 0;
-        color: #64748b;
-        font-size: 14px;
-      }
-
-      .status-badge {
-        margin-top: 12px;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-align: center;
-      }
-
-      .status-badge.status-active {
-        background: #d1fae5;
-        color: #047857;
-      }
-      .status-badge.status-pending {
-        background: #fef3c7;
-        color: #b45309;
-      }
-
-      .forms-container {
-        display: flex;
-        flex-direction: column;
-      }
-
-      .form-card {
-        padding: 32px;
-        margin-top: 16px;
-      }
-
-      .success-alert {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: #d1fae5;
-        color: #047857;
-        border-radius: 6px;
-        margin-bottom: 24px;
-        font-size: 14px;
-      }
-
-      .error-alert {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        background: #fee2e2;
-        color: #dc2626;
-        border-radius: 6px;
-        margin-bottom: 24px;
-        font-size: 14px;
-      }
-
-      .form-card form {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+    @media (max-width: 600px) {
+      .profile-card,
+      .form-panel {
+        padding: var(--app-space-4);
       }
 
       .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 12px;
-        padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
-        margin-top: 8px;
+        flex-direction: column-reverse;
       }
 
-      button[type='submit'] {
-        display: flex;
-        align-items: center;
-        gap: 8px;
+      .form-actions app-button {
+        inline-size: 100%;
       }
-
-      @media (max-width: 1024px) {
-        .profile-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .info-card {
-          margin-bottom: 16px;
-        }
-      }
-
-      @media (max-width: 768px) {
-        .page-header {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .header-content h1 {
-          font-size: 1.35rem;
-        }
-
-        .form-card {
-          padding: 24px;
-        }
-      }
-
-      @media (max-width: 600px) {
-        .info-card {
-          padding: 24px;
-        }
-
-        .user-avatar {
-          width: 80px;
-          height: 80px;
-        }
-
-        .info-card h2 {
-          font-size: 1.1rem;
-        }
-
-        .form-card {
-          padding: 20px;
-        }
-
-        .form-actions {
-          flex-direction: column-reverse;
-        }
-
-        .form-actions button {
-          width: 100%;
-        }
-      }
-
-      @media (max-width: 420px) {
-        .header-content {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .header-content lucide-icon {
-          display: none;
-        }
-
-        .info-card {
-          padding: 20px;
-        }
-
-        .user-avatar {
-          width: 72px;
-          height: 72px;
-        }
-
-        .contract-info h3 {
-          font-size: 13px;
-        }
-
-        .info-item {
-          font-size: 13px;
-        }
-      }
-    `,
-  ],
+    }
+  `,
 })
-export class TenantProfileComponent implements OnInit {
-  readonly User = User;
-  readonly Mail = Mail;
-  readonly Phone = Phone;
-  readonly Lock = Lock;
-  readonly CheckCircle2 = CheckCircle2;
-  readonly AlertCircle = AlertCircle;
-  readonly Home = Home;
-  readonly FileText = FileText;
-  readonly Calendar = Calendar;
+export class TenantProfileComponent {
+  protected readonly User = User;
+  protected readonly CheckCircle2 = CheckCircle2;
+  protected readonly AlertCircle = AlertCircle;
+  protected readonly Home = Home;
+  protected readonly FileText = FileText;
 
-  private fb = inject(FormBuilder);
-  authService = inject(TenantAuthService);
+  protected readonly tabs: readonly AppTabOption<TenantProfileTab>[] = [
+    {
+      label: 'Informacion personal',
+      value: 'personal',
+    },
+    {
+      label: 'Contrasena',
+      value: 'password',
+    },
+  ];
 
-  updateSuccess = signal(false);
-  updateError = signal<string | null>(null);
-  isUpdating = signal(false);
+  private readonly fb = inject(FormBuilder);
+  protected readonly authService = inject(TenantAuthService);
 
-  passwordSuccess = signal(false);
-  passwordError = signal<string | null>(null);
-  isUpdatingPassword = signal(false);
+  protected activeTab: TenantProfileTab = 'personal';
+  protected readonly updateSuccess = signal(false);
+  protected readonly updateError = signal<string | null>(null);
+  protected readonly isUpdating = signal(false);
+  protected readonly passwordSuccess = signal(false);
+  protected readonly passwordError = signal<string | null>(null);
+  protected readonly isUpdatingPassword = signal(false);
 
-  profileForm = this.fb.group({
+  protected readonly profileForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
   });
 
-  passwordForm = this.fb.group(
+  protected readonly passwordForm = this.fb.nonNullable.group(
     {
       current_password: ['', Validators.required],
       new_password: ['', [Validators.required, Validators.minLength(8)]],
       confirm_password: ['', Validators.required],
     },
     {
-      validators: this.passwordMatchValidator.bind(this),
+      validators: passwordMatchValidator,
     },
   );
 
-  ngOnInit(): void {
-    const user = this.authService.currentUser();
-    if (user) {
-      this.profileForm.patchValue({
-        name: user.name,
-        email: user.email,
-        phone: user.phone || '',
-      });
-    }
+  constructor() {
+    this.resetProfileForm();
   }
 
-  passwordMatchValidator(form: any) {
-    const newPassword = form.get('new_password')?.value;
-    const confirmPassword = form.get('confirm_password')?.value;
-
-    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
-      return { passwordMismatch: true };
+  protected contractTone(status: string): 'neutral' | 'info' | 'success' | 'warning' | 'danger' {
+    const normalized = status.toUpperCase();
+    if (normalized === 'ACTIVE' || normalized === 'ACTIVO' || normalized === 'FIRMADO') {
+      return 'success';
     }
-    return null;
+    if (normalized === 'PENDING' || normalized === 'PENDIENTE' || normalized === 'BORRADOR') {
+      return 'warning';
+    }
+    if (normalized === 'VENCIDO' || normalized === 'CANCELADO') {
+      return 'danger';
+    }
+    return 'info';
   }
 
-  updateProfile(): void {
+  protected updateProfile(): void {
     if (this.profileForm.invalid) {
       this.profileForm.markAllAsTouched();
       return;
@@ -615,22 +523,19 @@ export class TenantProfileComponent implements OnInit {
     this.updateSuccess.set(false);
     this.updateError.set(null);
 
-    // Simulación - reemplazar con llamada real al API
-    setTimeout(() => {
+    window.setTimeout(() => {
       this.isUpdating.set(false);
       this.updateSuccess.set(true);
       this.profileForm.markAsPristine();
 
-      setTimeout(() => {
-        this.updateSuccess.set(false);
-      }, 3000);
+      window.setTimeout(() => this.updateSuccess.set(false), 3000);
     }, 1000);
   }
 
-  resetProfileForm(): void {
+  protected resetProfileForm(): void {
     const user = this.authService.currentUser();
     if (user) {
-      this.profileForm.patchValue({
+      this.profileForm.reset({
         name: user.name,
         email: user.email,
         phone: user.phone || '',
@@ -641,7 +546,7 @@ export class TenantProfileComponent implements OnInit {
     this.updateError.set(null);
   }
 
-  updatePassword(): void {
+  protected updatePassword(): void {
     if (this.passwordForm.invalid) {
       this.passwordForm.markAllAsTouched();
       return;
@@ -651,19 +556,16 @@ export class TenantProfileComponent implements OnInit {
     this.passwordSuccess.set(false);
     this.passwordError.set(null);
 
-    // Simulación - reemplazar con llamada real al API
-    setTimeout(() => {
+    window.setTimeout(() => {
       this.isUpdatingPassword.set(false);
       this.passwordSuccess.set(true);
       this.passwordForm.reset();
 
-      setTimeout(() => {
-        this.passwordSuccess.set(false);
-      }, 3000);
+      window.setTimeout(() => this.passwordSuccess.set(false), 3000);
     }, 1000);
   }
 
-  resetPasswordForm(): void {
+  protected resetPasswordForm(): void {
     this.passwordForm.reset();
     this.passwordSuccess.set(false);
     this.passwordError.set(null);

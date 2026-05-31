@@ -50,10 +50,9 @@ export class TenantDocumentService {
           this.documentsSignal.set(parsedDocs);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadDocuments'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading documents:', error);
           return of([]);
         }),
       )
@@ -79,7 +78,6 @@ export class TenantDocumentService {
         );
       }),
       catchError((error) => {
-        console.error('Error loading document:', error);
         throw error;
       }),
     );

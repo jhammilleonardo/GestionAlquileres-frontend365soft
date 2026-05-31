@@ -1,20 +1,17 @@
 <div class="modal-overlay" (click)="closeModal()">
   <div class="modal-container large" (click)="$event.stopPropagation()">
-    <button class="close-btn" (click)="closeModal()">
-      <lucide-icon [img]="X" [size]="18"></lucide-icon>
-    </button>
+    <button class="close-btn" (click)="closeModal()">✕</button>
 
     <div class="modal-content no-padding">
       <div class="map-header">
         <div>
-          <h2 class="modal-title">Ubicación de la Propiedad</h2>
-          <p class="map-address" *ngIf="location">
-            {{ location.address }}
+          <h2 class="modal-title">{{ 'public.map.title' | transloco }}</h2>
+          <p class="map-address">
+            {{ location()?.address }}
           </p>
         </div>
         <button class="btn-external" (click)="openInNewTab()">
-          <lucide-icon [img]="Map" [size]="18" class="btn-icon-small"></lucide-icon>
-          Ver en Google Maps
+          🗺️ {{ 'public.map.openMap' | transloco }}
         </button>
       </div>
 
@@ -28,38 +25,36 @@
         ></iframe>
       </div>
 
-      <div class="map-info-panel" *ngIf="location">
-        <div class="info-item" *ngIf="location.address">
-          <span class="info-icon">
-            <lucide-icon [img]="MapPin" [size]="24"></lucide-icon>
-          </span>
+      <div class="map-info-panel">
+        <div class="info-item">
+          <span class="info-icon">📍</span>
           <div>
-            <div class="info-label">Dirección</div>
-            <div class="info-value">{{ location.address }}</div>
+            <div class="info-label">{{ 'common.address' | transloco }}</div>
+            <div class="info-value">{{ location()?.address }}</div>
           </div>
         </div>
 
-        <div class="info-item" *ngIf="location.city">
-          <span class="info-icon">
-            <lucide-icon [img]="Building2" [size]="24"></lucide-icon>
-          </span>
-          <div>
-            <div class="info-label">Ciudad</div>
-            <div class="info-value">
-              {{ location.city }}{{ location.state ? ', ' + location.state : '' }}
+        @if (location()?.city) {
+          <div class="info-item">
+            <span class="info-icon">🏙️</span>
+            <div>
+              <div class="info-label">{{ 'public.map.city' | transloco }}</div>
+              <div class="info-value">
+                {{ location()?.city }}{{ location()?.state ? ', ' + location()?.state : '' }}
+              </div>
             </div>
           </div>
-        </div>
+        }
 
-        <div class="info-item" *ngIf="location.zipCode">
-          <span class="info-icon">
-            <lucide-icon [img]="Mailbox" [size]="24"></lucide-icon>
-          </span>
-          <div>
-            <div class="info-label">Código Postal</div>
-            <div class="info-value">{{ location.zipCode }}</div>
+        @if (location()?.zipCode) {
+          <div class="info-item">
+            <span class="info-icon">📮</span>
+            <div>
+              <div class="info-label">{{ 'public.map.zipCode' | transloco }}</div>
+              <div class="info-value">{{ location()?.zipCode }}</div>
+            </div>
           </div>
-        </div>
+        }
       </div>
     </div>
   </div>

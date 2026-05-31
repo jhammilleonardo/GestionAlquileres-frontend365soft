@@ -1,632 +1,393 @@
-import { Component, input, output, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, input, output, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
-  FormGroup,
+  AbstractControl,
   FormArray,
   FormBuilder,
+  FormControl,
+  FormGroup,
   ReactiveFormsModule,
   Validators,
-  FormControl,
-  AbstractControl,
 } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatStepperModule } from '@angular/material/stepper';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { Briefcase, Building2, Plus, Trash2 } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import {
-  LucideAngularModule,
-  Building2,
-  Briefcase,
-  DollarSign,
-  Phone,
-  User,
-  MapPin,
-  Plus,
-  Trash2,
-  ArrowLeft,
-  ArrowRight,
-  Calendar,
-} from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
+  AppButtonComponent,
+  AppDatePickerComponent,
+  AppSelectComponent,
+  AppSelectOption,
+  AppTextFieldComponent,
+} from '../../../../shared/ui';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-step-2-employment-history',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule,
-    MatCardModule,
-    MatDividerModule,
-    MatStepperModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppDatePickerComponent,
+    AppSelectComponent,
+    AppTextFieldComponent,
   ],
   providers: [provideTranslocoScope('rentalApp')],
   template: `
-    <div class="step-content">
-      <div class="step-header">
+    <section class="step-content">
+      <header class="step-header">
         <h2>{{ 'rentalApp.step2Title' | transloco }}</h2>
         <p>{{ 'rentalApp.step2Subtitle' | transloco }}</p>
-      </div>
+      </header>
 
-      <!-- Employment Type -->
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'rentalApp.currentJob' | transloco }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="form-grid">
-            <div class="form-field full-width">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.company' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Building2" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [formControl]="getControl('current_job.company')"
-                  placeholder="Nombre de la empresa"
-                />
-                @if (
-                  form.get('current_job.company')?.hasError('required') &&
-                  form.get('current_job.company')?.touched
-                ) {
-                  <mat-error>{{ 'rentalApp.companyRequired' | transloco }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
+      <article class="section-card">
+        <header>
+          <lucide-icon [img]="Briefcase" [size]="20"></lucide-icon>
+          <h3>{{ 'rentalApp.currentJob' | transloco }}</h3>
+        </header>
 
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.positionField' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Briefcase" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [formControl]="getControl('current_job.position')"
-                  placeholder="Gerente, Desarrollador, etc."
-                />
-                @if (
-                  form.get('current_job.position')?.hasError('required') &&
-                  form.get('current_job.position')?.touched
-                ) {
-                  <mat-error>{{ 'rentalApp.positionRequired' | transloco }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.employmentTypeLabel' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Briefcase" [size]="20"></lucide-icon>
-                <mat-select [formControl]="getControl('current_job.employment_type')">
-                  <mat-option value="tiempo_completo">{{
-                    'rentalApp.employmentTypes.tiempo_completo' | transloco
-                  }}</mat-option>
-                  <mat-option value="medio_tiempo">{{
-                    'rentalApp.employmentTypes.medio_tiempo' | transloco
-                  }}</mat-option>
-                  <mat-option value="freelance">{{
-                    'rentalApp.employmentTypes.freelance' | transloco
-                  }}</mat-option>
-                  <mat-option value="autonomo">{{
-                    'rentalApp.employmentTypes.autonomo' | transloco
-                  }}</mat-option>
-                  <mat-option value="empresario">{{
-                    'rentalApp.employmentTypes.empresario' | transloco
-                  }}</mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.salary' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="DollarSign" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  type="number"
-                  [formControl]="getControl('current_job.salary')"
-                  placeholder="5000"
-                />
-                @if (
-                  form.get('current_job.salary')?.hasError('required') &&
-                  form.get('current_job.salary')?.touched
-                ) {
-                  <mat-error>{{ 'rentalApp.salaryRequired' | transloco }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.currency' | transloco }}</mat-label>
-                <mat-select [formControl]="getControl('current_job.currency')">
-                  <mat-option value="USD">USD - Dólar</mat-option>
-                  <mat-option value="EUR">EUR - Euro</mat-option>
-                  <mat-option value="GBP">GBP - Libra</mat-option>
-                  <mat-option value="MXN">MXN - Peso Mexicano</mat-option>
-                  <mat-option value="COP">COP - Peso Colombiano</mat-option>
-                  <mat-option value="ARS">ARS - Peso Argentino</mat-option>
-                </mat-select>
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.startDate' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [matDatepicker]="startDatePicker"
-                  [formControl]="getControl('current_job.start_date')"
-                  [max]="today"
-                  placeholder="DD/MM/YYYY"
-                />
-                <mat-datepicker-toggle matSuffix [for]="startDatePicker"></mat-datepicker-toggle>
-                <mat-datepicker
-                  #startDatePicker
-                  startView="multi-year"
-                  [startAt]="startAtDate"
-                ></mat-datepicker>
-                @if (
-                  form.get('current_job.start_date')?.hasError('required') &&
-                  form.get('current_job.start_date')?.touched
-                ) {
-                  <mat-error>{{ 'rentalApp.startDateRequired' | transloco }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-
-            <div class="form-field full-width">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.supervisorName' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="User" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [formControl]="getControl('current_job.supervisor_name')"
-                  placeholder="Nombre completo"
-                />
-                @if (
-                  form.get('current_job.supervisor_name')?.hasError('required') &&
-                  form.get('current_job.supervisor_name')?.touched
-                ) {
-                  <mat-error>{{ 'rentalApp.supervisorNameRequired' | transloco }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-
-            <div class="form-field full-width">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.supervisorPhone' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Phone" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  type="tel"
-                  [formControl]="getControl('current_job.supervisor_phone')"
-                  placeholder="+1 234 567 8900"
-                />
-                @if (
-                  form.get('current_job.supervisor_phone')?.hasError('required') &&
-                  form.get('current_job.supervisor_phone')?.touched
-                ) {
-                  <mat-error>{{ 'rentalApp.supervisorPhoneRequired' | transloco }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Previous Job (Optional) -->
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'rentalApp.previousJob' | transloco }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="form-grid">
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.previousCompany' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Building2" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [formControl]="getControl('previous_job.company')"
-                  placeholder="Nombre de la empresa"
-                />
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.previousPosition' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Briefcase" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [formControl]="getControl('previous_job.position')"
-                  placeholder="Puesto que ocupabas"
-                />
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.previousSalary' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="DollarSign" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  type="number"
-                  [formControl]="getControl('previous_job.salary')"
-                  placeholder="4000"
-                />
-              </mat-form-field>
-            </div>
-
-            <div class="form-field">
-              <mat-form-field appearance="outline" class="custom-field">
-                <mat-label>{{ 'rentalApp.previousEndDate' | transloco }}</mat-label>
-                <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
-                <input
-                  matInput
-                  [matDatepicker]="endDatePicker"
-                  [formControl]="getControl('previous_job.end_date')"
-                  [max]="today"
-                  placeholder="DD/MM/YYYY"
-                />
-                <mat-datepicker-toggle matSuffix [for]="endDatePicker"></mat-datepicker-toggle>
-                <mat-datepicker
-                  #endDatePicker
-                  startView="multi-year"
-                  [startAt]="startAtDate"
-                ></mat-datepicker>
-              </mat-form-field>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Rental History -->
-      <mat-card class="section-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'rentalApp.rentalHistory' | transloco }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="rental-history-list">
-            @for (history of rentalHistoryArray.controls; track history; let i = $index) {
-              <div class="history-item">
-                <div class="history-header">
-                  <h4>{{ 'rentalApp.rentalNumber' | transloco: { index: i + 1 } }}</h4>
-                  @if (rentalHistoryArray.length > 1) {
-                    <button mat-icon-button color="warn" (click)="removeRentalHistory(i)">
-                      <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
-                    </button>
-                  }
-                </div>
-                <div class="form-grid">
-                  <div class="form-field full-width">
-                    <mat-form-field appearance="outline" class="custom-field">
-                      <mat-label>{{ 'rentalApp.propertyAddress' | transloco }}</mat-label>
-                      <lucide-icon matPrefix [img]="MapPin" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        [formControl]="getHistoryControl(history, 'property_address')"
-                        placeholder="Calle, número, ciudad"
-                      />
-                      @if (
-                        history.get('property_address')?.hasError('required') &&
-                        history.get('property_address')?.touched
-                      ) {
-                        <mat-error>{{ 'rentalApp.propertyAddressRequired' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-field">
-                    <mat-form-field appearance="outline" class="custom-field">
-                      <mat-label>{{ 'rentalApp.landlordName' | transloco }}</mat-label>
-                      <lucide-icon matPrefix [img]="User" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        [formControl]="getHistoryControl(history, 'landlord_name')"
-                        placeholder="Nombre completo"
-                      />
-                      @if (
-                        history.get('landlord_name')?.hasError('required') &&
-                        history.get('landlord_name')?.touched
-                      ) {
-                        <mat-error>{{ 'rentalApp.landlordNameRequired' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-field">
-                    <mat-form-field appearance="outline" class="custom-field">
-                      <mat-label>{{ 'rentalApp.landlordPhone' | transloco }}</mat-label>
-                      <lucide-icon matPrefix [img]="Phone" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        type="tel"
-                        [formControl]="getHistoryControl(history, 'landlord_phone')"
-                        placeholder="+1 234 567 8900"
-                      />
-                      @if (
-                        history.get('landlord_phone')?.hasError('required') &&
-                        history.get('landlord_phone')?.touched
-                      ) {
-                        <mat-error>{{ 'rentalApp.landlordPhoneRequired' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-field">
-                    <mat-form-field appearance="outline" class="custom-field">
-                      <mat-label>{{ 'rentalApp.monthlyRent' | transloco }}</mat-label>
-                      <lucide-icon matPrefix [img]="DollarSign" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        type="number"
-                        [formControl]="getHistoryControl(history, 'monthly_rent')"
-                        placeholder="1500"
-                      />
-                      @if (
-                        history.get('monthly_rent')?.hasError('required') &&
-                        history.get('monthly_rent')?.touched
-                      ) {
-                        <mat-error>{{ 'rentalApp.monthlyRentRequired' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-field">
-                    <mat-form-field appearance="outline" class="custom-field">
-                      <mat-label>{{ 'rentalApp.rentalStartDate' | transloco }}</mat-label>
-                      <lucide-icon matPrefix [img]="Calendar" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        [matDatepicker]="rentStartPicker"
-                        [formControl]="getHistoryControl(history, 'start_date')"
-                        [max]="today"
-                        placeholder="DD/MM/YYYY"
-                      />
-                      <mat-datepicker-toggle
-                        matSuffix
-                        [for]="rentStartPicker"
-                      ></mat-datepicker-toggle>
-                      <mat-datepicker
-                        #rentStartPicker
-                        startView="multi-year"
-                        [startAt]="startAtDate"
-                      ></mat-datepicker>
-                      @if (
-                        history.get('start_date')?.hasError('required') &&
-                        history.get('start_date')?.touched
-                      ) {
-                        <mat-error>{{ 'rentalApp.rentalStartDateRequired' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
-                  </div>
-
-                  <div class="form-field full-width">
-                    <mat-form-field appearance="outline" class="custom-field">
-                      <mat-label>{{ 'rentalApp.moveReason' | transloco }}</mat-label>
-                      <input
-                        matInput
-                        [formControl]="getHistoryControl(history, 'reason_for_leaving')"
-                        placeholder="Por qué te mudaste"
-                      />
-                    </mat-form-field>
-                  </div>
-                </div>
-              </div>
+        <div class="form-grid">
+          <div class="full-width">
+            <app-text-field
+              [formControl]="getControl('current_job.company')"
+              [label]="'rentalApp.company' | transloco"
+              placeholder="Nombre de la empresa"
+            />
+            @if (hasError('current_job.company', 'required')) {
+              <p class="field-error">{{ 'rentalApp.companyRequired' | transloco }}</p>
             }
           </div>
 
-          <button mat-stroked-button color="primary" class="add-btn" (click)="addRentalHistory()">
-            <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
-            {{ 'rentalApp.addRental' | transloco }}
-          </button>
-        </mat-card-content>
-      </mat-card>
+          <div>
+            <app-text-field
+              [formControl]="getControl('current_job.position')"
+              [label]="'rentalApp.positionField' | transloco"
+              placeholder="Gerente, desarrollador, etc."
+            />
+            @if (hasError('current_job.position', 'required')) {
+              <p class="field-error">{{ 'rentalApp.positionRequired' | transloco }}</p>
+            }
+          </div>
 
-      <!-- Navigation -->
-      <div class="step-nav">
-        <button mat-stroked-button matStepperPrevious class="nav-btn">
-          <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
-          <span>{{ 'rentalApp.previous' | transloco }}</span>
-        </button>
-        <button
-          mat-raised-button
-          color="primary"
-          matStepperNext
-          class="nav-btn"
-          [disabled]="form.invalid"
-        >
-          <span>{{ 'rentalApp.next' | transloco }}</span>
-          <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
-        </button>
-      </div>
-    </div>
+          <app-select
+            [formControl]="getControl('current_job.employment_type')"
+            [label]="'rentalApp.employmentTypeLabel' | transloco"
+            [options]="employmentTypeOptions()"
+          />
+
+          <div>
+            <app-text-field
+              [formControl]="getControl('current_job.salary')"
+              type="number"
+              inputMode="decimal"
+              [label]="'rentalApp.salary' | transloco"
+              placeholder="5000"
+            />
+            @if (hasError('current_job.salary', 'required')) {
+              <p class="field-error">{{ 'rentalApp.salaryRequired' | transloco }}</p>
+            }
+          </div>
+
+          <app-select
+            [formControl]="getControl('current_job.currency')"
+            [label]="'rentalApp.currency' | transloco"
+            [options]="currencyOptions"
+          />
+
+          <div>
+            <app-date-picker
+              [formControl]="getControl('current_job.start_date')"
+              [label]="'rentalApp.startDate' | transloco"
+              [max]="today"
+            />
+            @if (hasError('current_job.start_date', 'required')) {
+              <p class="field-error">{{ 'rentalApp.startDateRequired' | transloco }}</p>
+            }
+          </div>
+
+          <div class="full-width">
+            <app-text-field
+              [formControl]="getControl('current_job.supervisor_name')"
+              [label]="'rentalApp.supervisorName' | transloco"
+              placeholder="Nombre completo"
+            />
+            @if (hasError('current_job.supervisor_name', 'required')) {
+              <p class="field-error">{{ 'rentalApp.supervisorNameRequired' | transloco }}</p>
+            }
+          </div>
+
+          <div class="full-width">
+            <app-text-field
+              [formControl]="getControl('current_job.supervisor_phone')"
+              type="tel"
+              [label]="'rentalApp.supervisorPhone' | transloco"
+              placeholder="+591 70000000"
+            />
+            @if (hasError('current_job.supervisor_phone', 'required')) {
+              <p class="field-error">{{ 'rentalApp.supervisorPhoneRequired' | transloco }}</p>
+            }
+          </div>
+        </div>
+      </article>
+
+      <article class="section-card">
+        <header>
+          <lucide-icon [img]="Building2" [size]="20"></lucide-icon>
+          <h3>{{ 'rentalApp.previousJob' | transloco }}</h3>
+        </header>
+
+        <div class="form-grid">
+          <app-text-field
+            [formControl]="getControl('previous_job.company')"
+            [label]="'rentalApp.previousCompany' | transloco"
+            placeholder="Nombre de la empresa"
+          />
+          <app-text-field
+            [formControl]="getControl('previous_job.position')"
+            [label]="'rentalApp.previousPosition' | transloco"
+            placeholder="Puesto que ocupabas"
+          />
+          <app-text-field
+            [formControl]="getControl('previous_job.salary')"
+            type="number"
+            inputMode="decimal"
+            [label]="'rentalApp.previousSalary' | transloco"
+            placeholder="4000"
+          />
+          <app-date-picker
+            [formControl]="getControl('previous_job.end_date')"
+            [label]="'rentalApp.previousEndDate' | transloco"
+            [max]="today"
+          />
+        </div>
+      </article>
+
+      <article class="section-card">
+        <header>
+          <h3>{{ 'rentalApp.rentalHistory' | transloco }}</h3>
+        </header>
+
+        <div class="rental-history-list">
+          @for (history of rentalHistoryArray.controls; track history; let i = $index) {
+            <section class="history-item">
+              <header>
+                <h4>{{ 'rentalApp.rentalNumber' | transloco: { index: i + 1 } }}</h4>
+                @if (rentalHistoryArray.length > 1) {
+                  <button
+                    class="icon-action"
+                    type="button"
+                    [attr.aria-label]="'rentalApp.removeRental' | transloco"
+                    (click)="removeRentalHistory(i)"
+                  >
+                    <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
+                  </button>
+                }
+              </header>
+
+              <div class="form-grid">
+                <div class="full-width">
+                  <app-text-field
+                    [formControl]="getHistoryControl(history, 'property_address')"
+                    [label]="'rentalApp.propertyAddress' | transloco"
+                    placeholder="Calle, numero, ciudad"
+                  />
+                  @if (hasHistoryError(history, 'property_address', 'required')) {
+                    <p class="field-error">{{ 'rentalApp.propertyAddressRequired' | transloco }}</p>
+                  }
+                </div>
+
+                <div>
+                  <app-text-field
+                    [formControl]="getHistoryControl(history, 'landlord_name')"
+                    [label]="'rentalApp.landlordName' | transloco"
+                    placeholder="Nombre completo"
+                  />
+                  @if (hasHistoryError(history, 'landlord_name', 'required')) {
+                    <p class="field-error">{{ 'rentalApp.landlordNameRequired' | transloco }}</p>
+                  }
+                </div>
+
+                <div>
+                  <app-text-field
+                    [formControl]="getHistoryControl(history, 'landlord_phone')"
+                    type="tel"
+                    [label]="'rentalApp.landlordPhone' | transloco"
+                    placeholder="+591 70000000"
+                  />
+                  @if (hasHistoryError(history, 'landlord_phone', 'required')) {
+                    <p class="field-error">{{ 'rentalApp.landlordPhoneRequired' | transloco }}</p>
+                  }
+                </div>
+
+                <div>
+                  <app-text-field
+                    [formControl]="getHistoryControl(history, 'monthly_rent')"
+                    type="number"
+                    inputMode="decimal"
+                    [label]="'rentalApp.monthlyRent' | transloco"
+                    placeholder="1500"
+                  />
+                  @if (hasHistoryError(history, 'monthly_rent', 'required')) {
+                    <p class="field-error">{{ 'rentalApp.monthlyRentRequired' | transloco }}</p>
+                  }
+                </div>
+
+                <div>
+                  <app-date-picker
+                    [formControl]="getHistoryControl(history, 'start_date')"
+                    [label]="'rentalApp.rentalStartDate' | transloco"
+                    [max]="today"
+                  />
+                  @if (hasHistoryError(history, 'start_date', 'required')) {
+                    <p class="field-error">{{ 'rentalApp.rentalStartDateRequired' | transloco }}</p>
+                  }
+                </div>
+
+                <div class="full-width">
+                  <app-text-field
+                    [formControl]="getHistoryControl(history, 'reason_for_leaving')"
+                    [label]="'rentalApp.moveReason' | transloco"
+                    placeholder="Por que te mudaste"
+                  />
+                </div>
+              </div>
+            </section>
+          }
+        </div>
+
+        <app-button appearance="outline" [fullWidth]="true" (clicked)="addRentalHistory()">
+          <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+          {{ 'rentalApp.addRental' | transloco }}
+        </app-button>
+      </article>
+    </section>
   `,
-  styles: [
-    `
-      .step-content {
-        padding: 24px 0;
-      }
+  styles: `
+    .step-content {
+      display: grid;
+      gap: var(--app-space-5);
+    }
 
-      .step-header {
-        margin-bottom: 32px;
-        text-align: center;
-      }
+    .step-header {
+      text-align: center;
+    }
 
-      .step-header h2 {
-        margin: 0 0 8px;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--mat-sys-on-surface);
-      }
+    .step-header h2,
+    .step-header p,
+    .section-card h3,
+    .history-item h4 {
+      margin: 0;
+    }
 
-      .step-header p {
-        margin: 0;
-        font-size: 1rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
+    .step-header h2 {
+      color: var(--app-color-text);
+      font-size: 1.35rem;
+      font-weight: 820;
+    }
 
-      .section-card {
-        margin-bottom: 24px;
-        border: 1px solid var(--mat-sys-outline-variant);
-      }
+    .step-header p {
+      margin-block-start: var(--app-space-1);
+      color: var(--app-color-text-muted);
+    }
 
-      .section-card mat-card-header {
-        padding: 16px 24px;
-        background: var(--mat-sys-surface-container-low);
-      }
+    .section-card,
+    .history-item {
+      display: grid;
+      gap: var(--app-space-4);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      padding: var(--app-space-4);
+    }
 
-      .section-card mat-card-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
-      }
+    .section-card > header,
+    .history-item > header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+      color: var(--app-color-text);
+    }
 
-      .section-card mat-card-content {
-        padding: 24px;
-      }
+    .section-card h3 {
+      font-size: 1rem;
+      font-weight: 800;
+    }
 
+    .history-item {
+      background: var(--app-color-surface-muted);
+    }
+
+    .history-item h4 {
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--app-space-4);
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .rental-history-list {
+      display: grid;
+      gap: var(--app-space-4);
+    }
+
+    .icon-action {
+      display: inline-grid;
+      place-items: center;
+      inline-size: 2rem;
+      block-size: 2rem;
+      border: 0;
+      border-radius: 999px;
+      background: var(--tui-status-negative-pale);
+      color: var(--tui-status-negative);
+      cursor: pointer;
+    }
+
+    .field-error {
+      margin: var(--app-space-1) 0 0;
+      color: var(--tui-status-negative);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
       .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
+        grid-template-columns: 1fr;
       }
-
-      .form-field {
-        width: 100%;
-      }
-
-      .form-field.full-width {
-        grid-column: 1 / -1;
-      }
-
-      .custom-field {
-        width: 100%;
-      }
-
-      .rental-history-list {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        margin-bottom: 16px;
-      }
-
-      .history-item {
-        padding: 16px;
-        background: var(--mat-sys-surface-container-low);
-        border-radius: 8px;
-        border: 1px solid var(--mat-sys-outline-variant);
-      }
-
-      .history-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-      }
-
-      .history-header h4 {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
-      }
-
-      .add-btn {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        height: 48px;
-        font-weight: 600;
-        border-radius: 8px;
-      }
-
-      .step-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 24px;
-        padding-top: 16px;
-        border-top: 1px solid var(--mat-sys-outline-variant);
-      }
-
-      .nav-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        height: 44px;
-        padding: 0 24px;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-      }
-
-      @media (max-width: 768px) {
-        .form-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .step-content {
-          padding: 16px 0;
-        }
-
-        .section-card mat-card-content {
-          padding: 16px;
-        }
-      }
-    `,
-  ],
+    }
+  `,
 })
 export class Step2EmploymentHistoryComponent implements OnInit {
-  readonly Building2 = Building2;
-  readonly Briefcase = Briefcase;
-  readonly DollarSign = DollarSign;
-  readonly Phone = Phone;
-  readonly User = User;
-  readonly MapPin = MapPin;
-  readonly Plus = Plus;
-  readonly Trash2 = Trash2;
-  readonly ArrowLeft = ArrowLeft;
-  readonly ArrowRight = ArrowRight;
-  readonly Calendar = Calendar;
+  protected readonly Building2 = Building2;
+  protected readonly Briefcase = Briefcase;
+  protected readonly Plus = Plus;
+  protected readonly Trash2 = Trash2;
 
-  // Datepicker constraints
-  today = new Date();
-  startAtDate = new Date(2015, 0, 1);
+  readonly formGroup = input.required<FormGroup>();
+  readonly isValid = output<boolean>();
 
-  formGroup = input.required<FormGroup>();
-  isValid = output<boolean>();
-  private fb = inject(FormBuilder);
+  private readonly fb = inject(FormBuilder);
+  private readonly translocoService = inject(TranslocoService);
 
-  // Computed property para acceder al formGroup sin paréntesis en el template
+  protected readonly today = new Date().toISOString().slice(0, 10);
+  protected readonly currencyOptions: readonly AppSelectOption<string>[] = [
+    { label: 'USD - Dolar', value: 'USD' },
+    { label: 'BOB - Boliviano', value: 'BOB' },
+    { label: 'EUR - Euro', value: 'EUR' },
+    { label: 'MXN - Peso Mexicano', value: 'MXN' },
+    { label: 'COP - Peso Colombiano', value: 'COP' },
+    { label: 'ARS - Peso Argentino', value: 'ARS' },
+  ];
+
   get form(): FormGroup {
     return this.formGroup();
-  }
-
-  // Helper para obtener controles de forma segura
-  getControl(path: string): FormControl {
-    return this.form.get(path) as FormControl;
-  }
-
-  // Helper para obtener controles del historial de alquiler
-  getHistoryControl(history: AbstractControl, path: string): FormControl {
-    return (history as FormGroup).get(path) as FormControl;
   }
 
   get rentalHistoryArray(): FormArray {
@@ -634,18 +395,42 @@ export class Step2EmploymentHistoryComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Add one rental history item by default
     if (this.rentalHistoryArray.length === 0) {
       this.addRentalHistory();
     }
 
-    // Emit validation status on form changes
-    this.form.valueChanges.subscribe(() => {
-      this.isValid.emit(this.form.valid);
-    });
+    this.isValid.emit(this.form.valid);
+    this.form.valueChanges.subscribe(() => this.isValid.emit(this.form.valid));
   }
 
-  addRentalHistory(): void {
+  protected getControl(path: string): FormControl {
+    return this.form.get(path) as FormControl;
+  }
+
+  protected getHistoryControl(history: AbstractControl, path: string): FormControl {
+    return (history as FormGroup).get(path) as FormControl;
+  }
+
+  protected hasError(path: string, error: string): boolean {
+    const control = this.form.get(path);
+    return Boolean(control?.hasError(error) && control.touched);
+  }
+
+  protected hasHistoryError(history: AbstractControl, path: string, error: string): boolean {
+    const control = (history as FormGroup).get(path);
+    return Boolean(control?.hasError(error) && control.touched);
+  }
+
+  protected employmentTypeOptions(): readonly AppSelectOption<string>[] {
+    return ['tiempo_completo', 'medio_tiempo', 'freelance', 'autonomo', 'empresario'].map(
+      (type) => ({
+        value: type,
+        label: this.translocoService.translate(`rentalApp.employmentTypes.${type}`),
+      }),
+    );
+  }
+
+  protected addRentalHistory(): void {
     const historyForm = this.fb.group({
       property_address: ['', Validators.required],
       landlord_name: ['', Validators.required],
@@ -659,7 +444,7 @@ export class Step2EmploymentHistoryComponent implements OnInit {
     this.rentalHistoryArray.push(historyForm);
   }
 
-  removeRentalHistory(index: number): void {
+  protected removeRentalHistory(index: number): void {
     this.rentalHistoryArray.removeAt(index);
   }
 }

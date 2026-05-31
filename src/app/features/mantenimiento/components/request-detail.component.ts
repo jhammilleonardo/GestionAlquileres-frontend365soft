@@ -1,26 +1,19 @@
 import {
   Component,
-  Inject,
-  inject,
-  signal,
-  OnInit,
-  OnDestroy,
-  ViewChild,
+  DestroyRef,
   ElementRef,
+  ViewChild,
+  inject,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '../../../../environments/environment';
-import { interval, Subscription } from 'rxjs';
-import { CommonModule } from '@angular/common';
+import { interval } from 'rxjs';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import {
   LucideAngularModule,
   X,
@@ -39,6 +32,8 @@ import {
   FileText,
   Paperclip,
   Image,
+  Star,
+  type LucideIconData,
 } from 'lucide-angular';
 import {
   MaintenanceRequest,
@@ -51,23 +46,31 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { MaintenanceService } from '../../../core/services/admin/maintenance.service';
+import { VendorService } from '../../../core/services/admin/vendor.service';
+import { Vendor } from '../../../core/models/vendor.model';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppCheckboxComponent } from '../../../shared/ui/checkbox/checkbox.component';
+import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
+import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
+import { AppDialogComponent } from '../../../shared/ui/dialog/dialog.component';
+import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
+import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-request-detail',
   standalone: true,
   imports: [
-    CommonModule,
+    NgClass,
     FormsModule,
-    MatDialogModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatInputModule,
-    MatDividerModule,
-    MatChipsModule,
-    MatCheckboxModule,
-    MatProgressSpinnerModule,
+    AppButtonComponent,
+    AppCheckboxComponent,
+    AppDatePickerComponent,
+    AppDialogComponent,
+    AppLoadingStateComponent,
+    AppSelectComponent,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
@@ -76,7 +79,12 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
   templateUrl: './request-detail.component.html',
   styleUrl: './request-detail.component.scss',
 })
-export class RequestDetailComponent implements OnInit, OnDestroy {
+export class RequestDetailComponent {
+  readonly initialRequest = input.required<MaintenanceRequest>();
+  readonly closed = output<void>();
+  readonly changed = output<MaintenanceRequest>();
+  readonly deleted = output<void>();
+
   @ViewChild('msgContainer') msgContainer!: ElementRef;
   @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
 
@@ -97,6 +105,8 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
   readonly ArrowLeft = ArrowLeft;
   readonly Settings = Settings;
   readonly FileText = FileText;
+  readonly Star = Star;
+  readonly stars = [1, 2, 3, 4, 5];
 
   // Enums
   MaintenanceStatus = MaintenanceStatus;
@@ -104,9 +114,11 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
   MaintenanceCategory = MaintenanceCategory;
 
   private transloco = inject(TranslocoService);
+  private confirmDialog = inject(ConfirmDialogService);
+  private toast = inject(ToastService);
 
   // State
-  request: MaintenanceRequest;
+  request!: MaintenanceRequest;
   messages = signal<MaintenanceMessage[]>([]);
   newMessage = signal('');
   isInternalNote = signal(false);
@@ -119,8 +131,9 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
   firstUnreadMessageId = 0;
   unreadCountFromHere = 0;
 
+  private readonly destroyRef = inject(DestroyRef);
+
   // Polling
-  private pollingSub: Subscription | null = null;
   private lastMessageId = 0;
   newMessagesCount = signal(0);
   pollingNewFromId = signal(0);
@@ -133,6 +146,25 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
     { id: 4, name: 'Control Plagas Pro' },
     { id: 5, name: 'Ana Plomera' },
   ];
+
+  readonly statusOptions: AppSelectOption<MaintenanceStatus>[] = Object.values(
+    MaintenanceStatus,
+  ).map((value) => ({
+    value,
+    label: this.transloco.translate(`maintenance.status.${value}`),
+  }));
+
+  readonly priorityOptions: AppSelectOption<MaintenancePriority>[] = Object.values(
+    MaintenancePriority,
+  ).map((value) => ({
+    value,
+    label: this.transloco.translate(`maintenance.priority.${value}`),
+  }));
+
+  readonly staffOptions: AppSelectOption<number>[] = this.staffMembers.map((staff) => ({
+    value: staff.id,
+    label: staff.name,
+  }));
 
   // Getter/setter for the date input (HTML date inputs require YYYY-MM-DD strings)
   get dueDateString(): string {
@@ -154,16 +186,40 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
     }
   }
 
-  constructor(
-    public dialogRef: MatDialogRef<RequestDetailComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { request: MaintenanceRequest },
-    private maintenanceService: MaintenanceService,
-  ) {
-    this.request = { ...data.request };
+  private readonly maintenanceService = inject(MaintenanceService);
+  private readonly vendorService = inject(VendorService);
+
+  // Proveedores externos para asignación
+  readonly vendors = signal<Vendor[]>([]);
+  readonly vendorOptions = signal<AppSelectOption<number>[]>([]);
+
+  // Modal de calificación del proveedor al cerrar la orden
+  readonly ratingDialogOpen = signal(false);
+  readonly ratingValue = signal(0);
+  readonly ratingComment = signal('');
+  readonly ratingSaving = signal(false);
+
+  constructor() {
+    queueMicrotask(() => {
+      this.request = { ...this.initialRequest() };
+      this.loadMessages();
+    });
+    this.loadVendors();
   }
 
-  ngOnInit(): void {
-    this.loadMessages();
+  private loadVendors(): void {
+    this.vendorService.list().subscribe({
+      next: (vendors) => {
+        this.vendors.set(vendors);
+        this.vendorOptions.set(
+          vendors.map((v) => ({
+            value: v.id,
+            label: `${v.name} · ${this.transloco.translate('vendors.specialty.' + v.specialty)}`,
+          })),
+        );
+      },
+      error: () => this.vendorOptions.set([]),
+    });
   }
 
   private scrollToBottom(): void {
@@ -180,33 +236,34 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
   }
 
   private startPolling(): void {
-    this.pollingSub?.unsubscribe();
     const requestId = this.request.id;
-    this.pollingSub = interval(5000).subscribe(() => {
-      if (document.hidden) return;
-      this.maintenanceService.getMessages(requestId).subscribe({
-        next: (messages) => {
-          const newLastId = messages.length > 0 ? messages[messages.length - 1].id : 0;
-          if (newLastId !== this.lastMessageId) {
-            const oldLastId = this.lastMessageId;
-            const incoming = messages.length - this.messages().length;
-            this.lastMessageId = newLastId;
-            const atBottom = this.isNearBottom();
-            const firstNew = messages.find((m) => m.id > oldLastId);
-            if (firstNew) this.pollingNewFromId.set(firstNew.id);
-            this.messages.set(messages);
-            if (atBottom) {
-              this.scrollToBottom();
-              this.newMessagesCount.set(0);
-              setTimeout(() => this.pollingNewFromId.set(0), 2000);
-            } else {
-              this.newMessagesCount.update((c) => c + (incoming > 0 ? incoming : 1));
+    interval(5000)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (document.hidden) return;
+        this.maintenanceService.getMessages(requestId).subscribe({
+          next: (messages) => {
+            const newLastId = messages.length > 0 ? messages[messages.length - 1].id : 0;
+            if (newLastId !== this.lastMessageId) {
+              const oldLastId = this.lastMessageId;
+              const incoming = messages.length - this.messages().length;
+              this.lastMessageId = newLastId;
+              const atBottom = this.isNearBottom();
+              const firstNew = messages.find((m) => m.id > oldLastId);
+              if (firstNew) this.pollingNewFromId.set(firstNew.id);
+              this.messages.set(messages);
+              if (atBottom) {
+                this.scrollToBottom();
+                this.newMessagesCount.set(0);
+                setTimeout(() => this.pollingNewFromId.set(0), 2000);
+              } else {
+                this.newMessagesCount.update((c) => c + (incoming > 0 ? incoming : 1));
+              }
             }
-          }
-        },
-        error: () => {},
+          },
+          error: () => undefined,
+        });
       });
-    });
   }
 
   isFirstPollingNew(msg: MaintenanceMessage): boolean {
@@ -225,10 +282,6 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
       this.newMessagesCount.set(0);
       this.pollingNewFromId.set(0);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.pollingSub?.unsubscribe();
   }
 
   private getLastReadId(): number {
@@ -270,15 +323,15 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
         this.scrollToBottom();
         this.startPolling();
       },
-      error: (error) => {
-        console.error('Error loading messages:', error);
+      error: () => {
+        this.toast.error(this.transloco.translate('maintenance.errorLoadMessages'));
         this.isLoadingMessages.set(false);
       },
     });
   }
 
   close(): void {
-    this.dialogRef.close();
+    this.closed.emit();
   }
 
   save(): void {
@@ -294,30 +347,47 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (updated) => {
-          this.request = updated;
+          this.request = { ...this.request, ...updated };
           this.isUpdating.set(false);
-          this.dialogRef.close(this.request);
+          this.changed.emit(this.request);
+          // Al cerrar una orden asignada a un proveedor externo aún sin calificar,
+          // pedimos la calificación antes de salir.
+          if (this.shouldPromptRating()) {
+            this.openRatingDialog();
+          } else {
+            this.closed.emit();
+          }
         },
-        error: (error) => {
-          console.error('Error updating request:', error);
-          alert('Error al actualizar la solicitud');
+        error: () => {
+          this.toast.error(this.transloco.translate('maintenance.errorUpdateRequest'));
           this.isUpdating.set(false);
         },
       });
   }
 
-  delete(): void {
-    if (confirm(`¿Estás seguro de eliminar la solicitud "${this.request.title}"?`)) {
-      this.maintenanceService.deleteRequest(this.request.id).subscribe({
-        next: () => {
-          this.dialogRef.close({ deleted: true });
-        },
-        error: (error) => {
-          console.error('Error deleting request:', error);
-          alert('Error al eliminar la solicitud');
-        },
-      });
+  async delete(): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.transloco.translate('common.delete'),
+      message: this.transloco.translate('maintenance.confirmDeleteRequest', {
+        title: this.request.title,
+      }),
+      confirmLabel: this.transloco.translate('common.delete'),
+      cancelLabel: this.transloco.translate('common.cancel'),
+      variant: 'danger',
+    });
+
+    if (!confirmed) {
+      return;
     }
+
+    this.maintenanceService.deleteRequest(this.request.id).subscribe({
+      next: () => {
+        this.deleted.emit();
+      },
+      error: () => {
+        this.toast.error(this.transloco.translate('maintenance.errorDeleteRequest'));
+      },
+    });
   }
 
   onFileSelected(event: Event): void {
@@ -364,7 +434,7 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
           this.scrollToBottom();
         },
         error: () => {
-          alert('Error al enviar el mensaje');
+          this.toast.error(this.transloco.translate('maintenance.errorSendMessage'));
           this.isSendingMessage.set(false);
         },
       });
@@ -374,7 +444,7 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
       this.maintenanceService.uploadFiles(this.request.id, this.selectedFiles()).subscribe({
         next: (attachments) => send(attachments.map((a) => a.file_url)),
         error: () => {
-          alert('Error al subir los archivos');
+          this.toast.error(this.transloco.translate('maintenance.errorUploadFiles'));
           this.isSendingMessage.set(false);
         },
       });
@@ -394,6 +464,83 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
       return;
     }
     this.request.assigned_to = staffId;
+    // Asignar técnico interno excluye al proveedor externo
+    if (this.request.vendor_id) {
+      this.request.vendor_id = null;
+      this.request.vendor_name = null;
+    }
+  }
+
+  getVendorName(vendorId: number): string {
+    return this.vendors().find((v) => v.id === vendorId)?.name ?? `Proveedor #${vendorId}`;
+  }
+
+  onVendorAssignment(vendorId: number | null): void {
+    if (!vendorId) return;
+    this.maintenanceService.assignVendor(this.request.id, { vendor_id: vendorId }).subscribe({
+      next: (updated) => {
+        this.request = { ...this.request, ...updated };
+        // Proveedor externo excluye al técnico interno
+        this.request.assigned_to = null;
+        this.request.vendor_id = vendorId;
+        this.request.vendor_name = this.getVendorName(vendorId);
+        this.changed.emit(this.request);
+        this.toast.success(
+          this.transloco.translate('maintenance.vendorAssigned', {
+            name: this.getVendorName(vendorId),
+          }),
+        );
+      },
+      error: () => this.toast.error(this.transloco.translate('maintenance.errorUpdateRequest')),
+    });
+  }
+
+  private shouldPromptRating(): boolean {
+    return (
+      this.request.status === MaintenanceStatus.COMPLETED &&
+      !!this.request.vendor_id &&
+      !this.request.vendor_rating
+    );
+  }
+
+  openRatingDialog(): void {
+    this.ratingValue.set(0);
+    this.ratingComment.set('');
+    this.ratingDialogOpen.set(true);
+  }
+
+  setRating(value: number): void {
+    this.ratingValue.set(value);
+  }
+
+  closeRatingDialog(): void {
+    this.ratingDialogOpen.set(false);
+    this.closed.emit();
+  }
+
+  submitRating(): void {
+    if (this.ratingValue() < 1) {
+      this.toast.error(this.transloco.translate('maintenance.ratingRequired'));
+      return;
+    }
+    this.ratingSaving.set(true);
+    this.maintenanceService
+      .rateVendor(this.request.id, {
+        rating: this.ratingValue(),
+        comment: this.ratingComment().trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.ratingSaving.set(false);
+          this.ratingDialogOpen.set(false);
+          this.toast.success(this.transloco.translate('maintenance.ratingSaved'));
+          this.closed.emit();
+        },
+        error: () => {
+          this.ratingSaving.set(false);
+          this.toast.error(this.transloco.translate('maintenance.ratingError'));
+        },
+      });
   }
 
   updateStatus(status: MaintenanceStatus): void {
@@ -465,7 +612,7 @@ export class RequestDetailComponent implements OnInit, OnDestroy {
     return 'Tú (Admin)';
   }
 
-  getMessageIcon(message: MaintenanceMessage): any {
+  getMessageIcon(message: MaintenanceMessage): LucideIconData {
     return this.isMessageInternal(message) ? this.Lock : this.MessageSquare;
   }
 }

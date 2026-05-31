@@ -33,7 +33,14 @@
   "status": {
     "BORRADOR": "Borrador",
     "ACTIVO": "Activo",
-    "FINALIZADO": "Finalizado"
+    "FINALIZADO": "Finalizado",
+    "PENDIENTE": "Pendiente",
+    "FIRMADO": "Firmado",
+    "POR_VENCER": "Por vencer",
+    "VENCIDO": "Vencido",
+    "RENOVADO": "Renovado",
+    "CANCELADO": "Cancelado",
+    "SUSPENDIDO": "Suspendido"
   },
   "edit": {
     "titlePrefix": "Editar Contrato",
@@ -116,7 +123,9 @@
     "confirmFinalize": "¿Deseas finalizar el contrato {{number}}? Esta acción pasará el contrato a estado Finalizado.",
     "finalizedReason": "Finalizado por el administrador",
     "finalizedSuccess": "Contrato finalizado exitosamente",
-    "finalizeError": "Error al finalizar el contrato"
+    "finalizeError": "Error al finalizar el contrato",
+    "historyTitle": "Historial de renovaciones",
+    "historyCurrent": "Actual"
   },
   "create": {
     "back": "Volver a Contratos",

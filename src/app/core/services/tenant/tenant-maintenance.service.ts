@@ -112,7 +112,6 @@ export class TenantMaintenanceService {
       })
       .pipe(
         catchError((error) => {
-          console.error('Error loading stats:', error);
           throw error;
         }),
       )

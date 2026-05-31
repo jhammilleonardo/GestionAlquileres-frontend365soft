@@ -1,0 +1,43 @@
+<div class="stats-grid">
+  <div class="stat-card total">
+    <div class="stat-icon">
+      <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
+    </div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats().total_payments }}</div>
+      <div class="stat-label">{{ 'payments.total' | transloco }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card pending">
+    <div class="stat-icon">
+      <lucide-icon [img]="AlertCircle" [size]="24"></lucide-icon>
+    </div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats().total_pending }}</div>
+      <div class="stat-label">{{ 'payments.pending' | transloco }}</div>
+      <div class="stat-amount">{{ formatCurrency(stats().total_amount_pending) }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card approved">
+    <div class="stat-icon">
+      <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
+    </div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats().total_approved }}</div>
+      <div class="stat-label">{{ 'payments.approved' | transloco }}</div>
+      <div class="stat-amount">{{ formatCurrency(stats().total_amount_approved) }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card rejected">
+    <div class="stat-icon">
+      <lucide-icon [img]="XCircle" [size]="24"></lucide-icon>
+    </div>
+    <div class="stat-content">
+      <div class="stat-value">{{ stats().total_rejected }}</div>
+      <div class="stat-label">{{ 'payments.rejected' | transloco }}</div>
+    </div>
+  </div>
+</div>

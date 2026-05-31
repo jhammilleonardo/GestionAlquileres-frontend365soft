@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
-import { ApiHttpService } from '../api-http.service';
+import { Observable, tap, catchError, of, map } from 'rxjs';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
-import { AuthService } from '../auth.service';
 import { TranslocoService } from '@jsverse/transloco';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
   Contract,
   ContractDashboard,
@@ -27,10 +27,10 @@ export interface PdfUrlResponse {
   providedIn: 'root',
 })
 export class AdminContractService {
-  private apiHttp = inject(ApiHttpService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
-  private authService = inject(AuthService);
   private transloco = inject(TranslocoService);
+  private toast = inject(ToastService);
 
   // Signals para estado reactivo
   private contractsSignal = signal<Contract[]>([]);
@@ -54,16 +54,6 @@ export class AdminContractService {
   }
 
   /**
-   * Obtener headers con autenticación
-   */
-  private get headers() {
-    const token = this.authService.getToken();
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
-  /**
    * Cargar métricas del dashboard
    */
   loadDashboard(): void {
@@ -74,17 +64,16 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint('admin/contracts/dashboard');
 
-    this.apiHttp
-      .get<ContractDashboard>(endpoint, {}, this.headers)
+    this.apiClient
+      .get<ContractDashboard>(endpoint)
       .pipe(
         tap((dashboard) => {
           this.dashboardSignal.set(dashboard);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadMetrics'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading dashboard:', error);
           return of(null);
         }),
       )
@@ -101,24 +90,23 @@ export class AdminContractService {
     this.errorSignal.set(null);
 
     const endpoint = this.slugService.buildApiEndpoint('admin/contracts');
-    const params: any = {};
+    const params: Record<string, string | number> = {};
 
-    if (filters?.status) params.status = filters.status;
-    if (filters?.tenant_id) params.tenant_id = filters.tenant_id;
-    if (filters?.property_id) params.property_id = filters.property_id;
+    if (filters?.status) params['status'] = filters.status;
+    if (filters?.tenant_id) params['tenant_id'] = filters.tenant_id;
+    if (filters?.property_id) params['property_id'] = filters.property_id;
 
-    this.apiHttp
-      .get<Contract[]>(endpoint, params, this.headers)
+    this.apiClient
+      .get<Contract[]>(endpoint, { params })
       .pipe(
         tap((contracts) => {
           const processedContracts = contracts.map((c) => this.processContract(c));
           this.contractsSignal.set(processedContracts);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadContracts'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading contracts:', error);
           return of([]);
         }),
       )
@@ -135,7 +123,7 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint(`admin/contracts/${id}`);
 
-    return this.apiHttp.get<Contract>(endpoint, {}, this.headers).pipe(
+    return this.apiClient.get<Contract>(endpoint).pipe(
       tap((contract) => {
         const processedContract = this.processContract(contract);
         this.currentContractSignal.set(processedContract);
@@ -147,7 +135,6 @@ export class AdminContractService {
       }),
       catchError((error) => {
         this.errorSignal.set(this.transloco.translate('common.errors.loadContract'));
-        console.error('Error getting contract:', error);
         throw error;
       }),
     );
@@ -166,7 +153,7 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint('admin/contracts');
 
-    return this.apiHttp.post<Contract>(endpoint, data, this.headers).pipe(
+    return this.apiClient.post<Contract>(endpoint, data).pipe(
       tap((contract) => {
         const processedContract = this.processContract(contract);
 
@@ -198,7 +185,7 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint(`admin/contracts/${id}`);
 
-    return this.apiHttp.patch<Contract>(endpoint, data, this.headers).pipe(
+    return this.apiClient.patch<Contract>(endpoint, data).pipe(
       tap((contract) => {
         const processedContract = this.processContract(contract);
 
@@ -237,7 +224,7 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint(`admin/contracts/${id}/status`);
 
-    return this.apiHttp.patch<Contract>(endpoint, statusData, this.headers).pipe(
+    return this.apiClient.patch<Contract>(endpoint, statusData).pipe(
       tap((contract) => {
         const processedContract = this.processContract(contract);
 
@@ -276,7 +263,7 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint(`admin/contracts/${id}/renew`);
 
-    return this.apiHttp.post<RenewContractResponse>(endpoint, {}, this.headers).pipe(
+    return this.apiClient.post<RenewContractResponse>(endpoint, {}).pipe(
       tap((response) => {
         // Crear un objeto Contract a partir de la respuesta
         const newContract: Contract = {
@@ -308,6 +295,22 @@ export class AdminContractService {
   }
 
   /**
+   * Historial cronológico de renovaciones de un contrato (cadena de la unidad)
+   */
+  getContractHistory(id: number): Observable<Contract[]> {
+    if (!this.slug) {
+      return of([]);
+    }
+
+    const endpoint = this.slugService.buildApiEndpoint(`admin/contracts/${id}/history`);
+
+    return this.apiClient.get<Contract[]>(endpoint).pipe(
+      map((contracts) => contracts.map((contract) => this.processContract(contract))),
+      catchError(() => of([])),
+    );
+  }
+
+  /**
    * Generar y obtener la URL del PDF de un contrato
    */
   generatePdfUrl(id: number): Observable<PdfUrlResponse> {
@@ -317,7 +320,7 @@ export class AdminContractService {
 
     const endpoint = this.slugService.buildApiEndpoint(`admin/contracts/${id}/pdf-url`);
 
-    return this.apiHttp.get<PdfUrlResponse>(endpoint, {}, this.headers);
+    return this.apiClient.get<PdfUrlResponse>(endpoint);
   }
 
   /**
@@ -333,9 +336,8 @@ export class AdminContractService {
         // Abrir el PDF en una nueva pestaña para visualización
         window.open(response.fullUrl, '_blank');
       },
-      error: (error) => {
-        console.error('Error generating PDF:', error);
-        alert('Error al generar el PDF');
+      error: (_e) => {
+        this.toast.error(this.transloco.translate('common.errors.generatePdf'));
       },
     });
   }

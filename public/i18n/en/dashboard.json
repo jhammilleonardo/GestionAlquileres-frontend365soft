@@ -2,5 +2,20 @@
   "title": "Dashboard",
   "welcome": "Welcome to the rental management system",
   "viewPublicPortal": "View Public Property Portal",
-  "accessDenied": "You don't have permission to access that section. Contact your administrator."
+  "accessDenied": "You don't have permission to access that section. Contact your administrator.",
+  "occupancyRate": "Occupancy rate",
+  "monthlyIncome": "Monthly income",
+  "pendingPayments": "Pending payments",
+  "activeMaintenance": "Active maintenance",
+  "expiringContracts": "Expiring contracts",
+  "availableProperties": "Available properties",
+  "refresh": "Refresh",
+  "loading": "Loading metrics...",
+  "units": "units",
+  "vsPrevMonth": "vs last month",
+  "delinquent": "delinquent",
+  "pendingReview": "To review",
+  "upToDate": "Up to date",
+  "withRequests": "With requests",
+  "next30Days": "Next 30 days"
 }

@@ -1,0 +1,230 @@
+<div class="vendors-page">
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'vendors.title' | transloco"
+    [description]="'vendors.subtitle' | transloco"
+  >
+    <app-button actions (clicked)="openCreate()">
+      <lucide-icon [img]="Plus" [size]="16" />
+      {{ 'vendors.new' | transloco }}
+    </app-button>
+  </app-page-header>
+
+  <div class="vendors-toolbar">
+    <app-select
+      [options]="specialtyFilterOptions"
+      [ariaLabel]="'vendors.filterBySpecialty' | transloco"
+      [placeholder]="'vendors.allSpecialties' | transloco"
+      (valueChanged)="onSpecialtyFilter($event ?? '')"
+    />
+  </div>
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'vendors.loading' | transloco" />
+  } @else if (filteredVendors().length === 0) {
+    <app-empty-state [title]="'vendors.empty' | transloco" />
+  } @else {
+    <div class="vendors-grid">
+      @for (vendor of filteredVendors(); track vendor.id) {
+        <article
+          class="vendor-card"
+          role="button"
+          tabindex="0"
+          (click)="openDetail(vendor)"
+          (keyup.enter)="openDetail(vendor)"
+        >
+          <div class="vendor-card__head">
+            <div>
+              <h3 class="vendor-name">{{ vendor.name }}</h3>
+              <app-status-badge
+                [label]="'vendors.specialty.' + vendor.specialty | transloco"
+                tone="info"
+              />
+            </div>
+            <div class="vendor-card__actions">
+              <button
+                type="button"
+                class="icon-btn"
+                [attr.aria-label]="'common.edit' | transloco"
+                (click)="openEdit(vendor, $event)"
+              >
+                <lucide-icon [img]="Pencil" [size]="16" />
+              </button>
+              <button
+                type="button"
+                class="icon-btn danger"
+                [attr.aria-label]="'vendors.deactivate' | transloco"
+                (click)="deactivate(vendor, $event)"
+              >
+                <lucide-icon [img]="Trash2" [size]="16" />
+              </button>
+            </div>
+          </div>
+
+          <div class="vendor-rating" [attr.aria-label]="'vendors.rating' | transloco">
+            @for (s of stars; track s) {
+              <lucide-icon
+                [img]="Star"
+                [size]="16"
+                class="star"
+                [class.filled]="s <= filledStars(vendor.average_rating)"
+              />
+            }
+            <span class="rating-value">
+              {{ vendor.average_rating ? (vendor.average_rating | number: '1.1-1') : '—' }}
+            </span>
+          </div>
+
+          <div class="vendor-meta">
+            @if (vendor.phone) {
+              <span class="meta-item"
+                ><lucide-icon [img]="Phone" [size]="14" /> {{ vendor.phone }}</span
+              >
+            }
+            <span class="meta-item">
+              <lucide-icon [img]="Wrench" [size]="14" />
+              {{ vendor.total_orders ?? 0 }} {{ 'vendors.jobsDone' | transloco }}
+            </span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>
+
+<!-- Detalle del proveedor con historial de órdenes -->
+@if (selectedVendor(); as vendor) {
+  <div class="detail-overlay" role="presentation" (click)="closeDetail()">
+    <aside class="detail-panel" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <header class="detail-header">
+        <div>
+          <h2>{{ vendor.name }}</h2>
+          <span class="detail-specialty">{{
+            'vendors.specialty.' + vendor.specialty | transloco
+          }}</span>
+        </div>
+        <button
+          type="button"
+          class="icon-btn"
+          [attr.aria-label]="'common.close' | transloco"
+          (click)="closeDetail()"
+        >
+          <lucide-icon [img]="X" [size]="20" />
+        </button>
+      </header>
+
+      <div class="detail-summary">
+        <div class="summary-item">
+          <span class="summary-label">{{ 'vendors.rating' | transloco }}</span>
+          <span class="vendor-rating">
+            @for (s of stars; track s) {
+              <lucide-icon
+                [img]="Star"
+                [size]="14"
+                class="star"
+                [class.filled]="s <= filledStars(vendor.average_rating)"
+              />
+            }
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'vendors.jobsDone' | transloco }}</span>
+          <strong>{{ vendor.total_orders ?? 0 }}</strong>
+        </div>
+        @if (vendor.phone) {
+          <div class="summary-item">
+            <span class="summary-label">{{ 'vendors.phone' | transloco }}</span>
+            <strong>{{ vendor.phone }}</strong>
+          </div>
+        }
+        @if (vendor.email) {
+          <div class="summary-item">
+            <span class="summary-label">{{ 'vendors.email' | transloco }}</span>
+            <strong>{{ vendor.email }}</strong>
+          </div>
+        }
+      </div>
+
+      <h3 class="detail-section-title">{{ 'vendors.orderHistory' | transloco }}</h3>
+      @if (historyLoading()) {
+        <app-loading-state [label]="'vendors.loading' | transloco" />
+      } @else if (history().length === 0) {
+        <app-empty-state [title]="'vendors.noOrders' | transloco" />
+      } @else {
+        <ul class="order-list">
+          @for (order of history(); track order.id) {
+            <li class="order-item">
+              <div class="order-head">
+                <strong>{{ order.ticket_number }}</strong>
+                <span class="order-title">{{ order.title }}</span>
+              </div>
+              <div class="order-rating">
+                @if (order.vendor_rating) {
+                  @for (s of stars; track s) {
+                    <lucide-icon
+                      [img]="Star"
+                      [size]="13"
+                      class="star"
+                      [class.filled]="s <= order.vendor_rating"
+                    />
+                  }
+                  @if (order.vendor_rating_comment) {
+                    <span class="order-comment">"{{ order.vendor_rating_comment }}"</span>
+                  }
+                } @else {
+                  <span class="order-unrated">{{ 'vendors.notRated' | transloco }}</span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </aside>
+  </div>
+}
+
+<!-- Formulario crear / editar -->
+<app-dialog
+  [open]="dialogOpen()"
+  [title]="(editingId() ? 'vendors.editTitle' : 'vendors.createTitle') | transloco"
+  (closed)="closeDialog()"
+>
+  <form [formGroup]="form" class="vendor-form" (ngSubmit)="save()">
+    <app-text-field
+      formControlName="name"
+      [label]="'vendors.name' | transloco"
+      [placeholder]="'vendors.namePlaceholder' | transloco"
+    />
+    <app-select
+      formControlName="specialty"
+      [label]="'vendors.specialtyLabel' | transloco"
+      [options]="specialtyOptions"
+    />
+    <div class="form-row">
+      <app-text-field formControlName="phone" [label]="'vendors.phone' | transloco" type="tel" />
+      <app-text-field formControlName="email" [label]="'vendors.email' | transloco" type="email" />
+    </div>
+    <div class="form-row">
+      <app-text-field
+        formControlName="rate_per_hour"
+        [label]="'vendors.ratePerHour' | transloco"
+        type="number"
+      />
+      <app-text-field
+        formControlName="rate_flat"
+        [label]="'vendors.rateFlat' | transloco"
+        type="number"
+      />
+    </div>
+    <app-textarea formControlName="notes" [label]="'vendors.notes' | transloco" />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeDialog()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="save()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

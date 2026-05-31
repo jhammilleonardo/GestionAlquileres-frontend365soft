@@ -1,45 +1,64 @@
-# Gestión de Alquileres 365Soft
+# 365Soft Frontend
 
-Sistema de gestión de propiedades y alquileres desarrollado con Angular 21 y Angular Material.
+Frontend Angular para el sistema 365Soft de gestion de propiedades,
+alquileres, pagos, mantenimiento, propietarios, inquilinos y reportes.
 
-## 🚀 Características
+## Estado Actual
 
-- ✅ Sidebar profesional colapsable estilo Buildium
-- ✅ Layout completo con header y navegación
-- ✅ Sistema de rutas configurado
-- ✅ Angular Material con tema personalizado
-- ✅ Íconos modernos con Lucide (1000+ íconos SVG)
-- ✅ Estructura de carpetas organizada
-- ✅ Componentes standalone (nueva arquitectura de Angular)
+El proyecto esta en una etapa de modernizacion frontend. La base actual usa
+Angular 21, componentes standalone, Angular Material, Tailwind CSS y Lucide.
 
-## 📋 Requisitos Previos
+La nueva direccion tecnica esta documentada en:
 
-- Node.js 18+ y npm
+- [Modernizacion Frontend](docs/frontend-modernization.md)
+- [Estado De Modernizacion](docs/frontend-modernization-status.md)
+- [Internacionalizacion](docs/i18n.md)
+
+Decision vigente:
+
+- Taiga UI sera la nueva base visual para pantallas nuevas y reemplazo gradual.
+- Plus Jakarta Sans sera la fuente global self-hosted.
+- Angular Material queda como dependencia de transicion.
+- Material Icons queda self-hosted solo mientras existan pantallas Material antiguas.
+- Los componentes nuevos deben pasar por wrappers propios en `src/app/shared/ui`.
+- Las rutas admin se cargan lazy desde `src/app/features/admin/admin.routes.ts`.
+- La seleccion de tokens vive en `SessionTokenService`.
+- El cliente HTTP nuevo para codigo de dominio es `ApiClientService`.
+- El shell principal ya empezo la modernizacion fuera de Angular Material: header y
+  sidebar usan tokens propios; `mat-menu` queda como transicion.
+
+## Requisitos Previos
+
+- Node.js 22 recomendado
+- npm 11 recomendado
 - Angular CLI 21+
 
-## 🛠️ Instalación
+## Instalacion
 
-1. Clonar el repositorio:
 ```bash
 git clone <URL_DEL_REPOSITORIO>
-cd GestionAlquileres_365Soft
-```
-
-2. Instalar dependencias:
-```bash
+cd GestionAlquileres_365Soft-frontend
 npm install
-```
-
-3. Iniciar el servidor de desarrollo:
-```bash
 npm start
 ```
 
-4. Abrir el navegador en `http://localhost:4200/`
+La aplicacion queda disponible en `http://localhost:4200/`.
 
-## 🐳 Docker de producción (staging)
+## Scripts
 
-Build multi-stage: Angular production build + Nginx como servidor de archivos estáticos.
+```txt
+npm start        # Servidor de desarrollo
+npm run build    # Build production
+npm run test     # Tests
+npm run test:cov # Tests con cobertura
+npm run lint:check
+npm run format
+```
+
+## Docker
+
+El Dockerfile de produccion hace build Angular y sirve la SPA con Nginx. Las
+variables de entorno se inyectan por build args.
 
 ```bash
 docker build -t gestion-frontend:staging \
@@ -47,84 +66,39 @@ docker build -t gestion-frontend:staging \
   --build-arg NG_APP_API_TIMEOUT=30000 \
   --build-arg NG_APP_SENTRY_DSN= \
   --build-arg NG_APP_SENTRY_ENV=staging .
-
-docker run --rm -p 8080:80 gestion-frontend:staging
 ```
 
-La imagen sirve la SPA con fallback de rutas (`try_files ... /index.html`) y no expone source maps.
+## Estructura
 
-## 📁 Estructura del Proyecto
-
-```
+```txt
 src/
 ├── app/
-│   ├── core/                   # Servicios y modelos centrales
-│   │   ├── services/          # AuthService, SidebarService
-│   │   └── models/            # User, MenuOption
-│   ├── shared/                # Componentes compartidos
-│   │   └── layouts/           # MainLayout, Sidebar, Header
-│   ├── features/              # Páginas del sistema
-│   │   ├── dashboard/         # Dashboard principal
-│   │   ├── propiedades/       # Gestión de propiedades
-│   │   ├── inquilinos/        # Gestión de inquilinos
-│   │   ├── contratos/         # Gestión de contratos
-│   │   ├── pagos/             # Gestión de pagos
-│   │   └── mantenimiento/     # Gestión de mantenimiento
-│   ├── app.routes.ts          # Configuración de rutas
-│   ├── app.config.ts          # Configuración de la aplicación
-│   └── app.ts                 # Componente raíz
-└── styles.scss                # Estilos globales
+│   ├── core/       # Guards, interceptors, services y modelos globales
+│   ├── features/   # Modulos funcionales
+│   ├── shared/     # Layouts, pipes y UI compartida
+│   ├── app.routes.ts
+│   └── app.config.ts
+├── assets/
+├── environments/
+└── styles.scss
 ```
 
-## 🎨 Tecnologías Utilizadas
+## Reglas De Desarrollo
 
-- **Angular 21.1.0** - Framework frontend
-- **Angular Material 21.1.1** - Biblioteca de componentes UI
-- **Angular CDK 21.1.1** - Componentes de desarrollo
-- **Lucide Angular** - Biblioteca de íconos moderna (1000+ íconos SVG)
-- **SCSS** - Preprocesador de CSS
-- **TypeScript 5.9.2** - Lenguaje de programación
+- Usar componentes standalone.
+- Usar SCSS para estilos nuevos.
+- No crear componentes gigantes; dividir por pagina, presentacional, dialog y
+  servicio/facade.
+- No usar `any` en codigo nuevo salvo justificacion puntual.
+- No usar `console.*` productivo.
+- No consumir `localStorage` directo desde componentes.
+- No crear UI nueva directamente con Angular Material; usar wrappers propios.
+- Mantener DTOs/modelos alineados con el backend.
 
-## 🔧 Scripts Disponibles
+## Iconos
 
-```bash
-npm start              # Inicia el servidor de desarrollo
-npm run build          # Compila la aplicación para producción
-npm run test           # Ejecuta los tests
-npm run watch          # Modo observación para desarrollo
-```
+El proyecto usa Lucide para iconos SVG:
 
-## 👥 Cómo Trabajar en Este Proyecto
-
-### 1. Clonar y Configurar
-
-Cada miembro del equipo debe clonar el repositorio y ejecutar `npm install`.
-
-### 2. Crear Nueva Funcionalidad
-
-Para crear una nueva página/funcionalidad:
-
-1. Crear la carpeta en `src/app/features/`
-2. Crear el componente standalone:
-   - `nombre.component.ts`
-   - `nombre.component.html`
-   - `nombre.component.scss`
-3. Agregar la ruta en `src/app/app.routes.ts`
-4. Agregar el ítem en el menú en `src/app/core/services/sidebar.service.ts`
-
-### 3. Estilos
-
-- Usa las variables CSS de Angular Material: `var(--mat-sys-*)`
-- Respeta el tema establecido en `src/styles.scss`
-- Mantén los estilos específicos del componente en su archivo `.scss`
-
-### 4. Íconos con Lucide
-
-El proyecto usa **Lucide icons** en lugar de Material Icons para una mejor calidad visual.
-
-**Cómo usar íconos:**
-
-1. Importar el ícono en tu componente:
 ```typescript
 import { LucideAngularModule, IconName } from 'lucide-angular';
 
@@ -133,73 +107,20 @@ export class MyComponent {
 }
 ```
 
-2. Agregar `LucideAngularModule` a los imports del componente
-
-3. Usar en el template:
 ```html
 <lucide-icon [img]="IconName" [size]="20"></lucide-icon>
 ```
 
-**Recursos:**
-- Explorar íconos: [lucide.dev/icons](https://lucide.dev/icons)
-- Los estilos globales ya están configurados para alineación perfecta
-
-### 5. Convenciones de Código
-
-- Usar componentes **standalone**
-- Usar **signals** para la gestión de estado
-- Seguir la estructura de carpetas existente
-- Usar **SCSS** para los estilos
-- Nombres de archivos en **kebab-case**
-
-## 🔐 Usuarios (Demo)
-
-Actualmente el sistema tiene un usuario de demostración:
-- **Email:** admin@365soft.com
-- **Rol:** admin
-- **Nombre:** Administrador
-
-## 📦 Páginas Disponibles
-
-- `/dashboard` - Dashboard principal
-- `/propiedades` - Gestión de propiedades
-- `/inquilinos` - Gestión de inquilinos
-- `/contratos` - Gestión de contratos
-- `/pagos` - Control de pagos
-- `/mantenimiento` - Solicitudes de mantenimiento
-
-## 🎯 Próximos Pasos
-
-Este es el punto de partida del proyecto. Las siguientes funcionalidades están pendientes de desarrollo:
-
-- [ ] Sistema de autenticación real
-- [ ] CRUD de propiedades
-- [ ] CRUD de inquilinos
-- [ ] Gestión de contratos
-- [ ] Sistema de pagos
-- [ ] Reportes y estadísticas
-- [ ] Configuración de perfil
-- [ ] Sistema de notificaciones
-
-## 📝 Notas Importantes
-
-- El proyecto usa la nueva arquitectura de Angular 21 con componentes standalone
-- Angular Material ya está configurado con un tema personalizado
-- **Lucide icons** está integrado para todos los íconos (no usar Material Icons)
-- El sidebar es colapsable y responsive
-- Todas las páginas están creadas pero vacías, listas para ser desarrolladas
-
-## 🤝 Contribución
+## Flujo De Trabajo
 
 1. Crea una rama para tu funcionalidad: `git checkout -b feature/tu-funcionalidad`
-2. Haz tus cambios y commit: `git commit -m "Descripción de cambios"`
+2. Ejecuta lint/build/tests antes de abrir PR.
 3. Push a la rama: `git push origin feature/tu-funcionalidad`
-4. Abre un Pull Request para revisión
+4. Abre un Pull Request para revision.
 
-## 📄 Licencia
+Una tarea esta terminada solo cuando el PR fue aprobado, el pipeline pasa y el
+codigo esta en `main`.
 
-Este proyecto es propiedad de 365Soft.
+## Licencia
 
----
-
-**Desarrollado por el equipo de 365Soft**
+Proyecto propiedad de 365Soft.

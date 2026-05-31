@@ -1,59 +1,70 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { Subscription, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
 import {
-  LucideAngularModule,
-  MapPin,
-  Home,
-  Heart,
-  Share2,
-  Maximize,
-  Bed,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
+import { of } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
   Bath,
+  Bed,
   Car,
-  User,
+  Heart,
+  Home,
+  LucideAngularModule,
   Mail,
-  Phone,
+  MapPin,
+  Maximize,
   MessageSquare,
+  Phone,
   PhoneCall,
-  AlertTriangle,
-  PawPrint,
-  Ban,
-  Cigarette,
-  CigaretteOff,
-  Users,
-  Calendar,
+  Share2,
+  User,
 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
+
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { Property } from '../../../core/models/property.model';
 import { ApplicationModalComponent } from '../application-modal/application-modal.component';
 import { ContactModalComponent } from '../contact-modal/contact-modal.component';
 import { MapModalComponent } from '../map-modal/map-modal.component';
+import { AvailabilityCalendarComponent } from '../availability-calendar/availability-calendar.component';
+
+interface PropertyLocation {
+  coordinates: { lat: number; lng: number };
+  address: string;
+}
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
+    DatePipe,
+    DecimalPipe,
     LucideAngularModule,
     ApplicationModalComponent,
     ContactModalComponent,
     MapModalComponent,
+    AvailabilityCalendarComponent,
     TranslocoModule,
   ],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './property-detail.component.html',
   styleUrls: ['./property-detail.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropertyDetailComponent implements OnInit, OnDestroy {
+export class PropertyDetailComponent {
   readonly MapPin = MapPin;
   readonly Home = Home;
   readonly Heart = Heart;
@@ -67,58 +78,46 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
   readonly Phone = Phone;
   readonly MessageSquare = MessageSquare;
   readonly PhoneCall = PhoneCall;
-  readonly AlertTriangle = AlertTriangle;
-  readonly PawPrint = PawPrint;
-  readonly Ban = Ban;
-  readonly Cigarette = Cigarette;
-  readonly CigaretteOff = CigaretteOff;
-  readonly Users = Users;
-  readonly Calendar = Calendar;
 
-  property: Property | null = null;
-  currentImageIndex = 0;
-  isLoading = true;
-  hasError = false;
-  isFavorite = false;
-  showApplicationModal = false;
-  showContactModal = false;
-  showMapModal = false;
+  readonly property = signal<Property | null>(null);
 
-  private slugService = inject(SlugService);
-  private router = inject(Router);
-  private intentionService = inject(ApplicationIntentionService);
-  private authService = inject(TenantAuthService);
-  private cdr = inject(ChangeDetectorRef);
-  private subscriptions: Subscription[] = [];
+  /** Primera unidad de alquiler corto plazo con precio configurado (para el calendario). */
+  readonly shortTermUnit = computed(() =>
+    (this.property()?.units ?? []).find(
+      (u) => (u.rental_type ?? '').toUpperCase().includes('SHORT') && (u.price_per_night ?? 0) > 0,
+    ),
+  );
 
-  constructor(
-    private route: ActivatedRoute,
-    private propertyService: PropertyService,
-  ) {}
+  readonly currentImageIndex = signal(0);
+  readonly isLoading = signal(true);
+  readonly hasError = signal(false);
+  readonly isFavorite = signal(false);
+  readonly showApplicationModal = signal(false);
+  readonly showContactModal = signal(false);
+  readonly showMapModal = signal(false);
 
-  ngOnInit(): void {
+  private readonly slugService = inject(SlugService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly propertyService = inject(PropertyService);
+  private readonly intentionService = inject(ApplicationIntentionService);
+  private readonly authService = inject(TenantAuthService);
+  private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
     this.loadPropertyFromRoute();
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-  }
-
   private loadPropertyFromRoute(): void {
-    // With paramsInheritanceStrategy: 'always' (set in app.config.ts),
-    // the slug from the parent ':slug' route is accessible here directly.
-    const sub = this.route.paramMap
+    this.route.paramMap
       .pipe(
         switchMap((params) => {
-          this.isLoading = true;
-          this.hasError = false;
-          this.property = null;
-          this.cdr.detectChanges();
+          this.isLoading.set(true);
+          this.hasError.set(false);
+          this.property.set(null);
 
-          // Get slug from inherited params (paramsInheritanceStrategy: 'always')
           let slug = params.get('slug');
-
-          // Fallback 1: traverse parent routes
           if (!slug) {
             let current: ActivatedRoute | null = this.route;
             while (current) {
@@ -130,247 +129,177 @@ export class PropertyDetailComponent implements OnInit, OnDestroy {
               current = current.parent;
             }
           }
-
-          // Fallback 2: parse from router URL directly
           if (!slug) {
             const urlParts = this.router.url.split('/').filter(Boolean);
             if (urlParts.length > 0) slug = urlParts[0];
           }
+          if (slug) this.slugService.setSlug(slug);
 
-          // Set slug in service if found
-          if (slug) {
-            this.slugService.setSlug(slug);
-          }
-
-          const propertySlug = params.get('propertySlug');
-
-          if (propertySlug) {
-            // Si es un número, asumimos que es el ID para mantener compatibilidad
-            const id = parseInt(propertySlug, 10);
-            if (!isNaN(id) && propertySlug === id.toString()) {
-              this.checkFavoriteStatus(id);
-              return this.propertyService.getPropertyById(id);
-            }
-            // De lo contrario, buscar por slug
-            return this.propertyService.getPropertyBySlug(propertySlug);
-          } else {
-            this.isLoading = false;
-            this.hasError = true;
-            this.cdr.detectChanges();
+          const idStr = params.get('id');
+          const propertyId = idStr ? parseInt(idStr, 10) : NaN;
+          if (isNaN(propertyId)) {
+            this.isLoading.set(false);
+            this.hasError.set(true);
             return of(undefined);
           }
+
+          this.propertyService
+            .isFavorite(propertyId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isFav) => this.isFavorite.set(isFav));
+
+          return this.propertyService.getPropertyById(propertyId);
         }),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (property) => {
-          this.property = property || null;
-          this.isLoading = false;
-          this.hasError = !this.property;
-          this.cdr.detectChanges();
+          this.property.set(property ?? null);
+          this.isLoading.set(false);
+          this.hasError.set(!property);
         },
         error: () => {
-          this.property = null;
-          this.isLoading = false;
-          this.hasError = true;
-          this.cdr.detectChanges();
+          this.property.set(null);
+          this.isLoading.set(false);
+          this.hasError.set(true);
         },
       });
-
-    this.subscriptions.push(sub);
-  }
-  checkFavoriteStatus(propertyId: number): void {
-    this.propertyService.isFavorite(propertyId).subscribe((isFav) => {
-      this.isFavorite = isFav;
-      this.cdr.detectChanges();
-    });
   }
 
-  // Helper para obtener imágenes como array seguro (con URL completa)
   getImagesArray(): string[] {
-    if (!this.property?.images) return [];
-    const images = Array.isArray(this.property.images) ? this.property.images : [];
-    return images.map((_, i) => this.propertyService.getPropertyImageUrl(this.property!, i));
+    const raw = this.property()?.images;
+    if (!Array.isArray(raw)) return [];
+    return raw.map((img) => this.buildImageUrl(img));
   }
 
-  // Helper para verificar si tiene múltiples imágenes
   hasMultipleImages(): boolean {
     return this.getImagesArray().length > 1;
   }
 
-  // Helper para obtener imagen actual (con URL completa)
   getCurrentImage(): string {
-    if (!this.property) return '';
-    return this.propertyService.getPropertyImageUrl(this.property, this.currentImageIndex);
+    return this.getImagesArray()[this.currentImageIndex()] ?? '';
   }
 
-  // Helper para obtener cantidad de imágenes
   getImagesCount(): number {
-    if (!this.property?.images) return 0;
-    return Array.isArray(this.property.images)
-      ? this.property.images.length
-      : Object.keys(this.property.images).length;
+    return this.getImagesArray().length;
+  }
+
+  private buildImageUrl(imagePath: string): string {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    const normalized = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    return `http://localhost:3000${normalized}`;
   }
 
   toggleFavorite(): void {
-    if (this.property) {
-      this.propertyService.toggleFavorite(this.property.id);
-      this.isFavorite = !this.isFavorite;
-    }
+    const prop = this.property();
+    if (!prop) return;
+    this.propertyService.toggleFavorite(prop.id);
+    this.isFavorite.update((v) => !v);
   }
 
   nextImage(): void {
     const images = this.getImagesArray();
-    if (images.length > 0) {
-      this.currentImageIndex = (this.currentImageIndex + 1) % images.length;
-    }
+    if (!images.length) return;
+    this.currentImageIndex.update((i) => (i + 1) % images.length);
   }
 
   previousImage(): void {
     const images = this.getImagesArray();
-    if (images.length > 0) {
-      this.currentImageIndex = (this.currentImageIndex - 1 + images.length) % images.length;
-    }
+    if (!images.length) return;
+    this.currentImageIndex.update((i) => (i - 1 + images.length) % images.length);
   }
 
   selectImage(index: number): void {
-    this.currentImageIndex = index;
+    this.currentImageIndex.set(index);
   }
 
   openApplicationModal(): void {
-    console.log('🔘 Botón "Quiero Aplicar" clickeado');
-    console.log('Property:', this.property);
-
-    if (this.property) {
-      const slug = this.slugService.getSlug();
-
-      // Verificar si el usuario está autenticado como inquilino
-      const isTenantAuthenticated = this.authService.isAuthenticated();
-
-      if (isTenantAuthenticated) {
-        // Usuario autenticado -> Ir directamente al formulario
-        console.log('✅ Usuario autenticado, navegando al formulario');
-        this.intentionService.setIntention(this.property.id, this.property.title);
-        if (slug) {
-          this.intentionService.navigateToApplication(slug);
-        }
-      } else {
-        // Usuario NO autenticado -> Guardar intención y ir a login
-        console.log('🔐 Usuario no autenticado, navegando al login con intención');
-        if (slug) {
-          this.intentionService.navigateToLoginWithIntention(
-            slug,
-            this.property.id,
-            this.property.title,
-          );
-        }
-      }
+    const prop = this.property();
+    if (!prop) return;
+    const slug = this.slugService.getSlug();
+    if (this.authService.isAuthenticated()) {
+      this.intentionService.setIntention(prop.id, prop.title);
+      if (slug) this.intentionService.navigateToApplication(slug);
     } else {
-      console.warn('⚠️ No hay property cargada');
+      if (slug) {
+        this.intentionService.navigateToLoginWithIntention(slug, prop.id, prop.title);
+      }
     }
   }
 
   closeApplicationModal(): void {
-    this.showApplicationModal = false;
+    this.showApplicationModal.set(false);
   }
-
   openContactModal(): void {
-    this.showContactModal = true;
+    this.showContactModal.set(true);
   }
-
   closeContactModal(): void {
-    this.showContactModal = false;
+    this.showContactModal.set(false);
   }
-
   openMapModal(): void {
-    this.showMapModal = true;
+    this.showMapModal.set(true);
   }
-
   closeMapModal(): void {
-    this.showMapModal = false;
+    this.showMapModal.set(false);
   }
 
   shareProperty(): void {
-    const url = window.location.href;
-    if (navigator.share && this.property) {
-      navigator
-        .share({
-          title: this.property.title,
-          text: `Mira esta propiedad: ${this.property.title}`,
-          url: url,
-        })
-        .catch((err) => {
-          console.log('Error sharing:', err);
-          this.copyToClipboard(url);
-        });
+    const prop = this.property();
+    if (navigator.share && prop) {
+      void navigator.share({
+        title: prop.title,
+        text: `Mira esta propiedad: ${prop.title}`,
+        url: window.location.href,
+      });
     } else {
-      this.copyToClipboard(url);
+      void navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => this.toast.success('¡Enlace copiado al portapapeles!'));
     }
-  }
-
-  private copyToClipboard(text: string): void {
-    navigator.clipboard.writeText(text).then(() => {
-      // Usar snackbar o similar si está disponible, o un simple alert mejorado
-      alert('¡Enlace copiado al portapapeles!');
-    });
   }
 
   printProperty(): void {
     window.print();
   }
 
-  // Helper methods para adaptar el formato del backend
   getPropertyAddress(): string {
-    return this.property ? this.propertyService.getPropertyAddress(this.property) : '';
+    const prop = this.property();
+    if (prop?.addresses?.length) {
+      const addr = prop.addresses[0];
+      return `${addr.street_address}, ${addr.city}${addr.state ? ', ' + addr.state : ''}`;
+    }
+    return '';
   }
 
-  getLocationForMap(): any {
-    return {
-      coordinates: {
-        lat: this.property?.latitude || 0,
-        lng: this.property?.longitude || 0,
-      },
-      address: this.getPropertyAddress(),
-      city:
-        this.property?.addresses && this.property.addresses.length > 0
-          ? this.property.addresses[0].city
-          : '',
-      state:
-        this.property?.addresses && this.property.addresses.length > 0
-          ? this.property.addresses[0].state
-          : '',
-      zipCode:
-        this.property?.addresses && this.property.addresses.length > 0
-          ? this.property.addresses[0].zip_code
-          : '',
-    };
+  getLocationForMap(): PropertyLocation | null {
+    const prop = this.property();
+    if (prop?.latitude && prop?.longitude) {
+      return {
+        coordinates: { lat: prop.latitude, lng: prop.longitude },
+        address: this.getPropertyAddress(),
+      };
+    }
+    return null;
   }
 
   getOwnerName(): string {
-    if (this.property?.owners && this.property.owners.length > 0) {
-      return this.property.owners[0].name;
-    }
-    return 'No disponible';
+    return this.property()?.owners?.[0]?.name ?? 'No disponible';
   }
 
   getOwnerEmail(): string {
-    if (this.property?.owners && this.property.owners.length > 0) {
-      return this.property.owners[0].primary_email;
-    }
-    return '';
+    return this.property()?.owners?.[0]?.primary_email ?? '';
   }
 
   getOwnerPhone(): string {
-    if (this.property?.owners && this.property.owners.length > 0) {
-      return this.property.owners[0].phone_number;
-    }
-    return '';
+    return this.property()?.owners?.[0]?.phone_number ?? '';
   }
 
   getPropertyTypeName(): string {
-    return this.property?.property_type?.name || 'N/A';
+    return this.property()?.property_type?.name ?? 'N/A';
   }
 
   getPropertySubtypeName(): string {
-    return this.property?.property_subtype?.name || '';
+    return this.property()?.property_subtype?.name ?? '';
   }
 }

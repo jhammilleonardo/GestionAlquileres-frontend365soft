@@ -2,155 +2,163 @@
   <div class="modal-container" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="closeModal()">✕</button>
 
-    <div *ngIf="!submitted" class="modal-content">
-      <h2 class="modal-title">{{ 'public.applicationModal.title' | transloco }}</h2>
-      <p class="modal-subtitle">{{ property.title }}</p>
+    @if (!submitted()) {
+      <div class="modal-content">
+        <h2 class="modal-title">{{ 'public.applicationModal.title' | transloco }}</h2>
+        <p class="modal-subtitle">{{ property().title }}</p>
 
-      <form (ngSubmit)="submitApplication()" class="application-form">
-        <div class="form-section">
-          <h3 class="section-title">{{ 'public.applicationModal.personalInfo' | transloco }}</h3>
+        <form (ngSubmit)="submitApplication()" class="application-form">
+          <div class="form-section">
+            <h3 class="section-title">{{ 'public.applicationModal.personalInfo' | transloco }}</h3>
 
-          <div class="form-row">
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ 'public.applicationModal.firstName' | transloco }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="application.applicantInfo.firstName"
+                  name="firstName"
+                  required
+                  [placeholder]="'public.applicationModal.firstNamePlace' | transloco"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>{{ 'public.applicationModal.lastName' | transloco }}</label>
+                <input
+                  type="text"
+                  [(ngModel)]="application.applicantInfo.lastName"
+                  name="lastName"
+                  required
+                  [placeholder]="'public.applicationModal.lastNamePlace' | transloco"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ 'public.applicationModal.email' | transloco }}</label>
+                <input
+                  type="email"
+                  [(ngModel)]="application.applicantInfo.email"
+                  name="email"
+                  required
+                  [placeholder]="'public.applicationModal.emailPlace' | transloco"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>{{ 'public.applicationModal.phone' | transloco }}</label>
+                <input
+                  type="tel"
+                  [(ngModel)]="application.applicantInfo.phone"
+                  name="phone"
+                  required
+                  [placeholder]="'public.applicationModal.phonePlace' | transloco"
+                />
+              </div>
+            </div>
+
             <div class="form-group">
-              <label>{{ 'public.applicationModal.firstName' | transloco }}</label>
+              <label>{{ 'public.applicationModal.currentAddress' | transloco }}</label>
               <input
                 type="text"
-                [(ngModel)]="application.applicantInfo.firstName"
-                name="firstName"
+                [(ngModel)]="application.applicantInfo.currentAddress"
+                name="currentAddress"
                 required
-                [placeholder]="'public.applicationModal.firstNamePlace' | transloco"
+                [placeholder]="'public.applicationModal.currentAddressPlace' | transloco"
               />
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3 class="section-title">{{ 'public.applicationModal.workInfo' | transloco }}</h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>{{ 'public.applicationModal.status' | transloco }}</label>
+                <select
+                  [(ngModel)]="application.applicantInfo.employmentStatus"
+                  name="employmentStatus"
+                  required
+                >
+                  <option value="">{{ 'public.applicationModal.statusSelect' | transloco }}</option>
+                  <option value="employed">
+                    {{ 'public.applicationModal.employed' | transloco }}
+                  </option>
+                  <option value="self-employed">
+                    {{ 'public.applicationModal.selfEmployed' | transloco }}
+                  </option>
+                  <option value="retired">
+                    {{ 'public.applicationModal.retired' | transloco }}
+                  </option>
+                  <option value="student">
+                    {{ 'public.applicationModal.student' | transloco }}
+                  </option>
+                  <option value="other">{{ 'public.applicationModal.other' | transloco }}</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>{{ 'public.applicationModal.monthlyIncome' | transloco }}</label>
+                <input
+                  type="number"
+                  [(ngModel)]="application.applicantInfo.monthlyIncome"
+                  name="monthlyIncome"
+                  required
+                  min="0"
+                  [placeholder]="'public.applicationModal.monthlyIncomePlace' | transloco"
+                />
+              </div>
             </div>
 
             <div class="form-group">
-              <label>{{ 'public.applicationModal.lastName' | transloco }}</label>
+              <label>{{ 'public.applicationModal.moveInDate' | transloco }}</label>
               <input
-                type="text"
-                [(ngModel)]="application.applicantInfo.lastName"
-                name="lastName"
+                type="date"
+                [(ngModel)]="application.applicantInfo.moveInDate"
+                name="moveInDate"
                 required
-                [placeholder]="'public.applicationModal.lastNamePlace' | transloco"
               />
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'public.applicationModal.email' | transloco }}</label>
-              <input
-                type="email"
-                [(ngModel)]="application.applicantInfo.email"
-                name="email"
-                required
-                [placeholder]="'public.applicationModal.emailPlace' | transloco"
-              />
-            </div>
+          <div class="form-section">
+            <h3 class="section-title">
+              {{ 'public.applicationModal.additionalInfo' | transloco }}
+            </h3>
 
             <div class="form-group">
-              <label>{{ 'public.applicationModal.phone' | transloco }}</label>
-              <input
-                type="tel"
-                [(ngModel)]="application.applicantInfo.phone"
-                name="phone"
-                required
-                [placeholder]="'public.applicationModal.phonePlace' | transloco"
-              />
+              <label>{{ 'public.applicationModal.comments' | transloco }}</label>
+              <textarea
+                [(ngModel)]="application.additionalInfo"
+                name="additionalInfo"
+                rows="4"
+                [placeholder]="'public.applicationModal.commentsPlace' | transloco"
+              ></textarea>
             </div>
           </div>
 
-          <div class="form-group">
-            <label>{{ 'public.applicationModal.currentAddress' | transloco }}</label>
-            <input
-              type="text"
-              [(ngModel)]="application.applicantInfo.currentAddress"
-              name="currentAddress"
-              required
-              [placeholder]="'public.applicationModal.currentAddressPlace' | transloco"
-            />
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="closeModal()">
+              {{ 'public.applicationModal.cancel' | transloco }}
+            </button>
+            <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
+              {{
+                isSubmitting()
+                  ? ('public.applicationModal.submitting' | transloco)
+                  : ('public.applicationModal.submit' | transloco)
+              }}
+            </button>
           </div>
-        </div>
-
-        <div class="form-section">
-          <h3 class="section-title">{{ 'public.applicationModal.workInfo' | transloco }}</h3>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>{{ 'public.applicationModal.status' | transloco }}</label>
-              <select
-                [(ngModel)]="application.applicantInfo.employmentStatus"
-                name="employmentStatus"
-                required
-              >
-                <option value="">{{ 'public.applicationModal.statusSelect' | transloco }}</option>
-                <option value="employed">
-                  {{ 'public.applicationModal.employed' | transloco }}
-                </option>
-                <option value="self-employed">
-                  {{ 'public.applicationModal.selfEmployed' | transloco }}
-                </option>
-                <option value="retired">{{ 'public.applicationModal.retired' | transloco }}</option>
-                <option value="student">{{ 'public.applicationModal.student' | transloco }}</option>
-                <option value="other">{{ 'public.applicationModal.other' | transloco }}</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label>{{ 'public.applicationModal.monthlyIncome' | transloco }}</label>
-              <input
-                type="number"
-                [(ngModel)]="application.applicantInfo.monthlyIncome"
-                name="monthlyIncome"
-                required
-                min="0"
-                [placeholder]="'public.applicationModal.monthlyIncomePlace' | transloco"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>{{ 'public.applicationModal.moveInDate' | transloco }}</label>
-            <input
-              type="date"
-              [(ngModel)]="application.applicantInfo.moveInDate"
-              name="moveInDate"
-              required
-            />
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h3 class="section-title">{{ 'public.applicationModal.additionalInfo' | transloco }}</h3>
-
-          <div class="form-group">
-            <label>{{ 'public.applicationModal.comments' | transloco }}</label>
-            <textarea
-              [(ngModel)]="application.additionalInfo"
-              name="additionalInfo"
-              rows="4"
-              [placeholder]="'public.applicationModal.commentsPlace' | transloco"
-            ></textarea>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" class="btn-cancel" (click)="closeModal()">
-            {{ 'public.applicationModal.cancel' | transloco }}
-          </button>
-          <button type="submit" class="btn-submit" [disabled]="isSubmitting">
-            {{
-              isSubmitting
-                ? ('public.applicationModal.submitting' | transloco)
-                : ('public.applicationModal.submit' | transloco)
-            }}
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <div *ngIf="submitted" class="success-message">
-      <div class="success-icon">✓</div>
-      <h2>{{ 'public.applicationModal.successTitle' | transloco }}</h2>
-      <p>{{ 'public.applicationModal.successMsg' | transloco }}</p>
-    </div>
+        </form>
+      </div>
+    } @else {
+      <div class="success-message">
+        <div class="success-icon">✓</div>
+        <h2>{{ 'public.applicationModal.successTitle' | transloco }}</h2>
+        <p>{{ 'public.applicationModal.successMsg' | transloco }}</p>
+      </div>
+    }
   </div>
 </div>

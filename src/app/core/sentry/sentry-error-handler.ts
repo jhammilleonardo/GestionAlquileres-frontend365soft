@@ -13,11 +13,9 @@ export class SentryErrorHandler implements ErrorHandler {
     // Ignorar errores HTTP 4xx
     const status = err?.status ?? err?.rejection?.status;
     if (status !== undefined && status >= 400 && status < 500) {
-      console.warn('Ignored 4xx error:', error);
       return;
     }
 
-    console.error(error);
     Sentry.captureException(error);
   }
 }

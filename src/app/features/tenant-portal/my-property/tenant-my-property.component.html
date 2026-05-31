@@ -1,0 +1,64 @@
+<section class="mp-page">
+  <header class="mp-header">
+    <h1><lucide-icon [img]="Home" [size]="22" /> {{ 'public.myProperty.title' | transloco }}</h1>
+    <p>{{ 'public.myProperty.subtitle' | transloco }}</p>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'public.myProperty.loading' | transloco" />
+  } @else if (!contract()) {
+    <app-empty-state [title]="'public.myProperty.noProperty' | transloco" />
+  } @else {
+    <!-- Datos de la propiedad -->
+    <article class="mp-card">
+      <h2>{{ contract()?.property?.title || ('public.myProperty.property' | transloco) }}</h2>
+      @if (contract()?.property?.address) {
+        <p class="mp-address">
+          <lucide-icon [img]="MapPin" [size]="14" /> {{ contract()?.property?.address }}
+        </p>
+      }
+
+      @if (photos().length > 0) {
+        <div class="mp-gallery">
+          @for (photo of photos(); track photo) {
+            <img [src]="photo" alt="foto de la propiedad" loading="lazy" />
+          }
+        </div>
+      }
+
+      @if (amenities().length > 0) {
+        <div class="mp-amenities">
+          <h3>{{ 'public.myProperty.amenities' | transloco }}</h3>
+          <div class="chips">
+            @for (a of amenities(); track a) {
+              <span class="chip"><lucide-icon [img]="CheckCircle2" [size]="13" /> {{ a }}</span>
+            }
+          </div>
+        </div>
+      }
+    </article>
+
+    <!-- Reglas del edificio -->
+    @if (contract()?.coexistence_rules) {
+      <article class="mp-card">
+        <h3>
+          <lucide-icon [img]="ScrollText" [size]="16" /> {{ 'public.myProperty.rules' | transloco }}
+        </h3>
+        <p class="mp-rules">{{ contract()?.coexistence_rules }}</p>
+      </article>
+    }
+
+    <!-- Contacto con la administración -->
+    <article class="mp-card">
+      <h3>
+        <lucide-icon [img]="MessageSquare" [size]="16" />
+        {{ 'public.myProperty.admin' | transloco }}
+      </h3>
+      <p class="mp-rules">{{ 'public.myProperty.adminHint' | transloco }}</p>
+      <a class="mp-contact-link" routerLink="../mensajes">
+        <lucide-icon [img]="MessageSquare" [size]="14" />
+        {{ 'public.myProperty.contactAdmin' | transloco }}
+      </a>
+    </article>
+  }
+</section>

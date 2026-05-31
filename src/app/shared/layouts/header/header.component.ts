@@ -1,13 +1,9 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatBadgeModule } from '@angular/material/badge';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatDividerModule } from '@angular/material/divider';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   LucideAngularModule,
+  type LucideIconData,
   Menu,
   Bell,
   Search,
@@ -23,6 +19,7 @@ import {
   CheckCheck,
   X,
   ChevronRight,
+  MessageSquare,
 } from 'lucide-angular';
 
 import { TranslocoModule } from '@jsverse/transloco';
@@ -33,20 +30,14 @@ import {
   Notification,
 } from '../../../core/services/admin/notification.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { InternalMessageService } from '../../../core/services/internal-message.service';
+import { NotificationSocketService } from '../../../core/services/notification-socket.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-header',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatMenuModule,
-    MatBadgeModule,
-    MatDividerModule,
-    LucideAngularModule,
-    TranslocoModule,
-  ],
+  imports: [NgClass, LucideAngularModule, TranslocoModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
 })
@@ -56,6 +47,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private slugService = inject(SlugService);
   notificationService = inject(NotificationService);
+  private messageService = inject(InternalMessageService);
+  readonly unreadMessages = this.messageService.unread;
+  private notificationSocket = inject(NotificationSocketService);
 
   currentUser = this.authService.currentUser;
   sidebarExpanded = this.sidebarService.expanded;
@@ -63,6 +57,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   notifications = this.notificationService.notifications;
   unreadCount = this.notificationService.unreadCount;
   isNotificationsDropdownOpen = false;
+  isUserMenuOpen = false;
 
   readonly Menu = Menu;
   readonly Bell = Bell;
@@ -79,15 +74,36 @@ export class HeaderComponent implements OnInit, OnDestroy {
   readonly CheckCheck = CheckCheck;
   readonly X = X;
   readonly ChevronRight = ChevronRight;
+  readonly MessageSquare = MessageSquare;
+
+  private messagePollId?: ReturnType<typeof setInterval>;
 
   ngOnInit(): void {
     this.notificationService.loadNotifications({ is_read: false, limit: 5 });
     this.notificationService.loadStats();
     this.notificationService.startPolling(60000);
+
+    // Contador de mensajes no leídos (polling cada 60s)
+    this.messageService.refreshUnread().subscribe({ error: () => undefined });
+    this.messagePollId = setInterval(() => {
+      this.messageService.refreshUnread().subscribe({ error: () => undefined });
+    }, 60000);
+
+    // Notificaciones en tiempo real vía WebSocket (polling queda como respaldo)
+    this.notificationSocket.connect();
+  }
+
+  goToMessages(): void {
+    const slug = this.slugService.getSlug();
+    void this.router.navigate([slug, 'mensajes']);
   }
 
   ngOnDestroy(): void {
     this.notificationService.stopPolling();
+    if (this.messagePollId) {
+      clearInterval(this.messagePollId);
+    }
+    this.notificationSocket.disconnect();
   }
 
   toggleSidebar(): void {
@@ -108,16 +124,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   goToProfile(): void {
-    this.slugService.navigateTo(['perfil']);
+    void this.slugService.navigateTo(['perfil']);
   }
 
   goToSettings(): void {
-    this.slugService.navigateTo(['configuracion']);
+    void this.slugService.navigateTo(['configuracion']);
   }
 
   logout(): void {
+    this.closeUserMenu();
     this.authService.logout();
-    this.router.navigate(['/login']);
+    void this.router.navigate(['/login']);
   }
 
   markNotificationRead(id: number): void {
@@ -143,10 +160,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   toggleNotificationsDropdown(): void {
     this.isNotificationsDropdownOpen = !this.isNotificationsDropdownOpen;
+    if (this.isNotificationsDropdownOpen) {
+      this.isUserMenuOpen = false;
+    }
   }
 
   closeNotificationsDropdown(): void {
     this.isNotificationsDropdownOpen = false;
+  }
+
+  toggleUserMenu(): void {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+    if (this.isUserMenuOpen) {
+      this.closeNotificationsDropdown();
+    }
+  }
+
+  closeUserMenu(): void {
+    this.isUserMenuOpen = false;
   }
 
   handleNotificationClick(notification: Notification): void {
@@ -165,7 +196,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private navigateToSlugPath(path: string): void {
     const slug = this.getSlugFromCurrentUrl() || this.slugService.getSlug();
     if (slug) {
-      this.router.navigateByUrl(`/${slug}/${path}`);
+      void this.router.navigateByUrl(`/${slug}/${path}`);
     }
     this.closeNotificationsDropdown();
   }
@@ -173,7 +204,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   navigateToRelatedPage(notification: Notification): void {
     const slug = this.getSlugFromCurrentUrl() || this.slugService.getSlug();
     if (slug) {
-      this.router.navigate(['/', slug, 'notificaciones'], {
+      void this.router.navigate(['/', slug, 'notificaciones'], {
         queryParams: { highlight: notification.id },
       });
     }
@@ -184,7 +215,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.navigateToSlugPath('notificaciones');
   }
 
-  getNotificationIcon(eventType: string): any {
+  getNotificationIcon(eventType: string): LucideIconData {
     if (eventType.includes('maintenance')) return this.Wrench;
     if (eventType.includes('property')) return this.Home;
     if (eventType.includes('contract')) return this.FileText;

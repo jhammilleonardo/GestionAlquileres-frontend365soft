@@ -4,7 +4,7 @@
 export enum ApplicationStatus {
   PENDIENTE = 'PENDIENTE',
   APROBADA = 'APROBADA',
-  RECHAZADA = 'RECHAZADA'
+  RECHAZADA = 'RECHAZADA',
 }
 
 // ==================== PERSONAL DATA ====================
@@ -24,7 +24,7 @@ export enum MaritalStatus {
   CASADO = 'casado',
   DIVORCIADO = 'divorciado',
   VIUDO = 'viudo',
-  UNION_LIBRE = 'union_libre'
+  UNION_LIBRE = 'union_libre',
 }
 
 // ==================== EMPLOYMENT DATA ====================
@@ -49,7 +49,7 @@ export enum EmploymentType {
   MEDIO_TIEMPO = 'medio_tiempo',
   FREELANCE = 'freelance',
   AUTONOMO = 'autonomo',
-  EMPRESARIO = 'empresario'
+  EMPRESARIO = 'empresario',
 }
 
 export interface PreviousJob {
@@ -98,12 +98,30 @@ export interface ApplicationDocument {
   uploaded_date?: string; // YYYY-MM-DD
 }
 
+export interface ApplicationReference {
+  name: string;
+  relationship: string;
+  phone: string;
+  email?: string;
+  company?: string;
+  position?: string;
+}
+
+export interface ApplicationBackendDocument {
+  id?: number;
+  type?: string;
+  url?: string;
+  file_url?: string;
+  file_name?: string;
+  uploaded_date?: string;
+}
+
 export enum DocumentType {
   CEDULA_IDENTIDAD = 'cedula_identidad',
   COMPROBANTE_INGRESOS = 'comprobante_ingresos',
   CARTA_RECOMENDACION = 'carta_recomendacion',
   CONTRATO_ANTERIOR = 'contrato_anterior',
-  OTRO = 'otro'
+  OTRO = 'otro',
 }
 
 // ==================== MAIN APPLICATION ====================
@@ -134,8 +152,8 @@ export interface Application {
     previous_landlord_name: string;
     previous_landlord_phone: string;
   }>;
-  references: any[];
-  documents: any[];
+  references: ApplicationReference[];
+  documents: ApplicationBackendDocument[];
   additional_notes: string | null;
   admin_feedback: string | null;
   created_at: string;
@@ -220,8 +238,8 @@ export interface ApplicationListItem {
     previous_landlord_name: string;
     previous_landlord_phone: string;
   }>;
-  references: any[];
-  documents: any[];
+  references: ApplicationReference[];
+  documents: ApplicationBackendDocument[];
   additional_notes: string | null;
   admin_feedback: string | null;
   created_at: string;

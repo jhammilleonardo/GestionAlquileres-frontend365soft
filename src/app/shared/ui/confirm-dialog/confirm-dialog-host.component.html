@@ -1,0 +1,48 @@
+@if (options(); as dialog) {
+  <app-dialog [open]="true" [title]="dialog.title" [closeOnBackdrop]="false" (closed)="close()">
+    <div class="confirm-dialog" [class.confirm-dialog--danger]="isDanger()">
+      @if (isDanger()) {
+        <div class="confirm-dialog__icon" aria-hidden="true">
+          <lucide-icon [img]="AlertTriangle" [size]="22" />
+        </div>
+      }
+
+      <p class="confirm-dialog__message">{{ dialog.message }}</p>
+
+      @if (dialog.input; as input) {
+        <label class="confirm-dialog__input">
+          <span>{{ input.label }}</span>
+          <textarea
+            [placeholder]="input.placeholder ?? ''"
+            [value]="inputValue()"
+            rows="4"
+            (input)="onInput($event)"
+          ></textarea>
+        </label>
+
+        @if (inputInvalid()) {
+          <p class="confirm-dialog__error">Este campo es obligatorio.</p>
+        }
+      }
+    </div>
+
+    <div dialog-actions class="confirm-dialog__actions">
+      <button
+        class="confirm-dialog__button confirm-dialog__button--flat"
+        type="button"
+        (click)="close()"
+      >
+        {{ dialog.cancelLabel ?? 'Cancelar' }}
+      </button>
+      <button
+        class="confirm-dialog__button"
+        [class.confirm-dialog__button--danger]="isDanger()"
+        type="button"
+        [disabled]="inputInvalid()"
+        (click)="confirm()"
+      >
+        {{ dialog.confirmLabel ?? 'Confirmar' }}
+      </button>
+    </div>
+  </app-dialog>
+}

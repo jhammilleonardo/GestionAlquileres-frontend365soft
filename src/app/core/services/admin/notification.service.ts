@@ -26,7 +26,7 @@ export interface NotificationMetadata {
   role?: string;
   phone?: string;
   contract_number?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface Notification {
@@ -122,10 +122,9 @@ export class NotificationService {
           this.notificationsSignal.set(processedNotifications);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadNotifications'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading notifications:', error);
           return of([]);
         }),
       )
@@ -144,8 +143,7 @@ export class NotificationService {
         tap((stats) => {
           this.statsSignal.set(stats);
         }),
-        catchError((error) => {
-          console.error('Error loading notification stats:', error);
+        catchError((_e) => {
           return of(null);
         }),
       )
@@ -191,8 +189,7 @@ export class NotificationService {
           // Actualizar estadísticas
           this.loadStats();
         }),
-        catchError((error) => {
-          console.error('Error marking notification as read:', error);
+        catchError((_e) => {
           return of(undefined);
         }),
       );
@@ -214,9 +211,8 @@ export class NotificationService {
           // Actualizar estadísticas
           this.loadStats();
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.markAllRead'));
-          console.error('Error marking all notifications as read:', error);
           return of(undefined);
         }),
       );
@@ -236,9 +232,8 @@ export class NotificationService {
         // Actualizar estadísticas
         this.loadStats();
       }),
-      catchError((error) => {
+      catchError((_e) => {
         this.errorSignal.set(this.transloco.translate('common.errors.deleteNotification'));
-        console.error('Error deleting notification:', error);
         return of(undefined);
       }),
     );

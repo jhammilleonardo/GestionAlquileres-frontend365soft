@@ -1,858 +1,625 @@
-import { Component, inject, OnInit, DestroyRef, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import {
-  LucideAngularModule,
-  FileText,
-  Download,
-  ArrowLeft,
-  Edit,
-  CheckCircle2,
   AlertTriangle,
-  Home,
+  ArrowLeft,
   Calendar,
+  CheckCircle2,
   DollarSign,
+  Download,
   FileCheck,
+  FileText,
+  Home,
   Info,
   X,
 } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import {
-  TenantContractService,
   Contract,
   ContractStatus,
-  ContractStatusLabels,
+  TenantContractService,
 } from '../../../core/services/tenant/tenant-contract.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { FormatService } from '../../../core/services/format.service';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AppButtonComponent,
+  AppEmptyStateComponent,
+  AppLoadingStateComponent,
+  AppStatusBadgeComponent,
+  AppStatusTone,
+  ToastService,
+} from '../../../shared/ui';
 import { ContractSigningDialogComponent } from '../dialogs/contract-signing-dialog.component';
 import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-contract-detail',
   standalone: true,
   imports: [
-    CommonModule,
-    MatCardModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    MatDialogModule,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
     TenantCurrencyPipe,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppStatusBadgeComponent,
+    ContractSigningDialogComponent,
+    SigningSuccessDialogComponent,
   ],
   template: `
-    <div class="contract-detail-container">
-      <!-- Header -->
-      <div class="detail-header">
-        <button mat-stroked-button (click)="goBack()" class="back-btn">
+    <section class="contract-detail">
+      <header class="detail-header">
+        <app-button appearance="outline" size="s" (clicked)="goBack()">
           <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
           {{ 'tenantContracts.details.back' | transloco }}
-        </button>
-        <div class="header-info">
-          @if (contract(); as c) {
+        </app-button>
+
+        @if (contract(); as c) {
+          <div class="detail-header__identity">
             <h1>{{ c.contract_number }}</h1>
-            <span class="status-badge" [class]="'status-' + c.status.toLowerCase()">
-              {{ 'tenantContracts.status.' + c.status | transloco }}
-            </span>
-          }
-        </div>
-      </div>
-
-      <!-- Loading -->
-      @if (isLoading()) {
-        <div class="loading-container">
-          <mat-spinner diameter="50"></mat-spinner>
-          <p>{{ 'tenantContracts.details.loading' | transloco }}</p>
-        </div>
-      }
-
-      <!-- Error -->
-      @else if (error()) {
-        <mat-card class="error-card">
-          <div class="error-content">
-            <lucide-icon [img]="X" [size]="48"></lucide-icon>
-            <h2>{{ 'tenantContracts.details.error' | transloco }}</h2>
-            <p>{{ error() }}</p>
-            <button mat-raised-button color="primary" (click)="goBack()">
-              {{ 'tenantContracts.details.back' | transloco }}
-            </button>
+            <app-status-badge
+              [label]="'tenantContracts.status.' + c.status | transloco"
+              [tone]="statusTone(c.status)"
+            />
           </div>
-        </mat-card>
-      }
+        }
+      </header>
 
-      <!-- Contract Detail -->
-      @else if (contract(); as c) {
+      @if (isLoading()) {
+        <div class="state-box">
+          <app-loading-state [label]="'tenantContracts.details.loading' | transloco" />
+        </div>
+      } @else if (error()) {
+        <app-empty-state
+          [title]="'tenantContracts.details.error' | transloco"
+          [description]="error()"
+        >
+          <lucide-icon icon [img]="X" [size]="28"></lucide-icon>
+          <app-button actions appearance="primary" (clicked)="goBack()">
+            {{ 'tenantContracts.details.back' | transloco }}
+          </app-button>
+        </app-empty-state>
+      } @else if (contract(); as c) {
         <div class="contract-content">
-          <!-- Alerta de firma pendiente -->
           @if (c.status === ContractStatus.BORRADOR) {
-            <mat-card class="pending-signature-alert">
-              <div class="alert-content">
-                <lucide-icon [img]="AlertTriangle" [size]="32"></lucide-icon>
-                <div class="alert-text">
-                  <h3>{{ 'tenantContracts.details.pendingAlertTitle' | transloco }}</h3>
-                  <p>
-                    {{ 'tenantContracts.details.pendingAlertDescBefore' | transloco }}
-                    <strong>{{
-                      'tenantContracts.details.pendingAlertDescButton' | transloco
-                    }}</strong>
-                    {{ 'tenantContracts.details.pendingAlertDescAfter' | transloco }}
-                  </p>
-                </div>
-              </div>
-              <div class="alert-action">
-                <button
-                  mat-raised-button
-                  color="primary"
-                  (click)="signContract()"
-                  [disabled]="isSigning()"
-                  class="sign-btn-top"
-                >
-                  <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
-                  {{
-                    isSigning()
-                      ? ('tenantContracts.details.signing' | transloco)
-                      : ('tenantContracts.details.signButton' | transloco)
-                  }}
-                </button>
-              </div>
-            </mat-card>
-          }
-
-          <!-- Confirmación de firma -->
-          @if (c.status === ContractStatus.ACTIVO && c.signed_at) {
-            <mat-card class="signed-confirmation">
-              <div class="confirmation-content">
-                <lucide-icon [img]="CheckCircle2" [size]="32"></lucide-icon>
-                <div class="confirmation-text">
-                  <h3>{{ 'tenantContracts.details.signedTitle' | transloco }}</h3>
-                  <p>
-                    {{
-                      'tenantContracts.details.signedDesc'
-                        | transloco: { date: formatDate(c.signed_at) }
-                    }}
-                  </p>
-                </div>
-              </div>
-            </mat-card>
-          }
-
-          <!-- Información de la Propiedad -->
-          <mat-card class="info-card">
-            <div class="card-header">
-              <lucide-icon [img]="Home" [size]="24"></lucide-icon>
-              <h3>{{ 'tenantContracts.details.propertyTitle' | transloco }}</h3>
-            </div>
-            <div class="card-content">
-              <h2 class="property-title">
-                {{ c.property?.title || ('tenantContracts.propertyNotSpecified' | transloco) }}
-              </h2>
-              @if (c.property && c.property.address) {
-                <p class="property-address">
-                  {{ c.property.address }}
+            <section class="banner banner--warning">
+              <lucide-icon [img]="AlertTriangle" [size]="28"></lucide-icon>
+              <div>
+                <h2>{{ 'tenantContracts.details.pendingAlertTitle' | transloco }}</h2>
+                <p>
+                  {{ 'tenantContracts.details.pendingAlertDescBefore' | transloco }}
+                  <strong>{{
+                    'tenantContracts.details.pendingAlertDescButton' | transloco
+                  }}</strong>
+                  {{ 'tenantContracts.details.pendingAlertDescAfter' | transloco }}
                 </p>
-              }
-            </div>
-          </mat-card>
+              </div>
+              <app-button appearance="primary" [loading]="isSigning()" (clicked)="signContract()">
+                <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
+                {{ 'tenantContracts.details.signButton' | transloco }}
+              </app-button>
+            </section>
+          }
 
-          <!-- Fechas del Contrato -->
-          <mat-card class="info-card">
-            <div class="card-header">
-              <lucide-icon [img]="Calendar" [size]="24"></lucide-icon>
-              <h3>{{ 'tenantContracts.details.validityTitle' | transloco }}</h3>
-            </div>
-            <div class="card-content">
-              <div class="dates-grid">
-                <div class="date-item">
-                  <span class="label">{{ 'tenantContracts.details.startLabel' | transloco }}:</span>
-                  <span class="value">{{ c.start_date | tenantDate }}</span>
+          @if (c.status === ContractStatus.ACTIVO && c.signed_at) {
+            <section class="banner banner--success">
+              <lucide-icon [img]="CheckCircle2" [size]="28"></lucide-icon>
+              <div>
+                <h2>{{ 'tenantContracts.details.signedTitle' | transloco }}</h2>
+                <p>
+                  {{
+                    'tenantContracts.details.signedDesc'
+                      | transloco: { date: formatDate(c.signed_at) }
+                  }}
+                </p>
+              </div>
+            </section>
+          }
+
+          <div class="detail-grid">
+            <article class="info-card">
+              <header>
+                <lucide-icon [img]="Home" [size]="22"></lucide-icon>
+                <h2>{{ 'tenantContracts.details.propertyTitle' | transloco }}</h2>
+              </header>
+              <div class="info-card__body">
+                <h3>
+                  {{ c.property?.title || ('tenantContracts.propertyNotSpecified' | transloco) }}
+                </h3>
+                @if (c.property?.address) {
+                  <p>{{ c.property?.address }}</p>
+                }
+              </div>
+            </article>
+
+            <article class="info-card">
+              <header>
+                <lucide-icon [img]="Calendar" [size]="22"></lucide-icon>
+                <h2>{{ 'tenantContracts.details.validityTitle' | transloco }}</h2>
+              </header>
+              <dl class="info-list">
+                <div>
+                  <dt>{{ 'tenantContracts.details.startLabel' | transloco }}</dt>
+                  <dd>{{ c.start_date | tenantDate }}</dd>
                 </div>
-                <div class="date-item">
-                  <span class="label">{{ 'tenantContracts.details.endLabel' | transloco }}:</span>
-                  <span class="value">{{ c.end_date | tenantDate }}</span>
+                <div>
+                  <dt>{{ 'tenantContracts.details.endLabel' | transloco }}</dt>
+                  <dd>{{ c.end_date | tenantDate }}</dd>
                 </div>
                 @if (c.key_delivery_date) {
-                  <div class="date-item">
-                    <span class="label"
-                      >{{ 'tenantContracts.details.keyDeliveryLabel' | transloco }}:</span
-                    >
-                    <span class="value">{{ c.key_delivery_date | tenantDate }}</span>
+                  <div>
+                    <dt>{{ 'tenantContracts.details.keyDeliveryLabel' | transloco }}</dt>
+                    <dd>{{ c.key_delivery_date | tenantDate }}</dd>
                   </div>
                 }
                 @if (c.signed_at) {
-                  <div class="date-item signed">
-                    <span class="label"
-                      >{{ 'tenantContracts.details.signDateLabel' | transloco }}:</span
-                    >
-                    <span class="value">{{ c.signed_at | tenantDate }}</span>
+                  <div>
+                    <dt>{{ 'tenantContracts.details.signDateLabel' | transloco }}</dt>
+                    <dd>{{ c.signed_at | tenantDate }}</dd>
                   </div>
                 }
-              </div>
-            </div>
-          </mat-card>
+              </dl>
+            </article>
 
-          <!-- Condiciones Económicas -->
-          <mat-card class="info-card">
-            <div class="card-header">
-              <lucide-icon [img]="DollarSign" [size]="24"></lucide-icon>
-              <h3>{{ 'tenantContracts.details.economicTitle' | transloco }}</h3>
-            </div>
-            <div class="card-content">
-              <div class="economic-terms">
-                <div class="term-item">
-                  <span class="label">{{ 'tenantContracts.details.rentLabel' | transloco }}:</span>
-                  <span class="value amount">
+            <article class="info-card info-card--wide">
+              <header>
+                <lucide-icon [img]="DollarSign" [size]="22"></lucide-icon>
+                <h2>{{ 'tenantContracts.details.economicTitle' | transloco }}</h2>
+              </header>
+
+              <dl class="terms-grid">
+                <div>
+                  <dt>{{ 'tenantContracts.details.rentLabel' | transloco }}</dt>
+                  <dd class="amount">
                     {{ c.monthly_rent | tenantCurrency }}
                     @if (c.currency) {
                       {{ c.currency }}
                     }
-                  </span>
+                  </dd>
                 </div>
                 @if (c.deposit_amount) {
-                  <div class="term-item">
-                    <span class="label"
-                      >{{ 'tenantContracts.details.depositLabel' | transloco }}:</span
-                    >
-                    <span class="value">
+                  <div>
+                    <dt>{{ 'tenantContracts.details.depositLabel' | transloco }}</dt>
+                    <dd>
                       {{ c.deposit_amount | tenantCurrency }}
                       @if (c.currency) {
                         {{ c.currency }}
                       }
-                    </span>
+                    </dd>
                   </div>
                 }
                 @if (c.payment_day) {
-                  <div class="term-item">
-                    <span class="label"
-                      >{{ 'tenantContracts.details.paymentDayLabel' | transloco }}:</span
-                    >
-                    <span class="value">{{
-                      'tenantContracts.details.paymentDayValue' | transloco: { day: c.payment_day }
-                    }}</span>
+                  <div>
+                    <dt>{{ 'tenantContracts.details.paymentDayLabel' | transloco }}</dt>
+                    <dd>
+                      {{
+                        'tenantContracts.details.paymentDayValue'
+                          | transloco: { day: c.payment_day }
+                      }}
+                    </dd>
                   </div>
                 }
                 @if (c.payment_method) {
-                  <div class="term-item">
-                    <span class="label"
-                      >{{ 'tenantContracts.details.methodLabel' | transloco }}:</span
-                    >
-                    <span class="value">{{ c.payment_method }}</span>
+                  <div>
+                    <dt>{{ 'tenantContracts.details.methodLabel' | transloco }}</dt>
+                    <dd>{{ c.payment_method }}</dd>
                   </div>
                 }
-              </div>
+              </dl>
 
-              <!-- Datos bancarios -->
               @if (c.bank_name || c.bank_account_number) {
-                <mat-divider class="my-4"></mat-divider>
-                <div class="bank-info">
-                  <h4>{{ 'tenantContracts.details.bankTitle' | transloco }}</h4>
-                  @if (c.bank_name) {
-                    <p>
-                      <strong>{{ 'tenantContracts.details.bankLabel' | transloco }}:</strong>
-                      {{ c.bank_name }}
-                    </p>
-                  }
-                  @if (c.bank_account_holder) {
-                    <p>
-                      <strong>{{ 'tenantContracts.details.holderLabel' | transloco }}:</strong>
-                      {{ c.bank_account_holder }}
-                    </p>
-                  }
-                  @if (c.bank_account_type && c.bank_account_number) {
-                    <p>
-                      <strong>{{ 'tenantContracts.details.accountLabel' | transloco }}:</strong>
-                      {{ c.bank_account_type }} -
-                      {{ c.bank_account_number }}
-                    </p>
-                  }
+                <div class="bank-section">
+                  <h3>{{ 'tenantContracts.details.bankTitle' | transloco }}</h3>
+                  <dl class="info-list">
+                    @if (c.bank_name) {
+                      <div>
+                        <dt>{{ 'tenantContracts.details.bankLabel' | transloco }}</dt>
+                        <dd>{{ c.bank_name }}</dd>
+                      </div>
+                    }
+                    @if (c.bank_account_holder) {
+                      <div>
+                        <dt>{{ 'tenantContracts.details.holderLabel' | transloco }}</dt>
+                        <dd>{{ c.bank_account_holder }}</dd>
+                      </div>
+                    }
+                    @if (c.bank_account_type && c.bank_account_number) {
+                      <div>
+                        <dt>{{ 'tenantContracts.details.accountLabel' | transloco }}</dt>
+                        <dd>{{ c.bank_account_type }} - {{ c.bank_account_number }}</dd>
+                      </div>
+                    }
+                  </dl>
                 </div>
               }
-            </div>
-          </mat-card>
+            </article>
 
-          <!-- Servicios Incluidos -->
-          @if (c.included_services && c.included_services.length > 0) {
-            <mat-card class="info-card">
-              <div class="card-header">
-                <lucide-icon [img]="Info" [size]="24"></lucide-icon>
-                <h3>{{ 'tenantContracts.details.servicesTitle' | transloco }}</h3>
-              </div>
-              <div class="card-content">
-                <div class="services-list">
-                  @for (service of c.included_services; track $index) {
-                    <div class="service-item">
-                      <span class="service-icon">✓</span>
-                      <span class="service-name">{{ service }}</span>
-                    </div>
+            @if (c.included_services && c.included_services.length > 0) {
+              <article class="info-card">
+                <header>
+                  <lucide-icon [img]="Info" [size]="22"></lucide-icon>
+                  <h2>{{ 'tenantContracts.details.servicesTitle' | transloco }}</h2>
+                </header>
+                <ul class="check-list">
+                  @for (service of c.included_services; track service) {
+                    <li>{{ service }}</li>
+                  }
+                </ul>
+              </article>
+            }
+
+            @if (c.tenant_responsibilities) {
+              <article class="info-card">
+                <header>
+                  <lucide-icon [img]="FileText" [size]="22"></lucide-icon>
+                  <h2>{{ 'tenantContracts.details.responsibilitiesTitle' | transloco }}</h2>
+                </header>
+                <p class="long-text">{{ c.tenant_responsibilities }}</p>
+              </article>
+            }
+
+            @if (c.prohibitions) {
+              <article class="info-card info-card--danger">
+                <header>
+                  <lucide-icon [img]="AlertTriangle" [size]="22"></lucide-icon>
+                  <h2>{{ 'tenantContracts.details.prohibitionsTitle' | transloco }}</h2>
+                </header>
+                <p class="long-text">{{ c.prohibitions }}</p>
+              </article>
+            }
+
+            @if (c.renewal_terms || c.termination_terms || c.jurisdiction) {
+              <article class="info-card info-card--wide">
+                <header>
+                  <lucide-icon [img]="Info" [size]="22"></lucide-icon>
+                  <h2>{{ 'tenantContracts.details.additionalTitle' | transloco }}</h2>
+                </header>
+                <div class="additional-grid">
+                  @if (c.renewal_terms) {
+                    <section>
+                      <h3>{{ 'tenantContracts.details.renewalLabel' | transloco }}</h3>
+                      <p>{{ c.renewal_terms }}</p>
+                    </section>
+                  }
+                  @if (c.termination_terms) {
+                    <section>
+                      <h3>{{ 'tenantContracts.details.terminationLabel' | transloco }}</h3>
+                      <p>{{ c.termination_terms }}</p>
+                    </section>
+                  }
+                  @if (c.jurisdiction) {
+                    <section>
+                      <h3>{{ 'tenantContracts.details.jurisdictionLabel' | transloco }}</h3>
+                      <p>{{ c.jurisdiction }}</p>
+                    </section>
                   }
                 </div>
-              </div>
-            </mat-card>
-          }
-
-          <!-- Responsabilidades -->
-          @if (c.tenant_responsibilities) {
-            <mat-card class="info-card">
-              <div class="card-header">
-                <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
-                <h3>{{ 'tenantContracts.details.responsibilitiesTitle' | transloco }}</h3>
-              </div>
-              <div class="card-content">
-                <p class="terms-text">{{ c.tenant_responsibilities }}</p>
-              </div>
-            </mat-card>
-          }
-
-          <!-- Prohibiciones -->
-          @if (c.prohibitions) {
-            <mat-card class="info-card prohibitions">
-              <div class="card-header">
-                <lucide-icon [img]="AlertTriangle" [size]="24"></lucide-icon>
-                <h3>{{ 'tenantContracts.details.prohibitionsTitle' | transloco }}</h3>
-              </div>
-              <div class="card-content">
-                <p class="terms-text">{{ c.prohibitions }}</p>
-              </div>
-            </mat-card>
-          }
-
-          <!-- Información adicional -->
-          @if (c.renewal_terms || c.termination_terms || c.jurisdiction) {
-            <mat-card class="info-card">
-              <div class="card-header">
-                <lucide-icon [img]="Info" [size]="24"></lucide-icon>
-                <h3>{{ 'tenantContracts.details.additionalTitle' | transloco }}</h3>
-              </div>
-              <div class="card-content">
-                @if (c.renewal_terms) {
-                  <div class="additional-term">
-                    <h4>{{ 'tenantContracts.details.renewalLabel' | transloco }}</h4>
-                    <p>{{ c.renewal_terms }}</p>
-                  </div>
-                }
-                @if (c.termination_terms) {
-                  <div class="additional-term">
-                    <h4>{{ 'tenantContracts.details.terminationLabel' | transloco }}</h4>
-                    <p>{{ c.termination_terms }}</p>
-                  </div>
-                }
-                @if (c.jurisdiction) {
-                  <div class="additional-term">
-                    <h4>{{ 'tenantContracts.details.jurisdictionLabel' | transloco }}</h4>
-                    <p>{{ c.jurisdiction }}</p>
-                  </div>
-                }
-              </div>
-            </mat-card>
-          }
-
-          <!-- Actions Footer -->
-          <div class="actions-footer">
-            <button mat-stroked-button (click)="viewPDF()" class="action-btn download-btn">
-              <lucide-icon [img]="Download" [size]="18"></lucide-icon>
-              {{ 'tenantContracts.details.viewPDF' | transloco }}
-            </button>
-
-            @if (c.status === ContractStatus.BORRADOR) {
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="signContract()"
-                [disabled]="isSigning()"
-                class="action-btn sign-btn"
-              >
-                <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
-                {{
-                  isSigning()
-                    ? ('tenantContracts.details.signing' | transloco)
-                    : ('tenantContracts.details.signButton' | transloco)
-                }}
-              </button>
+              </article>
             }
           </div>
+
+          <footer class="detail-actions">
+            <app-button appearance="outline" (clicked)="viewPDF()">
+              <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
+              {{ 'tenantContracts.details.viewPdf' | transloco }}
+            </app-button>
+            <app-button appearance="outline" (clicked)="downloadPDF()">
+              <lucide-icon [img]="Download" [size]="18"></lucide-icon>
+              {{ 'tenantContracts.details.downloadPdf' | transloco }}
+            </app-button>
+            @if (c.status === ContractStatus.BORRADOR) {
+              <app-button appearance="primary" [loading]="isSigning()" (clicked)="signContract()">
+                <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
+                {{ 'tenantContracts.details.signButton' | transloco }}
+              </app-button>
+            }
+          </footer>
         </div>
       }
-    </div>
+    </section>
+
+    <app-contract-signing-dialog
+      [open]="isSigningDialogOpen()"
+      [contract]="contract()"
+      [isSigning]="isSigning()"
+      (cancelled)="closeSigningDialog()"
+      (confirmed)="confirmSigning()"
+    />
+
+    <app-signing-success-dialog
+      [open]="isSuccessDialogOpen()"
+      [contract]="signedContract()"
+      (closed)="closeSuccessDialog()"
+    />
   `,
-  styles: [
-    `
-      .contract-detail-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 24px 0;
+  styles: `
+    .contract-detail {
+      max-inline-size: 1120px;
+      margin-inline: auto;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--app-space-4);
+      margin-block-end: var(--app-space-6);
+    }
+
+    .detail-header__identity {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--app-space-3);
+      min-inline-size: 0;
+    }
+
+    .detail-header h1 {
+      margin: 0;
+      color: var(--app-color-text);
+      font-size: clamp(1.25rem, 2vw, 1.75rem);
+      font-weight: 820;
+      line-height: 1.15;
+      overflow-wrap: anywhere;
+    }
+
+    .state-box {
+      display: grid;
+      min-block-size: 20rem;
+      place-items: center;
+    }
+
+    .contract-content {
+      display: grid;
+      gap: var(--app-space-5);
+    }
+
+    .banner {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--app-space-4);
+      border-radius: var(--app-radius-lg);
+      padding: var(--app-space-4);
+    }
+
+    .banner h2,
+    .banner p {
+      margin: 0;
+    }
+
+    .banner h2 {
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .banner p {
+      margin-block-start: 0.25rem;
+      line-height: 1.5;
+    }
+
+    .banner--warning {
+      background: var(--tui-status-warning-pale);
+      color: var(--tui-status-warning);
+    }
+
+    .banner--success {
+      background: var(--tui-status-positive-pale);
+      color: var(--tui-status-positive);
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--app-space-4);
+    }
+
+    .info-card {
+      display: grid;
+      gap: var(--app-space-4);
+      align-content: start;
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      box-shadow: var(--app-shadow-sm);
+      padding: var(--app-space-4);
+    }
+
+    .info-card--wide {
+      grid-column: 1 / -1;
+    }
+
+    .info-card--danger {
+      border-color: var(--tui-status-negative);
+      background: var(--tui-status-negative-pale);
+    }
+
+    .info-card header {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      color: var(--app-color-text);
+    }
+
+    .info-card h2,
+    .info-card h3,
+    .info-card p,
+    .info-list,
+    .terms-grid,
+    .additional-grid p {
+      margin: 0;
+    }
+
+    .info-card h2 {
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .info-card__body h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 820;
+    }
+
+    .info-card__body p,
+    .long-text,
+    .additional-grid p {
+      color: var(--app-color-text-muted);
+      line-height: 1.6;
+    }
+
+    .info-list,
+    .terms-grid {
+      display: grid;
+      gap: var(--app-space-2);
+    }
+
+    .terms-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .info-list div,
+    .terms-grid div {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+      border-bottom: 1px solid var(--app-color-border);
+      padding-block-end: var(--app-space-2);
+    }
+
+    .info-list dt,
+    .terms-grid dt {
+      color: var(--app-color-text-muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .info-list dd,
+    .terms-grid dd {
+      margin: 0;
+      color: var(--app-color-text);
+      font-weight: 780;
+      text-align: end;
+    }
+
+    .terms-grid .amount {
+      color: var(--app-color-primary);
+      font-size: 1.1rem;
+    }
+
+    .bank-section {
+      display: grid;
+      gap: var(--app-space-3);
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-4);
+    }
+
+    .check-list {
+      display: grid;
+      gap: var(--app-space-2);
+      margin: 0;
+      padding-inline-start: 1.2rem;
+      color: var(--app-color-text);
+      font-weight: 650;
+    }
+
+    .additional-grid {
+      display: grid;
+      gap: var(--app-space-4);
+    }
+
+    .additional-grid h3 {
+      margin: 0 0 var(--app-space-1);
+      font-size: 0.9rem;
+      font-weight: 780;
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: var(--app-space-2);
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-5);
+    }
+
+    @media (max-width: 820px) {
+      .detail-header,
+      .banner {
+        align-items: stretch;
+        grid-template-columns: 1fr;
       }
 
       .detail-header {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-      }
-
-      .back-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .header-info {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-
-      .header-info h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0;
-      }
-
-      .status-badge {
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-        display: inline-block;
-      }
-
-      .status-badge.status-borrador {
-        background: #fef3c7;
-        color: #b45309;
-      }
-
-      .status-badge.status-activo {
-        background: #d1fae5;
-        color: #047857;
-      }
-
-      .status-badge.status-finalizado {
-        background: #e5e7eb;
-        color: #374151;
-      }
-
-      .loading-container {
-        display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 80px 20px;
-        gap: 16px;
-        color: #64748b;
       }
 
-      .error-card {
-        margin: 40px 0;
+      .detail-header__identity,
+      .detail-actions {
+        justify-content: flex-start;
       }
 
-      .error-content {
-        text-align: center;
-        padding: 40px 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
+      .detail-grid,
+      .terms-grid {
+        grid-template-columns: 1fr;
       }
-
-      .error-content lucide-icon {
-        color: #dc2626;
-      }
-
-      .error-content h2 {
-        margin: 0;
-        color: #1e293b;
-      }
-
-      .contract-content {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .pending-signature-alert {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border-left: 4px solid #f59e0b;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
-      }
-
-      .alert-action {
-        margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid rgba(245, 158, 11, 0.3);
-      }
-
-      .sign-btn-top {
-        width: 100%;
-        padding: 12px 24px;
-        font-size: 15px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-
-      .alert-content,
-      .confirmation-content {
-        display: flex;
-        gap: 16px;
-        align-items: flex-start;
-      }
-
-      .alert-content lucide-icon {
-        color: #f59e0b;
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
-
-      .alert-content h3,
-      .confirmation-content h3 {
-        margin: 0 0 8px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #1e293b;
-      }
-
-      .alert-content p,
-      .confirmation-content p {
-        margin: 0;
-        color: #64748b;
-        line-height: 1.5;
-      }
-
-      .signed-confirmation {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        border-left: 4px solid #10b981;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-      }
-
-      .confirmation-content lucide-icon {
-        color: #10b981;
-        flex-shrink: 0;
-        margin-top: 2px;
-      }
-
-      .info-card {
-        padding: 24px;
-      }
-
-      .card-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-        padding-bottom: 16px;
-        border-bottom: 2px solid #e2e8f0;
-      }
-
-      .card-header lucide-icon {
-        color: var(--mat-sys-primary);
-      }
-
-      .card-header h3 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0;
-      }
-
-      .card-content {
-        color: #475569;
-      }
-
-      .property-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 8px;
-      }
-
-      .property-address {
-        margin: 0;
-        color: #64748b;
-        line-height: 1.5;
-      }
-
-      .dates-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-      }
-
-      .date-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        padding: 12px;
-        background: #f8fafc;
-        border-radius: 8px;
-      }
-
-      .date-item.signed {
-        background: #d1fae5;
-      }
-
-      .date-item .label {
-        font-size: 12px;
-        color: #64748b;
-        font-weight: 500;
-      }
-
-      .date-item .value {
-        font-size: 15px;
-        color: #1e293b;
-        font-weight: 600;
-      }
-
-      .economic-terms {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .term-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px;
-        background: #f8fafc;
-        border-radius: 8px;
-      }
-
-      .term-item .label {
-        font-size: 14px;
-        color: #64748b;
-      }
-
-      .term-item .value {
-        font-size: 16px;
-        color: #1e293b;
-        font-weight: 600;
-      }
-
-      .term-item .value.amount {
-        font-size: 18px;
-        color: var(--mat-sys-primary);
-      }
-
-      .bank-info {
-        margin-top: 16px;
-        padding: 16px;
-        background: #f8fafc;
-        border-radius: 8px;
-      }
-
-      .bank-info h4 {
-        margin: 0 0 12px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-      }
-
-      .bank-info p {
-        margin: 0 0 8px;
-        font-size: 14px;
-        color: #475569;
-      }
-
-      .bank-info p:last-child {
-        margin-bottom: 0;
-      }
-
-      .services-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .service-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        background: #f8fafc;
-        border-radius: 6px;
-      }
-
-      .service-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        background: #d1fae5;
-        color: #047857;
-        border-radius: 50%;
-        font-weight: 700;
-        font-size: 14px;
-      }
-
-      .service-name {
-        font-size: 14px;
-        color: #1e293b;
-      }
-
-      .terms-text {
-        margin: 0;
-        line-height: 1.7;
-        color: #475569;
-      }
-
-      .info-card.prohibitions {
-        border-left: 4px solid #f59e0b;
-        background: #fffbeb;
-      }
-
-      .additional-term {
-        margin-bottom: 16px;
-      }
-
-      .additional-term:last-child {
-        margin-bottom: 0;
-      }
-
-      .additional-term h4 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0 0 8px;
-      }
-
-      .additional-term p {
-        margin: 0;
-        line-height: 1.6;
-        color: #475569;
-      }
-
-      .actions-footer {
-        display: flex;
-        gap: 12px;
-        margin-top: 24px;
-        padding: 20px;
-        background: var(--mat-sys-surface);
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      }
-
-      .action-btn {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 14px 24px;
-        font-size: 15px;
-        font-weight: 600;
-      }
-
-      .sign-btn {
-        min-width: 200px;
-      }
-
-      @media (max-width: 768px) {
-        .contract-detail-container {
-          padding: 16px 0;
-        }
-
-        .detail-header {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .header-info {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-
-        .dates-grid {
-          grid-template-columns: 1fr;
-        }
-
-        .actions-footer {
-          flex-direction: column;
-        }
-
-        .action-btn {
-          width: 100%;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .info-card {
-          padding: 20px;
-        }
-
-        .property-title {
-          font-size: 1.25rem;
-        }
-
-        .card-header h3 {
-          font-size: 1.1rem;
-        }
-      }
-
-      .my-4 {
-        margin: 16px 0;
-      }
-    `,
-  ],
-})
-export class TenantContractDetailComponent implements OnInit {
-  readonly ArrowLeft = ArrowLeft;
-  readonly Download = Download;
-  readonly Edit = Edit;
-  readonly CheckCircle2 = CheckCircle2;
-  readonly AlertTriangle = AlertTriangle;
-  readonly Home = Home;
-  readonly Calendar = Calendar;
-  readonly DollarSign = DollarSign;
-  readonly FileCheck = FileCheck;
-  readonly Info = Info;
-  readonly FileText = FileText;
-  readonly X = X;
-  readonly ContractStatus = ContractStatus;
-  readonly ContractStatusLabels = ContractStatusLabels;
-
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
-  private contractService = inject(TenantContractService);
-  private authService = inject(TenantAuthService);
-  private slugService = inject(SlugService);
-  private destroyRef = inject(DestroyRef);
-  private dialog = inject(MatDialog);
-  private translocoService = inject(TranslocoService);
-  private formatService = inject(FormatService);
-
-  contract = signal<Contract | null>(null);
-  isLoading = signal(true);
-  error = signal<string | null>(null);
-  isSigning = signal(false);
-
-  ngOnInit(): void {
-    const contractId = this.route.snapshot.paramMap.get('id');
-    if (contractId) {
-      this.loadContract(parseInt(contractId));
-    } else {
-      this.error.set('ID de contrato no proporcionado');
-      this.isLoading.set(false);
     }
+  `,
+})
+export class TenantContractDetailComponent {
+  protected readonly ArrowLeft = ArrowLeft;
+  protected readonly Download = Download;
+  protected readonly Edit = FileCheck;
+  protected readonly CheckCircle2 = CheckCircle2;
+  protected readonly AlertTriangle = AlertTriangle;
+  protected readonly Home = Home;
+  protected readonly Calendar = Calendar;
+  protected readonly DollarSign = DollarSign;
+  protected readonly FileCheck = FileCheck;
+  protected readonly Info = Info;
+  protected readonly FileText = FileText;
+  protected readonly X = X;
+  protected readonly ContractStatus = ContractStatus;
+
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly contractService = inject(TenantContractService);
+  private readonly authService = inject(TenantAuthService);
+  private readonly slugService = inject(SlugService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly formatService = inject(FormatService);
+  private readonly toast = inject(ToastService);
+
+  protected readonly contract = signal<Contract | null>(null);
+  protected readonly isLoading = signal(true);
+  protected readonly error = signal<string | null>(null);
+  protected readonly isSigning = signal(false);
+  protected readonly isSigningDialogOpen = signal(false);
+  protected readonly isSuccessDialogOpen = signal(false);
+  protected readonly signedContract = signal<Contract | null>(null);
+
+  constructor() {
+    const contractId = this.route.snapshot.paramMap.get('id');
+    if (!contractId) {
+      this.error.set(this.translocoService.translate('tenantContracts.details.missingId'));
+      this.isLoading.set(false);
+      return;
+    }
+
+    this.loadContract(Number(contractId));
   }
 
-  loadContract(id: number): void {
+  protected loadContract(id: number): void {
     this.contractService
       .getContract(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -861,42 +628,37 @@ export class TenantContractDetailComponent implements OnInit {
           this.contract.set(contract);
           this.isLoading.set(false);
         },
-        error: (err) => {
-          console.error('Error loading contract:', err);
-          this.error.set(
-            'No se pudo cargar el contrato. Es posible que no tengas permiso para verlo.',
-          );
+        error: () => {
+          this.error.set(this.translocoService.translate('tenantContracts.details.loadError'));
           this.isLoading.set(false);
         },
       });
   }
 
-  goBack(): void {
+  protected goBack(): void {
     const url = this.slugService.buildUrl('/portal/documentos');
-    this.router.navigateByUrl(url);
+    void this.router.navigateByUrl(url);
   }
 
-  signContract(): void {
+  protected signContract(): void {
+    if (!this.contract() || this.isSigning()) return;
+    this.isSigningDialogOpen.set(true);
+  }
+
+  protected closeSigningDialog(): void {
+    if (this.isSigning()) return;
+    this.isSigningDialogOpen.set(false);
+  }
+
+  protected confirmSigning(): void {
     const contract = this.contract();
     if (!contract || this.isSigning()) return;
 
-    // Abrir el diálogo de confirmación de firma
-    const dialogRef = this.dialog.open(ContractSigningDialogComponent, {
-      width: '700px',
-      maxWidth: '95vw',
-      data: { contract },
-      disableClose: true,
-      autoFocus: false,
-    });
-
-    dialogRef.afterClosed().subscribe((confirmed) => {
-      if (confirmed && contract) {
-        this.performSigning(contract.id);
-      }
-    });
+    this.isSigningDialogOpen.set(false);
+    this.performSigning(contract.id);
   }
 
-  private performSigning(contractId: number): void {
+  private performSigning(contractId: Contract['id']): void {
     this.isSigning.set(true);
 
     this.contractService
@@ -906,26 +668,12 @@ export class TenantContractDetailComponent implements OnInit {
         next: (response) => {
           this.isSigning.set(false);
           this.contract.set(response);
-
-          // Mostrar diálogo de éxito
-          const successRef = this.dialog.open(SigningSuccessDialogComponent, {
-            width: '450px',
-            maxWidth: '90vw',
-            data: { contract: response },
-            disableClose: true,
-          });
-
-          // Cuando cierra el diálogo: refrescar sesión y navegar al dashboard
-          successRef.afterClosed().subscribe(() => {
-            this.authService.refreshUserData().subscribe(() => {
-              this.slugService.navigateTo(['portal', 'dashboard']);
-            });
-          });
+          this.signedContract.set(response);
+          this.isSuccessDialogOpen.set(true);
         },
-        error: (err) => {
+        error: (err: { error?: { message?: string } }) => {
           this.isSigning.set(false);
-          console.error('Error signing contract:', err);
-          alert(
+          this.toast.error(
             err.error?.message ||
               this.translocoService.translate('tenantContracts.details.signError'),
           );
@@ -933,7 +681,25 @@ export class TenantContractDetailComponent implements OnInit {
       });
   }
 
-  downloadPDF(): void {
+  protected closeSuccessDialog(): void {
+    this.isSuccessDialogOpen.set(false);
+    this.authService
+      .refreshUserData()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.slugService.navigateTo(['portal', 'dashboard']);
+      });
+  }
+
+  protected downloadPDF(): void {
+    this.openContractPdf();
+  }
+
+  protected viewPDF(): void {
+    this.openContractPdf();
+  }
+
+  private openContractPdf(): void {
     const contract = this.contract();
     if (!contract) return;
 
@@ -942,42 +708,24 @@ export class TenantContractDetailComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (blob) => {
-          // Crear URL del blob y abrir en nueva pestaña para visualización
           const url = window.URL.createObjectURL(blob);
-          window.open(url, '_blank');
-          // Nota: No revocamos la URL de inmediato porque el navegador necesita tiempo para cargar el PDF
-          // Se limpiará automáticamente cuando se cierre la pestaña
+          window.open(url, '_blank', 'noopener,noreferrer');
         },
-        error: (err) => {
-          console.error('Error viewing PDF:', err);
-          alert(this.translocoService.translate('tenantContracts.details.pdfError'));
+        error: () => {
+          this.toast.error(this.translocoService.translate('tenantContracts.details.pdfError'));
         },
       });
   }
 
-  viewPDF(): void {
-    const contract = this.contract();
-    if (!contract) return;
-
-    this.contractService
-      .downloadContractPDF(contract.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (blob) => {
-          // Crear URL del blob y abrir en nueva pestaña para visualización
-          const url = window.URL.createObjectURL(blob);
-          window.open(url, '_blank');
-          // Nota: No revocamos la URL de inmediato porque el navegador necesita tiempo para cargar el PDF
-          // Se limpiará automáticamente cuando se cierre la pestaña
-        },
-        error: (err) => {
-          console.error('Error viewing PDF:', err);
-          alert(this.translocoService.translate('tenantContracts.details.pdfError'));
-        },
-      });
+  protected statusTone(status: ContractStatus): AppStatusTone {
+    if (status === ContractStatus.ACTIVO || status === ContractStatus.FIRMADO) return 'success';
+    if (status === ContractStatus.BORRADOR || status === ContractStatus.PENDIENTE) return 'warning';
+    if (status === ContractStatus.VENCIDO || status === ContractStatus.CANCELADO) return 'danger';
+    if (status === ContractStatus.POR_VENCER) return 'info';
+    return 'neutral';
   }
 
-  formatDate(date: Date | string): string {
+  protected formatDate(date: Date | string): string {
     return this.formatService.formatDate(date);
   }
 }

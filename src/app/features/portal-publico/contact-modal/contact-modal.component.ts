@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
@@ -7,9 +6,10 @@ import { Property } from '../../../core/models/property.model';
 import { PropertyService } from '../../../core/services/admin/property.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-contact-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslocoModule],
+  imports: [FormsModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './contact-modal.component.html',
   styleUrls: ['./contact-modal.component.css'],

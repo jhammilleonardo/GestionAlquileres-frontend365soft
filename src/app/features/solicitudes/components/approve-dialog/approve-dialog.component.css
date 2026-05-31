@@ -62,6 +62,7 @@
 /* Section Cards */
 .section-card {
   margin-bottom: 24px;
+  padding: 24px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
@@ -166,6 +167,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   background-color: #f8fafc;
+  color: #475569;
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
 }
 
 .service-item:hover {
@@ -295,6 +300,7 @@
   width: 100%;
   max-width: 500px;
   margin: 32px auto;
+  padding: 24px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
@@ -413,6 +419,12 @@
   padding: 12px 24px;
   background-color: #f8fafc;
   border-radius: 20px;
+}
+
+.field-hint {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 13px;
 }
 
 /* Responsive Adjustments */

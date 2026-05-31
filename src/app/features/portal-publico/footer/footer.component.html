@@ -11,14 +11,11 @@
           {{ 'public.footer.desc' | transloco }}
         </p>
         <div class="social-links">
-          <a
-            *ngFor="let social of socialLinks"
-            [href]="social.url"
-            [title]="social.name"
-            class="social-link"
-          >
-            <lucide-icon [img]="social.icon"></lucide-icon>
-          </a>
+          @for (social of socialLinks; track social.name) {
+            <a [href]="social.url" [title]="social.name" class="social-link">
+              <lucide-icon [img]="social.icon"></lucide-icon>
+            </a>
+          }
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, catchError, of, throwError } from 'rxjs';
+import { Observable, tap, catchError, of, throwError, map } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import {
@@ -13,6 +13,29 @@ import {
   BulkPaymentActionDto,
 } from '../../models/payment.model';
 import { SlugService } from '../slug.service';
+
+/** Pago crudo del backend: montos pueden venir como string. */
+type RawPayment = Omit<Payment, 'amount' | 'processor_fee'> & {
+  amount: string | number;
+  processor_fee?: string | number;
+};
+
+/** Estadísticas crudas del backend: totales monetarios pueden venir como string. */
+type RawPaymentStats = Omit<
+  PaymentStats,
+  'total_amount_pending' | 'total_amount_approved' | 'total_amount_failed'
+> & {
+  total_amount_pending: string | number;
+  total_amount_approved: string | number;
+  total_amount_failed: string | number;
+};
+
+interface PaymentsListResponse {
+  payments: RawPayment[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -58,7 +81,7 @@ export class PaymentService {
   /**
    * Normalizar Payment - convertir strings a números
    */
-  private normalizePayment(payment: any): Payment {
+  private normalizePayment(payment: RawPayment): Payment {
     return {
       ...payment,
       amount: typeof payment.amount === 'string' ? parseFloat(payment.amount) : payment.amount,
@@ -73,7 +96,7 @@ export class PaymentService {
   /**
    * Normalizar PaymentStats - convertir strings a números
    */
-  private normalizeStats(stats: any): PaymentStats {
+  private normalizeStats(stats: RawPaymentStats): PaymentStats {
     return {
       ...stats,
       total_amount_pending:
@@ -109,9 +132,7 @@ export class PaymentService {
     }
 
     this.http
-      .get<{ payments: any[]; total: number; page: number; limit: number }>(this.getBaseUrl(), {
-        params,
-      })
+      .get<PaymentsListResponse>(this.getBaseUrl(), { params })
       .pipe(
         tap((response) => {
           const normalizedPayments = (response.payments || []).map((p) => this.normalizePayment(p));
@@ -123,7 +144,6 @@ export class PaymentService {
             error.error?.message || this.transloco.translate('common.errors.loadPayments'),
           );
           this.isLoadingSignal.set(false);
-          console.error('Error loading payments:', error);
           this.paymentsSignal.set([]);
           return of({ payments: [], total: 0, page: 1, limit: 50 });
         }),
@@ -138,16 +158,13 @@ export class PaymentService {
   loadStats(): void {
     const endpoint = this.slugService.buildApiEndpoint('admin/payments/stats');
     this.http
-      .get<any>(`${environment.apiUrl}${endpoint}`)
+      .get<RawPaymentStats>(`${environment.apiUrl}${endpoint}`)
       .pipe(
         tap((stats) => {
           const normalizedStats = this.normalizeStats(stats);
           this.statsSignal.set(normalizedStats);
         }),
-        catchError((error) => {
-          console.error('Error loading payment stats:', error);
-          return of(null);
-        }),
+        catchError(() => of(null)),
       )
       .subscribe();
   }
@@ -157,17 +174,14 @@ export class PaymentService {
    * GET /:slug/admin/payments/:id
    */
   getPayment(id: number): Observable<Payment> {
-    return this.http.get<any>(`${this.getBaseUrl()}/${id}`).pipe(
-      tap((payment) => {
+    return this.http.get<RawPayment>(`${this.getBaseUrl()}/${id}`).pipe(
+      map((payment) => {
         const normalizedPayment = this.normalizePayment(payment);
         // Actualizar en la lista si existe
         this.paymentsSignal.update((payments) =>
           payments.map((p) => (p.id === normalizedPayment.id ? normalizedPayment : p)),
         );
-      }),
-      catchError((error) => {
-        console.error('Error loading payment:', error);
-        throw error;
+        return normalizedPayment;
       }),
     );
   }
@@ -180,8 +194,8 @@ export class PaymentService {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    return this.http.patch<any>(`${this.getBaseUrl()}/${id}`, data).pipe(
-      tap((updatedPayment) => {
+    return this.http.patch<RawPayment>(`${this.getBaseUrl()}/${id}`, data).pipe(
+      map((updatedPayment) => {
         const normalizedPayment = this.normalizePayment(updatedPayment);
         this.paymentsSignal.update((payments) =>
           payments.map((p) => (p.id === normalizedPayment.id ? normalizedPayment : p)),
@@ -190,13 +204,14 @@ export class PaymentService {
 
         // Recargar stats
         this.loadStats();
+        return normalizedPayment;
       }),
-      catchError((error) => {
+      catchError((error: { error?: { message?: string } }) => {
         this.errorSignal.set(
           error.error?.message || this.transloco.translate('common.errors.updatePayment'),
         );
         this.isLoadingSignal.set(false);
-        throw error;
+        return throwError(() => error);
       }),
     );
   }
@@ -223,21 +238,22 @@ export class PaymentService {
         : undefined,
     };
 
-    return this.http.post<any>(this.getBaseUrl(), payload).pipe(
-      tap((newPayment) => {
+    return this.http.post<RawPayment>(this.getBaseUrl(), payload).pipe(
+      map((newPayment) => {
         const normalizedPayment = this.normalizePayment(newPayment);
         this.paymentsSignal.update((payments) => [normalizedPayment, ...payments]);
         this.isLoadingSignal.set(false);
 
         // Recargar stats
         this.loadStats();
+        return normalizedPayment;
       }),
-      catchError((error) => {
+      catchError((error: { error?: { message?: string } }) => {
         this.errorSignal.set(
           error.error?.message || this.transloco.translate('common.errors.createPayment'),
         );
         this.isLoadingSignal.set(false);
-        throw error;
+        return throwError(() => error);
       }),
     );
   }
@@ -263,7 +279,7 @@ export class PaymentService {
           error.error?.message || this.transloco.translate('common.errors.deletePayment'),
         );
         this.isLoadingSignal.set(false);
-        throw error;
+        return throwError(() => error);
       }),
     );
   }
@@ -283,12 +299,12 @@ export class PaymentService {
           this.loadPayments();
           this.loadStats();
         }),
-        catchError((error) => {
+        catchError((error: { error?: { message?: string } }) => {
           this.errorSignal.set(
             error.error?.message || this.transloco.translate('common.errors.bulkAction'),
           );
           this.isLoadingSignal.set(false);
-          throw error;
+          return throwError(() => error);
         }),
       );
   }

@@ -1,0 +1,434 @@
+<div class="landing-page">
+  <!-- Top Bar -->
+  <nav class="top-bar">
+    <div class="container">
+      <div class="logo-section">
+        <div class="logo-icon">
+          <lucide-icon [img]="Home" [size]="22"></lucide-icon>
+        </div>
+        <span class="brand-name">365Soft</span>
+      </div>
+      <div class="top-actions">
+        <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isSpanish()"
+            (click)="languageService.setLanguage('es')"
+            aria-label="Español"
+            title="Español"
+          >
+            ES
+          </button>
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isEnglish()"
+            (click)="languageService.setLanguage('en')"
+            aria-label="English"
+            title="English"
+          >
+            EN
+          </button>
+        </div>
+        <button type="button" routerLink="/login" class="login-link">
+          <lucide-icon [img]="LogIn" [size]="18"></lucide-icon>
+          {{ 'landing.login' | transloco }}
+        </button>
+        <button type="button" routerLink="/register" class="signup-btn primary-btn">
+          {{ 'landing.startFree' | transloco }}
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+    <div class="container hero-container">
+      <div class="hero-content">
+        <div class="hero-badge reveal">
+          <lucide-icon [img]="Zap" [size]="14"></lucide-icon>
+          {{ 'landing.heroBadge' | transloco }}
+        </div>
+        <h1 class="reveal">
+          {{ 'landing.heroTitle1' | transloco }}<br />
+          <span class="gradient-text">{{ 'landing.heroTitle2' | transloco }}</span>
+        </h1>
+        <p class="hero-subtitle reveal">{{ 'landing.heroSubtitle' | transloco }}</p>
+        <div class="hero-cta reveal">
+          <button type="button" routerLink="/register" class="cta-large primary-btn">
+            {{ 'landing.heroCta' | transloco }}
+            <lucide-icon [img]="ArrowRight" [size]="20"></lucide-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3D Dashboard Mockup -->
+      <div class="hero-visual reveal-right">
+        <div class="dashboard-3d">
+          <div class="dashboard-card card-main">
+            <div class="d-card-header">
+              <div class="d-dot red"></div>
+              <div class="d-dot yellow"></div>
+              <div class="d-dot green"></div>
+            </div>
+            <div class="d-card-body">
+              <div class="d-stat-row">
+                <div class="d-stat">
+                  <span class="d-num">24</span
+                  ><span class="d-lbl">{{ 'landing.dashboardProperties' | transloco }}</span>
+                </div>
+                <div class="d-stat">
+                  <span class="d-num">18</span
+                  ><span class="d-lbl">{{ 'landing.dashboardTenants' | transloco }}</span>
+                </div>
+                <div class="d-stat">
+                  <span class="d-num">Bs 42k</span
+                  ><span class="d-lbl">{{ 'landing.dashboardRevenue' | transloco }}</span>
+                </div>
+              </div>
+              <div class="d-bar-group">
+                <div class="d-bar" style="height: 60%"></div>
+                <div class="d-bar" style="height: 80%"></div>
+                <div class="d-bar" style="height: 45%"></div>
+                <div class="d-bar" style="height: 90%"></div>
+                <div class="d-bar" style="height: 70%"></div>
+                <div class="d-bar" style="height: 55%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="dashboard-card card-small card-s1">
+            <lucide-icon [img]="CheckCircle" [size]="18" class="cs-icon green"></lucide-icon>
+            <span>{{ 'landing.dashboardPaymentApproved' | transloco }}</span>
+            <strong>Bs 2,500</strong>
+          </div>
+          <div class="dashboard-card card-small card-s2">
+            <lucide-icon [img]="Wrench" [size]="18" class="cs-icon orange"></lucide-icon>
+            <span>{{ 'landing.dashboardNewRequest' | transloco }}</span>
+            <strong>Plomería</strong>
+          </div>
+          <div class="dashboard-card card-small card-s3">
+            <lucide-icon [img]="FileText" [size]="18" class="cs-icon blue"></lucide-icon>
+            <span>{{ 'landing.dashboardContractSigned' | transloco }}</span>
+            <strong>Apto 4B</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Strip -->
+  <section class="stats-strip">
+    <div class="container">
+      <div class="stats-row">
+        <div class="stat-item reveal">
+          <span class="stat-num">{{ 'landing.stat1Num' | transloco }}</span>
+          <span class="stat-desc">{{ 'landing.stat1Desc' | transloco }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item reveal">
+          <span class="stat-num">{{ 'landing.stat2Num' | transloco }}</span>
+          <span class="stat-desc">{{ 'landing.stat2Desc' | transloco }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item reveal">
+          <span class="stat-num">{{ 'landing.stat3Num' | transloco }}</span>
+          <span class="stat-desc">{{ 'landing.stat3Desc' | transloco }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item reveal">
+          <span class="stat-num">{{ 'landing.stat4Num' | transloco }}</span>
+          <span class="stat-desc">{{ 'landing.stat4Desc' | transloco }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modules Section -->
+  <section class="modules">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">{{ 'landing.modulesTag' | transloco }}</div>
+        <h2>{{ 'landing.modulesTitle' | transloco }}</h2>
+        <p>{{ 'landing.modulesSubtitle' | transloco }}</p>
+      </div>
+
+      <div class="modules-grid">
+        <div class="module-card reveal" style="--delay: 0ms">
+          <div class="module-icon-wrap properties">
+            <lucide-icon [img]="Building2" [size]="28"></lucide-icon>
+          </div>
+          <h3>{{ 'landing.mod1Title' | transloco }}</h3>
+          <p>{{ 'landing.mod1Desc' | transloco }}</p>
+          <ul class="module-features">
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod1F1' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod1F2' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod1F3' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod1F4' | transloco }}
+            </li>
+          </ul>
+          <div class="card-shine"></div>
+        </div>
+
+        <div class="module-card reveal" style="--delay: 80ms">
+          <div class="module-icon-wrap tenants">
+            <lucide-icon [img]="Users" [size]="28"></lucide-icon>
+          </div>
+          <h3>{{ 'landing.mod2Title' | transloco }}</h3>
+          <p>{{ 'landing.mod2Desc' | transloco }}</p>
+          <ul class="module-features">
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod2F1' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod2F2' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod2F3' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod2F4' | transloco }}
+            </li>
+          </ul>
+          <div class="card-shine"></div>
+        </div>
+
+        <div class="module-card reveal" style="--delay: 160ms">
+          <div class="module-icon-wrap leases">
+            <lucide-icon [img]="FileText" [size]="28"></lucide-icon>
+          </div>
+          <h3>{{ 'landing.mod3Title' | transloco }}</h3>
+          <p>{{ 'landing.mod3Desc' | transloco }}</p>
+          <ul class="module-features">
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod3F1' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod3F2' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod3F3' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod3F4' | transloco }}
+            </li>
+          </ul>
+          <div class="card-shine"></div>
+        </div>
+
+        <div class="module-card reveal" style="--delay: 240ms">
+          <div class="module-icon-wrap payments">
+            <lucide-icon [img]="DollarSign" [size]="28"></lucide-icon>
+          </div>
+          <h3>{{ 'landing.mod4Title' | transloco }}</h3>
+          <p>{{ 'landing.mod4Desc' | transloco }}</p>
+          <ul class="module-features">
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod4F1' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod4F2' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod4F3' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod4F4' | transloco }}
+            </li>
+          </ul>
+          <div class="card-shine"></div>
+        </div>
+
+        <div class="module-card reveal" style="--delay: 320ms">
+          <div class="module-icon-wrap maintenance">
+            <lucide-icon [img]="Wrench" [size]="28"></lucide-icon>
+          </div>
+          <h3>{{ 'landing.mod5Title' | transloco }}</h3>
+          <p>{{ 'landing.mod5Desc' | transloco }}</p>
+          <ul class="module-features">
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod5F1' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod5F2' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod5F3' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod5F4' | transloco }}
+            </li>
+          </ul>
+          <div class="card-shine"></div>
+        </div>
+
+        <div class="module-card reveal" style="--delay: 400ms">
+          <div class="module-icon-wrap reports">
+            <lucide-icon [img]="BarChart3" [size]="28"></lucide-icon>
+          </div>
+          <h3>{{ 'landing.mod6Title' | transloco }}</h3>
+          <p>{{ 'landing.mod6Desc' | transloco }}</p>
+          <ul class="module-features">
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod6F1' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod6F2' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod6F3' | transloco }}
+            </li>
+            <li>
+              <lucide-icon [img]="CheckCircle" [size]="16"></lucide-icon>
+              {{ 'landing.mod6F4' | transloco }}
+            </li>
+          </ul>
+          <div class="card-shine"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works">
+    <div class="container">
+      <div class="section-header reveal">
+        <div class="section-tag">{{ 'landing.howTag' | transloco }}</div>
+        <h2>{{ 'landing.howTitle' | transloco }}</h2>
+        <p>{{ 'landing.howSubtitle' | transloco }}</p>
+      </div>
+
+      <div class="steps">
+        <div class="step reveal-left" style="--delay: 0ms">
+          <div class="step-number">1</div>
+          <div class="step-line"></div>
+          <div class="step-content">
+            <h3>{{ 'landing.step1Title' | transloco }}</h3>
+            <p>{{ 'landing.step1Desc' | transloco }}</p>
+          </div>
+        </div>
+        <div class="step reveal-left" style="--delay: 100ms">
+          <div class="step-number">2</div>
+          <div class="step-line"></div>
+          <div class="step-content">
+            <h3>{{ 'landing.step2Title' | transloco }}</h3>
+            <p>{{ 'landing.step2Desc' | transloco }}</p>
+          </div>
+        </div>
+        <div class="step reveal-left" style="--delay: 200ms">
+          <div class="step-number">3</div>
+          <div class="step-line"></div>
+          <div class="step-content">
+            <h3>{{ 'landing.step3Title' | transloco }}</h3>
+            <p>{{ 'landing.step3Desc' | transloco }}</p>
+          </div>
+        </div>
+        <div class="step reveal-left" style="--delay: 300ms">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>{{ 'landing.step4Title' | transloco }}</h3>
+            <p>{{ 'landing.step4Desc' | transloco }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <div class="cta-orb cta-orb-1"></div>
+    <div class="cta-orb cta-orb-2"></div>
+    <div class="container">
+      <div class="cta-box reveal">
+        <div class="cta-stars">
+          <lucide-icon [img]="Star" [size]="16"></lucide-icon>
+          <lucide-icon [img]="Star" [size]="16"></lucide-icon>
+          <lucide-icon [img]="Star" [size]="16"></lucide-icon>
+          <lucide-icon [img]="Star" [size]="16"></lucide-icon>
+          <lucide-icon [img]="Star" [size]="16"></lucide-icon>
+          <span>{{ 'landing.ctaTrust' | transloco }}</span>
+        </div>
+        <h2>{{ 'landing.ctaTitle' | transloco }}</h2>
+        <p>{{ 'landing.ctaSubtitle' | transloco }}</p>
+        <button type="button" routerLink="/register" class="cta-button-xl primary-btn">
+          {{ 'landing.ctaBtn' | transloco }}
+          <lucide-icon [img]="ArrowRight" [size]="24"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <div class="logo-icon small">
+              <lucide-icon [img]="Home" [size]="16"></lucide-icon>
+            </div>
+            <span>365Soft</span>
+          </div>
+          <p>{{ 'landing.footerTagline' | transloco }}</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-section">
+            <h4>{{ 'landing.footerProduct' | transloco }}</h4>
+            <a href="#">{{ 'landing.footerFeatures' | transloco }}</a>
+            <a href="#">{{ 'landing.footerPricing' | transloco }}</a>
+            <a href="#">{{ 'landing.footerDemo' | transloco }}</a>
+          </div>
+          <div class="footer-section">
+            <h4>{{ 'landing.footerSupport' | transloco }}</h4>
+            <a href="#">{{ 'landing.footerHelp' | transloco }}</a>
+            <a href="#">{{ 'landing.footerContact' | transloco }}</a>
+            <a href="#">{{ 'landing.footerStatus' | transloco }}</a>
+          </div>
+          <div class="footer-section">
+            <h4>{{ 'landing.footerCompany' | transloco }}</h4>
+            <a href="#">{{ 'landing.footerAbout' | transloco }}</a>
+            <a href="#">{{ 'landing.footerBlog' | transloco }}</a>
+            <a href="#">{{ 'landing.footerTerms' | transloco }}</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>{{ 'landing.footerCopyright' | transloco }}</p>
+      </div>
+    </div>
+  </footer>
+</div>

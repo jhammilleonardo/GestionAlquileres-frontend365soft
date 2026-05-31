@@ -1,12 +1,12 @@
 import {
-  Component,
-  OnInit,
-  signal,
-  inject,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -17,15 +17,6 @@ import {
 } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import {
   LucideAngularModule,
   Building2,
@@ -65,33 +56,128 @@ import {
   PropertyStatus,
   PropertyType,
   PropertySubtype,
+  SortOption,
 } from '../../core/models/property.model';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { AppDialogComponent } from '../../shared/ui/dialog/dialog.component';
+import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
+import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { AppSelectComponent, AppSelectOption } from '../../shared/ui/select/select.component';
+import {
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../shared/ui/status-badge/status-badge.component';
+import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
+import { AppTextareaComponent } from '../../shared/ui/textarea/textarea.component';
+import { AppFileUploadComponent } from '../../shared/ui/file-upload/file-upload.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
+
+interface PropertyFormAddressValue {
+  address_type?: string;
+  street_address: string;
+  city: string;
+  state?: string;
+  zip_code?: string;
+  country: string;
+}
+
+interface PropertyFormOwnerValue {
+  name?: string;
+  is_company?: boolean;
+  company_name?: string;
+  primary_email?: string;
+  phone_number?: string;
+  ownership_percentage?: number | string | null;
+  is_primary?: boolean;
+}
+
+interface PropertyFormValue {
+  title?: string;
+  description?: string;
+  property_type_id?: number | string | null;
+  property_subtype_id?: number | string | null;
+  active?: boolean;
+  monthly_rent?: number | string | null;
+  currency?: string;
+  security_deposit_amount?: number | string | null;
+  account_number?: string;
+  account_type?: string;
+  account_holder_name?: string;
+  square_meters?: number | string | null;
+  bedrooms?: number | string | null;
+  bathrooms?: number | string | null;
+  parking_spaces?: number | string | null;
+  year_built?: number | string | null;
+  is_furnished?: boolean;
+  pets_allowed?: boolean;
+  smoking_allowed?: boolean;
+  max_occupants?: number | string | null;
+  min_lease_months?: number | string | null;
+  amenities?: string[];
+  included_items?: string[];
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  addresses?: PropertyFormAddressValue[];
+  new_owners?: PropertyFormOwnerValue[];
+}
+
+interface PropertyRulesPayload {
+  pets_allowed?: boolean;
+  smoking_allowed?: boolean;
+  max_occupants?: number;
+  min_lease_months?: number;
+}
+
+interface PropertySavePayload {
+  title: string;
+  property_type_id: number;
+  property_subtype_id: number;
+  addresses: PropertyFormAddressValue[];
+  description?: string;
+  security_deposit_amount?: number;
+  account_number?: string;
+  account_type?: string;
+  account_holder_name?: string;
+  monthly_rent?: number;
+  currency?: string;
+  square_meters?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  parking_spaces?: number;
+  year_built?: number;
+  is_furnished?: boolean;
+  latitude?: number;
+  longitude?: number;
+  amenities?: string[];
+  included_items?: string[];
+  property_rules?: PropertyRulesPayload;
+  new_owners?: PropertyFormOwnerValue[];
+}
 
 @Component({
   selector: 'app-propiedades',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppDialogComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppSelectComponent,
+    AppStatusBadgeComponent,
+    AppTextFieldComponent,
+    AppTextareaComponent,
+    AppFileUploadComponent,
   ],
   templateUrl: './propiedades.component.html',
   styleUrl: './propiedades.component.scss',
   providers: [provideTranslocoScope({ scope: 'propiedades', alias: 'properties' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropiedadesComponent implements OnInit {
+export class PropiedadesComponent {
   // Icons
   readonly Building2 = Building2;
   readonly Plus = Plus;
@@ -122,10 +208,10 @@ export class PropiedadesComponent implements OnInit {
   private authService = inject(AuthService);
   private slugService = inject(SlugService);
   private fb = inject(FormBuilder);
-  private cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private snackBar = inject(MatSnackBar);
+  private toast = inject(ToastService);
   private formatService = inject(FormatService);
 
   // Validation & confirmation state
@@ -159,6 +245,7 @@ export class PropiedadesComponent implements OnInit {
   propertyTypes = signal<PropertyType[]>([]);
   propertySubtypes = signal<PropertySubtype[]>([]);
   filteredSubtypes = signal<PropertySubtype[]>([]);
+  private readonly propertyImageMap = signal<Map<number, string>>(new Map());
 
   isListLoading = signal(false);
   isSubmitting = signal(false);
@@ -172,7 +259,7 @@ export class PropiedadesComponent implements OnInit {
     search: '',
     status: undefined,
     property_type_id: undefined,
-    sort_by: 'created_at' as any,
+    sort_by: SortOption.CREATED_AT,
     sort_order: 'DESC',
     page: 1,
     limit: 50,
@@ -181,26 +268,36 @@ export class PropiedadesComponent implements OnInit {
   propertyForm: FormGroup = this.createForm();
   PropertyStatus = PropertyStatus;
   statusOptions = Object.values(PropertyStatus);
+  readonly statusSelectOptions: readonly AppSelectOption<PropertyStatus>[] = this.statusOptions.map(
+    (status) => ({ value: status, label: status }),
+  );
+  readonly propertyTypeOptions = computed<readonly AppSelectOption<number>[]>(() =>
+    this.propertyTypes().map((type) => ({ value: type.id, label: type.name })),
+  );
+  readonly propertySubtypeOptions = computed<readonly AppSelectOption<number>[]>(() =>
+    this.filteredSubtypes().map((subtype) => ({ value: subtype.id, label: subtype.name })),
+  );
+  readonly currencyOptions: readonly AppSelectOption<string>[] = [
+    { value: 'BOB', label: 'BOB - Bolivia' },
+    { value: 'USD', label: 'USD - Estados Unidos' },
+    { value: 'EUR', label: 'EUR - Euro' },
+  ];
 
-  ngOnInit(): void {
+  constructor() {
     this.loadProperties();
     this.loadPropertyTypes();
     this.loadPropertySubtypes();
 
-    // Handle edit query param from property detail page
-    this.route.queryParams.subscribe((params) => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       const editId = params['edit'];
       if (editId) {
         const id = parseInt(editId, 10);
         this.propertyService.getAdminPropertyById(id).subscribe({
           next: (property) => {
-            if (property) {
-              this.openEditModal(property);
-            }
+            if (property) this.openEditModal(property);
           },
         });
-        // Clean up the query param
-        this.router.navigate([], { relativeTo: this.route, queryParams: {} });
+        void this.router.navigate([], { relativeTo: this.route, queryParams: {} });
       }
     });
   }
@@ -289,13 +386,14 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getAdminProperties(this.filters).subscribe({
       next: (data) => {
         this.properties.set(data);
+        const imageMap = new Map<number, string>();
+        data.forEach((prop) => imageMap.set(prop.id, this.buildImageUrl(prop)));
+        this.propertyImageMap.set(imageMap);
         this.isListLoading.set(false);
-        this.cdr.markForCheck();
       },
       error: () => {
         this.isListLoading.set(false);
-        this.snackBar.open('Error al cargar las propiedades', 'Cerrar', { duration: 5000 });
-        this.cdr.markForCheck();
+        this.toast.error('Error al cargar las propiedades');
       },
     });
   }
@@ -304,15 +402,9 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getPropertyTypes().subscribe({
       next: (types) => {
         this.propertyTypes.set(types);
-        this.cdr.markForCheck();
       },
       error: () => {
-        this.snackBar.open(
-          'No se pudieron cargar los tipos de propiedad. Recarga la página.',
-          'Cerrar',
-          { duration: 8000 },
-        );
-        this.cdr.markForCheck();
+        this.toast.error('No se pudieron cargar los tipos de propiedad. Recarga la página.');
       },
     });
   }
@@ -321,13 +413,9 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.getPropertySubtypes().subscribe({
       next: (subtypes) => {
         this.propertySubtypes.set(subtypes);
-        this.cdr.markForCheck();
       },
       error: () => {
-        this.snackBar.open('No se pudieron cargar los subtipos de propiedad', 'Cerrar', {
-          duration: 5000,
-        });
-        this.cdr.markForCheck();
+        this.toast.error('No se pudieron cargar los subtipos de propiedad');
       },
     });
   }
@@ -349,12 +437,22 @@ export class PropiedadesComponent implements OnInit {
     this.loadProperties();
   }
 
+  setStatusFilter(status: PropertyStatus | null): void {
+    this.filters.status = status ?? undefined;
+    this.applyFilters();
+  }
+
+  setPropertyTypeFilter(propertyTypeId: number | null): void {
+    this.filters.property_type_id = propertyTypeId ?? undefined;
+    this.applyFilters();
+  }
+
   clearFilters(): void {
     this.filters = {
       search: '',
       status: undefined,
       property_type_id: undefined,
-      sort_by: 'created_at' as any,
+      sort_by: SortOption.CREATED_AT,
       sort_order: 'DESC',
       page: 1,
       limit: 50,
@@ -386,12 +484,10 @@ export class PropiedadesComponent implements OnInit {
         const p = fullProperty || property;
         this.selectedProperty = p;
         this.populateEditForm(p);
-        this.cdr.markForCheck();
       },
       error: () => {
         // Si falla, usar los datos del listado
         this.populateEditForm(property);
-        this.cdr.markForCheck();
       },
     });
   }
@@ -461,13 +557,12 @@ export class PropiedadesComponent implements OnInit {
     this.validationErrors.set([]);
   }
 
-  onImagesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) {
-      const filesArray = Array.from(input.files);
+  onImagesSelected(files: File[]): void {
+    if (files.length > 0) {
+      const filesArray = files;
       // Validar máximo 10 imágenes
       if (filesArray.length > 10) {
-        this.snackBar.open('Máximo 10 imágenes permitidas', 'Cerrar', { duration: 4000 });
+        this.toast.warning('Máximo 10 imágenes permitidas');
         this.selectedImages = filesArray.slice(0, 10);
       } else {
         this.selectedImages = filesArray;
@@ -480,11 +575,7 @@ export class PropiedadesComponent implements OnInit {
       });
 
       if (invalidFiles.length > 0) {
-        this.snackBar.open(
-          'Solo se permiten imágenes JPG, PNG, GIF, WebP menores a 5MB',
-          'Cerrar',
-          { duration: 5000 },
-        );
+        this.toast.warning('Solo se permiten imágenes JPG, PNG, GIF, WebP menores a 5MB');
         this.selectedImages = this.selectedImages.filter((file) => !invalidFiles.includes(file));
       }
     }
@@ -525,7 +616,7 @@ export class PropiedadesComponent implements OnInit {
 
     this.validationErrors.set([]);
     this.isSubmitting.set(true);
-    const formValue = this.propertyForm.value;
+    const formValue = this.propertyForm.getRawValue() as PropertyFormValue;
 
     // Convertir valores a tipos correctos
     const property_type_id = formValue.property_type_id ? +formValue.property_type_id : null;
@@ -552,11 +643,11 @@ export class PropiedadesComponent implements OnInit {
       return;
     }
 
-    const createDto: any = {
+    const createDto: PropertySavePayload = {
       title: formValue.title,
       property_type_id: property_type_id,
       property_subtype_id: property_subtype_id,
-      addresses: formValue.addresses.map((addr: any) => ({
+      addresses: formValue.addresses.map((addr) => ({
         address_type: addr.address_type || 'address_1',
         street_address: addr.street_address,
         city: addr.city,
@@ -595,7 +686,7 @@ export class PropiedadesComponent implements OnInit {
     if (formValue.included_items?.length) createDto.included_items = formValue.included_items;
 
     // Property rules
-    const propertyRules: any = {};
+    const propertyRules: PropertyRulesPayload = {};
     if (formValue.pets_allowed !== undefined) propertyRules.pets_allowed = formValue.pets_allowed;
     if (formValue.smoking_allowed !== undefined)
       propertyRules.smoking_allowed = formValue.smoking_allowed;
@@ -606,19 +697,22 @@ export class PropiedadesComponent implements OnInit {
     // Owners - solo si tienen datos completos
     if (formValue.new_owners && formValue.new_owners.length > 0) {
       const validOwners = formValue.new_owners.filter(
-        (o: any) => o.name && o.primary_email && o.phone_number,
+        (owner) => owner.name && owner.primary_email && owner.phone_number,
       );
       if (validOwners.length > 0) createDto.new_owners = validOwners;
     }
 
     // Para edición, copiar createDto sin campos exclusivos de create
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { new_owners, existing_owners, ...updateDto } = createDto;
+    const { new_owners, ...updateDto } = createDto;
 
     const operation =
       this.modalMode === 'create'
-        ? this.propertyService.createProperty(createDto)
-        : this.propertyService.updateProperty(this.selectedProperty!.id, updateDto);
+        ? this.propertyService.createProperty(createDto as unknown as Record<string, unknown>)
+        : this.propertyService.updateProperty(
+            this.selectedProperty!.id,
+            updateDto as unknown as Record<string, unknown>,
+          );
 
     operation.subscribe({
       next: (savedProperty) => {
@@ -632,29 +726,20 @@ export class PropiedadesComponent implements OnInit {
             error: () => {
               this.isSubmitting.set(false);
               const action = this.modalMode === 'create' ? 'creada' : 'actualizada';
-              this.snackBar.open(
-                `Propiedad ${action}, pero algunas imágenes no se pudieron subir`,
-                'Cerrar',
-                { duration: 6000 },
-              );
+              this.toast.warning(`Propiedad ${action}, pero algunas imágenes no se pudieron subir`);
               this.loadProperties();
               this.closeModal();
-              this.cdr.markForCheck();
             },
           });
         } else {
           this.finishSave(this.modalMode);
         }
       },
-      error: (error) => {
+      error: (error: unknown) => {
         this.isSubmitting.set(false);
-        const errorMessage = error.message || 'Error desconocido';
+        const errorMessage = this.resolveErrorMessage(error, 'Error desconocido');
         const action = this.modalMode === 'create' ? 'crear' : 'actualizar';
-        this.snackBar.open(`Error al ${action} propiedad: ${errorMessage}`, 'Cerrar', {
-          duration: 6000,
-          panelClass: 'snack-error',
-        });
-        this.cdr.markForCheck();
+        this.toast.error(`Error al ${action} propiedad: ${errorMessage}`);
       },
     });
   }
@@ -676,16 +761,12 @@ export class PropiedadesComponent implements OnInit {
     this.propertyService.deleteProperty(property.id).subscribe({
       next: () => {
         this.loadProperties();
-        this.snackBar.open('Propiedad eliminada exitosamente', 'Cerrar', {
-          duration: 4000,
-          panelClass: 'snack-success',
-        });
+        this.toast.success('Propiedad eliminada exitosamente');
       },
-      error: (error) => {
-        this.snackBar.open(`Error al eliminar: ${error.message}`, 'Cerrar', {
-          duration: 5000,
-          panelClass: 'snack-error',
-        });
+      error: (error: unknown) => {
+        this.toast.error(
+          `Error al eliminar: ${this.resolveErrorMessage(error, 'Error desconocido')}`,
+        );
       },
     });
   }
@@ -700,7 +781,7 @@ export class PropiedadesComponent implements OnInit {
     this.isSubmitting.set(false);
     const msg =
       mode === 'create' ? 'Propiedad creada exitosamente' : 'Propiedad actualizada exitosamente';
-    this.snackBar.open(msg, 'Cerrar', { duration: 4000, panelClass: 'snack-success' });
+    this.toast.success(msg);
   }
 
   toggleStatus(property: Property): void {
@@ -711,13 +792,12 @@ export class PropiedadesComponent implements OnInit {
       next: () => {
         this.loadProperties();
         const msg = newActive ? 'Propiedad activada exitosamente' : 'Propiedad desactivada';
-        this.snackBar.open(msg, 'Cerrar', { duration: 3000, panelClass: 'snack-success' });
+        this.toast.success(msg);
       },
-      error: (error) => {
-        this.snackBar.open(`Error al actualizar estado: ${error.message}`, 'Cerrar', {
-          duration: 5000,
-          panelClass: 'snack-error',
-        });
+      error: (error: unknown) => {
+        this.toast.error(
+          `Error al actualizar estado: ${this.resolveErrorMessage(error, 'Error desconocido')}`,
+        );
       },
     });
   }
@@ -732,6 +812,24 @@ export class PropiedadesComponent implements OnInit {
       }
     });
   }
+
+  private resolveErrorMessage(error: unknown, fallback: string): string {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'error' in error &&
+      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
+    ) {
+      return (error as { error: { message: string } }).error.message;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return fallback;
+  }
+
   private scrollToValidationErrors(): void {
     setTimeout(() => {
       const panel = document.querySelector('.validation-error-panel');
@@ -741,27 +839,56 @@ export class PropiedadesComponent implements OnInit {
     }, 80);
   }
   getPropertyAddress(property: Property): string {
-    return this.propertyService.getPropertyAddress(property) || 'Sin dirección';
+    if (property && property.addresses && property.addresses.length > 0) {
+      const addr = property.addresses[0];
+      return `${addr.street_address || ''}, ${addr.city || ''}, ${addr.country || ''}`;
+    }
+    return 'Sin dirección';
+  }
+
+  /** Construye la URL de imagen de una propiedad (uso interno, llamar solo al cargar datos) */
+  private buildImageUrl(property: Property): string {
+    let imagePath: string | null = null;
+
+    if (property.first_image) {
+      imagePath = property.first_image;
+    } else if (property.images && Array.isArray(property.images) && property.images.length > 0) {
+      imagePath = property.images[0];
+    }
+
+    if (imagePath) {
+      if (imagePath.startsWith('http')) return imagePath;
+      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+      return `http://localhost:3000${normalizedPath}`;
+    }
+
+    return '';
   }
 
   /** Retorna la URL de imagen pre-computada (seguro llamar desde template) */
   getPropertyImage(property: Property): string {
-    return this.propertyService.getPropertyImageUrl(property);
+    return this.propertyImageMap().get(property.id) ?? '';
   }
 
   getPropertyPrice(property: Property): string {
-    return this.propertyService.getPropertyPrice(property);
+    const price = property.monthly_rent || property.monthly_rent_amount;
+    if (price) return this.formatService.formatCurrency(price);
+    return 'N/A';
   }
 
   getPropertyArea(property: Property): string {
-    return this.propertyService.getPropertyArea(property);
+    const area = property.square_meters || property.total_area;
+    return area ? `${area} m²` : 'N/A';
   }
 
   onImageLoad(_property: Property): void {}
 
-  onImageError(_property: Property, _url: string): void {
-    // Error loading image, handled by browser default or service helper fallback
-    this.cdr.markForCheck();
+  onImageError(property: Property, _url: string): void {
+    this.propertyImageMap.update((map) => {
+      const next = new Map(map);
+      next.delete(property.id);
+      return next;
+    });
   }
 
   getStatusBadgeClass(status: PropertyStatus | undefined): string {
@@ -786,6 +913,21 @@ export class PropiedadesComponent implements OnInit {
       [PropertyStatus.INACTIVO]: 'inactivo',
     };
     return map[status] || 'default';
+  }
+
+  getStatusTone(status: PropertyStatus | undefined): AppStatusTone {
+    switch (status) {
+      case PropertyStatus.DISPONIBLE:
+        return 'success';
+      case PropertyStatus.OCUPADO:
+      case PropertyStatus.RESERVADO:
+        return 'info';
+      case PropertyStatus.MANTENIMIENTO:
+        return 'warning';
+      case PropertyStatus.INACTIVO:
+      default:
+        return 'neutral';
+    }
   }
 
   // Helper methods para validación visual

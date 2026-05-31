@@ -1,8 +1,23 @@
 // ==================== PROPERTY MODELS ====================
 
+/** Unidad con configuración de alquiler (incl. corto plazo) expuesta en el catálogo. */
+export interface CatalogUnit {
+  id: number;
+  unit_number: string;
+  rental_type?: string | null;
+  status?: string | null;
+  price_per_night?: number | null;
+  cleaning_fee?: number | null;
+  min_nights?: number | null;
+  max_nights?: number | null;
+  checkin_time?: string | null;
+  checkout_time?: string | null;
+}
+
 export interface Property {
   id: number;
   title: string;
+  units?: CatalogUnit[];
   description?: string;
   property_type_id: number;
   property_subtype_id: number;

@@ -1,798 +1,526 @@
-import { Component, inject, computed, OnInit, signal } from '@angular/core';
-import { TranslocoModule } from '@jsverse/transloco';
-import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
-import { provideTranslocoScope } from '@jsverse/transloco';
-import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
-  LucideAngularModule,
-  Home,
-  Search,
-  MapPin,
-  DollarSign,
-  Users,
-  Bed,
-  Bath,
-  Maximize,
   ArrowRight,
+  Bath,
+  Bed,
+  Home,
+  MapPin,
+  Maximize,
   SlidersHorizontal,
+  Users,
 } from 'lucide-angular';
+import { LucideAngularModule } from 'lucide-angular';
 import { PropertyService } from '../../../core/services/admin/property.service';
-import { Property, PropertyStatus, PropertyFilters } from '../../../core/models/property.model';
+import { Property } from '../../../core/models/property.model';
 import { SlugService } from '../../../core/services/slug.service';
+import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
+import {
+  AppButtonComponent,
+  AppEmptyStateComponent,
+  AppLoadingStateComponent,
+  AppPageHeaderComponent,
+  AppSelectComponent,
+  AppSelectOption,
+  AppTextFieldComponent,
+  ToastService,
+} from '../../../shared/ui';
+
+type MarketplaceSort = 'created_at' | 'price_asc' | 'price_desc' | 'area';
+
+interface MarketplaceFilters {
+  search: string;
+  propertyType: string;
+  sort: MarketplaceSort;
+}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-new-application',
   standalone: true,
   imports: [
-    CommonModule,
-    RouterModule,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatInputModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
-    MatPaginatorModule,
     LucideAngularModule,
     TranslocoModule,
     TenantCurrencyPipe,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppSelectComponent,
+    AppTextFieldComponent,
   ],
   providers: [provideTranslocoScope('rentalApp')],
   template: `
-    <div class="new-application">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <lucide-icon [img]="SlidersHorizontal" [size]="28"></lucide-icon>
-          </div>
-          <div class="header-text">
-            <h1>{{ 'tenantApplications.marketplace.title' | transloco }}</h1>
-            <p class="subtitle">{{ 'tenantApplications.marketplace.subtitle' | transloco }}</p>
-          </div>
-        </div>
-      </div>
+    <section class="marketplace-page">
+      <app-page-header
+        [eyebrow]="'tenantApplications.marketplace.eyebrow' | transloco"
+        [title]="'tenantApplications.marketplace.title' | transloco"
+        [description]="'tenantApplications.marketplace.subtitle' | transloco"
+      />
 
-      <!-- Filters -->
-      <div class="filters-section">
-        <div class="filter-row">
-          <div class="filter-group search-group">
-            <lucide-icon [img]="Search" [size]="20"></lucide-icon>
-            <input
-              type="text"
-              placeholder="Buscar por título, ciudad o dirección..."
-              [value]="filters().search"
-              (input)="updateFilter('search', $any($event.target).value)"
-              class="search-input"
-            />
-          </div>
+      <section
+        class="filters-panel"
+        [attr.aria-label]="'tenantApplications.marketplace.title' | transloco"
+      >
+        <app-text-field
+          [(ngModel)]="filters.search"
+          type="search"
+          [label]="'tenantApplications.marketplace.searchPlaceholder' | transloco"
+          [placeholder]="'tenantApplications.marketplace.searchPlaceholder' | transloco"
+          (ngModelChange)="resetPage()"
+        />
 
-          <div class="filter-group">
-            <mat-select
-              placeholder="Tipo de propiedad"
-              [value]="filters().property_type_id"
-              (selectionChange)="updateFilter('property_type_id', $event.value)"
-              class="filter-select"
-            >
-              <mat-option [value]="null">Todos los tipos</mat-option>
-              @for (type of propertyTypes(); track type) {
-                <mat-option [value]="type">{{ type }}</mat-option>
-              }
-            </mat-select>
-          </div>
+        <app-select
+          [(ngModel)]="filters.propertyType"
+          [label]="'tenantApplications.marketplace.typePlaceholder' | transloco"
+          [options]="propertyTypeOptions()"
+          (ngModelChange)="resetPage()"
+        />
 
-          <div class="filter-group">
-            <div class="filter-input-wrapper">
-              <input
-                type="number"
-                placeholder="Precio Mínimo"
-                (change)="updateFilter('min_price', $any($event.target).value)"
-                class="custom-filter-input"
-              />
-            </div>
-          </div>
-          <div class="filter-group">
-            <div class="filter-input-wrapper">
-              <input
-                type="number"
-                placeholder="Precio Máximo"
-                (change)="updateFilter('max_price', $any($event.target).value)"
-                class="custom-filter-input"
-              />
-            </div>
-          </div>
+        <app-select
+          [(ngModel)]="filters.sort"
+          [label]="'tenantApplications.marketplace.sortBy' | transloco"
+          [options]="sortOptions()"
+          (ngModelChange)="resetPage()"
+        />
 
-          <div class="filter-group">
-            <div class="filter-input-wrapper">
-              <input
-                type="number"
-                placeholder="Habitaciones"
-                (change)="updateFilter('bedrooms', $any($event.target).value)"
-                class="custom-filter-input"
-              />
-            </div>
-          </div>
+        <app-button appearance="outline" (clicked)="clearFilters()">
+          <lucide-icon [img]="SlidersHorizontal" [size]="16"></lucide-icon>
+          {{ 'tenantApplications.marketplace.clearFilters' | transloco }}
+        </app-button>
+      </section>
 
-          <div class="filter-group">
-            <mat-select
-              placeholder="Ordenar por"
-              [value]="filters().sort_by"
-              (selectionChange)="updateFilter('sort_by', $event.value)"
-              class="filter-select"
-            >
-              <mat-option value="created_at">Más recientes</mat-option>
-              <mat-option value="price_asc">Precio: de menor a mayor</mat-option>
-              <mat-option value="price_desc">Precio: de mayor a menor</mat-option>
-              <mat-option value="area">Mayor tamaño</mat-option>
-            </mat-select>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-bottom: 20px; font-weight: 600; color: var(--mat-sys-on-surface-variant);">
-        Mostrando {{ paginatedProperties().length }} de
-        {{ filteredProperties().length }} propiedades disponibles
-      </div>
-
-      <!-- Properties Grid -->
       @if (isLoading()) {
-        <div class="loading-state">
-          <mat-spinner diameter="48"></mat-spinner>
-          <p>{{ 'tenantApplications.marketplace.loading' | transloco }}</p>
+        <div class="state-box">
+          <app-loading-state [label]="'tenantApplications.marketplace.loading' | transloco" />
         </div>
       } @else if (filteredProperties().length === 0) {
-        <div class="empty-state">
-          <lucide-icon [img]="Home" [size]="64" class="empty-icon"></lucide-icon>
-          <h3>{{ 'tenantApplications.marketplace.noResultsTitle' | transloco }}</h3>
-          <p>{{ 'tenantApplications.marketplace.noResultsDesc' | transloco }}</p>
-          <button mat-raised-button color="primary" (click)="clearFilters()">
+        <app-empty-state
+          [title]="'tenantApplications.marketplace.noResultsTitle' | transloco"
+          [description]="'tenantApplications.marketplace.noResultsDesc' | transloco"
+        >
+          <lucide-icon icon [img]="Home" [size]="28"></lucide-icon>
+          <app-button actions appearance="primary" (clicked)="clearFilters()">
             {{ 'tenantApplications.marketplace.clearFilters' | transloco }}
-          </button>
-        </div>
+          </app-button>
+        </app-empty-state>
       } @else {
         <div class="properties-grid">
           @for (property of paginatedProperties(); track property.id) {
-            <mat-card class="property-card" (click)="selectProperty(property)">
-              <div class="property-image" style="position: relative;">
-                <button
-                  class="carousel-btn prev"
-                  (click)="prevImage($event, property)"
-                  *ngIf="hasMultipleImages(property)"
-                  style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"
-                >
-                  ‹
-                </button>
-
-                @if (getPropertyImageUrl(property)) {
-                  <img [src]="getPropertyImageUrl(property)" [alt]="property.title" />
+            <article
+              class="property-card"
+              tabindex="0"
+              (click)="selectProperty(property)"
+              (keydown.enter)="selectProperty(property)"
+            >
+              <div class="property-image">
+                @if (property.first_image) {
+                  <img [src]="property.first_image" [alt]="property.title" />
                 } @else {
                   <div class="image-placeholder">
-                    <lucide-icon [img]="Home" [size]="48"></lucide-icon>
+                    <lucide-icon [img]="Home" [size]="44"></lucide-icon>
                   </div>
                 }
 
-                <button
-                  class="carousel-btn next"
-                  (click)="nextImage($event, property)"
-                  *ngIf="hasMultipleImages(property)"
-                  style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer;"
-                >
-                  ›
-                </button>
-
                 <div class="property-price">
-                  <span class="price-amount">{{ property.monthly_rent | tenantCurrency }}</span>
-                  <span class="price-period">{{
-                    'tenantApplications.marketplace.priceMonth' | transloco
-                  }}</span>
+                  <strong>{{ property.monthly_rent | tenantCurrency }}</strong>
+                  <span>{{ 'tenantApplications.marketplace.priceMonth' | transloco }}</span>
                 </div>
               </div>
 
               <div class="property-content">
-                <h3 class="property-title">{{ property.title }}</h3>
+                <h2>{{ property.title }}</h2>
 
-                <div class="property-location">
+                <p class="property-location">
                   <lucide-icon [img]="MapPin" [size]="16"></lucide-icon>
                   <span
                     >{{ property.addresses?.[0]?.city }},
                     {{ property.addresses?.[0]?.country }}</span
                   >
-                </div>
+                </p>
 
                 <div class="property-features">
                   @if (property.bedrooms) {
-                    <div class="feature">
+                    <span>
                       <lucide-icon [img]="Bed" [size]="16"></lucide-icon>
-                      <span>{{
+                      {{
                         (property.bedrooms === 1
                           ? 'tenantApplications.marketplace.bedrooms'
                           : 'tenantApplications.marketplace.bedroomsPlural'
                         ) | transloco: { count: property.bedrooms }
-                      }}</span>
-                    </div>
+                      }}
+                    </span>
                   }
                   @if (property.bathrooms) {
-                    <div class="feature">
+                    <span>
                       <lucide-icon [img]="Bath" [size]="16"></lucide-icon>
-                      <span>{{
+                      {{
                         (property.bathrooms === 1
                           ? 'tenantApplications.marketplace.bathrooms'
                           : 'tenantApplications.marketplace.bathroomsPlural'
                         ) | transloco: { count: property.bathrooms }
-                      }}</span>
-                    </div>
+                      }}
+                    </span>
                   }
                   @if (property.square_meters) {
-                    <div class="feature">
+                    <span>
                       <lucide-icon [img]="Maximize" [size]="16"></lucide-icon>
-                      <span>{{ property.square_meters }}m²</span>
-                    </div>
+                      {{ property.square_meters }}m2
+                    </span>
                   }
-                  @if (property.property_rules && property.property_rules.max_occupants) {
-                    <div class="feature">
+                  @if (property.property_rules?.max_occupants) {
+                    <span>
                       <lucide-icon [img]="Users" [size]="16"></lucide-icon>
-                      <span>{{
+                      {{
                         'tenantApplications.marketplace.occupants'
-                          | transloco: { count: property.property_rules.max_occupants }
-                      }}</span>
-                    </div>
+                          | transloco: { count: property.property_rules?.max_occupants }
+                      }}
+                    </span>
                   }
                 </div>
 
-                <button
-                  mat-flat-button
-                  color="primary"
-                  class="apply-btn"
-                  (click)="$event.stopPropagation(); selectProperty(property)"
+                <app-button
+                  appearance="primary"
+                  [fullWidth]="true"
+                  (clicked)="selectProperty(property)"
                 >
                   {{ 'tenantApplications.marketplace.apply' | transloco }}
                   <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
-                </button>
+                </app-button>
               </div>
-            </mat-card>
+            </article>
           }
         </div>
 
-        <!-- Pagination -->
         @if (totalPages() > 1) {
-          <div class="pagination-section">
-            <mat-paginator
-              [length]="filteredProperties().length"
-              [pageSize]="pageSize()"
-              [pageIndex]="currentPage()"
-              [showFirstLastButtons]="true"
-              (page)="onPageChange($event)"
-              [aria-label]="'tenantApplications.marketplace.paginationLabel' | transloco"
+          <nav
+            class="pagination"
+            [attr.aria-label]="'tenantApplications.marketplace.paginationLabel' | transloco"
+          >
+            <app-button
+              appearance="outline"
+              [disabled]="currentPage() === 0"
+              (clicked)="previousPage()"
             >
-            </mat-paginator>
-          </div>
+              Anterior
+            </app-button>
+            <span>{{ currentPage() + 1 }} / {{ totalPages() }}</span>
+            <app-button
+              appearance="outline"
+              [disabled]="currentPage() + 1 >= totalPages()"
+              (clicked)="nextPage()"
+            >
+              Siguiente
+            </app-button>
+          </nav>
         }
       }
-    </div>
+    </section>
   `,
-  styles: [
-    `
-      .new-application {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 24px;
+  styles: `
+    .marketplace-page {
+      max-inline-size: 1240px;
+      margin-inline: auto;
+    }
+
+    .filters-panel {
+      display: grid;
+      grid-template-columns: minmax(260px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr) auto;
+      gap: var(--app-space-3);
+      align-items: end;
+      margin-block-end: var(--app-space-6);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface-muted);
+      padding: var(--app-space-4);
+    }
+
+    .state-box {
+      display: grid;
+      min-block-size: 20rem;
+      place-items: center;
+    }
+
+    .properties-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+      gap: var(--app-space-4);
+    }
+
+    .property-card {
+      overflow: hidden;
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      background: var(--app-color-surface);
+      box-shadow: var(--app-shadow-sm);
+      cursor: pointer;
+      transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        transform 0.15s ease;
+    }
+
+    .property-card:hover,
+    .property-card:focus-visible {
+      border-color: var(--app-color-primary);
+      box-shadow: var(--app-shadow-md);
+      outline: none;
+      transform: translateY(-2px);
+    }
+
+    .property-image {
+      position: relative;
+      block-size: 210px;
+      overflow: hidden;
+      background: var(--app-color-surface-muted);
+    }
+
+    .property-image img {
+      inline-size: 100%;
+      block-size: 100%;
+      object-fit: cover;
+    }
+
+    .image-placeholder {
+      display: grid;
+      block-size: 100%;
+      place-items: center;
+      color: var(--app-color-text-muted);
+    }
+
+    .property-price {
+      position: absolute;
+      inset-block-start: var(--app-space-3);
+      inset-inline-end: var(--app-space-3);
+      display: grid;
+      justify-items: end;
+      border-radius: var(--app-radius-md);
+      background: rgb(15 23 42 / 82%);
+      color: #fff;
+      padding: var(--app-space-2) var(--app-space-3);
+    }
+
+    .property-price strong {
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+
+    .property-price span {
+      font-size: 0.75rem;
+      opacity: 0.84;
+    }
+
+    .property-content {
+      display: grid;
+      gap: var(--app-space-3);
+      padding: var(--app-space-4);
+    }
+
+    .property-content h2 {
+      display: -webkit-box;
+      min-block-size: 2.7rem;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      margin: 0;
+      color: var(--app-color-text);
+      font-size: 1.05rem;
+      font-weight: 800;
+      line-height: 1.32;
+    }
+
+    .property-location,
+    .property-features span {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--app-space-1);
+      color: var(--app-color-text-muted);
+      font-size: 0.85rem;
+    }
+
+    .property-location {
+      margin: 0;
+    }
+
+    .property-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--app-space-3);
+      min-block-size: 1.5rem;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--app-space-3);
+      margin-block-start: var(--app-space-6);
+    }
+
+    .pagination span {
+      color: var(--app-color-text);
+      font-weight: 800;
+    }
+
+    @media (max-width: 900px) {
+      .filters-panel {
+        grid-template-columns: 1fr;
       }
-
-      .page-header {
-        margin-bottom: 32px;
-      }
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .header-icon {
-        width: 56px;
-        height: 56px;
-        background: var(--mat-sys-primary-container);
-        color: var(--mat-sys-on-primary-container);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .header-text h1 {
-        margin: 0;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--mat-sys-on-surface);
-      }
-
-      .subtitle {
-        margin: 4px 0 0;
-        font-size: 1rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .filters-section {
-        background: var(--mat-sys-surface-container-low);
-        border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 32px;
-        border: 1px solid var(--mat-sys-outline-variant);
-      }
-
-      .filter-row {
-        display: flex;
-        gap: 16px;
-        flex-wrap: wrap;
-      }
-
-      .filter-group {
-        flex: 1;
-        min-width: 200px;
-      }
-
-      .search-group {
-        flex: 2;
-        min-width: 280px;
-        position: relative;
-        display: flex;
-        align-items: center;
-        background: var(--mat-sys-surface);
-        border-radius: 8px;
-        border: 1px solid var(--mat-sys-outline);
-        padding: 0 16px;
-      }
-
-      .search-group lucide-icon {
-        color: var(--mat-sys-on-surface-variant);
-        flex-shrink: 0;
-      }
-
-      .search-input {
-        flex: 1;
-        border: none;
-        background: transparent;
-        padding: 12px 8px;
-        font-size: 0.9375rem;
-        color: var(--mat-sys-on-surface);
-        outline: none;
-      }
-
-      .filter-select {
-        height: 100%;
-        min-height: 52px;
-        padding: 0 16px;
-        border: 1px solid var(--mat-sys-outline);
-        border-radius: 8px;
-        background: var(--mat-sys-surface);
-        display: flex;
-        align-items: center;
-      }
-
-      .filter-input-wrapper {
-        height: 100%;
-        min-height: 52px;
-        border: 1px solid var(--mat-sys-outline);
-        border-radius: 8px;
-        background: var(--mat-sys-surface);
-        display: flex;
-        align-items: center;
-      }
-
-      .custom-filter-input {
-        width: 100%;
-        border: none;
-        background: transparent;
-        padding: 0 16px;
-        font-size: 1rem;
-        color: var(--mat-sys-on-surface);
-        outline: none;
-      }
-
-      .search-input::placeholder {
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .filter-select {
-        width: 100%;
-      }
-
-      .loading-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 64px 24px;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        padding: 64px 24px;
-        text-align: center;
-      }
-
-      .empty-icon {
-        color: var(--mat-sys-outline-variant);
-        opacity: 0.3;
-      }
-
-      .empty-state h3 {
-        margin: 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
-      }
-
-      .empty-state p {
-        margin: 0;
-        font-size: 0.9375rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .properties-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 24px;
-        margin-bottom: 32px;
-      }
-
-      .property-card {
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 1px solid var(--mat-sys-outline-variant);
-        overflow: hidden;
-      }
-
-      .property-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-        border-color: var(--mat-sys-primary);
-      }
-
-      .property-image {
-        position: relative;
-        width: 100%;
-        height: 200px;
-        overflow: hidden;
-        background: var(--mat-sys-surface-container-low);
-      }
-
-      .property-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-      }
-
-      .image-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--mat-sys-outline-variant);
-      }
-
-      .property-price {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        background: rgba(0, 0, 0, 0.75);
-        color: white;
-        padding: 8px 12px;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        backdrop-filter: blur(10px);
-      }
-
-      .price-amount {
-        font-size: 1.125rem;
-        font-weight: 700;
-        line-height: 1;
-      }
-
-      .price-period {
-        font-size: 0.75rem;
-        opacity: 0.8;
-      }
-
-      .property-content {
-        padding: 16px;
-      }
-
-      .property-title {
-        margin: 0 0 8px;
-        font-size: 1.0625rem;
-        font-weight: 600;
-        color: var(--mat-sys-on-surface);
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-
-      .property-location {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.875rem;
-        color: var(--mat-sys-on-surface-variant);
-        margin-bottom: 12px;
-      }
-
-      .property-location lucide-icon {
-        flex-shrink: 0;
-      }
-
-      .property-features {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .feature {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 0.8125rem;
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .feature lucide-icon {
-        flex-shrink: 0;
-      }
-
-      .apply-btn {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        height: 40px;
-        font-weight: 600;
-        border-radius: 8px;
-      }
-
-      .pagination-section {
-        display: flex;
-        justify-content: center;
-        padding: 24px 0;
-      }
-
-      @media (max-width: 768px) {
-        .new-application {
-          padding: 16px;
-        }
-
-        .filter-row {
-          flex-direction: column;
-        }
-
-        .filter-group {
-          min-width: 100%;
-        }
-
-        .search-group {
-          min-width: 100%;
-        }
-
-        .properties-grid {
-          grid-template-columns: 1fr;
-          gap: 16px;
-        }
-      }
-    `,
-  ],
+    }
+  `,
 })
-export class NewApplicationComponent implements OnInit {
-  readonly Home = Home;
-  readonly Search = Search;
-  readonly MapPin = MapPin;
-  readonly DollarSign = DollarSign;
-  readonly Users = Users;
-  readonly Bed = Bed;
-  readonly Bath = Bath;
-  readonly Maximize = Maximize;
-  readonly ArrowRight = ArrowRight;
-  readonly SlidersHorizontal = SlidersHorizontal;
+export class NewApplicationComponent {
+  protected readonly Home = Home;
+  protected readonly MapPin = MapPin;
+  protected readonly Users = Users;
+  protected readonly Bed = Bed;
+  protected readonly Bath = Bath;
+  protected readonly Maximize = Maximize;
+  protected readonly ArrowRight = ArrowRight;
+  protected readonly SlidersHorizontal = SlidersHorizontal;
 
-  private router = inject(Router);
-  private slugService = inject(SlugService);
-  private propertyService = inject(PropertyService);
+  private readonly slugService = inject(SlugService);
+  private readonly propertyService = inject(PropertyService);
+  private readonly translocoService = inject(TranslocoService);
+  private readonly toast = inject(ToastService);
 
-  // Signals - Managing state locally
-  isLoading = signal(false);
-  allProperties = signal<Property[]>([]);
+  protected readonly isLoading = signal(false);
+  protected readonly allProperties = signal<Property[]>([]);
+  protected readonly currentPage = signal(0);
+  protected readonly pageSize = signal(12);
 
-  // Filter state
-  filters = signal<PropertyFilters>({
-    status: PropertyStatus.DISPONIBLE,
+  protected filters: MarketplaceFilters = {
     search: '',
-    property_type_id: undefined,
-    sort_by: 'created_at' as any,
-    sort_order: 'DESC' as 'ASC' | 'DESC',
-  });
+    propertyType: 'ALL',
+    sort: 'created_at',
+  };
 
-  // Pagination
-  currentPage = signal(0);
-  pageSize = signal(12);
+  protected readonly propertyTypes = signal<string[]>([
+    'Apartamento',
+    'Casa',
+    'Estudio',
+    'Loft',
+    'Penthouse',
+  ]);
 
-  propertyImagesIndex: { [propertyId: number]: number } = {};
+  protected readonly propertyTypeOptions = computed<readonly AppSelectOption<string>[]>(() => [
+    {
+      label: this.translocoService.translate('tenantApplications.marketplace.allTypes'),
+      value: 'ALL',
+    },
+    ...this.propertyTypes().map((type) => ({ label: type, value: type })),
+  ]);
 
-  getPropertyImageUrl(property: Property): string {
-    let imagePath: string | null = null;
-    const index = this.propertyImagesIndex[property.id] || 0;
+  protected readonly sortOptions = computed<readonly AppSelectOption<MarketplaceSort>[]>(() => [
+    {
+      label: this.translocoService.translate('tenantApplications.marketplace.recent'),
+      value: 'created_at',
+    },
+    {
+      label: this.translocoService.translate('tenantApplications.marketplace.priceLow'),
+      value: 'price_asc',
+    },
+    {
+      label: this.translocoService.translate('tenantApplications.marketplace.priceHigh'),
+      value: 'price_desc',
+    },
+    {
+      label: this.translocoService.translate('tenantApplications.marketplace.area'),
+      value: 'area',
+    },
+  ]);
 
-    if (property.images && Array.isArray(property.images) && property.images.length > index) {
-      imagePath = property.images[index];
-    } else if (
-      property.images &&
-      typeof property.images === 'object' &&
-      Object.keys(property.images).length > index
-    ) {
-      const keys = Object.keys(property.images);
-      imagePath = (property.images as any)[keys[index]];
-    } else if (property.first_image && index === 0) {
-      imagePath = property.first_image;
-    }
+  protected filteredProperties(): Property[] {
+    const search = this.filters.search.trim().toLowerCase();
+    const propertyType = this.filters.propertyType;
 
-    if (imagePath) {
-      if (imagePath.startsWith('http')) return imagePath;
-      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-      return `http://localhost:3000${normalizedPath}`;
-    }
+    const filtered = this.allProperties().filter((property) => {
+      const matchesSearch =
+        !search ||
+        property.title.toLowerCase().includes(search) ||
+        property.addresses?.[0]?.city?.toLowerCase().includes(search) ||
+        property.addresses?.[0]?.street_address?.toLowerCase().includes(search);
 
-    return '';
+      const matchesType =
+        propertyType === 'ALL' ||
+        property.property_type?.name === propertyType ||
+        property.property_type_name === propertyType;
+
+      return matchesSearch && matchesType;
+    });
+
+    return this.sortProperties(filtered);
   }
 
-  hasMultipleImages(property: Property): boolean {
-    if (property.images && Array.isArray(property.images)) {
-      return property.images.length > 1;
-    }
-    if (property.images && typeof property.images === 'object') {
-      return Object.keys(property.images).length > 1;
-    }
-    return false;
-  }
-
-  nextImage(event: Event, property: Property): void {
-    event.stopPropagation();
-    const current = this.propertyImagesIndex[property.id] || 0;
-    const length = Array.isArray(property.images)
-      ? property.images.length
-      : property.images
-        ? Object.keys(property.images).length
-        : 1;
-    this.propertyImagesIndex[property.id] = (current + 1) % length;
-  }
-
-  prevImage(event: Event, property: Property): void {
-    event.stopPropagation();
-    const current = this.propertyImagesIndex[property.id] || 0;
-    const length = Array.isArray(property.images)
-      ? property.images.length
-      : property.images
-        ? Object.keys(property.images).length
-        : 1;
-    this.propertyImagesIndex[property.id] = (current - 1 + length) % length;
-  }
-
-  // Computed properties
-  filteredProperties = computed(() => {
-    let filtered = this.allProperties();
-    const search = this.filters().search?.toLowerCase() || '';
-
-    if (search) {
-      filtered = filtered.filter(
-        (p: Property) =>
-          p.title.toLowerCase().includes(search) ||
-          p.addresses?.[0]?.city.toLowerCase().includes(search) ||
-          p.addresses?.[0]?.street_address.toLowerCase().includes(search),
-      );
-    }
-
-    if (this.filters().min_price) {
-      filtered = filtered.filter((p) => (p.monthly_rent || 0) >= this.filters().min_price!);
-    }
-
-    if (this.filters().max_price) {
-      filtered = filtered.filter((p) => (p.monthly_rent || 0) <= this.filters().max_price!);
-    }
-
-    if (this.filters().bedrooms) {
-      filtered = filtered.filter((p) => p.bedrooms === this.filters().bedrooms!);
-    }
-
-    // Sort logic
-    const sortBy = this.filters().sort_by as any;
-    if (sortBy === 'price_asc') {
-      filtered.sort((a, b) => (a.monthly_rent || 0) - (b.monthly_rent || 0));
-    } else if (sortBy === 'price_desc') {
-      filtered.sort((a, b) => (b.monthly_rent || 0) - (a.monthly_rent || 0));
-    } else if (sortBy === 'area') {
-      filtered.sort((a, b) => (b.square_meters || 0) - (a.square_meters || 0));
-    } else {
-      // Default created_at (descending)
-      filtered.sort(
-        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime(),
-      );
-    }
-
-    return filtered;
-  });
-
-  paginatedProperties = computed(() => {
+  protected paginatedProperties(): Property[] {
     const start = this.currentPage() * this.pageSize();
-    const end = start + this.pageSize();
-    return this.filteredProperties().slice(start, end);
-  });
+    return this.filteredProperties().slice(start, start + this.pageSize());
+  }
 
-  totalPages = computed(() => Math.ceil(this.filteredProperties().length / this.pageSize()));
+  protected totalPages(): number {
+    return Math.ceil(this.filteredProperties().length / this.pageSize());
+  }
 
-  propertyTypes = signal<string[]>(['Apartamento', 'Casa', 'Estudio', 'Loft', 'Penthouse']);
-
-  ngOnInit(): void {
+  constructor() {
     this.loadProperties();
   }
 
-  loadProperties(): void {
+  protected loadProperties(): void {
     this.isLoading.set(true);
     this.propertyService.getProperties().subscribe({
-      next: (props) => {
-        this.allProperties.set(props);
+      next: (properties) => {
+        this.allProperties.set(properties);
         this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);
+        this.toast.error(
+          this.translocoService.translate('tenantApplications.marketplace.loadError'),
+        );
       },
     });
   }
 
-  updateFilter(key: keyof PropertyFilters, value: any): void {
-    if (key === 'min_price' || key === 'max_price' || key === 'bedrooms') {
-      value = value !== '' ? Number(value) : undefined;
-    }
-    this.filters.update((f) => ({ ...f, [key]: value }));
+  protected resetPage(): void {
     this.currentPage.set(0);
-    this.loadProperties();
   }
 
-  clearFilters(): void {
-    this.filters.set({
-      status: PropertyStatus.DISPONIBLE,
+  protected clearFilters(): void {
+    this.filters = {
       search: '',
-      property_type_id: undefined,
-      min_price: undefined,
-      max_price: undefined,
-      bedrooms: undefined,
-      sort_by: 'created_at' as any,
-      sort_order: 'DESC' as 'ASC' | 'DESC',
-    });
+      propertyType: 'ALL',
+      sort: 'created_at',
+    };
     this.currentPage.set(0);
-    this.loadProperties();
   }
 
-  onPageChange(event: PageEvent): void {
-    this.currentPage.set(event.pageIndex);
-    this.pageSize.set(event.pageSize);
+  protected previousPage(): void {
+    this.currentPage.update((page) => Math.max(0, page - 1));
   }
 
-  selectProperty(property: Property): void {
+  protected nextPage(): void {
+    this.currentPage.update((page) => Math.min(this.totalPages() - 1, page + 1));
+  }
+
+  protected selectProperty(property: Property): void {
     this.slugService.navigateTo(['portal', 'application-wizard', property.id.toString()]);
+  }
+
+  private sortProperties(properties: Property[]): Property[] {
+    return [...properties].sort((a, b) => {
+      if (this.filters.sort === 'price_asc') {
+        return Number(a.monthly_rent || 0) - Number(b.monthly_rent || 0);
+      }
+      if (this.filters.sort === 'price_desc') {
+        return Number(b.monthly_rent || 0) - Number(a.monthly_rent || 0);
+      }
+      if (this.filters.sort === 'area') {
+        return Number(b.square_meters || 0) - Number(a.square_meters || 0);
+      }
+
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
   }
 }

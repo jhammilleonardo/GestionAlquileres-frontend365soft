@@ -453,15 +453,28 @@
 
 // ── Chips ──────────────────────────────────────────────────────
 .pd-chips {
-  ::ng-deep .mat-mdc-chip {
-    font-weight: 500;
-  }
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pd-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  padding: 0 10px;
 }
 
 .pd-chip-green {
-  ::ng-deep .mdc-evolution-chip__cell--primary {
-    color: #15803d !important;
-  }
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
 }
 
 // ── Responsive ─────────────────────────────────────────────────
@@ -503,35 +516,9 @@
 
 // ── Tabs ───────────────────────────────────────────────────────
 .pd-tabs {
+  display: flex;
+  justify-content: flex-start;
   margin-top: 0;
-
-  ::ng-deep .mat-mdc-tab-header {
-    background: white;
-    border-radius: 16px 16px 0 0;
-    border: 1px solid #e2e8f0;
-    border-bottom: none;
-    padding: 0 16px;
-  }
-
-  ::ng-deep .mat-mdc-tab-body-wrapper {
-    border: 1px solid #e2e8f0;
-    border-top: none;
-    border-radius: 0 0 16px 16px;
-    background: transparent;
-    overflow: visible;
-  }
-
-  ::ng-deep .mat-mdc-tab-body {
-    overflow: visible;
-  }
-
-  ::ng-deep .mat-mdc-tab-body-content {
-    overflow: visible;
-  }
-}
-
-.pd-tab-icon {
-  margin-right: 6px;
 }
 
 .pd-tab-content {

@@ -1,0 +1,155 @@
+<div class="messages-page">
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'messages.title' | transloco"
+    [description]="'messages.subtitle' | transloco"
+  >
+    <div actions class="header-actions">
+      <app-button appearance="secondary" (clicked)="openBroadcast()">
+        <lucide-icon [img]="Megaphone" [size]="16" />
+        {{ 'messages.broadcast' | transloco }}
+      </app-button>
+      <app-button (clicked)="openCompose()">
+        <lucide-icon [img]="Plus" [size]="16" />
+        {{ 'messages.new' | transloco }}
+      </app-button>
+    </div>
+  </app-page-header>
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'messages.loading' | transloco" />
+  } @else {
+    <div class="messenger" [class.thread-open]="activeUserId() !== null">
+      <!-- Bandeja -->
+      <aside class="thread-list">
+        @if (threads().length === 0) {
+          <app-empty-state [title]="'messages.empty' | transloco" />
+        } @else {
+          @for (thread of threads(); track thread.user_id) {
+            <button
+              type="button"
+              class="thread-item"
+              [class.active]="activeUserId() === thread.user_id"
+              (click)="openThread(thread)"
+            >
+              <div class="thread-avatar">{{ thread.user_name.charAt(0).toUpperCase() }}</div>
+              <div class="thread-info">
+                <div class="thread-top">
+                  <strong>{{ thread.user_name }}</strong>
+                  @if (thread.unread > 0) {
+                    <span class="thread-badge">{{ thread.unread }}</span>
+                  }
+                </div>
+                <span class="thread-preview">{{ thread.last_message }}</span>
+              </div>
+            </button>
+          }
+        }
+      </aside>
+
+      <!-- Conversación -->
+      <section class="conversation">
+        @if (activeUserId() === null) {
+          <div class="conversation-empty">
+            <lucide-icon [img]="MessageSquare" [size]="40" />
+            <p>{{ 'messages.selectThread' | transloco }}</p>
+          </div>
+        } @else {
+          <header class="conversation-header">
+            <button type="button" class="back-btn" (click)="closeThread()">
+              <lucide-icon [img]="ArrowLeft" [size]="18" />
+            </button>
+            <strong>{{ activeName() }}</strong>
+          </header>
+
+          <div class="conversation-body">
+            @if (loadingThread()) {
+              <app-loading-state [label]="'messages.loading' | transloco" />
+            } @else {
+              @for (message of messages(); track message.id) {
+                <div class="bubble-row" [class.mine]="isMine(message)">
+                  <div class="bubble">
+                    <p>{{ message.body }}</p>
+                    <span class="bubble-time">{{ message.created_at | date: 'short' }}</span>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          <form class="composer" (ngSubmit)="send()">
+            <textarea
+              rows="1"
+              [placeholder]="'messages.typeMessage' | transloco"
+              [value]="draft()"
+              (input)="draft.set($any($event.target).value)"
+            ></textarea>
+            <app-button type="submit" [disabled]="sending() || !draft().trim()" (clicked)="send()">
+              <lucide-icon [img]="Send" [size]="16" />
+            </app-button>
+          </form>
+        }
+      </section>
+    </div>
+  }
+</div>
+
+<!-- Componer nuevo mensaje -->
+<app-dialog
+  [open]="composeOpen()"
+  [title]="'messages.newTitle' | transloco"
+  (closed)="closeCompose()"
+>
+  <div class="compose-form">
+    <app-select
+      [label]="'messages.recipient' | transloco"
+      [placeholder]="'messages.selectRecipient' | transloco"
+      [options]="recipientOptions()"
+      (valueChanged)="composeRecipient.set($event)"
+    />
+    <textarea
+      class="compose-body"
+      rows="4"
+      [placeholder]="'messages.typeMessage' | transloco"
+      [value]="composeBody()"
+      (input)="composeBody.set($any($event.target).value)"
+    ></textarea>
+  </div>
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeCompose()">{{
+      'common.cancel' | transloco
+    }}</app-button>
+    <app-button
+      [disabled]="sending() || !composeRecipient() || !composeBody().trim()"
+      (clicked)="sendNew()"
+    >
+      {{ 'messages.send' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>
+
+<!-- Envío masivo -->
+<app-dialog
+  [open]="broadcastOpen()"
+  [title]="'messages.broadcastTitle' | transloco"
+  (closed)="closeBroadcast()"
+>
+  <div class="compose-form">
+    <p class="broadcast-hint">{{ 'messages.broadcastHint' | transloco }}</p>
+    <textarea
+      class="compose-body"
+      rows="4"
+      [placeholder]="'messages.typeMessage' | transloco"
+      [value]="broadcastBody()"
+      (input)="broadcastBody.set($any($event.target).value)"
+    ></textarea>
+  </div>
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closeBroadcast()">{{
+      'common.cancel' | transloco
+    }}</app-button>
+    <app-button [disabled]="sending() || !broadcastBody().trim()" (clicked)="sendBroadcast()">
+      {{ 'messages.sendToAll' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

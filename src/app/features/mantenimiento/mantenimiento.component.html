@@ -3,17 +3,10 @@
 } @else {
   <div class="mantenimiento-container">
     <!-- Header -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-title-section">
-          <lucide-icon [img]="Wrench" [size]="32" class="header-icon"></lucide-icon>
-          <div>
-            <h1>{{ 'maintenance.title' | transloco }}</h1>
-            <p class="subtitle">{{ 'maintenance.subtitle' | transloco }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <app-page-header
+      [title]="'maintenance.title' | transloco"
+      [description]="'maintenance.subtitle' | transloco"
+    />
 
     <!-- Interactive Statistics Cards -->
     <div class="stats-grid">
@@ -75,41 +68,40 @@
     </div>
 
     <!-- Filters -->
-    <mat-card class="filters-card">
+    <section class="filters-card">
       <!-- Filter Bar -->
       <div class="filter-bar">
-        <mat-form-field appearance="outline" class="search-field">
-          <lucide-icon matIconPrefix [img]="Search" [size]="20"></lucide-icon>
-          <mat-label>{{ 'maintenance.searchPlaceholder' | transloco }}</mat-label>
-          <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" />
-        </mat-form-field>
+        <app-text-field
+          class="search-field"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          [label]="'maintenance.searchPlaceholder' | transloco"
+          type="search"
+          autocomplete="off"
+        />
 
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>{{ 'maintenance.priorityLabel' | transloco }}</mat-label>
-          <mat-select [ngModel]="selectedPriority()" (ngModelChange)="selectedPriority.set($event)">
-            <mat-option value="all">{{ 'common.all' | transloco }}</mat-option>
-            <mat-option *ngFor="let priority of getPriorityValues()" [value]="priority">
-              {{ 'maintenance.priority.' + priority | transloco }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+        <app-select
+          class="filter-field"
+          [ngModel]="selectedPriority()"
+          [label]="'maintenance.priorityLabel' | transloco"
+          [options]="priorityOptions"
+          (ngModelChange)="selectedPriority.set($event)"
+        />
 
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>{{ 'maintenance.categoryLabel' | transloco }}</mat-label>
-          <mat-select [ngModel]="selectedCategory()" (ngModelChange)="selectedCategory.set($event)">
-            <mat-option value="all">{{ 'common.all' | transloco }}</mat-option>
-            <mat-option *ngFor="let category of getCategoryValues()" [value]="category">
-              {{ 'maintenance.category.' + category | transloco }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+        <app-select
+          class="filter-field"
+          [ngModel]="selectedCategory()"
+          [label]="'maintenance.categoryLabel' | transloco"
+          [options]="categoryOptions"
+          (ngModelChange)="selectedCategory.set($event)"
+        />
 
-        <button mat-stroked-button (click)="clearFilters()" class="clear-filters-btn">
+        <app-button appearance="flat" (clicked)="clearFilters()" class="clear-filters-btn">
           <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
           {{ 'common.clearFilters' | transloco }}
-        </button>
+        </app-button>
       </div>
-    </mat-card>
+    </section>
 
     <!-- Requests List -->
     <div class="requests-container">
@@ -119,9 +111,9 @@
           <h2>{{ 'maintenance.empty' | transloco }}</h2>
           <p>{{ 'maintenance.emptyFiltered' | transloco }}</p>
           @if (searchQuery() || selectedPriority() !== 'all' || selectedCategory() !== 'all') {
-            <button mat-raised-button color="primary" (click)="clearFilters()">
+            <app-button (clicked)="clearFilters()">
               {{ 'common.clearFilters' | transloco }}
-            </button>
+            </app-button>
           }
         </div>
       } @else {
@@ -134,58 +126,31 @@
                     <span class="request-id">{{ request.ticket_number }}</span>
                   </div>
 
-                  <button
-                    mat-icon-button
-                    [matMenuTriggerFor]="menu"
-                    (click)="$event.stopPropagation()"
-                    style="height: 32px; width: 32px; line-height: 32px"
-                  >
-                    <lucide-icon [img]="MoreVertical" [size]="16"></lucide-icon>
-                  </button>
-
-                  <mat-menu #menu="matMenu">
-                    <button mat-menu-item (click)="viewRequestDetails(request)">
-                      {{ 'maintenance.viewDetail' | transloco }}
+                  <div class="quick-actions" (click)="$event.stopPropagation()">
+                    <button
+                      type="button"
+                      class="quick-action"
+                      (click)="viewRequestDetails(request)"
+                      [attr.aria-label]="'maintenance.viewDetail' | transloco"
+                    >
+                      <lucide-icon [img]="MoreVertical" [size]="16"></lucide-icon>
                     </button>
-                    <button mat-menu-item [matMenuTriggerFor]="statusMenu">
-                      {{ 'maintenance.changeStatus' | transloco }}
+                    <button
+                      type="button"
+                      class="quick-action danger"
+                      (click)="deleteRequest(request)"
+                      [attr.aria-label]="'common.delete' | transloco"
+                    >
+                      <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
                     </button>
-                    <button mat-menu-item [matMenuTriggerFor]="priorityMenu">
-                      {{ 'maintenance.changePriority' | transloco }}
-                    </button>
-                    <mat-divider></mat-divider>
-                    <button mat-menu-item (click)="deleteRequest(request)" class="delete-option">
-                      {{ 'common.delete' | transloco }}
-                    </button>
-                  </mat-menu>
-
-                  <!-- Status submenu -->
-                  <mat-menu #statusMenu="matMenu">
-                    @for (status of getStatusValues(); track status) {
-                      <button mat-menu-item (click)="updateRequestStatus(request, status)">
-                        {{ 'maintenance.status.' + status | transloco }}
-                      </button>
-                    }
-                  </mat-menu>
-
-                  <!-- Priority submenu -->
-                  <mat-menu #priorityMenu="matMenu">
-                    @for (priority of getPriorityValues(); track priority) {
-                      <button mat-menu-item (click)="updateRequestPriority(request, priority)">
-                        {{ 'maintenance.priority.' + priority | transloco }}
-                      </button>
-                    }
-                  </mat-menu>
+                  </div>
                 </div>
 
                 <div class="request-body">
                   <h3 class="request-title">{{ request.title }}</h3>
 
                   @if (request.category) {
-                    <div
-                      class="meta-item"
-                      style="color: var(--mat-sys-primary); margin-bottom: 12px; font-weight: 500"
-                    >
+                    <div class="meta-item category-meta">
                       <lucide-icon [img]="Wrench" [size]="14"></lucide-icon>
                       <span>{{ 'maintenance.category.' + request.category | transloco }}</span>
                     </div>
@@ -215,9 +180,10 @@
               </div>
 
               <div class="request-footer">
-                <span class="status-badge" [ngClass]="getStatusColor(request.status)">
-                  {{ 'maintenance.status.' + request.status | transloco }}
-                </span>
+                <app-status-badge
+                  [label]="'maintenance.status.' + request.status | transloco"
+                  [tone]="getStatusTone(request.status)"
+                />
 
                 <div class="d-flex align-items-center gap-3">
                   @if (request.messages && request.messages.length > 0) {
@@ -236,11 +202,9 @@
                   }
 
                   <div class="priority-indicator" [ngClass]="getPriorityColor(request.priority)">
-                    <lucide-icon
-                      [img]="AlertCircle"
-                      [size]="14"
-                      *ngIf="request.priority === MaintenancePriority.HIGH"
-                    ></lucide-icon>
+                    @if (request.priority === MaintenancePriority.HIGH) {
+                      <lucide-icon [img]="AlertCircle" [size]="14"></lucide-icon>
+                    }
                     <span>{{ 'maintenance.priority.' + request.priority | transloco }}</span>
                   </div>
                 </div>
@@ -250,5 +214,22 @@
         </div>
       }
     </div>
+
+    <app-dialog
+      class="request-detail-dialog"
+      [open]="selectedRequest() !== null"
+      [title]="'maintenance.detailTitle' | transloco"
+      [showFooter]="false"
+      (closed)="closeRequestDetails()"
+    >
+      @if (selectedRequest()) {
+        <app-request-detail
+          [initialRequest]="selectedRequest()!"
+          (closed)="closeRequestDetails()"
+          (changed)="onRequestChanged($event)"
+          (deleted)="onRequestDeleted()"
+        />
+      }
+    </app-dialog>
   </div>
 }

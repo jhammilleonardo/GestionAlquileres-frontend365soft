@@ -1,144 +1,120 @@
-<div class="detail-container">
-  <!-- Loading -->
-  <div *ngIf="loading" class="loading-state">
-    <mat-spinner diameter="48" color="primary"></mat-spinner>
-    <p>{{ 'solicitudes.loading' | transloco }}</p>
-  </div>
-
-  <!-- Error -->
-  <div *ngIf="error && !loading" class="error-state">
-    <div class="error-icon-wrapper">
-      <lucide-icon [img]="AlertCircle" [size]="48"></lucide-icon>
+<section class="detail-container">
+  @if (facade.loading()) {
+    <div class="state state--loading">
+      <app-loading-state [label]="'solicitudes.loading' | transloco" />
     </div>
-    <h2>{{ 'solicitudes.approve.loadingRequest' | transloco }}</h2>
-    <p>{{ error }}</p>
-    <button mat-stroked-button color="primary" (click)="goBack()">
-      <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
-      {{ 'common.back' | transloco }}
-    </button>
-  </div>
-
-  <!-- Content -->
-  <ng-container *ngIf="!loading && !error">
-    <div *ngIf="application as app; else noData" class="content-wrapper">
-      <!-- Back Button -->
-      <button mat-button class="back-btn" (click)="goBack()">
-        <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
+  } @else if (facade.error()) {
+    <app-empty-state [title]="'common.error' | transloco" [description]="facade.error()">
+      <lucide-icon icon [img]="AlertCircle" [size]="32"></lucide-icon>
+      <app-button actions appearance="outline" (clicked)="goBack()">
+        <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+        {{ 'common.back' | transloco }}
+      </app-button>
+    </app-empty-state>
+  } @else if (facade.application(); as app) {
+    <div class="content-wrapper">
+      <app-button appearance="flat" (clicked)="goBack()">
+        <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
         {{ 'solicitudes.title' | transloco }}
-      </button>
+      </app-button>
 
-      <!-- Header Card -->
-      <mat-card class="header-card">
-        <mat-card-content>
-          <div class="header-top">
-            <div class="header-title-row">
-              <div class="title-group">
-                <h1>{{ 'solicitudes.viewDetail' | transloco }} #{{ app.id }}</h1>
-                <span class="status-badge" [ngClass]="app.status.toLowerCase()">
-                  {{ 'solicitudes.status.' + app.status | transloco }}
-                </span>
-              </div>
+      <header class="header-card">
+        <div class="header-top">
+          <div class="title-group">
+            <h1>{{ 'solicitudes.viewDetail' | transloco }} #{{ app.id }}</h1>
+            <app-status-badge
+              [tone]="getStatusTone(app.status)"
+              [label]="'solicitudes.status.' + app.status | transloco"
+            />
+          </div>
+
+          <div class="header-meta">
+            <div class="meta-item">
+              <lucide-icon [img]="Home" [size]="18"></lucide-icon>
+              <span>{{ app.property_title }}</span>
             </div>
-            <div class="header-meta">
-              <div class="meta-item">
-                <lucide-icon [img]="Home" [size]="18" class="meta-icon"></lucide-icon>
-                <span class="meta-text">{{ app.property_title }}</span>
-              </div>
-              <div class="meta-item">
-                <lucide-icon [img]="Calendar" [size]="18" class="meta-icon"></lucide-icon>
-                <span class="meta-text">{{ app.created_at | tenantDate: true }}</span>
-              </div>
+            <div class="meta-item">
+              <lucide-icon [img]="Calendar" [size]="18"></lucide-icon>
+              <span>{{ app.created_at | tenantDate: true }}</span>
             </div>
           </div>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      </header>
 
       <div class="grid-layout">
-        <!-- Left Column -->
-        <div class="left-column">
-          <!-- Personal Info -->
-          <mat-card class="section-card">
-            <mat-card-content>
-              <div class="section-header">
-                <div class="section-icon-wrapper blue">
-                  <lucide-icon [img]="User" [size]="24"></lucide-icon>
-                </div>
-                <h2>{{ 'solicitudes.applicant' | transloco }}</h2>
+        <div class="column">
+          <article class="section-card">
+            <div class="section-header">
+              <div class="section-icon-wrapper blue">
+                <lucide-icon [img]="User" [size]="24"></lucide-icon>
               </div>
-              <div class="info-list">
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.name' | transloco }}</span>
-                  <span class="info-value">{{ app.personal_data.full_name }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.email' | transloco }}</span>
-                  <span class="info-value">{{ app.applicant_email }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.phone' | transloco }}</span>
-                  <span class="info-value">{{ app.personal_data.phone }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.address' | transloco }}</span>
-                  <span class="info-value">{{
-                    app.personal_data.current_address || ('common.noData' | transloco)
-                  }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">CI</span>
-                  <span class="info-value">{{ app.personal_data.identity_document }}</span>
-                </div>
+              <h2>{{ 'solicitudes.applicant' | transloco }}</h2>
+            </div>
+            <div class="info-list">
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.name' | transloco }}</span>
+                <span class="info-value">{{ app.personal_data.full_name }}</span>
               </div>
-            </mat-card-content>
-          </mat-card>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.email' | transloco }}</span>
+                <span class="info-value">{{ app.applicant_email }}</span>
+              </div>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.phone' | transloco }}</span>
+                <span class="info-value">{{ app.personal_data.phone }}</span>
+              </div>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.address' | transloco }}</span>
+                <span class="info-value">
+                  {{ app.personal_data.current_address || ('common.noData' | transloco) }}
+                </span>
+              </div>
+              <div class="info-list-item">
+                <span class="info-label">CI</span>
+                <span class="info-value">{{ app.personal_data.identity_document }}</span>
+              </div>
+            </div>
+          </article>
 
-          <!-- Employment Info -->
-          <mat-card class="section-card">
-            <mat-card-content>
-              <div class="section-header">
-                <div class="section-icon-wrapper amber">
-                  <lucide-icon [img]="Briefcase" [size]="24"></lucide-icon>
-                </div>
-                <h2>{{ 'solicitudes.income' | transloco }}</h2>
+          <article class="section-card">
+            <div class="section-header">
+              <div class="section-icon-wrapper amber">
+                <lucide-icon [img]="Briefcase" [size]="24"></lucide-icon>
               </div>
-              <div class="info-list">
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.name' | transloco }}</span>
-                  <span class="info-value">{{ app.employment_data.employer_name }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.type' | transloco }}</span>
-                  <span class="info-value">{{ app.employment_data.position }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'solicitudes.income' | transloco }}</span>
-                  <span class="info-value income-highlight">{{
-                    app.employment_data.monthly_income | tenantCurrency
-                  }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'solicitudes.date' | transloco }}</span>
-                  <span class="info-value">{{
-                    app.employment_data.employment_duration | tenantDate
-                  }}</span>
-                </div>
-                <div class="info-list-item">
-                  <span class="info-label">{{ 'common.phone' | transloco }}</span>
-                  <span class="info-value">{{ app.employment_data.employer_phone }}</span>
-                </div>
+              <h2>{{ 'solicitudes.income' | transloco }}</h2>
+            </div>
+            <div class="info-list">
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.name' | transloco }}</span>
+                <span class="info-value">{{ app.employment_data.employer_name }}</span>
               </div>
-            </mat-card-content>
-          </mat-card>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.type' | transloco }}</span>
+                <span class="info-value">{{ app.employment_data.position }}</span>
+              </div>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'solicitudes.income' | transloco }}</span>
+                <span class="info-value income-highlight">
+                  {{ app.employment_data.monthly_income | tenantCurrency }}
+                </span>
+              </div>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'solicitudes.date' | transloco }}</span>
+                <span class="info-value">{{
+                  app.employment_data.employment_duration | tenantDate
+                }}</span>
+              </div>
+              <div class="info-list-item">
+                <span class="info-label">{{ 'common.phone' | transloco }}</span>
+                <span class="info-value">{{ app.employment_data.employer_phone }}</span>
+              </div>
+            </div>
+          </article>
         </div>
 
-        <!-- Right Column -->
-        <div class="right-column">
-          <!-- Rental History -->
-          <mat-card
-            class="section-card"
-            *ngIf="app.rental_history && app.rental_history.length > 0"
-          >
-            <mat-card-content>
+        <div class="column">
+          @if (app.rental_history && app.rental_history.length > 0) {
+            <article class="section-card">
               <div class="section-header">
                 <div class="section-icon-wrapper green">
                   <lucide-icon [img]="Home" [size]="24"></lucide-icon>
@@ -146,37 +122,38 @@
                 <h2>{{ 'solicitudes.property' | transloco }}</h2>
               </div>
               <div class="history-list">
-                <div class="history-card" *ngFor="let h of app.rental_history">
-                  <div class="history-header">
-                    <h4 class="history-address">{{ h.previous_address }}</h4>
-                    <span class="history-rent"
-                      >{{ h.previous_rent_amount | tenantCurrency }}/{{
-                        'common.month' | transloco
-                      }}</span
-                    >
-                  </div>
-                  <div class="history-details">
+                @for (history of app.rental_history; track history.previous_address) {
+                  <div class="history-card">
+                    <div class="history-header">
+                      <h3>{{ history.previous_address }}</h3>
+                      <span class="history-rent">
+                        {{ history.previous_rent_amount | tenantCurrency }}/{{
+                          'common.month' | transloco
+                        }}
+                      </span>
+                    </div>
                     <div class="detail-row">
-                      <lucide-icon [img]="User" [size]="16" class="detail-icon"></lucide-icon>
-                      <span>{{ h.previous_landlord_name }} ({{ h.previous_landlord_phone }})</span>
+                      <lucide-icon [img]="User" [size]="16"></lucide-icon>
+                      <span
+                        >{{ history.previous_landlord_name }} ({{
+                          history.previous_landlord_phone
+                        }})</span
+                      >
                     </div>
-                    <div class="detail-row" *ngIf="h.reason_for_leaving">
-                      <lucide-icon
-                        [img]="AlertCircle"
-                        [size]="16"
-                        class="detail-icon"
-                      ></lucide-icon>
-                      <span>{{ h.reason_for_leaving | titlecase }}</span>
-                    </div>
+                    @if (history.reason_for_leaving) {
+                      <div class="detail-row">
+                        <lucide-icon [img]="AlertCircle" [size]="16"></lucide-icon>
+                        <span>{{ history.reason_for_leaving | titlecase }}</span>
+                      </div>
+                    }
                   </div>
-                </div>
+                }
               </div>
-            </mat-card-content>
-          </mat-card>
+            </article>
+          }
 
-          <!-- References -->
-          <mat-card class="section-card" *ngIf="app.references && app.references.length > 0">
-            <mat-card-content>
+          @if (app.references && app.references.length > 0) {
+            <article class="section-card">
               <div class="section-header">
                 <div class="section-icon-wrapper purple">
                   <lucide-icon [img]="Phone" [size]="24"></lucide-icon>
@@ -184,32 +161,35 @@
                 <h2>{{ 'common.name' | transloco }}</h2>
               </div>
               <div class="references-list">
-                <div class="reference-card" *ngFor="let ref of app.references">
-                  <div class="ref-header">
-                    <div class="ref-avatar">{{ ref.name.charAt(0).toUpperCase() }}</div>
-                    <div class="ref-info">
-                      <p class="ref-name">{{ ref.name }}</p>
-                      <p class="ref-relation">{{ ref.relationship | titlecase }}</p>
+                @for (reference of app.references; track reference.name + reference.phone) {
+                  <div class="reference-card">
+                    <div class="ref-header">
+                      <div class="ref-avatar">{{ reference.name.charAt(0).toUpperCase() }}</div>
+                      <div class="ref-info">
+                        <p class="ref-name">{{ reference.name }}</p>
+                        <p class="ref-relation">{{ reference.relationship | titlecase }}</p>
+                      </div>
+                    </div>
+                    <div class="ref-contacts">
+                      <a [href]="'tel:' + reference.phone" class="contact-link">
+                        <lucide-icon [img]="Phone" [size]="14"></lucide-icon>
+                        {{ reference.phone }}
+                      </a>
+                      @if (reference.email) {
+                        <a [href]="'mailto:' + reference.email" class="contact-link">
+                          <lucide-icon [img]="Mail" [size]="14"></lucide-icon>
+                          {{ reference.email }}
+                        </a>
+                      }
                     </div>
                   </div>
-                  <div class="ref-contacts">
-                    <a href="tel:{{ ref.phone }}" class="contact-link">
-                      <lucide-icon [img]="Phone" [size]="14"></lucide-icon>
-                      {{ ref.phone }}
-                    </a>
-                    <a *ngIf="ref.email" href="mailto:{{ ref.email }}" class="contact-link">
-                      <lucide-icon [img]="Mail" [size]="14"></lucide-icon>
-                      {{ ref.email }}
-                    </a>
-                  </div>
-                </div>
+                }
               </div>
-            </mat-card-content>
-          </mat-card>
+            </article>
+          }
 
-          <!-- Admin Feedback -->
-          <mat-card class="section-card feedback-section" *ngIf="app.admin_feedback">
-            <mat-card-content>
+          @if (app.admin_feedback) {
+            <article class="section-card">
               <div class="section-header">
                 <div class="section-icon-wrapper" [ngClass]="app.status.toLowerCase()">
                   <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
@@ -219,15 +199,11 @@
               <div class="feedback-content" [ngClass]="app.status.toLowerCase()">
                 <p>{{ app.admin_feedback }}</p>
               </div>
-            </mat-card-content>
-          </mat-card>
+            </article>
+          }
 
-          <!-- Actions -->
-          <mat-card
-            class="section-card actions-section"
-            *ngIf="canBeApproved(app.status) || canBeRejected(app.status)"
-          >
-            <mat-card-content>
+          @if (canBeApproved(app.status) || canBeRejected(app.status)) {
+            <article class="section-card">
               <div class="section-header">
                 <div class="section-icon-wrapper blue">
                   <lucide-icon [img]="Zap" [size]="24"></lucide-icon>
@@ -235,33 +211,28 @@
                 <h2>{{ 'common.actions' | transloco }}</h2>
               </div>
               <div class="actions-container">
-                <button
-                  *ngIf="canBeApproved(app.status)"
-                  mat-flat-button
-                  color="primary"
-                  class="action-button approve-btn"
-                  [routerLink]="['.', 'aprobar']"
-                >
-                  <lucide-icon [img]="CheckCircle2" [size]="20" class="btn-icon"></lucide-icon>
-                  {{ 'common.approve' | transloco }}
-                </button>
-                <button
-                  *ngIf="canBeRejected(app.status)"
-                  mat-stroked-button
-                  color="warn"
-                  class="action-button reject-btn"
-                  [routerLink]="['.', 'rechazar']"
-                >
-                  <lucide-icon [img]="XCircle" [size]="20" class="btn-icon"></lucide-icon>
-                  {{ 'common.reject' | transloco }}
-                </button>
+                @if (canBeApproved(app.status)) {
+                  <app-button [routerLink]="['.', 'aprobar']" [fullWidth]="true">
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                    {{ 'common.approve' | transloco }}
+                  </app-button>
+                }
+                @if (canBeRejected(app.status)) {
+                  <app-button
+                    [routerLink]="['.', 'rechazar']"
+                    appearance="destructive"
+                    [fullWidth]="true"
+                  >
+                    <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
+                    {{ 'common.reject' | transloco }}
+                  </app-button>
+                }
               </div>
-            </mat-card-content>
-          </mat-card>
+            </article>
+          }
 
-          <!-- Create Contract -->
-          <mat-card class="section-card contract-action-section" *ngIf="app.status === 'APROBADA'">
-            <mat-card-content>
+          @if (app.status === 'APROBADA') {
+            <article class="section-card">
               <div class="section-header">
                 <div class="section-icon-wrapper green">
                   <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
@@ -270,39 +241,30 @@
               </div>
               <div class="contract-next-step">
                 <p>{{ 'solicitudes.approve.successMessage' | transloco }}</p>
-                <button
-                  mat-flat-button
-                  color="primary"
-                  class="action-button create-contract-btn"
-                  (click)="createContract(app)"
-                >
-                  <lucide-icon [img]="FileText" [size]="20" class="btn-icon"></lucide-icon>
+                <app-button (clicked)="createContract(app)">
+                  <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
                   {{ 'contracts.new' | transloco }}
-                </button>
+                </app-button>
               </div>
-            </mat-card-content>
-          </mat-card>
+            </article>
+          }
         </div>
       </div>
 
-      <!-- Metadata -->
-      <div class="metadata-footer">
+      <footer class="metadata-footer">
         <p>{{ 'solicitudes.date' | transloco }}: {{ app.created_at | tenantDate: true }}</p>
-      </div>
+      </footer>
     </div>
-
-    <ng-template #noData>
-      <div class="error-state">
-        <div class="error-icon-wrapper">
-          <lucide-icon [img]="FileText" [size]="48"></lucide-icon>
-        </div>
-        <h2>{{ 'solicitudes.empty' | transloco }}</h2>
-        <p>{{ 'solicitudes.emptyHint' | transloco }}</p>
-        <button mat-stroked-button color="primary" (click)="goBack()">
-          <lucide-icon [img]="ArrowLeft" [size]="18" class="btn-icon"></lucide-icon>
-          {{ 'common.back' | transloco }}
-        </button>
-      </div>
-    </ng-template>
-  </ng-container>
-</div>
+  } @else {
+    <app-empty-state
+      [title]="'solicitudes.empty' | transloco"
+      [description]="'solicitudes.emptyHint' | transloco"
+    >
+      <lucide-icon icon [img]="FileText" [size]="32"></lucide-icon>
+      <app-button actions appearance="outline" (clicked)="goBack()">
+        <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+        {{ 'common.back' | transloco }}
+      </app-button>
+    </app-empty-state>
+  }
+</section>

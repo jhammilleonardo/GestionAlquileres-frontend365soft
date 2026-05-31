@@ -1,22 +1,31 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  input,
+  output,
+  inject,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { Property, RentalApplication } from '../../../core/models/property.model';
 import { PropertyService } from '../../../core/services/admin/property.service';
+import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-application-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslocoModule],
+  imports: [FormsModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './application-modal.component.html',
   styleUrls: ['./application-modal.component.css'],
 })
-export class ApplicationModalComponent {
-  @Input() property!: Property;
-  @Output() close = new EventEmitter<void>();
+export class ApplicationModalComponent implements OnInit {
+  readonly property = input.required<Property>();
+  readonly close = output<void>();
 
   application: RentalApplication = {
     propertyId: 0,
@@ -33,32 +42,32 @@ export class ApplicationModalComponent {
     additionalInfo: '',
   };
 
-  isSubmitting = false;
-  submitted = false;
+  readonly isSubmitting = signal(false);
+  readonly submitted = signal(false);
 
-  constructor(private propertyService: PropertyService) {}
+  private propertyService = inject(PropertyService);
+  private toast = inject(ToastService);
 
   ngOnInit() {
-    this.application.propertyId = this.property.id;
+    this.application.propertyId = this.property().id;
   }
 
   submitApplication() {
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
 
     this.propertyService.submitApplication(this.application).subscribe({
       next: (success) => {
         if (success) {
-          this.submitted = true;
+          this.submitted.set(true);
           setTimeout(() => {
             this.closeModal();
           }, 3000);
         }
-        this.isSubmitting = false;
+        this.isSubmitting.set(false);
       },
-      error: (error: any) => {
-        console.error('Error submitting application:', error);
-        alert('Hubo un error al enviar la solicitud. Por favor intente nuevamente.');
-        this.isSubmitting = false;
+      error: () => {
+        this.toast.error('Hubo un error al enviar la solicitud. Por favor intente nuevamente.');
+        this.isSubmitting.set(false);
       },
     });
   }

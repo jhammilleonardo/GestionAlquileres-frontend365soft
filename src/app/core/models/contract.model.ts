@@ -8,8 +8,15 @@
  */
 export enum ContractStatus {
   BORRADOR = 'BORRADOR',
+  PENDIENTE = 'PENDIENTE',
+  FIRMADO = 'FIRMADO',
   ACTIVO = 'ACTIVO',
+  POR_VENCER = 'POR_VENCER',
+  VENCIDO = 'VENCIDO',
+  RENOVADO = 'RENOVADO',
   FINALIZADO = 'FINALIZADO',
+  CANCELADO = 'CANCELADO',
+  SUSPENDIDO = 'SUSPENDIDO',
 }
 
 /**
@@ -17,8 +24,15 @@ export enum ContractStatus {
  */
 export const ContractStatusLabels: Record<ContractStatus, string> = {
   [ContractStatus.BORRADOR]: 'Borrador',
+  [ContractStatus.PENDIENTE]: 'Pendiente',
+  [ContractStatus.FIRMADO]: 'Firmado',
   [ContractStatus.ACTIVO]: 'Activo',
+  [ContractStatus.POR_VENCER]: 'Por vencer',
+  [ContractStatus.VENCIDO]: 'Vencido',
+  [ContractStatus.RENOVADO]: 'Renovado',
   [ContractStatus.FINALIZADO]: 'Finalizado',
+  [ContractStatus.CANCELADO]: 'Cancelado',
+  [ContractStatus.SUSPENDIDO]: 'Suspendido',
 };
 
 /**
@@ -26,8 +40,15 @@ export const ContractStatusLabels: Record<ContractStatus, string> = {
  */
 export const ContractStatusClasses: Record<ContractStatus, string> = {
   [ContractStatus.BORRADOR]: 'status-borrador',
+  [ContractStatus.PENDIENTE]: 'status-pendiente',
+  [ContractStatus.FIRMADO]: 'status-firmado',
   [ContractStatus.ACTIVO]: 'status-activo',
+  [ContractStatus.POR_VENCER]: 'status-por_vencer',
+  [ContractStatus.VENCIDO]: 'status-vencido',
+  [ContractStatus.RENOVADO]: 'status-renovado',
   [ContractStatus.FINALIZADO]: 'status-finalizado',
+  [ContractStatus.CANCELADO]: 'status-cancelado',
+  [ContractStatus.SUSPENDIDO]: 'status-suspendido',
 };
 
 /**

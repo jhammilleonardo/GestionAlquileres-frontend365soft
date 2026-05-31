@@ -5,7 +5,7 @@
       <lucide-icon [img]="Building2" [size]="18"></lucide-icon>
       <span class="udp-unit-number">Unidad {{ unit().unit_number }}</span>
     </div>
-    <button mat-icon-button (click)="onClose()" aria-label="Cerrar panel">
+    <button class="udp-icon-button" type="button" (click)="onClose()" aria-label="Cerrar panel">
       <lucide-icon [img]="X" [size]="18"></lucide-icon>
     </button>
   </div>
@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <mat-divider></mat-divider>
+    <div class="udp-divider" role="separator"></div>
 
     <!-- Characteristics -->
     <div class="udp-section">
@@ -77,7 +77,7 @@
       </div>
     </div>
 
-    <mat-divider></mat-divider>
+    <div class="udp-divider" role="separator"></div>
 
     <!-- Pricing -->
     <div class="udp-section">
@@ -115,7 +115,7 @@
 
     <!-- Tenant / Contract info hint -->
     @if (unit().status === UnitStatus.OCCUPIED) {
-      <mat-divider></mat-divider>
+      <div class="udp-divider" role="separator"></div>
       <div class="udp-section udp-occupied-hint">
         <div class="udp-occupied-badge">
           <span class="udp-occupied-dot"></span>
@@ -143,14 +143,19 @@
     </a>
 
     <div class="udp-footer-actions">
-      <button mat-stroked-button color="warn" (click)="onDelete()" aria-label="Eliminar unidad">
+      <app-button
+        appearance="destructive"
+        size="s"
+        (clicked)="onDelete()"
+        ariaLabel="Eliminar unidad"
+      >
         <lucide-icon [img]="Trash2" [size]="15"></lucide-icon>
         Eliminar
-      </button>
-      <button mat-flat-button color="primary" (click)="onEdit()" aria-label="Editar unidad">
+      </app-button>
+      <app-button size="s" (clicked)="onEdit()" ariaLabel="Editar unidad">
         <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
         Editar
-      </button>
+      </app-button>
     </div>
   </div>
 </div>

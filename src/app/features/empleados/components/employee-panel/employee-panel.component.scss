@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--mat-sys-surface);
+  background: var(--app-color-surface);
   overflow: hidden;
 }
 
@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1rem 0.75rem;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--app-color-border);
   flex-shrink: 0;
 }
 
@@ -27,8 +27,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--mat-sys-primary-container);
-  color: var(--mat-sys-on-primary-container);
+  background: var(--app-color-primary-soft);
+  color: var(--app-color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,7 +45,7 @@
   font-size: 0.9375rem;
   font-weight: 600;
   margin: 0;
-  color: var(--mat-sys-on-surface);
+  color: var(--app-color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -53,7 +53,7 @@
 
 .employee-email {
   font-size: 0.75rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -61,7 +61,22 @@
 }
 
 .close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-color-text-muted);
+  cursor: pointer;
   flex-shrink: 0;
+
+  &:hover {
+    background: var(--app-color-surface-muted);
+    color: var(--app-color-text);
+  }
 }
 
 /* ─── Status badges ─────────────────────── */
@@ -88,13 +103,13 @@
 }
 
 .status-badge.inactive {
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
+  background: color-mix(in srgb, var(--app-color-danger) 12%, transparent);
+  color: var(--app-color-danger);
 }
 
 .role-badge {
-  background: var(--mat-sys-secondary-container);
-  color: var(--mat-sys-on-secondary-container);
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-text-muted);
 }
 
 /* ─── Permissions table ─────────────────── */
@@ -110,7 +125,7 @@
   gap: 0.4rem;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 0.75rem;
@@ -121,14 +136,14 @@
   grid-template-columns: 1fr 36px 36px 36px 36px;
   align-items: center;
   padding: 0 0.25rem 0.375rem;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--app-color-border);
   margin-bottom: 0.25rem;
 }
 
 .permissions-header-row .action-col {
   display: flex;
   justify-content: center;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
 }
 
 .permission-row {
@@ -140,26 +155,79 @@
   transition: background 0.15s ease;
 
   &:hover {
-    background: var(--mat-sys-surface-container-low);
+    background: var(--app-color-surface-muted);
   }
 }
 
 .module-name {
   font-size: 0.8125rem;
-  color: var(--mat-sys-on-surface);
+  color: var(--app-color-text);
 }
 
 .module-col {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
 }
 
-.action-toggle {
-  display: flex;
+.toggle-cell {
+  position: relative;
+  display: inline-flex;
   justify-content: center;
-  transform: scale(0.75);
-  transform-origin: center;
+  cursor: pointer;
+}
+
+.toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.toggle-track {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--app-color-border-strong);
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+
+  &::after {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: var(--app-color-surface);
+    box-shadow: var(--app-shadow-sm);
+    content: '';
+    transition: transform 0.15s ease;
+  }
+}
+
+.toggle-input:checked + .toggle-track {
+  background: var(--app-color-primary);
+}
+
+.toggle-input:checked + .toggle-track.danger {
+  background: var(--app-color-danger);
+}
+
+.toggle-input:checked + .toggle-track::after {
+  transform: translateX(12px);
+}
+
+.toggle-input:focus-visible + .toggle-track {
+  outline: 3px solid color-mix(in srgb, var(--app-color-primary) 18%, transparent);
+  outline-offset: 2px;
+}
+
+.toggle-input:disabled + .toggle-track {
+  opacity: 0.45;
 }
 
 /* ─── Actions footer ────────────────────── */
@@ -168,22 +236,6 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.75rem 1rem 1rem;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-top: 1px solid var(--app-color-border);
   flex-shrink: 0;
-}
-
-.save-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.status-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
 }

@@ -1,11 +1,13 @@
 {
   "title": "Employees",
+  "subtitle": "Manage internal users, module permissions, and operational access.",
   "new": "New Employee",
   "reload": "Reload",
   "reloadAria": "Reload employee list",
   "createAria": "Create new employee",
   "loading": "Loading employees",
   "empty": "No employees registered",
+  "emptyDescription": "Create employees to delegate operations without exposing sensitive modules.",
   "createFirst": "Create first employee",
   "lastConnection": "Last connection",
   "managePermissions": "Manage permissions",

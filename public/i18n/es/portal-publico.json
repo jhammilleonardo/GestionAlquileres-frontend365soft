@@ -862,5 +862,37 @@
     "today": "Hoy",
     "yesterday": "Ayer",
     "daysAgo": "Hace {{count}} días"
+  },
+  "tenantHistory": {
+    "title": "Mi historial",
+    "subtitle": "Cronología de tus pagos, mantenimientos y notificaciones",
+    "empty": "Aún no hay actividad en tu historial"
+  },
+  "availability": {
+    "available": "Disponible",
+    "blocked": "Bloqueado",
+    "booked": "Reservado",
+    "nights": "noches",
+    "cleaningFee": "Tarifa de limpieza",
+    "total": "Total",
+    "request": "Solicitar reserva",
+    "selectDates": "Selecciona las fechas de tu estadía",
+    "rangeUnavailable": "El rango incluye fechas no disponibles",
+    "minNights": "Mínimo {{n}} noches",
+    "requested": "Solicitud de reserva enviada",
+    "requestError": "No se pudo crear la reserva",
+    "title": "Disponibilidad"
+  },
+  "myProperty": {
+    "title": "Mi propiedad",
+    "subtitle": "Información de tu unidad, amenidades, reglas y contacto del administrador",
+    "loading": "Cargando tu propiedad...",
+    "noProperty": "No tienes una propiedad asignada",
+    "property": "Propiedad",
+    "amenities": "Amenidades",
+    "rules": "Reglas del edificio",
+    "admin": "Administrador",
+    "adminHint": "¿Dudas sobre tu propiedad? Escribe a la administración.",
+    "contactAdmin": "Contactar administración"
   }
 }

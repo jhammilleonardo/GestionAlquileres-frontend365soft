@@ -1,76 +1,56 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   FormsModule,
   ReactiveFormsModule,
-  Validators,
-  AbstractControl,
   ValidationErrors,
+  Validators,
 } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatTabsModule } from '@angular/material/tabs';
-import {
-  LucideAngularModule,
-  User,
-  Mail,
-  Phone,
-  Lock,
-  CheckCircle2,
-  AlertCircle,
-  Shield,
-} from 'lucide-angular';
+import { AlertCircle, CheckCircle2, Mail, Shield, User, LucideAngularModule } from 'lucide-angular';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+
 import { AuthService } from '../../core/services/auth.service';
+import {
+  AppButtonComponent,
+  AppPageHeaderComponent,
+  AppTabOption,
+  AppTabsComponent,
+  AppTextFieldComponent,
+} from '../../shared/ui';
+
+type ProfileTab = 'profile' | 'password';
 
 function passwordMatchValidator(form: AbstractControl): ValidationErrors | null {
   const newPass = form.get('new_password')?.value;
   const confirmPass = form.get('confirm_password')?.value;
-  if (newPass && confirmPass && newPass !== confirmPass) {
-    return { passwordMismatch: true };
-  }
-  return null;
+  return newPass && confirmPass && newPass !== confirmPass ? { passwordMismatch: true } : null;
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-admin-perfil',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
-    MatTabsModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppPageHeaderComponent,
+    AppTabsComponent,
+    AppTextFieldComponent,
   ],
   template: `
     <div class="profile-container">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-content">
-          <lucide-icon [img]="User" [size]="32"></lucide-icon>
-          <div>
-            <h1>{{ 'perfil.title' | transloco }}</h1>
-            <p>{{ 'perfil.subtitle' | transloco }}</p>
-          </div>
-        </div>
-      </div>
+      <app-page-header
+        [title]="'perfil.title' | transloco"
+        [description]="'perfil.subtitle' | transloco"
+      />
 
       @if (authService.currentUser(); as user) {
         <div class="profile-grid">
-          <!-- Info Card -->
-          <mat-card class="info-card">
+          <aside class="info-card" aria-label="Perfil del usuario">
             <div class="user-avatar">
               <span class="avatar-initials">{{ getInitials(user.name) }}</span>
             </div>
@@ -80,8 +60,6 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
               <lucide-icon [img]="Shield" [size]="14"></lucide-icon>
               {{ getRoleLabel(user.role) }}
             </div>
-
-            <mat-divider style="margin: 20px 0;"></mat-divider>
 
             <div class="info-items">
               <div class="info-row">
@@ -95,197 +73,184 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                 </div>
               }
             </div>
-          </mat-card>
+          </aside>
 
-          <!-- Forms -->
-          <div class="forms-container">
-            <mat-tab-group>
-              <!-- Personal Info Tab -->
-              <mat-tab [label]="'perfil.personalInfo' | transloco">
-                <mat-card class="form-card">
-                  @if (updateSuccess()) {
-                    <div class="success-alert">
-                      <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                      <span>{{ 'perfil.profileSaved' | transloco }}</span>
-                    </div>
-                  }
-                  @if (updateError()) {
-                    <div class="error-alert">
-                      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
-                      <span>{{ updateError() }}</span>
-                    </div>
-                  }
+          <section class="forms-container">
+            <app-tabs
+              [(ngModel)]="selectedTab"
+              [tabs]="tabs"
+              [ariaLabel]="'perfil.title' | transloco"
+            />
 
-                  <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
-                    <div class="form-row">
-                      <mat-form-field appearance="outline">
-                        <mat-label>{{ 'perfil.nameLabel' | transloco }}</mat-label>
-                        <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
-                        <input
-                          matInput
-                          formControlName="name"
-                          [placeholder]="'perfil.namePlaceholder' | transloco"
-                          required
-                        />
-                        @if (
-                          profileForm.get('name')?.hasError('required') &&
-                          profileForm.get('name')?.touched
-                        ) {
-                          <mat-error>{{ 'perfil.required' | transloco }}</mat-error>
-                        }
-                      </mat-form-field>
+            @if (selectedTab === 'profile') {
+              <article class="form-card">
+                @if (updateSuccess()) {
+                  <div class="success-alert">
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                    <span>{{ 'perfil.profileSaved' | transloco }}</span>
+                  </div>
+                }
+                @if (updateError()) {
+                  <div class="error-alert">
+                    <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+                    <span>{{ updateError() }}</span>
+                  </div>
+                }
 
-                      <mat-form-field appearance="outline">
-                        <mat-label>{{ 'perfil.emailLabel' | transloco }}</mat-label>
-                        <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
-                        <input
-                          matInput
-                          type="email"
-                          formControlName="email"
-                          placeholder="correo@ejemplo.com"
-                          required
-                        />
-                        @if (
-                          profileForm.get('email')?.hasError('required') &&
-                          profileForm.get('email')?.touched
-                        ) {
-                          <mat-error>{{ 'perfil.required' | transloco }}</mat-error>
-                        }
-                        @if (profileForm.get('email')?.hasError('email')) {
-                          <mat-error>{{ 'auth.emailInvalid' | transloco }}</mat-error>
-                        }
-                      </mat-form-field>
-                    </div>
-
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'perfil.phoneLabel' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Phone" [size]="20"></lucide-icon>
-                      <input
-                        matInput
-                        type="tel"
-                        formControlName="phone"
-                        [placeholder]="'perfil.phonePlaceholder' | transloco"
+                <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                  <div class="form-row">
+                    <label class="field-group">
+                      <app-text-field
+                        formControlName="name"
+                        [label]="'perfil.nameLabel' | transloco"
+                        [placeholder]="'perfil.namePlaceholder' | transloco"
                       />
-                    </mat-form-field>
-
-                    <div class="form-actions">
-                      <button
-                        type="button"
-                        mat-stroked-button
-                        (click)="resetProfileForm()"
-                        [disabled]="isUpdating()"
-                      >
-                        {{ 'common.cancel' | transloco }}
-                      </button>
-                      <button
-                        type="submit"
-                        mat-raised-button
-                        color="primary"
-                        [disabled]="profileForm.invalid || !profileForm.dirty || isUpdating()"
-                      >
-                        @if (isUpdating()) {
-                          <mat-spinner diameter="20"></mat-spinner>
-                          {{ 'perfil.saving' | transloco }}
-                        } @else {
-                          {{ 'perfil.saveProfile' | transloco }}
-                        }
-                      </button>
-                    </div>
-                  </form>
-                </mat-card>
-              </mat-tab>
-
-              <!-- Password Tab -->
-              <mat-tab [label]="'perfil.changePassword' | transloco">
-                <mat-card class="form-card">
-                  @if (passwordSuccess()) {
-                    <div class="success-alert">
-                      <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-                      <span>{{ 'perfil.passwordChanged' | transloco }}</span>
-                    </div>
-                  }
-                  @if (passwordError()) {
-                    <div class="error-alert">
-                      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
-                      <span>{{ passwordError() }}</span>
-                    </div>
-                  }
-
-                  <form [formGroup]="passwordForm" (ngSubmit)="savePassword()">
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'perfil.currentPassword' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-                      <input matInput type="password" formControlName="current_password" required />
                       @if (
-                        passwordForm.get('current_password')?.hasError('required') &&
-                        passwordForm.get('current_password')?.touched
+                        profileForm.get('name')?.hasError('required') &&
+                        profileForm.get('name')?.touched
                       ) {
-                        <mat-error>{{ 'perfil.required' | transloco }}</mat-error>
+                        <span class="field-error">{{ 'perfil.required' | transloco }}</span>
                       }
-                    </mat-form-field>
+                    </label>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'perfil.newPassword' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-                      <input matInput type="password" formControlName="new_password" required />
+                    <label class="field-group">
+                      <app-text-field
+                        formControlName="email"
+                        type="email"
+                        [label]="'perfil.emailLabel' | transloco"
+                        placeholder="correo@ejemplo.com"
+                      />
                       @if (
-                        passwordForm.get('new_password')?.hasError('required') &&
-                        passwordForm.get('new_password')?.touched
+                        profileForm.get('email')?.hasError('required') &&
+                        profileForm.get('email')?.touched
                       ) {
-                        <mat-error>{{ 'perfil.required' | transloco }}</mat-error>
+                        <span class="field-error">{{ 'perfil.required' | transloco }}</span>
                       }
-                      @if (passwordForm.get('new_password')?.hasError('minlength')) {
-                        <mat-error>{{ 'perfil.minChars6' | transloco }}</mat-error>
+                      @if (profileForm.get('email')?.hasError('email')) {
+                        <span class="field-error">{{ 'auth.emailInvalid' | transloco }}</span>
                       }
-                      <mat-hint>{{ 'perfil.passwordHint' | transloco }}</mat-hint>
-                    </mat-form-field>
+                    </label>
+                  </div>
 
-                    <mat-form-field appearance="outline">
-                      <mat-label>{{ 'perfil.confirmNewPassword' | transloco }}</mat-label>
-                      <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-                      <input matInput type="password" formControlName="confirm_password" required />
-                      @if (
-                        passwordForm.get('confirm_password')?.hasError('required') &&
-                        passwordForm.get('confirm_password')?.touched
-                      ) {
-                        <mat-error>{{ 'perfil.required' | transloco }}</mat-error>
-                      }
-                      @if (
-                        passwordForm.hasError('passwordMismatch') &&
-                        passwordForm.get('confirm_password')?.touched
-                      ) {
-                        <mat-error>{{ 'perfil.passwordMismatch' | transloco }}</mat-error>
-                      }
-                    </mat-form-field>
+                  <label class="field-group">
+                    <app-text-field
+                      formControlName="phone"
+                      type="tel"
+                      [label]="'perfil.phoneLabel' | transloco"
+                      [placeholder]="'perfil.phonePlaceholder' | transloco"
+                    />
+                  </label>
 
-                    <div class="form-actions">
-                      <button
-                        type="button"
-                        mat-stroked-button
-                        (click)="resetPasswordForm()"
-                        [disabled]="isUpdatingPassword()"
-                      >
-                        {{ 'common.cancel' | transloco }}
-                      </button>
-                      <button
-                        type="submit"
-                        mat-raised-button
-                        color="primary"
-                        [disabled]="passwordForm.invalid || isUpdatingPassword()"
-                      >
-                        @if (isUpdatingPassword()) {
-                          <mat-spinner diameter="20"></mat-spinner>
-                          {{ 'perfil.saving' | transloco }}
-                        } @else {
-                          {{ 'perfil.changePassword' | transloco }}
-                        }
-                      </button>
-                    </div>
-                  </form>
-                </mat-card>
-              </mat-tab>
-            </mat-tab-group>
-          </div>
+                  <div class="form-actions">
+                    <app-button
+                      appearance="outline"
+                      type="button"
+                      [disabled]="isUpdating()"
+                      (clicked)="resetProfileForm()"
+                    >
+                      {{ 'common.cancel' | transloco }}
+                    </app-button>
+                    <app-button
+                      type="submit"
+                      [disabled]="profileForm.invalid || !profileForm.dirty"
+                      [loading]="isUpdating()"
+                    >
+                      {{ 'perfil.saveProfile' | transloco }}
+                    </app-button>
+                  </div>
+                </form>
+              </article>
+            }
+
+            @if (selectedTab === 'password') {
+              <article class="form-card">
+                @if (passwordSuccess()) {
+                  <div class="success-alert">
+                    <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+                    <span>{{ 'perfil.passwordChanged' | transloco }}</span>
+                  </div>
+                }
+                @if (passwordError()) {
+                  <div class="error-alert">
+                    <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+                    <span>{{ passwordError() }}</span>
+                  </div>
+                }
+
+                <form [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+                  <label class="field-group">
+                    <app-text-field
+                      formControlName="current_password"
+                      type="password"
+                      [label]="'perfil.currentPassword' | transloco"
+                    />
+                    @if (
+                      passwordForm.get('current_password')?.hasError('required') &&
+                      passwordForm.get('current_password')?.touched
+                    ) {
+                      <span class="field-error">{{ 'perfil.required' | transloco }}</span>
+                    }
+                  </label>
+
+                  <label class="field-group">
+                    <app-text-field
+                      formControlName="new_password"
+                      type="password"
+                      [label]="'perfil.newPassword' | transloco"
+                    />
+                    @if (
+                      passwordForm.get('new_password')?.hasError('required') &&
+                      passwordForm.get('new_password')?.touched
+                    ) {
+                      <span class="field-error">{{ 'perfil.required' | transloco }}</span>
+                    }
+                    @if (passwordForm.get('new_password')?.hasError('minlength')) {
+                      <span class="field-error">{{ 'perfil.minChars6' | transloco }}</span>
+                    }
+                    <span class="field-hint">{{ 'perfil.passwordHint' | transloco }}</span>
+                  </label>
+
+                  <label class="field-group">
+                    <app-text-field
+                      formControlName="confirm_password"
+                      type="password"
+                      [label]="'perfil.confirmNewPassword' | transloco"
+                    />
+                    @if (
+                      passwordForm.get('confirm_password')?.hasError('required') &&
+                      passwordForm.get('confirm_password')?.touched
+                    ) {
+                      <span class="field-error">{{ 'perfil.required' | transloco }}</span>
+                    }
+                    @if (
+                      passwordForm.hasError('passwordMismatch') &&
+                      passwordForm.get('confirm_password')?.touched
+                    ) {
+                      <span class="field-error">{{ 'perfil.passwordMismatch' | transloco }}</span>
+                    }
+                  </label>
+
+                  <div class="form-actions">
+                    <app-button
+                      appearance="outline"
+                      type="button"
+                      [disabled]="isUpdatingPassword()"
+                      (clicked)="resetPasswordForm()"
+                    >
+                      {{ 'common.cancel' | transloco }}
+                    </app-button>
+                    <app-button
+                      type="submit"
+                      [disabled]="passwordForm.invalid"
+                      [loading]="isUpdatingPassword()"
+                    >
+                      {{ 'perfil.changePassword' | transloco }}
+                    </app-button>
+                  </div>
+                </form>
+              </article>
+            }
+          </section>
         </div>
       }
     </div>
@@ -297,36 +262,19 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         margin: 0 auto;
       }
 
-      .page-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 24px;
-      }
-
-      .header-content {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
-
-      .header-content h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
-
-      .header-content p {
-        color: #64748b;
-        margin: 0;
-        font-size: 14px;
-      }
-
       .profile-grid {
         display: grid;
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 300px minmax(0, 1fr);
         gap: 24px;
         align-items: start;
+      }
+
+      .info-card,
+      .form-card {
+        border: 1px solid var(--app-color-border);
+        border-radius: var(--app-radius-lg);
+        background: var(--app-color-surface);
+        box-shadow: var(--app-shadow-sm);
       }
 
       .info-card {
@@ -338,7 +286,7 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         width: 88px;
         height: 88px;
         border-radius: 50%;
-        background: var(--mat-sys-primary, #3f51b5);
+        background: var(--app-color-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -347,20 +295,20 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
 
       .avatar-initials {
         font-size: 1.75rem;
-        font-weight: 700;
-        color: white;
-        letter-spacing: 1px;
+        font-weight: 800;
+        color: #fff;
+        letter-spacing: 0;
       }
 
       .info-card h2 {
         font-size: 1.15rem;
-        font-weight: 700;
-        color: #1e293b;
+        font-weight: 800;
+        color: var(--app-color-text);
         margin: 0 0 4px;
       }
 
       .user-email {
-        color: #64748b;
+        color: var(--app-color-text-muted);
         font-size: 13px;
         margin: 0 0 12px;
         word-break: break-all;
@@ -371,14 +319,17 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         align-items: center;
         gap: 6px;
         padding: 4px 14px;
-        background: var(--mat-sys-primary-container, #e8eaf6);
-        color: var(--mat-sys-primary, #3f51b5);
-        border-radius: 20px;
+        background: var(--app-color-primary-soft);
+        color: var(--app-color-primary);
+        border-radius: 999px;
         font-size: 13px;
-        font-weight: 600;
+        font-weight: 750;
       }
 
       .info-items {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--app-color-border);
         text-align: left;
       }
 
@@ -387,9 +338,9 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         align-items: center;
         gap: 10px;
         padding: 8px 0;
-        color: #64748b;
+        color: var(--app-color-text-muted);
         font-size: 13px;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--app-color-border);
       }
 
       .info-row:last-child {
@@ -398,12 +349,13 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
 
       .forms-container {
         display: flex;
+        min-width: 0;
         flex-direction: column;
+        gap: 16px;
       }
 
       .form-card {
         padding: 32px;
-        margin-top: 16px;
       }
 
       .form-row {
@@ -412,38 +364,50 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         gap: 16px;
       }
 
-      form {
+      form,
+      .field-group {
         display: flex;
         flex-direction: column;
+      }
+
+      form {
         gap: 16px;
       }
 
-      mat-form-field {
-        width: 100%;
+      .field-group {
+        gap: 6px;
       }
 
-      .success-alert {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        background: #d1fae5;
-        color: #047857;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 14px;
+      .field-error {
+        color: var(--app-color-danger);
+        font-size: 0.78rem;
+        font-weight: 650;
       }
 
+      .field-hint {
+        color: var(--app-color-text-muted);
+        font-size: 0.78rem;
+      }
+
+      .success-alert,
       .error-alert {
         display: flex;
         align-items: center;
         gap: 10px;
         padding: 12px 16px;
-        background: #fee2e2;
-        color: #dc2626;
-        border-radius: 8px;
+        border-radius: var(--app-radius-md);
         margin-bottom: 20px;
         font-size: 14px;
+      }
+
+      .success-alert {
+        background: var(--app-color-success-soft);
+        color: var(--app-color-success);
+      }
+
+      .error-alert {
+        background: var(--app-color-danger-soft);
+        color: var(--app-color-danger);
       }
 
       .form-actions {
@@ -451,14 +415,8 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         justify-content: flex-end;
         gap: 12px;
         padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
+        border-top: 1px solid var(--app-color-border);
         margin-top: 8px;
-      }
-
-      button[type='submit'] {
-        display: flex;
-        align-items: center;
-        gap: 8px;
       }
 
       @media (max-width: 960px) {
@@ -479,27 +437,27 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
         .form-actions {
           flex-direction: column-reverse;
         }
-
-        .form-actions button {
-          width: 100%;
-        }
       }
     `,
   ],
 })
-export class AdminPerfilComponent implements OnInit {
+export class AdminPerfilComponent {
   readonly User = User;
   readonly Mail = Mail;
-  readonly Phone = Phone;
-  readonly Lock = Lock;
+  readonly Shield = Shield;
   readonly CheckCircle2 = CheckCircle2;
   readonly AlertCircle = AlertCircle;
-  readonly Shield = Shield;
 
-  private fb = inject(FormBuilder);
-  authService = inject(AuthService);
-  private transloco = inject(TranslocoService);
+  readonly tabs: readonly AppTabOption<ProfileTab>[] = [
+    { label: 'Datos personales', value: 'profile' },
+    { label: 'Contraseña', value: 'password' },
+  ];
 
+  private readonly fb = inject(FormBuilder);
+  readonly authService = inject(AuthService);
+  private readonly transloco = inject(TranslocoService);
+
+  selectedTab: ProfileTab = 'profile';
   updateSuccess = signal(false);
   updateError = signal<string | null>(null);
   isUpdating = signal(false);
@@ -508,13 +466,13 @@ export class AdminPerfilComponent implements OnInit {
   passwordError = signal<string | null>(null);
   isUpdatingPassword = signal(false);
 
-  profileForm = this.fb.group({
+  readonly profileForm = this.fb.group({
     name: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
   });
 
-  passwordForm = this.fb.group(
+  readonly passwordForm = this.fb.group(
     {
       current_password: ['', Validators.required],
       new_password: ['', [Validators.required, Validators.minLength(8)]],
@@ -523,7 +481,7 @@ export class AdminPerfilComponent implements OnInit {
     { validators: passwordMatchValidator },
   );
 
-  ngOnInit(): void {
+  constructor() {
     const user = this.authService.currentUser();
     if (user) {
       this.profileForm.patchValue({
@@ -535,11 +493,15 @@ export class AdminPerfilComponent implements OnInit {
   }
 
   getInitials(name: string): string {
-    if (!name) return '??';
+    if (!name) {
+      return '??';
+    }
+
     const parts = name.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
+
     return name.substring(0, 2).toUpperCase();
   }
 
@@ -555,16 +517,18 @@ export class AdminPerfilComponent implements OnInit {
       return;
     }
 
+    const user = this.authService.currentUser();
+    if (!user) {
+      return;
+    }
+
     this.isUpdating.set(true);
     this.updateSuccess.set(false);
     this.updateError.set(null);
 
-    const user = this.authService.currentUser();
-    if (!user) return;
-
-    const { name, email, phone } = this.profileForm.value;
+    const { name, email, phone } = this.profileForm.getRawValue();
     this.authService
-      .updateProfile(parseInt(user.id), { name: name!, email: email!, phone: phone || undefined })
+      .updateProfile(Number(user.id), { name: name!, email: email!, phone: phone || undefined })
       .subscribe({
         next: () => {
           this.isUpdating.set(false);
@@ -572,7 +536,7 @@ export class AdminPerfilComponent implements OnInit {
           this.profileForm.markAsPristine();
           setTimeout(() => this.updateSuccess.set(false), 3000);
         },
-        error: (err) => {
+        error: (err: Error) => {
           this.isUpdating.set(false);
           this.updateError.set(err.message || this.transloco.translate('perfil.profileError'));
           setTimeout(() => this.updateError.set(null), 3000);
@@ -590,6 +554,7 @@ export class AdminPerfilComponent implements OnInit {
       });
       this.profileForm.markAsPristine();
     }
+
     this.updateSuccess.set(false);
     this.updateError.set(null);
   }
@@ -600,22 +565,24 @@ export class AdminPerfilComponent implements OnInit {
       return;
     }
 
+    const user = this.authService.currentUser();
+    if (!user) {
+      return;
+    }
+
     this.isUpdatingPassword.set(true);
     this.passwordSuccess.set(false);
     this.passwordError.set(null);
 
-    const user = this.authService.currentUser();
-    if (!user) return;
-
-    const newPassword = this.passwordForm.value.new_password!;
-    this.authService.changePassword(parseInt(user.id), newPassword).subscribe({
+    const newPassword = this.passwordForm.getRawValue().new_password!;
+    this.authService.changePassword(Number(user.id), newPassword).subscribe({
       next: () => {
         this.isUpdatingPassword.set(false);
         this.passwordSuccess.set(true);
         this.passwordForm.reset();
         setTimeout(() => this.passwordSuccess.set(false), 3000);
       },
-      error: (err) => {
+      error: (err: Error) => {
         this.isUpdatingPassword.set(false);
         this.passwordError.set(err.message || this.transloco.translate('perfil.passwordError'));
         setTimeout(() => this.passwordError.set(null), 3000);

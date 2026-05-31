@@ -1,0 +1,156 @@
+<section class="owner-page">
+  <app-page-header
+    title="Portal del propietario"
+    description="Resumen de propiedades, liquidaciones, mantenimiento y documentos."
+  >
+    <app-button actions appearance="secondary" size="s" (clicked)="load()">Recargar</app-button>
+  </app-page-header>
+
+  @if (isLoading()) {
+    <app-loading-state label="Cargando portal..." />
+  } @else {
+    <div class="kpi-grid">
+      <article class="kpi">
+        <span>Propiedades</span>
+        <strong>{{ dashboard().properties_count ?? properties().length }}</strong>
+      </article>
+      <article class="kpi">
+        <span>Contratos activos</span>
+        <strong>{{ dashboard().active_contracts_count ?? contracts().length }}</strong>
+      </article>
+      <article class="kpi">
+        <span>Saldo pendiente</span>
+        <strong>{{ dashboard().pending_balance ?? 0 | currency: 'USD' }}</strong>
+      </article>
+      <article class="kpi">
+        <span>Mantenimientos</span>
+        <strong>{{ dashboard().active_maintenance_count ?? maintenance().length }}</strong>
+      </article>
+    </div>
+
+    <nav class="tabs" aria-label="Secciones del propietario">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          [class.active]="activeTab() === tab.id"
+          (click)="activeTab.set(tab.id)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </nav>
+
+    @if (activeCount() === 0) {
+      <app-empty-state title="Sin datos" description="No hay información para esta sección." />
+    } @else {
+      @switch (activeTab()) {
+        <!-- Mis propiedades -->
+        @case ('properties') {
+          <div class="cards-grid">
+            @for (prop of properties(); track prop.id) {
+              <article class="info-card">
+                <div class="info-card__head">
+                  <lucide-icon [img]="Home" [size]="18" />
+                  <h3>{{ str(prop, 'title') }}</h3>
+                  <app-status-badge
+                    [label]="str(prop, 'status')"
+                    [tone]="str(prop, 'status') === 'OCUPADA' ? 'success' : 'info'"
+                  />
+                </div>
+                <dl class="info-card__body">
+                  <div>
+                    <dt><lucide-icon [img]="User" [size]="13" /> Inquilino</dt>
+                    <dd>{{ str(prop, 'current_tenant') || 'Sin inquilino' }}</dd>
+                  </div>
+                  @if (str(prop, 'contract_end_date')) {
+                    <div>
+                      <dt><lucide-icon [img]="Calendar" [size]="13" /> Vence</dt>
+                      <dd>{{ str(prop, 'contract_end_date') }}</dd>
+                    </div>
+                  }
+                </dl>
+              </article>
+            }
+          </div>
+        }
+
+        <!-- Liquidaciones con descarga PDF -->
+        @case ('statements') {
+          <ul class="record-list">
+            @for (st of statements(); track st.id) {
+              <li class="record-item">
+                <div class="record-main">
+                  <strong>{{ str(st, 'period_month') || 'Liquidación #' + st.id }}</strong>
+                  <span class="record-sub">{{ str(st, 'status') }}</span>
+                </div>
+                <span class="record-amount">{{ num(st, 'net_amount') | currency: 'USD' }}</span>
+                <app-button
+                  size="s"
+                  appearance="secondary"
+                  [disabled]="downloadingId() === st.id"
+                  (clicked)="downloadStatement(st)"
+                >
+                  <lucide-icon [img]="Download" [size]="15" />
+                  PDF
+                </app-button>
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- Mantenimiento con timeline y autorizar gasto -->
+        @case ('maintenance') {
+          <ul class="record-list">
+            @for (mr of maintenance(); track mr.id) {
+              <li class="record-item record-item--column">
+                <div class="record-row">
+                  <div class="record-main">
+                    <strong>{{ str(mr, 'title') }}</strong>
+                    <span class="record-sub">{{ str(mr, 'property_title') }}</span>
+                  </div>
+                  <app-status-badge [label]="str(mr, 'priority')" tone="neutral" />
+                  @if (canAuthorize(mr)) {
+                    <app-button
+                      size="s"
+                      [disabled]="authorizingId() === mr.id"
+                      (clicked)="authorize(mr)"
+                    >
+                      <lucide-icon [img]="CheckCircle2" [size]="15" />
+                      Autorizar gasto
+                    </app-button>
+                  }
+                </div>
+                <ol class="stage-timeline" [attr.aria-label]="'Etapa: ' + str(mr, 'current_stage')">
+                  @for (stage of stages; track stage; let i = $index) {
+                    <li class="stage" [class.done]="i <= stageIndex(mr)">
+                      <span class="stage-dot"></span>
+                      <span class="stage-name">{{ stage }}</span>
+                    </li>
+                  }
+                </ol>
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- Documentos / contratos -->
+        @case ('contracts') {
+          <ul class="record-list">
+            @for (c of contracts(); track c.id) {
+              <li class="record-item">
+                <div class="record-main">
+                  <strong>{{ str(c, 'contract_number') }}</strong>
+                  <span class="record-sub">{{ str(c, 'property_title') }}</span>
+                </div>
+                <app-status-badge
+                  [label]="str(c, 'status')"
+                  [tone]="str(c, 'status') === 'ACTIVO' ? 'success' : 'neutral'"
+                />
+              </li>
+            }
+          </ul>
+        }
+      }
+    }
+  }
+</section>

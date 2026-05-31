@@ -862,5 +862,37 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "daysAgo": "{{count}} days ago"
+  },
+  "tenantHistory": {
+    "title": "My history",
+    "subtitle": "Timeline of your payments, maintenance and notifications",
+    "empty": "No activity in your history yet"
+  },
+  "availability": {
+    "available": "Available",
+    "blocked": "Blocked",
+    "booked": "Booked",
+    "nights": "nights",
+    "cleaningFee": "Cleaning fee",
+    "total": "Total",
+    "request": "Request booking",
+    "selectDates": "Select your stay dates",
+    "rangeUnavailable": "The range includes unavailable dates",
+    "minNights": "Minimum {{n}} nights",
+    "requested": "Booking request sent",
+    "requestError": "Could not create the booking",
+    "title": "Availability"
+  },
+  "myProperty": {
+    "title": "My property",
+    "subtitle": "Your unit info, amenities, rules and admin contact",
+    "loading": "Loading your property...",
+    "noProperty": "You have no assigned property",
+    "property": "Property",
+    "amenities": "Amenities",
+    "rules": "Building rules",
+    "admin": "Administrator",
+    "adminHint": "Questions about your property? Message the management.",
+    "contactAdmin": "Contact management"
   }
 }

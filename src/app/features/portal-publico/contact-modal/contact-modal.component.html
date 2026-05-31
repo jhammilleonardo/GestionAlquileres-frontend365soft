@@ -2,82 +2,84 @@
   <div class="modal-container small" (click)="$event.stopPropagation()">
     <button class="close-btn" (click)="closeModal()">✕</button>
 
-    <div *ngIf="!submitted" class="modal-content">
-      <h2 class="modal-title">{{ 'public.contactModal.title' | transloco }}</h2>
-      <p class="modal-subtitle">{{ property.title }}</p>
+    @if (!submitted) {
+      <div class="modal-content">
+        <h2 class="modal-title">{{ 'public.contactModal.title' | transloco }}</h2>
+        <p class="modal-subtitle">{{ property.title }}</p>
 
-      <form (ngSubmit)="submitForm()" class="contact-form">
-        <div class="form-group">
-          <label>{{ 'public.contactModal.name' | transloco }}</label>
-          <input
-            type="text"
-            [(ngModel)]="contactForm.name"
-            name="name"
-            required
-            [placeholder]="'public.contactModal.namePlace' | transloco"
-          />
-        </div>
+        <form (ngSubmit)="submitForm()" class="contact-form">
+          <div class="form-group">
+            <label>{{ 'public.contactModal.name' | transloco }}</label>
+            <input
+              type="text"
+              [(ngModel)]="contactForm.name"
+              name="name"
+              required
+              [placeholder]="'public.contactModal.namePlace' | transloco"
+            />
+          </div>
 
-        <div class="form-group">
-          <label>{{ 'public.contactModal.email' | transloco }}</label>
-          <input
-            type="email"
-            [(ngModel)]="contactForm.email"
-            name="email"
-            required
-            [placeholder]="'public.contactModal.emailPlace' | transloco"
-          />
-        </div>
+          <div class="form-group">
+            <label>{{ 'public.contactModal.email' | transloco }}</label>
+            <input
+              type="email"
+              [(ngModel)]="contactForm.email"
+              name="email"
+              required
+              [placeholder]="'public.contactModal.emailPlace' | transloco"
+            />
+          </div>
 
-        <div class="form-group">
-          <label>{{ 'public.contactModal.phone' | transloco }}</label>
-          <input
-            type="tel"
-            [(ngModel)]="contactForm.phone"
-            name="phone"
-            [placeholder]="'public.contactModal.phonePlace' | transloco"
-          />
-        </div>
+          <div class="form-group">
+            <label>{{ 'public.contactModal.phone' | transloco }}</label>
+            <input
+              type="tel"
+              [(ngModel)]="contactForm.phone"
+              name="phone"
+              [placeholder]="'public.contactModal.phonePlace' | transloco"
+            />
+          </div>
 
-        <div class="form-group">
-          <label>{{ 'public.contactModal.preferredContact' | transloco }}</label>
-          <select [(ngModel)]="contactForm.preferredContact" name="preferredContact">
-            <option value="email">{{ 'public.contactModal.emailOpt' | transloco }}</option>
-            <option value="phone">{{ 'public.contactModal.phoneOpt' | transloco }}</option>
-            <option value="whatsapp">{{ 'public.contactModal.whatsappOpt' | transloco }}</option>
-          </select>
-        </div>
+          <div class="form-group">
+            <label>{{ 'public.contactModal.preferredContact' | transloco }}</label>
+            <select [(ngModel)]="contactForm.preferredContact" name="preferredContact">
+              <option value="email">{{ 'public.contactModal.emailOpt' | transloco }}</option>
+              <option value="phone">{{ 'public.contactModal.phoneOpt' | transloco }}</option>
+              <option value="whatsapp">{{ 'public.contactModal.whatsappOpt' | transloco }}</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label>{{ 'public.contactModal.message' | transloco }}</label>
-          <textarea
-            [(ngModel)]="contactForm.message"
-            name="message"
-            required
-            rows="5"
-            [placeholder]="'public.contactModal.messagePlace' | transloco"
-          ></textarea>
-        </div>
+          <div class="form-group">
+            <label>{{ 'public.contactModal.message' | transloco }}</label>
+            <textarea
+              [(ngModel)]="contactForm.message"
+              name="message"
+              required
+              rows="5"
+              [placeholder]="'public.contactModal.messagePlace' | transloco"
+            ></textarea>
+          </div>
 
-        <div class="form-actions">
-          <button type="button" class="btn-cancel" (click)="closeModal()">
-            {{ 'public.contactModal.cancel' | transloco }}
-          </button>
-          <button type="submit" class="btn-submit" [disabled]="isSubmitting">
-            {{
-              isSubmitting
-                ? ('public.contactModal.submitting' | transloco)
-                : ('public.contactModal.submit' | transloco)
-            }}
-          </button>
-        </div>
-      </form>
-    </div>
-
-    <div *ngIf="submitted" class="success-message">
-      <div class="success-icon">✓</div>
-      <h2>{{ 'public.contactModal.successTitle' | transloco }}</h2>
-      <p>{{ 'public.contactModal.successMsg' | transloco }}</p>
-    </div>
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="closeModal()">
+              {{ 'public.contactModal.cancel' | transloco }}
+            </button>
+            <button type="submit" class="btn-submit" [disabled]="isSubmitting">
+              {{
+                isSubmitting
+                  ? ('public.contactModal.submitting' | transloco)
+                  : ('public.contactModal.submit' | transloco)
+              }}
+            </button>
+          </div>
+        </form>
+      </div>
+    } @else {
+      <div class="success-message">
+        <div class="success-icon">✓</div>
+        <h2>{{ 'public.contactModal.successTitle' | transloco }}</h2>
+        <p>{{ 'public.contactModal.successMsg' | transloco }}</p>
+      </div>
+    }
   </div>
 </div>

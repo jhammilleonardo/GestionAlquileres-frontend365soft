@@ -1,18 +1,9 @@
-import { Component, inject, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatStepperModule } from '@angular/material/stepper';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import {
   LucideAngularModule,
+  type LucideIconData,
   Wrench,
   MessageSquare,
   ArrowLeft,
@@ -39,31 +30,50 @@ import {
   PermissionToEnter,
 } from '../../../core/models/maintenance-request.model';
 import { TranslocoModule } from '@jsverse/transloco';
+import {
+  AppButtonComponent,
+  AppCheckboxComponent,
+  AppTextFieldComponent,
+  AppTextareaComponent,
+} from '../../../shared/ui';
+
+interface MaintenanceCategoryOption {
+  value: MaintenanceCategory;
+  label: string;
+  icon: LucideIconData;
+}
+
+interface RequestTypeOption {
+  value: MaintenanceRequestType;
+  labelKey: string;
+  descriptionKey: string;
+  icon: LucideIconData;
+}
+
+interface PermissionOption {
+  value: PermissionToEnter;
+  labelKey: string;
+  descriptionKey: string;
+}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-create-request',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
-    FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatRadioModule,
-    MatProgressSpinnerModule,
-    MatStepperModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppCheckboxComponent,
+    AppTextFieldComponent,
+    AppTextareaComponent,
   ],
   template: `
     <div class="create-request-container">
       <div class="page-header">
-        <button mat-icon-button [routerLink]="mantenimientoUrl()" class="back-btn">
+        <button type="button" [routerLink]="mantenimientoUrl()" class="back-btn">
           <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
         </button>
         <div>
@@ -79,43 +89,26 @@ import { TranslocoModule } from '@jsverse/transloco';
         </div>
       }
 
-      <mat-card class="form-card">
+      <section class="form-card">
         <form [formGroup]="requestForm" (ngSubmit)="onSubmit()">
-          <!-- Step 1: Request Type -->
           <div class="form-section">
             <h3>{{ 'public.tenantMaintenance.requestTypeQ' | transloco }}</h3>
             <div class="type-options">
-              <label
-                class="type-option"
-                [class.selected]="requestForm.get('request_type')?.value === 'MAINTENANCE'"
-              >
-                <input type="radio" formControlName="request_type" value="MAINTENANCE" />
-                <lucide-icon [img]="Wrench" [size]="32"></lucide-icon>
-                <span class="type-label">{{
-                  'public.tenantMaintenance.maintenanceType' | transloco
-                }}</span>
-                <span class="type-desc">{{
-                  'public.tenantMaintenance.maintenanceDesc' | transloco
-                }}</span>
-              </label>
-              <label
-                class="type-option"
-                [class.selected]="requestForm.get('request_type')?.value === 'GENERAL'"
-              >
-                <input type="radio" formControlName="request_type" value="GENERAL" />
-                <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
-                <span class="type-label">{{
-                  'public.tenantMaintenance.generalType' | transloco
-                }}</span>
-                <span class="type-desc">{{
-                  'public.tenantMaintenance.generalDesc' | transloco
-                }}</span>
-              </label>
+              @for (option of requestTypeOptions; track option.value) {
+                <label
+                  class="type-option"
+                  [class.selected]="requestForm.controls.request_type.value === option.value"
+                >
+                  <input type="radio" formControlName="request_type" [value]="option.value" />
+                  <lucide-icon [img]="option.icon" [size]="32"></lucide-icon>
+                  <span class="type-label">{{ option.labelKey | transloco }}</span>
+                  <span class="type-desc">{{ option.descriptionKey | transloco }}</span>
+                </label>
+              }
             </div>
           </div>
 
-          <!-- Step 2: Category (only for MAINTENANCE) -->
-          @if (requestForm.get('request_type')?.value === 'MAINTENANCE') {
+          @if (isMaintenanceRequest()) {
             <div class="form-section">
               <h3>{{ 'public.tenantMaintenance.categoryQ' | transloco }}</h3>
               <div class="category-grid">
@@ -133,118 +126,113 @@ import { TranslocoModule } from '@jsverse/transloco';
             </div>
           }
 
-          <!-- Step 3: Details -->
           <div class="form-section">
             <h3>{{ 'public.tenantMaintenance.describeQ' | transloco }}</h3>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>{{ 'public.tenantMaintenance.titleLabel' | transloco }}</mat-label>
-              <input
-                matInput
+            <div class="field-stack">
+              <app-text-field
                 formControlName="title"
+                [label]="'public.tenantMaintenance.titleLabel' | transloco"
                 [placeholder]="'public.tenantMaintenance.titlePlaceholder' | transloco"
               />
               @if (
-                requestForm.get('title')?.hasError('required') && requestForm.get('title')?.touched
+                requestForm.controls.title.hasError('required') &&
+                requestForm.controls.title.touched
               ) {
-                <mat-error>{{ 'public.tenantMaintenance.titleRequired' | transloco }}</mat-error>
+                <p class="field-error">
+                  {{ 'public.tenantMaintenance.titleRequired' | transloco }}
+                </p>
               }
-              @if (requestForm.get('title')?.hasError('minlength')) {
-                <mat-error>{{ 'public.tenantMaintenance.min5' | transloco }}</mat-error>
+              @if (requestForm.controls.title.hasError('minlength')) {
+                <p class="field-error">{{ 'public.tenantMaintenance.min5' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>{{ 'public.tenantMaintenance.descLabel' | transloco }}</mat-label>
-              <textarea
-                matInput
+            <div class="field-stack">
+              <app-textarea
                 formControlName="description"
-                rows="4"
+                [label]="'public.tenantMaintenance.descLabel' | transloco"
                 [placeholder]="'public.tenantMaintenance.descPlaceholder' | transloco"
-              ></textarea>
+                [minRows]="4"
+                [maxRows]="7"
+              />
               @if (
-                requestForm.get('description')?.hasError('required') &&
-                requestForm.get('description')?.touched
+                requestForm.controls.description.hasError('required') &&
+                requestForm.controls.description.touched
               ) {
-                <mat-error>{{ 'public.tenantMaintenance.descRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantMaintenance.descRequired' | transloco }}</p>
               }
-              @if (requestForm.get('description')?.hasError('minlength')) {
-                <mat-error>{{ 'public.tenantMaintenance.min10' | transloco }}</mat-error>
+              @if (requestForm.controls.description.hasError('minlength')) {
+                <p class="field-error">{{ 'public.tenantMaintenance.min10' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
           </div>
 
-          <!-- Step 4: Entry Permission (only for MAINTENANCE) -->
-          @if (requestForm.get('request_type')?.value === 'MAINTENANCE') {
+          @if (isMaintenanceRequest()) {
             <div class="form-section">
               <h3>{{ 'public.tenantMaintenance.entryPerm' | transloco }}</h3>
               <p class="section-desc">
                 {{ 'public.tenantMaintenance.entryPermDesc' | transloco }}
               </p>
 
-              <mat-radio-group formControlName="permission_to_enter" class="permission-options">
-                <mat-radio-button value="YES">
-                  <strong>{{ 'public.tenantMaintenance.yesEnter' | transloco }}</strong>
-                  <span class="radio-desc">{{
-                    'public.tenantMaintenance.yesEnterDesc' | transloco
-                  }}</span>
-                </mat-radio-button>
-                <mat-radio-button value="NO">
-                  <strong>{{ 'public.tenantMaintenance.noPresence' | transloco }}</strong>
-                  <span class="radio-desc">{{
-                    'public.tenantMaintenance.noPresenceDesc' | transloco
-                  }}</span>
-                </mat-radio-button>
-                <mat-radio-button value="NOT_APPLICABLE">
-                  <strong>{{ 'public.tenantMaintenance.notApplicable' | transloco }}</strong>
-                  <span class="radio-desc">{{
-                    'public.tenantMaintenance.notApplicableDesc' | transloco
-                  }}</span>
-                </mat-radio-button>
-              </mat-radio-group>
+              <div class="permission-options">
+                @for (option of permissionOptions; track option.value) {
+                  <label
+                    class="permission-option"
+                    [class.permission-option--selected]="
+                      requestForm.controls.permission_to_enter.value === option.value
+                    "
+                  >
+                    <input
+                      type="radio"
+                      formControlName="permission_to_enter"
+                      [value]="option.value"
+                    />
+                    <span>
+                      <strong>{{ option.labelKey | transloco }}</strong>
+                      <small>{{ option.descriptionKey | transloco }}</small>
+                    </span>
+                  </label>
+                }
+              </div>
 
-              @if (requestForm.get('permission_to_enter')?.value === 'YES') {
+              @if (requestForm.controls.permission_to_enter.value === 'YES') {
                 <div class="entry-details">
-                  <mat-checkbox formControlName="has_pets">
+                  <app-checkbox formControlName="has_pets">
                     {{ 'public.tenantMaintenance.hasPets' | transloco }}
-                  </mat-checkbox>
+                  </app-checkbox>
 
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>{{ 'public.tenantMaintenance.entryNotes' | transloco }}</mat-label>
-                    <textarea
-                      matInput
-                      formControlName="entry_notes"
-                      rows="2"
-                      [placeholder]="'public.tenantMaintenance.entryNotesPlaceholder' | transloco"
-                    ></textarea>
-                  </mat-form-field>
+                  <app-textarea
+                    formControlName="entry_notes"
+                    [label]="'public.tenantMaintenance.entryNotes' | transloco"
+                    [placeholder]="'public.tenantMaintenance.entryNotesPlaceholder' | transloco"
+                    [minRows]="2"
+                    [maxRows]="4"
+                  />
                 </div>
               }
             </div>
           }
 
-          <!-- Submit -->
           <div class="form-actions">
-            <button mat-button type="button" [routerLink]="mantenimientoUrl()">
+            <app-button appearance="flat" type="button" [routerLink]="mantenimientoUrl()">
               {{ 'public.tenantMaintenance.cancel' | transloco }}
-            </button>
-            <button
-              mat-raised-button
-              color="primary"
+            </app-button>
+            <app-button
               type="submit"
               [disabled]="requestForm.invalid || maintenanceService.isLoading()"
+              [loading]="maintenanceService.isLoading()"
             >
-              @if (maintenanceService.isLoading()) {
-                <mat-spinner diameter="20"></mat-spinner>
-                {{ 'public.tenantMaintenance.sending' | transloco }}
-              } @else {
-                <lucide-icon [img]="Check" [size]="20"></lucide-icon>
-                {{ 'public.tenantMaintenance.sendRequest' | transloco }}
-              }
-            </button>
+              <lucide-icon [img]="Check" [size]="20"></lucide-icon>
+              {{
+                maintenanceService.isLoading()
+                  ? ('public.tenantMaintenance.sending' | transloco)
+                  : ('public.tenantMaintenance.sendRequest' | transloco)
+              }}
+            </app-button>
           </div>
         </form>
-      </mat-card>
+      </section>
     </div>
   `,
   styles: [
@@ -262,7 +250,15 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .back-btn {
+        display: inline-grid;
+        place-items: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border: 1px solid var(--app-color-border);
+        border-radius: var(--app-radius-md);
+        background: var(--app-color-surface);
         color: #64748b;
+        cursor: pointer;
       }
 
       .page-header h1 {
@@ -290,7 +286,12 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .form-card {
+        display: block;
         padding: 32px;
+        border: 1px solid var(--app-color-border);
+        border-radius: var(--app-radius-lg);
+        background: var(--app-color-surface);
+        box-shadow: var(--app-shadow-sm);
       }
 
       .form-section {
@@ -320,7 +321,7 @@ import { TranslocoModule } from '@jsverse/transloco';
         flex-direction: column;
         align-items: center;
         padding: 24px;
-        border: 2px solid var(--mat-sys-outline-variant);
+        border: 2px solid var(--app-color-border);
         border-radius: 12px;
         cursor: pointer;
         transition: all 0.2s;
@@ -328,12 +329,12 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .type-option:hover {
-        border-color: var(--mat-sys-primary);
+        border-color: var(--app-color-primary);
       }
 
       .type-option.selected {
-        border-color: var(--mat-sys-primary);
-        background: var(--mat-sys-primary-container);
+        border-color: var(--app-color-primary);
+        background: color-mix(in srgb, var(--app-color-primary) 10%, transparent);
       }
 
       .type-option input {
@@ -341,7 +342,7 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .type-option lucide-icon {
-        color: var(--mat-sys-primary);
+        color: var(--app-color-primary);
         margin-bottom: 12px;
       }
 
@@ -367,7 +368,7 @@ import { TranslocoModule } from '@jsverse/transloco';
         flex-direction: column;
         align-items: center;
         padding: 16px;
-        border: 2px solid var(--mat-sys-outline-variant);
+        border: 2px solid var(--app-color-border);
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s;
@@ -375,12 +376,12 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .category-option:hover {
-        border-color: var(--mat-sys-primary);
+        border-color: var(--app-color-primary);
       }
 
       .category-option.selected {
-        border-color: var(--mat-sys-primary);
-        background: var(--mat-sys-primary-container);
+        border-color: var(--app-color-primary);
+        background: color-mix(in srgb, var(--app-color-primary) 10%, transparent);
       }
 
       .category-option input {
@@ -388,19 +389,25 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .category-option lucide-icon {
-        color: var(--mat-sys-primary);
+        color: var(--app-color-primary);
         margin-bottom: 8px;
       }
 
       .category-option span {
         font-size: 13px;
         font-weight: 500;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
       }
 
-      .full-width {
-        width: 100%;
+      .field-stack {
         margin-bottom: 16px;
+      }
+
+      .field-error {
+        margin: var(--app-space-1) 0 0;
+        color: var(--tui-status-negative);
+        font-size: 0.8125rem;
+        font-weight: 650;
       }
 
       .permission-options {
@@ -409,13 +416,29 @@ import { TranslocoModule } from '@jsverse/transloco';
         gap: 12px;
       }
 
-      .permission-options mat-radio-button {
+      .permission-option {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr);
+        gap: var(--app-space-3);
         padding: 16px;
         border: 1px solid #e2e8f0;
         border-radius: 8px;
+        cursor: pointer;
+        transition:
+          border-color 0.15s,
+          background 0.15s;
       }
 
-      .radio-desc {
+      .permission-option--selected {
+        border-color: var(--app-color-primary);
+        background: color-mix(in srgb, var(--app-color-primary) 8%, transparent);
+      }
+
+      .permission-option input {
+        margin-top: 0.15rem;
+      }
+
+      .permission-option small {
         display: block;
         font-size: 13px;
         color: #64748b;
@@ -423,14 +446,12 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .entry-details {
+        display: grid;
+        gap: var(--app-space-4);
         margin-top: 16px;
         padding: 16px;
         background: #f8fafc;
         border-radius: 8px;
-      }
-
-      .entry-details mat-checkbox {
-        margin-bottom: 16px;
       }
 
       .form-actions {
@@ -440,13 +461,6 @@ import { TranslocoModule } from '@jsverse/transloco';
         padding-top: 24px;
         border-top: 1px solid #e2e8f0;
       }
-
-      .form-actions button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
       @media (max-width: 768px) {
         .form-card {
           padding: 24px;
@@ -524,7 +538,40 @@ export class TenantCreateRequestComponent {
   // URL para volver a la lista de mantenimiento
   mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
 
-  categories = [
+  readonly requestTypeOptions: RequestTypeOption[] = [
+    {
+      value: MaintenanceRequestType.MAINTENANCE,
+      labelKey: 'public.tenantMaintenance.maintenanceType',
+      descriptionKey: 'public.tenantMaintenance.maintenanceDesc',
+      icon: Wrench,
+    },
+    {
+      value: MaintenanceRequestType.GENERAL,
+      labelKey: 'public.tenantMaintenance.generalType',
+      descriptionKey: 'public.tenantMaintenance.generalDesc',
+      icon: MessageSquare,
+    },
+  ];
+
+  readonly permissionOptions: PermissionOption[] = [
+    {
+      value: PermissionToEnter.YES,
+      labelKey: 'public.tenantMaintenance.yesEnter',
+      descriptionKey: 'public.tenantMaintenance.yesEnterDesc',
+    },
+    {
+      value: PermissionToEnter.NO,
+      labelKey: 'public.tenantMaintenance.noPresence',
+      descriptionKey: 'public.tenantMaintenance.noPresenceDesc',
+    },
+    {
+      value: PermissionToEnter.NOT_APPLICABLE,
+      labelKey: 'public.tenantMaintenance.notApplicable',
+      descriptionKey: 'public.tenantMaintenance.notApplicableDesc',
+    },
+  ];
+
+  categories: MaintenanceCategoryOption[] = [
     { value: MaintenanceCategory.PLOMERIA, label: 'Plomeria', icon: Droplets },
     { value: MaintenanceCategory.ELECTRICO, label: 'Electrico', icon: Lightbulb },
     { value: MaintenanceCategory.CLIMATIZACION, label: 'Climatizacion', icon: Wind },
@@ -561,6 +608,10 @@ export class TenantCreateRequestComponent {
       }
       categoryControl?.updateValueAndValidity();
     });
+  }
+
+  isMaintenanceRequest(): boolean {
+    return this.requestForm.controls.request_type.value === MaintenanceRequestType.MAINTENANCE;
   }
 
   onSubmit(): void {

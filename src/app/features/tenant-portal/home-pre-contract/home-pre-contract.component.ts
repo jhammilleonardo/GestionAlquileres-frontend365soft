@@ -1,10 +1,5 @@
-import { Component, inject, computed, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
+import { Component, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import {
   LucideAngularModule,
   Home,
@@ -22,18 +17,24 @@ import { ApplicationService } from '../../../core/services/admin/application.ser
 import { ContractService, Contract } from '../../../core/services/admin/contract.service';
 import { ApplicationListItem, ApplicationStatus } from '../../../core/models/application.model';
 import { TranslocoModule } from '@jsverse/transloco';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
+import {
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../../shared/ui/status-badge/status-badge.component';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-home-pre-contract',
   standalone: true,
   imports: [
-    CommonModule,
-    MatButtonModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
+    DecimalPipe,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppLoadingStateComponent,
+    AppStatusBadgeComponent,
   ],
   template: `
     <div class="home-pre-contract">
@@ -48,22 +49,17 @@ import { TranslocoModule } from '@jsverse/transloco';
             <p class="subtitle">{{ 'public.homePreContract.subtitle' | transloco }}</p>
           </div>
         </div>
-        <button
-          mat-raised-button
-          color="primary"
-          class="new-app-btn"
-          (click)="goToNewApplication()"
-        >
+        <app-button class="new-app-btn" size="l" (clicked)="goToNewApplication()">
           <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
           <span>{{ 'public.homePreContract.newApplication' | transloco }}</span>
-        </button>
+        </app-button>
       </div>
 
       <!-- Content -->
       <div class="content-grid">
         <!-- Banner: Contrato pendiente de firma -->
         @if (pendingContract()) {
-          <mat-card class="pending-contract-card">
+          <section class="pending-contract-card">
             <div class="pending-contract-content">
               <div class="pending-icon">
                 <lucide-icon [img]="FileSignature" [size]="40"></lucide-icon>
@@ -83,16 +79,16 @@ import { TranslocoModule } from '@jsverse/transloco';
                   >
                 </div>
               </div>
-              <button mat-raised-button color="primary" class="sign-btn" (click)="goToContracts()">
+              <app-button class="sign-btn" (clicked)="goToContracts()">
                 <lucide-icon [img]="FileSignature" [size]="18"></lucide-icon>
                 {{ 'public.homePreContract.signContractBtn' | transloco }}
-              </button>
+              </app-button>
             </div>
-          </mat-card>
+          </section>
         }
 
         <!-- Welcome Card -->
-        <mat-card class="welcome-card">
+        <section class="welcome-card">
           <div class="welcome-content">
             <div class="welcome-icon">
               <lucide-icon [img]="Home" [size]="48"></lucide-icon>
@@ -102,42 +98,41 @@ import { TranslocoModule } from '@jsverse/transloco';
               {{ 'public.homePreContract.welcomeBackDesc' | transloco }}
             </p>
             <div class="welcome-actions">
-              <button mat-raised-button color="primary" (click)="goToNewApplication()">
+              <app-button (clicked)="goToNewApplication()">
                 <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
                 {{ 'public.homePreContract.viewPropertiesBtn' | transloco }}
-              </button>
+              </app-button>
             </div>
           </div>
-        </mat-card>
+        </section>
 
         <!-- My Applications Card -->
-        <mat-card class="applications-card">
+        <section class="applications-card">
           <div class="card-header">
             <div class="header-title">
               <lucide-icon [img]="FileEdit" [size]="24"></lucide-icon>
               <h3>{{ 'public.homePreContract.myApplications' | transloco }}</h3>
             </div>
             @if (applications().length > 0) {
-              <button mat-stroked-button (click)="viewAllApplications()">
+              <app-button appearance="outline" size="s" (clicked)="viewAllApplications()">
                 {{ 'public.homePreContract.viewAll' | transloco }}
-              </button>
+              </app-button>
             }
           </div>
 
-          <mat-card-content>
+          <div class="card-content">
             @if (isLoading()) {
               <div class="loading-state">
-                <mat-spinner diameter="40"></mat-spinner>
-                <p>{{ 'public.homePreContract.loadingApps' | transloco }}</p>
+                <app-loading-state [label]="'public.homePreContract.loadingApps' | transloco" />
               </div>
             } @else if (applications().length === 0) {
               <div class="empty-state">
                 <lucide-icon [img]="FileEdit" [size]="48" class="empty-icon"></lucide-icon>
                 <h4>{{ 'public.homePreContract.noAppsTitle' | transloco }}</h4>
                 <p>{{ 'public.homePreContract.noAppsDesc' | transloco }}</p>
-                <button mat-flat-button color="primary" (click)="goToNewApplication()">
+                <app-button appearance="primary" (clicked)="goToNewApplication()">
                   {{ 'public.homePreContract.exploreBtn' | transloco }}
-                </button>
+                </app-button>
               </div>
             } @else {
               <div class="applications-list">
@@ -145,9 +140,10 @@ import { TranslocoModule } from '@jsverse/transloco';
                   <div class="application-item" [class]="'status-' + app.status.toLowerCase()">
                     <div class="application-header">
                       <h4 class="property-title">{{ app.property_title }}</h4>
-                      <span [class]="'status-chip status-' + app.status.toLowerCase()">
-                        {{ getStatusLabel(app.status) }}
-                      </span>
+                      <app-status-badge
+                        [label]="getStatusLabel(app.status)"
+                        [tone]="getStatusTone(app.status)"
+                      />
                     </div>
 
                     <div class="application-details">
@@ -182,8 +178,8 @@ import { TranslocoModule } from '@jsverse/transloco';
                 }
               </div>
             }
-          </mat-card-content>
-        </mat-card>
+          </div>
+        </section>
       </div>
     </div>
   `,
@@ -213,8 +209,8 @@ import { TranslocoModule } from '@jsverse/transloco';
       .header-icon {
         width: 56px;
         height: 56px;
-        background: var(--mat-sys-primary-container);
-        color: var(--mat-sys-on-primary-container);
+        background: var(--app-color-primary-soft);
+        color: var(--app-color-primary);
         border-radius: 12px;
         display: flex;
         align-items: center;
@@ -225,13 +221,13 @@ import { TranslocoModule } from '@jsverse/transloco';
         margin: 0;
         font-size: 1.75rem;
         font-weight: 700;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
       }
 
       .subtitle {
         margin: 4px 0 0;
         font-size: 1rem;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
       }
 
       .new-app-btn {
@@ -252,12 +248,9 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .welcome-card {
-        background: linear-gradient(
-          135deg,
-          var(--mat-sys-primary-container) 0%,
-          var(--mat-sys-surface-container-low) 100%
-        );
-        border: 1px solid var(--mat-sys-outline-variant);
+        background: linear-gradient(135deg, var(--app-color-primary-soft) 0%, #fff 100%);
+        border: 1px solid var(--app-color-border);
+        border-radius: 12px;
       }
 
       .welcome-content {
@@ -266,7 +259,7 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .welcome-icon {
-        color: var(--mat-sys-primary);
+        color: var(--app-color-primary);
         margin-bottom: 16px;
       }
 
@@ -274,14 +267,14 @@ import { TranslocoModule } from '@jsverse/transloco';
         margin: 0 0 12px;
         font-size: 1.5rem;
         font-weight: 700;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
       }
 
       .welcome-text {
         margin: 0 0 24px;
         font-size: 1rem;
         line-height: 1.6;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         max-width: 600px;
         margin-left: auto;
         margin-right: auto;
@@ -294,7 +287,10 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .applications-card {
-        border: 1px solid var(--mat-sys-outline-variant);
+        border: 1px solid var(--app-color-border);
+        border-radius: 12px;
+        background: var(--app-color-surface);
+        overflow: hidden;
       }
 
       .card-header {
@@ -302,7 +298,7 @@ import { TranslocoModule } from '@jsverse/transloco';
         justify-content: space-between;
         align-items: center;
         padding: 20px 24px;
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        border-bottom: 1px solid var(--app-color-border);
       }
 
       .header-title {
@@ -315,14 +311,10 @@ import { TranslocoModule } from '@jsverse/transloco';
         margin: 0;
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
       }
 
-      .card-header mat-chip {
-        color: var(--mat-sys-primary);
-      }
-
-      mat-card-content {
+      .card-content {
         padding: 24px;
       }
 
@@ -332,7 +324,7 @@ import { TranslocoModule } from '@jsverse/transloco';
         align-items: center;
         gap: 16px;
         padding: 48px 24px;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
       }
 
       .empty-state {
@@ -345,7 +337,7 @@ import { TranslocoModule } from '@jsverse/transloco';
       }
 
       .empty-icon {
-        color: var(--mat-sys-outline-variant);
+        color: var(--app-color-border-strong);
         opacity: 0.5;
       }
 
@@ -353,19 +345,20 @@ import { TranslocoModule } from '@jsverse/transloco';
         margin: 0;
         font-size: 1.125rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
       }
 
       .empty-state p {
         margin: 0 0 16px;
         font-size: 0.9375rem;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         max-width: 400px;
       }
 
       .pending-contract-card {
         background: linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%);
         border: 2px solid #16a34a;
+        border-radius: 12px;
       }
 
       .pending-contract-content {
@@ -423,13 +416,13 @@ import { TranslocoModule } from '@jsverse/transloco';
       .application-item {
         padding: 16px;
         border-radius: 12px;
-        border: 1px solid var(--mat-sys-outline-variant);
-        background: var(--mat-sys-surface-container-low);
+        border: 1px solid var(--app-color-border);
+        background: var(--app-color-surface-muted);
         transition: all 0.2s;
       }
 
       .application-item:hover {
-        border-color: var(--mat-sys-primary);
+        border-color: var(--app-color-primary);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
       }
 
@@ -445,39 +438,8 @@ import { TranslocoModule } from '@jsverse/transloco';
         margin: 0;
         font-size: 1rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         flex: 1;
-      }
-
-      .status-chip {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        height: 36px;
-        padding: 0 24px;
-        border-radius: 9999px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        letter-spacing: 0.0892857143em;
-        text-transform: uppercase;
-        white-space: nowrap;
-        border: none;
-        line-height: 1;
-      }
-
-      .status-chip.status-pendiente {
-        background: #1d4ed8;
-        color: #ffffff;
-      }
-
-      .status-chip.status-aprobada {
-        background: #10b981;
-        color: #ffffff;
-      }
-
-      .status-chip.status-rechazada {
-        background: #b91c1c;
-        color: #ffffff;
       }
 
       .application-details {
@@ -491,7 +453,7 @@ import { TranslocoModule } from '@jsverse/transloco';
         align-items: center;
         gap: 8px;
         font-size: 0.875rem;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
       }
 
       .detail-item.pending {
@@ -540,7 +502,7 @@ import { TranslocoModule } from '@jsverse/transloco';
     `,
   ],
 })
-export class HomePreContractComponent implements OnInit {
+export class HomePreContractComponent {
   readonly Home = Home;
   readonly Plus = Plus;
   readonly FileEdit = FileEdit;
@@ -551,7 +513,6 @@ export class HomePreContractComponent implements OnInit {
   readonly FileSignature = FileSignature;
   readonly ApplicationStatus = ApplicationStatus;
 
-  private router = inject(Router);
   private slugService = inject(SlugService);
   private authService = inject(TenantAuthService);
   private applicationService = inject(ApplicationService);
@@ -562,7 +523,7 @@ export class HomePreContractComponent implements OnInit {
   pendingContract = signal<Contract | null>(null);
   userName = computed(() => this.authService.currentUser()?.name || 'Usuario');
 
-  ngOnInit(): void {
+  constructor() {
     this.loadApplications();
     this.checkPendingContract();
   }
@@ -617,17 +578,14 @@ export class HomePreContractComponent implements OnInit {
     }
   }
 
-  getStatusColor(status: ApplicationStatus): string {
-    switch (status) {
-      case ApplicationStatus.PENDIENTE:
-        return 'warn';
-      case ApplicationStatus.APROBADA:
-        return '';
-      case ApplicationStatus.RECHAZADA:
-        return 'accent';
-      default:
-        return '';
-    }
+  getStatusTone(status: ApplicationStatus): AppStatusTone {
+    const tones: Partial<Record<ApplicationStatus, AppStatusTone>> = {
+      [ApplicationStatus.PENDIENTE]: 'warning',
+      [ApplicationStatus.APROBADA]: 'success',
+      [ApplicationStatus.RECHAZADA]: 'danger',
+    };
+
+    return tones[status] ?? 'neutral';
   }
 
   formatDate(dateString: string): string {

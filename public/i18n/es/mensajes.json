@@ -1,0 +1,23 @@
+{
+  "title": "Mensajes",
+  "subtitle": "Comunicación con inquilinos y propietarios",
+  "new": "Nuevo mensaje",
+  "broadcast": "Mensaje a todos",
+  "loading": "Cargando mensajes...",
+  "empty": "Sin conversaciones",
+  "selectThread": "Selecciona una conversación",
+  "typeMessage": "Escribe un mensaje...",
+  "send": "Enviar",
+  "sent": "Mensaje enviado",
+  "sendError": "No se pudo enviar el mensaje",
+  "newTitle": "Nuevo mensaje",
+  "recipient": "Destinatario",
+  "selectRecipient": "Seleccionar destinatario...",
+  "broadcastTitle": "Mensaje a todos los inquilinos",
+  "broadcastHint": "Este mensaje se enviará a todos los inquilinos y propietarios.",
+  "sendToAll": "Enviar a todos",
+  "broadcastSent": "Mensaje enviado a {{count}} destinatarios",
+  "tenantSubtitle": "Conversación con la administración",
+  "tenantEmpty": "Aún no hay mensajes. Escribe a la administración.",
+  "noAdmin": "No hay un administrador disponible para contactar."
+}

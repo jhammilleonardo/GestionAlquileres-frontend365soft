@@ -1,0 +1,18 @@
+<div class="toast-host" aria-live="polite" aria-atomic="true">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <section class="toast" [class]="'toast toast--' + toast.variant" role="status">
+      <lucide-icon class="toast__icon" [img]="iconFor(toast)" [size]="20" />
+
+      <p class="toast__message">{{ toast.message }}</p>
+
+      <button
+        class="toast__close"
+        type="button"
+        aria-label="Cerrar notificacion"
+        (click)="toastService.dismiss(toast.id)"
+      >
+        <lucide-icon [img]="X" [size]="16" />
+      </button>
+    </section>
+  }
+</div>

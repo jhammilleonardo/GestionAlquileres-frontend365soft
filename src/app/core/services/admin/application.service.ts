@@ -8,15 +8,16 @@ import {
   ApproveApplicationResponse,
   ChangeStatusDto,
   ApplicationFilters,
+  ApplicationStatus,
 } from '../../models/application.model';
-import { ApiHttpService } from '../api-http.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApplicationService {
-  private apiHttp = inject(ApiHttpService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
 
   // ==================== ADMIN ENDPOINTS ====================
@@ -26,13 +27,13 @@ export class ApplicationService {
    * GET /:slug/applications
    */
   getAllApplications(filters?: ApplicationFilters): Observable<ApplicationListItem[]> {
-    const params: any = {};
-    if (filters?.status) params.status = filters.status;
-    if (filters?.property_id) params.property_id = filters.property_id;
-    if (filters?.applicant_id) params.applicant_id = filters.applicant_id;
+    const params: Record<string, string | number> = {};
+    if (filters?.status) params['status'] = filters.status;
+    if (filters?.property_id) params['property_id'] = filters.property_id;
+    if (filters?.applicant_id) params['applicant_id'] = filters.applicant_id;
 
     const endpoint = this.slugService.buildApiEndpoint('applications');
-    return this.apiHttp.get<ApplicationListItem[]>(endpoint, params);
+    return this.apiClient.get<ApplicationListItem[]>(endpoint, { params });
   }
 
   /**
@@ -41,8 +42,7 @@ export class ApplicationService {
    */
   getApplicationById(id: number): Observable<Application> {
     const endpoint = this.slugService.buildApiEndpoint(`applications/${id}`);
-    console.log('[ApplicationService] Fetching application:', id, 'endpoint:', endpoint);
-    return this.apiHttp.get<Application>(endpoint);
+    return this.apiClient.get<Application>(endpoint);
   }
 
   /**
@@ -54,7 +54,7 @@ export class ApplicationService {
     data: ApproveApplicationDto,
   ): Observable<ApproveApplicationResponse> {
     const endpoint = this.slugService.buildApiEndpoint(`applications/${id}/approve`);
-    return this.apiHttp.patch<ApproveApplicationResponse>(endpoint, data);
+    return this.apiClient.patch<ApproveApplicationResponse>(endpoint, data);
   }
 
   /**
@@ -63,7 +63,7 @@ export class ApplicationService {
    */
   changeApplicationStatus(id: number, data: ChangeStatusDto): Observable<Application> {
     const endpoint = this.slugService.buildApiEndpoint(`applications/${id}/status`);
-    return this.apiHttp.patch<Application>(endpoint, data);
+    return this.apiClient.patch<Application>(endpoint, data);
   }
 
   /**
@@ -71,7 +71,7 @@ export class ApplicationService {
    */
   rejectApplication(id: number, feedback: string): Observable<Application> {
     return this.changeApplicationStatus(id, {
-      status: 'RECHAZADA' as any,
+      status: ApplicationStatus.RECHAZADA,
       admin_feedback: feedback,
     });
   }
@@ -84,7 +84,7 @@ export class ApplicationService {
    */
   createApplication(data: CreateApplicationDto): Observable<Application> {
     const endpoint = this.slugService.buildApiEndpoint('applications');
-    return this.apiHttp.post<Application>(endpoint, data);
+    return this.apiClient.post<Application>(endpoint, data);
   }
 
   /**
@@ -94,7 +94,7 @@ export class ApplicationService {
   getMyApplications(status?: string): Observable<ApplicationListItem[]> {
     const params = status ? { status } : {};
     const endpoint = this.slugService.buildApiEndpoint('applications/my-applications');
-    return this.apiHttp.get<ApplicationListItem[]>(endpoint, params);
+    return this.apiClient.get<ApplicationListItem[]>(endpoint, { params });
   }
 
   /**
@@ -103,7 +103,7 @@ export class ApplicationService {
    */
   getMyApplicationById(id: number): Observable<Application> {
     const endpoint = this.slugService.buildApiEndpoint(`applications/${id}`);
-    return this.apiHttp.get<Application>(endpoint);
+    return this.apiClient.get<Application>(endpoint);
   }
 
   // ==================== HELPER METHODS ====================

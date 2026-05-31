@@ -1,14 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Location } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import {
   LucideAngularModule,
   Building2,
@@ -28,25 +21,23 @@ import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TenantAuthService } from '../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../core/services/slug.service';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { AppCheckboxComponent } from '../../shared/ui/checkbox/checkbox.component';
+import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
-    FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
-    MatCheckboxModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppCheckboxComponent,
+    AppTextFieldComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="login-page">
       <!-- Left Side - Branding -->
@@ -125,76 +116,70 @@ import { SlugService } from '../../core/services/slug.service';
           }
 
           <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'auth.email' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
-              <input
-                matInput
-                type="email"
+            <div class="field-block">
+              <app-text-field
                 formControlName="email"
-                placeholder="admin@empresa.com"
+                type="email"
                 autocomplete="email"
+                label="{{ 'auth.email' | transloco }}"
+                placeholder="admin@empresa.com"
               />
               @if (
                 loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched
               ) {
-                <mat-error>{{ 'auth.emailRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'auth.emailRequired' | transloco }}</p>
               }
               @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
-                <mat-error>{{ 'auth.emailInvalid' | transloco }}</mat-error>
+                <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'auth.password' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-              <input
-                matInput
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="password"
-                placeholder="••••••••"
-                autocomplete="current-password"
-              />
-              <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                (click)="togglePassword()"
-                tabindex="-1"
-              >
-                <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
-              </button>
+            <div class="field-block">
+              <div class="password-wrapper">
+                <app-text-field
+                  formControlName="password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  label="{{ 'auth.password' | transloco }}"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  (click)="togglePassword()"
+                  tabindex="-1"
+                  [attr.aria-label]="'auth.password' | transloco"
+                >
+                  <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
+                </button>
+              </div>
               @if (
                 loginForm.get('password')?.hasError('required') &&
                 loginForm.get('password')?.touched
               ) {
-                <mat-error>{{ 'auth.passwordRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'auth.passwordRequired' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
             <div class="form-options">
-              <mat-checkbox formControlName="rememberMe" color="primary">
-                {{ 'auth.rememberMe' | transloco }}
-              </mat-checkbox>
+              <app-checkbox
+                formControlName="rememberMe"
+                label="{{ 'auth.rememberMe' | transloco }}"
+              />
               <a routerLink="/forgot-password" class="forgot-link">{{
                 'auth.forgotPassword' | transloco
               }}</a>
             </div>
 
-            <button
-              mat-raised-button
-              color="primary"
+            <app-button
               type="submit"
               class="submit-btn"
+              [fullWidth]="true"
+              [loading]="isLoading()"
               [disabled]="loginForm.invalid || isLoading()"
             >
-              @if (isLoading()) {
-                <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>{{ 'auth.loggingIn' | transloco }}</span>
-              } @else {
-                <span>{{ 'auth.login' | transloco }}</span>
-              }
-            </button>
+              {{ isLoading() ? ('auth.loggingIn' | transloco) : ('auth.login' | transloco) }}
+            </app-button>
           </form>
 
           <div class="form-footer">
@@ -425,23 +410,48 @@ import { SlugService } from '../../core/services/slug.service';
       .login-form {
         display: flex;
         flex-direction: column;
+        gap: 16px;
       }
 
-      .custom-field {
-        width: 100%;
-        margin-bottom: 16px;
+      .field-block {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field-error {
+        color: #dc2626;
+        font-size: 0.8125rem;
+        margin: 0;
+      }
+
+      .password-wrapper {
+        position: relative;
+      }
+
+      .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        z-index: 2;
+      }
+      .password-toggle:hover {
+        color: #0f172a;
       }
 
       .form-options {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 24px;
-      }
-
-      .form-options ::ng-deep .mat-mdc-checkbox {
-        font-size: 0.875rem;
-        color: #475569;
+        margin-bottom: 8px;
       }
 
       .forgot-link {
@@ -457,22 +467,7 @@ import { SlugService } from '../../core/services/slug.service';
       }
 
       .submit-btn {
-        width: 100%;
-        height: 52px;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        text-transform: none;
-        letter-spacing: 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-      }
-
-      .submit-btn:not(:disabled):hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-top: 8px;
       }
 
       .form-footer {
@@ -637,18 +632,20 @@ export class LoginComponent {
       const userJson = localStorage.getItem('admin_user');
       if (userJson) {
         try {
-          const user = JSON.parse(userJson);
+          const user = JSON.parse(userJson) as { tenant_slug?: string };
           const userSlug = user.tenant_slug;
           if (userSlug) {
             // Usar replaceUrl para que el login no quede en el historial
-            this.router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true }).then(() => {
-              // Limpiar el estado para asegurar que no haya query params en el historial
-              this.location.replaceState(`/${userSlug}/dashboard`);
-            });
+            void this.router
+              .navigate(['/', userSlug, 'dashboard'], { replaceUrl: true })
+              .then(() => {
+                // Limpiar el estado para asegurar que no haya query params en el historial
+                this.location.replaceState(`/${userSlug}/dashboard`);
+              });
             return;
           }
-        } catch (e) {
-          console.error('Error parsing user data', e);
+        } catch {
+          // Ignorar JSON inválido en storage
         }
       }
       // Fallback: try to get slug from SlugService (loaded from localStorage)
@@ -683,8 +680,7 @@ export class LoginComponent {
           this.isLoading.set(false);
           // TenantAuthService already handles navigation to /portal/dashboard
         },
-        error: (error) => {
-          console.error('Login error:', error);
+        error: (error: { error?: { message?: string } }) => {
           this.isLoading.set(false);
           this.errorMessage.set(
             error.error?.message || this.transloco.translate('auth.credentialsInvalid'),
@@ -717,8 +713,7 @@ export class LoginComponent {
             this.errorMessage.set(this.transloco.translate('auth.orgNotFound'));
           }
         },
-        error: (error) => {
-          console.error('Login error:', error);
+        error: (error: { error?: { message?: string } }) => {
           this.isLoading.set(false);
           this.errorMessage.set(
             error.error?.message || this.transloco.translate('auth.credentialsInvalid'),

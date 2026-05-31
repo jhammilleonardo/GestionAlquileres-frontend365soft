@@ -1,10 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
 import {
   LucideAngularModule,
   QrCode,
@@ -14,7 +10,6 @@ import {
   XCircle,
   AlertCircle,
   RefreshCw,
-  Banknote,
 } from 'lucide-angular';
 
 import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
@@ -23,7 +18,6 @@ import {
   QrPayment,
   QrPaymentStatus,
   QrPaymentStatusLabels,
-  QrPaymentStatusColors,
   PaymentTypeLabels,
   CurrencySymbols,
   Currency,
@@ -31,37 +25,42 @@ import {
 } from '../../../core/models/payment.model';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import {
+  AppButtonComponent,
+  AppEmptyStateComponent,
+  AppLoadingStateComponent,
+  AppPageHeaderComponent,
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../../shared/ui';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-qr-payments-list',
   standalone: true,
   imports: [
-    CommonModule,
+    DecimalPipe,
     RouterModule,
-    MatCardModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppPageHeaderComponent,
+    AppStatusBadgeComponent,
   ],
   template: `
     <div class="qrl-container">
-      <!-- Header -->
-      <div class="page-header">
-        <div class="header-left">
-          <lucide-icon [img]="QrCode" [size]="32" class="icon-primary"></lucide-icon>
-          <div>
-            <h1>{{ 'public.tenantPayments.qrTitle' | transloco }}</h1>
-            <p>{{ 'public.tenantPayments.qrSubtitle' | transloco }}</p>
-          </div>
-        </div>
-        <button mat-raised-button color="primary" [routerLink]="nuevoQrUrl()">
+      <app-page-header
+        [title]="'public.tenantPayments.qrTitle' | transloco"
+        [description]="'public.tenantPayments.qrSubtitle' | transloco"
+      >
+        <a actions class="primary-link-button" [routerLink]="nuevoQrUrl()">
           <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
           {{ 'public.tenantPayments.generateQr' | transloco }}
-        </button>
-      </div>
+        </a>
+      </app-page-header>
 
       <!-- Error -->
       @if (qrService.error()) {
@@ -73,43 +72,44 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 
       <!-- Loading -->
       @if (qrService.isLoading() && qrService.qrList().length === 0) {
-        <div class="loading-state">
-          <mat-spinner diameter="40"></mat-spinner>
-          <p>{{ 'public.tenantPayments.loadingQrHistory' | transloco }}</p>
+        <div class="state-card">
+          <app-loading-state [label]="'public.tenantPayments.loadingQrHistory' | transloco" />
         </div>
       }
 
       <!-- Empty -->
       @else if (!qrService.isLoading() && qrService.qrList().length === 0) {
-        <mat-card class="empty-card">
-          <lucide-icon [img]="QrCode" [size]="60" class="empty-icon"></lucide-icon>
-          <h2>{{ 'public.tenantPayments.noQrTitle' | transloco }}</h2>
-          <p>{{ 'public.tenantPayments.noQrDesc' | transloco }}</p>
-          <button mat-raised-button color="primary" [routerLink]="nuevoQrUrl()">
-            <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+        <app-empty-state
+          [title]="'public.tenantPayments.noQrTitle' | transloco"
+          [description]="'public.tenantPayments.noQrDesc' | transloco"
+        >
+          <lucide-icon icon [img]="QrCode" [size]="28"></lucide-icon>
+          <a actions class="primary-link-button" [routerLink]="nuevoQrUrl()">
+            <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
             {{ 'public.tenantPayments.generateFirstQr' | transloco }}
-          </button>
-        </mat-card>
+          </a>
+        </app-empty-state>
       }
 
       <!-- List -->
       @else {
-        <mat-card class="list-card">
+        <section class="list-card">
           <div class="list-header">
             <span class="list-count">{{
               'public.tenantPayments.qrRecordsCount'
                 | transloco: { count: qrService.qrList().length }
             }}</span>
-            <button
-              mat-icon-button
-              (click)="qrService.loadQrList()"
+            <app-button
+              appearance="outline"
+              size="s"
+              (clicked)="qrService.loadQrList()"
               [disabled]="qrService.isLoading()"
               [attr.aria-label]="'public.tenantPayments.reload' | transloco"
             >
               <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
-            </button>
+              {{ 'public.tenantPayments.reload' | transloco }}
+            </app-button>
           </div>
-          <mat-divider></mat-divider>
 
           <div class="qr-list">
             @for (qr of qrService.qrList(); track qr.id) {
@@ -158,35 +158,26 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
                 </div>
 
                 <!-- Status badge -->
-                <span
-                  class="status-badge"
-                  [style.background]="statusBg(qr.status)"
-                  [style.color]="statusColor(qr.status)"
-                >
-                  {{ statusLabel(qr.status) }}
-                </span>
+                <app-status-badge [label]="statusLabel(qr.status)" [tone]="statusTone(qr.status)" />
 
                 <!-- Acción cancelar si pendiente -->
                 @if (qr.status === QrStatus.PENDIENTE) {
-                  <button
-                    mat-icon-button
-                    color="warn"
-                    (click)="onCancel(qr)"
+                  <app-button
+                    appearance="destructive"
+                    size="s"
+                    (clicked)="onCancel(qr)"
                     [disabled]="cancellingId() === qr.id"
+                    [loading]="cancellingId() === qr.id"
                     [attr.aria-label]="'public.tenantPayments.cancelQr' | transloco"
                   >
-                    @if (cancellingId() === qr.id) {
-                      <mat-spinner diameter="16"></mat-spinner>
-                    } @else {
-                      <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
-                    }
-                  </button>
+                    <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
+                    {{ 'public.tenantPayments.cancelQr' | transloco }}
+                  </app-button>
                 }
               </div>
-              <mat-divider></mat-divider>
             }
           </div>
-        </mat-card>
+        </section>
       }
     </div>
   `,
@@ -197,33 +188,8 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
         margin: 0 auto;
       }
 
-      /* Header */
-      .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-        gap: 16px;
-      }
-      .header-left {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-      }
       .icon-primary {
-        color: var(--mat-sys-primary, #1976d2);
-      }
-      .header-left h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
-      .header-left p {
-        color: #64748b;
-        margin: 0;
-        font-size: 0.875rem;
+        color: var(--app-color-primary);
       }
 
       /* Alert */
@@ -231,53 +197,41 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
         display: flex;
         align-items: center;
         gap: 10px;
-        background: #fee2e2;
-        color: #dc2626;
+        background: var(--app-color-danger-soft);
+        color: var(--app-color-danger);
         padding: 14px 18px;
-        border-radius: 8px;
+        border-radius: var(--app-radius-md);
         margin-bottom: 20px;
       }
 
-      /* States */
-      .loading-state {
+      .state-card {
         display: flex;
-        flex-direction: column;
-        align-items: center;
+        justify-content: center;
         padding: 60px;
-        color: #64748b;
-        gap: 16px;
-      }
-      .empty-card {
-        padding: 56px 32px;
-        text-align: center;
-      }
-      .empty-icon {
-        color: #cbd5e1;
-        margin-bottom: 16px;
-      }
-      .empty-card h2 {
-        color: #1e293b;
-        margin: 0 0 8px;
-      }
-      .empty-card p {
-        color: #64748b;
-        margin: 0 0 24px;
+        border: 1px solid var(--app-color-border);
+        border-radius: var(--app-radius-lg);
+        background: var(--app-color-surface);
       }
 
       /* List */
       .list-card {
         padding: 0;
         overflow: hidden;
+        border: 1px solid var(--app-color-border);
+        border-radius: var(--app-radius-lg);
+        background: var(--app-color-surface);
+        box-shadow: var(--app-shadow-sm);
       }
       .list-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         padding: 12px 20px;
+        border-bottom: 1px solid var(--app-color-border);
       }
       .list-count {
         font-size: 0.8rem;
-        color: #94a3b8;
+        color: var(--app-color-text-muted);
         font-weight: 600;
       }
 
@@ -291,10 +245,14 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
         align-items: center;
         gap: 16px;
         padding: 16px 20px;
+        border-bottom: 1px solid var(--app-color-border);
         transition: background 0.1s;
       }
       .qr-row:hover {
-        background: #f8fafc;
+        background: var(--app-color-primary-soft);
+      }
+      .qr-row:last-child {
+        border-bottom: 0;
       }
 
       .qr-icon {
@@ -317,16 +275,16 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
       .qr-type {
         font-weight: 600;
         font-size: 0.9rem;
-        color: #1e293b;
+        color: var(--app-color-text);
       }
       .qr-date {
         font-size: 0.78rem;
-        color: #94a3b8;
+        color: var(--app-color-text-muted);
       }
       .qr-tx {
         font-family: monospace;
         font-size: 0.75rem;
-        color: #64748b;
+        color: var(--app-color-text-muted);
       }
 
       .qr-amount {
@@ -338,18 +296,28 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
       .amount-value {
         font-weight: 700;
         font-size: 0.95rem;
-        color: #1e293b;
+        color: var(--app-color-text);
       }
       .amount-currency {
         font-size: 0.72rem;
-        color: #94a3b8;
+        color: var(--app-color-text-muted);
       }
 
-      .status-badge {
-        padding: 4px 12px;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 600;
+      .primary-link-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 40px;
+        padding-inline: 16px;
+        border-radius: var(--app-radius-md);
+        background: var(--app-color-primary);
+        color: #fff;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      app-status-badge {
         flex-shrink: 0;
       }
 
@@ -370,14 +338,14 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
           min-width: 100%;
           order: 2;
         }
-        .status-badge {
+        app-status-badge {
           order: 3;
         }
       }
     `,
   ],
 })
-export class TenantQrPaymentsListComponent implements OnInit {
+export class TenantQrPaymentsListComponent {
   // ── Icons ─────────────────────────────────────────────────────────
   readonly QrCode = QrCode;
   readonly Plus = Plus;
@@ -386,7 +354,6 @@ export class TenantQrPaymentsListComponent implements OnInit {
   readonly XCircle = XCircle;
   readonly AlertCircle = AlertCircle;
   readonly RefreshCw = RefreshCw;
-  readonly Banknote = Banknote;
 
   // ── Services ──────────────────────────────────────────────────────
   qrService = inject(TenantQrPaymentService);
@@ -401,17 +368,13 @@ export class TenantQrPaymentsListComponent implements OnInit {
   nuevoQrUrl = () => this.slugService.buildUrl('/portal/pagos/qr/nuevo');
 
   // ── Lifecycle ─────────────────────────────────────────────────────
-  ngOnInit(): void {
+  constructor() {
     this.qrService.loadQrList();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────
   statusLabel(s: QrPaymentStatus): string {
     return QrPaymentStatusLabels[s] ?? s;
-  }
-
-  statusColor(s: QrPaymentStatus): string {
-    return QrPaymentStatusColors[s] ?? '#475569';
   }
 
   statusBg(s: QrPaymentStatus): string {
@@ -422,6 +385,16 @@ export class TenantQrPaymentsListComponent implements OnInit {
       [QrPaymentStatus.CANCELADO]: '#fee2e2',
     };
     return alpha[s] ?? '#f1f5f9';
+  }
+
+  statusTone(s: QrPaymentStatus): AppStatusTone {
+    const tones: Record<QrPaymentStatus, AppStatusTone> = {
+      [QrPaymentStatus.PENDIENTE]: 'warning',
+      [QrPaymentStatus.PAGADO]: 'success',
+      [QrPaymentStatus.EXPIRADO]: 'neutral',
+      [QrPaymentStatus.CANCELADO]: 'danger',
+    };
+    return tones[s] ?? 'neutral';
   }
 
   typeLabel(t: PaymentType): string {

@@ -1,0 +1,33 @@
+{
+  "title": "Audit",
+  "subtitle": "System action log",
+  "readonly": "Read-only",
+  "actionLabel": "Action",
+  "allActions": "All actions",
+  "entity": "Entity",
+  "user": "User",
+  "from": "From",
+  "to": "To",
+  "date": "Date",
+  "loading": "Loading records...",
+  "empty": "No audit records",
+  "loadError": "Could not load records",
+  "loadMore": "Load more",
+  "viewDetail": "View detail",
+  "detailTitle": "Record detail",
+  "field": "Field",
+  "before": "Before",
+  "after": "After",
+  "noChanges": "No value changes recorded",
+  "action": {
+    "created": "Created",
+    "updated": "Updated",
+    "deleted": "Deleted",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "status_changed": "Status changed",
+    "signed": "Signed",
+    "renewed": "Renewed",
+    "permissions_updated": "Permissions updated"
+  }
+}

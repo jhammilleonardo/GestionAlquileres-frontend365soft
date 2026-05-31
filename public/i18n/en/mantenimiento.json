@@ -72,5 +72,16 @@
     "ILUMINACION": "Lighting",
     "AFUERA": "Outdoor Areas",
     "PLOMERIA": "Plumbing"
-  }
+  },
+  "assignVendor": "External vendor",
+  "selectVendor": "Select vendor...",
+  "externalVendor": "External vendor",
+  "vendorAssigned": "Order assigned to {{name}}",
+  "rateVendorTitle": "Rate the vendor",
+  "rateVendorIntro": "How would you rate {{name}}’s work?",
+  "rating": "Rating",
+  "ratingRequired": "Select at least one star",
+  "ratingSaved": "Rating saved",
+  "ratingError": "Could not save the rating",
+  "ratingCommentPlaceholder": "Comment about the work (optional)"
 }

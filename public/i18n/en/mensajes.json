@@ -1,0 +1,23 @@
+{
+  "title": "Messages",
+  "subtitle": "Communication with tenants and owners",
+  "new": "New message",
+  "broadcast": "Message all",
+  "loading": "Loading messages...",
+  "empty": "No conversations",
+  "selectThread": "Select a conversation",
+  "typeMessage": "Type a message...",
+  "send": "Send",
+  "sent": "Message sent",
+  "sendError": "Could not send the message",
+  "newTitle": "New message",
+  "recipient": "Recipient",
+  "selectRecipient": "Select recipient...",
+  "broadcastTitle": "Message all tenants",
+  "broadcastHint": "This message will be sent to all tenants and owners.",
+  "sendToAll": "Send to all",
+  "broadcastSent": "Message sent to {{count}} recipients",
+  "tenantSubtitle": "Conversation with management",
+  "tenantEmpty": "No messages yet. Write to management.",
+  "noAdmin": "No administrator available to contact."
+}

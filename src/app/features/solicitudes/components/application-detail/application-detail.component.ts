@@ -1,137 +1,114 @@
-import { Component, inject, OnInit, ChangeDetectorRef } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { NgClass, TitleCasePipe } from '@angular/common';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
 import {
-  LucideAngularModule,
-  ArrowLeft,
-  User,
-  Briefcase,
-  Home,
-  Phone,
-  CheckCircle2,
-  XCircle,
   AlertCircle,
-  FileText,
+  ArrowLeft,
+  Briefcase,
   Calendar,
-  MessageSquare,
-  Zap,
+  CheckCircle2,
+  FileText,
+  Home,
+  LucideAngularModule,
   Mail,
+  MessageSquare,
+  Phone,
+  User,
+  XCircle,
+  Zap,
 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
-import { ApplicationService } from '../../../../core/services/admin/application.service';
+
 import { Application, ApplicationStatus } from '../../../../core/models/application.model';
-import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
+import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
+import {
+  AppButtonComponent,
+  AppEmptyStateComponent,
+  AppLoadingStateComponent,
+  AppStatusBadgeComponent,
+  AppStatusTone,
+} from '../../../../shared/ui';
+import { ApplicationDetailFacade } from './application-detail.facade';
 
 @Component({
   selector: 'app-application-detail',
   standalone: true,
   imports: [
-    CommonModule,
+    TitleCasePipe,
+    NgClass,
     RouterModule,
-    MatCardModule,
-    MatButtonModule,
-    MatChipsModule,
-    MatProgressSpinnerModule,
-    MatTooltipModule,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
     TenantCurrencyPipe,
+    AppButtonComponent,
+    AppEmptyStateComponent,
+    AppLoadingStateComponent,
+    AppStatusBadgeComponent,
   ],
-  providers: [provideTranslocoScope('solicitudes')],
+  providers: [provideTranslocoScope('solicitudes'), ApplicationDetailFacade],
   templateUrl: './application-detail.component.html',
   styleUrls: ['./application-detail.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApplicationDetailComponent implements OnInit {
-  // Icons
-  readonly ArrowLeft = ArrowLeft;
-  readonly User = User;
-  readonly Briefcase = Briefcase;
-  readonly Home = Home;
-  readonly Phone = Phone;
-  readonly CheckCircle2 = CheckCircle2;
-  readonly XCircle = XCircle;
-  readonly AlertCircle = AlertCircle;
-  readonly FileText = FileText;
-  readonly Calendar = Calendar;
-  readonly MessageSquare = MessageSquare;
-  readonly Zap = Zap;
-  readonly Mail = Mail;
+export class ApplicationDetailComponent {
+  protected readonly facade = inject(ApplicationDetailFacade);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  private applicationService = inject(ApplicationService);
-  private cdr = inject(ChangeDetectorRef);
+  protected readonly AlertCircle = AlertCircle;
+  protected readonly ArrowLeft = ArrowLeft;
+  protected readonly Briefcase = Briefcase;
+  protected readonly Calendar = Calendar;
+  protected readonly CheckCircle2 = CheckCircle2;
+  protected readonly FileText = FileText;
+  protected readonly Home = Home;
+  protected readonly Mail = Mail;
+  protected readonly MessageSquare = MessageSquare;
+  protected readonly Phone = Phone;
+  protected readonly User = User;
+  protected readonly XCircle = XCircle;
+  protected readonly Zap = Zap;
 
-  loading = true;
-  error: string | null = null;
-  application: Application | null = null;
+  protected readonly applicationId = computed(() => this.facade.application()?.id ?? null);
 
-  ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      const id = Number(params.get('id'));
-      if (!id) {
-        this.error = 'ID de solicitud no válido';
-        this.loading = false;
-        this.cdr.markForCheck();
-        return;
-      }
-
-      this.applicationService.getApplicationById(id).subscribe({
-        next: (data) => {
-          this.application = data;
-          this.loading = false;
-          this.error = null;
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          this.loading = false;
-          this.error = err.error?.message || err.message || 'Error al cargar la solicitud';
-          this.cdr.markForCheck();
-        },
-      });
+  constructor() {
+    this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      this.facade.load(Number(params.get('id')));
     });
   }
 
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'PENDIENTE':
-        return '#f59e0b';
-      case 'APROBADA':
-        return '#10b981';
-      case 'RECHAZADA':
-        return '#ef4444';
-      default:
-        return '#64748b';
-    }
+  protected getStatusTone(status: ApplicationStatus): AppStatusTone {
+    const toneByStatus: Record<ApplicationStatus, AppStatusTone> = {
+      [ApplicationStatus.PENDIENTE]: 'warning',
+      [ApplicationStatus.APROBADA]: 'success',
+      [ApplicationStatus.RECHAZADA]: 'danger',
+    };
+
+    return toneByStatus[status];
   }
 
-  canBeApproved(status: ApplicationStatus): boolean {
-    return status === ApplicationStatus.PENDIENTE;
+  protected canBeApproved(status: ApplicationStatus): boolean {
+    return this.facade.canBeApproved(status);
   }
 
-  canBeRejected(status: ApplicationStatus): boolean {
-    return status === ApplicationStatus.PENDIENTE;
+  protected canBeRejected(status: ApplicationStatus): boolean {
+    return this.facade.canBeRejected(status);
   }
 
-  createContract(app: Application): void {
-    this.router.navigate(['../../contratos/nuevo'], {
+  protected createContract(application: Application): void {
+    void this.router.navigate(['../../contratos/nuevo'], {
       relativeTo: this.route,
       queryParams: {
-        tenant_id: app.applicant_id,
-        property_id: app.property_id,
+        tenant_id: application.applicant_id,
+        property_id: application.property_id,
       },
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['../'], { relativeTo: this.route });
+  protected goBack(): void {
+    void this.router.navigate(['../'], { relativeTo: this.route });
   }
 }

@@ -24,7 +24,8 @@
         <h1>{{ 'tecnico.myOrders' | transloco }}</h1>
       </div>
       <button
-        mat-icon-button
+        type="button"
+        class="refresh-button"
         (click)="refresh()"
         [attr.aria-label]="'tecnico.refresh' | transloco"
         [disabled]="isLoading()"
@@ -81,8 +82,7 @@
     <main class="request-list">
       @if (isLoading()) {
         <div class="loading-center">
-          <mat-spinner diameter="40" />
-          <p>{{ 'tecnico.loading' | transloco }}</p>
+          <app-loading-state [label]="'tecnico.loading' | transloco" />
         </div>
       } @else if (filteredRequests().length === 0) {
         <div class="empty-state">

@@ -1,27 +1,17 @@
-import { Component, OnInit, inject, DestroyRef, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
-  FormBuilder,
-  FormGroup,
-  Validators,
-  ReactiveFormsModule,
-  FormsModule,
-} from '@angular/forms';
+  Component,
+  inject,
+  DestroyRef,
+  signal,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
 import {
   LucideAngularModule,
   Home,
-  User,
-  Mail,
-  Lock,
-  Phone,
   Eye,
   EyeOff,
   AlertCircle,
@@ -36,6 +26,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SlugService } from '../../../core/services/slug.service';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 
 interface RegisterResponse {
   access_token?: string;
@@ -49,21 +41,16 @@ interface RegisterResponse {
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-register',
   standalone: true,
   imports: [
-    CommonModule,
     RouterModule,
-    FormsModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressSpinnerModule,
-    MatIconModule,
     LucideAngularModule,
     TranslocoModule,
+    AppButtonComponent,
+    AppTextFieldComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
@@ -148,138 +135,135 @@ interface RegisterResponse {
           }
 
           <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantRegister.nameLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="User" [size]="20"></lucide-icon>
-              <input
-                matInput
+            <div class="field-block">
+              <app-text-field
                 formControlName="name"
-                [placeholder]="'public.tenantRegister.namePlaceholder' | transloco"
                 autocomplete="name"
+                label="{{ 'public.tenantRegister.nameLabel' | transloco }}"
+                placeholder="{{ 'public.tenantRegister.namePlaceholder' | transloco }}"
               />
               @if (
                 registerForm.get('name')?.hasError('required') && registerForm.get('name')?.touched
               ) {
-                <mat-error>{{ 'public.tenantRegister.nameRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantRegister.nameRequired' | transloco }}</p>
               }
               @if (registerForm.get('name')?.hasError('minlength')) {
-                <mat-error>{{ 'public.tenantRegister.nameMin' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantRegister.nameMin' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantRegister.emailLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Mail" [size]="20"></lucide-icon>
-              <input
-                matInput
-                type="email"
+            <div class="field-block">
+              <app-text-field
                 formControlName="email"
-                [placeholder]="'public.tenantRegister.emailPlaceholder' | transloco"
+                type="email"
                 autocomplete="email"
+                label="{{ 'public.tenantRegister.emailLabel' | transloco }}"
+                placeholder="{{ 'public.tenantRegister.emailPlaceholder' | transloco }}"
               />
               @if (
                 registerForm.get('email')?.hasError('required') &&
                 registerForm.get('email')?.touched
               ) {
-                <mat-error>{{ 'public.tenantRegister.emailRequired' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantRegister.emailRequired' | transloco }}</p>
               }
               @if (registerForm.get('email')?.hasError('email')) {
-                <mat-error>{{ 'public.tenantRegister.emailInvalid' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantRegister.emailInvalid' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantRegister.phoneLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Phone" [size]="20"></lucide-icon>
-              <input
-                matInput
-                type="tel"
+            <div class="field-block">
+              <app-text-field
                 formControlName="phone"
-                [placeholder]="'public.tenantRegister.phonePlaceholder' | transloco"
+                type="tel"
                 autocomplete="tel"
+                label="{{ 'public.tenantRegister.phoneLabel' | transloco }}"
+                placeholder="{{ 'public.tenantRegister.phonePlaceholder' | transloco }}"
               />
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantRegister.passwordLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-              <input
-                matInput
-                [type]="showPassword() ? 'text' : 'password'"
-                formControlName="password"
-                [placeholder]="'public.tenantRegister.passwordPlaceholder' | transloco"
-                autocomplete="new-password"
-              />
-              <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                (click)="togglePassword()"
-                tabindex="-1"
-              >
-                <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
-              </button>
-              <mat-hint>{{ 'public.tenantRegister.passwordMin' | transloco }}</mat-hint>
+            <div class="field-block">
+              <div class="password-wrapper">
+                <app-text-field
+                  formControlName="password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  label="{{ 'public.tenantRegister.passwordLabel' | transloco }}"
+                  placeholder="{{ 'public.tenantRegister.passwordPlaceholder' | transloco }}"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  (click)="togglePassword()"
+                  tabindex="-1"
+                  [attr.aria-label]="'public.tenantRegister.passwordLabel' | transloco"
+                >
+                  <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
+                </button>
+              </div>
+              <p class="field-hint">{{ 'public.tenantRegister.passwordMin' | transloco }}</p>
               @if (
                 registerForm.get('password')?.hasError('required') &&
                 registerForm.get('password')?.touched
               ) {
-                <mat-error>{{ 'public.tenantRegister.passwordRequired' | transloco }}</mat-error>
+                <p class="field-error">
+                  {{ 'public.tenantRegister.passwordRequired' | transloco }}
+                </p>
               }
               @if (registerForm.get('password')?.hasError('minlength')) {
-                <mat-error>{{ 'public.tenantRegister.passwordMin' | transloco }}</mat-error>
+                <p class="field-error">{{ 'public.tenantRegister.passwordMin' | transloco }}</p>
               }
-            </mat-form-field>
+            </div>
 
-            <mat-form-field appearance="outline" class="custom-field">
-              <mat-label>{{ 'public.tenantRegister.confirmPasswordLabel' | transloco }}</mat-label>
-              <lucide-icon matIconPrefix [img]="Lock" [size]="20"></lucide-icon>
-              <input
-                matInput
-                [type]="showConfirmPassword() ? 'text' : 'password'"
-                formControlName="confirmPassword"
-                [placeholder]="'public.tenantRegister.passwordPlaceholder' | transloco"
-                autocomplete="new-password"
-              />
-              <button
-                mat-icon-button
-                matSuffix
-                type="button"
-                (click)="toggleConfirmPassword()"
-                tabindex="-1"
-              >
-                <lucide-icon [img]="showConfirmPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
-              </button>
+            <div class="field-block">
+              <div class="password-wrapper">
+                <app-text-field
+                  formControlName="confirmPassword"
+                  [type]="showConfirmPassword() ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  label="{{ 'public.tenantRegister.confirmPasswordLabel' | transloco }}"
+                  placeholder="{{ 'public.tenantRegister.passwordPlaceholder' | transloco }}"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  (click)="toggleConfirmPassword()"
+                  tabindex="-1"
+                  [attr.aria-label]="'public.tenantRegister.confirmPasswordLabel' | transloco"
+                >
+                  <lucide-icon [img]="showConfirmPassword() ? EyeOff : Eye" [size]="18" />
+                </button>
+              </div>
               @if (
                 registerForm.get('confirmPassword')?.hasError('required') &&
                 registerForm.get('confirmPassword')?.touched
               ) {
-                <mat-error>{{
-                  'public.tenantRegister.confirmPasswordRequired' | transloco
-                }}</mat-error>
+                <p class="field-error">
+                  {{ 'public.tenantRegister.confirmPasswordRequired' | transloco }}
+                </p>
               }
               @if (
                 registerForm.hasError('passwordMismatch') &&
                 registerForm.get('confirmPassword')?.touched
               ) {
-                <mat-error>{{ 'public.tenantRegister.passwordMismatch' | transloco }}</mat-error>
+                <p class="field-error">
+                  {{ 'public.tenantRegister.passwordMismatch' | transloco }}
+                </p>
               }
-            </mat-form-field>
+            </div>
 
-            <button
-              mat-raised-button
-              color="primary"
+            <app-button
               type="submit"
               class="submit-btn"
+              [fullWidth]="true"
+              [loading]="isLoading()"
               [disabled]="registerForm.invalid || isLoading()"
             >
-              @if (isLoading()) {
-                <mat-spinner diameter="20" color="accent"></mat-spinner>
-                <span>{{ 'public.tenantRegister.submittingBtn' | transloco }}</span>
-              } @else {
-                <span>{{ 'public.tenantRegister.submitBtn' | transloco }}</span>
-              }
-            </button>
+              {{
+                isLoading()
+                  ? ('public.tenantRegister.submittingBtn' | transloco)
+                  : ('public.tenantRegister.submitBtn' | transloco)
+              }}
+            </app-button>
           </form>
 
           <div class="form-footer">
@@ -540,31 +524,51 @@ interface RegisterResponse {
       .register-form {
         display: flex;
         flex-direction: column;
+        gap: 16px;
       }
 
-      .custom-field {
-        width: 100%;
-        margin-bottom: 16px;
+      .field-block {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field-error {
+        color: #dc2626;
+        font-size: 0.8125rem;
+        margin: 0;
+      }
+
+      .field-hint {
+        color: #64748b;
+        font-size: 0.75rem;
+        margin: 0;
+      }
+
+      .password-wrapper {
+        position: relative;
+      }
+
+      .password-toggle {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        z-index: 2;
+      }
+      .password-toggle:hover {
+        color: #0f172a;
       }
 
       .submit-btn {
-        width: 100%;
-        height: 52px;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 8px;
-        text-transform: none;
-        letter-spacing: 0;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
         margin-top: 8px;
-      }
-
-      .submit-btn:not(:disabled):hover {
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       .form-footer {
@@ -657,10 +661,6 @@ interface RegisterResponse {
 })
 export class TenantRegisterComponent implements OnInit {
   readonly Home = Home;
-  readonly User = User;
-  readonly Mail = Mail;
-  readonly Lock = Lock;
-  readonly Phone = Phone;
   readonly Eye = Eye;
   readonly EyeOff = EyeOff;
   readonly AlertCircle = AlertCircle;

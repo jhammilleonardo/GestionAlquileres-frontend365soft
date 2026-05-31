@@ -1,6 +1,4 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatButtonModule } from '@angular/material/button';
 import {
   LucideAngularModule,
   Wrench,
@@ -19,6 +17,7 @@ import {
   MaintenanceStatus,
 } from '../../../core/models/maintenance-request.model';
 import { OrderDetailComponent } from './components/order-detail/order-detail.component';
+import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 
 type FilterTab =
   | 'all'
@@ -31,13 +30,7 @@ type FilterTab =
   standalone: true,
   providers: [provideTranslocoScope('tecnico')],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    MatProgressSpinnerModule,
-    MatButtonModule,
-    LucideAngularModule,
-    OrderDetailComponent,
-    TranslocoModule,
-  ],
+  imports: [AppLoadingStateComponent, LucideAngularModule, OrderDetailComponent, TranslocoModule],
   templateUrl: './tecnico-mantenimiento.component.html',
   styleUrl: './tecnico-mantenimiento.component.scss',
 })

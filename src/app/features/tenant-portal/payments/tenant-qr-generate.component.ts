@@ -1,67 +1,66 @@
-import { Component, inject, signal, OnInit, OnDestroy, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { MatCardModule } from '@angular/material/card';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
 import {
-  LucideAngularModule,
-  ArrowLeft,
-  QrCode,
-  CheckCircle2,
   AlertCircle,
+  ArrowLeft,
+  Banknote,
+  CheckCircle2,
+  Clock,
+  Download,
+  Info,
+  LucideAngularModule,
+  QrCode,
   RefreshCw,
   XCircle,
-  Clock,
-  Banknote,
-  Info,
-  Download,
 } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
 
 import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { TenantContractService } from '../../../core/services/tenant/tenant-contract.service';
 import {
-  QrPayment,
-  QrPaymentStatus,
-  PaymentType,
-  PaymentTypeLabels,
   Currency,
   CurrencyLabels,
   CurrencySymbols,
+  PaymentType,
+  PaymentTypeLabels,
+  QrPayment,
+  QrPaymentStatus,
 } from '../../../core/models/payment.model';
-import { TranslocoModule } from '@jsverse/transloco';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
+import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
+import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 
 @Component({
   selector: 'app-tenant-qr-generate',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatProgressSpinnerModule,
-    MatDividerModule,
+    DecimalPipe,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
+    AppButtonComponent,
+    AppSelectComponent,
+    AppTextFieldComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="qr-container">
       <!-- Header -->
       <div class="page-header">
-        <button mat-icon-button (click)="goBack()" class="back-btn">
-          <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
+        <button type="button" class="back-btn" (click)="goBack()" aria-label="Volver">
+          <lucide-icon [img]="ArrowLeft" [size]="24" />
         </button>
         <div>
           <h1>{{ 'public.tenantQrGenerate.qrPayTitle' | transloco }}</h1>
@@ -69,28 +68,24 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
         </div>
       </div>
 
-      <!-- Error global -->
       @if (qrService.error()) {
-        <div class="alert alert-error">
-          <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
+        <div class="alert alert-error" role="alert">
+          <lucide-icon [img]="AlertCircle" [size]="18" />
           <span>{{ qrService.error() }}</span>
         </div>
       }
 
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <!-- PASO 1 — Formulario (sin QR activo)                        -->
-      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- PASO 1: Formulario -->
       @if (!qrService.activeQr()) {
-        <mat-card class="form-card">
+        <div class="form-card">
           <div class="card-header">
-            <lucide-icon [img]="QrCode" [size]="24" class="icon-primary"></lucide-icon>
+            <lucide-icon [img]="QrCode" [size]="24" class="icon-primary" />
             <h2>{{ 'public.tenantQrGenerate.paymentDataTitle' | transloco }}</h2>
           </div>
-          <mat-divider></mat-divider>
+          <hr class="divider" />
 
-          <!-- Info sobre MC4/SIP -->
           <div class="info-banner">
-            <lucide-icon [img]="Info" [size]="16"></lucide-icon>
+            <lucide-icon [img]="Info" [size]="16" />
             <span>
               {{ 'public.tenantQrGenerate.qrCompatibilityInfoBefore' | transloco }}
               <strong>MC4 / SIP Bolivia</strong>.
@@ -99,90 +94,66 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
           </div>
 
           <form [formGroup]="form" (ngSubmit)="onGenerate()" class="qr-form">
-            <!-- Monto + Moneda -->
             <div class="form-row">
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'public.tenantQrGenerate.amountFieldLabel' | transloco }}</mat-label>
-                <span matTextPrefix>Bs&nbsp;</span>
-                <input
-                  matInput
-                  type="number"
+              <div class="field-group">
+                <app-text-field
                   formControlName="amount"
+                  [label]="'public.tenantQrGenerate.amountFieldLabel' | transloco"
+                  type="number"
                   placeholder="0.00"
-                  step="0.01"
-                  min="0.01"
                 />
                 @if (form.get('amount')?.invalid && form.get('amount')?.touched) {
-                  <mat-error>{{
+                  <span class="field-error">{{
                     'public.tenantQrGenerate.invalidAmountError' | transloco
-                  }}</mat-error>
+                  }}</span>
                 }
-              </mat-form-field>
+              </div>
 
-              <mat-form-field appearance="outline">
-                <mat-label>{{
-                  'public.tenantQrGenerate.currencyFieldLabel' | transloco
-                }}</mat-label>
-                <mat-select formControlName="currency">
-                  @for (c of currencies; track c.value) {
-                    <mat-option [value]="c.value"> {{ c.symbol }} — {{ c.label }} </mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
+              <app-select
+                formControlName="currency"
+                [label]="'public.tenantQrGenerate.currencyFieldLabel' | transloco"
+                [options]="currencyOptions"
+              />
             </div>
 
-            <!-- Tipo de pago -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>{{ 'public.tenantQrGenerate.paymentTypeLabel' | transloco }}</mat-label>
-              <mat-select formControlName="payment_type">
-                @for (t of paymentTypes; track t.value) {
-                  <mat-option [value]="t.value">{{ t.label }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
+            <app-select
+              formControlName="payment_type"
+              [label]="'public.tenantQrGenerate.paymentTypeLabel' | transloco"
+              [options]="paymentTypeOptions"
+            />
 
-            <!-- Nota opcional -->
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>{{ 'public.tenantQrGenerate.notesFieldLabel' | transloco }}</mat-label>
-              <input
-                matInput
-                formControlName="notes"
-                maxlength="200"
-                [placeholder]="'public.tenantQrGenerate.notesPlaceholder' | transloco"
-              />
-            </mat-form-field>
+            <app-text-field
+              formControlName="notes"
+              [label]="'public.tenantQrGenerate.notesFieldLabel' | transloco"
+              [placeholder]="'public.tenantQrGenerate.notesPlaceholder' | transloco"
+            />
 
             <div class="form-actions">
-              <button
+              <app-button
                 type="submit"
-                mat-raised-button
-                color="primary"
                 [disabled]="form.invalid || qrService.isLoading()"
+                [loading]="qrService.isLoading()"
               >
-                @if (qrService.isLoading()) {
-                  <mat-spinner diameter="20"></mat-spinner>
-                  {{ 'public.tenantQrGenerate.generatingQr' | transloco }}
-                } @else {
-                  <lucide-icon [img]="QrCode" [size]="20"></lucide-icon>
-                  {{ 'public.tenantQrGenerate.generateQr' | transloco }}
-                }
-              </button>
-              <button type="button" mat-stroked-button (click)="goBack()">
+                <lucide-icon [img]="QrCode" [size]="20" />
+                {{
+                  qrService.isLoading()
+                    ? ('public.tenantQrGenerate.generatingQr' | transloco)
+                    : ('public.tenantQrGenerate.generateQr' | transloco)
+                }}
+              </app-button>
+              <app-button type="button" appearance="secondary" (clicked)="goBack()">
                 {{ 'public.tenantQrGenerate.cancel' | transloco }}
-              </button>
+              </app-button>
             </div>
           </form>
-        </mat-card>
+        </div>
       }
 
-      <!-- ═══════════════════════════════════════════════════════════ -->
-      <!-- PASO 2 — QR generado: mostrar imagen + polling             -->
-      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- PASO 2: QR generado -->
       @if (qrService.activeQr(); as qr) {
-        <!-- ── PAGADO ── -->
         @if (qr.status === QrStatus.PAGADO) {
-          <mat-card class="result-card success">
-            <lucide-icon [img]="CheckCircle2" [size]="56" class="result-icon"></lucide-icon>
+          <div class="result-card success">
+            <lucide-icon [img]="CheckCircle2" [size]="56" class="result-icon" />
             <h2>{{ 'public.tenantQrGenerate.paymentConfirmedTitle' | transloco }}</h2>
             <p>
               {{ 'public.tenantQrGenerate.paymentProcessedDescBefore' | transloco }}
@@ -193,43 +164,40 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
               <span class="tx-id">TXN: {{ qr.transaction_id }}</span>
             }
             <div class="result-actions">
-              <button mat-raised-button color="primary" (click)="goBack()">
+              <app-button (clicked)="goBack()">
                 {{ 'public.tenantQrGenerate.backToPayments' | transloco }}
-              </button>
-              <button mat-stroked-button (click)="resetQr()">
+              </app-button>
+              <app-button appearance="secondary" (clicked)="resetQr()">
                 {{ 'public.tenantQrGenerate.generateAnotherQr' | transloco }}
-              </button>
+              </app-button>
             </div>
-          </mat-card>
+          </div>
         }
 
-        <!-- ── EXPIRADO ── -->
         @if (qr.status === QrStatus.EXPIRADO) {
-          <mat-card class="result-card expired">
-            <lucide-icon [img]="Clock" [size]="56" class="result-icon"></lucide-icon>
+          <div class="result-card expired">
+            <lucide-icon [img]="Clock" [size]="56" class="result-icon" />
             <h2>{{ 'public.tenantQrGenerate.qrExpiredTitle' | transloco }}</h2>
             <p>{{ 'public.tenantQrGenerate.qrExpiredDesc' | transloco }}</p>
-            <button mat-raised-button color="primary" (click)="resetQr()">
+            <app-button (clicked)="resetQr()">
               {{ 'public.tenantQrGenerate.generateNewQr' | transloco }}
-            </button>
-          </mat-card>
+            </app-button>
+          </div>
         }
 
-        <!-- ── CANCELADO ── -->
         @if (qr.status === QrStatus.CANCELADO) {
-          <mat-card class="result-card cancelled">
-            <lucide-icon [img]="XCircle" [size]="56" class="result-icon"></lucide-icon>
+          <div class="result-card cancelled">
+            <lucide-icon [img]="XCircle" [size]="56" class="result-icon" />
             <h2>{{ 'public.tenantQrGenerate.qrCancelledTitle' | transloco }}</h2>
             <p>{{ 'public.tenantQrGenerate.qrCancelledDesc' | transloco }}</p>
-            <button mat-raised-button color="primary" (click)="resetQr()">
+            <app-button (clicked)="resetQr()">
               {{ 'public.tenantQrGenerate.generateNewQr' | transloco }}
-            </button>
-          </mat-card>
+            </app-button>
+          </div>
         }
 
-        <!-- ── PENDIENTE / PROCESANDO ── -->
         @if (qr.status === QrStatus.PENDIENTE) {
-          <mat-card class="qr-display-card">
+          <div class="qr-display-card">
             <div class="qr-display-header">
               <div class="qr-amount">
                 <span class="qr-amount-label">{{
@@ -241,26 +209,24 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
                 </span>
               </div>
               <div class="qr-status-chip pending">
-                <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
+                <lucide-icon [img]="Clock" [size]="14" />
                 <span>{{ 'public.tenantQrGenerate.waitingForPayment' | transloco }}</span>
               </div>
             </div>
 
-            <mat-divider></mat-divider>
+            <hr class="divider" />
 
-            <!-- Imagen QR -->
             <div class="qr-image-wrapper">
               @if (qrSafeUrl()) {
                 <img [src]="qrSafeUrl()!" alt="Código QR de pago" class="qr-image" />
               } @else {
                 <div class="qr-placeholder">
-                  <lucide-icon [img]="QrCode" [size]="80"></lucide-icon>
+                  <lucide-icon [img]="QrCode" [size]="80" />
                   <span>{{ 'public.tenantQrGenerate.qrNotAvailable' | transloco }}</span>
                 </div>
               }
             </div>
 
-            <!-- Instrucciones -->
             <div class="qr-steps">
               <div class="step">
                 <span class="step-no">1</span>{{ 'public.tenantQrGenerate.step1' | transloco }}
@@ -281,14 +247,13 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
               </div>
             </div>
 
-            <!-- Vence -->
             @if (qr.expires_at) {
               <div class="expires-row">
-                <lucide-icon [img]="Clock" [size]="14"></lucide-icon>
-                <span
-                  >{{ 'public.tenantQrGenerate.expiresAtLabel' | transloco }}
-                  {{ qr.expires_at | tenantDate: true }}</span
-                >
+                <lucide-icon [img]="Clock" [size]="14" />
+                <span>
+                  {{ 'public.tenantQrGenerate.expiresAtLabel' | transloco }}
+                  {{ qr.expires_at | tenantDate: true }}
+                </span>
                 <span class="poll-label">
                   {{
                     'public.tenantQrGenerate.pollingStatusLabel'
@@ -298,359 +263,345 @@ import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
               </div>
             }
 
-            <mat-divider></mat-divider>
+            <hr class="divider" />
 
             <div class="qr-actions">
-              <button mat-stroked-button (click)="manualVerify(qr)" [disabled]="polling()">
-                @if (polling()) {
-                  <mat-spinner diameter="16"></mat-spinner>
-                } @else {
-                  <lucide-icon [img]="RefreshCw" [size]="16"></lucide-icon>
-                }
-                {{ 'public.tenantQrGenerate.verifyNow' | transloco }}
-              </button>
-              @if (qrSafeUrl()) {
-                <button mat-stroked-button (click)="downloadQr(qr)">
-                  <lucide-icon [img]="Download" [size]="16"></lucide-icon>
-                  {{ 'public.tenantQrGenerate.downloadQr' | transloco }}
-                </button>
-              }
-              <button
-                mat-stroked-button
-                color="warn"
-                (click)="onCancel(qr)"
-                [disabled]="cancelling()"
+              <app-button
+                appearance="secondary"
+                (clicked)="manualVerify(qr)"
+                [disabled]="polling()"
+                [loading]="polling()"
               >
-                @if (cancelling()) {
-                  <mat-spinner diameter="16"></mat-spinner>
-                } @else {
-                  <lucide-icon [img]="XCircle" [size]="16"></lucide-icon>
-                }
+                <lucide-icon [img]="RefreshCw" [size]="16" />
+                {{ 'public.tenantQrGenerate.verifyNow' | transloco }}
+              </app-button>
+              @if (qrSafeUrl()) {
+                <app-button appearance="secondary" (clicked)="downloadQr(qr)">
+                  <lucide-icon [img]="Download" [size]="16" />
+                  {{ 'public.tenantQrGenerate.downloadQr' | transloco }}
+                </app-button>
+              }
+              <app-button
+                appearance="outline"
+                (clicked)="onCancel(qr)"
+                [disabled]="cancelling()"
+                [loading]="cancelling()"
+              >
+                <lucide-icon [img]="XCircle" [size]="16" />
                 {{ 'public.tenantQrGenerate.cancelQr' | transloco }}
-              </button>
+              </app-button>
             </div>
-          </mat-card>
+          </div>
         }
       }
     </div>
   `,
-  styles: [
-    `
+  styles: `
+    .qr-container {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: var(--app-space-6);
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-4);
+      margin-bottom: var(--app-space-6);
+    }
+    .page-header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--app-color-text);
+      margin: 0 0 4px;
+    }
+    .page-header p {
+      color: var(--app-color-text-muted);
+      margin: 0;
+      font-size: 0.875rem;
+    }
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--app-color-surface);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-md);
+      color: var(--app-color-text);
+      cursor: pointer;
+      padding: var(--app-space-2);
+    }
+    .back-btn:hover {
+      background: var(--app-color-surface-hover);
+    }
+
+    .alert {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      padding: var(--app-space-3) var(--app-space-4);
+      border-radius: var(--app-radius-md);
+      margin-bottom: var(--app-space-4);
+      font-size: 0.875rem;
+    }
+    .alert-error {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .form-card {
+      background: var(--app-color-surface);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      padding: var(--app-space-6);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-3);
+      margin-bottom: var(--app-space-4);
+    }
+    .card-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--app-color-text);
+      margin: 0;
+    }
+    .icon-primary {
+      color: var(--app-color-primary);
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--app-color-border);
+      margin: var(--app-space-4) 0;
+    }
+
+    .info-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--app-space-2);
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--app-radius-md);
+      padding: var(--app-space-3) var(--app-space-4);
+      font-size: 0.85rem;
+      color: #1e40af;
+      line-height: 1.5;
+    }
+
+    .qr-form {
+      display: grid;
+      gap: var(--app-space-4);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--app-space-4);
+    }
+    .field-group {
+      display: grid;
+      gap: var(--app-space-1);
+    }
+    .field-error {
+      color: #dc2626;
+      font-size: 0.8rem;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: var(--app-space-3);
+      justify-content: flex-end;
+      padding-top: var(--app-space-4);
+      border-top: 1px solid var(--app-color-border);
+    }
+
+    .qr-display-card {
+      background: var(--app-color-surface);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      overflow: hidden;
+    }
+    .qr-display-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--app-space-4) var(--app-space-6);
+    }
+    .qr-amount-label {
+      font-size: 0.75rem;
+      color: var(--app-color-text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      display: block;
+    }
+    .qr-amount-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--app-color-text);
+    }
+    .qr-amount-value small {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--app-color-text-muted);
+      margin-left: 4px;
+    }
+    .qr-status-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .qr-status-chip.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .qr-image-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: var(--app-space-6) 0 var(--app-space-4);
+      background: var(--app-color-bg);
+    }
+    .qr-image {
+      width: 300px;
+      height: 300px;
+      border-radius: var(--app-radius-lg);
+      border: 3px solid var(--app-color-border);
+      display: block;
+    }
+    .qr-placeholder {
+      width: 300px;
+      height: 300px;
+      border-radius: var(--app-radius-lg);
+      border: 3px dashed var(--app-color-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--app-space-2);
+      color: var(--app-color-text-muted);
+    }
+
+    .qr-steps {
+      display: flex;
+      flex-direction: column;
+      gap: var(--app-space-2);
+      padding: var(--app-space-4) var(--app-space-6);
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-3);
+      font-size: 0.875rem;
+      color: var(--app-color-text-secondary);
+    }
+    .step-no {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--app-color-primary);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .expires-row {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-2);
+      padding: var(--app-space-2) var(--app-space-6) var(--app-space-4);
+      font-size: 0.8rem;
+      color: var(--app-color-text-muted);
+    }
+    .poll-label {
+      margin-left: auto;
+      font-size: 0.75rem;
+    }
+
+    .qr-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--app-space-3);
+      padding: var(--app-space-4) var(--app-space-6);
+      justify-content: center;
+    }
+
+    .result-card {
+      background: var(--app-color-surface);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-lg);
+      padding: var(--app-space-8) var(--app-space-6);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--app-space-3);
+    }
+    .result-card h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .result-card p {
+      color: var(--app-color-text-muted);
+      margin: 0;
+    }
+    .result-card.success .result-icon {
+      color: #10b981;
+    }
+    .result-card.expired .result-icon {
+      color: var(--app-color-text-muted);
+    }
+    .result-card.cancelled .result-icon {
+      color: #ef4444;
+    }
+
+    .tx-id {
+      font-family: monospace;
+      font-size: 0.82rem;
+      background: var(--app-color-bg);
+      padding: 3px 10px;
+      border-radius: var(--app-radius-sm);
+      color: var(--app-color-text-secondary);
+    }
+    .result-actions {
+      display: flex;
+      gap: var(--app-space-3);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    @media (max-width: 600px) {
       .qr-container {
-        max-width: 560px;
-        margin: 0 auto;
+        padding: var(--app-space-4);
       }
-
-      /* Header */
-      .page-header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-      .page-header h1 {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 4px;
-      }
-      .page-header p {
-        color: #64748b;
-        margin: 0;
-        font-size: 0.88rem;
-      }
-
-      /* Alerts */
-      .alert {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 14px 18px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        font-size: 0.9rem;
-      }
-      .alert-error {
-        background: #fee2e2;
-        color: #dc2626;
-      }
-
-      /* Form card */
-      .form-card {
-        padding: 28px;
-      }
-      .card-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-      .card-header h2 {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0;
-      }
-      .icon-primary {
-        color: var(--mat-sys-primary, #1976d2);
-      }
-
-      .info-banner {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin: 16px 0 20px;
-        font-size: 0.85rem;
-        color: #1e40af;
-        line-height: 1.5;
-      }
-      .info-banner lucide-icon {
-        margin-top: 2px;
-        flex-shrink: 0;
-        color: #3b82f6;
-      }
-
-      .qr-form {
-        margin-top: 20px;
-      }
-
       .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        margin-bottom: 16px;
-      }
-      .form-row mat-form-field {
-        width: 100%;
-      }
-      .full-width {
-        width: 100%;
-        display: block;
-        margin-bottom: 16px;
-      }
-      .form-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
-        padding-top: 16px;
-        border-top: 1px solid #e2e8f0;
-      }
-      .form-actions button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      /* QR Display */
-      .qr-display-card {
-        padding: 0;
-        overflow: hidden;
+        grid-template-columns: 1fr;
       }
       .qr-display-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 20px 24px;
-      }
-      .qr-amount-label {
-        font-size: 0.75rem;
-        color: #94a3b8;
-        font-weight: 600;
-        text-transform: uppercase;
-        display: block;
-      }
-      .qr-amount-value {
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: #1e293b;
-      }
-      .qr-amount-value small {
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #64748b;
-        margin-left: 4px;
-      }
-      .qr-status-chip {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-size: 0.8rem;
-        font-weight: 600;
-      }
-      .qr-status-chip.pending {
-        background: #fef3c7;
-        color: #92400e;
-      }
-
-      /* QR Image */
-      .qr-image-wrapper {
-        position: relative;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 28px 0 20px;
-        background: #f8fafc;
-      }
-      .qr-image {
-        width: 320px;
-        height: 320px;
-        border-radius: 12px;
-        border: 3px solid #e2e8f0;
-        display: block;
-      }
-      .qr-placeholder {
-        width: 320px;
-        height: 320px;
-        border-radius: 12px;
-        border: 3px dashed #cbd5e1;
-        display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        color: #94a3b8;
+        align-items: flex-start;
+        gap: var(--app-space-3);
       }
-      /* Steps */
-      .qr-steps {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        padding: 20px 24px 16px;
-      }
-      .step {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 0.88rem;
-        color: #475569;
-      }
-      .step-no {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: var(--mat-sys-primary, #1976d2);
-        color: white;
-        font-size: 0.75rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-
-      /* Expires row */
-      .expires-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 24px 16px;
-        font-size: 0.8rem;
-        color: #64748b;
-      }
-      .poll-label {
-        margin-left: auto;
-        color: #94a3b8;
-        font-size: 0.75rem;
-      }
-
-      /* QR Actions */
-      .qr-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        padding: 16px 24px;
-        justify-content: center;
-      }
-      .qr-actions button {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      /* Result cards */
-      .result-card {
-        padding: 48px 32px;
-        text-align: center;
-      }
-      .result-card h2 {
-        margin: 12px 0 8px;
-        font-size: 1.4rem;
-        font-weight: 700;
-      }
-      .result-card p {
-        color: #64748b;
-        margin: 0 0 20px;
-      }
-      .result-card.success .result-icon {
-        color: #10b981;
-      }
-      .result-card.expired .result-icon {
-        color: #64748b;
-      }
-      .result-card.cancelled .result-icon {
-        color: #ef4444;
-      }
-
-      .tx-id {
-        display: inline-block;
-        font-family: monospace;
-        font-size: 0.82rem;
-        background: #f1f5f9;
-        padding: 3px 10px;
-        border-radius: 6px;
-        margin-bottom: 20px;
-        color: #475569;
-      }
-
+      .form-actions,
+      .qr-actions,
       .result-actions {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        flex-wrap: wrap;
+        flex-direction: column;
       }
-
-      /* Responsive */
-      @media (max-width: 600px) {
-        .form-row {
-          grid-template-columns: 1fr;
-        }
-        .qr-display-header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 12px;
-        }
-        .form-actions {
-          flex-direction: column-reverse;
-        }
-        .form-actions button {
-          width: 100%;
-          justify-content: center;
-        }
-        .qr-actions {
-          flex-direction: column;
-        }
-        .qr-actions button {
-          width: 100%;
-          justify-content: center;
-        }
-        .result-actions {
-          flex-direction: column;
-        }
-        .result-actions button {
-          width: 100%;
-        }
-      }
-    `,
-  ],
+    }
+  `,
 })
-export class TenantQrGenerateComponent implements OnInit, OnDestroy {
-  // ── Icons ─────────────────────────────────────────────────────────
+export class TenantQrGenerateComponent {
   readonly ArrowLeft = ArrowLeft;
   readonly QrCode = QrCode;
   readonly CheckCircle2 = CheckCircle2;
@@ -661,68 +612,65 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
   readonly Banknote = Banknote;
   readonly Info = Info;
   readonly Download = Download;
-  // ── Services ──────────────────────────────────────────────────────
-  qrService = inject(TenantQrPaymentService);
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
-  private slugService = inject(SlugService);
-  private sanitizer = inject(DomSanitizer);
-  contractService = inject(TenantContractService);
 
-  // ── Enums exposed to template ─────────────────────────────────────
-  QrStatus = QrPaymentStatus;
+  readonly qrService = inject(TenantQrPaymentService);
+  private readonly fb = inject(FormBuilder);
+  private readonly slugService = inject(SlugService);
+  private readonly sanitizer = inject(DomSanitizer);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly contractService = inject(TenantContractService);
 
-  // ── State ─────────────────────────────────────────────────────────
-  polling = signal(false);
-  cancelling = signal(false);
+  readonly QrStatus = QrPaymentStatus;
 
+  readonly polling = signal(false);
+  readonly cancelling = signal(false);
   readonly pollIntervalSec = 5;
   private pollTimer?: ReturnType<typeof setInterval>;
 
-  // ── Form data ─────────────────────────────────────────────────────
-  paymentTypes = Object.keys(PaymentType).map((k) => ({
-    value: PaymentType[k as keyof typeof PaymentType],
-    label: PaymentTypeLabels[PaymentType[k as keyof typeof PaymentType]],
-  }));
+  readonly currencyOptions: AppSelectOption[] = Object.keys(Currency).map((k) => {
+    const val = Currency[k as keyof typeof Currency];
+    return {
+      value: val,
+      label: `${CurrencySymbols[val]} — ${CurrencyLabels[val]}`,
+    };
+  });
 
-  currencies = Object.keys(Currency).map((k) => ({
-    value: Currency[k as keyof typeof Currency],
-    label: CurrencyLabels[Currency[k as keyof typeof Currency]],
-    symbol: CurrencySymbols[Currency[k as keyof typeof Currency]],
-  }));
+  readonly paymentTypeOptions: AppSelectOption[] = Object.keys(PaymentType).map((k) => {
+    const val = PaymentType[k as keyof typeof PaymentType];
+    return { value: val, label: PaymentTypeLabels[val] };
+  });
 
-  form = this.fb.group({
+  readonly form = this.fb.group({
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     currency: [Currency.BOB, Validators.required],
     payment_type: [PaymentType.RENT, Validators.required],
     notes: [''],
   });
 
-  // ── SafeUrl for QR image ──────────────────────────────────────────
-  qrSafeUrl = computed<SafeUrl | null>(() => {
+  readonly qrSafeUrl = computed<SafeUrl | null>(() => {
     const qr = this.qrService.activeQr();
     if (!qr?.qr_image) return null;
-    // Si ya es una URL completa (http/https), úsala directo
     if (qr.qr_image.startsWith('http')) {
       return this.sanitizer.bypassSecurityTrustUrl(qr.qr_image);
     }
-    // Si es base64
     const src = qr.qr_image.startsWith('data:')
       ? qr.qr_image
       : `data:image/png;base64,${qr.qr_image}`;
     return this.sanitizer.bypassSecurityTrustUrl(src);
   });
 
-  // ── Lifecycle ─────────────────────────────────────────────────────
-  ngOnInit(): void {
+  constructor() {
     this.qrService.clearError();
     this.qrService.clearActiveQr();
+    this.destroyRef.onDestroy(() => this.stopPolling());
+    this.prefillFromContract();
+  }
 
-    // Pre-rellenar monto del contrato
+  private prefillFromContract(): void {
     if (!this.contractService.currentContract()) {
       this.contractService.loadCurrentContract();
     }
-    const tryPrefill = () => {
+    const tryPrefill = (): void => {
       const c = this.contractService.currentContract();
       if (c) {
         const amount =
@@ -738,11 +686,6 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
     setTimeout(tryPrefill, 150);
   }
 
-  ngOnDestroy(): void {
-    this.stopPolling();
-  }
-
-  // ── Helpers ───────────────────────────────────────────────────────
   private normalizeCurrency(value?: string): Currency | null {
     if (!value) return null;
     const u = value.toUpperCase();
@@ -753,7 +696,6 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
     return CurrencySymbols[code as Currency] ?? code;
   }
 
-  // ── Actions ───────────────────────────────────────────────────────
   onGenerate(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -767,10 +709,7 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
         payment_type: val.payment_type ?? PaymentType.RENT,
         notes: val.notes || undefined,
       })
-      .subscribe({
-        next: () => this.startPolling(),
-        error: () => {}, // el servicio ya setea el error signal
-      });
+      .subscribe({ next: () => this.startPolling() });
   }
 
   manualVerify(qr: QrPayment): void {
@@ -801,17 +740,13 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
     this.stopPolling();
     this.qrService.clearActiveQr();
     this.qrService.clearError();
-    this.form.reset({
-      currency: Currency.BOB,
-      payment_type: PaymentType.RENT,
-    });
+    this.form.reset({ currency: Currency.BOB, payment_type: PaymentType.RENT });
   }
 
   goBack(): void {
     this.slugService.navigateTo(['portal', 'pagos']);
   }
 
-  // ── Polling ───────────────────────────────────────────────────────
   private startPolling(): void {
     this.stopPolling();
     this.pollTimer = setInterval(() => {
@@ -837,9 +772,7 @@ export class TenantQrGenerateComponent implements OnInit, OnDestroy {
     this.qrService.verifyQr({ qr_id: qr.id }).subscribe({
       next: (updated) => {
         this.polling.set(false);
-        if (this.qrService.isTerminalStatus(updated.status)) {
-          this.stopPolling();
-        }
+        if (this.qrService.isTerminalStatus(updated.status)) this.stopPolling();
       },
       error: () => this.polling.set(false),
     });

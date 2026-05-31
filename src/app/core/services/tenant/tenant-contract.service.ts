@@ -1,8 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap, catchError, of, map, throwError } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -82,14 +81,57 @@ export interface SignContractResponse {
   contract: Contract;
 }
 
+/** Forma cruda del contrato que devuelve el backend (montos como string, fechas ISO). */
+interface RawContract {
+  id: number;
+  tenant_id: number;
+  property_id: number;
+  contract_number: string;
+  start_date: string;
+  end_date: string;
+  key_delivery_date?: string;
+  monthly_rent: string | number;
+  currency?: string;
+  payment_day?: number;
+  deposit_amount?: string | number;
+  payment_method?: string;
+  status: ContractStatus;
+  is_signed: boolean;
+  tenant_signature_date?: string;
+  signed_ip?: string;
+  property?: { id?: number; title?: string; street_address?: string };
+  property_title?: string;
+  street_address?: string;
+  city?: string;
+  country?: string;
+  late_fee_percentage?: string | number;
+  grace_days?: number;
+  included_services?: string[];
+  tenant_responsibilities?: string;
+  owner_responsibilities?: string;
+  prohibitions?: string;
+  coexistence_rules?: string;
+  renewal_terms?: string;
+  termination_terms?: string;
+  jurisdiction?: string;
+  auto_renew?: boolean;
+  renewal_notice_days?: number;
+  auto_increase_percentage?: string | number;
+  bank_name?: string;
+  bank_account_number?: string;
+  bank_account_type?: string;
+  bank_account_holder?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class TenantContractService {
-  private http = inject(HttpClient);
-  private authService = inject(TenantAuthService);
-  private slugService = inject(SlugService);
-  private transloco = inject(TranslocoService);
+  private readonly http = inject(HttpClient);
+  private readonly slugService = inject(SlugService);
+  private readonly transloco = inject(TranslocoService);
 
   // Signal-based reactive state
   private contractsSignal = signal<Contract[]>([]);
@@ -107,14 +149,6 @@ export class TenantContractService {
     return this.slugService.getSlug() || '';
   }
 
-  private get headers(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    });
-  }
-
   /**
    * Cargar el contrato activo del inquilino
    */
@@ -125,19 +159,16 @@ export class TenantContractService {
     this.errorSignal.set(null);
 
     this.http
-      .get<any>(`${environment.apiUrl}${this.slug}/tenant/contracts/current`, {
-        headers: this.headers,
-      })
+      .get<RawContract>(`${environment.apiUrl}${this.slug}/tenant/contracts/current`)
       .pipe(
         tap((contract) => {
           const processedContract = this.processContract(contract);
           this.currentContractSignal.set(processedContract);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadActiveContract'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading current contract:', error);
           return of(null);
         }),
       )
@@ -158,17 +189,16 @@ export class TenantContractService {
       : `${environment.apiUrl}${this.slug}/tenant/contracts`;
 
     this.http
-      .get<any[]>(url, { headers: this.headers })
+      .get<RawContract[]>(url)
       .pipe(
         tap((contracts) => {
           const processedContracts = contracts.map((c) => this.processContract(c));
           this.contractsSignal.set(processedContracts);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadContracts'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading contracts:', error);
           return of([]);
         }),
       )
@@ -180,17 +210,15 @@ export class TenantContractService {
    */
   getContract(id: number): Observable<Contract> {
     return this.http
-      .get<any>(`${environment.apiUrl}${this.slug}/tenant/contracts/${id}`, {
-        headers: this.headers,
-      })
+      .get<RawContract>(`${environment.apiUrl}${this.slug}/tenant/contracts/${id}`)
       .pipe(
-        tap((contract) => {
+        map((contract) => {
           const processedContract = this.processContract(contract);
-
           // Actualizar en la lista si existe
           this.contractsSignal.update((contracts) =>
             contracts.map((c) => (c.id === processedContract.id ? processedContract : c)),
           );
+          return processedContract;
         }),
       );
   }
@@ -203,13 +231,12 @@ export class TenantContractService {
     this.errorSignal.set(null);
 
     return this.http
-      .post<any>(
+      .post<RawContract>(
         `${environment.apiUrl}${this.slug}/tenant/contracts/${contractId}/sign`,
         {},
-        { headers: this.headers },
       )
       .pipe(
-        tap((response) => {
+        map((response) => {
           const processedContract = this.processContract(response);
 
           // Actualizar el contrato actual si es el mismo
@@ -223,13 +250,14 @@ export class TenantContractService {
           );
 
           this.isLoadingSignal.set(false);
+          return processedContract;
         }),
-        catchError((error) => {
+        catchError((error: { error?: { message?: string } }) => {
           this.errorSignal.set(
             error.error?.message || this.transloco.translate('common.errors.signContract'),
           );
           this.isLoadingSignal.set(false);
-          throw error;
+          return throwError(() => error);
         }),
       );
   }
@@ -239,7 +267,6 @@ export class TenantContractService {
    */
   downloadContractPDF(contractId: number): Observable<Blob> {
     return this.http.get(`${environment.apiUrl}${this.slug}/tenant/contracts/${contractId}/pdf`, {
-      headers: this.headers,
       responseType: 'blob',
     });
   }
@@ -254,7 +281,10 @@ export class TenantContractService {
   /**
    * Procesar fechas y mapear datos del contrato desde la API
    */
-  private processContract(contract: any): Contract {
+  private processContract(contract: RawContract): Contract {
+    const toNum = (v: string | number | undefined): number | undefined =>
+      v === undefined || v === null ? undefined : Number(v);
+
     return {
       id: contract.id,
       tenant_id: contract.tenant_id,
@@ -265,10 +295,10 @@ export class TenantContractService {
       key_delivery_date: contract.key_delivery_date
         ? new Date(contract.key_delivery_date)
         : undefined,
-      monthly_rent: parseFloat(contract.monthly_rent),
+      monthly_rent: Number(contract.monthly_rent),
       currency: contract.currency,
       payment_day: contract.payment_day,
-      deposit_amount: contract.deposit_amount ? parseFloat(contract.deposit_amount) : undefined,
+      deposit_amount: toNum(contract.deposit_amount),
       payment_method: contract.payment_method,
       status: contract.status,
       is_signed: contract.is_signed,
@@ -287,9 +317,7 @@ export class TenantContractService {
           '',
       },
       // Campos adicionales del contrato
-      late_fee_percentage: contract.late_fee_percentage
-        ? parseFloat(contract.late_fee_percentage)
-        : undefined,
+      late_fee_percentage: toNum(contract.late_fee_percentage),
       grace_days: contract.grace_days,
       included_services: contract.included_services || [],
       tenant_responsibilities: contract.tenant_responsibilities,
@@ -301,9 +329,7 @@ export class TenantContractService {
       jurisdiction: contract.jurisdiction,
       auto_renew: contract.auto_renew,
       renewal_notice_days: contract.renewal_notice_days,
-      auto_increase_percentage: contract.auto_increase_percentage
-        ? parseFloat(contract.auto_increase_percentage)
-        : undefined,
+      auto_increase_percentage: toNum(contract.auto_increase_percentage),
       // Datos bancarios
       bank_name: contract.bank_name,
       bank_account_number: contract.bank_account_number,

@@ -1,0 +1,480 @@
+<div class="register-page">
+  <!-- Left Side - Branding -->
+  <div class="register-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
+      </div>
+      <h1>365Soft</h1>
+      <h2>{{ 'auth.adminPanel' | transloco }}</h2>
+      <p class="brand-tagline">
+        {{ 'auth.registerTagline' | transloco }}
+      </p>
+
+      <div class="features">
+        <div class="feature-item">
+          <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+          <span>{{ 'auth.regFeature1' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+          <span>{{ 'auth.regFeature2' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+          <span>{{ 'auth.regFeature3' | transloco }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Registration Form -->
+  <div class="register-form-container">
+    <div class="register-form-wrapper">
+      <div class="lang-toggle-row">
+        <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isSpanish()"
+            (click)="languageService.setLanguage('es')"
+            aria-label="Español"
+            title="Español"
+          >
+            ES
+          </button>
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isEnglish()"
+            (click)="languageService.setLanguage('en')"
+            aria-label="English"
+            title="English"
+          >
+            EN
+          </button>
+        </div>
+      </div>
+      <div class="form-header">
+        <h3>{{ 'auth.registerTitle' | transloco }}</h3>
+        <p>{{ 'auth.registerSubtitle' | transloco }}</p>
+      </div>
+
+      @if (successMessage()) {
+        <div class="success-alert">
+          <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+          <div class="alert-content">
+            <strong>{{ 'auth.accountCreated' | transloco }}</strong>
+            <span>{{ successMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      @if (errorMessage()) {
+        <div class="error-alert">
+          <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
+          <div class="alert-content">
+            <strong>{{ 'auth.accountError' | transloco }}</strong>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <app-stepper
+        [steps]="[
+          'auth.companyStep' | transloco,
+          'auth.adminStep' | transloco,
+          'auth.passwordStep' | transloco,
+        ]"
+        [currentIndex]="currentStep()"
+      />
+
+      @if (currentStep() === 0) {
+        <form [formGroup]="companyForm" class="step-form">
+          <h3 class="step-title">{{ 'auth.companyStepTitle' | transloco }}</h3>
+
+          <div class="field-block">
+            <app-text-field
+              formControlName="company_name"
+              autocomplete="organization"
+              label="{{ 'auth.companyName' | transloco }}"
+              [placeholder]="'auth.companyNamePlaceholder' | transloco"
+            />
+            <p class="field-hint">{{ 'auth.companyNameHint' | transloco }}</p>
+            @if (
+              companyForm.get('company_name')?.hasError('required') &&
+              companyForm.get('company_name')?.touched
+            ) {
+              <p class="field-error">{{ 'auth.required' | transloco }}</p>
+            }
+          </div>
+
+          <div class="field-block">
+            <app-select
+              formControlName="country"
+              label="{{ 'auth.country' | transloco }}"
+              [options]="countries()"
+              [required]="true"
+            />
+            <p class="field-hint">{{ 'auth.countryHint' | transloco }}</p>
+            @if (
+              companyForm.get('country')?.hasError('required') &&
+              companyForm.get('country')?.touched
+            ) {
+              <p class="field-error">{{ 'auth.required' | transloco }}</p>
+            }
+          </div>
+
+          <div class="step-actions step-actions--end">
+            <app-button
+              class="next-btn"
+              [disabled]="companyForm.invalid"
+              (clicked)="nextCompanyStep()"
+            >
+              {{ 'auth.next' | transloco }}
+              <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+            </app-button>
+          </div>
+        </form>
+      }
+
+      @if (currentStep() === 1) {
+        <form [formGroup]="adminForm" class="step-form">
+          <h3 class="step-title">{{ 'auth.adminStepTitle' | transloco }}</h3>
+
+          <div class="field-block">
+            <app-text-field
+              formControlName="name"
+              autocomplete="name"
+              label="{{ 'auth.fullName' | transloco }}"
+              [placeholder]="'auth.fullNamePlaceholder' | transloco"
+            />
+            @if (adminForm.get('name')?.hasError('required') && adminForm.get('name')?.touched) {
+              <p class="field-error">{{ 'auth.required' | transloco }}</p>
+            }
+            @if (adminForm.get('name')?.hasError('minlength')) {
+              <p class="field-error">{{ 'auth.minChars2' | transloco }}</p>
+            }
+          </div>
+
+          <div class="field-block">
+            <app-text-field
+              formControlName="email"
+              autocomplete="email"
+              label="{{ 'auth.email' | transloco }}"
+              placeholder="admin@empresa.com"
+              type="email"
+            />
+            @if (adminForm.get('email')?.hasError('required') && adminForm.get('email')?.touched) {
+              <p class="field-error">{{ 'auth.required' | transloco }}</p>
+            }
+            @if (adminForm.get('email')?.hasError('email') && adminForm.get('email')?.touched) {
+              <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
+            }
+          </div>
+
+          <div class="field-block">
+            <app-text-field
+              formControlName="phone"
+              autocomplete="tel"
+              label="{{ 'auth.phoneOptional' | transloco }}"
+              [placeholder]="'auth.phonePlaceholder' | transloco"
+              type="tel"
+            />
+          </div>
+
+          <div class="step-actions">
+            <app-button appearance="flat" class="back-btn" (clicked)="previousStep()">
+              <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+              {{ 'auth.back' | transloco }}
+            </app-button>
+            <app-button class="next-btn" [disabled]="adminForm.invalid" (clicked)="nextAdminStep()">
+              {{ 'auth.next' | transloco }}
+              <lucide-icon [img]="ArrowRight" [size]="18"></lucide-icon>
+            </app-button>
+          </div>
+        </form>
+      }
+
+      @if (currentStep() === 2) {
+        <form [formGroup]="passwordForm" (ngSubmit)="onSubmit()" class="step-form">
+          <h3 class="step-title">{{ 'auth.passwordStepTitle' | transloco }}</h3>
+
+          <div class="field-block">
+            <div class="password-row">
+              <app-text-field
+                formControlName="password"
+                autocomplete="new-password"
+                label="{{ 'auth.password' | transloco }}"
+                placeholder="••••••••"
+                [type]="showPassword() ? 'text' : 'password'"
+              />
+              <button
+                class="password-toggle"
+                type="button"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+              >
+                <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
+              </button>
+            </div>
+            <p class="field-hint">{{ 'auth.passwordHint' | transloco }}</p>
+            @if (
+              passwordForm.get('password')?.hasError('required') &&
+              passwordForm.get('password')?.touched
+            ) {
+              <p class="field-error">{{ 'auth.required' | transloco }}</p>
+            }
+            @if (passwordForm.get('password')?.hasError('minlength')) {
+              <p class="field-error">{{ 'auth.minChars6' | transloco }}</p>
+            }
+          </div>
+
+          <div class="field-block">
+            <div class="password-row">
+              <app-text-field
+                formControlName="confirm_password"
+                autocomplete="new-password"
+                label="{{ 'auth.confirmPassword' | transloco }}"
+                placeholder="••••••••"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+              />
+              <button
+                class="password-toggle"
+                type="button"
+                (click)="toggleConfirmPassword()"
+                [attr.aria-label]="
+                  showConfirmPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'
+                "
+              >
+                <lucide-icon [img]="showConfirmPassword() ? EyeOff : Eye" [size]="18"></lucide-icon>
+              </button>
+            </div>
+            @if (
+              passwordForm.get('confirm_password')?.hasError('required') &&
+              passwordForm.get('confirm_password')?.touched
+            ) {
+              <p class="field-error">{{ 'auth.required' | transloco }}</p>
+            }
+            @if (
+              passwordForm.hasError('passwordMismatch') &&
+              passwordForm.get('confirm_password')?.touched
+            ) {
+              <p class="field-error">{{ 'auth.passwordMismatch' | transloco }}</p>
+            }
+          </div>
+
+          <div class="terms-checkbox">
+            <app-checkbox formControlName="acceptTerms">
+              {{ 'auth.acceptTerms' | transloco }}
+              <a (click)="openTerms($event)" class="link">{{ 'auth.termsLink' | transloco }}</a>
+              {{ 'auth.andThe' | transloco }}
+              <a (click)="openPrivacy($event)" class="link">{{ 'auth.privacyLink' | transloco }}</a>
+            </app-checkbox>
+          </div>
+
+          <div class="step-actions">
+            <app-button appearance="flat" class="back-btn" (clicked)="previousStep()">
+              <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+              {{ 'auth.back' | transloco }}
+            </app-button>
+            <app-button
+              type="submit"
+              class="submit-btn"
+              [loading]="isLoading()"
+              [disabled]="passwordForm.invalid || isLoading()"
+            >
+              {{ isLoading() ? ('auth.creating' | transloco) : ('auth.createAccount' | transloco) }}
+            </app-button>
+          </div>
+        </form>
+      }
+
+      <div class="register-footer">
+        <div class="help-links">
+          <a routerLink="/login" class="help-link">{{ 'auth.alreadyHaveAccount' | transloco }}</a>
+          <span class="separator">•</span>
+          <a (click)="goToTenantPortal()" class="help-link tenant-portal-link">{{
+            'auth.tenantPortal' | transloco
+          }}</a>
+        </div>
+      </div>
+
+      <app-dialog
+        [open]="termsOpen()"
+        [title]="'auth.termsTitle' | transloco"
+        [closeLabel]="'auth.close' | transloco"
+        (closed)="termsOpen.set(false)"
+      >
+        <div class="legal-content">
+          <p class="last-updated">Ultima actualizacion: Febrero 8, 2026</p>
+
+          <h3>1. Aceptacion de los Terminos</h3>
+          <p>
+            Al acceder y utilizar 365Soft, usted acepta estar sujeto a estos Terminos y Condiciones
+            de uso. Si no esta de acuerdo con estos terminos, no debe utilizar el Servicio.
+          </p>
+
+          <h3>2. Descripcion del Servicio</h3>
+          <p>
+            365Soft es una plataforma de gestion de propiedades que permite a los administradores
+            gestionar propiedades, inquilinos, contratos, pagos y mantenimiento de manera eficiente.
+          </p>
+
+          <h3>3. Registro de Cuenta</h3>
+          <p>
+            Para utilizar el Servicio, debe crear una cuenta proporcionando informacion precisa y
+            completa. Usted es responsable de mantener la confidencialidad de su cuenta y
+            contrasena.
+          </p>
+
+          <h3>4. Uso Aceptable</h3>
+          <p>Usted se compromete a:</p>
+          <ul>
+            <li>Utilizar el Servicio unicamente para fines legales</li>
+            <li>No compartir su cuenta con terceros no autorizados</li>
+            <li>Mantener la informacion de su cuenta actualizada</li>
+            <li>No intentar acceder a areas no autorizadas del sistema</li>
+            <li>No utilizar el Servicio para actividades fraudulentas o ilegales</li>
+          </ul>
+
+          <h3>5. Propiedad Intelectual</h3>
+          <p>
+            Todo el contenido, caracteristicas y funcionalidad del Servicio son propiedad exclusiva
+            de 365Soft y estan protegidos por las leyes de propiedad intelectual.
+          </p>
+
+          <h3>6. Privacidad y Seguridad de Datos</h3>
+          <p>
+            Nos comprometemos a proteger su informacion personal de acuerdo con nuestra Politica de
+            Privacidad. Implementamos medidas de seguridad tecnicas y organizativas para proteger
+            sus datos.
+          </p>
+
+          <h3>7. Limitacion de Responsabilidad</h3>
+          <p>
+            365Soft no sera responsable por danos indirectos, incidentales, especiales o
+            consecuentes que resulten del uso o la imposibilidad de usar el Servicio.
+          </p>
+
+          <h3>8. Modificaciones del Servicio</h3>
+          <p>
+            Nos reservamos el derecho de modificar o discontinuar el Servicio en cualquier momento,
+            con o sin previo aviso.
+          </p>
+
+          <h3>9. Terminacion</h3>
+          <p>
+            Podemos suspender o terminar su acceso al Servicio si viola estos terminos o por
+            cualquier otra razon a nuestra discrecion.
+          </p>
+
+          <h3>10. Ley Aplicable</h3>
+          <p>Estos terminos se rigen por las leyes aplicables en su jurisdiccion.</p>
+
+          <h3>11. Contacto</h3>
+          <p>Para preguntas sobre estos terminos, contacte a: soporte@365soft.com</p>
+        </div>
+        <app-button dialog-actions (clicked)="termsOpen.set(false)">
+          {{ 'auth.close' | transloco }}
+        </app-button>
+      </app-dialog>
+
+      <app-dialog
+        [open]="privacyOpen()"
+        [title]="'auth.privacyTitle' | transloco"
+        [closeLabel]="'auth.close' | transloco"
+        (closed)="privacyOpen.set(false)"
+      >
+        <div class="legal-content">
+          <p class="last-updated">Ultima actualizacion: Febrero 8, 2026</p>
+
+          <h3>1. Introduccion</h3>
+          <p>
+            En 365Soft, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Politica
+            de Privacidad describe como recopilamos, usamos, compartimos y protegemos su informacion
+            personal.
+          </p>
+
+          <h3>2. Informacion que Recopilamos</h3>
+          <p>Recopilamos la siguiente informacion:</p>
+          <ul>
+            <li>
+              <strong>Informacion de cuenta:</strong> nombre, correo electronico, telefono, nombre
+              de empresa
+            </li>
+            <li>
+              <strong>Informacion de propiedades:</strong> direcciones, datos de propiedades y
+              contratos
+            </li>
+            <li>
+              <strong>Informacion de inquilinos:</strong> datos de contacto y documentacion
+              necesaria
+            </li>
+            <li>
+              <strong>Informacion de pago:</strong> historial de transacciones y metodos de pago
+            </li>
+            <li><strong>Datos de uso:</strong> como interactua con nuestro Servicio</li>
+            <li>
+              <strong>Informacion tecnica:</strong> direccion IP, tipo de navegador, sistema
+              operativo
+            </li>
+          </ul>
+
+          <h3>3. Como Usamos su Informacion</h3>
+          <p>Utilizamos su informacion para:</p>
+          <ul>
+            <li>Proporcionar y mantener el Servicio</li>
+            <li>Procesar transacciones y enviar notificaciones relacionadas</li>
+            <li>Mejorar y personalizar su experiencia</li>
+            <li>Comunicarnos con usted sobre actualizaciones y novedades</li>
+            <li>Detectar y prevenir fraudes o abuso del Servicio</li>
+            <li>Cumplir con obligaciones legales</li>
+          </ul>
+
+          <h3>4. Compartir Informacion</h3>
+          <p>No vendemos su informacion personal. Podemos compartir su informacion con:</p>
+          <ul>
+            <li><strong>Proveedores de servicios:</strong> que nos ayudan a operar el Servicio</li>
+            <li><strong>Autoridades legales:</strong> cuando sea requerido por ley</li>
+            <li><strong>Socios comerciales:</strong> con su consentimiento explicito</li>
+          </ul>
+
+          <h3>5. Seguridad de Datos</h3>
+          <p>
+            Implementamos medidas de seguridad tecnicas y organizativas para proteger su
+            informacion.
+          </p>
+
+          <h3>6. Retencion de Datos</h3>
+          <p>
+            Conservamos su informacion personal mientras su cuenta este activa o segun sea necesario
+            para cumplir con obligaciones legales.
+          </p>
+
+          <h3>7. Sus Derechos</h3>
+          <p>
+            Usted puede solicitar acceso, correccion, eliminacion, oposicion al procesamiento,
+            portabilidad de datos o retiro de consentimiento.
+          </p>
+
+          <h3>8. Cookies y Tecnologias Similares</h3>
+          <p>
+            Utilizamos cookies y tecnologias similares para mejorar su experiencia y analizar el uso
+            del Servicio.
+          </p>
+
+          <h3>9. Privacidad de Menores</h3>
+          <p>
+            Nuestro Servicio no esta dirigido a menores de 18 anos. No recopilamos intencionalmente
+            informacion de menores.
+          </p>
+
+          <h3>10. Contacto</h3>
+          <p>Para preguntas o inquietudes sobre esta politica: privacidad@365soft.com</p>
+        </div>
+        <app-button dialog-actions (clicked)="privacyOpen.set(false)">
+          {{ 'auth.close' | transloco }}
+        </app-button>
+      </app-dialog>
+    </div>
+  </div>
+</div>

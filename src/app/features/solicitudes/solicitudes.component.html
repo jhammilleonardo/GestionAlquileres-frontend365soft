@@ -1,224 +1,172 @@
 <div class="solicitudes-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1>{{ 'solicitudes.title' | transloco }}</h1>
-      <p>{{ 'solicitudes.subtitle' | transloco }}</p>
-    </div>
-  </div>
+  <app-page-header
+    [title]="'solicitudes.title' | transloco"
+    [description]="'solicitudes.subtitle' | transloco"
+  />
 
-  <!-- Stats -->
-  <div class="stats-grid">
-    <mat-card class="stat-card total-card">
-      <mat-card-content>
-        <div class="stat-icon">
-          <lucide-icon [img]="FileText" [size]="30"></lucide-icon>
-        </div>
-        <div class="stat-info">
-          <h2 class="stat-value">{{ metrics.total }}</h2>
-          <p class="stat-label">{{ 'solicitudes.totalRequests' | transloco }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
+  <section class="stats-grid" aria-label="Resumen de solicitudes">
+    <article class="stat-card total-card">
+      <div class="stat-icon">
+        <lucide-icon [img]="FileText" [size]="30"></lucide-icon>
+      </div>
+      <div class="stat-info">
+        <h2 class="stat-value">{{ facade.metrics().total }}</h2>
+        <p class="stat-label">{{ 'solicitudes.totalRequests' | transloco }}</p>
+      </div>
+    </article>
 
-    <mat-card class="stat-card pending-card">
-      <mat-card-content>
-        <div class="stat-icon">
-          <lucide-icon [img]="Clock" [size]="30"></lucide-icon>
-        </div>
-        <div class="stat-info">
-          <h2 class="stat-value">{{ metrics.pendientes }}</h2>
-          <p class="stat-label">{{ 'solicitudes.pending' | transloco }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <article class="stat-card pending-card">
+      <div class="stat-icon">
+        <lucide-icon [img]="Clock" [size]="30"></lucide-icon>
+      </div>
+      <div class="stat-info">
+        <h2 class="stat-value">{{ facade.metrics().pendientes }}</h2>
+        <p class="stat-label">{{ 'solicitudes.pending' | transloco }}</p>
+      </div>
+    </article>
 
-    <mat-card class="stat-card approved-card">
-      <mat-card-content>
-        <div class="stat-icon">
-          <lucide-icon [img]="CheckCircle2" [size]="30"></lucide-icon>
-        </div>
-        <div class="stat-info">
-          <h2 class="stat-value">{{ metrics.aprobadas }}</h2>
-          <p class="stat-label">{{ 'solicitudes.approved' | transloco }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
+    <article class="stat-card approved-card">
+      <div class="stat-icon">
+        <lucide-icon [img]="CheckCircle2" [size]="30"></lucide-icon>
+      </div>
+      <div class="stat-info">
+        <h2 class="stat-value">{{ facade.metrics().aprobadas }}</h2>
+        <p class="stat-label">{{ 'solicitudes.approved' | transloco }}</p>
+      </div>
+    </article>
 
-    <mat-card class="stat-card rejected-card">
-      <mat-card-content>
-        <div class="stat-icon">
-          <lucide-icon [img]="XCircle" [size]="30"></lucide-icon>
-        </div>
-        <div class="stat-info">
-          <h2 class="stat-value">{{ metrics.rechazadas }}</h2>
-          <p class="stat-label">{{ 'solicitudes.rejected' | transloco }}</p>
-        </div>
-      </mat-card-content>
-    </mat-card>
-  </div>
+    <article class="stat-card rejected-card">
+      <div class="stat-icon">
+        <lucide-icon [img]="XCircle" [size]="30"></lucide-icon>
+      </div>
+      <div class="stat-info">
+        <h2 class="stat-value">{{ facade.metrics().rechazadas }}</h2>
+        <p class="stat-label">{{ 'solicitudes.rejected' | transloco }}</p>
+      </div>
+    </article>
+  </section>
 
-  <!-- Filtros -->
-  <mat-card class="filters-card">
-    <mat-card-content>
-      <div class="filters-grid">
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-label>{{ 'solicitudes.searchLabel' | transloco }}</mat-label>
-          <lucide-icon matPrefix [img]="Search" [size]="20" class="search-icon"></lucide-icon>
-          <input
-            matInput
-            [placeholder]="'solicitudes.searchPlaceholder' | transloco"
-            [(ngModel)]="searchTerm"
-          />
+  <section class="filters-card" aria-label="Filtros de solicitudes">
+    <div class="filters-grid">
+      <div class="search-control">
+        <app-text-field
+          [label]="'solicitudes.searchLabel' | transloco"
+          [placeholder]="'solicitudes.searchPlaceholder' | transloco"
+          type="search"
+          [(ngModel)]="facade.searchTermValue"
+        />
+        @if (facade.searchTerm()) {
           <button
-            *ngIf="searchTerm"
-            mat-icon-button
-            matSuffix
-            (click)="clearSearch()"
             type="button"
+            class="clear-search"
+            (click)="facade.clearSearch()"
             aria-label="Clear"
           >
             <lucide-icon [img]="X" [size]="18"></lucide-icon>
           </button>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="status-field">
-          <mat-label>{{ 'common.status' | transloco }}</mat-label>
-          <mat-select [(ngModel)]="selectedStatus">
-            <mat-option *ngFor="let s of statuses" [value]="s">
-              {{ (s ? 'solicitudes.status.' + s : 'solicitudes.status.all') | transloco }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
+        }
       </div>
-    </mat-card-content>
-  </mat-card>
 
-  <!-- Tabla -->
-  <mat-card class="table-card">
-    <!-- Loading -->
-    <div *ngIf="loading" class="loading-container">
-      <mat-spinner diameter="40" color="primary"></mat-spinner>
-      <p>{{ 'solicitudes.loading' | transloco }}</p>
+      <app-select
+        [label]="'common.status' | transloco"
+        [options]="statusOptions"
+        [(ngModel)]="facade.selectedStatusValue"
+      />
     </div>
+  </section>
 
-    <!-- Error -->
-    <div *ngIf="error && !loading" class="error-container">
-      <lucide-icon [img]="XCircle" [size]="40"></lucide-icon>
-      <p>{{ error }}</p>
-      <button mat-stroked-button color="primary" (click)="loadApplications()">
-        {{ 'solicitudes.retry' | transloco }}
-      </button>
-    </div>
-
-    <!-- Contenido -->
-    <ng-container *ngIf="!loading && !error">
-      <!-- Empty -->
-      <div *ngIf="filteredApplications.length === 0" class="empty-state">
+  <section class="table-card">
+    @if (facade.loading()) {
+      <div class="loading-container">
+        <app-loading-state [label]="'solicitudes.loading' | transloco" />
+      </div>
+    } @else if (facade.error()) {
+      <div class="error-container">
+        <lucide-icon [img]="XCircle" [size]="40"></lucide-icon>
+        <p>{{ facade.error() }}</p>
+        <app-button appearance="outline" (clicked)="facade.loadApplications()">
+          {{ 'solicitudes.retry' | transloco }}
+        </app-button>
+      </div>
+    } @else if (facade.filteredApplications().length === 0) {
+      <div class="empty-state">
         <div class="empty-icon-wrapper">
           <lucide-icon [img]="FileText" [size]="48"></lucide-icon>
         </div>
         <h3>{{ 'solicitudes.empty' | transloco }}</h3>
         <p>{{ 'solicitudes.emptyHint' | transloco }}</p>
       </div>
-
-      <!-- Table -->
-      <ng-container *ngIf="filteredApplications.length > 0">
-        <div class="table-container">
-          <table mat-table [dataSource]="filteredApplications" class="applications-table">
-            <!-- ID -->
-            <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef>#</th>
-              <td mat-cell *matCellDef="let app" class="id-cell">#{{ app.id }}</td>
-            </ng-container>
-
-            <!-- Solicitante -->
-            <ng-container matColumnDef="applicant">
-              <th mat-header-cell *matHeaderCellDef>{{ 'solicitudes.applicant' | transloco }}</th>
-              <td mat-cell *matCellDef="let app">
-                <div class="applicant-info">
-                  <div class="applicant-avatar">
-                    {{ app.personal_data.full_name.charAt(0).toUpperCase() }}
+    } @else {
+      <div class="table-container">
+        <table class="applications-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ 'solicitudes.applicant' | transloco }}</th>
+              <th>{{ 'solicitudes.property' | transloco }}</th>
+              <th>{{ 'solicitudes.income' | transloco }}</th>
+              <th>{{ 'solicitudes.date' | transloco }}</th>
+              <th>{{ 'common.status' | transloco }}</th>
+              <th class="actions-header">{{ 'solicitudes.actions' | transloco }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (app of facade.filteredApplications(); track app.id) {
+              <tr class="table-row">
+                <td class="id-cell">#{{ app.id }}</td>
+                <td>
+                  <div class="applicant-info">
+                    <div class="applicant-avatar">
+                      {{ app.personal_data.full_name.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="applicant-details">
+                      <p class="applicant-name">{{ app.personal_data.full_name }}</p>
+                      <p class="applicant-email">{{ app.applicant_email }}</p>
+                    </div>
                   </div>
-                  <div class="applicant-details">
-                    <p class="applicant-name">{{ app.personal_data.full_name }}</p>
-                    <p class="applicant-email">{{ app.applicant_email }}</p>
-                  </div>
-                </div>
-              </td>
-            </ng-container>
-
-            <!-- Propiedad -->
-            <ng-container matColumnDef="property">
-              <th mat-header-cell *matHeaderCellDef>{{ 'solicitudes.property' | transloco }}</th>
-              <td mat-cell *matCellDef="let app">
-                <div class="property-cell">
+                </td>
+                <td>
                   <span class="property-title">{{ app.property_title }}</span>
-                </div>
-              </td>
-            </ng-container>
+                </td>
+                <td>
+                  <span class="income-badge">
+                    {{ app.employment_data.monthly_income | tenantCurrency }}
+                  </span>
+                </td>
+                <td class="date-cell">
+                  <lucide-icon [img]="Clock" [size]="14" class="date-icon"></lucide-icon>
+                  {{ app.created_at | tenantDate }}
+                </td>
+                <td>
+                  <app-status-badge
+                    [label]="'solicitudes.status.' + app.status | transloco"
+                    [tone]="getStatusTone(app.status)"
+                  />
+                </td>
+                <td class="actions-cell">
+                  <a
+                    class="action-btn"
+                    [routerLink]="['../solicitudes', app.id]"
+                    [attr.aria-label]="'solicitudes.viewDetail' | transloco"
+                  >
+                    <lucide-icon [img]="Eye" [size]="20"></lucide-icon>
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
-            <!-- Ingreso -->
-            <ng-container matColumnDef="income">
-              <th mat-header-cell *matHeaderCellDef>{{ 'solicitudes.income' | transloco }}</th>
-              <td mat-cell *matCellDef="let app">
-                <span class="income-badge">{{
-                  app.employment_data.monthly_income | tenantCurrency
-                }}</span>
-              </td>
-            </ng-container>
-
-            <!-- Fecha -->
-            <ng-container matColumnDef="date">
-              <th mat-header-cell *matHeaderCellDef>{{ 'solicitudes.date' | transloco }}</th>
-              <td mat-cell *matCellDef="let app" class="date-cell">
-                <lucide-icon [img]="Clock" [size]="14" class="date-icon"></lucide-icon>
-                {{ app.created_at | tenantDate }}
-              </td>
-            </ng-container>
-
-            <!-- Estado -->
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>{{ 'common.status' | transloco }}</th>
-              <td mat-cell *matCellDef="let app">
-                <span class="status-badge" [ngClass]="app.status.toLowerCase()">
-                  {{ 'solicitudes.status.' + app.status | transloco }}
-                </span>
-              </td>
-            </ng-container>
-
-            <!-- Acciones -->
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef class="actions-header">
-                {{ 'solicitudes.actions' | transloco }}
-              </th>
-              <td mat-cell *matCellDef="let app" class="actions-cell">
-                <button
-                  mat-icon-button
-                  color="primary"
-                  [routerLink]="['../solicitudes', app.id]"
-                  [matTooltip]="'solicitudes.viewDetail' | transloco"
-                  class="action-btn"
-                >
-                  <lucide-icon [img]="Eye" [size]="20"></lucide-icon>
-                </button>
-              </td>
-            </ng-container>
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
-          </table>
-        </div>
-
-        <div class="table-footer">
-          <p>
-            {{
-              'solicitudes.showing'
-                | transloco: { shown: filteredApplications.length, total: metrics.total }
-            }}
-          </p>
-        </div>
-      </ng-container>
-    </ng-container>
-  </mat-card>
+      <div class="table-footer">
+        <p>
+          {{
+            'solicitudes.showing'
+              | transloco
+                : { shown: facade.filteredApplications().length, total: facade.metrics().total }
+          }}
+        </p>
+      </div>
+    }
+  </section>
 </div>

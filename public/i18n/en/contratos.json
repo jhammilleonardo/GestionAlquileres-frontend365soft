@@ -33,7 +33,14 @@
   "status": {
     "BORRADOR": "Draft",
     "ACTIVO": "Active",
-    "FINALIZADO": "Ended"
+    "FINALIZADO": "Finalized",
+    "PENDIENTE": "Pending",
+    "FIRMADO": "Signed",
+    "POR_VENCER": "Expiring",
+    "VENCIDO": "Expired",
+    "RENOVADO": "Renewed",
+    "CANCELADO": "Cancelled",
+    "SUSPENDIDO": "Suspended"
   },
   "edit": {
     "titlePrefix": "Edit Contract",
@@ -116,7 +123,9 @@
     "confirmFinalize": "Do you want to finalize contract {{number}}? This will set the contract status to Finalized.",
     "finalizedReason": "Finalized by administrator",
     "finalizedSuccess": "Contract finalized successfully",
-    "finalizeError": "Error finalizing contract"
+    "finalizeError": "Error finalizing contract",
+    "historyTitle": "Renewal history",
+    "historyCurrent": "Current"
   },
   "create": {
     "back": "Back to Contracts",

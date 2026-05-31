@@ -1,19 +1,7 @@
-import {
-  Component,
-  OnInit,
-  signal,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-} from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
 import {
   LucideAngularModule,
   ArrowLeft,
@@ -42,36 +30,38 @@ import {
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../core/services/admin/property.service';
-import { AuthService } from '../../core/services/auth.service';
 import { SlugService } from '../../core/services/slug.service';
 import { Property } from '../../core/models/property.model';
 import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
 import { PropertyUnitsComponent } from './property-units/property-units.component';
+import { AppButtonComponent } from '../../shared/ui/button/button.component';
+import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
+import { AppTabsComponent, AppTabOption } from '../../shared/ui/tabs/tabs.component';
+import { ToastService } from '../../shared/ui/toast/toast.service';
+
+type PropertyDetailTab = 'information' | 'units';
 
 @Component({
   selector: 'app-property-detail-admin',
   standalone: true,
   imports: [
-    CommonModule,
+    NgClass,
+    FormsModule,
     RouterModule,
-    MatButtonModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatChipsModule,
-    MatDividerModule,
-    MatSnackBarModule,
-    MatTabsModule,
     LucideAngularModule,
     TranslocoModule,
     TenantCurrencyPipe,
     PropertyUnitsComponent,
+    AppButtonComponent,
+    AppLoadingStateComponent,
+    AppTabsComponent,
   ],
   templateUrl: './property-detail-admin.component.html',
   styleUrls: ['./property-detail-admin.component.scss'],
   providers: [provideTranslocoScope({ scope: 'propiedades', alias: 'properties' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropertyDetailAdminComponent implements OnInit {
+export class PropertyDetailAdminComponent {
   // Icons
   readonly ArrowLeft = ArrowLeft;
   readonly Pencil = Pencil;
@@ -100,18 +90,19 @@ export class PropertyDetailAdminComponent implements OnInit {
   currentImageIndex = signal(0);
   isLoading = signal(true);
   slug = signal('');
+  activeTab: PropertyDetailTab = 'information';
+  readonly tabs: AppTabOption<PropertyDetailTab>[] = [
+    { label: 'Informacion', value: 'information' },
+    { label: 'Unidades', value: 'units' },
+  ];
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private propertyService: PropertyService,
-    private authService: AuthService,
-    private slugService: SlugService,
-    private snackBar: MatSnackBar,
-    private cdr: ChangeDetectorRef,
-  ) {}
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly propertyService = inject(PropertyService);
+  private readonly slugService = inject(SlugService);
+  private readonly toast = inject(ToastService);
 
-  ngOnInit(): void {
+  constructor() {
     this.slug.set(this.slugService.getSlug() ?? '');
     const propertyIdStr = this.route.snapshot.paramMap.get('id');
     if (propertyIdStr) {
@@ -127,17 +118,14 @@ export class PropertyDetailAdminComponent implements OnInit {
         if (property) {
           this.property.set(property);
         } else {
-          this.snackBar.open('Propiedad no encontrada', 'Cerrar', { duration: 3000 });
+          this.toast.error('Propiedad no encontrada');
           this.goBack();
         }
         this.isLoading.set(false);
-        this.cdr.markForCheck();
       },
-      error: (error) => {
-        console.error('Error loading property:', error);
-        this.snackBar.open('Error al cargar la propiedad', 'Cerrar', { duration: 3000 });
+      error: () => {
+        this.toast.error('Error al cargar la propiedad');
         this.isLoading.set(false);
-        this.cdr.markForCheck();
         this.goBack();
       },
     });

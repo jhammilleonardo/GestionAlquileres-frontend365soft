@@ -2,5 +2,20 @@
   "title": "Dashboard",
   "welcome": "Bienvenido al sistema de gestión de alquileres",
   "viewPublicPortal": "Ver Portal Público de Propiedades",
-  "accessDenied": "No tienes permiso para acceder a esa sección. Contacta al administrador."
+  "accessDenied": "No tienes permiso para acceder a esa sección. Contacta al administrador.",
+  "occupancyRate": "Tasa de ocupación",
+  "monthlyIncome": "Ingresos del mes",
+  "pendingPayments": "Pagos pendientes",
+  "activeMaintenance": "Mantenimientos activos",
+  "expiringContracts": "Contratos por vencer",
+  "availableProperties": "Propiedades disponibles",
+  "refresh": "Actualizar",
+  "loading": "Cargando métricas...",
+  "units": "unidades",
+  "vsPrevMonth": "vs mes anterior",
+  "delinquent": "en mora",
+  "pendingReview": "Por revisar",
+  "upToDate": "Al día",
+  "withRequests": "Con solicitudes",
+  "next30Days": "Próximos 30 días"
 }

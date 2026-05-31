@@ -221,13 +221,10 @@ export class AuthService {
    * Validate current token with backend
    */
   private validateToken(): void {
-    const token = this.getToken();
-    if (!token) return;
+    if (!this.getToken()) return;
 
     this.http
-      .get<AdminUser>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get<AdminUser>(`${environment.apiUrl}auth/me`)
       .pipe(
         catchError(() => {
           this.logout();
@@ -254,19 +251,15 @@ export class AuthService {
    * Clears invalid tokens without redirecting to prevent 401 loops
    */
   private validateTokenSilently(): void {
-    const token = this.getToken();
-    if (!token) return;
+    if (!this.getToken()) return;
 
     this.http
-      .get<AdminUser>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get<AdminUser>(`${environment.apiUrl}auth/me`)
       .pipe(
         catchError((error) => {
           // Only clear storage if token is invalid (401)
           // Don't clear on network errors to avoid logout on connection issues
           if (error.status === 401) {
-            console.warn('[AdminAuth] Invalid token detected, clearing storage');
             localStorage.removeItem(this.TOKEN_KEY);
             localStorage.removeItem(this.USER_KEY);
             sessionStorage.removeItem(this.TOKEN_KEY);

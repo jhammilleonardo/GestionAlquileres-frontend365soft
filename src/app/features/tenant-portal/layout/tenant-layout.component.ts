@@ -1,19 +1,11 @@
-import { Component, inject, computed, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatListModule } from '@angular/material/list';
-import { MatSidenavModule } from '@angular/material/sidenav';
-import { MatBadgeModule } from '@angular/material/badge';
 import {
   LucideAngularModule,
   Home,
   Wrench,
   MessageSquare,
+  History,
   User,
   LogOut,
   Menu,
@@ -27,7 +19,7 @@ import {
   FileEdit,
 } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
-import { TenantMessageService } from '../../../core/services/tenant/tenant-message.service';
+import { InternalMessageService } from '../../../core/services/internal-message.service';
 import {
   TenantNotificationService,
   TenantNotification,
@@ -42,33 +34,21 @@ import { LanguageService } from '../../../core/services/language.service';
 interface NavItem {
   labelKey: string;
   route: string;
-  icon: any;
+  icon: typeof Home;
 }
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-layout',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    MatToolbarModule,
-    MatButtonModule,
-    MatIconModule,
-    MatMenuModule,
-    MatDividerModule,
-    MatListModule,
-    MatSidenavModule,
-    MatBadgeModule,
-    LucideAngularModule,
-    TranslocoModule,
-  ],
+  imports: [RouterModule, LucideAngularModule, TranslocoModule],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   template: `
     <div class="tenant-layout">
       <!-- Header -->
       <header class="tenant-header">
         <div class="header-left">
-          <button mat-icon-button class="menu-toggle" (click)="toggleSidebar()">
+          <button type="button" class="icon-button menu-toggle" (click)="toggleSidebar()">
             <lucide-icon [img]="Menu" [size]="24"></lucide-icon>
           </button>
           <div class="brand">
@@ -102,15 +82,15 @@ interface NavItem {
           <!-- Notifications -->
           <div class="notification-container">
             <button
-              mat-icon-button
-              class="notification-btn"
+              type="button"
+              class="icon-button notification-btn"
               (click)="toggleNotificationsDropdown()"
-              [matBadge]="unreadCount() > 9 ? '9+' : unreadCount().toString()"
-              [matBadgeHidden]="unreadCount() === 0"
-              matBadgeColor="warn"
-              matBadgeSize="small"
+              [attr.aria-label]="'public.tenantLayout.notifications' | transloco"
             >
               <lucide-icon [img]="Bell" [size]="20"></lucide-icon>
+              @if (unreadCount() > 0) {
+                <span class="icon-badge">{{ unreadCount() > 9 ? '9+' : unreadCount() }}</span>
+              }
             </button>
 
             <!-- Notifications Dropdown -->
@@ -182,39 +162,50 @@ interface NavItem {
 
           <!-- Messages -->
           <button
-            mat-icon-button
-            class="messages-btn"
-            [matBadge]="messageService.unreadCount()"
-            [matBadgeHidden]="messageService.unreadCount() === 0"
-            matBadgeColor="primary"
-            matBadgeSize="small"
+            type="button"
+            class="icon-button messages-btn"
             [routerLink]="mensajesUrl()"
+            [attr.aria-label]="'public.tenantMessages.title' | transloco"
           >
             <lucide-icon [img]="MessageSquare" [size]="20"></lucide-icon>
+            @if (messageService.unread() > 0) {
+              <span class="icon-badge info">{{
+                messageService.unread() > 9 ? '9+' : messageService.unread()
+              }}</span>
+            }
           </button>
 
-          <button mat-button [matMenuTriggerFor]="userMenu" class="user-btn">
-            <div class="user-avatar">
-              {{ getUserInitials() }}
-            </div>
-            <span class="user-name">{{ authService.currentUser()?.name }}</span>
-          </button>
+          <div class="user-menu-container">
+            <button type="button" class="user-btn" (click)="toggleUserMenu()">
+              <div class="user-avatar">
+                {{ getUserInitials() }}
+              </div>
+              <span class="user-name">{{ authService.currentUser()?.name }}</span>
+            </button>
 
-          <mat-menu #userMenu="matMenu">
-            <button mat-menu-item [routerLink]="perfilUrl()">
-              <lucide-icon [img]="User" [size]="18"></lucide-icon>
-              <span>{{ 'public.tenantLayout.myProfile' | transloco }}</span>
-            </button>
-            <button mat-menu-item [routerLink]="configuracionUrl()">
-              <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
-              <span>{{ 'public.tenantLayout.settings' | transloco }}</span>
-            </button>
-            <mat-divider></mat-divider>
-            <button mat-menu-item (click)="logout()" class="logout-btn">
-              <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
-              <span>{{ 'public.tenantLayout.logout' | transloco }}</span>
-            </button>
-          </mat-menu>
+            @if (isUserMenuOpen) {
+              <div class="user-dropdown">
+                <a class="user-menu-item" [routerLink]="perfilUrl()" (click)="closeUserMenu()">
+                  <lucide-icon [img]="User" [size]="18"></lucide-icon>
+                  <span>{{ 'public.tenantLayout.myProfile' | transloco }}</span>
+                </a>
+                <a
+                  class="user-menu-item"
+                  [routerLink]="configuracionUrl()"
+                  (click)="closeUserMenu()"
+                >
+                  <lucide-icon [img]="Settings" [size]="18"></lucide-icon>
+                  <span>{{ 'public.tenantLayout.settings' | transloco }}</span>
+                </a>
+                <div class="user-menu-divider"></div>
+                <button type="button" class="user-menu-item logout-btn" (click)="logout()">
+                  <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
+                  <span>{{ 'public.tenantLayout.logout' | transloco }}</span>
+                </button>
+              </div>
+              <div class="dropdown-overlay" (click)="closeUserMenu()"></div>
+            }
+          </div>
         </div>
       </header>
 
@@ -268,7 +259,7 @@ interface NavItem {
         display: flex;
         flex-direction: column;
         height: 100vh;
-        background: var(--mat-sys-surface-container-low);
+        background: var(--app-color-bg);
       }
 
       .tenant-header {
@@ -277,8 +268,8 @@ interface NavItem {
         justify-content: space-between;
         padding: 0 24px;
         height: 64px;
-        background: var(--mat-sys-surface);
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        background: var(--app-color-surface);
+        border-bottom: 1px solid var(--app-color-border);
         position: sticky;
         top: 0;
         z-index: 100;
@@ -294,10 +285,54 @@ interface NavItem {
         display: none;
       }
 
+      .icon-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: var(--app-color-text-muted);
+        cursor: pointer;
+        transition:
+          background 0.2s ease,
+          color 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .icon-button:hover {
+        background: var(--app-color-surface-muted);
+        color: var(--app-color-text);
+      }
+
+      .icon-badge {
+        position: absolute;
+        top: 3px;
+        right: 2px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 999px;
+        background: var(--app-color-danger);
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 800;
+        line-height: 18px;
+        text-align: center;
+        box-shadow: 0 0 0 2px var(--app-color-surface);
+      }
+
+      .icon-badge.info {
+        background: var(--app-color-primary);
+      }
+
       .brand-text {
         font-size: 1.25rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
       }
 
       .header-right {
@@ -340,14 +375,6 @@ interface NavItem {
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
       }
 
-      .notification-btn {
-        color: var(--mat-sys-on-surface-variant);
-      }
-
-      .messages-btn {
-        color: var(--mat-sys-on-surface-variant);
-      }
-
       // Notifications Dropdown Styles
       .notification-container {
         position: relative;
@@ -359,10 +386,10 @@ interface NavItem {
         right: 0;
         width: 380px;
         max-width: 90vw;
-        background: var(--mat-sys-surface);
+        background: var(--app-color-surface);
         border-radius: 8px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        border: 1px solid var(--mat-sys-outline-variant);
+        border: 1px solid var(--app-color-border);
         z-index: 1000;
         max-height: 500px;
         display: flex;
@@ -386,13 +413,13 @@ interface NavItem {
         justify-content: space-between;
         align-items: center;
         padding: 16px;
-        border-bottom: 1px solid var(--mat-sys-outline-variant);
+        border-bottom: 1px solid var(--app-color-border);
 
         h3 {
           margin: 0;
           font-size: 1rem;
           font-weight: 600;
-          color: var(--mat-sys-on-surface);
+          color: var(--app-color-text);
         }
 
         .header-actions-btns {
@@ -404,8 +431,8 @@ interface NavItem {
       .mark-all-btn {
         padding: 6px 12px;
         font-size: 0.75rem;
-        background: var(--mat-sys-primary);
-        color: var(--mat-sys-on-primary);
+        background: var(--app-color-primary);
+        color: #fff;
         border: none;
         border-radius: 6px;
         cursor: pointer;
@@ -413,14 +440,14 @@ interface NavItem {
         transition: background 0.2s;
 
         &:hover {
-          background: color-mix(in srgb, var(--mat-sys-primary) 90%, black);
+          background: var(--app-color-primary-hover);
         }
       }
 
       .no-notifications {
         padding: 48px 24px;
         text-align: center;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
 
         .empty-icon {
           opacity: 0.3;
@@ -449,7 +476,7 @@ interface NavItem {
         }
 
         &::-webkit-scrollbar-thumb {
-          background: var(--mat-sys-outline-variant);
+          background: var(--app-color-border-strong);
           border-radius: 3px;
         }
       }
@@ -465,11 +492,11 @@ interface NavItem {
         position: relative;
 
         &:hover {
-          background: var(--mat-sys-surface-container-low);
+          background: var(--app-color-surface-muted);
         }
 
         &.unread {
-          background: color-mix(in srgb, var(--mat-sys-primary) 5%, transparent);
+          background: var(--app-color-primary-soft);
         }
       }
 
@@ -481,7 +508,7 @@ interface NavItem {
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--mat-sys-surface-container-low);
+        background: var(--app-color-surface-muted);
         border-radius: 50%;
       }
 
@@ -494,14 +521,14 @@ interface NavItem {
         margin: 0 0 4px 0;
         font-size: 0.875rem;
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         line-height: 1.3;
       }
 
       .notification-message {
         margin: 0 0 6px 0;
         font-size: 0.8125rem;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         line-height: 1.4;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -511,14 +538,14 @@ interface NavItem {
 
       .notification-time {
         font-size: 0.75rem;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         opacity: 0.7;
       }
 
       .unread-dot {
         width: 8px;
         height: 8px;
-        background: var(--mat-sys-primary);
+        background: var(--app-color-primary);
         border-radius: 50%;
         flex-shrink: 0;
         margin-top: 6px;
@@ -526,7 +553,7 @@ interface NavItem {
 
       .dropdown-footer {
         padding: 12px 16px;
-        border-top: 1px solid var(--mat-sys-outline-variant);
+        border-top: 1px solid var(--app-color-border);
       }
 
       .view-all-btn {
@@ -534,15 +561,15 @@ interface NavItem {
         padding: 10px;
         font-size: 0.875rem;
         font-weight: 500;
-        background: var(--mat-sys-surface-container-low);
-        color: var(--mat-sys-on-surface);
+        background: var(--app-color-surface-muted);
+        color: var(--app-color-text);
         border: none;
         border-radius: 6px;
         cursor: pointer;
         transition: background 0.2s;
 
         &:hover {
-          background: var(--mat-sys-surface-container);
+          background: var(--app-color-primary-soft);
         }
       }
 
@@ -559,14 +586,27 @@ interface NavItem {
         display: flex;
         align-items: center;
         gap: 8px;
+        min-height: 44px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background: transparent;
+        padding: 4px 8px 4px 4px;
+        cursor: pointer;
+        transition:
+          background 0.2s ease,
+          border-color 0.2s ease;
+      }
+
+      .user-btn:hover {
+        background: var(--app-color-surface-muted);
       }
 
       .user-avatar {
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: var(--mat-sys-primary);
-        color: var(--mat-sys-on-primary);
+        background: var(--app-color-primary);
+        color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -575,8 +615,51 @@ interface NavItem {
       }
 
       .user-name {
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         font-weight: 500;
+      }
+
+      .user-menu-container {
+        position: relative;
+      }
+
+      .user-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 220px;
+        padding: 8px;
+        border: 1px solid var(--app-color-border);
+        border-radius: 12px;
+        background: var(--app-color-surface);
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+        z-index: 1000;
+      }
+
+      .user-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--app-color-text);
+        font: inherit;
+        text-align: left;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .user-menu-item:hover {
+        background: var(--app-color-surface-muted);
+      }
+
+      .user-menu-divider {
+        height: 1px;
+        margin: 6px 0;
+        background: var(--app-color-border);
       }
 
       .layout-body {
@@ -592,8 +675,8 @@ interface NavItem {
 
       .tenant-sidebar {
         width: 260px;
-        background: var(--mat-sys-surface);
-        border-right: 1px solid var(--mat-sys-outline-variant);
+        background: var(--app-color-surface);
+        border-right: 1px solid var(--app-color-border);
         display: flex;
         flex-direction: column;
         transition: width 0.3s ease;
@@ -615,20 +698,20 @@ interface NavItem {
         gap: 12px;
         padding: 12px 16px;
         border-radius: 8px;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         text-decoration: none;
         margin-bottom: 4px;
         transition: all 0.2s;
       }
 
       .nav-item:hover {
-        background: var(--mat-sys-surface-container-low);
-        color: var(--mat-sys-on-surface);
+        background: var(--app-color-surface-muted);
+        color: var(--app-color-text);
       }
 
       .nav-item.active {
-        background: var(--mat-sys-primary);
-        color: var(--mat-sys-on-primary);
+        background: var(--app-color-primary);
+        color: #fff;
       }
 
       .nav-label {
@@ -638,14 +721,14 @@ interface NavItem {
       .contract-info {
         padding: 16px;
         margin: 16px;
-        background: var(--mat-sys-surface-container-low);
+        background: var(--app-color-surface-muted);
         border-radius: 8px;
-        border: 1px solid var(--mat-sys-outline-variant);
+        border: 1px solid var(--app-color-border);
       }
 
       .contract-label {
         font-size: 12px;
-        color: var(--mat-sys-on-surface-variant);
+        color: var(--app-color-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         margin-bottom: 4px;
@@ -653,13 +736,13 @@ interface NavItem {
 
       .contract-value {
         font-weight: 600;
-        color: var(--mat-sys-on-surface);
+        color: var(--app-color-text);
         margin-bottom: 4px;
       }
 
       .contract-number {
         font-size: 12px;
-        color: var(--mat-sys-primary);
+        color: var(--app-color-primary);
         font-family: monospace;
       }
 
@@ -670,7 +753,7 @@ interface NavItem {
       }
 
       .logout-btn {
-        color: var(--mat-sys-error);
+        color: var(--app-color-danger);
       }
 
       @media (max-width: 768px) {
@@ -793,10 +876,11 @@ interface NavItem {
     `,
   ],
 })
-export class TenantLayoutComponent implements OnInit, OnDestroy {
+export class TenantLayoutComponent implements OnDestroy {
   readonly Home = Home;
   readonly Wrench = Wrench;
   readonly MessageSquare = MessageSquare;
+  readonly History = History;
   readonly User = User;
   readonly LogOut = LogOut;
   readonly Menu = Menu;
@@ -810,7 +894,7 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
   readonly FileEdit = FileEdit;
 
   authService = inject(TenantAuthService);
-  messageService = inject(TenantMessageService);
+  messageService = inject(InternalMessageService);
   notificationService = inject(TenantNotificationService);
   contractService = inject(ContractService);
   private router = inject(Router);
@@ -821,6 +905,7 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
 
   sidebarCollapsed = false;
   isNotificationsDropdownOpen = false;
+  isUserMenuOpen = false;
 
   // Notifications
   notifications = this.notificationService.notifications;
@@ -860,6 +945,11 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
         icon: this.Home,
       },
       {
+        labelKey: 'public.myProperty.title',
+        route: this.slugService.buildUrl('/portal/mi-propiedad'),
+        icon: this.Home,
+      },
+      {
         labelKey: 'public.tenantLayout.navMaintenance',
         route: this.slugService.buildUrl('/portal/mantenimiento'),
         icon: this.Wrench,
@@ -884,6 +974,11 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
         route: this.slugService.buildUrl('/portal/mensajes'),
         icon: this.MessageSquare,
       },
+      {
+        labelKey: 'public.tenantHistory.title',
+        route: this.slugService.buildUrl('/portal/historial'),
+        icon: this.History,
+      },
     ];
   });
 
@@ -899,6 +994,9 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
       this.sidebarCollapsed = window.innerWidth <= 768;
     }
 
+    // Contador de mensajes internos no leídos
+    this.messageService.refreshUnread().subscribe({ error: () => undefined });
+
     // Check if user has contracts by querying the contract service directly
     const currentUser = this.authService.currentUser();
 
@@ -913,9 +1011,7 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
               this.slugService.navigateTo(['portal', 'dashboard']);
             }
           },
-          error: (err) => {
-            console.error('[TenantLayout] Error checking contracts:', err);
-          },
+          error: () => undefined,
         });
       }
     }
@@ -961,16 +1057,31 @@ export class TenantLayoutComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.closeUserMenu();
     this.authService.logout();
   }
 
   // Notification methods
   toggleNotificationsDropdown(): void {
     this.isNotificationsDropdownOpen = !this.isNotificationsDropdownOpen;
+    if (this.isNotificationsDropdownOpen) {
+      this.closeUserMenu();
+    }
   }
 
   closeNotificationsDropdown(): void {
     this.isNotificationsDropdownOpen = false;
+  }
+
+  toggleUserMenu(): void {
+    this.isUserMenuOpen = !this.isUserMenuOpen;
+    if (this.isUserMenuOpen) {
+      this.closeNotificationsDropdown();
+    }
+  }
+
+  closeUserMenu(): void {
+    this.isUserMenuOpen = false;
   }
 
   handleNotificationClick(notification: TenantNotification): void {
