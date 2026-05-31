@@ -57,6 +57,12 @@ export const PERMISSION_MODULES: { key: AvailableModule; label: string }[] = [
   { key: 'contracts', label: 'Contratos' },
   { key: 'payments', label: 'Pagos' },
   { key: 'maintenance', label: 'Mantenimiento' },
+  { key: 'reports', label: 'Reportes' },
+  { key: 'owners', label: 'Propietarios' },
+  { key: 'inspections', label: 'Inspecciones' },
+  { key: 'violations', label: 'Violaciones' },
+  { key: 'expenses', label: 'Gastos' },
+  { key: 'vendors', label: 'Proveedores' },
   { key: 'config', label: 'Configuración' },
   { key: 'employees', label: 'Empleados' },
 ];

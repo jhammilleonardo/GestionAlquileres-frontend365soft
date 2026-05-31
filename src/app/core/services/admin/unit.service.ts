@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiHttpService } from '../api-http.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 import { Unit, UnitFormData } from '../../models/unit.model';
 
 @Injectable({ providedIn: 'root' })
 export class UnitService {
-  private apiHttp = inject(ApiHttpService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
 
   private endpoint(propertyId: number, suffix = ''): string {
@@ -14,18 +14,18 @@ export class UnitService {
   }
 
   findByProperty(propertyId: number): Observable<Unit[]> {
-    return this.apiHttp.get<Unit[]>(this.endpoint(propertyId));
+    return this.apiClient.get<Unit[]>(this.endpoint(propertyId));
   }
 
   create(propertyId: number, dto: Partial<UnitFormData>): Observable<Unit> {
-    return this.apiHttp.post<Unit>(this.endpoint(propertyId), dto);
+    return this.apiClient.post<Unit>(this.endpoint(propertyId), dto);
   }
 
   update(propertyId: number, unitId: number, dto: Partial<UnitFormData>): Observable<Unit> {
-    return this.apiHttp.patch<Unit>(this.endpoint(propertyId, `/${unitId}`), dto);
+    return this.apiClient.patch<Unit>(this.endpoint(propertyId, `/${unitId}`), dto);
   }
 
   remove(propertyId: number, unitId: number): Observable<{ message: string }> {
-    return this.apiHttp.delete<{ message: string }>(this.endpoint(propertyId, `/${unitId}`));
+    return this.apiClient.delete<{ message: string }>(this.endpoint(propertyId, `/${unitId}`));
   }
 }

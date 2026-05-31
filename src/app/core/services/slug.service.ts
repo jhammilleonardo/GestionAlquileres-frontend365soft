@@ -149,16 +149,10 @@ export class SlugService {
    */
   navigateTo(path: string[]): void {
     const slug = this.currentSlugSignal();
-    console.log('[SlugService.navigateTo] Current slug:', slug);
-    console.log('[SlugService.navigateTo] Path to navigate:', path);
-    console.log('[SlugService.navigateTo] Full path will be:', ['/', slug, ...path]);
 
     if (slug) {
       const fullPath = ['/', slug, ...path];
-      console.log('[SlugService.navigateTo] Executing router.navigate to:', fullPath);
       this.router.navigate(fullPath);
-    } else {
-      console.warn('[SlugService.navigateTo] No slug found, cannot navigate');
     }
   }
 
@@ -168,7 +162,6 @@ export class SlugService {
   buildUrl(path: string): string {
     const slug = this.currentSlugSignal();
     if (!slug) {
-      console.warn('SlugService: No hay slug actual para construir URL');
       return path;
     }
     return `/${slug}${path.startsWith('/') ? path : '/' + path}`;
@@ -180,7 +173,6 @@ export class SlugService {
   buildApiEndpoint(endpoint: string): string {
     const slug = this.currentSlugSignal();
     if (!slug) {
-      console.warn('SlugService: No hay slug actual para construir endpoint');
       return endpoint;
     }
 

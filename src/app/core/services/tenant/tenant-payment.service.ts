@@ -73,7 +73,6 @@ export class TenantPaymentService {
             error.error?.message || this.transloco.translate('common.errors.loadPayments'),
           );
           this.isLoadingSignal.set(false);
-          console.error('Error loading payments:', error);
           return of([]);
         }),
       )
@@ -92,8 +91,7 @@ export class TenantPaymentService {
         tap((stats) => {
           this.statsSignal.set(stats);
         }),
-        catchError((error) => {
-          console.error('Error loading payment stats:', error);
+        catchError((_e) => {
           return of(null);
         }),
       )
@@ -210,7 +208,6 @@ export class TenantPaymentService {
         );
       }),
       catchError((error) => {
-        console.error('Error loading payment:', error);
         throw error;
       }),
     );

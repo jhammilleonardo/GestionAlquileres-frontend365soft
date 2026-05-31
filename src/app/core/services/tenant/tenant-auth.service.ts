@@ -1,9 +1,10 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError, of, switchMap } from 'rxjs';
+import { Observable, tap, catchError, of, switchMap, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { SlugService } from '../slug.service';
+import { SessionTokenService } from '../session-token.service';
 
 export interface TenantUser {
   id: number;
@@ -27,13 +28,27 @@ export interface LoginResponse {
   user: TenantUser;
 }
 
+/** Forma cruda del usuario que devuelve el backend (camelCase o snake_case). */
+interface RawTenantUser {
+  id?: number;
+  userId?: number;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: 'TENANT' | 'INQUILINO';
+  tenant_slug?: string;
+  tenantSlug?: string;
+  contract?: TenantUser['contract'];
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class TenantAuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
-  private slugService = inject(SlugService);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly slugService = inject(SlugService);
+  private readonly sessionToken = inject(SessionTokenService);
 
   private readonly TOKEN_KEY = 'tenant_access_token';
   private readonly USER_KEY = 'tenant_user';
@@ -82,7 +97,7 @@ export class TenantAuthService {
       .pipe(
         tap((response) => {
           // Store token and initial user data immediately
-          localStorage.setItem(this.TOKEN_KEY, response.access_token);
+          this.sessionToken.setToken('tenant', response.access_token);
           const normalizedUser = this.normalizeUserData(response.user);
           this.currentUserSignal.set(normalizedUser);
           this.saveUserToStorage(normalizedUser);
@@ -108,7 +123,7 @@ export class TenantAuthService {
   logout(): void {
     const slug = this.slugService.getSlug();
 
-    localStorage.removeItem(this.TOKEN_KEY);
+    this.sessionToken.clearToken('tenant');
     localStorage.removeItem(this.USER_KEY);
     this.currentUserSignal.set(null);
 
@@ -128,7 +143,7 @@ export class TenantAuthService {
    * Get stored JWT token
    */
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return this.sessionToken.getToken('tenant');
   }
 
   /**
@@ -144,13 +159,10 @@ export class TenantAuthService {
    * Validate current token with backend
    */
   private validateToken(): void {
-    const token = this.getToken();
-    if (!token) return;
+    if (!this.getToken()) return;
 
     this.http
-      .get<TenantUser>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get<TenantUser>(`${environment.apiUrl}auth/me`)
       .pipe(
         catchError(() => {
           this.logout();
@@ -170,28 +182,20 @@ export class TenantAuthService {
    * Call this when you need to update user info (e.g., after contract creation)
    */
   refreshUserData(): Observable<TenantUser | null> {
-    const token = this.getToken();
-    if (!token) {
+    if (!this.getToken()) {
       return of(null);
     }
 
-    return this.http
-      .get<any>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .pipe(
-        tap((user) => {
-          if (user) {
-            const normalizedUser = this.normalizeUserData(user);
-            this.currentUserSignal.set(normalizedUser);
-            this.saveUserToStorage(normalizedUser);
-          }
-        }),
-        catchError((error) => {
-          console.error('[TenantAuthService] Error refreshing user data:', error);
-          return of(null);
-        }),
-      );
+    return this.http.get<RawTenantUser>(`${environment.apiUrl}auth/me`).pipe(
+      map((user) => {
+        if (!user) return null;
+        const normalizedUser = this.normalizeUserData(user);
+        this.currentUserSignal.set(normalizedUser);
+        this.saveUserToStorage(normalizedUser);
+        return normalizedUser;
+      }),
+      catchError(() => of(null)),
+    );
   }
 
   /**
@@ -199,20 +203,16 @@ export class TenantAuthService {
    * Clears invalid tokens without redirecting to prevent 401 loops
    */
   private validateTokenSilently(): void {
-    const token = this.getToken();
-    if (!token) return;
+    if (!this.getToken()) return;
 
     this.http
-      .get<any>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get<RawTenantUser>(`${environment.apiUrl}auth/me`)
       .pipe(
-        catchError((error) => {
+        catchError((error: { status?: number }) => {
           // Only clear storage if token is invalid (401)
           // Don't clear on network errors to avoid logout on connection issues
           if (error.status === 401) {
-            console.warn('[TenantAuth] Invalid token detected, clearing storage');
-            localStorage.removeItem(this.TOKEN_KEY);
+            this.sessionToken.clearToken('tenant');
             localStorage.removeItem(this.USER_KEY);
             this.currentUserSignal.set(null);
             this.slugService.clearSlug();
@@ -234,26 +234,25 @@ export class TenantAuthService {
    * Normalize user data from backend to match TenantUser interface
    * Backend returns userId but we expect id, tenantSlug vs tenant_slug, etc.
    */
-  private normalizeUserData(user: any): TenantUser {
-    const normalized = {
-      id: user.userId || user.id,
-      userId: user.userId || user.id, // Keep both for compatibility
-      name: user.name,
-      email: user.email,
+  private normalizeUserData(user: RawTenantUser): TenantUser {
+    return {
+      id: user.userId ?? user.id ?? 0,
+      userId: user.userId ?? user.id, // Keep both for compatibility
+      name: user.name ?? '',
+      email: user.email ?? '',
       phone: user.phone,
-      role: user.role,
-      tenant_slug: user.tenantSlug || user.tenant_slug,
-      tenantSlug: user.tenantSlug || user.tenant_slug, // Keep both
+      role: user.role ?? 'INQUILINO',
+      tenant_slug: user.tenantSlug ?? user.tenant_slug ?? '',
+      tenantSlug: user.tenantSlug ?? user.tenant_slug, // Keep both
       contract: user.contract,
     };
-    return normalized;
   }
 
   /**
    * Set session after successful login
    */
   private setSession(response: LoginResponse): void {
-    localStorage.setItem(this.TOKEN_KEY, response.access_token);
+    this.sessionToken.setToken('tenant', response.access_token);
     const normalizedUser = this.normalizeUserData(response.user);
     this.saveUserToStorage(normalizedUser);
     this.currentUserSignal.set(normalizedUser);
@@ -285,8 +284,8 @@ export class TenantAuthService {
    * Set session from external auth (e.g., after registration)
    * Updates the signal so guards see the user as authenticated immediately.
    */
-  setSessionFromToken(token: string, userData: any, slug?: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
+  setSessionFromToken(token: string, userData: RawTenantUser, slug?: string): void {
+    this.sessionToken.setToken('tenant', token);
     if (slug) {
       this.slugService.setSlug(slug);
     }

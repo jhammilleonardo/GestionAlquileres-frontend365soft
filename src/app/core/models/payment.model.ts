@@ -109,7 +109,7 @@ export interface QrPayment {
   expires_at?: string;
   paid_at?: string;
   payment_id?: number; // id del pago registrado en payments cuando status=PAGADO
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -197,7 +197,7 @@ export interface Payment {
   approved_at?: Date | string;
 
   // Metadata
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   // Timestamps
   created_at: Date | string;

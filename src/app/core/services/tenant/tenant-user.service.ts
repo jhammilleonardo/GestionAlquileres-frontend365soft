@@ -10,14 +10,14 @@ import {
   UserRole,
   UserStatus,
 } from '../../models/tenant-user.model';
-import { ApiService } from '../api.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TenantUserService {
-  private apiService = inject(ApiService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
 
   // Signal-based reactive state
@@ -55,19 +55,17 @@ export class TenantUserService {
   loadAllUsers(): void {
     const slug = this.getTenantSlug();
     if (!slug) {
-      console.warn('TenantUserService: No slug available, skipping loadAllUsers');
       return;
     }
     this.isLoadingSignal.set(true);
-    this.apiService
+    this.apiClient
       .get<AdminTenantUser[]>(`${slug}/users`)
       .pipe(tap(() => this.isLoadingSignal.set(false)))
       .subscribe({
         next: (users) => {
           this.usersSignal.set(users);
         },
-        error: (error) => {
-          console.error('Error loading users:', error);
+        error: (_e) => {
           this.isLoadingSignal.set(false);
         },
       });
@@ -94,16 +92,16 @@ export class TenantUserService {
    */
   getFilteredUsers(filters: TenantUserFilters): Observable<AdminTenantUser[]> {
     const slug = this.getTenantSlug();
-    const params: any = {};
+    const params: Record<string, string> = {};
 
-    if (filters.role) params.role = filters.role;
-    if (filters.status) params.status = filters.status;
-    if (filters.search) params.search = filters.search;
-    if (filters.date_from) params.date_from = filters.date_from;
-    if (filters.date_to) params.date_to = filters.date_to;
+    if (filters.role) params['role'] = filters.role;
+    if (filters.status) params['status'] = filters.status;
+    if (filters.search) params['search'] = filters.search;
+    if (filters.date_from) params['date_from'] = filters.date_from;
+    if (filters.date_to) params['date_to'] = filters.date_to;
 
-    return this.apiService
-      .get<AdminTenantUser[]>(`${slug}/users`, params)
+    return this.apiClient
+      .get<AdminTenantUser[]>(`${slug}/users`, { params })
       .pipe(tap((users) => this.usersSignal.set(users)));
   }
 
@@ -112,7 +110,7 @@ export class TenantUserService {
    */
   getUserById(id: number): Observable<AdminTenantUser> {
     const slug = this.getTenantSlug();
-    return this.apiService.get<AdminTenantUser>(`${slug}/users/${id}`);
+    return this.apiClient.get<AdminTenantUser>(`${slug}/users/${id}`);
   }
 
   /**
@@ -120,7 +118,7 @@ export class TenantUserService {
    */
   createUser(userData: CreateTenantUserDto): Observable<TenantUser> {
     const slug = this.getTenantSlug();
-    return this.apiService.post<TenantUser>(`${slug}/users`, userData).pipe(
+    return this.apiClient.post<TenantUser>(`${slug}/users`, userData).pipe(
       tap(() => {
         // Reload users after creating
         this.loadAllUsers();
@@ -134,7 +132,7 @@ export class TenantUserService {
    */
   updateUser(id: number, userData: UpdateTenantUserDto): Observable<TenantUser> {
     const slug = this.getTenantSlug();
-    return this.apiService.patch<TenantUser>(`${slug}/users/${id}`, userData).pipe(
+    return this.apiClient.patch<TenantUser>(`${slug}/users/${id}`, userData).pipe(
       tap(() => {
         // Reload users after updating
         this.loadAllUsers();
@@ -147,7 +145,7 @@ export class TenantUserService {
    */
   deleteUser(id: number): Observable<void> {
     const slug = this.getTenantSlug();
-    return this.apiService.delete<void>(`${slug}/users/${id}`).pipe(
+    return this.apiClient.delete<void>(`${slug}/users/${id}`).pipe(
       tap(() => {
         // Remove from local state
         const updatedUsers = this.usersSignal().filter((u) => u.id !== id);
@@ -169,7 +167,7 @@ export class TenantUserService {
    */
   resetUserPassword(id: number, newPassword: string): Observable<void> {
     const slug = this.getTenantSlug();
-    return this.apiService.post<void>(`${slug}/users/${id}/reset-password`, {
+    return this.apiClient.post<void>(`${slug}/users/${id}/reset-password`, {
       password: newPassword,
     });
   }
@@ -177,17 +175,17 @@ export class TenantUserService {
   /**
    * Get user contracts
    */
-  getUserContracts(userId: number): Observable<any[]> {
+  getUserContracts(userId: number): Observable<Record<string, unknown>[]> {
     const slug = this.getTenantSlug();
-    return this.apiService.get<any[]>(`${slug}/users/${userId}/contracts`);
+    return this.apiClient.get<Record<string, unknown>[]>(`${slug}/users/${userId}/contracts`);
   }
 
   /**
    * Get user payments
    */
-  getUserPayments(userId: number): Observable<any[]> {
+  getUserPayments(userId: number): Observable<Record<string, unknown>[]> {
     const slug = this.getTenantSlug();
-    return this.apiService.get<any[]>(`${slug}/users/${userId}/payments`);
+    return this.apiClient.get<Record<string, unknown>[]>(`${slug}/users/${userId}/payments`);
   }
 
   /**

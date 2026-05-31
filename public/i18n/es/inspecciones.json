@@ -1,0 +1,62 @@
+{
+  "title": "Inspecciones",
+  "subtitle": "Documentación visual del estado de las propiedades",
+  "new": "Nueva inspección",
+  "compare": "Comparar",
+  "loading": "Cargando inspecciones...",
+  "empty": "Sin inspecciones registradas",
+  "property": "Propiedad",
+  "selectProperty": "Seleccionar propiedad...",
+  "typeLabel": "Tipo",
+  "statusLabel": "Estado",
+  "allStatuses": "Todos los estados",
+  "date": "Fecha",
+  "inspector": "Inspector",
+  "selectInspector": "Asignar inspector...",
+  "open": "Abrir",
+  "createTitle": "Nueva inspección",
+  "created": "Inspección creada",
+  "saveError": "No se pudo guardar",
+  "checklistHint": "Se generará un checklist por áreas que podrás completar.",
+  "compareTitle": "Comparar entrada vs salida",
+  "selectInspection": "Seleccionar inspección...",
+  "runCompare": "Comparar",
+  "compareError": "No se pudo comparar",
+  "noCompareData": "Sin datos para comparar",
+  "item": "Ítem",
+  "notesPlaceholder": "Observaciones...",
+  "addPhoto": "Agregar foto",
+  "uploading": "Subiendo...",
+  "photosUploaded": "Fotos subidas",
+  "photoError": "No se pudieron subir las fotos",
+  "saveDraft": "Guardar borrador",
+  "complete": "Completar inspección",
+  "completed": "Inspección completada",
+  "saved": "Cambios guardados",
+  "pdf": "PDF",
+  "pdfError": "No se pudo generar el PDF",
+  "type": {
+    "move_in": "Entrada",
+    "move_out": "Salida",
+    "periodic": "Periódica"
+  },
+  "status": {
+    "scheduled": "Programada",
+    "in_progress": "En progreso",
+    "completed": "Completada"
+  },
+  "condition": {
+    "good": "Bueno",
+    "fair": "Regular",
+    "poor": "Malo",
+    "damaged": "Dañado"
+  },
+  "area": {
+    "living_room": "Sala",
+    "kitchen": "Cocina",
+    "bathroom": "Baño",
+    "bedroom": "Dormitorio",
+    "exterior": "Exterior",
+    "other": "Otro"
+  }
+}

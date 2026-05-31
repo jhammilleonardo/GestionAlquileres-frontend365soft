@@ -45,6 +45,11 @@ export interface UnitFormData {
   price_per_month: number | null;
   price_per_night: number | null;
   deposit_amount: number | null;
+  cleaning_fee?: number;
+  min_nights?: number;
+  max_nights?: number;
+  checkin_time?: string;
+  checkout_time?: string;
 }
 
 export interface UnitDialogData {

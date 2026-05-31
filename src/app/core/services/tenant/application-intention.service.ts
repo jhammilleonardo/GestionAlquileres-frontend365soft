@@ -120,8 +120,7 @@ export class ApplicationIntentionService {
           this.clearIntention();
         }
       }
-    } catch (error) {
-      console.error('Error loading application intention:', error);
+    } catch {
       this.clearIntention();
     }
   }

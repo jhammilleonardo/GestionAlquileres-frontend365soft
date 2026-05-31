@@ -88,8 +88,14 @@
       "loadConversations": "Error loading conversations",
       "loadProperties": "Error loading properties",
       "loadQR": "Error loading QR codes",
-      "orgNotFound": "Organization \"{{slug}}\" not found"
-    }
+      "orgNotFound": "Organization \"{{slug}}\" not found",
+      "generatePdf": "Failed to generate the PDF"
+    },
+    "skip": "Skip",
+    "apply": "Apply",
+    "clear": "Clear",
+    "previous": "Previous",
+    "next": "Next"
   },
   "sidebar": {
     "appName": "365Soft",
@@ -103,10 +109,18 @@
       "applications": "Applications",
       "payments": "Payments",
       "maintenance": "Maintenance",
+      "reports": "Reports",
+      "vendors": "Vendors",
+      "expenses": "Expenses",
+      "violations": "Violations",
+      "inspections": "Inspections",
       "employees": "Employees",
       "notifications": "Notifications",
       "settings": "Settings",
-      "profile": "Profile"
+      "profile": "Profile",
+      "website": "My website",
+      "messages": "Messages",
+      "audit": "Audit"
     }
   },
   "tenants": {

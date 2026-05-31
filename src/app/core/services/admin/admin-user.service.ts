@@ -1,8 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap, catchError, of } from 'rxjs';
-import { ApiHttpService } from '../api-http.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
-import { AuthService } from '../auth.service';
 import { TranslocoService } from '@jsverse/transloco';
 
 /**
@@ -29,9 +28,8 @@ export interface UserFilters {
   providedIn: 'root',
 })
 export class AdminUserService {
-  private apiHttp = inject(ApiHttpService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
-  private authService = inject(AuthService);
   private transloco = inject(TranslocoService);
 
   // Signals para estado reactivo
@@ -54,16 +52,6 @@ export class AdminUserService {
   }
 
   /**
-   * Obtener headers con autenticación
-   */
-  private get headers() {
-    const token = this.authService.getToken();
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
-  /**
    * Cargar todos los usuarios
    */
   loadUsers(filters?: UserFilters): void {
@@ -73,22 +61,21 @@ export class AdminUserService {
     this.errorSignal.set(null);
 
     const endpoint = this.slugService.buildApiEndpoint('users');
-    const params: any = {};
+    const params: Record<string, string> = {};
 
-    if (filters?.role) params.role = filters.role;
-    if (filters?.search) params.search = filters.search;
+    if (filters?.role) params['role'] = filters.role;
+    if (filters?.search) params['search'] = filters.search;
 
-    this.apiHttp
-      .get<User[]>(endpoint, params, this.headers)
+    this.apiClient
+      .get<User[]>(endpoint, { params })
       .pipe(
         tap((users) => {
           this.usersSignal.set(users);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadUsers'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading users:', error);
           return of([]);
         }),
       )
@@ -106,8 +93,8 @@ export class AdminUserService {
 
     const endpoint = this.slugService.buildApiEndpoint('users');
 
-    this.apiHttp
-      .get<User[]>(endpoint, {}, this.headers)
+    this.apiClient
+      .get<User[]>(endpoint)
       .pipe(
         tap((users) => {
           // Filtrar solo usuarios con rol USER o INQUILINO
@@ -115,10 +102,9 @@ export class AdminUserService {
           this.tenantsSignal.set(tenants);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadTenants'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading tenants:', error);
           return of([]);
         }),
       )
@@ -135,10 +121,9 @@ export class AdminUserService {
 
     const endpoint = this.slugService.buildApiEndpoint(`users/${id}`);
 
-    return this.apiHttp.get<User>(endpoint, {}, this.headers).pipe(
+    return this.apiClient.get<User>(endpoint).pipe(
       catchError((error) => {
         this.errorSignal.set(this.transloco.translate('common.errors.loadUser'));
-        console.error('Error getting user:', error);
         throw error;
       }),
     );

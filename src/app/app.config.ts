@@ -4,12 +4,14 @@ import {
   inject,
   provideBrowserGlobalErrorListeners,
   isDevMode,
+  signal,
 } from '@angular/core';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideTransloco, TranslocoLoader, Translation } from '@jsverse/transloco';
+import { provideTaiga, TUI_DARK_MODE } from '@taiga-ui/core';
 import { Observable } from 'rxjs';
 
 import { routes } from './app.routes';
@@ -33,6 +35,18 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
     provideAnimations(),
+    provideTaiga({
+      apis: 'stable',
+      fontScaling: false,
+      scrollbars: 'native',
+    }),
+    // La app está diseñada solo en tema claro (fondos claros fijos). Forzamos el
+    // modo claro de Taiga para que NO siga el modo oscuro del SO, que dejaba el
+    // texto de los inputs en blanco sobre fondo blanco (invisible al escribir).
+    {
+      provide: TUI_DARK_MODE,
+      useFactory: () => Object.assign(signal(false), { reset: () => undefined }),
+    },
     provideHttpClient(withInterceptors([authInterceptor])),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),

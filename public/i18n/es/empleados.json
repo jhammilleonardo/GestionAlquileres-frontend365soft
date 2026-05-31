@@ -1,11 +1,13 @@
 {
   "title": "Empleados",
+  "subtitle": "Administra usuarios internos, permisos por módulo y acceso operativo.",
   "new": "Nuevo Empleado",
   "reload": "Recargar",
   "reloadAria": "Recargar lista de empleados",
   "createAria": "Crear nuevo empleado",
   "loading": "Cargando empleados",
   "empty": "No hay empleados registrados",
+  "emptyDescription": "Crea empleados para delegar operaciones sin exponer módulos sensibles.",
   "createFirst": "Crear primer empleado",
   "lastConnection": "Última conexión",
   "managePermissions": "Gestionar permisos",

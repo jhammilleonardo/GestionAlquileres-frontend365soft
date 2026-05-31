@@ -25,7 +25,7 @@ export const moduleGuard: CanActivateFn = (route, _state) => {
   if (!requiredModule) return true;
 
   const slug = route.paramMap.get('slug') ?? slugService.getSlug();
-  if (!slug) return true;
+  if (!slug) return router.createUrlTree(['/login']);
 
   const permissions$ = toObservable(permissionsService.permissions);
 
@@ -61,6 +61,13 @@ export const moduleGuard: CanActivateFn = (route, _state) => {
       });
       return false;
     }),
-    catchError(() => of(true)), // timeout o error → no bloquear
+    catchError(() => {
+      void router.navigate(['/', slug, 'dashboard'], {
+        replaceUrl: true,
+        state: { accessDenied: true, module: requiredModule },
+      });
+
+      return of(false);
+    }),
   );
 };

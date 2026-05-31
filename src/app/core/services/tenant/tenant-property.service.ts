@@ -91,10 +91,9 @@ export class TenantPropertyService {
           this.propertiesSignal.set(processedProperties);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadProperties'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading properties:', error);
           return of([]);
         }),
       )

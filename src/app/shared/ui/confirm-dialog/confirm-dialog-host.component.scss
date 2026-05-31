@@ -1,0 +1,103 @@
+.confirm-dialog {
+  display: grid;
+  gap: 1rem;
+}
+
+.confirm-dialog--danger {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+.confirm-dialog__icon {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-danger, #dc2626) 12%, transparent);
+  color: var(--app-danger, #dc2626);
+}
+
+.confirm-dialog__message {
+  margin: 0;
+  color: var(--app-color-text, #0f172a);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.confirm-dialog__input {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.45rem;
+  color: var(--app-color-text, #0f172a);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.confirm-dialog__input textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid var(--app-color-border, #dbe3ef);
+  border-radius: var(--app-radius-md, 8px);
+  padding: 0.75rem;
+  background: var(--app-color-surface, #ffffff);
+  color: var(--app-color-text, #0f172a);
+  font: inherit;
+  font-weight: 450;
+  line-height: 1.45;
+}
+
+.confirm-dialog__input textarea:focus {
+  border-color: var(--app-color-primary, #2563eb);
+  outline: 3px solid color-mix(in srgb, var(--app-color-primary, #2563eb) 18%, transparent);
+}
+
+.confirm-dialog__error {
+  grid-column: 1 / -1;
+  margin: -0.5rem 0 0;
+  color: var(--app-danger, #dc2626);
+  font-size: 0.82rem;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.confirm-dialog__button {
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--app-radius-md, 8px);
+  padding: 0.55rem 0.9rem;
+  background: var(--app-color-primary, #2563eb);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm-dialog__button--danger {
+  background: var(--app-danger, #dc2626);
+}
+
+.confirm-dialog__button--flat {
+  background: transparent;
+  color: var(--app-color-text-muted, #64748b);
+}
+
+.confirm-dialog__button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.confirm-dialog__button--flat:hover:not(:disabled) {
+  background: var(--app-color-surface-muted, #f1f5f9);
+  filter: none;
+}
+
+.confirm-dialog__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}

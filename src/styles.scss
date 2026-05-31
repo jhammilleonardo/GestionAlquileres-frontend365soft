@@ -6,16 +6,53 @@
 @use '@angular/material' as mat;
 
 // Tailwind CSS v4
-@use "tailwindcss";
+@use 'tailwindcss';
+
+:root {
+  --app-font-family:
+    'Plus Jakarta Sans Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --app-color-bg: #f7f8fb;
+  --app-color-surface: #ffffff;
+  --app-color-surface-muted: #f2f5f8;
+  --app-color-border: #dce3ea;
+  --app-color-border-strong: #c6d1dc;
+  --app-color-text: #17202a;
+  --app-color-text-muted: #617080;
+  --app-color-primary: #2563eb;
+  --app-color-primary-hover: #1d4ed8;
+  --app-color-primary-soft: #eff6ff;
+  --app-color-primary-softer: #dbeafe;
+  --app-color-success: #16a34a;
+  --app-color-warning: #d97706;
+  --app-color-danger: #dc2626;
+  --app-shadow-dropdown: 0 18px 50px rgb(23 32 42 / 14%);
+  --app-radius-sm: 4px;
+  --app-radius-md: 8px;
+  --app-radius-lg: 12px;
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-6: 24px;
+  --app-space-8: 32px;
+
+  --tui-typography-family-text: var(--app-font-family);
+  --tui-typography-family-display: var(--app-font-family);
+}
 
 html {
   height: 100%;
-  @include mat.theme((color: (primary: mat.$azure-palette,
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
         tertiary: mat.$blue-palette,
       ),
-      typography: Roboto,
+      typography: 'Plus Jakarta Sans Variable',
       density: 0,
-    ));
+    )
+  );
 }
 
 body {
@@ -27,13 +64,22 @@ body {
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these
   // variables at https://material.angular.dev/guide/system-variables
-  background-color: var(--mat-sys-surface);
-  color: var(--mat-sys-on-surface);
-  font: var(--mat-sys-body-medium);
+  background-color: var(--app-color-bg);
+  color: var(--app-color-text);
+  font-family: var(--app-font-family);
+  font-size: 14px;
+  line-height: 1.5;
 
   // Reset the user agent margin.
   margin: 0;
   height: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 /* Global Lucide Icon Styles */
@@ -131,7 +177,8 @@ lucide-icon {
     flex-direction: column !important;
   }
 
-  mat-dialog-content, .mat-mdc-dialog-content {
+  mat-dialog-content,
+  .mat-mdc-dialog-content {
     flex: 1;
     max-height: unset !important;
     padding: 0 !important;

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet, ActivatedRoute } from '@angular/router';
 
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -9,6 +9,7 @@ import { TenantConfigService } from '../../../core/services/admin/tenant-config.
 import { FormatService } from '../../../core/services/format.service';
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-main-layout',
   standalone: true,
   imports: [RouterOutlet, SidebarComponent, HeaderComponent],
@@ -34,11 +35,8 @@ export class MainLayoutComponent implements OnInit {
     const currentSlug = this.slugService.getSlug();
 
     if (routeSlug && routeSlug !== currentSlug) {
-      // Only update if the route gives us something different (e.g. after page refresh)
-      console.log('MainLayout: Actualizando slug desde ruta:', routeSlug);
       this.slugService.setSlug(routeSlug);
     }
-    // If both match, or no route slug found, keep what the authGuard already set
 
     const slug = routeSlug ?? this.slugService.getSlug();
     if (slug) {

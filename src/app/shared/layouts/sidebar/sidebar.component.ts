@@ -23,6 +23,10 @@ import {
   FileCheck,
   User,
   UserCog,
+  AlertCircle,
+  Globe,
+  MessageSquare,
+  ShieldCheck,
 } from 'lucide-angular';
 
 import { SidebarService } from '../../../core/services/sidebar.service';
@@ -48,6 +52,10 @@ const ICON_MAP: Record<string, LucideIconData> = {
   Bell,
   User,
   UserCog,
+  AlertCircle,
+  Globe,
+  MessageSquare,
+  ShieldCheck,
 };
 
 @Component({

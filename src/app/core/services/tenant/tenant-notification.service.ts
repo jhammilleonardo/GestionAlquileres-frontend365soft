@@ -25,7 +25,7 @@ export interface TenantNotificationMetadata {
   payment_id?: number;
   payment_amount?: number;
   payment_due_date?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface TenantNotification {
@@ -130,10 +130,9 @@ export class TenantNotificationService {
           this.notificationsSignal.set(processedNotifications);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.loadNotifications'));
           this.isLoadingSignal.set(false);
-          console.error('Error loading tenant notifications:', error);
           return of([]);
         }),
       )
@@ -154,8 +153,7 @@ export class TenantNotificationService {
         tap((stats) => {
           this.statsSignal.set(stats);
         }),
-        catchError((error) => {
-          console.error('Error loading tenant notification stats:', error);
+        catchError((_e) => {
           return of(null);
         }),
       )
@@ -207,8 +205,7 @@ export class TenantNotificationService {
           // Actualizar estadísticas
           this.loadStats();
         }),
-        catchError((error) => {
-          console.error('Error marking tenant notification as read:', error);
+        catchError((_e) => {
           return of(undefined);
         }),
       );
@@ -234,9 +231,8 @@ export class TenantNotificationService {
           // Actualizar estadísticas
           this.loadStats();
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.markAllRead'));
-          console.error('Error marking all tenant notifications as read:', error);
           return of(undefined);
         }),
       );
@@ -260,9 +256,8 @@ export class TenantNotificationService {
           // Actualizar estadísticas
           this.loadStats();
         }),
-        catchError((error) => {
+        catchError((_e) => {
           this.errorSignal.set(this.transloco.translate('common.errors.deleteNotification'));
-          console.error('Error deleting tenant notification:', error);
           return of(undefined);
         }),
       );

@@ -1,0 +1,33 @@
+{
+  "title": "Auditoría",
+  "subtitle": "Registro de acciones del sistema",
+  "readonly": "Solo lectura",
+  "actionLabel": "Acción",
+  "allActions": "Todas las acciones",
+  "entity": "Entidad",
+  "user": "Usuario",
+  "from": "Desde",
+  "to": "Hasta",
+  "date": "Fecha",
+  "loading": "Cargando registros...",
+  "empty": "Sin registros de auditoría",
+  "loadError": "No se pudieron cargar los registros",
+  "loadMore": "Cargar más",
+  "viewDetail": "Ver detalle",
+  "detailTitle": "Detalle del registro",
+  "field": "Campo",
+  "before": "Antes",
+  "after": "Después",
+  "noChanges": "Sin cambios de valores registrados",
+  "action": {
+    "created": "Creado",
+    "updated": "Actualizado",
+    "deleted": "Eliminado",
+    "approved": "Aprobado",
+    "rejected": "Rechazado",
+    "status_changed": "Estado cambiado",
+    "signed": "Firmado",
+    "renewed": "Renovado",
+    "permissions_updated": "Permisos actualizados"
+  }
+}

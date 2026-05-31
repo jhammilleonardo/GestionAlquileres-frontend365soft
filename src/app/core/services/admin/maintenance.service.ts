@@ -12,14 +12,14 @@ import {
   MaintenanceAttachment,
   MaintenanceRequestType,
 } from '../../models/maintenance-request.model';
-import { ApiService } from '../api.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MaintenanceService {
-  private apiService = inject(ApiService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
 
   /**
@@ -67,7 +67,7 @@ export class MaintenanceService {
     const endpoint = `${this.slugService.buildApiEndpoint('admin/maintenance')}${params.toString() ? '?' + params.toString() : ''}`;
 
     this.loadingSignal.set(true);
-    this.apiService.get<MaintenanceRequest[]>(endpoint).subscribe({
+    this.apiClient.get<MaintenanceRequest[]>(endpoint).subscribe({
       next: (requests) => {
         const processedRequests = requests.map((req) => ({
           ...req,
@@ -80,8 +80,7 @@ export class MaintenanceService {
         this.requestsSignal.set(processedRequests);
         this.loadingSignal.set(false);
       },
-      error: (error) => {
-        console.error('Error loading maintenance requests:', error);
+      error: (_e) => {
         this.requestsSignal.set([]);
         this.loadingSignal.set(false);
       },
@@ -100,7 +99,7 @@ export class MaintenanceService {
    */
   getRequestById(id: number): Observable<MaintenanceRequest> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
-    return this.apiService.get<MaintenanceRequest>(endpoint).pipe(
+    return this.apiClient.get<MaintenanceRequest>(endpoint).pipe(
       map((req) => ({
         ...req,
         created_at: new Date(req.created_at),
@@ -119,7 +118,7 @@ export class MaintenanceService {
    */
   updateRequest(id: number, dto: UpdateMaintenanceDto): Observable<MaintenanceRequest> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
-    return this.apiService.patch<MaintenanceRequest>(endpoint, dto).pipe(
+    return this.apiClient.patch<MaintenanceRequest>(endpoint, dto).pipe(
       tap(() => {
         // Reload the list after updating
         this.loadAllRequests();
@@ -133,7 +132,7 @@ export class MaintenanceService {
    */
   deleteRequest(id: number): Observable<void> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
-    return this.apiService.delete<void>(endpoint).pipe(
+    return this.apiClient.delete<void>(endpoint).pipe(
       tap(() => {
         // Remove from local state
         this.requestsSignal.update((requests) => requests.filter((req) => req.id !== id));
@@ -182,6 +181,28 @@ export class MaintenanceService {
     return this.updateRequest(id, { assigned_to: 0 });
   }
 
+  /**
+   * Asignar la orden a un técnico interno O a un proveedor externo (excluyentes).
+   */
+  assignVendor(
+    id: number,
+    payload: { vendor_id?: number | null; assigned_to?: number | null },
+  ): Observable<MaintenanceRequest> {
+    const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}/assign-vendor`);
+    return this.apiClient.patch<MaintenanceRequest>(endpoint, payload);
+  }
+
+  /**
+   * Calificar al proveedor externo al cerrar una orden (1-5 estrellas + comentario).
+   */
+  rateVendor(
+    id: number,
+    payload: { rating: number; comment?: string },
+  ): Observable<MaintenanceRequest> {
+    const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}/rate-vendor`);
+    return this.apiClient.post<MaintenanceRequest>(endpoint, payload);
+  }
+
   // ==================== Messaging System ====================
 
   /**
@@ -189,7 +210,7 @@ export class MaintenanceService {
    */
   getMessages(requestId: number): Observable<MaintenanceMessage[]> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/messages`);
-    return this.apiService.get<MaintenanceMessage[]>(endpoint).pipe(
+    return this.apiClient.get<MaintenanceMessage[]>(endpoint).pipe(
       map((messages) =>
         messages.map((msg) => ({
           ...msg,
@@ -204,7 +225,7 @@ export class MaintenanceService {
    */
   addMessage(requestId: number, dto: CreateMessageDto): Observable<MaintenanceMessage> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/messages`);
-    return this.apiService.post<MaintenanceMessage>(endpoint, dto);
+    return this.apiClient.post<MaintenanceMessage>(endpoint, dto);
   }
 
   /**
@@ -214,7 +235,7 @@ export class MaintenanceService {
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/upload`);
-    return this.apiService.post<MaintenanceAttachment[]>(endpoint, formData);
+    return this.apiClient.post<MaintenanceAttachment[]>(endpoint, formData);
   }
 
   // ==================== Filtering ====================
@@ -259,7 +280,7 @@ export class MaintenanceService {
    */
   getRequestsByProperty(propertyId: number): Observable<MaintenanceRequest[]> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/property/${propertyId}`);
-    return this.apiService.get<MaintenanceRequest[]>(endpoint);
+    return this.apiClient.get<MaintenanceRequest[]>(endpoint);
   }
 
   /**
@@ -267,7 +288,7 @@ export class MaintenanceService {
    */
   getRequestsByContract(contractId: number): Observable<MaintenanceRequest[]> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/contract/${contractId}`);
-    return this.apiService.get<MaintenanceRequest[]>(endpoint);
+    return this.apiClient.get<MaintenanceRequest[]>(endpoint);
   }
 
   /**
@@ -282,7 +303,7 @@ export class MaintenanceService {
    */
   getRequestsByTenant(tenantId: number): Observable<MaintenanceRequest[]> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/tenant/${tenantId}`);
-    return this.apiService.get<MaintenanceRequest[]>(endpoint);
+    return this.apiClient.get<MaintenanceRequest[]>(endpoint);
   }
 
   // ==================== Search ====================
@@ -308,12 +329,11 @@ export class MaintenanceService {
    */
   loadStats(): void {
     const endpoint = this.slugService.buildApiEndpoint('admin/maintenance/stats');
-    this.apiService.get<MaintenanceStats>(endpoint).subscribe({
+    this.apiClient.get<MaintenanceStats>(endpoint).subscribe({
       next: (stats) => {
         this.statsSignal.set(stats);
       },
-      error: (error) => {
-        console.error('Error loading maintenance stats:', error);
+      error: (_e) => {
         this.statsSignal.set(null);
       },
     });
@@ -324,7 +344,7 @@ export class MaintenanceService {
    */
   getNewRequests(): Observable<MaintenanceRequest[]> {
     const endpoint = this.slugService.buildApiEndpoint('admin/maintenance/new');
-    return this.apiService.get<MaintenanceRequest[]>(endpoint);
+    return this.apiClient.get<MaintenanceRequest[]>(endpoint);
   }
 
   /**
@@ -332,7 +352,7 @@ export class MaintenanceService {
    */
   getUrgentRequests(): Observable<MaintenanceRequest[]> {
     const endpoint = this.slugService.buildApiEndpoint('admin/maintenance/urgent');
-    return this.apiService.get<MaintenanceRequest[]>(endpoint);
+    return this.apiClient.get<MaintenanceRequest[]>(endpoint);
   }
 
   // ==================== Utility Methods ====================

@@ -6,8 +6,8 @@
   left: 0;
   height: 100vh;
   width: 150px;
-  background: var(--mat-sys-surface);
-  border-right: 1px solid var(--mat-sys-outline-variant);
+  background: var(--app-color-surface);
+  border-right: 1px solid var(--app-color-border);
   display: flex;
   flex-direction: column;
   z-index: 1000;
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   padding: 0.5rem 0.5rem;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  border-bottom: 1px solid var(--app-color-border);
   height: 64px;
 }
 
@@ -73,7 +73,8 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, var(--mat-sys-primary) 0%, var(--mat-sys-tertiary) 100%);
+  background: var(--app-color-primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +85,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   margin: 0;
-  color: var(--mat-sys-on-surface);
+  color: var(--app-color-text);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -92,7 +93,7 @@
 .logo-text p {
   font-size: 0.6rem;
   margin: 0;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   line-height: 1;
   white-space: nowrap;
 }
@@ -118,7 +119,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   text-decoration: none;
   transition: all 0.2s ease;
   position: relative;
@@ -131,19 +132,19 @@
     transform: translateY(-50%);
     width: 3px;
     height: 0;
-    background: var(--mat-sys-primary);
+    background: var(--app-color-primary);
     transition: height 0.2s ease;
     border-radius: 0 2px 2px 0;
   }
 
   &:hover {
-    background: var(--mat-sys-surface-container-low);
-    color: var(--mat-sys-on-surface);
+    background: var(--app-color-surface-muted);
+    color: var(--app-color-text);
   }
 
   &.active {
-    background: var(--mat-sys-primary-container);
-    color: var(--mat-sys-on-primary-container);
+    background: var(--app-color-primary-soft);
+    color: var(--app-color-primary);
 
     &::before {
       height: 100%;
@@ -162,7 +163,7 @@
   justify-content: center;
   font-size: 0.65rem;
   font-weight: 700;
-  background: #ef4444;
+  background: var(--app-color-danger);
   color: #fff;
 }
 
@@ -185,7 +186,7 @@
 .lang-toggle {
   margin-top: auto;
   padding: 0.75rem 0.875rem 1rem;
-  border-top: 1px solid var(--mat-sys-outline-variant);
+  border-top: 1px solid var(--app-color-border);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -198,7 +199,7 @@
 
 .lang-label {
   font-size: 0.7rem;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   white-space: nowrap;
   flex: 1;
 }
@@ -206,7 +207,7 @@
 .lang-buttons {
   display: flex;
   gap: 2px;
-  background: var(--mat-sys-surface-container-high);
+  background: var(--app-color-surface-muted);
   border-radius: 6px;
   padding: 2px;
 }
@@ -219,7 +220,7 @@
   background: transparent;
   border-radius: 4px;
   cursor: pointer;
-  color: var(--mat-sys-on-surface-variant);
+  color: var(--app-color-text-muted);
   letter-spacing: 0.04em;
   transition:
     background 0.15s,
@@ -227,16 +228,16 @@
   font-family: inherit;
 
   &.active {
-    background: var(--mat-sys-primary);
-    color: var(--mat-sys-on-primary);
+    background: var(--app-color-primary);
+    color: #ffffff;
   }
 
   &:hover:not(.active) {
-    background: var(--mat-sys-surface-container);
+    background: var(--app-color-primary-soft);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--mat-sys-primary);
+    outline: 2px solid var(--app-color-primary);
     outline-offset: 1px;
   }
 }

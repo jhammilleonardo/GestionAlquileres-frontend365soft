@@ -1,17 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
 import {
   Property,
   PropertyType,
   PropertySubtype,
   PropertyStatus,
   PropertyFilters,
+  PropertyOwner,
   RentalApplication,
   TenantInfo,
   PaginatedResponse,
 } from '../../models/property.model';
-import { ApiHttpService } from '../api-http.service';
+import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 
 @Injectable({
@@ -21,7 +22,7 @@ export class PropertyService {
   private favoritesSubject = new BehaviorSubject<Set<number>>(new Set());
   public favorites$ = this.favoritesSubject.asObservable();
 
-  private apiHttp = inject(ApiHttpService);
+  private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
 
   constructor() {
@@ -50,42 +51,32 @@ export class PropertyService {
     if (!tenantSlug) {
       throw new Error('No tenant slug available');
     }
-    return this.apiHttp.get<TenantInfo>(`tenants/slug/${tenantSlug}`);
+    return this.apiClient.get<TenantInfo>(`tenants/slug/${tenantSlug}`);
   }
 
   /**
    * Obtener propiedades disponibles con filtros
    */
   getFilteredProperties(filters: PropertyFilters): Observable<Property[]> {
-    const params: any = {};
+    const params: Record<string, string | number> = {};
 
     // Mapear filtros al formato del backend
-    if (filters.status) params.status = filters.status;
-    if (filters.property_type_id) params.property_type_id = filters.property_type_id;
-    if (filters.property_subtype_id) params.property_subtype_id = filters.property_subtype_id;
-    if (filters.city) params.city = filters.city;
-    if (filters.country) params.country = filters.country;
-    if (filters.search) params.search = filters.search;
-    if (filters.sort_by) params.sort_by = filters.sort_by;
-    if (filters.sort_order) params.sort_order = filters.sort_order;
-    if (filters.page) params.page = filters.page;
-    if (filters.limit) params.limit = filters.limit;
+    if (filters.status) params['status'] = filters.status;
+    if (filters.property_type_id) params['property_type_id'] = filters.property_type_id;
+    if (filters.property_subtype_id) params['property_subtype_id'] = filters.property_subtype_id;
+    if (filters.city) params['city'] = filters.city;
+    if (filters.country) params['country'] = filters.country;
+    if (filters.search) params['search'] = filters.search;
+    if (filters.sort_by) params['sort_by'] = filters.sort_by;
+    if (filters.sort_order) params['sort_order'] = filters.sort_order;
+    if (filters.page) params['page'] = filters.page;
+    if (filters.limit) params['limit'] = filters.limit;
 
     const endpoint = this.slugService.buildApiEndpoint('catalog/properties');
 
-    console.log('PropertyService - Cargando propiedades');
-    console.log('  Slug actual:', this.slugService.getSlug());
-    console.log('  Endpoint:', endpoint);
-    console.log('  Filtros:', params);
-
-    return this.apiHttp.get<PaginatedResponse<Property>>(endpoint, params).pipe(
-      tap((response) => {
-        console.log('PropertyService - Respuesta recibida:', response);
-        console.log('PropertyService - Total de propiedades:', response.total);
-      }),
+    return this.apiClient.get<PaginatedResponse<Property>>(endpoint, { params }).pipe(
       map((response) => response.items.map((p) => this.transformProperty(p))),
-      catchError((error) => {
-        console.error('PropertyService - Error loading properties:', error);
+      catchError((_e) => {
         return of([]);
       }),
     );
@@ -104,10 +95,9 @@ export class PropertyService {
   getPropertyById(id: number): Observable<Property | undefined> {
     const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${id}`);
 
-    return this.apiHttp.get<Property>(endpoint).pipe(
+    return this.apiClient.get<Property>(endpoint).pipe(
       map((property) => this.transformProperty(property)),
-      catchError((error) => {
-        console.error(`Error loading property ${id}:`, error);
+      catchError((_e) => {
         return of(undefined);
       }),
     );
@@ -118,32 +108,30 @@ export class PropertyService {
    */
   getPropertyTypes(): Observable<PropertyType[]> {
     const endpoint = this.slugService.buildApiEndpoint('admin/property-types');
-    return this.apiHttp.get<PropertyType[]>(endpoint);
+    return this.apiClient.get<PropertyType[]>(endpoint);
   }
 
   getPropertySubtypes(typeId?: number): Observable<PropertySubtype[]> {
     const params = typeId ? { typeId } : {};
     const endpoint = this.slugService.buildApiEndpoint('admin/property-subtypes');
-    return this.apiHttp.get<PropertySubtype[]>(endpoint, params);
+    return this.apiClient.get<PropertySubtype[]>(endpoint, { params });
   }
 
   /**
    * Enviar solicitud de alquiler
    */
   submitApplication(
-    application: RentalApplication,
+    _application: RentalApplication,
   ): Observable<{ success: boolean; message: string }> {
     // TODO: Implementar endpoint para enviar solicitudes
     // Por ahora retornamos un Observable simulado
-    console.log('Application submitted:', application);
 
     return of({
       success: true,
       message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.',
     }).pipe(
       map((response) => response),
-      catchError((error) => {
-        console.error('Error submitting application:', error);
+      catchError((_e) => {
         return of({
           success: false,
           message: 'Error al enviar la solicitud. Por favor intente nuevamente.',
@@ -181,8 +169,11 @@ export class PropertyService {
   }
 
   /**
-   * Transformar propiedad del backend al formato local si es necesario
+   * Transformar propiedad del backend al formato local si es necesario.
+   * El backend devuelve formatos variables (images como string/array/objeto,
+   * montos como string), por eso se normaliza aquí en el borde del sistema.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private transformProperty(property: any): Property {
     // Asegurar que las fechas sean objetos Date
     if (typeof property.created_at === 'string') {
@@ -243,25 +234,22 @@ export class PropertyService {
           country: '',
         },
       ];
-      console.warn(
-        'Propiedad sin direcciones, usando dirección por defecto:',
-        property.id,
-        property.title,
-      );
     }
 
     // Asegurar owners - normalizar estructura y agregar un owner por defecto si no existe
     if (property.owners && Array.isArray(property.owners) && property.owners.length > 0) {
       // Flatten: si el owner tiene rental_owner anidado, traer sus campos al nivel superior
-      property.owners = property.owners.map((owner: any) => {
-        const ro = owner.rental_owner;
-        return {
-          ...owner,
-          name: owner.name || (ro && ro.name) || 'No disponible',
-          primary_email: owner.primary_email || (ro && ro.primary_email) || '',
-          phone_number: owner.phone_number || (ro && ro.phone_number) || '',
-        };
-      });
+      property.owners = property.owners.map(
+        (owner: PropertyOwner & { rental_owner?: PropertyOwner }) => {
+          const ro = owner.rental_owner;
+          return {
+            ...owner,
+            name: owner.name || (ro && ro.name) || 'No disponible',
+            primary_email: owner.primary_email || (ro && ro.primary_email) || '',
+            phone_number: owner.phone_number || (ro && ro.phone_number) || '',
+          };
+        },
+      );
     } else {
       property.owners = [
         {
@@ -279,7 +267,6 @@ export class PropertyService {
           created_at: new Date(),
         },
       ];
-      console.warn('Propiedad sin owners, usando owner por defecto:', property.id, property.title);
     }
 
     // Si la respuesta tiene property_type_name/code en lugar del objeto, construirlo
@@ -341,8 +328,8 @@ export class PropertyService {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('property_favorites', JSON.stringify(Array.from(favorites)));
       }
-    } catch (error) {
-      console.error('Error saving favorites to storage:', error);
+    } catch {
+      /* ignore storage errors */
     }
   }
 
@@ -358,8 +345,8 @@ export class PropertyService {
           this.favoritesSubject.next(new Set(favArray));
         }
       }
-    } catch (error) {
-      console.error('Error loading favorites from storage:', error);
+    } catch {
+      /* ignore storage errors */
     }
   }
 
@@ -369,36 +356,35 @@ export class PropertyService {
    * Listar todas las propiedades (admin) con filtros
    */
   getAdminProperties(filters?: PropertyFilters): Observable<Property[]> {
-    const params: any = {};
+    const params: Record<string, string | number> = {};
 
     if (filters) {
-      if (filters.status) params.status = filters.status;
-      if (filters.property_type_id) params.property_type_id = filters.property_type_id;
-      if (filters.property_subtype_id) params.property_subtype_id = filters.property_subtype_id;
-      if (filters.city) params.city = filters.city;
-      if (filters.country) params.country = filters.country;
-      if (filters.search) params.search = filters.search;
-      if (filters.sort_by) params.sort_by = filters.sort_by;
-      if (filters.sort_order) params.sort_order = filters.sort_order;
-      if (filters.page) params.page = filters.page;
-      if (filters.limit) params.limit = filters.limit;
+      if (filters.status) params['status'] = filters.status;
+      if (filters.property_type_id) params['property_type_id'] = filters.property_type_id;
+      if (filters.property_subtype_id) params['property_subtype_id'] = filters.property_subtype_id;
+      if (filters.city) params['city'] = filters.city;
+      if (filters.country) params['country'] = filters.country;
+      if (filters.search) params['search'] = filters.search;
+      if (filters.sort_by) params['sort_by'] = filters.sort_by;
+      if (filters.sort_order) params['sort_order'] = filters.sort_order;
+      if (filters.page) params['page'] = filters.page;
+      if (filters.limit) params['limit'] = filters.limit;
     }
 
     const endpoint = this.slugService.buildApiEndpoint('admin/properties');
 
     // El backend devuelve {items: [], total, page, limit, pages}
-    return this.apiHttp
+    return this.apiClient
       .get<{
         items: Property[];
         total: number;
         page: number;
         limit: number;
         pages: number;
-      }>(endpoint, params)
+      }>(endpoint, { params })
       .pipe(
         map((response) => response.items.map((p) => this.transformProperty(p))),
-        catchError((error) => {
-          console.error('Error loading admin properties:', error);
+        catchError((_e) => {
           return of([]);
         }),
       );
@@ -410,10 +396,9 @@ export class PropertyService {
   getAdminPropertyById(id: number): Observable<Property | undefined> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${id}`);
 
-    return this.apiHttp.get<Property>(endpoint).pipe(
+    return this.apiClient.get<Property>(endpoint).pipe(
       map((property) => this.transformProperty(property)),
-      catchError((error) => {
-        console.error(`Error loading admin property ${id}:`, error);
+      catchError((_e) => {
         return of(undefined);
       }),
     );
@@ -422,14 +407,12 @@ export class PropertyService {
   /**
    * Crear nueva propiedad (admin)
    */
-  createProperty(propertyData: any): Observable<Property> {
+  createProperty(propertyData: Record<string, unknown>): Observable<Property> {
     const endpoint = this.slugService.buildApiEndpoint('admin/properties');
 
-    return this.apiHttp.post<Property>(endpoint, propertyData).pipe(
+    return this.apiClient.post<Property>(endpoint, propertyData).pipe(
       map((property) => this.transformProperty(property)),
-      tap(() => console.log('Property created successfully')),
       catchError((error) => {
-        console.error('Error creating property:', error);
         throw error;
       }),
     );
@@ -438,15 +421,13 @@ export class PropertyService {
   /**
    * Subir una imagen para una propiedad (admin) - multipart/form-data
    */
-  uploadPropertyImage(propertyId: number, file: File): Observable<any> {
+  uploadPropertyImage(propertyId: number, file: File): Observable<Record<string, unknown>> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${propertyId}/images`);
     const formData = new FormData();
     formData.append('file', file);
 
-    return this.apiHttp.post<any>(endpoint, formData).pipe(
-      tap(() => console.log(`Image uploaded for property ${propertyId}`)),
+    return this.apiClient.post<Record<string, unknown>>(endpoint, formData).pipe(
       catchError((error) => {
-        console.error(`Error uploading image for property ${propertyId}:`, error);
         throw error;
       }),
     );
@@ -455,14 +436,12 @@ export class PropertyService {
   /**
    * Actualizar propiedad existente (admin)
    */
-  updateProperty(id: number, propertyData: any): Observable<Property> {
+  updateProperty(id: number, propertyData: Record<string, unknown>): Observable<Property> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${id}`);
 
-    return this.apiHttp.patch<Property>(endpoint, propertyData).pipe(
+    return this.apiClient.patch<Property>(endpoint, propertyData).pipe(
       map((property) => this.transformProperty(property)),
-      tap(() => console.log(`Property ${id} updated successfully`)),
       catchError((error) => {
-        console.error(`Error updating property ${id}:`, error);
         throw error;
       }),
     );
@@ -474,10 +453,8 @@ export class PropertyService {
   deleteProperty(id: number): Observable<void> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${id}`);
 
-    return this.apiHttp.delete<void>(endpoint).pipe(
-      tap(() => console.log(`Property ${id} deleted successfully`)),
+    return this.apiClient.delete<void>(endpoint).pipe(
       catchError((error) => {
-        console.error(`Error deleting property ${id}:`, error);
         throw error;
       }),
     );

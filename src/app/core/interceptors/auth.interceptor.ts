@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { HttpRequest, HttpHandlerFn, HttpInterceptorFn } from '@angular/common/http';
-import { AuthService } from '../services/auth.service';
-import { TenantAuthService } from '../services/tenant/tenant-auth.service';
+import { SessionTokenService } from '../services/session-token.service';
 
 /**
  * Authentication Interceptor
@@ -9,8 +8,8 @@ import { TenantAuthService } from '../services/tenant/tenant-auth.service';
  *
  * Priority rules:
  * 1. If the request already has an Authorization header (set explicitly by a service), respect it.
- * 2. If the URL contains "/tenant/", use the tenant token.
- * 3. Otherwise (admin routes, public), use the admin token.
+ * 2. Select token by API route context: admin, tenant or owner.
+ * 3. Public routes continue without Authorization.
  */
 export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
@@ -21,13 +20,8 @@ export const authInterceptor: HttpInterceptorFn = (
     return next(req);
   }
 
-  const authService = inject(AuthService);
-  const tenantAuthService = inject(TenantAuthService);
-
-  // Seleccionar el token según el tipo de ruta, sin fallback entre roles.
-  // Un token de admin nunca debe usarse en rutas de tenant y viceversa.
-  const isTenantRoute = req.url.includes('/tenant/');
-  const token = isTenantRoute ? tenantAuthService.getToken() : authService.getToken();
+  const sessionToken = inject(SessionTokenService);
+  const token = sessionToken.getTokenForRequest(req.url);
 
   if (token) {
     const authReq = req.clone({

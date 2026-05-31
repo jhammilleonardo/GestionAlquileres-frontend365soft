@@ -51,16 +51,13 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
   return false;
 };
 
-export const tenantLoginGuard: CanActivateFn = (route, state) => {
+export const tenantLoginGuard: CanActivateFn = (route, _state) => {
   const authService = inject(TenantAuthService);
   const slugService = inject(SlugService);
   const router = inject(Router);
 
   // Get slug from URL
   const slug = route.paramMap.get('slug');
-  console.log('[tenantLoginGuard] ===== START =====');
-  console.log('[tenantLoginGuard] Slug:', slug);
-  console.log('[tenantLoginGuard] State URL:', state.url);
 
   // Check if slug exists in URL
   if (slug) {
@@ -72,14 +69,10 @@ export const tenantLoginGuard: CanActivateFn = (route, state) => {
   // Usar replaceUrl para que el login no quede en el historial
   if (authService.isAuthenticated()) {
     const currentUser = authService.currentUser();
-    console.log('[tenantLoginGuard] User is authenticated');
-    console.log('[tenantLoginGuard] Current user:', currentUser);
-    console.log('[tenantLoginGuard] Has contract in user object?', !!currentUser?.contract);
 
     if (currentUser && slug) {
       // Check if user has contract in the current user object (fast path)
       if (currentUser.contract) {
-        console.log('[tenantLoginGuard] User has contract, redirecting to dashboard');
         void router.navigate(['/', slug, 'portal', 'dashboard'], { replaceUrl: true });
         return false;
       }
@@ -87,18 +80,14 @@ export const tenantLoginGuard: CanActivateFn = (route, state) => {
       // No contract in user object, default to home pre-contract
       // The tenant-layout component will do a more thorough check via ContractService
       // and redirect if contracts are found
-      console.log('[tenantLoginGuard] No contract in user object, redirecting to home');
       void router.navigate(['/', slug, 'portal', 'home'], { replaceUrl: true });
       return false;
     } else if (!slug) {
-      console.log('[tenantLoginGuard] No slug, redirecting to default dashboard');
       void router.navigate(['/portal/dashboard'], { replaceUrl: true });
       return false;
     }
   }
 
-  console.log('[tenantLoginGuard] User not authenticated, allowing access to login');
-  console.log('[tenantLoginGuard] ===== END =====');
   return true;
 };
 
