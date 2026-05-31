@@ -14,7 +14,7 @@
               type="text"
               class="search-input"
               [value]="search()"
-              (input)="search.set($any($event.target).value)"
+              (input)="search.set(inputValue($event))"
               (keyup.enter)="applyFilters()"
               [placeholder]="'public.properties.searchPlaceholder' | transloco"
             />
@@ -59,7 +59,7 @@
                 type="text"
                 class="filter-input"
                 [value]="city()"
-                (input)="city.set($any($event.target).value)"
+                (input)="city.set(inputValue($event))"
                 (change)="applyFilters()"
                 [placeholder]="'public.properties.cityPlaceholder' | transloco"
               />
@@ -74,7 +74,7 @@
                 type="text"
                 class="filter-input"
                 [value]="country()"
-                (input)="country.set($any($event.target).value)"
+                (input)="country.set(inputValue($event))"
                 (change)="applyFilters()"
                 [placeholder]="'public.properties.countryPlaceholder' | transloco"
               />
@@ -97,11 +97,7 @@
 
     <div class="sort-container">
       <label class="filter-label">{{ 'public.properties.sortBy' | transloco }}</label>
-      <select
-        class="sort-select"
-        [value]="sortBy()"
-        (change)="sortBy.set($any($event.target).value); applyFilters()"
-      >
+      <select class="sort-select" [value]="sortBy()" (change)="setSortFromEvent($event)">
         @for (option of sortOptions; track option.value) {
           <option [value]="option.value">{{ option.label | transloco }}</option>
         }

@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, tap, catchError, of, map } from 'rxjs';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 import { TranslocoService } from '@jsverse/transloco';
@@ -12,7 +12,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: 'ADMIN' | 'USER' | 'INQUILINO';
+  role: 'ADMIN' | 'SUPERADMIN' | 'USER' | 'INQUILINO' | 'EMPLEADO' | 'TECNICO';
   created_at: string;
 }
 
@@ -20,7 +20,7 @@ export interface User {
  * Filtros para listar usuarios
  */
 export interface UserFilters {
-  role?: 'ADMIN' | 'USER' | 'INQUILINO';
+  role?: 'ADMIN' | 'SUPERADMIN' | 'USER' | 'INQUILINO' | 'EMPLEADO' | 'TECNICO';
   search?: string;
 }
 
@@ -80,6 +80,27 @@ export class AdminUserService {
         }),
       )
       .subscribe();
+  }
+
+  listUsers(filters?: UserFilters): Observable<User[]> {
+    const endpoint = this.slugService.buildApiEndpoint('users');
+    const params: Record<string, string> = {};
+
+    if (filters?.role) params['role'] = filters.role;
+    if (filters?.search) params['search'] = filters.search;
+
+    return this.apiClient.get<User[]>(endpoint, { params }).pipe(
+      map((users) =>
+        users.filter((user) => {
+          const roleMatches = filters?.role ? user.role === filters.role : true;
+          const search = filters?.search?.trim().toLowerCase();
+          const searchMatches = search
+            ? `${user.name} ${user.email}`.toLowerCase().includes(search)
+            : true;
+          return roleMatches && searchMatches;
+        }),
+      ),
+    );
   }
 
   /**

@@ -24,6 +24,7 @@ import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 @Component({
   selector: 'app-empleados',
   standalone: true,
@@ -79,7 +80,7 @@ export class EmpleadosComponent {
       .pipe(
         catchError((err: { error?: { message?: string } }) => {
           this.isLoading.set(false);
-          this.errorMessage.set(err.error?.message ?? 'Error al cargar los empleados');
+          this.errorMessage.set(getApiErrorMessage(err, 'Error al cargar los empleados'));
           return EMPTY;
         }),
         takeUntilDestroyed(this.destroyRef),

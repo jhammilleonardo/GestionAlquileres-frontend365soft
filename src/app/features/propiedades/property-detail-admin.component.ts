@@ -176,12 +176,14 @@ export class PropertyDetailAdminComponent {
 
   goBack(): void {
     const slug = this.slugService.getSlug() || '';
-    this.router.navigate([`/${slug}/propiedades`]);
+    void this.router.navigate([`/${slug}/propiedades`]);
   }
 
   editProperty(): void {
     const slug = this.slugService.getSlug() || '';
-    this.router.navigate([`/${slug}/propiedades`], { queryParams: { edit: this.property()?.id } });
+    void this.router.navigate([`/${slug}/propiedades`], {
+      queryParams: { edit: this.property()?.id },
+    });
   }
 
   getPropertyAddress(): string {

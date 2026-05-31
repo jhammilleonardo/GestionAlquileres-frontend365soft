@@ -1,0 +1,79 @@
+<app-dialog
+  [open]="open()"
+  [title]="'Gestionar disponibilidad' + (unit() ? ' · Unidad ' + unit()!.unit_number : '')"
+  [showFooter]="false"
+  [closeOnBackdrop]="!submitting()"
+  (closed)="onClose()"
+>
+  <div class="bd-body">
+    <p class="bd-help">
+      Selecciona los días y bloquéalos para que no estén disponibles en el catálogo, o desbloquéalos
+      para volver a ofrecerlos. Los días con reserva confirmada no se pueden editar.
+    </p>
+
+    <div class="bd-toolbar">
+      <button type="button" class="bd-nav" (click)="prevMonth()" aria-label="Mes anterior">
+        <lucide-icon [img]="ChevronLeft" [size]="18" />
+      </button>
+      <span class="bd-month">{{ monthLabel() }}</span>
+      <button type="button" class="bd-nav" (click)="nextMonth()" aria-label="Mes siguiente">
+        <lucide-icon [img]="ChevronRight" [size]="18" />
+      </button>
+    </div>
+
+    <div class="bd-weekdays">
+      @for (wd of weekdays; track wd) {
+        <span>{{ wd }}</span>
+      }
+    </div>
+
+    <div class="bd-grid" [class.bd-grid--loading]="loading()">
+      @for (cell of cells(); track cell.iso) {
+        @if (cell.date) {
+          <button
+            type="button"
+            class="bd-day"
+            [class.bd-day--available]="cell.status === 'available'"
+            [class.bd-day--blocked]="cell.status === 'blocked'"
+            [class.bd-day--booked]="cell.status === 'booked'"
+            [class.bd-day--past]="cell.status === 'past'"
+            [class.bd-day--selected]="cell.selected"
+            [disabled]="cell.status === 'past' || cell.status === 'booked'"
+            (click)="toggleDay(cell)"
+          >
+            {{ cell.date.getDate() }}
+          </button>
+        } @else {
+          <span class="bd-day bd-day--pad"></span>
+        }
+      }
+    </div>
+
+    <div class="bd-legend">
+      <span><i class="dot dot--available"></i> Disponible</span>
+      <span><i class="dot dot--blocked"></i> Bloqueada</span>
+      <span><i class="dot dot--booked"></i> Reservada</span>
+      <span><i class="dot dot--selected"></i> Seleccionada</span>
+    </div>
+  </div>
+
+  <div class="bd-footer">
+    <span class="bd-count">{{ selectedCount() }} día(s) seleccionado(s)</span>
+    <div class="bd-actions">
+      <app-button
+        appearance="outline"
+        [disabled]="submitting() || selectedCount() === 0"
+        (clicked)="apply(false)"
+      >
+        <lucide-icon [img]="LockOpen" [size]="16" /> Desbloquear
+      </app-button>
+      <app-button
+        [loading]="submitting()"
+        [disabled]="selectedCount() === 0"
+        (clicked)="apply(true)"
+      >
+        <lucide-icon [img]="Lock" [size]="16" /> Bloquear
+      </app-button>
+    </div>
+  </div>
+</app-dialog>

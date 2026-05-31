@@ -402,6 +402,7 @@
     "sendInstructions": "Send Instructions",
     "backToLogin": "Back to sign in",
     "forgotPasswordSentMsg": "Recovery instructions have been sent to {{email}}. Please check your inbox.",
+    "forgotPasswordError": "Could not request password recovery. Please try again.",
     "required": "Required",
     "registerTitle": "Create Account",
     "registerSubtitle": "Start managing your properties today",

@@ -43,6 +43,7 @@ import { AppButtonComponent } from '../../../../../shared/ui/button/button.compo
 import { AppLoadingStateComponent } from '../../../../../shared/ui/loading-state/loading-state.component';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 
+import { getApiErrorMessage } from '../../../../../core/http/http-error.util';
 @Component({
   selector: 'app-order-detail',
   standalone: true,
@@ -157,7 +158,7 @@ export class OrderDetailComponent {
         error: (err: { error?: { message?: string } }) => {
           this.isAdvancingStage.set(false);
           this.toast.error(
-            err.error?.message ?? this.transloco.translate('tecnico.errorUpdateStatus'),
+            getApiErrorMessage(err, this.transloco.translate('tecnico.errorUpdateStatus')),
           );
         },
       });
@@ -221,7 +222,7 @@ export class OrderDetailComponent {
           error: (err: { error?: { message?: string } }) => {
             this.isSendingNote.set(false);
             this.toast.error(
-              err.error?.message ?? this.transloco.translate('tecnico.errorSendNote'),
+              getApiErrorMessage(err, this.transloco.translate('tecnico.errorSendNote')),
             );
           },
         });
@@ -236,7 +237,7 @@ export class OrderDetailComponent {
           error: (err: { error?: { message?: string } }) => {
             this.isSendingNote.set(false);
             this.toast.error(
-              err.error?.message ?? this.transloco.translate('tecnico.errorUploadFiles'),
+              getApiErrorMessage(err, this.transloco.translate('tecnico.errorUploadFiles')),
             );
           },
         });

@@ -34,6 +34,7 @@ import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-
 import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 interface ChartBar {
   readonly label: string;
   readonly income: number;
@@ -258,7 +259,7 @@ export class ExpensesComponent {
       },
       error: (err: { error?: { message?: string } }) => {
         this.saving.set(false);
-        this.toast.error(err.error?.message ?? this.transloco.translate('accounting.saveError'));
+        this.toast.error(getApiErrorMessage(err, this.transloco.translate('accounting.saveError')));
       },
     });
   }

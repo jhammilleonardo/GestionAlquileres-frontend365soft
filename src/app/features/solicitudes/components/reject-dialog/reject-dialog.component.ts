@@ -20,6 +20,7 @@ import {
   AppTextareaComponent,
 } from '../../../../shared/ui';
 
+import { getApiErrorMessage } from '../../../../core/http/http-error.util';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-reject-dialog',
@@ -89,11 +90,11 @@ export class RejectDialogComponent {
           this.success.set(true);
           this.submitting.set(false);
           setTimeout(() => {
-            this.router.navigate(['../../'], { relativeTo: this.route });
+            void this.router.navigate(['../../'], { relativeTo: this.route });
           }, 2000);
         },
         error: (err: { error?: { message?: string }; message?: string }) => {
-          this.error.set(err.error?.message ?? err.message ?? 'Error al rechazar la solicitud');
+          this.error.set(getApiErrorMessage(err, err.message ?? 'Error al rechazar la solicitud'));
           this.submitting.set(false);
         },
       });
@@ -104,6 +105,6 @@ export class RejectDialogComponent {
   }
 
   cancel(): void {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    void this.router.navigate(['../'], { relativeTo: this.route });
   }
 }

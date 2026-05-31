@@ -1,0 +1,135 @@
+<section class="contracts-card">
+  <header class="contracts-card-header">
+    <div class="ch-title">
+      <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+      <span>{{ 'contracts.listTitle' | transloco }}</span>
+    </div>
+    <span class="contracts-count">
+      {{ contracts().length }} contrato{{ contracts().length !== 1 ? 's' : '' }}
+    </span>
+  </header>
+
+  @if (emptyLoading()) {
+    <div class="loading-container">
+      <app-loading-state [label]="'contracts.loading' | transloco" />
+    </div>
+  } @else if (contracts().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <lucide-icon [img]="FileText" [size]="30"></lucide-icon>
+      </div>
+      <p class="empty-title">{{ 'contracts.emptyTitle' | transloco }}</p>
+      <span class="empty-sub">{{ 'contracts.emptySub' | transloco }}</span>
+      <app-button (clicked)="createRequested.emit()" class="create-button">
+        <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+        {{ 'contracts.createFirst' | transloco }}
+      </app-button>
+    </div>
+  } @else {
+    <div class="table-scroll-wrap" [class.is-loading]="loading()">
+      <div class="contracts-table">
+        <div class="table-header">
+          <div class="cell col-contract">{{ 'contracts.colNumber' | transloco }}</div>
+          <div class="cell col-tenant">{{ 'contracts.colTenant' | transloco }}</div>
+          <div class="cell col-property">{{ 'contracts.colProperty' | transloco }}</div>
+          <div class="cell col-dates">{{ 'contracts.colDates' | transloco }}</div>
+          <div class="cell col-rent">{{ 'contracts.colRent' | transloco }}</div>
+          <div class="cell col-status">{{ 'contracts.colStatus' | transloco }}</div>
+          <div class="cell col-actions">{{ 'contracts.colActions' | transloco }}</div>
+        </div>
+
+        @for (contract of contracts(); track contract.id) {
+          <div class="table-row">
+            <div class="cell col-contract">
+              <span class="contract-num">{{ contract.contract_number }}</span>
+            </div>
+
+            <div class="cell col-tenant">
+              <div class="tenant-row">
+                <div class="tenant-avatar">
+                  {{
+                    (contract.tenant?.name || contract.tenant_name || 'I').charAt(0).toUpperCase()
+                  }}
+                </div>
+                <div class="tenant-info">
+                  <span class="tenant-name">{{
+                    contract.tenant?.name || contract.tenant_name || 'N/A'
+                  }}</span>
+                  <span class="tenant-email">{{
+                    contract.tenant?.email || contract.tenant_email || ''
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cell col-property">
+              <div class="property-row">
+                <lucide-icon [img]="Home" [size]="13" class="prop-icon"></lucide-icon>
+                <span class="property-title">{{
+                  contract.property?.title || contract.property_title || 'N/A'
+                }}</span>
+              </div>
+            </div>
+
+            <div class="cell col-dates">
+              <div class="date-stack">
+                <span class="date-from">{{ contract.start_date | tenantDate }}</span>
+                <span class="date-to">{{ contract.end_date | tenantDate }}</span>
+              </div>
+            </div>
+
+            <div class="cell col-rent">
+              <span class="rent-amount">{{ contract.monthly_rent | tenantCurrency }}</span>
+            </div>
+
+            <div class="cell col-status">
+              <app-status-badge
+                [label]="'contracts.status.' + contract.status | transloco"
+                [tone]="statusTone()(contract.status)"
+              />
+            </div>
+
+            <div class="cell col-actions">
+              <div class="action-group">
+                <a
+                  class="action-btn view-btn"
+                  [routerLink]="detailUrl()(contract.id)"
+                  [attr.aria-label]="'contracts.tooltipView' | transloco"
+                >
+                  <lucide-icon [img]="Eye" [size]="15"></lucide-icon>
+                </a>
+                @if (contract.status === ContractStatus.BORRADOR) {
+                  <a
+                    class="action-btn edit-btn"
+                    [routerLink]="editUrl()(contract.id)"
+                    [attr.aria-label]="'contracts.tooltipEdit' | transloco"
+                  >
+                    <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
+                  </a>
+                }
+                <button
+                  type="button"
+                  class="action-btn download-btn"
+                  (click)="pdfRequested.emit(contract.id)"
+                  [attr.aria-label]="'contracts.tooltipDownload' | transloco"
+                >
+                  <lucide-icon [img]="Download" [size]="15"></lucide-icon>
+                </button>
+                @if (contract.status === ContractStatus.ACTIVO) {
+                  <button
+                    type="button"
+                    class="action-btn renew-btn"
+                    (click)="renewRequested.emit(contract.id)"
+                    [attr.aria-label]="'contracts.tooltipRenew' | transloco"
+                  >
+                    <lucide-icon [img]="RotateCcw" [size]="15"></lucide-icon>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</section>

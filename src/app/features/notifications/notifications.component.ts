@@ -67,7 +67,7 @@ export class NotificationsComponent implements AfterViewInit {
   private destroyRef = inject(DestroyRef);
   private confirmDialog = inject(ConfirmDialogService);
 
-  @ViewChildren('notifCard') notifCards!: QueryList<ElementRef>;
+  @ViewChildren('notifCard') notifCards!: QueryList<ElementRef<HTMLElement>>;
 
   // Signals
   notifications = this.notificationService.notifications;

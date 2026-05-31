@@ -37,6 +37,7 @@ import {
 import { ContractSigningDialogComponent } from '../dialogs/contract-signing-dialog.component';
 import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog.component';
 
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-contract-detail',
@@ -674,8 +675,10 @@ export class TenantContractDetailComponent {
         error: (err: { error?: { message?: string } }) => {
           this.isSigning.set(false);
           this.toast.error(
-            err.error?.message ||
+            getApiErrorMessage(
+              err,
               this.translocoService.translate('tenantContracts.details.signError'),
+            ),
           );
         },
       });

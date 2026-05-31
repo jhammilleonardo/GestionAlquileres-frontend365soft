@@ -29,6 +29,7 @@ import { LanguageService } from '../../../core/services/language.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 interface RegisterResponse {
   access_token?: string;
   id: number;
@@ -738,8 +739,8 @@ export class TenantRegisterComponent implements OnInit {
   }
 
   passwordMatchValidator(group: FormGroup): { [key: string]: boolean } | null {
-    const password = group.get('password')?.value;
-    const confirmPassword = group.get('confirmPassword')?.value;
+    const password = group.get('password')?.value as string | undefined;
+    const confirmPassword = group.get('confirmPassword')?.value as string | undefined;
 
     return password === confirmPassword ? null : { passwordMismatch: true };
   }
@@ -762,7 +763,12 @@ export class TenantRegisterComponent implements OnInit {
     this.errorMessage.set('');
     this.successMessage.set('');
 
-    const { name, email, password, phone } = this.registerForm.value;
+    const { name, email, password, phone } = this.registerForm.value as {
+      name?: string;
+      email?: string;
+      password?: string;
+      phone?: string;
+    };
 
     this.http
       .post<RegisterResponse>(`${environment.apiUrl}auth/${this.slug}/register`, {
@@ -791,7 +797,9 @@ export class TenantRegisterComponent implements OnInit {
 
             // Redirect to tenant dashboard after 1 second
             setTimeout(() => {
-              this.router.navigate(['/', this.slug, 'portal', 'dashboard'], { replaceUrl: true });
+              void this.router.navigate(['/', this.slug, 'portal', 'dashboard'], {
+                replaceUrl: true,
+              });
             }, 1000);
           } else {
             // No token returned, redirect to login
@@ -801,7 +809,7 @@ export class TenantRegisterComponent implements OnInit {
 
             // Redirect to login after 2 seconds
             setTimeout(() => {
-              this.router.navigate(['/', this.slug, 'login'], {
+              void this.router.navigate(['/', this.slug, 'login'], {
                 queryParams: { registered: 'true' },
                 replaceUrl: true,
               });
@@ -811,8 +819,10 @@ export class TenantRegisterComponent implements OnInit {
         error: (error) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message ||
+            getApiErrorMessage(
+              error,
               this.translocoService.translate('public.tenantRegister.defaultError'),
+            ),
           );
         },
       });

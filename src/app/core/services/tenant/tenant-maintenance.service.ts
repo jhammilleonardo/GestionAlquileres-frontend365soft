@@ -14,6 +14,7 @@ import {
   PermissionToEnter,
 } from '../../models/maintenance-request.model';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 export interface TenantMaintenanceStats {
   total: number;
   active: number;
@@ -167,7 +168,7 @@ export class TenantMaintenanceService {
         }),
         catchError((error) => {
           this.isLoadingSignal.set(false);
-          const message = error.error?.message || 'Error al crear la solicitud';
+          const message = getApiErrorMessage(error, 'Error al crear la solicitud');
           this.errorSignal.set(message);
           throw error;
         }),

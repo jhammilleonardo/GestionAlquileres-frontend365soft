@@ -1,0 +1,39 @@
+<div class="dashboard-container">
+  <app-tenant-dashboard-welcome
+    [firstName]="dashboard.getFirstName()"
+    [contract]="dashboard.auth.currentUser()?.contract"
+  />
+
+  <app-tenant-dashboard-stats
+    [loading]="dashboard.maintenance.isLoading() || dashboard.payments.isLoading()"
+    [activeRequests]="dashboard.maintenance.stats()?.active || 0"
+    [unreadMessages]="dashboard.messages.unread()"
+    [documentsCount]="dashboard.documents.documents().length"
+  />
+
+  <div class="dashboard-grid">
+    <app-tenant-dashboard-maintenance-list
+      [loading]="dashboard.maintenance.isLoading()"
+      [requests]="dashboard.maintenance.requests()"
+      [viewAllUrl]="dashboard.mantenimientoUrl()"
+      [statusLabels]="dashboard.statusLabels"
+      [statusTone]="dashboard.getMaintenanceStatusTone"
+      [detailUrl]="dashboard.buildRequestDetailUrl"
+    />
+
+    <app-tenant-dashboard-payments-list
+      [loading]="dashboard.payments.isLoading()"
+      [payments]="dashboard.payments.payments()"
+      [viewAllUrl]="dashboard.pagosUrl()"
+      [statusLabels]="dashboard.paymentStatusLabels"
+      [statusTone]="dashboard.getPaymentStatusTone"
+    />
+  </div>
+
+  <app-tenant-dashboard-quick-actions
+    [maintenanceCreateUrl]="dashboard.mantenimientoNuevoUrl()"
+    [paymentCreateUrl]="dashboard.pagosNuevoUrl()"
+    [messagesUrl]="dashboard.mensajesUrl()"
+    [documentsUrl]="dashboard.documentosUrl()"
+  />
+</div>

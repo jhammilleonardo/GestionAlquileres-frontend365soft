@@ -9,7 +9,7 @@
               [checked]="allPendingSelected()"
               [indeterminate]="somePendingSelected()"
               [attr.aria-label]="'payments.pending' | transloco"
-              (change)="selectAllToggled.emit($any($event.target).checked)"
+              (change)="selectAllToggled.emit(checkboxChecked($event))"
             />
           }
         </th>

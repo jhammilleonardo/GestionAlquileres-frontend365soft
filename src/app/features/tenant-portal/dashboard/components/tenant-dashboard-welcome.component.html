@@ -1,0 +1,27 @@
+<div class="welcome-section">
+  <div class="welcome-content">
+    <h1>{{ 'public.tenantDashboard.greeting' | transloco: { name: firstName() } }}</h1>
+    <p>{{ 'public.tenantDashboard.subtitle' | transloco }}</p>
+  </div>
+</div>
+
+@if (contract(); as currentContract) {
+  <section class="property-card">
+    <div class="property-header">
+      <lucide-icon [img]="Home" [size]="24"></lucide-icon>
+      <span>{{ 'public.tenantDashboard.myProperty' | transloco }}</span>
+    </div>
+    <div class="property-content">
+      <h2>{{ currentContract.property_title }}</h2>
+      <div class="property-meta">
+        <div class="meta-item">
+          <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
+          <span>{{ currentContract.contract_number }}</span>
+        </div>
+        <span class="contract-status" [class]="'status-' + currentContract.status.toLowerCase()">
+          {{ currentContract.status }}
+        </span>
+      </div>
+    </div>
+  </section>
+}

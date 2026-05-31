@@ -99,7 +99,9 @@ describe('moduleGuard', () => {
     expect(result).toBe(false);
     expect(navigateSpy).toHaveBeenCalledWith(
       ['/', 'acme', 'dashboard'],
-      expect.objectContaining({ state: expect.objectContaining({ accessDenied: true }) }),
+      expect.objectContaining({
+        state: expect.objectContaining({ accessDenied: true }) as unknown,
+      }),
     );
   });
 
@@ -116,7 +118,7 @@ describe('moduleGuard', () => {
     expect(navigateSpy).toHaveBeenCalledWith(
       ['/', 'acme', 'dashboard'],
       expect.objectContaining({
-        state: expect.objectContaining({ accessDenied: true, module: 'payments' }),
+        state: expect.objectContaining({ accessDenied: true, module: 'payments' }) as unknown,
       }),
     );
   });

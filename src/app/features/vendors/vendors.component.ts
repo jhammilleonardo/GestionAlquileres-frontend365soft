@@ -33,6 +33,7 @@ import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { AppStatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 @Component({
   selector: 'app-vendors',
   standalone: true,
@@ -195,7 +196,7 @@ export class VendorsComponent {
       },
       error: (err: { error?: { message?: string } }) => {
         this.saving.set(false);
-        this.toast.error(err.error?.message ?? this.transloco.translate('vendors.saveError'));
+        this.toast.error(getApiErrorMessage(err, this.transloco.translate('vendors.saveError')));
       },
     });
   }

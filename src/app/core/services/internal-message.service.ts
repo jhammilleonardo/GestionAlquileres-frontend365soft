@@ -17,8 +17,18 @@ export class InternalMessageService {
     return this.api.get<MessageThread[]>(this.endpoint('messages/threads'));
   }
 
-  getThread(userId: number): Observable<InternalMessage[]> {
-    return this.api.get<InternalMessage[]>(this.endpoint(`messages/thread/${userId}`));
+  /**
+   * Conversación con un usuario. Paginación por cursor: `before` trae los
+   * mensajes anteriores (más antiguos) a ese id para "cargar más".
+   */
+  getThread(
+    userId: number,
+    options: { limit?: number; before?: number } = {},
+  ): Observable<InternalMessage[]> {
+    const params: Record<string, number> = {};
+    if (options.limit) params['limit'] = options.limit;
+    if (options.before) params['before'] = options.before;
+    return this.api.get<InternalMessage[]>(this.endpoint(`messages/thread/${userId}`), { params });
   }
 
   getRecipients(): Observable<MessageRecipient[]> {

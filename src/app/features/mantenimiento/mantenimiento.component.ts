@@ -134,7 +134,7 @@ export class MantenimientoComponent {
     // Check for query param 'open' to auto-open a request detail
     this.route.queryParams.subscribe((params) => {
       if (params['open']) {
-        const id = parseInt(params['open'], 10);
+        const id = parseInt(params['open'] as string, 10);
         if (!isNaN(id)) {
           this.maintenanceService.getRequestById(id).subscribe({
             next: (request) => {

@@ -152,7 +152,7 @@ export class SlugService {
 
     if (slug) {
       const fullPath = ['/', slug, ...path];
-      this.router.navigate(fullPath);
+      void this.router.navigate(fullPath);
     }
   }
 
@@ -188,7 +188,7 @@ export class SlugService {
    * Construir URL completa de API (para archivos, PDFs, etc.)
    */
   buildApiUrl(path: string): string {
-    const apiUrl = 'http://localhost:3000'; // TODO: mover a configuración
+    const apiUrl = environment.apiUrl.replace(/\/$/, '');
     return `${apiUrl}${path.startsWith('/') ? path : '/' + path}`;
   }
 
@@ -222,7 +222,7 @@ export class SlugService {
     try {
       const adminUserJson = localStorage.getItem('admin_user');
       if (adminUserJson) {
-        const adminUser = JSON.parse(adminUserJson);
+        const adminUser = JSON.parse(adminUserJson) as { tenant_slug?: string } | null;
         if (adminUser?.tenant_slug) return adminUser.tenant_slug;
       }
     } catch {
@@ -233,7 +233,10 @@ export class SlugService {
     try {
       const tenantUserJson = localStorage.getItem('tenant_user');
       if (tenantUserJson) {
-        const tenantUser = JSON.parse(tenantUserJson);
+        const tenantUser = JSON.parse(tenantUserJson) as {
+          tenant_slug?: string;
+          tenantSlug?: string;
+        } | null;
         const slug = tenantUser?.tenant_slug || tenantUser?.tenantSlug;
         if (slug) return slug;
       }

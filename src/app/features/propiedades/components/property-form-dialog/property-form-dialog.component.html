@@ -1,0 +1,385 @@
+<div class="modal-overlay animate-fadeIn" (click)="closed.emit()">
+  <div class="modal-container animate-slideUp" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">
+        <div class="modal-title-icon">
+          <lucide-icon [img]="Building2" [size]="22"></lucide-icon>
+        </div>
+        <h2>{{ (mode() === 'create' ? 'properties.new' : 'properties.edit') | transloco }}</h2>
+      </div>
+      <button type="button" class="btn-close" (click)="closed.emit()" aria-label="Cerrar">
+        <lucide-icon [img]="X" [size]="22"></lucide-icon>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      @if (validationErrors().length > 0) {
+        <div class="validation-error-panel">
+          <div class="validation-error-header">
+            <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+            <strong>{{ 'common.required' | transloco }}</strong>
+          </div>
+          <ul class="validation-error-list">
+            @for (error of validationErrors(); track error) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <form [formGroup]="form()" novalidate>
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="Home" [size]="18" class="text-blue-600"></lucide-icon>
+            <h3>{{ 'properties.basicInfo' | transloco }}</h3>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="full-width">
+              <app-text-field
+                formControlName="title"
+                [label]="'properties.title_field' | transloco"
+                [placeholder]="'properties.titlePlaceholder' | transloco"
+              />
+              @if (hasError('title')) {
+                <p class="field-error">{{ 'common.required' | transloco }}</p>
+              }
+              <p class="field-hint">{{ 'properties.titleHint' | transloco }}</p>
+            </div>
+
+            <div class="full-width">
+              <app-textarea
+                formControlName="description"
+                [label]="'common.description' | transloco"
+                [placeholder]="'properties.descriptionPlaceholder' | transloco"
+                [minRows]="3"
+              />
+            </div>
+
+            <div>
+              <app-select
+                formControlName="property_type_id"
+                [label]="'properties.propertyType' | transloco"
+                [placeholder]="'properties.propertyTypePlaceholder' | transloco"
+                [options]="propertyTypeOptions()"
+                [required]="true"
+                (valueChanged)="propertyTypeChanged.emit($event ?? 0)"
+              />
+              @if (hasError('property_type_id')) {
+                <p class="field-error">{{ 'common.required' | transloco }}</p>
+              }
+            </div>
+
+            <div>
+              <app-select
+                formControlName="property_subtype_id"
+                [label]="'properties.subtype' | transloco"
+                [placeholder]="'properties.subtypePlaceholder' | transloco"
+                [options]="propertySubtypeOptions()"
+                [required]="true"
+              />
+              @if (hasError('property_subtype_id')) {
+                <p class="field-error">{{ 'common.required' | transloco }}</p>
+              }
+            </div>
+
+            <div class="checkbox-simple full-width">
+              <input type="checkbox" formControlName="active" id="active" />
+              <label for="active">{{ 'properties.activeProperty' | transloco }}</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="LucideImage" [size]="18" class="text-pink-600"></lucide-icon>
+            <h3>{{ 'properties.images' | transloco }}</h3>
+            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+          </div>
+
+          <p class="hint-text">{{ 'properties.imagesHint' | transloco }}</p>
+          <app-file-upload
+            [label]="'properties.images' | transloco"
+            [hint]="'properties.imagesNote' | transloco"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            [multiple]="true"
+            (filesSelected)="imagesSelected.emit($event)"
+          />
+
+          @if (selectedImages().length > 0) {
+            <div class="selected-images">
+              <p>
+                {{ 'properties.imagesSelected' | transloco: { count: selectedImages().length } }}
+              </p>
+              <ul>
+                @for (image of selectedImages(); track image.name) {
+                  <li>{{ image.name }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          <p class="hint-text top-gap">{{ 'properties.imagesNote' | transloco }}</p>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
+            <h3>{{ 'properties.financialInfo' | transloco }}</h3>
+            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+          </div>
+
+          <div class="form-grid-3">
+            <app-text-field
+              [label]="'properties.monthlyRent' | transloco"
+              type="number"
+              placeholder="2500"
+              formControlName="monthly_rent"
+            />
+
+            <app-select
+              [label]="'common.currency' | transloco"
+              [options]="currencyOptions()"
+              formControlName="currency"
+            />
+
+            <app-text-field
+              [label]="'properties.deposit' | transloco"
+              type="number"
+              placeholder="3000"
+              formControlName="security_deposit_amount"
+            />
+          </div>
+
+          <div class="subsection-title">
+            <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
+            {{ 'properties.bankAccount' | transloco }}
+            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+          </div>
+          <div class="form-grid-3">
+            <app-text-field
+              [label]="'properties.accountNumber' | transloco"
+              [placeholder]="'properties.accountNumberPlaceholder' | transloco"
+              formControlName="account_number"
+            />
+            <app-text-field
+              [label]="'properties.accountType' | transloco"
+              [placeholder]="'properties.accountTypePlaceholder' | transloco"
+              formControlName="account_type"
+            />
+            <app-text-field
+              [label]="'properties.accountHolder' | transloco"
+              formControlName="account_holder_name"
+            />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="Maximize2" [size]="18" class="text-purple-600"></lucide-icon>
+            <h3>{{ 'properties.details' | transloco }}</h3>
+            <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+          </div>
+
+          <div class="form-grid-4">
+            <app-text-field
+              [label]="'properties.area' | transloco"
+              type="number"
+              placeholder="85"
+              formControlName="square_meters"
+            />
+            <app-text-field
+              [label]="'properties.bedrooms' | transloco"
+              type="number"
+              placeholder="3"
+              formControlName="bedrooms"
+            />
+            <app-text-field
+              [label]="'properties.bathrooms' | transloco"
+              type="number"
+              placeholder="2"
+              formControlName="bathrooms"
+            />
+            <app-text-field
+              [label]="'properties.parking' | transloco"
+              type="number"
+              placeholder="1"
+              formControlName="parking_spaces"
+            />
+            <app-text-field
+              [label]="'properties.yearBuilt' | transloco"
+              type="number"
+              placeholder="2020"
+              formControlName="year_built"
+            />
+            <div class="checkbox-simple">
+              <input type="checkbox" formControlName="is_furnished" id="is_furnished" />
+              <label for="is_furnished">{{ 'properties.furnished' | transloco }}</label>
+            </div>
+            <app-text-field
+              [label]="'properties.latitude' | transloco"
+              type="number"
+              placeholder="-16.5000"
+              formControlName="latitude"
+            />
+            <app-text-field
+              [label]="'properties.longitude' | transloco"
+              type="number"
+              placeholder="-68.1500"
+              formControlName="longitude"
+            />
+          </div>
+
+          <div class="subsection-title">{{ 'properties.rules' | transloco }}</div>
+          <div class="form-grid-2">
+            <div [class]="'checkbox-rule ' + (form().get('pets_allowed')?.value ? 'checked' : '')">
+              <input type="checkbox" formControlName="pets_allowed" id="pets_allowed" />
+              <label for="pets_allowed">
+                <lucide-icon [img]="PawPrint" [size]="18"></lucide-icon>
+                {{ 'properties.petsAllowed' | transloco }}
+              </label>
+            </div>
+            <div
+              [class]="'checkbox-rule ' + (form().get('smoking_allowed')?.value ? 'checked' : '')"
+            >
+              <input type="checkbox" formControlName="smoking_allowed" id="smoking_allowed" />
+              <label for="smoking_allowed">
+                <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+                {{ 'properties.smokingAllowed' | transloco }}
+              </label>
+            </div>
+            <div>
+              <app-text-field
+                [label]="'properties.maxOccupants' | transloco"
+                type="number"
+                placeholder="4"
+                formControlName="max_occupants"
+              />
+              <p class="field-hint">{{ 'properties.maxOccupantsPlaceholder' | transloco }}</p>
+            </div>
+            <div>
+              <app-text-field
+                [label]="'properties.minContractMonths' | transloco"
+                type="number"
+                placeholder="6"
+                formControlName="min_lease_months"
+              />
+              <p class="field-hint">{{ 'properties.minContractPlaceholder' | transloco }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <lucide-icon [img]="MapPin" [size]="18" class="text-red-600"></lucide-icon>
+            <h3>{{ 'properties.fullAddress' | transloco }}</h3>
+          </div>
+
+          <div formArrayName="addresses">
+            @for (address of addresses.controls; track $index; let i = $index) {
+              <div [formGroupName]="i" class="form-grid-2">
+                <div class="full-width">
+                  <app-text-field
+                    [label]="'properties.fullAddress' | transloco"
+                    [placeholder]="'properties.fullAddressPlaceholder' | transloco"
+                    formControlName="street_address"
+                  />
+                  @if (getAddressError(i, 'street_address')) {
+                    <p class="field-error">{{ 'common.required' | transloco }}</p>
+                  }
+                </div>
+                <div>
+                  <app-text-field
+                    [label]="'properties.city' | transloco"
+                    placeholder="Santa Cruz"
+                    formControlName="city"
+                  />
+                  @if (getAddressError(i, 'city')) {
+                    <p class="field-error">{{ 'common.required' | transloco }}</p>
+                  }
+                </div>
+                <app-text-field
+                  [label]="'properties.state' | transloco"
+                  placeholder="Santa Cruz de la Sierra"
+                  formControlName="state"
+                />
+                <app-text-field
+                  [label]="'properties.zip' | transloco"
+                  placeholder="1001"
+                  formControlName="zip_code"
+                />
+                <div>
+                  <app-text-field
+                    [label]="'properties.country' | transloco"
+                    placeholder="Bolivia"
+                    formControlName="country"
+                  />
+                  @if (getAddressError(i, 'country')) {
+                    <p class="field-error">{{ 'common.required' | transloco }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (mode() === 'create') {
+          <div class="form-section">
+            <div class="section-title">
+              <lucide-icon [img]="Users" [size]="18" class="text-indigo-600"></lucide-icon>
+              <h3>{{ 'properties.ownerInfo' | transloco }}</h3>
+              <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
+            </div>
+
+            <div formArrayName="new_owners">
+              @for (owner of owners.controls; track $index; let i = $index) {
+                <div [formGroupName]="i" class="form-grid-2">
+                  <app-text-field
+                    [label]="'common.name' | transloco"
+                    placeholder="Carlos Gonzalez"
+                    formControlName="name"
+                  />
+                  <app-text-field
+                    [label]="'common.email' | transloco"
+                    type="email"
+                    placeholder="carlos@example.com"
+                    formControlName="primary_email"
+                  />
+                  <app-text-field
+                    [label]="'common.phone' | transloco"
+                    type="tel"
+                    placeholder="+5912345678"
+                    formControlName="phone_number"
+                  />
+                  <app-text-field
+                    [label]="'properties.ownerPercent' | transloco"
+                    type="number"
+                    placeholder="100"
+                    formControlName="ownership_percentage"
+                  />
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </form>
+    </div>
+
+    <div class="modal-footer">
+      <app-button appearance="outline" type="button" (clicked)="closed.emit()">
+        {{ 'common.cancel' | transloco }}
+      </app-button>
+      <app-button
+        type="button"
+        (clicked)="saved.emit()"
+        [disabled]="isSubmitting()"
+        [loading]="isSubmitting()"
+      >
+        @if (!isSubmitting()) {
+          <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
+        }
+        {{ getButtonText() }}
+      </app-button>
+    </div>
+  </div>
+</div>

@@ -46,6 +46,10 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { MaintenanceService } from '../../../core/services/admin/maintenance.service';
+import {
+  AdminUserService,
+  User as AdminUser,
+} from '../../../core/services/admin/admin-user.service';
 import { VendorService } from '../../../core/services/admin/vendor.service';
 import { Vendor } from '../../../core/models/vendor.model';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
@@ -85,7 +89,7 @@ export class RequestDetailComponent {
   readonly changed = output<MaintenanceRequest>();
   readonly deleted = output<void>();
 
-  @ViewChild('msgContainer') msgContainer!: ElementRef;
+  @ViewChild('msgContainer') msgContainer!: ElementRef<HTMLElement>;
   @ViewChild('fileInputRef') fileInputRef!: ElementRef<HTMLInputElement>;
 
   // Icons
@@ -138,14 +142,7 @@ export class RequestDetailComponent {
   newMessagesCount = signal(0);
   pollingNewFromId = signal(0);
 
-  // Staff members (TODO: should come from API)
-  staffMembers = [
-    { id: 1, name: 'Juan Electricista' },
-    { id: 2, name: 'Pedro Técnico' },
-    { id: 3, name: 'Miguel Constructor' },
-    { id: 4, name: 'Control Plagas Pro' },
-    { id: 5, name: 'Ana Plomera' },
-  ];
+  readonly staffMembers = signal<AdminUser[]>([]);
 
   readonly statusOptions: AppSelectOption<MaintenanceStatus>[] = Object.values(
     MaintenanceStatus,
@@ -161,10 +158,7 @@ export class RequestDetailComponent {
     label: this.transloco.translate(`maintenance.priority.${value}`),
   }));
 
-  readonly staffOptions: AppSelectOption<number>[] = this.staffMembers.map((staff) => ({
-    value: staff.id,
-    label: staff.name,
-  }));
+  readonly staffOptions = signal<AppSelectOption<number>[]>([]);
 
   // Getter/setter for the date input (HTML date inputs require YYYY-MM-DD strings)
   get dueDateString(): string {
@@ -187,6 +181,7 @@ export class RequestDetailComponent {
   }
 
   private readonly maintenanceService = inject(MaintenanceService);
+  private readonly adminUserService = inject(AdminUserService);
   private readonly vendorService = inject(VendorService);
 
   // Proveedores externos para asignación
@@ -197,6 +192,10 @@ export class RequestDetailComponent {
   readonly ratingDialogOpen = signal(false);
   readonly ratingValue = signal(0);
   readonly ratingComment = signal('');
+
+  textareaValue(event: Event): string {
+    return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+  }
   readonly ratingSaving = signal(false);
 
   constructor() {
@@ -204,7 +203,33 @@ export class RequestDetailComponent {
       this.request = { ...this.initialRequest() };
       this.loadMessages();
     });
+    this.loadStaffMembers();
     this.loadVendors();
+  }
+
+  private loadStaffMembers(): void {
+    this.adminUserService.listUsers().subscribe({
+      next: (users) => {
+        const staff = users.filter(
+          (user) =>
+            user.role === 'TECNICO' ||
+            user.role === 'EMPLEADO' ||
+            user.role === 'ADMIN' ||
+            user.role === 'SUPERADMIN',
+        );
+        this.staffMembers.set(staff);
+        this.staffOptions.set(
+          staff.map((user) => ({
+            value: user.id,
+            label: `${user.name} · ${user.role}`,
+          })),
+        );
+      },
+      error: () => {
+        this.staffMembers.set([]);
+        this.staffOptions.set([]);
+      },
+    });
   }
 
   private loadVendors(): void {
@@ -454,7 +479,7 @@ export class RequestDetailComponent {
   }
 
   getStaffName(staffId: number): string {
-    const staff = this.staffMembers.find((s) => s.id === staffId);
+    const staff = this.staffMembers().find((s) => s.id === staffId);
     return staff ? staff.name : `Staff #${staffId}`;
   }
 

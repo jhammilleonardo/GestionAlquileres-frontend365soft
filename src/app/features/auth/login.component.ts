@@ -25,6 +25,7 @@ import { AppButtonComponent } from '../../shared/ui/button/button.component';
 import { AppCheckboxComponent } from '../../shared/ui/checkbox/checkbox.component';
 import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -651,7 +652,7 @@ export class LoginComponent {
       // Fallback: try to get slug from SlugService (loaded from localStorage)
       const storedSlug = this.slugService.getSlug();
       if (storedSlug) {
-        this.router.navigate(['/', storedSlug, 'dashboard'], { replaceUrl: true });
+        void this.router.navigate(['/', storedSlug, 'dashboard'], { replaceUrl: true });
       }
       // If no slug is available anywhere, stay on login page
     }
@@ -683,7 +684,7 @@ export class LoginComponent {
         error: (error: { error?: { message?: string } }) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message || this.transloco.translate('auth.credentialsInvalid'),
+            getApiErrorMessage(error, this.transloco.translate('auth.credentialsInvalid')),
           );
         },
       });
@@ -700,7 +701,7 @@ export class LoginComponent {
           if (userSlug) {
             // Navegar al dashboard con replaceUrl para limpiar el historial
             // Esto previene que el usuario vuelva al login al presionar el botón de retroceso
-            this.router
+            void this.router
               .navigate(['/', userSlug, 'dashboard'], {
                 replaceUrl: true,
               })
@@ -716,7 +717,7 @@ export class LoginComponent {
         error: (error: { error?: { message?: string } }) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            error.error?.message || this.transloco.translate('auth.credentialsInvalid'),
+            getApiErrorMessage(error, this.transloco.translate('auth.credentialsInvalid')),
           );
         },
       });

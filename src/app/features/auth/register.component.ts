@@ -22,6 +22,7 @@ import { catchError, tap } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
   AppButtonComponent,
   AppCheckboxComponent,
@@ -173,8 +174,8 @@ export class RegisterComponent {
     localStorage.removeItem('tenant_access_token');
     localStorage.removeItem('tenant_user');
     localStorage.removeItem('tenant_slug');
-    // TODO: Navegar con slug cuando se tenga
-    void this.router.navigate(['/portal/login']);
+    const slug = this.authService.getCurrentSlug();
+    void this.router.navigate(slug ? ['/', slug, 'login'] : ['/login']);
   }
 
   onSubmit(): void {
@@ -204,10 +205,10 @@ export class RegisterComponent {
             void this.router.navigate(['/', slug, 'configuracion', 'inicio']);
           }, 1500);
         }),
-        catchError((_e) => {
+        catchError((_e: unknown) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            _e._e?.message || this.transloco.translate('auth.createAccountError'),
+            getApiErrorMessage(_e, this.transloco.translate('auth.createAccountError')),
           );
           throw _e;
         }),

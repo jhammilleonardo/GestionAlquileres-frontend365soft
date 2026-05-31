@@ -1,11 +1,12 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, tap, catchError, of, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, UserRole } from '../models/user.model';
 import { SlugService } from './slug.service';
 import { PermissionsService } from './permissions.service';
+import { getApiErrorMessage } from '../http/http-error.util';
 
 export interface AdminUser {
   id: number;
@@ -121,10 +122,9 @@ export class AuthService {
           this.setSession(response, rememberMe);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((error: unknown) => {
           this.isLoadingSignal.set(false);
-          const message = error.error?.message || 'Error al iniciar sesión';
-          this.errorSignal.set(message);
+          this.errorSignal.set(getApiErrorMessage(error, 'Error al iniciar sesión'));
           throw error;
         }),
       );
@@ -152,10 +152,9 @@ export class AuthService {
           }
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((error: unknown) => {
           this.isLoadingSignal.set(false);
-          const message = error.error?.message || 'Error al iniciar sesión';
-          this.errorSignal.set(message);
+          this.errorSignal.set(getApiErrorMessage(error, 'Error al iniciar sesión'));
           throw error;
         }),
       );
@@ -184,7 +183,7 @@ export class AuthService {
     this.permissionsService.clear();
 
     // Redirect to login page
-    this.router.navigate(['/login'], { replaceUrl: true });
+    void this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   /**
@@ -256,7 +255,7 @@ export class AuthService {
     this.http
       .get<AdminUser>(`${environment.apiUrl}auth/me`)
       .pipe(
-        catchError((error) => {
+        catchError((error: HttpErrorResponse) => {
           // Only clear storage if token is invalid (401)
           // Don't clear on network errors to avoid logout on connection issues
           if (error.status === 401) {
@@ -323,7 +322,7 @@ export class AuthService {
     const userJson = localStorage.getItem(this.USER_KEY) || sessionStorage.getItem(this.USER_KEY);
     if (!userJson) return null;
     try {
-      return JSON.parse(userJson);
+      return JSON.parse(userJson) as User;
     } catch {
       return null;
     }
@@ -371,6 +370,12 @@ export class AuthService {
     });
   }
 
+  requestPasswordReset(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}auth/forgot-password`, {
+      email,
+    });
+  }
+
   /**
    * Clear error message
    */
@@ -411,10 +416,9 @@ export class AuthService {
           }
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((error: unknown) => {
           this.isLoadingSignal.set(false);
-          const message = error.error?.message || 'Error al registrar';
-          this.errorSignal.set(message);
+          this.errorSignal.set(getApiErrorMessage(error, 'Error al registrar'));
           throw error;
         }),
       );

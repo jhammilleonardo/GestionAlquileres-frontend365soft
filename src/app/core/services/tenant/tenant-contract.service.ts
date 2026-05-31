@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 import { SlugService } from '../slug.service';
 import { TranslocoService } from '@jsverse/transloco';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 export enum ContractStatus {
   BORRADOR = 'BORRADOR',
   PENDIENTE = 'PENDIENTE',
@@ -254,7 +255,7 @@ export class TenantContractService {
         }),
         catchError((error: { error?: { message?: string } }) => {
           this.errorSignal.set(
-            error.error?.message || this.transloco.translate('common.errors.signContract'),
+            getApiErrorMessage(error, this.transloco.translate('common.errors.signContract')),
           );
           this.isLoadingSignal.set(false);
           return throwError(() => error);

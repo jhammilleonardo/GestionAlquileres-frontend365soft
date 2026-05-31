@@ -4,6 +4,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { Property } from '../../../core/models/property.model';
 import { PropertyService } from '../../../core/services/admin/property.service';
+import { ToastService } from '../../../shared/ui';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +30,10 @@ export class ContactModalComponent {
   isSubmitting = false;
   submitted = false;
 
-  constructor(private propertyService: PropertyService) {}
+  constructor(
+    private propertyService: PropertyService,
+    private toast: ToastService,
+  ) {}
 
   submitForm() {
     if (!this.contactForm.name || !this.contactForm.email || !this.contactForm.message) {
@@ -53,10 +57,9 @@ export class ContactModalComponent {
             this.closeModal();
           }, 2500);
         },
-        error: (error: any) => {
-          console.error('Error submitting contact form:', error);
+        error: () => {
           this.isSubmitting = false;
-          alert('Hubo un error al enviar su mensaje. Por favor intente más tarde.');
+          this.toast.error('Hubo un error al enviar su mensaje. Por favor intente más tarde.');
         },
       });
   }

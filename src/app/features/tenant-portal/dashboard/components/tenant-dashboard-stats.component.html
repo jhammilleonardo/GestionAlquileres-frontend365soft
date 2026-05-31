@@ -1,0 +1,45 @@
+@if (loading()) {
+  <div class="stats-grid">
+    @for (item of [1, 2, 3]; track item) {
+      <div class="stat-card skeleton">
+        <div class="skeleton-icon"></div>
+        <div class="skeleton-content">
+          <div class="skeleton-value"></div>
+          <div class="skeleton-label"></div>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="stats-grid">
+    <div class="stat-card maintenance">
+      <div class="stat-icon">
+        <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ activeRequests() }}</div>
+        <div class="stat-label">{{ 'public.tenantDashboard.activeRequests' | transloco }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card messages">
+      <div class="stat-icon">
+        <lucide-icon [img]="MessageSquare" [size]="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ unreadMessages() }}</div>
+        <div class="stat-label">{{ 'public.tenantDashboard.unreadMessages' | transloco }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card documents">
+      <div class="stat-icon">
+        <lucide-icon [img]="FileText" [size]="24"></lucide-icon>
+      </div>
+      <div class="stat-content">
+        <div class="stat-value">{{ documentsCount() }}</div>
+        <div class="stat-label">{{ 'public.tenantDashboard.documents' | transloco }}</div>
+      </div>
+    </div>
+  </div>
+}

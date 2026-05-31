@@ -228,6 +228,7 @@
         (close)="closePanel()"
         (edit)="openEditDialog($event)"
         (delete)="deleteUnit($event)"
+        (manageDates)="openBlockDates($event)"
       />
     </div>
   }
@@ -238,5 +239,12 @@
     [unit]="formDialogUnit()"
     (closed)="closeFormDialog()"
     (saved)="handleUnitSaved($event)"
+  />
+
+  <app-block-dates-dialog
+    [open]="blockDatesOpen()"
+    [propertyId]="propertyId()"
+    [unit]="blockDatesUnit()"
+    (closed)="closeBlockDates()"
   />
 </div>

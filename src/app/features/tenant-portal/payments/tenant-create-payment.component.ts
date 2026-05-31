@@ -1,54 +1,26 @@
 import {
+  ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   inject,
   signal,
-  computed,
-  ChangeDetectionStrategy,
 } from '@angular/core';
-import { HttpEventType } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import {
-  LucideAngularModule,
-  ArrowLeft,
-  CreditCard,
-  AlertCircle,
-  FileText,
-  Landmark,
-} from 'lucide-angular';
-import { TenantPaymentService } from '../../../core/services/tenant/tenant-payment.service';
-import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
-import { SlugService } from '../../../core/services/slug.service';
-import { TenantContractService } from '../../../core/services/tenant/tenant-contract.service';
-import {
-  PaymentType,
-  PaymentMethod,
-  Currency,
-  CurrencySymbols,
-  QrPayment,
-  QrPaymentStatus,
-  PaymentStatus,
-} from '../../../core/models/payment.model';
+import { LucideAngularModule, ArrowLeft, CreditCard, AlertCircle, FileText } from 'lucide-angular';
+import { PaymentMethod, QrPaymentStatus } from '../../../core/models/payment.model';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { FormatService } from '../../../core/services/format.service';
-import {
-  TenantCreatePaymentFacade,
-  PaymentOption,
-  CurrencyOption,
-} from './tenant-create-payment.facade';
+import { TenantCreatePaymentFacade } from './tenant-create-payment.facade';
 import { TenantPaymentScheduleComponent } from './components/tenant-payment-schedule.component';
 import { TenantPaymentReceiptUploadComponent } from './components/tenant-payment-receipt-upload.component';
 import { TenantPaymentQrPanelComponent } from './components/tenant-payment-qr-panel.component';
 import { TenantContractPaymentSummaryComponent } from './components/tenant-contract-payment-summary.component';
 import { TenantPaymentSuccessStateComponent } from './components/tenant-payment-success-state.component';
+import { TenantPaymentBasicFieldsComponent } from './components/tenant-payment-basic-fields.component';
+import { TenantPaymentMethodDetailsComponent } from './components/tenant-payment-method-details.component';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
-import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
-import { AppSelectComponent } from '../../../shared/ui/select/select.component';
-import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.component';
-
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-create-payment',
@@ -64,10 +36,9 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
     TenantPaymentQrPanelComponent,
     TenantContractPaymentSummaryComponent,
     TenantPaymentSuccessStateComponent,
+    TenantPaymentBasicFieldsComponent,
+    TenantPaymentMethodDetailsComponent,
     AppButtonComponent,
-    AppDatePickerComponent,
-    AppSelectComponent,
-    AppTextFieldComponent,
     AppTextareaComponent,
   ],
   template: `
@@ -135,95 +106,13 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
           </div>
 
           <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()" class="form-body">
-            <!-- Sección 1: Información del Pago -->
-            <div class="form-section">
-              <div class="section-title">
-                <span class="section-title-accent"></span>
-                <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
-                {{ 'public.tenantCreatePayment.paymentInfo' | transloco }}
-              </div>
-
-              <div class="full-width">
-                <app-select
-                  formControlName="payment_type"
-                  [label]="'public.tenantCreatePayment.paymentType' | transloco"
-                  [options]="paymentTypes"
-                  [required]="true"
-                />
-                @if (showFieldError('payment_type', 'required')) {
-                  <p class="field-error">
-                    {{ 'public.tenantCreatePayment.typeRequired' | transloco }}
-                  </p>
-                }
-              </div>
-
-              <div class="form-row">
-                <div>
-                  <app-text-field
-                    formControlName="amount"
-                    [label]="'public.tenantCreatePayment.amount' | transloco"
-                    placeholder="0.00"
-                    type="number"
-                    inputMode="decimal"
-                  />
-                  @if (showFieldError('amount', 'required')) {
-                    <p class="field-error">
-                      {{ 'public.tenantCreatePayment.amountRequired' | transloco }}
-                    </p>
-                  }
-                  @if (paymentForm.get('amount')?.hasError('min')) {
-                    <p class="field-error">
-                      {{ 'public.tenantCreatePayment.amountMin' | transloco }}
-                    </p>
-                  }
-                </div>
-
-                <div>
-                  <app-select
-                    formControlName="currency"
-                    [label]="'public.tenantCreatePayment.currency' | transloco"
-                    [options]="currencySelectOptions"
-                    [required]="true"
-                  />
-                  @if (showFieldError('currency', 'required')) {
-                    <p class="field-error">
-                      {{ 'public.tenantCreatePayment.currencyRequired' | transloco }}
-                    </p>
-                  }
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div>
-                  <app-select
-                    formControlName="payment_method"
-                    [label]="'public.tenantCreatePayment.method' | transloco"
-                    [options]="paymentMethods"
-                    [required]="true"
-                  />
-                  @if (showFieldError('payment_method', 'required')) {
-                    <p class="field-error">
-                      {{ 'public.tenantCreatePayment.methodRequired' | transloco }}
-                    </p>
-                  }
-                </div>
-
-                @if (!isQrMethod()) {
-                  <div>
-                    <app-date-picker
-                      formControlName="payment_date"
-                      [label]="'public.tenantCreatePayment.paymentDate' | transloco"
-                      [max]="maxDateInput"
-                    />
-                    @if (showFieldError('payment_date', 'required')) {
-                      <p class="field-error">
-                        {{ 'public.tenantCreatePayment.dateRequired' | transloco }}
-                      </p>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
+            <app-tenant-payment-basic-fields
+              [form]="paymentForm"
+              [paymentTypes]="paymentTypes"
+              [paymentMethods]="paymentMethods"
+              [currencyOptions]="currencySelectOptions"
+              [maxDate]="maxDateInput"
+            />
 
             <!-- ══ Sección QR ══ -->
             @if (isQrMethod()) {
@@ -248,151 +137,11 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
               />
             }
 
-            <!-- Sección 2: Datos del Método (solo métodos no-QR) -->
-            @if (
-              !isQrMethod() &&
-              (paymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
-                paymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD ||
-                paymentForm.get('payment_method')?.value === PaymentMethod.CHECK ||
-                paymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
-                paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER ||
-                paymentForm.get('payment_method')?.value === PaymentMethod.CASH)
-            ) {
-              <div class="form-section">
-                <div class="section-title">
-                  <span class="section-title-accent"></span>
-                  <lucide-icon [img]="Landmark" [size]="15"></lucide-icon>
-                  {{ 'public.tenantCreatePayment.methodData' | transloco }}
-                </div>
-
-                <!-- Tarjeta de Crédito/Débito -->
-                @if (
-                  paymentForm.get('payment_method')?.value === PaymentMethod.CREDIT_CARD ||
-                  paymentForm.get('payment_method')?.value === PaymentMethod.DEBIT_CARD
-                ) {
-                  <div class="form-row">
-                    <div>
-                      <app-text-field
-                        formControlName="card_last_4_digits"
-                        [label]="'public.tenantCreatePayment.last4Digits' | transloco"
-                        placeholder="1234"
-                        inputMode="numeric"
-                        [maxLength]="4"
-                        pattern="[0-9]{4}"
-                      />
-                      <p class="field-hint">
-                        {{ 'public.tenantCreatePayment.last4Hint' | transloco }}
-                      </p>
-                    </div>
-
-                    <app-text-field
-                      formControlName="card_holder_name"
-                      [label]="'public.tenantCreatePayment.cardHolder' | transloco"
-                      placeholder="Juan Pérez"
-                    />
-                  </div>
-
-                  <div class="form-row">
-                    <div>
-                      <app-text-field
-                        formControlName="card_expiry"
-                        [label]="'public.tenantCreatePayment.expiryDate' | transloco"
-                        placeholder="MM/YY"
-                        [maxLength]="5"
-                      />
-                      <p class="field-hint">
-                        {{ 'public.tenantCreatePayment.expiryHint' | transloco }}
-                      </p>
-                    </div>
-
-                    <app-text-field
-                      formControlName="reference_number"
-                      [label]="'public.tenantCreatePayment.authCode' | transloco"
-                      placeholder="Ej: AUTH-123456"
-                    />
-                  </div>
-                }
-
-                <!-- Cheque -->
-                @if (paymentForm.get('payment_method')?.value === PaymentMethod.CHECK) {
-                  <div class="form-row">
-                    <app-text-field
-                      formControlName="check_number"
-                      [label]="'public.tenantCreatePayment.checkNumber' | transloco"
-                      placeholder="Ej: CHK-001"
-                    />
-
-                    <app-text-field
-                      formControlName="bank_name"
-                      [label]="'public.tenantCreatePayment.bankName' | transloco"
-                      placeholder="Banco Nacional"
-                    />
-                  </div>
-
-                  <div class="full-width">
-                    <app-text-field
-                      formControlName="bank_account_last_4"
-                      [label]="'public.tenantCreatePayment.accTitle' | transloco"
-                      placeholder="5678"
-                      inputMode="numeric"
-                      [maxLength]="4"
-                    />
-                  </div>
-                }
-
-                <!-- Transferencia -->
-                @if (
-                  paymentForm.get('payment_method')?.value === PaymentMethod.TRANSFER ||
-                  paymentForm.get('payment_method')?.value === PaymentMethod.WIRE_TRANSFER
-                ) {
-                  <div class="full-width">
-                    <app-text-field
-                      formControlName="reference_number"
-                      [label]="'public.tenantCreatePayment.refNumber' | transloco"
-                      placeholder="Ej: TRF-12345"
-                    />
-                    <p class="field-hint">{{ 'public.tenantCreatePayment.refHint' | transloco }}</p>
-                  </div>
-
-                  <div class="form-row">
-                    <app-text-field
-                      formControlName="bank_name"
-                      [label]="'public.tenantCreatePayment.originBank' | transloco"
-                      placeholder="Tu banco"
-                    />
-
-                    <app-text-field
-                      formControlName="bank_account_last_4"
-                      [label]="'public.tenantCreatePayment.accTitle' | transloco"
-                      placeholder="9012"
-                      inputMode="numeric"
-                      [maxLength]="4"
-                    />
-                  </div>
-                }
-
-                <!-- Efectivo -->
-                @if (paymentForm.get('payment_method')?.value === PaymentMethod.CASH) {
-                  <div class="form-row">
-                    <div>
-                      <app-text-field
-                        formControlName="received_by"
-                        [label]="'public.tenantCreatePayment.receivedBy' | transloco"
-                        placeholder="Nombre de quien recibió"
-                      />
-                      <p class="field-hint">
-                        {{ 'public.tenantCreatePayment.receivedByHint' | transloco }}
-                      </p>
-                    </div>
-
-                    <app-text-field
-                      formControlName="reference_number"
-                      [label]="'public.tenantCreatePayment.receiptNumber' | transloco"
-                      placeholder="Ej: REC-001"
-                    />
-                  </div>
-                }
-              </div>
+            @if (!isQrMethod()) {
+              <app-tenant-payment-method-details
+                [form]="paymentForm"
+                [method]="paymentForm.get('payment_method')?.value"
+              />
             }
 
             <!-- Sección 3: Comprobante y notas (solo métodos no-QR) -->
@@ -727,25 +476,20 @@ export class TenantCreatePaymentComponent {
   readonly CreditCard = CreditCard;
   readonly AlertCircle = AlertCircle;
   readonly FileText = FileText;
-  readonly Landmark = Landmark;
 
-  private readonly fb = inject(FormBuilder);
-  private readonly route = inject(ActivatedRoute);
-  private readonly slugService = inject(SlugService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly destroyRef = inject(DestroyRef);
   readonly facade = inject(TenantCreatePaymentFacade);
-  paymentService = inject(TenantPaymentService);
-  qrService = inject(TenantQrPaymentService);
-  contractService = inject(TenantContractService);
+  readonly paymentService = this.facade.paymentService;
+  readonly qrService = this.facade.qrService;
+  readonly contractService = this.facade.contractService;
   private translocoService = inject(TranslocoService);
-  private formatService = inject(FormatService);
 
-  success = signal(false);
-  readonly maxDateInput = this.toDateInputValue(new Date());
-  qrPolling = signal(false);
-  qrCancelling = signal(false);
-  qrError = signal<string | null>(null);
+  readonly success = this.facade.success;
+  readonly maxDateInput = this.facade.maxDateInput;
+  readonly qrPolling = this.facade.qrPolling;
+  readonly qrCancelling = this.facade.qrCancelling;
+  readonly qrError = this.facade.qrError;
   selectedReceipt = signal<File | null>(null);
   receiptError = signal<string | null>(null);
   receiptPreviewKind = signal<'image' | 'pdf' | null>(null);
@@ -753,20 +497,19 @@ export class TenantCreatePaymentComponent {
   receiptZoom = signal(1);
   readonly minReceiptZoom = 1;
   readonly maxReceiptZoom = 8;
-  uploadProgress = signal(0);
-  retryPaymentId = signal<number | null>(null);
-  private qrPollTimer?: ReturnType<typeof setInterval>;
+  readonly uploadProgress = this.facade.uploadProgress;
   private receiptObjectUrl = signal<string | null>(null);
 
-  calendarExpanded = this.facade.calendarExpanded;
-  paymentSchedule = this.facade.paymentSchedule;
-  paidCount = this.facade.paidCount;
+  readonly calendarExpanded = this.facade.calendarExpanded;
+  readonly paymentSchedule = this.facade.paymentSchedule;
+  readonly paidCount = this.facade.paidCount;
+  readonly paymentForm = this.facade.paymentForm;
 
-  PaymentMethod = PaymentMethod;
-  QrStatus = QrPaymentStatus;
+  readonly PaymentMethod = PaymentMethod;
+  readonly QrStatus = QrPaymentStatus;
 
   isQrMethod(): boolean {
-    return this.paymentForm.get('payment_method')?.value === PaymentMethod.QR_MC4;
+    return this.facade.isQrMethod();
   }
 
   qrSafeUrl = computed<SafeUrl | null>(() => {
@@ -785,115 +528,28 @@ export class TenantCreatePaymentComponent {
     return this.sanitizer.bypassSecurityTrustUrl(url);
   });
 
-  paymentTypes: PaymentOption<PaymentType>[] = this.facade.paymentTypes;
-  paymentMethods: PaymentOption<PaymentMethod>[] = this.facade.defaultPaymentMethods;
-  currencies: CurrencyOption[] = this.facade.currencies;
-  currencySelectOptions: PaymentOption<Currency>[] = this.currencies.map((currency) => ({
-    value: currency.value,
-    label: `${currency.symbol} - ${currency.label}`,
-  }));
+  get paymentTypes() {
+    return this.facade.paymentTypes;
+  }
 
-  paymentForm = this.fb.group({
-    payment_type: [PaymentType.RENT, Validators.required],
-    amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    currency: [Currency.USD, Validators.required],
-    payment_method: [PaymentMethod.TRANSFER, Validators.required],
-    payment_date: [new Date(), Validators.required],
-    reference_number: [''],
-    check_number: [''],
-    notes: ['', Validators.maxLength(500)],
+  get paymentMethods() {
+    return this.facade.paymentMethods;
+  }
 
-    // Campos específicos por método de pago
-    card_last_4_digits: [''],
-    card_holder_name: [''],
-    card_expiry: [''],
-    bank_name: [''],
-    bank_account_last_4: [''],
-    received_by: [''],
-  });
+  get currencySelectOptions() {
+    return this.facade.currencySelectOptions;
+  }
 
   constructor() {
-    this.qrService.clearActiveQr();
-    this.loadAvailablePaymentMethods();
-    if (!this.contractService.currentContract()) {
-      this.contractService.loadCurrentContract();
-    }
-    this.paymentService.loadPayments();
-    this.loadRetryPayment();
-
-    // Cuando el contrato está disponible, pre-rellenar monto, moneda y construir calendario
-    const tryPrefill = () => {
-      const contract = this.contractService.currentContract();
-      if (contract) {
-        this.paymentForm.patchValue(this.facade.getContractPaymentPatch(contract));
-        setTimeout(
-          () => this.facade.buildPaymentSchedule(contract, this.paymentService.payments()),
-          200,
-        );
-      } else {
-        // Reintentar al siguiente frame si aún está cargando
-        setTimeout(tryPrefill, 300);
-      }
-    };
-    setTimeout(tryPrefill, 100);
-    this.destroyRef.onDestroy(() => {
-      this.stopPolling();
-      this.revokeReceiptObjectUrl();
-    });
-  }
-
-  private loadAvailablePaymentMethods(): void {
-    this.paymentService.getAvailablePaymentMethods().subscribe({
-      next: (methods) => {
-        const allowed = this.facade.normalizeAvailableMethods(methods);
-
-        if (allowed.length === 0) return;
-
-        this.paymentMethods = allowed;
-        const current = this.paymentForm.get('payment_method')?.value;
-        if (!current || !allowed.some((method) => method.value === current)) {
-          this.paymentForm.patchValue({ payment_method: allowed[0].value });
-        }
-      },
-      error: () => undefined,
-    });
-  }
-
-  private loadRetryPayment(): void {
-    const retryParam = this.route.snapshot.queryParamMap.get('retry');
-    const retryId = retryParam ? Number(retryParam) : NaN;
-    if (!Number.isFinite(retryId) || retryId <= 0) return;
-
-    this.paymentService.getPayment(retryId).subscribe({
-      next: (payment) => {
-        if (payment.status !== PaymentStatus.REJECTED) return;
-        this.retryPaymentId.set(payment.id);
-        this.paymentForm.patchValue({
-          payment_type: payment.payment_type,
-          amount: payment.amount,
-          currency: payment.currency,
-          payment_method: payment.payment_method,
-          payment_date: new Date(),
-          reference_number: payment.reference_number || '',
-          check_number: payment.check_number || '',
-          notes: payment.notes || '',
-        });
-      },
-      error: () => undefined,
-    });
+    this.destroyRef.onDestroy(() => this.revokeReceiptObjectUrl());
   }
 
   currencySymbol(code: string): string {
-    return CurrencySymbols[code as Currency] ?? code;
+    return this.facade.currencySymbol(code);
   }
 
   formatDate(iso: string): string {
-    return this.formatService.formatDateTime(iso);
-  }
-
-  showFieldError(controlName: string, error: string): boolean {
-    const control = this.paymentForm.get(controlName);
-    return !!control?.hasError(error) && (control.touched || control.dirty);
+    return this.facade.formatDate(iso);
   }
 
   onReceiptFileSelected(file: File | null): void {
@@ -974,177 +630,31 @@ export class TenantCreatePaymentComponent {
   }
 
   onSubmit(): void {
-    if (this.isQrMethod()) {
-      this.generateQr();
-      return;
-    }
-    if (this.paymentForm.invalid) {
-      this.paymentForm.markAllAsTouched();
-      return;
-    }
-    if (!this.selectedReceipt()) {
-      this.receiptError.set(
-        this.translocoService.translate('public.tenantCreatePayment.receiptRequired'),
-      );
-      return;
-    }
-
-    const formValue = this.paymentForm.value;
-    const amount = Number(formValue.amount);
-    this.paymentService
-      .createPaymentWithReceipt(
-        {
-          payment_type: formValue.payment_type!,
-          amount,
-          currency: formValue.currency ?? Currency.USD,
-          payment_method: formValue.payment_method!,
-          payment_date: formValue.payment_date!,
-          reference_number: formValue.reference_number || undefined,
-          check_number: formValue.check_number || undefined,
-          notes: formValue.notes || undefined,
-          // Campos específicos por método de pago
-          card_last_4_digits: formValue.card_last_4_digits || undefined,
-          card_holder_name: formValue.card_holder_name || undefined,
-          card_expiry: formValue.card_expiry || undefined,
-          bank_name: formValue.bank_name || undefined,
-          bank_account_last_4: formValue.bank_account_last_4 || undefined,
-          received_by: formValue.received_by || undefined,
-          parent_payment_id: this.retryPaymentId() || undefined,
-        },
-        this.selectedReceipt()!,
-      )
-      .subscribe({
-        next: (event) => {
-          if (event.type === HttpEventType.UploadProgress && event.total) {
-            this.uploadProgress.set(Math.round((100 * event.loaded) / event.total));
-          }
-          if (event.type === HttpEventType.Response) {
-            this.uploadProgress.set(100);
-            this.success.set(true);
-          }
-        },
-        error: (err) => {
-          this.receiptError.set(
-            err?.error?.message ||
-              err?.message ||
-              this.translocoService.translate('common.errors.registerPayment'),
-          );
-        },
-      });
-  }
-
-  private generateQr(): void {
-    const v = this.paymentForm.value;
-    const amount = Number(v.amount);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      this.paymentForm.get('amount')?.markAsTouched();
-      return;
-    }
-    this.qrError.set(null);
-    this.qrService
-      .generateQr({
-        amount,
-        currency: v.currency ?? Currency.USD,
-        payment_type: v.payment_type ?? PaymentType.RENT,
-        notes: v.notes || undefined,
-      })
-      .subscribe({
-        next: () => this.startPolling(),
-        error: (err) =>
-          this.qrError.set(err?.error?.message || err?.message || 'Error al generar el QR.'),
-      });
+    this.facade.onSubmit(this.selectedReceipt(), (message) => this.receiptError.set(message));
   }
 
   manualVerify(): void {
-    const qr = this.qrService.activeQr();
-    if (qr) this.doVerify(qr);
+    this.facade.manualVerify();
   }
 
   downloadQr(): void {
-    const qr = this.qrService.activeQr();
-    if (!qr?.qr_image) return;
-    const raw = qr.qr_image;
-    const href =
-      raw.startsWith('http') || raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
-    const a = document.createElement('a');
-    a.href = href;
-    a.download = `QR-pago-${qr.id}.png`;
-    a.click();
+    this.facade.downloadQr();
   }
 
   onCancelQr(): void {
-    const qr = this.qrService.activeQr();
-    if (!qr) return;
-    this.qrCancelling.set(true);
-    this.stopPolling();
-    this.qrService.cancelQr(qr.id).subscribe({
-      next: () => this.qrCancelling.set(false),
-      error: () => this.qrCancelling.set(false),
-    });
+    this.facade.onCancelQr();
   }
 
   resetQr(): void {
-    this.stopPolling();
-    this.qrService.clearActiveQr();
-    this.qrError.set(null);
-  }
-
-  private startPolling(): void {
-    this.stopPolling();
-    this.qrPollTimer = setInterval(() => {
-      const qr = this.qrService.activeQr();
-      if (!qr || this.qrService.isTerminalStatus(qr.status)) {
-        this.stopPolling();
-        return;
-      }
-      this.doVerify(qr);
-    }, 5000);
-  }
-
-  private stopPolling(): void {
-    if (this.qrPollTimer !== undefined) {
-      clearInterval(this.qrPollTimer);
-      this.qrPollTimer = undefined;
-    }
-    this.qrPolling.set(false);
-  }
-
-  private doVerify(qr: QrPayment): void {
-    this.qrPolling.set(true);
-    this.qrService.verifyQr({ qr_id: qr.id }).subscribe({
-      next: (updated) => {
-        this.qrPolling.set(false);
-        if (this.qrService.isTerminalStatus(updated.status)) this.stopPolling();
-      },
-      error: () => this.qrPolling.set(false),
-    });
+    this.facade.resetQr();
   }
 
   resetForm(): void {
-    this.stopPolling();
-    this.qrService.clearActiveQr();
-    this.qrError.set(null);
     this.receiptError.set(null);
-    this.removeReceipt();
-    this.retryPaymentId.set(null);
-    this.paymentForm.reset({
-      payment_type: PaymentType.RENT,
-      currency: Currency.USD,
-      payment_method: PaymentMethod.TRANSFER,
-      payment_date: new Date(),
-    });
-    this.success.set(false);
-    this.paymentService.clearError();
+    this.facade.resetForm(() => this.removeReceipt());
   }
 
   goBack(): void {
-    this.slugService.navigateTo(['portal', 'pagos']);
-  }
-
-  private toDateInputValue(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    this.facade.goBack();
   }
 }

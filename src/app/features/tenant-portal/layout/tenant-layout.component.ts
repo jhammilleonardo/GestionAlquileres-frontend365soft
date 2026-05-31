@@ -1112,7 +1112,7 @@ export class TenantLayoutComponent implements OnDestroy {
   }
 
   goToNotifications(): void {
-    this.router.navigate([this.notificacionesUrl()]);
+    void this.router.navigate([this.notificacionesUrl()]);
     this.closeNotificationsDropdown();
   }
 

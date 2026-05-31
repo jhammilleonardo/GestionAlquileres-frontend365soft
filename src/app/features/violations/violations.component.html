@@ -176,7 +176,7 @@
       rows="3"
       [placeholder]="'violations.resolveCommentPlaceholder' | transloco"
       [value]="resolveNotes()"
-      (input)="resolveNotes.set($any($event.target).value)"
+      (input)="resolveNotes.set(textareaValue($event))"
     ></textarea>
   </div>
 

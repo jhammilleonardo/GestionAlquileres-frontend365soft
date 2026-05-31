@@ -27,6 +27,7 @@ import { AppTableColumn, AppTableComponent } from '../../shared/ui/table/table.c
 import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
 import { AppTextareaComponent } from '../../shared/ui/textarea/textarea.component';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 export type AdminResourceKind = 'vendors' | 'expenses' | 'violations' | 'inspections';
 
 type FieldType = 'text' | 'number' | 'email' | 'date' | 'select' | 'textarea';
@@ -574,7 +575,7 @@ export class AdminResourceListComponent {
           this.closeCreateDialog();
         },
         error: (err: { error?: { message?: string } }) => {
-          this.createError.set(err.error?.message ?? 'Error al crear el registro');
+          this.createError.set(getApiErrorMessage(err, 'Error al crear el registro'));
         },
       });
   }

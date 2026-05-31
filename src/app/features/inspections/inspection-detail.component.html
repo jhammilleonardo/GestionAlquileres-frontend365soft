@@ -77,7 +77,7 @@
                 [placeholder]="'inspections.notesPlaceholder' | transloco"
                 [value]="item.notes ?? ''"
                 [disabled]="isCompleted()"
-                (input)="setNotes(item, $any($event.target).value)"
+                (input)="setNotes(item, textareaValue($event))"
               ></textarea>
 
               @if (item.photos && item.photos.length > 0) {

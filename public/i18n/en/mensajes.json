@@ -4,6 +4,8 @@
   "new": "New message",
   "broadcast": "Message all",
   "loading": "Loading messages...",
+  "loadOlder": "Load earlier messages",
+  "loadingOlder": "Loading...",
   "empty": "No conversations",
   "selectThread": "Select a conversation",
   "typeMessage": "Type a message...",

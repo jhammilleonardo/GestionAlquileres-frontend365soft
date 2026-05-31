@@ -56,12 +56,14 @@ export class ApplicationModalComponent implements OnInit {
     this.isSubmitting.set(true);
 
     this.propertyService.submitApplication(this.application).subscribe({
-      next: (success) => {
-        if (success) {
+      next: (result) => {
+        if (result.success) {
           this.submitted.set(true);
           setTimeout(() => {
             this.closeModal();
           }, 3000);
+        } else {
+          this.toast.error(result.message);
         }
         this.isSubmitting.set(false);
       },

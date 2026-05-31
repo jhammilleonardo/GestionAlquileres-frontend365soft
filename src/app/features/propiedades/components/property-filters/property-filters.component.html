@@ -1,0 +1,41 @@
+<section class="filters-section">
+  <div class="filter-header">
+    <lucide-icon [img]="Filter" [size]="18"></lucide-icon>
+    <span>{{ 'common.filters' | transloco }}</span>
+  </div>
+
+  <div class="filter-grid">
+    <app-text-field
+      [(ngModel)]="filters().search"
+      [label]="'common.search' | transloco"
+      [placeholder]="'properties.search' | transloco"
+      type="search"
+      autocomplete="off"
+    />
+
+    <app-select
+      [ngModel]="filters().status ?? null"
+      [label]="'common.status' | transloco"
+      [placeholder]="'properties.allStatuses' | transloco"
+      [options]="statusOptions()"
+      (ngModelChange)="statusChanged.emit($event)"
+    />
+
+    <app-select
+      [ngModel]="filters().property_type_id ?? null"
+      [label]="'common.type' | transloco"
+      [placeholder]="'properties.allTypes' | transloco"
+      [options]="propertyTypeOptions()"
+      (ngModelChange)="propertyTypeChanged.emit($event)"
+    />
+  </div>
+
+  <div class="filter-actions">
+    <app-button appearance="flat" (clicked)="cleared.emit()">
+      {{ 'common.clearFilters' | transloco }}
+    </app-button>
+    <app-button (clicked)="applied.emit()">
+      {{ 'common.applyFilters' | transloco }}
+    </app-button>
+  </div>
+</section>

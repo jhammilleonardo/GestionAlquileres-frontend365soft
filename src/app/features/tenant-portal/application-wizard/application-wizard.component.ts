@@ -40,6 +40,29 @@ interface WizardDraft {
   };
 }
 
+interface PersonalInfoDraft {
+  full_name?: string;
+  phone?: string;
+  national_id?: string;
+  current_address?: string;
+  birth_date?: string | Date;
+}
+
+interface CurrentJobDraft {
+  company?: string;
+  position?: string;
+  salary?: number | string;
+  start_date?: string;
+  supervisor_phone?: string;
+}
+
+interface EmploymentRawValue {
+  current_job?: CurrentJobDraft;
+  previous_job?: Record<string, unknown>;
+  rental_history?: RentalHistoryDraft[];
+  personal_references?: PersonalReferenceDraft[];
+}
+
 interface RentalHistoryDraft {
   property_address?: string;
   landlord_name?: string;
@@ -387,8 +410,9 @@ export class ApplicationWizardComponent implements OnInit {
 
   private saveDraft(): void {
     const draft: WizardDraft = {
-      personalInfo: this.personalInfoForm.getRawValue(),
-      employmentHistory: this.employmentHistoryForm.getRawValue(),
+      personalInfo: this.personalInfoForm.getRawValue() as Record<string, unknown>,
+      employmentHistory:
+        this.employmentHistoryForm.getRawValue() as WizardDraft['employmentHistory'],
     };
     sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
   }
@@ -450,11 +474,11 @@ export class ApplicationWizardComponent implements OnInit {
 
     this.isSubmitting.set(true);
 
-    const personalInfo = this.personalInfoForm.getRawValue();
-    const employmentInfo = this.employmentHistoryForm.getRawValue();
+    const personalInfo = this.personalInfoForm.getRawValue() as PersonalInfoDraft;
+    const employmentInfo = this.employmentHistoryForm.getRawValue() as EmploymentRawValue;
     const currentJob = employmentInfo.current_job;
-    const rentalHistory = employmentInfo.rental_history || [];
-    const personalRefs = (employmentInfo.personal_references || []) as PersonalReferenceDraft[];
+    const rentalHistory = employmentInfo.rental_history ?? [];
+    const personalRefs = employmentInfo.personal_references ?? [];
 
     const payload: ApplicationPayload = {
       property_id: property.id,

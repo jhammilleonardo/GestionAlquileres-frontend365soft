@@ -12,6 +12,7 @@ import {
 } from '../../models/payment.model';
 import { SlugService } from '../slug.service';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 @Injectable({
   providedIn: 'root',
 })
@@ -70,7 +71,7 @@ export class TenantPaymentService {
         }),
         catchError((error) => {
           this.errorSignal.set(
-            error.error?.message || this.transloco.translate('common.errors.loadPayments'),
+            getApiErrorMessage(error, this.transloco.translate('common.errors.loadPayments')),
           );
           this.isLoadingSignal.set(false);
           return of([]);
@@ -125,7 +126,7 @@ export class TenantPaymentService {
       }),
       catchError((error) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.registerPayment'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.registerPayment')),
         );
         this.isLoadingSignal.set(false);
         throw error;
@@ -177,7 +178,7 @@ export class TenantPaymentService {
         }),
         catchError((error) => {
           this.errorSignal.set(
-            error.error?.message || this.transloco.translate('common.errors.registerPayment'),
+            getApiErrorMessage(error, this.transloco.translate('common.errors.registerPayment')),
           );
           this.isLoadingSignal.set(false);
           throw error;

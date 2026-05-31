@@ -9,6 +9,7 @@ import type { Employee } from '../../../../core/models/employee.model';
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
 import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-field.component';
 
+import { getApiErrorMessage } from '../../../../core/http/http-error.util';
 @Component({
   selector: 'app-create-employee-dialog',
   standalone: true,
@@ -56,7 +57,7 @@ export class CreateEmployeeDialogComponent {
         catchError((err: { error?: { message?: string } }) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            err.error?.message ?? this.transloco.translate('employees.dialog.createError'),
+            getApiErrorMessage(err, this.transloco.translate('employees.dialog.createError')),
           );
           return EMPTY;
         }),

@@ -19,6 +19,34 @@ import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loadi
 import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
 import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
+
+/** Valor crudo del formulario de edición de contrato (campos de texto/numéricos como string). */
+interface ContractEditFormValue {
+  start_date: Date | string | null;
+  end_date: Date | string | null;
+  key_delivery_date: Date | string | null;
+  monthly_rent: string | null;
+  payment_day: string | null;
+  payment_method: string | null;
+  late_fee_percentage: string | null;
+  grace_days: string | null;
+  included_services: string[] | null;
+  tenant_responsibilities: string | null;
+  owner_responsibilities: string | null;
+  prohibitions: string | null;
+  coexistence_rules: string | null;
+  renewal_terms: string | null;
+  termination_terms: string | null;
+  auto_renew: boolean | null;
+  renewal_notice_days: string | null;
+  auto_increase_percentage: string | null;
+  jurisdiction: string | null;
+  bank_name: string | null;
+  bank_account_type: string | null;
+  bank_account_number: string | null;
+  bank_account_holder: string | null;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -195,10 +223,10 @@ export class ContractEditComponent {
       return;
     }
 
-    // Validar fechas
-    const startDate = this.contractForm.value.start_date;
-    const endDate = this.contractForm.value.end_date;
+    const formData = this.contractForm.getRawValue() as ContractEditFormValue;
+    const { start_date: startDate, end_date: endDate } = formData;
 
+    // Validar fechas
     if (endDate && startDate && endDate <= startDate) {
       this.errorMessage.set(this.transloco.translate('contracts.create.dateRangeError'));
       return;
@@ -208,10 +236,7 @@ export class ContractEditComponent {
     this.errorMessage.set(null);
 
     const contractId = this.currentContract()!.id;
-    const formData = this.contractForm.getRawValue();
-
-    // Obtener servicios seleccionados
-    const selectedServices = (this.contractForm.get('included_services')?.value as string[]) || [];
+    const selectedServices = formData.included_services ?? [];
 
     const updateData: UpdateContractDTO = {
       start_date: startDate ? this.formatDate(startDate) : undefined,
@@ -233,7 +258,7 @@ export class ContractEditComponent {
       coexistence_rules: formData.coexistence_rules || undefined,
       renewal_terms: formData.renewal_terms || undefined,
       termination_terms: formData.termination_terms || undefined,
-      auto_renew: formData.auto_renew,
+      auto_renew: formData.auto_renew ?? undefined,
       renewal_notice_days: formData.renewal_notice_days
         ? parseInt(formData.renewal_notice_days)
         : undefined,
@@ -251,7 +276,7 @@ export class ContractEditComponent {
       next: (contract) => {
         this.isSubmitting = false;
         const contractUrl = this.slugService.buildUrl(`/contratos/${contract.id}`);
-        this.router.navigateByUrl(contractUrl);
+        void this.router.navigateByUrl(contractUrl);
       },
       error: (error: unknown) => {
         this.isSubmitting = false;
@@ -262,7 +287,7 @@ export class ContractEditComponent {
 
   goBack(): void {
     const contractUrl = this.slugService.buildUrl(`/contratos/${this.currentContract()!.id}`);
-    this.router.navigateByUrl(contractUrl);
+    void this.router.navigateByUrl(contractUrl);
   }
 
   private formatDate(date: Date | string): string {
@@ -277,19 +302,6 @@ export class ContractEditComponent {
   }
 
   private resolveErrorMessage(error: unknown): string {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'error' in error &&
-      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
-    ) {
-      return (error as { error: { message: string } }).error.message;
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    return this.transloco.translate('contracts.edit.updateError');
+    return getApiErrorMessage(error, this.transloco.translate('contracts.edit.updateError'));
   }
 }

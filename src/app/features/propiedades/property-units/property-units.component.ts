@@ -18,11 +18,13 @@ import { UnitService } from '../../../core/services/admin/unit.service';
 import { Unit, UnitStatus } from '../../../core/models/unit.model';
 import { UnitFormDialogComponent } from './unit-form-dialog/unit-form-dialog.component';
 import { UnitDetailPanelComponent } from './unit-detail-panel/unit-detail-panel.component';
+import { BlockDatesDialogComponent } from './block-dates-dialog/block-dates-dialog.component';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 
 @Component({
   selector: 'app-property-units',
@@ -33,6 +35,7 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
     TenantCurrencyPipe,
     UnitDetailPanelComponent,
     UnitFormDialogComponent,
+    BlockDatesDialogComponent,
     AppButtonComponent,
     AppEmptyStateComponent,
     AppLoadingStateComponent,
@@ -69,6 +72,8 @@ export class PropertyUnitsComponent {
   confirmingDeleteId = signal<number | null>(null);
   formDialogOpen = signal(false);
   formDialogUnit = signal<Unit | null>(null);
+  blockDatesOpen = signal(false);
+  blockDatesUnit = signal<Unit | null>(null);
 
   counters = computed(() => {
     const all = this.units();
@@ -150,6 +155,15 @@ export class PropertyUnitsComponent {
     this.selectedUnit.set(null);
   }
 
+  openBlockDates(unit: Unit): void {
+    this.blockDatesUnit.set(unit);
+    this.blockDatesOpen.set(true);
+  }
+
+  closeBlockDates(): void {
+    this.blockDatesOpen.set(false);
+  }
+
   async deleteUnit(unit: Unit): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
       title: 'Eliminar unidad',
@@ -199,19 +213,6 @@ export class PropertyUnitsComponent {
   }
 
   private resolveErrorMessage(error: unknown, fallback: string): string {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'error' in error &&
-      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
-    ) {
-      return (error as { error: { message: string } }).error.message;
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    return fallback;
+    return getApiErrorMessage(error, fallback);
   }
 }

@@ -66,6 +66,10 @@ export class PaymentTableComponent {
     return this.selectedIds().includes(id);
   }
 
+  checkboxChecked(event: Event): boolean {
+    return event.target instanceof HTMLInputElement ? event.target.checked : false;
+  }
+
   getTenantName(payment: Payment): string {
     const tenant = payment.tenant;
     if (tenant?.name) return tenant.name;

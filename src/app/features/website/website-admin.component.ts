@@ -13,6 +13,7 @@ import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { AppStatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 @Component({
   selector: 'app-website-admin',
   standalone: true,
@@ -127,7 +128,7 @@ export class WebsiteAdminComponent {
         },
         error: (err: { error?: { message?: string } }) => {
           this.saving.set(false);
-          this.toast.error(err.error?.message ?? this.transloco.translate('website.saveError'));
+          this.toast.error(getApiErrorMessage(err, this.transloco.translate('website.saveError')));
         },
       });
   }

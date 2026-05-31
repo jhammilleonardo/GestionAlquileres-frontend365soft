@@ -1,0 +1,369 @@
+<app-dialog [open]="open()" [title]="'payments.newTitle' | transloco" (closed)="closed.emit()">
+  <div class="create-payment-modal">
+    <form [formGroup]="form()" (ngSubmit)="submitted.emit()">
+      <div class="form-section">
+        <h2 class="section-title">{{ 'payments.tenantAndContract' | transloco }}</h2>
+
+        <div class="tenant-search">
+          <app-text-field
+            [formControl]="tenantSearchControl()"
+            [label]="'payments.searchTenant' | transloco"
+            [placeholder]="'payments.searchTenantHint' | transloco"
+            type="search"
+            autocomplete="off"
+          />
+          <p class="field-hint">{{ 'payments.searchTenantHint' | transloco }}</p>
+
+          @if (!selectedTenant()) {
+            <div class="tenant-options" role="listbox">
+              @for (tenant of filteredTenants() | async; track tenant.id) {
+                <button type="button" class="tenant-option" (click)="tenantSelected.emit(tenant)">
+                  <strong>{{ tenant.name }}</strong>
+                  <span class="tenant-email">{{ tenant.email }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (selectedTenant()) {
+          <div class="contract-picker">
+            <p class="field-label">{{ 'payments.selectContract' | transloco }}</p>
+            @if (loadingContracts()) {
+              <div class="inline-progress" aria-hidden="true"></div>
+            }
+
+            <div class="contract-options">
+              @for (contract of availableContracts(); track contract.id) {
+                <button
+                  type="button"
+                  class="contract-option"
+                  [class.selected]="selectedContract()?.id === contract.id"
+                  [disabled]="loadingContracts()"
+                  (click)="contractSelected.emit(contract)"
+                >
+                  <strong>{{ contract.contract_number }}</strong>
+                  <span>
+                    {{
+                      contract.property?.title ||
+                        ('common.property' | transloco) + ' #' + contract.property_id
+                    }}
+                  </span>
+                  <span class="contract-rent">
+                    {{ contract.monthly_rent | tenantCurrency }}/{{ 'common.month' | transloco }}
+                  </span>
+                </button>
+              } @empty {
+                <p class="empty-inline">{{ 'payments.noContracts' | transloco }}</p>
+              }
+            </div>
+
+            <p class="field-hint">
+              @if (availableContracts().length === 0 && !loadingContracts()) {
+                {{ 'payments.noActiveContracts' | transloco }}
+              } @else {
+                {{
+                  'payments.contractsAvailable' | transloco: { count: availableContracts().length }
+                }}
+              }
+            </p>
+          </div>
+        }
+
+        @if (selectedContract()) {
+          <div class="readonly-summary">
+            <span>{{ 'common.property' | transloco }}</span>
+            <strong>
+              {{
+                selectedContract()?.property?.title ||
+                  ('common.property' | transloco) + ' #' + selectedContract()?.property_id
+              }}
+            </strong>
+            <small>{{ 'payments.propertyAutoAssigned' | transloco }}</small>
+          </div>
+        }
+      </div>
+
+      <div class="form-section">
+        <h2 class="section-title">{{ 'payments.paymentInfo' | transloco }}</h2>
+
+        <div class="form-row">
+          <app-text-field
+            formControlName="amount"
+            [label]="'common.amount' | transloco"
+            placeholder="0.00"
+            type="number"
+            inputMode="decimal"
+          />
+
+          <app-select
+            formControlName="currency"
+            [label]="'common.currency' | transloco"
+            [options]="currencyOptions()"
+            [required]="true"
+          />
+        </div>
+
+        <div class="form-row">
+          <app-select
+            formControlName="payment_type"
+            [label]="'payments.paymentType' | transloco"
+            [options]="typeOptions()"
+            [required]="true"
+          />
+
+          <app-select
+            formControlName="payment_method"
+            [label]="'payments.paymentMethod' | transloco"
+            [options]="methodOptions()"
+            [required]="true"
+          />
+        </div>
+
+        <div class="form-row">
+          <div>
+            <app-select
+              formControlName="status"
+              [label]="'common.status' | transloco"
+              [options]="statusOptions()"
+            />
+            <p class="field-hint">{{ 'payments.statusDefault' | transloco }}</p>
+          </div>
+
+          <app-date-picker
+            formControlName="payment_date"
+            [label]="'payments.paymentDate' | transloco"
+          />
+        </div>
+
+        <app-date-picker formControlName="due_date" [label]="'payments.dueDate' | transloco" />
+      </div>
+
+      @if (
+        isMethod(
+          PaymentMethod.CREDIT_CARD,
+          PaymentMethod.DEBIT_CARD,
+          PaymentMethod.CHECK,
+          PaymentMethod.TRANSFER,
+          PaymentMethod.WIRE_TRANSFER,
+          PaymentMethod.ACH,
+          PaymentMethod.ECHECK,
+          PaymentMethod.SEPA,
+          PaymentMethod.CASH,
+          PaymentMethod.ZELLE,
+          PaymentMethod.VENMO,
+          PaymentMethod.PAYPAL,
+          PaymentMethod.STRIPE,
+          PaymentMethod.MONEY_ORDER
+        )
+      ) {
+        <div class="form-section">
+          <h2 class="section-title">{{ 'payments.methodData' | transloco }}</h2>
+
+          @if (isMethod(PaymentMethod.CREDIT_CARD, PaymentMethod.DEBIT_CARD)) {
+            <div class="card-info-banner">
+              <span class="card-banner-icon">i</span>
+              <span>{{ 'payments.cardSecurityNote' | transloco }}</span>
+            </div>
+
+            <div class="form-row">
+              <app-text-field
+                formControlName="card_holder_name"
+                [label]="'payments.cardHolder' | transloco"
+                placeholder="Ej: Juan Perez"
+              />
+
+              <app-text-field
+                formControlName="card_last_4_digits"
+                [label]="'payments.cardLast4' | transloco"
+                placeholder="1234"
+                inputMode="numeric"
+                [maxLength]="4"
+                pattern="[0-9]{4}"
+              />
+            </div>
+
+            <div class="form-row">
+              <div>
+                <app-text-field
+                  formControlName="card_expiry"
+                  [label]="'payments.cardExpiry' | transloco"
+                  placeholder="MM/AA"
+                  [maxLength]="5"
+                />
+                <p class="field-hint">{{ 'payments.cardExpiryFormat' | transloco }}</p>
+              </div>
+
+              <div>
+                <app-text-field
+                  formControlName="reference_number"
+                  [label]="'payments.authCode' | transloco"
+                  placeholder="Ej: 123456"
+                />
+                <p class="field-hint">{{ 'payments.authCodeHint' | transloco }}</p>
+              </div>
+            </div>
+          }
+
+          @if (isMethod(PaymentMethod.CHECK)) {
+            <div class="form-row">
+              <app-text-field
+                formControlName="check_number"
+                [label]="'payments.checkNumber' | transloco"
+                placeholder="Ej: 001234"
+              />
+
+              <app-text-field
+                formControlName="bank_name"
+                [label]="'payments.issuingBank' | transloco"
+                placeholder="Banco Nacional"
+              />
+            </div>
+
+            <app-text-field
+              formControlName="bank_account_last_4"
+              [label]="'payments.accountLast4' | transloco"
+              placeholder="5678"
+              inputMode="numeric"
+              [maxLength]="4"
+            />
+          }
+
+          @if (
+            isMethod(
+              PaymentMethod.TRANSFER,
+              PaymentMethod.WIRE_TRANSFER,
+              PaymentMethod.ACH,
+              PaymentMethod.ECHECK,
+              PaymentMethod.SEPA
+            )
+          ) {
+            <div>
+              <app-text-field
+                formControlName="reference_number"
+                [label]="'payments.referenceNumber' | transloco"
+                placeholder="Ej: TRF-12345678"
+              />
+              <p class="field-hint">{{ 'payments.bankConfirmationHint' | transloco }}</p>
+            </div>
+
+            <div class="form-row">
+              <app-text-field
+                formControlName="bank_name"
+                [label]="'payments.originBank' | transloco"
+                [placeholder]="'payments.originBankHint' | transloco"
+              />
+
+              <app-text-field
+                formControlName="bank_account_last_4"
+                [label]="'payments.accountLast4' | transloco"
+                placeholder="9012"
+                inputMode="numeric"
+                [maxLength]="4"
+              />
+            </div>
+          }
+
+          @if (isMethod(PaymentMethod.ZELLE, PaymentMethod.VENMO)) {
+            <div class="form-row">
+              <div>
+                <app-text-field
+                  formControlName="reference_number"
+                  [label]="'payments.confirmationCode' | transloco"
+                  placeholder="Ej: ZMEMO123456"
+                />
+                <p class="field-hint">{{ 'payments.transactionId' | transloco }}</p>
+              </div>
+
+              <div>
+                <app-text-field
+                  formControlName="received_by"
+                  [label]="'payments.sentFrom' | transloco"
+                  placeholder="Ej: +1 555-1234"
+                  type="tel"
+                />
+                <p class="field-hint">{{ 'payments.senderPhone' | transloco }}</p>
+              </div>
+            </div>
+          }
+
+          @if (isMethod(PaymentMethod.PAYPAL, PaymentMethod.STRIPE)) {
+            <div>
+              <app-text-field
+                formControlName="reference_number"
+                [label]="'payments.transactionIdLabel' | transloco"
+                placeholder="Ej: PAYID-1234ABCD"
+              />
+              <p class="field-hint">{{ 'payments.transactionIdHint' | transloco }}</p>
+            </div>
+          }
+
+          @if (isMethod(PaymentMethod.MONEY_ORDER)) {
+            <div class="form-row">
+              <app-text-field
+                formControlName="reference_number"
+                [label]="'payments.moneyOrderNumber' | transloco"
+                placeholder="Ej: MO-001234"
+              />
+
+              <app-text-field
+                formControlName="bank_name"
+                [label]="'payments.issuingEntity' | transloco"
+                placeholder="Ej: Western Union"
+              />
+            </div>
+          }
+
+          @if (isMethod(PaymentMethod.CASH)) {
+            <div class="form-row">
+              <div>
+                <app-text-field
+                  formControlName="received_by"
+                  [label]="'payments.receivedBy' | transloco"
+                  [placeholder]="'payments.receivedByHint' | transloco"
+                />
+                <p class="field-hint">{{ 'payments.receivedByHint' | transloco }}</p>
+              </div>
+
+              <app-text-field
+                formControlName="reference_number"
+                [label]="'payments.receiptNumber' | transloco"
+                placeholder="Ej: REC-001"
+              />
+            </div>
+          }
+        </div>
+      }
+
+      <div class="form-section last">
+        <h2 class="section-title">{{ 'payments.observations' | transloco }}</h2>
+
+        <app-textarea
+          formControlName="notes"
+          [label]="'payments.tenantNotesOptional' | transloco"
+          [placeholder]="'payments.tenantNotesHint' | transloco"
+          [minRows]="2"
+          [maxRows]="5"
+        />
+
+        <app-textarea
+          formControlName="admin_notes"
+          [label]="'payments.adminNotesOptional' | transloco"
+          [placeholder]="'payments.adminNotesHint' | transloco"
+          [minRows]="2"
+          [maxRows]="5"
+        />
+      </div>
+    </form>
+  </div>
+
+  <div dialog-actions class="modal-actions">
+    <app-button (clicked)="submitted.emit()" [disabled]="form().invalid">
+      <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+      {{ 'payments.create' | transloco }}
+    </app-button>
+    <app-button appearance="flat" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

@@ -32,9 +32,11 @@
             ],
             "styles": [
               "node_modules/@fontsource-variable/plus-jakarta-sans/index.css",
-              "node_modules/@fontsource/material-icons/index.css",
               "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
               "src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "leaflet"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [

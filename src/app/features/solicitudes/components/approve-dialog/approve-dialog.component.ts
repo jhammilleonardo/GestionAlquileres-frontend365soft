@@ -45,6 +45,7 @@ import {
   AppTextareaComponent,
 } from '../../../../shared/ui';
 
+import { getApiErrorMessage } from '../../../../core/http/http-error.util';
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-approve-dialog',
@@ -146,7 +147,7 @@ export class ApproveDialogComponent {
         this.cdr.detectChanges();
       },
       error: (err: { error?: { message?: string }; message?: string }) => {
-        this.error.set(err.error?.message ?? err.message ?? 'Error al cargar la solicitud');
+        this.error.set(getApiErrorMessage(err, err.message ?? 'Error al cargar la solicitud'));
       },
     });
   }
@@ -164,11 +165,11 @@ export class ApproveDialogComponent {
         this.contractGenerated.set(response.contract_generated);
         this.submitting.set(false);
         setTimeout(() => {
-          this.router.navigate(['../../'], { relativeTo: this.route });
+          void this.router.navigate(['../../'], { relativeTo: this.route });
         }, 3000);
       },
       error: (err: { error?: { message?: string }; message?: string }) => {
-        this.error.set(err.error?.message ?? err.message ?? 'Error al aprobar la solicitud');
+        this.error.set(getApiErrorMessage(err, err.message ?? 'Error al aprobar la solicitud'));
         this.submitting.set(false);
       },
     });
@@ -191,7 +192,7 @@ export class ApproveDialogComponent {
   }
 
   cancel(): void {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    void this.router.navigate(['../'], { relativeTo: this.route });
   }
 
   private buildPayload(): ApproveApplicationDto {

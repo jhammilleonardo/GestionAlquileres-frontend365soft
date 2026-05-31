@@ -61,6 +61,7 @@ export class OwnerPortalComponent {
   readonly maintenance = signal<OwnerPortalRecord[]>([]);
   readonly contracts = signal<OwnerPortalRecord[]>([]);
   readonly downloadingId = signal<number | null>(null);
+  readonly downloadingContractId = signal<number | null>(null);
   readonly authorizingId = signal<number | null>(null);
 
   readonly activeCount = computed(() => {
@@ -159,6 +160,29 @@ export class OwnerPortalComponent {
       error: () => {
         this.downloadingId.set(null);
         this.toast.error('No se pudo descargar el PDF');
+      },
+    });
+  }
+
+  hasContractPdf(record: OwnerPortalRecord): boolean {
+    return Boolean(this.str(record, 'pdf_url'));
+  }
+
+  downloadContract(record: OwnerPortalRecord): void {
+    this.downloadingContractId.set(record.id);
+    this.ownerPortal.downloadContractPdf(record).subscribe({
+      next: (blob) => {
+        this.downloadingContractId.set(null);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `contrato_${this.str(record, 'contract_number') || record.id}.pdf`;
+        link.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (error: Error) => {
+        this.downloadingContractId.set(null);
+        this.toast.error(error.message || 'No se pudo descargar el contrato');
       },
     });
   }

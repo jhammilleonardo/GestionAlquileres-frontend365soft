@@ -1,10 +1,3 @@
-// Include theming for Angular Material with `mat.theme()`.
-// This Sass mixin will define CSS variables that are used for styling Angular Material
-// components according to the Material 3 design spec.
-// Learn more about theming and how to use it for your application's
-// custom components at https://material.angular.dev/guide/theming
-@use '@angular/material' as mat;
-
 // Tailwind CSS v4
 @use 'tailwindcss';
 
@@ -43,16 +36,6 @@
 
 html {
   height: 100%;
-  @include mat.theme(
-    (
-      color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
-      ),
-      typography: 'Plus Jakarta Sans Variable',
-      density: 0,
-    )
-  );
 }
 
 body {
@@ -82,61 +65,7 @@ textarea {
   font: inherit;
 }
 
-/* Global Lucide Icon Styles */
-
-// Fix alignment for Lucide icons in Material form fields
-.mat-mdc-form-field {
-  lucide-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin-right: 8px;
-  }
-
-  // Prefix icons (left side)
-  .mat-mdc-form-field-icon-prefix lucide-icon {
-    margin-left: 4px;
-    margin-right: 8px;
-  }
-
-  // Suffix icons (right side)
-  .mat-mdc-form-field-icon-suffix lucide-icon {
-    margin-left: 8px;
-    margin-right: 4px;
-  }
-}
-
-// Fix alignment for Lucide icons in buttons
 button {
-  lucide-icon {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    vertical-align: middle !important;
-  }
-}
-
-// Fix alignment for Lucide icons in icon buttons
-.mat-mdc-icon-button {
-  lucide-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    margin: auto !important;
-  }
-}
-
-// Fix alignment for Lucide icons in list items
-.mat-mdc-list-item {
-  lucide-icon {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-}
-
-// Fix alignment for Lucide icons in chips
-.mat-mdc-chip {
   lucide-icon {
     display: inline-flex !important;
     align-items: center !important;
@@ -156,61 +85,4 @@ lucide-icon {
     width: 100%;
     height: 100%;
   }
-}
-
-/* ── Maintenance Request Detail Dialog ── */
-.request-detail-dialog-panel {
-  .mat-mdc-dialog-container {
-    padding: 0 !important;
-    border-radius: 14px !important;
-    overflow: hidden;
-    height: 100%;
-  }
-
-  .mdc-dialog__surface {
-    padding: 0 !important;
-    border-radius: 14px !important;
-    overflow: hidden;
-    height: 100% !important;
-    max-height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  mat-dialog-content,
-  .mat-mdc-dialog-content {
-    flex: 1;
-    max-height: unset !important;
-    padding: 0 !important;
-    overflow: hidden;
-  }
-}
-
-/* Material Icons Styles */
-.mat-icon {
-  display: inline-block;
-  font-family: 'Material Icons' !important;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'liga';
-}
-
-.material-icons {
-  direction: rtl;
-  display: inline-block;
-  font-family: 'Material Icons' !important;
-  font-size: inherit;
-  letter-spacing: normal;
-  line-height: 1;
-  text-transform: none;
-  white-space: nowrap;
-  word-wrap: normal;
 }

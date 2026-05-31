@@ -33,6 +33,7 @@ import { AppButtonComponent } from '../../../../shared/ui/button/button.componen
 import { ConfirmDialogService } from '../../../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 
+import { getApiErrorMessage } from '../../../../core/http/http-error.util';
 @Component({
   selector: 'app-employee-panel',
   standalone: true,
@@ -129,7 +130,7 @@ export class EmployeePanelComponent {
         catchError((err: { error?: { message?: string } }) => {
           this.isSaving.set(false);
           this.toast.error(
-            err.error?.message ?? this.transloco.translate('employees.panel.saveError'),
+            getApiErrorMessage(err, this.transloco.translate('employees.panel.saveError')),
           );
           return EMPTY;
         }),
@@ -167,7 +168,7 @@ export class EmployeePanelComponent {
         catchError((err: { error?: { message?: string } }) => {
           this.isTogglingStatus.set(false);
           this.toast.error(
-            err.error?.message ?? this.transloco.translate('employees.panel.deactivateError'),
+            getApiErrorMessage(err, this.transloco.translate('employees.panel.deactivateError')),
           );
           return EMPTY;
         }),
@@ -189,7 +190,7 @@ export class EmployeePanelComponent {
         catchError((err: { error?: { message?: string } }) => {
           this.isTogglingStatus.set(false);
           this.toast.error(
-            err.error?.message ?? this.transloco.translate('employees.panel.activateError'),
+            getApiErrorMessage(err, this.transloco.translate('employees.panel.activateError')),
           );
           return EMPTY;
         }),

@@ -231,3 +231,24 @@
     display: inline-flex;
   }
 }
+
+.load-older {
+  display: block;
+  margin: 0 auto 0.75rem;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--tui-text-action, #2563eb);
+  background: transparent;
+  border: 1px solid var(--tui-border-normal, #e2e8f0);
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--tui-background-neutral-1, #f1f5f9);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
