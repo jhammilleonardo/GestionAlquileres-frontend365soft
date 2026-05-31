@@ -7,7 +7,6 @@ import { SlugService } from '../../../core/services/slug.service';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import {
-  UpdateContractDTO,
   Contract,
   ContractStatus,
   SERVICE_OPTIONS,
@@ -20,33 +19,12 @@ import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/s
 import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
-
-/** Valor crudo del formulario de edición de contrato (campos de texto/numéricos como string). */
-interface ContractEditFormValue {
-  start_date: Date | string | null;
-  end_date: Date | string | null;
-  key_delivery_date: Date | string | null;
-  monthly_rent: string | null;
-  payment_day: string | null;
-  payment_method: string | null;
-  late_fee_percentage: string | null;
-  grace_days: string | null;
-  included_services: string[] | null;
-  tenant_responsibilities: string | null;
-  owner_responsibilities: string | null;
-  prohibitions: string | null;
-  coexistence_rules: string | null;
-  renewal_terms: string | null;
-  termination_terms: string | null;
-  auto_renew: boolean | null;
-  renewal_notice_days: string | null;
-  auto_increase_percentage: string | null;
-  jurisdiction: string | null;
-  bank_name: string | null;
-  bank_account_type: string | null;
-  bank_account_number: string | null;
-  bank_account_holder: string | null;
-}
+import { ContractEditFormValue } from '../models/contract-form.model';
+import {
+  hasValidContractDateRange,
+  toContractEditFormValue,
+  toUpdateContractDto,
+} from '../mappers/contract-form.mapper';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -147,46 +125,7 @@ export class ContractEditComponent {
   }
 
   private populateForm(contract: Contract): void {
-    // Convertir monthly_rent, deposit_amount, late_fee_percentage y auto_increase_percentage a número si vienen como string
-    const monthlyRent =
-      typeof contract.monthly_rent === 'string'
-        ? parseFloat(contract.monthly_rent)
-        : contract.monthly_rent;
-    const lateFeePercentage =
-      contract.late_fee_percentage && typeof contract.late_fee_percentage === 'string'
-        ? parseFloat(contract.late_fee_percentage)
-        : contract.late_fee_percentage;
-    const autoIncreasePercentage =
-      contract.auto_increase_percentage && typeof contract.auto_increase_percentage === 'string'
-        ? parseFloat(contract.auto_increase_percentage)
-        : contract.auto_increase_percentage;
-
-    // Información básica
-    this.contractForm.patchValue({
-      start_date: contract.start_date ? new Date(contract.start_date) : '',
-      end_date: contract.end_date ? new Date(contract.end_date) : '',
-      key_delivery_date: contract.key_delivery_date ? new Date(contract.key_delivery_date) : '',
-      monthly_rent: monthlyRent,
-      payment_day: contract.payment_day,
-      payment_method: contract.payment_method,
-      late_fee_percentage: lateFeePercentage,
-      grace_days: contract.grace_days,
-      tenant_responsibilities: contract.tenant_responsibilities,
-      owner_responsibilities: contract.owner_responsibilities,
-      prohibitions: contract.prohibitions,
-      coexistence_rules: contract.coexistence_rules,
-      renewal_terms: contract.renewal_terms,
-      termination_terms: contract.termination_terms,
-      auto_renew: contract.auto_renew || false,
-      renewal_notice_days: contract.renewal_notice_days,
-      auto_increase_percentage: autoIncreasePercentage,
-      jurisdiction: contract.jurisdiction,
-      bank_name: contract.bank_name,
-      bank_account_type: contract.bank_account_type,
-      bank_account_number: contract.bank_account_number,
-      bank_account_holder: contract.bank_account_holder,
-      included_services: contract.included_services || [],
-    });
+    this.contractForm.patchValue(toContractEditFormValue(contract));
   }
 
   isServiceSelected(service: string): boolean {
@@ -224,10 +163,7 @@ export class ContractEditComponent {
     }
 
     const formData = this.contractForm.getRawValue() as ContractEditFormValue;
-    const { start_date: startDate, end_date: endDate } = formData;
-
-    // Validar fechas
-    if (endDate && startDate && endDate <= startDate) {
+    if (!hasValidContractDateRange(formData.start_date, formData.end_date)) {
       this.errorMessage.set(this.transloco.translate('contracts.create.dateRangeError'));
       return;
     }
@@ -236,41 +172,7 @@ export class ContractEditComponent {
     this.errorMessage.set(null);
 
     const contractId = this.currentContract()!.id;
-    const selectedServices = formData.included_services ?? [];
-
-    const updateData: UpdateContractDTO = {
-      start_date: startDate ? this.formatDate(startDate) : undefined,
-      end_date: endDate ? this.formatDate(endDate) : undefined,
-      key_delivery_date: formData.key_delivery_date
-        ? this.formatDate(formData.key_delivery_date)
-        : undefined,
-      monthly_rent: formData.monthly_rent ? parseFloat(formData.monthly_rent) : undefined,
-      payment_day: formData.payment_day ? parseInt(formData.payment_day) : undefined,
-      payment_method: formData.payment_method || undefined,
-      late_fee_percentage: formData.late_fee_percentage
-        ? parseFloat(formData.late_fee_percentage)
-        : undefined,
-      grace_days: formData.grace_days ? parseInt(formData.grace_days) : undefined,
-      included_services: selectedServices,
-      tenant_responsibilities: formData.tenant_responsibilities || undefined,
-      owner_responsibilities: formData.owner_responsibilities || undefined,
-      prohibitions: formData.prohibitions || undefined,
-      coexistence_rules: formData.coexistence_rules || undefined,
-      renewal_terms: formData.renewal_terms || undefined,
-      termination_terms: formData.termination_terms || undefined,
-      auto_renew: formData.auto_renew ?? undefined,
-      renewal_notice_days: formData.renewal_notice_days
-        ? parseInt(formData.renewal_notice_days)
-        : undefined,
-      auto_increase_percentage: formData.auto_increase_percentage
-        ? parseFloat(formData.auto_increase_percentage)
-        : undefined,
-      jurisdiction: formData.jurisdiction || undefined,
-      bank_name: formData.bank_name || undefined,
-      bank_account_type: formData.bank_account_type || undefined,
-      bank_account_number: formData.bank_account_number || undefined,
-      bank_account_holder: formData.bank_account_holder || undefined,
-    };
+    const updateData = toUpdateContractDto(formData);
 
     this.contractService.updateContract(contractId, updateData).subscribe({
       next: (contract) => {
@@ -288,17 +190,6 @@ export class ContractEditComponent {
   goBack(): void {
     const contractUrl = this.slugService.buildUrl(`/contratos/${this.currentContract()!.id}`);
     void this.router.navigateByUrl(contractUrl);
-  }
-
-  private formatDate(date: Date | string): string {
-    if (typeof date === 'string') {
-      return date.slice(0, 10);
-    }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   private resolveErrorMessage(error: unknown): string {

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminLoginGuard } from './core/guards/auth.guard';
+import { ownerAuthGuard, ownerLoginGuard } from './core/guards/owner-auth.guard';
 import { tenantLoginGuard } from './core/guards/tenant-auth.guard';
 import { wizardGuard } from './core/guards/setup-complete.guard';
 
@@ -69,11 +70,20 @@ export const routes: Routes = [
 
       // ==================== OWNER PORTAL (PROPIETARIOS) ====================
       {
+        path: 'owner/login',
+        loadComponent: () =>
+          import('./features/owner-portal/auth/owner-login.component').then(
+            (m) => m.OwnerLoginComponent,
+          ),
+        canActivate: [ownerLoginGuard],
+      },
+      {
         path: 'owner',
         loadComponent: () =>
           import('./features/owner-portal/owner-portal.component').then(
             (m) => m.OwnerPortalComponent,
           ),
+        canActivate: [ownerAuthGuard],
       },
 
       // ==================== SETUP WIZARD (una vez, sin layout) ====================

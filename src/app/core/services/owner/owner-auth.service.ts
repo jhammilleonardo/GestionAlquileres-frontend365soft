@@ -1,0 +1,101 @@
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap, catchError } from 'rxjs';
+
+import { environment } from '../../../../environments/environment';
+import { getApiErrorMessage } from '../../http/http-error.util';
+import { SessionTokenService } from '../session-token.service';
+import { SlugService } from '../slug.service';
+
+export interface OwnerUser {
+  id: number;
+  email: string;
+  name: string;
+  phone?: string;
+  role: string;
+  tenant_slug: string;
+  rental_owner_id: number;
+}
+
+export interface OwnerLoginResponse {
+  access_token: string;
+  user: OwnerUser;
+}
+
+@Injectable({ providedIn: 'root' })
+export class OwnerAuthService {
+  private readonly http = inject(HttpClient);
+  private readonly sessionToken = inject(SessionTokenService);
+  private readonly slugService = inject(SlugService);
+
+  private readonly ownerUserKey = 'owner_user';
+  private readonly currentOwnerSignal = signal<OwnerUser | null>(this.loadOwnerFromStorage());
+  private readonly isLoadingSignal = signal(false);
+  private readonly errorSignal = signal<string | null>(null);
+
+  readonly currentOwner = this.currentOwnerSignal.asReadonly();
+  readonly isLoading = this.isLoadingSignal.asReadonly();
+  readonly error = this.errorSignal.asReadonly();
+
+  login(
+    slug: string,
+    email: string,
+    password: string,
+    rememberMe = false,
+  ): Observable<OwnerLoginResponse> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+    this.slugService.setSlug(slug);
+
+    return this.http
+      .post<OwnerLoginResponse>(`${environment.apiUrl}auth/${slug}/owner/login`, {
+        email,
+        password,
+      })
+      .pipe(
+        tap((response) => {
+          this.setSession(response, rememberMe);
+          this.isLoadingSignal.set(false);
+        }),
+        catchError((error: unknown) => {
+          this.isLoadingSignal.set(false);
+          this.errorSignal.set(getApiErrorMessage(error, 'Error al iniciar sesión'));
+          throw error;
+        }),
+      );
+  }
+
+  logout(slug = this.slugService.getSlug()): void {
+    this.sessionToken.clearToken('owner');
+    localStorage.removeItem(this.ownerUserKey);
+    sessionStorage.removeItem(this.ownerUserKey);
+    this.currentOwnerSignal.set(null);
+    if (slug) this.slugService.setSlug(slug);
+  }
+
+  hasToken(): boolean {
+    return Boolean(this.sessionToken.getToken('owner'));
+  }
+
+  private setSession(response: OwnerLoginResponse, rememberMe: boolean): void {
+    this.sessionToken.clearToken('owner');
+    this.sessionToken.setToken('owner', response.access_token, rememberMe);
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem(this.ownerUserKey, JSON.stringify(response.user));
+    this.currentOwnerSignal.set(response.user);
+  }
+
+  private loadOwnerFromStorage(): OwnerUser | null {
+    const raw =
+      localStorage.getItem(this.ownerUserKey) ?? sessionStorage.getItem(this.ownerUserKey);
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as OwnerUser;
+    } catch {
+      localStorage.removeItem(this.ownerUserKey);
+      sessionStorage.removeItem(this.ownerUserKey);
+      return null;
+    }
+  }
+}

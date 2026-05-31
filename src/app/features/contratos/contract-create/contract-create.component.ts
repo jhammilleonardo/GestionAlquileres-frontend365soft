@@ -8,7 +8,7 @@ import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
-import { CreateContractDTO, SERVICE_OPTIONS } from '../../../core/models/contract.model';
+import { SERVICE_OPTIONS } from '../../../core/models/contract.model';
 import { Property } from '../../../core/models/property.model';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
@@ -16,21 +16,8 @@ import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loadi
 import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
-
-/** Valor crudo del formulario de creación de contrato. */
-interface ContractCreateFormValue {
-  tenant_id: number | null;
-  property_id: number | null;
-  start_date: Date | string;
-  end_date: Date | string;
-  key_delivery_date: Date | string | null;
-  monthly_rent: string;
-  payment_day: string | null;
-  payment_method: string | null;
-  included_services: string[] | null;
-  late_fee_percentage: string | null;
-  grace_days: string | null;
-}
+import { ContractCreateFormValue } from '../models/contract-form.model';
+import { hasValidContractDateRange, toCreateContractDto } from '../mappers/contract-form.mapper';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -182,10 +169,7 @@ export class ContractCreateComponent {
     }
 
     const formData = this.contractForm.getRawValue() as ContractCreateFormValue;
-    const { start_date: startDate, end_date: endDate } = formData;
-
-    // Validar fechas
-    if (endDate <= startDate) {
+    if (!hasValidContractDateRange(formData.start_date, formData.end_date)) {
       this.errorMessage.set(this.transloco.translate('contracts.create.dateRangeError'));
       return;
     }
@@ -193,24 +177,7 @@ export class ContractCreateComponent {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
-    // Convertir fechas a string YYYY-MM-DD
-    const contractData: CreateContractDTO = {
-      tenant_id: formData.tenant_id!,
-      property_id: formData.property_id!,
-      start_date: this.formatDate(startDate),
-      end_date: this.formatDate(endDate),
-      key_delivery_date: formData.key_delivery_date
-        ? this.formatDate(formData.key_delivery_date)
-        : undefined,
-      monthly_rent: parseFloat(formData.monthly_rent),
-      payment_day: formData.payment_day ? parseInt(formData.payment_day) : 5,
-      payment_method: formData.payment_method || undefined,
-      included_services: formData.included_services || [],
-      late_fee_percentage: formData.late_fee_percentage
-        ? parseFloat(formData.late_fee_percentage)
-        : undefined,
-      grace_days: formData.grace_days ? parseInt(formData.grace_days) : undefined,
-    };
+    const contractData = toCreateContractDto(formData);
 
     this.contractService.createContract(contractData).subscribe({
       next: (contract) => {
@@ -229,17 +196,6 @@ export class ContractCreateComponent {
   goBack(): void {
     const contractsUrl = this.slugService.buildUrl('/contratos');
     void this.router.navigateByUrl(contractsUrl);
-  }
-
-  private formatDate(date: Date | string): string {
-    if (typeof date === 'string') {
-      return date.slice(0, 10);
-    }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   private resolveErrorMessage(error: unknown): string {

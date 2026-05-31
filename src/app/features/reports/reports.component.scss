@@ -1,0 +1,87 @@
+.page {
+  display: grid;
+  gap: var(--app-space-5);
+  padding: var(--app-space-6);
+}
+
+.filters {
+  align-items: end;
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  display: grid;
+  gap: var(--app-space-3);
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  padding: var(--app-space-4);
+}
+
+.filters-actions {
+  display: flex;
+  gap: var(--app-space-2);
+}
+
+.kpi-grid {
+  display: grid;
+  gap: var(--app-space-4);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.kpi {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  display: grid;
+  gap: var(--app-space-2);
+  padding: var(--app-space-4);
+}
+
+.kpi span {
+  color: var(--app-color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.kpi strong {
+  color: var(--app-color-text);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-2);
+}
+
+.tabs button {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  padding: 0.6rem 0.9rem;
+}
+
+.tabs button.active {
+  background: var(--app-color-primary);
+  border-color: var(--app-color-primary);
+  color: #fff;
+}
+
+@media (max-width: 980px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .page {
+    padding: var(--app-space-4);
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}

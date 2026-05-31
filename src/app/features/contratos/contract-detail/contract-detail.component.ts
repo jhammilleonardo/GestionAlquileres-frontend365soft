@@ -1,5 +1,5 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import {
   LucideAngularModule,
   ArrowLeft,
@@ -17,17 +17,14 @@ import {
   Bell,
   LineChart,
 } from 'lucide-angular';
-import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
-import { SlugService } from '../../../core/services/slug.service';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
-import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { Contract, ContractStatus } from '../../../core/models/contract.model';
-import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
+import { ContractDetailFacade } from './contract-detail.facade';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,7 +38,10 @@ import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loadi
     AppButtonComponent,
     AppLoadingStateComponent,
   ],
-  providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
+  providers: [
+    provideTranslocoScope({ scope: 'contratos', alias: 'contracts' }),
+    ContractDetailFacade,
+  ],
   templateUrl: './contract-detail.component.html',
   styleUrl: './contract-detail.component.scss',
 })
@@ -62,49 +62,25 @@ export class ContractDetailComponent {
   readonly LineChart = LineChart;
   readonly ContractStatus = ContractStatus;
 
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private contractService = inject(AdminContractService);
-  private slugService = inject(SlugService);
-  private transloco = inject(TranslocoService);
-  private confirmDialog = inject(ConfirmDialogService);
-  private toast = inject(ToastService);
+  protected readonly facade = inject(ContractDetailFacade);
 
-  isLoading = signal(true);
-  currentContract = signal<Contract | null>(null);
-  contractNumber = signal<string>('');
-  history = signal<Contract[]>([]);
+  readonly isLoading = this.facade.isLoading;
+  readonly currentContract = this.facade.currentContract;
+  readonly contractNumber = this.facade.contractNumber;
+  readonly history = this.facade.history;
 
   constructor() {
     const contractId = this.route.snapshot.paramMap.get('id');
     if (contractId) {
       this.loadContract(parseInt(contractId));
     } else {
-      this.isLoading.set(false);
       this.goBack();
     }
   }
 
   loadContract(id: number): void {
-    this.contractService.getContract(id).subscribe({
-      next: (contract) => {
-        this.currentContract.set(contract);
-        this.contractNumber.set(contract.contract_number);
-        this.isLoading.set(false);
-        this.loadHistory(id);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.goBack();
-      },
-    });
-  }
-
-  private loadHistory(id: number): void {
-    this.contractService.getContractHistory(id).subscribe({
-      next: (history) => this.history.set(history),
-      error: () => this.history.set([]),
-    });
+    this.facade.loadContract(id);
   }
 
   /** Tono visual de cada estado del contrato para el timeline. */
@@ -130,9 +106,7 @@ export class ContractDetailComponent {
   }
 
   viewHistoryContract(contract: Contract): void {
-    if (this.isCurrentInHistory(contract)) return;
-    const url = this.slugService.buildUrl(`/contratos/${contract.id}`);
-    void this.router.navigateByUrl(url);
+    this.facade.viewHistoryContract(contract);
   }
 
   canActivate(): boolean {
@@ -200,82 +174,23 @@ export class ContractDetailComponent {
   }
 
   downloadPDF(): void {
-    const contract = this.currentContract();
-    if (!contract) return;
-
-    this.contractService.downloadPDF(contract.id);
+    this.facade.downloadPDF();
   }
 
   editContract(): void {
-    const contract = this.currentContract();
-    if (!contract) return;
-
-    const editUrl = this.slugService.buildUrl(`/contratos/${contract.id}/editar`);
-    void this.router.navigateByUrl(editUrl);
+    this.facade.editContract();
   }
 
   async renewContract(): Promise<void> {
-    const contract = this.currentContract();
-    if (!contract) return;
-
-    const confirmed = await this.confirmDialog.confirm({
-      title: this.transloco.translate('contracts.detail.renew'),
-      message: this.transloco.translate('contracts.detail.confirmRenew', {
-        number: contract.contract_number,
-      }),
-      confirmLabel: this.transloco.translate('contracts.detail.renew'),
-      cancelLabel: this.transloco.translate('common.cancel'),
-    });
-
-    if (!confirmed) return;
-
-    this.contractService.renewContract(contract.id).subscribe({
-      next: (response) => {
-        this.toast.success(this.transloco.translate('contracts.detail.renewedSuccess'));
-        const newContractUrl = this.slugService.buildUrl(`/contratos/${response.id}`);
-        void this.router.navigateByUrl(newContractUrl);
-      },
-      error: () => {
-        this.toast.error(this.transloco.translate('contracts.detail.renewError'));
-      },
-    });
+    await this.facade.renewContract();
   }
 
   async finalizeContract(): Promise<void> {
-    const contract = this.currentContract();
-    if (!contract) return;
-
-    const confirmed = await this.confirmDialog.confirm({
-      title: this.transloco.translate('contracts.detail.finalize'),
-      message: this.transloco.translate('contracts.detail.confirmFinalize', {
-        number: contract.contract_number,
-      }),
-      confirmLabel: this.transloco.translate('contracts.detail.finalize'),
-      cancelLabel: this.transloco.translate('common.cancel'),
-      variant: 'danger',
-    });
-
-    if (!confirmed) return;
-
-    this.contractService
-      .updateStatus(contract.id, {
-        status: ContractStatus.FINALIZADO,
-        reason: this.transloco.translate('contracts.detail.finalizedReason'),
-      })
-      .subscribe({
-        next: () => {
-          this.toast.success(this.transloco.translate('contracts.detail.finalizedSuccess'));
-          this.loadContract(contract.id);
-        },
-        error: () => {
-          this.toast.error(this.transloco.translate('contracts.detail.finalizeError'));
-        },
-      });
+    await this.facade.finalizeContract();
   }
 
   goBack(): void {
-    const contractsUrl = this.slugService.buildUrl('/contratos');
-    void this.router.navigateByUrl(contractsUrl);
+    this.facade.goBack();
   }
 
   getStatusClass(status: ContractStatus): string {

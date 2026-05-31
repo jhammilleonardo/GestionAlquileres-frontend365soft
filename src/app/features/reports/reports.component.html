@@ -1,0 +1,102 @@
+<section class="page">
+  <app-page-header
+    title="Reportes"
+    description="Rent roll, vacantes, morosidad, P&L y KPIs operativos."
+  >
+    <div actions class="header-actions">
+      <app-button appearance="secondary" size="s" (clicked)="facade.loadDashboard()">
+        Recargar
+      </app-button>
+      @if (facade.rows().length > 0) {
+        <app-button appearance="secondary" size="s" (clicked)="facade.exportCsv(columns)">
+          CSV
+        </app-button>
+        <app-button
+          appearance="secondary"
+          size="s"
+          [disabled]="facade.exporting()"
+          (clicked)="facade.downloadReport('excel')"
+        >
+          Excel
+        </app-button>
+        <app-button
+          appearance="secondary"
+          size="s"
+          [disabled]="facade.exporting()"
+          (clicked)="facade.downloadReport('pdf')"
+        >
+          PDF
+        </app-button>
+      }
+    </div>
+  </app-page-header>
+
+  <form class="filters" [formGroup]="facade.filterForm" (ngSubmit)="facade.applyFilters()">
+    <app-text-field
+      formControlName="property_id"
+      label="Propiedad"
+      placeholder="ID de propiedad"
+      type="number"
+    />
+    <app-select
+      formControlName="status"
+      label="Estado"
+      placeholder="Todos"
+      [options]="statusOptions"
+    />
+    <app-date-picker formControlName="from" label="Desde" />
+    <app-date-picker formControlName="to" label="Hasta" />
+    <div class="filters-actions">
+      <app-button type="submit" size="s">Aplicar</app-button>
+      <app-button type="button" appearance="outline" size="s" (clicked)="facade.clearFilters()">
+        Limpiar
+      </app-button>
+    </div>
+  </form>
+
+  @if (facade.isLoading()) {
+    <app-loading-state label="Cargando reportes..." />
+  } @else {
+    <div class="kpi-grid">
+      <article class="kpi">
+        <span>Ocupación</span>
+        <strong>{{ (facade.kpis().occupancyRateValue ?? 0) * 100 | number: '1.0-1' }}%</strong>
+      </article>
+      <article class="kpi">
+        <span>Ingresos del mes</span>
+        <strong>{{ facade.kpis().monthlyIncome ?? 0 | currency: 'USD' }}</strong>
+      </article>
+      <article class="kpi">
+        <span>Pagos pendientes</span>
+        <strong>{{ facade.kpis().pendingPaymentsCount ?? 0 }}</strong>
+      </article>
+      <article class="kpi">
+        <span>Mantenimientos activos</span>
+        <strong>{{ facade.kpis().activeMaintenanceCount ?? 0 }}</strong>
+      </article>
+    </div>
+
+    <nav class="tabs" aria-label="Tipos de reporte">
+      @for (report of facade.reports; track report.type) {
+        <button
+          type="button"
+          [class.active]="facade.activeReport() === report.type"
+          (click)="facade.loadReport(report.type)"
+        >
+          {{ report.label }}
+        </button>
+      }
+    </nav>
+
+    @if (facade.rows().length === 0) {
+      <app-empty-state title="Sin datos" description="No hay filas para el reporte seleccionado." />
+    } @else {
+      <app-table
+        [columns]="columns"
+        [items]="facade.rows()"
+        emptyText="No hay datos para mostrar."
+        ariaLabel="Reporte financiero"
+      />
+    }
+  }
+</section>

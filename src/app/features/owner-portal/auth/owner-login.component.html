@@ -1,0 +1,52 @@
+<section class="owner-login">
+  <div class="brand">
+    <span class="brand-icon">
+      <lucide-icon [img]="Building2" [size]="28" />
+    </span>
+    <div>
+      <p>Portal propietario</p>
+      <h1>Acceso a tus propiedades</h1>
+    </div>
+  </div>
+
+  <form class="login-card" [formGroup]="form" (ngSubmit)="submit()">
+    <header>
+      <h2>Iniciar sesión</h2>
+      <p>Consulta liquidaciones, contratos y autorizaciones de mantenimiento.</p>
+    </header>
+
+    <app-text-field
+      formControlName="email"
+      label="Correo"
+      autocomplete="email"
+      type="email"
+      placeholder="propietario@empresa.com"
+    />
+
+    <app-text-field
+      formControlName="password"
+      label="Contraseña"
+      autocomplete="current-password"
+      type="password"
+      placeholder="Tu contraseña"
+    />
+
+    <app-checkbox formControlName="rememberMe" label="Mantener sesión iniciada" />
+
+    @if (errorMessage()) {
+      <p class="error">{{ errorMessage() }}</p>
+    }
+
+    <app-button type="submit" [loading]="isLoading()" [disabled]="form.invalid || isLoading()">
+      @if (!isLoading()) {
+        <lucide-icon [img]="LockKeyhole" [size]="18" />
+      }
+      Entrar al portal
+    </app-button>
+
+    <a routerLink="/forgot-password" class="forgot">
+      <lucide-icon [img]="Mail" [size]="16" />
+      Olvidé mi contraseña
+    </a>
+  </form>
+</section>

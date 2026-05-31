@@ -315,12 +315,24 @@ Pendiente:
   - [x] Spinner reemplazado por `app-loading-state`.
   - [x] `mat-icon` reemplazado por Lucide.
   - [x] Botones de acciones reemplazados por `app-button`.
+- [x] Mappers de formularios de contratos creados y testeados:
+  - [x] `formatContractDate`.
+  - [x] `hasValidContractDateRange`.
+  - [x] `toCreateContractDto`.
+  - [x] `toUpdateContractDto`.
+  - [x] `toContractEditFormValue`.
+- [x] `contract-detail.facade.ts` creada para sacar de la pantalla la logica
+  de cargar detalle, cargar historial, PDF, renovacion, finalizacion y
+  navegacion.
+- [x] Tests de `contract-detail.facade.ts` para cargar, descargar PDF, renovar
+  y finalizar.
 
 Pendiente:
 
 - [x] Extraer tabla/listado a componentes presentacionales.
-- [ ] Extraer formularios create/edit a componentes/facade reutilizables.
-- [ ] Agregar tests de flujo crear/editar/renovar/finalizar.
+- [ ] Extraer UI de formularios create/edit a componentes presentacionales
+  reutilizables. La conversion DTO ya esta en mappers testeados.
+- [ ] Agregar tests de componentes create/edit usando los mappers existentes.
 
 ### Propiedades Y Unidades
 
@@ -586,14 +598,24 @@ modernizacion:
 - [x] Owner Portal frontend inicial:
   - [x] Servicio `OwnerPortalService`.
   - [x] Ruta `/:slug/owner`.
+  - [x] Ruta `/:slug/owner/login`.
+  - [x] `OwnerAuthService` con endpoint real `auth/:slug/owner/login`.
+  - [x] `owner_access_token` integrado con `SessionTokenService`.
+  - [x] Guard `ownerAuthGuard` para proteger el portal.
+  - [x] Guard `ownerLoginGuard` para evitar login si ya hay token owner.
   - [x] Dashboard, propiedades, liquidaciones, mantenimiento y contratos en
     una primera vista funcional.
   - [x] Autorizacion de mantenimiento conectada a backend.
   - [x] Descarga PDF de liquidaciones.
   - [x] Descarga PDF de contratos firmados usando `pdf_url`.
+  - [x] Tests basicos de `OwnerAuthService`.
 - [x] Reports frontend inicial:
   - [x] Ruta admin `/reportes`.
   - [x] KPIs y reportes `rent-roll`, `vacancies`, `delinquency`, `pnl`.
+  - [x] `ReportsFacade` creada para filtros, carga, CSV y export PDF/Excel.
+  - [x] Filtros por propiedad, estado, desde y hasta.
+  - [x] Template/SCSS separados.
+  - [x] Tests basicos de `ReportsFacade`.
 - [x] Vendors / proveedores frontend inicial.
 - [x] Expenses / gastos frontend inicial.
 - [x] Violations / violaciones frontend inicial.
@@ -603,7 +625,7 @@ Pendiente de estos modulos:
 
 - [ ] Formularios completos de creacion/edicion.
 - [ ] Detalles por registro.
-- [ ] Exportaciones PDF/Excel desde UI cuando aplique.
+- [ ] Validar exportaciones PDF/Excel reales con backend/staging donde aplique.
 - [ ] Tests por servicio y flujo.
 
 ### Notifications
@@ -771,7 +793,8 @@ para que el tipado no dependa de objetos crudos del backend.
   - [x] `mat-select`.
   - [x] `mat-checkbox`.
 - [x] Quitar `mat-menu` restante del header.
-- Revisar guards y tokens owner/tenant/admin con flujos reales.
+- [x] Flujo owner real agregado con `owner_access_token`.
+- [ ] Revisar guards y tokens tenant/admin con flujos reales.
 
 Motivo: define la experiencia inicial y la navegacion base.
 
@@ -789,12 +812,14 @@ Motivo: sera el ejemplo para el resto de modulos admin.
 
 Orden sugerido:
 
-1. Completar modulos nuevos: Owner Portal, Reports, Vendors, Expenses,
-   Violations e Inspections.
+1. Completar modulos nuevos: Owner Portal y Reports ya tienen facade/login
+   inicial; faltan Vendors, Expenses, Violations e Inspections a nivel CRUD
+   completo.
 2. Pagos. Facade creada; falta tests de facade y separar pages/dialogs si el
    modulo crece.
-3. Contratos. Listado extraido; falta extraer formularios create/edit y
-   logica PDF/firma/renovacion a facades/servicios mas finos.
+3. Contratos. Listado extraido; detalle ya tiene facade y mappers testeados.
+   Falta extraer UI de formularios create/edit y separar firma si se agrega
+   flujo admin dedicado.
 4. Propiedades/unidades. Facade, cards, filtros y formulario grande extraidos;
    faltan tests de facade/form/mapper.
 5. Solicitudes. UI avanzada; falta separar listado en
