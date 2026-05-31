@@ -81,13 +81,10 @@ export class ContratosFacade {
     void this.router.navigateByUrl(this.slugService.buildUrl('/contratos/nuevo'));
   }
 
-  buildDetailUrl(id: number): string {
-    return this.slugService.buildUrl(`/contratos/${id}`);
-  }
+  readonly buildDetailUrl = (id: number): string => this.slugService.buildUrl(`/contratos/${id}`);
 
-  buildEditUrl(id: number): string {
-    return this.slugService.buildUrl(`/contratos/${id}/editar`);
-  }
+  readonly buildEditUrl = (id: number): string =>
+    this.slugService.buildUrl(`/contratos/${id}/editar`);
 
   downloadPDF(id: number): void {
     this.contractService.downloadPDF(id);

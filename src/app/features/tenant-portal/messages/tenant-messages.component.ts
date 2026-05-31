@@ -57,7 +57,7 @@ import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-sta
               rows="2"
               [placeholder]="'messages.typeMessage' | transloco"
               [value]="draft()"
-              (input)="draft.set($any($event.target).value)"
+              (input)="draft.set(textareaValue($event))"
             ></textarea>
             <app-button
               type="submit"
@@ -174,6 +174,10 @@ export class TenantMessagesComponent {
   readonly adminId = signal<number | null>(null);
 
   private readonly currentUserId = Number(this.auth.currentUser()?.id ?? 0);
+
+  textareaValue(event: Event): string {
+    return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+  }
 
   constructor() {
     this.init();

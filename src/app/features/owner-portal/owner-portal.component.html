@@ -146,6 +146,17 @@
                   [label]="str(c, 'status')"
                   [tone]="str(c, 'status') === 'ACTIVO' ? 'success' : 'neutral'"
                 />
+                @if (hasContractPdf(c)) {
+                  <app-button
+                    size="s"
+                    appearance="secondary"
+                    [disabled]="downloadingContractId() === c.id"
+                    (clicked)="downloadContract(c)"
+                  >
+                    <lucide-icon [img]="Download" [size]="15" />
+                    PDF
+                  </app-button>
+                }
               </li>
             }
           </ul>

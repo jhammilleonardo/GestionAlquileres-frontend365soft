@@ -15,6 +15,7 @@ import { AvailabilityStatus, ReservationService } from '../../../core/services/r
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 interface CalendarCell {
   date: Date | null;
   iso: string;
@@ -219,7 +220,7 @@ export class AvailabilityCalendarComponent implements OnInit {
         error: (err: { error?: { message?: string } }) => {
           this.submitting.set(false);
           this.toast.error(
-            err.error?.message ?? this.transloco.translate('public.availability.requestError'),
+            getApiErrorMessage(err, this.transloco.translate('public.availability.requestError')),
           );
         },
       });

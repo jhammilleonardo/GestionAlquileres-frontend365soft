@@ -1,0 +1,21 @@
+<section class="quick-actions">
+  <h3>{{ 'public.tenantDashboard.quickActions' | transloco }}</h3>
+  <div class="actions-grid">
+    <a [routerLink]="maintenanceCreateUrl()" class="action-card">
+      <lucide-icon [img]="Wrench" [size]="32"></lucide-icon>
+      <span>{{ 'public.tenantDashboard.reportIssue' | transloco }}</span>
+    </a>
+    <a [routerLink]="paymentCreateUrl()" class="action-card">
+      <lucide-icon [img]="CreditCard" [size]="32"></lucide-icon>
+      <span>{{ 'public.tenantDashboard.registerPayment' | transloco }}</span>
+    </a>
+    <a [routerLink]="messagesUrl()" class="action-card">
+      <lucide-icon [img]="MessageSquare" [size]="32"></lucide-icon>
+      <span>{{ 'public.tenantDashboard.sendMessage' | transloco }}</span>
+    </a>
+    <a [routerLink]="documentsUrl()" class="action-card">
+      <lucide-icon [img]="FileText" [size]="32"></lucide-icon>
+      <span>{{ 'public.tenantDashboard.viewDocs' | transloco }}</span>
+    </a>
+  </div>
+</section>

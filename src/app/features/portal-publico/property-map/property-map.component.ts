@@ -51,8 +51,7 @@ export class PropertyMapComponent implements OnInit, OnDestroy {
         // Initialize map after properties are loaded and view is updated
         setTimeout(() => this.initMap(), 100);
       },
-      error: (err) => {
-        console.error('Error loading properties for map:', err);
+      error: () => {
         this.isLoading = false;
         this.cdr.detectChanges();
       },

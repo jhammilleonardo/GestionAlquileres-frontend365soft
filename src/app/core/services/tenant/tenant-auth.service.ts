@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { SlugService } from '../slug.service';
 import { SessionTokenService } from '../session-token.service';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 export interface TenantUser {
   id: number;
   userId?: number; // El backend a veces devuelve userId en lugar de id
@@ -110,7 +111,7 @@ export class TenantAuthService {
         }),
         catchError((error) => {
           this.isLoadingSignal.set(false);
-          const message = error.error?.message || 'Error al iniciar sesión';
+          const message = getApiErrorMessage(error, 'Error al iniciar sesión');
           this.errorSignal.set(message);
           throw error;
         }),
@@ -133,9 +134,9 @@ export class TenantAuthService {
     // Navigate to login with slug
     // Usar replaceUrl para limpiar el historial al cerrar sesión
     if (slug) {
-      this.router.navigate(['/', slug, 'login'], { replaceUrl: true });
+      void this.router.navigate(['/', slug, 'login'], { replaceUrl: true });
     } else {
-      this.router.navigate(['/login'], { replaceUrl: true });
+      void this.router.navigate(['/login'], { replaceUrl: true });
     }
   }
 
@@ -265,7 +266,7 @@ export class TenantAuthService {
     const userJson = localStorage.getItem(this.USER_KEY);
     if (!userJson) return null;
     try {
-      const user = JSON.parse(userJson);
+      const user = JSON.parse(userJson) as RawTenantUser;
       // Normalize the user data to handle both old and new formats
       return this.normalizeUserData(user);
     } catch {

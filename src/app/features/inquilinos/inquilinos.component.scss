@@ -3,12 +3,12 @@
     font-size: 2rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
-    color: var(--mat-sys-on-surface);
+    color: var(--app-color-text);
   }
 
   p {
     font-size: 1rem;
     margin: 0;
-    color: var(--mat-sys-on-surface-variant);
+    color: var(--app-color-text-muted);
   }
 }

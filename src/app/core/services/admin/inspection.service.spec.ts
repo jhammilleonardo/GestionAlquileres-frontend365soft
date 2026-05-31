@@ -75,6 +75,6 @@ describe('InspectionService', () => {
   it('downloadPdf pide el blob', () => {
     service.downloadPdf(4).subscribe();
     expect(httpGet).toHaveBeenCalled();
-    expect(httpGet.mock.calls[0][1].responseType).toBe('blob');
+    expect((httpGet.mock.calls[0][1] as { responseType?: string }).responseType).toBe('blob');
   });
 });

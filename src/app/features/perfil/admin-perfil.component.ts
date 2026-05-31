@@ -22,8 +22,8 @@ import {
 type ProfileTab = 'profile' | 'password';
 
 function passwordMatchValidator(form: AbstractControl): ValidationErrors | null {
-  const newPass = form.get('new_password')?.value;
-  const confirmPass = form.get('confirm_password')?.value;
+  const newPass = form.get('new_password')?.value as string | undefined;
+  const confirmPass = form.get('confirm_password')?.value as string | undefined;
   return newPass && confirmPass && newPass !== confirmPass ? { passwordMismatch: true } : null;
 }
 

@@ -64,8 +64,12 @@ export class MessagesComponent {
   readonly activeName = signal('');
   readonly messages = signal<InternalMessage[]>([]);
   readonly loadingThread = signal(false);
+  readonly loadingOlder = signal(false);
+  readonly hasMoreMessages = signal(false);
   readonly draft = signal('');
   readonly sending = signal(false);
+
+  private readonly THREAD_PAGE_SIZE = 30;
 
   readonly recipients = signal<MessageRecipient[]>([]);
   readonly composeOpen = signal(false);
@@ -80,6 +84,10 @@ export class MessagesComponent {
   readonly recipientOptions = computed<AppSelectOption<number>[]>(() =>
     this.recipients().map((r) => ({ value: r.id, label: `${r.name} (${r.role})` })),
   );
+
+  textareaValue(event: Event): string {
+    return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+  }
 
   constructor() {
     this.load();
@@ -112,9 +120,10 @@ export class MessagesComponent {
     this.activeUserId.set(thread.user_id);
     this.activeName.set(thread.user_name);
     this.loadingThread.set(true);
-    this.messageService.getThread(thread.user_id).subscribe({
+    this.messageService.getThread(thread.user_id, { limit: this.THREAD_PAGE_SIZE }).subscribe({
       next: (messages) => {
         this.messages.set(messages);
+        this.hasMoreMessages.set(messages.length === this.THREAD_PAGE_SIZE);
         this.loadingThread.set(false);
         // Refrescar el contador de no leídos del hilo abierto
         this.threads.update((threads) =>
@@ -124,6 +133,24 @@ export class MessagesComponent {
       },
       error: () => this.loadingThread.set(false),
     });
+  }
+
+  loadOlderMessages(): void {
+    const userId = this.activeUserId();
+    const current = this.messages();
+    if (userId === null || current.length === 0 || this.loadingOlder()) return;
+    const oldestId = current[0].id;
+    this.loadingOlder.set(true);
+    this.messageService
+      .getThread(userId, { limit: this.THREAD_PAGE_SIZE, before: oldestId })
+      .subscribe({
+        next: (older) => {
+          this.messages.update((msgs) => [...older, ...msgs]);
+          this.hasMoreMessages.set(older.length === this.THREAD_PAGE_SIZE);
+          this.loadingOlder.set(false);
+        },
+        error: () => this.loadingOlder.set(false),
+      });
   }
 
   closeThread(): void {

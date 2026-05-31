@@ -32,6 +32,7 @@ import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/s
 import { AppStepperComponent } from '../../../shared/ui/stepper/stepper.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
 
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 type RentalType = 'LONG_TERM' | 'SHORT_TERM' | 'BOTH';
 
 interface PaymentOption {
@@ -716,7 +717,7 @@ export class WizardSetupComponent implements OnInit {
           error: (err: ApiErrorLike) => {
             this.isSaving.set(false);
             this.saveError.set(
-              err.error?.message ?? this.transloco.translate('wizard.finishError'),
+              getApiErrorMessage(err, this.transloco.translate('wizard.finishError')),
             );
           },
         });
@@ -724,7 +725,7 @@ export class WizardSetupComponent implements OnInit {
       error: (err: ApiErrorLike) => {
         this.isSaving.set(false);
         this.saveError.set(
-          err.error?.message ?? this.transloco.translate('wizard.saveConfigError'),
+          getApiErrorMessage(err, this.transloco.translate('wizard.saveConfigError')),
         );
       },
     });

@@ -66,6 +66,18 @@
             @if (loadingThread()) {
               <app-loading-state [label]="'messages.loading' | transloco" />
             } @else {
+              @if (hasMoreMessages()) {
+                <button
+                  type="button"
+                  class="load-older"
+                  [disabled]="loadingOlder()"
+                  (click)="loadOlderMessages()"
+                >
+                  {{
+                    (loadingOlder() ? 'messages.loadingOlder' : 'messages.loadOlder') | transloco
+                  }}
+                </button>
+              }
               @for (message of messages(); track message.id) {
                 <div class="bubble-row" [class.mine]="isMine(message)">
                   <div class="bubble">
@@ -82,7 +94,7 @@
               rows="1"
               [placeholder]="'messages.typeMessage' | transloco"
               [value]="draft()"
-              (input)="draft.set($any($event.target).value)"
+              (input)="draft.set(textareaValue($event))"
             ></textarea>
             <app-button type="submit" [disabled]="sending() || !draft().trim()" (clicked)="send()">
               <lucide-icon [img]="Send" [size]="16" />
@@ -112,7 +124,7 @@
       rows="4"
       [placeholder]="'messages.typeMessage' | transloco"
       [value]="composeBody()"
-      (input)="composeBody.set($any($event.target).value)"
+      (input)="composeBody.set(textareaValue($event))"
     ></textarea>
   </div>
   <div dialog-actions>
@@ -141,7 +153,7 @@
       rows="4"
       [placeholder]="'messages.typeMessage' | transloco"
       [value]="broadcastBody()"
-      (input)="broadcastBody.set($any($event.target).value)"
+      (input)="broadcastBody.set(textareaValue($event))"
     ></textarea>
   </div>
   <div dialog-actions>

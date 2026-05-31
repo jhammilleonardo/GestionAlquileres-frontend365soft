@@ -132,7 +132,7 @@ export class ContractDetailComponent {
   viewHistoryContract(contract: Contract): void {
     if (this.isCurrentInHistory(contract)) return;
     const url = this.slugService.buildUrl(`/contratos/${contract.id}`);
-    this.router.navigateByUrl(url);
+    void this.router.navigateByUrl(url);
   }
 
   canActivate(): boolean {
@@ -211,7 +211,7 @@ export class ContractDetailComponent {
     if (!contract) return;
 
     const editUrl = this.slugService.buildUrl(`/contratos/${contract.id}/editar`);
-    this.router.navigateByUrl(editUrl);
+    void this.router.navigateByUrl(editUrl);
   }
 
   async renewContract(): Promise<void> {
@@ -233,7 +233,7 @@ export class ContractDetailComponent {
       next: (response) => {
         this.toast.success(this.transloco.translate('contracts.detail.renewedSuccess'));
         const newContractUrl = this.slugService.buildUrl(`/contratos/${response.id}`);
-        this.router.navigateByUrl(newContractUrl);
+        void this.router.navigateByUrl(newContractUrl);
       },
       error: () => {
         this.toast.error(this.transloco.translate('contracts.detail.renewError'));
@@ -275,7 +275,7 @@ export class ContractDetailComponent {
 
   goBack(): void {
     const contractsUrl = this.slugService.buildUrl('/contratos');
-    this.router.navigateByUrl(contractsUrl);
+    void this.router.navigateByUrl(contractsUrl);
   }
 
   getStatusClass(status: ContractStatus): string {

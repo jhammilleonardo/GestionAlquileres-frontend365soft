@@ -402,6 +402,7 @@
     "sendInstructions": "Enviar Instrucciones",
     "backToLogin": "Volver al inicio de sesión",
     "forgotPasswordSentMsg": "Se han enviado las instrucciones de recuperación a {{email}}. Por favor revisa tu bandeja de entrada.",
+    "forgotPasswordError": "No se pudo solicitar la recuperación. Intenta nuevamente.",
     "required": "Requerido",
     "registerTitle": "Crear Cuenta",
     "registerSubtitle": "Comienza a gestionar tus propiedades hoy",

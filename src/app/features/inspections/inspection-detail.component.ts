@@ -130,6 +130,10 @@ export class InspectionDetailComponent {
     this.items.update((items) => items.map((i) => (i === item ? { ...i, notes } : i)));
   }
 
+  textareaValue(event: Event): string {
+    return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
+  }
+
   photoUrl(path: string): string {
     return path.startsWith('http') ? path : `${environment.apiUrl.replace(/\/$/, '')}${path}`;
   }

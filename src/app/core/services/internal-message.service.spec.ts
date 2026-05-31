@@ -30,7 +30,14 @@ describe('InternalMessageService', () => {
 
   it('getThread pide la conversación con un usuario', () => {
     service.getThread(5).subscribe();
-    expect(get).toHaveBeenCalledWith('acme/messages/thread/5');
+    expect(get).toHaveBeenCalledWith('acme/messages/thread/5', { params: {} });
+  });
+
+  it('getThread admite paginación por cursor (limit y before)', () => {
+    service.getThread(5, { limit: 30, before: 99 }).subscribe();
+    expect(get).toHaveBeenCalledWith('acme/messages/thread/5', {
+      params: { limit: 30, before: 99 },
+    });
   });
 
   it('send envía un mensaje con recipient y body', () => {

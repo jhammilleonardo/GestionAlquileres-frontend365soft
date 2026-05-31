@@ -14,6 +14,7 @@ import {
 } from '../../models/payment.model';
 import { SlugService } from '../slug.service';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 /** Pago crudo del backend: montos pueden venir como string. */
 type RawPayment = Omit<Payment, 'amount' | 'processor_fee'> & {
   amount: string | number;
@@ -139,9 +140,9 @@ export class PaymentService {
           this.paymentsSignal.set(normalizedPayments);
           this.isLoadingSignal.set(false);
         }),
-        catchError((error) => {
+        catchError((error: unknown) => {
           this.errorSignal.set(
-            error.error?.message || this.transloco.translate('common.errors.loadPayments'),
+            getApiErrorMessage(error, this.transloco.translate('common.errors.loadPayments')),
           );
           this.isLoadingSignal.set(false);
           this.paymentsSignal.set([]);
@@ -208,7 +209,7 @@ export class PaymentService {
       }),
       catchError((error: { error?: { message?: string } }) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.updatePayment'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.updatePayment')),
         );
         this.isLoadingSignal.set(false);
         return throwError(() => error);
@@ -250,7 +251,7 @@ export class PaymentService {
       }),
       catchError((error: { error?: { message?: string } }) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.createPayment'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.createPayment')),
         );
         this.isLoadingSignal.set(false);
         return throwError(() => error);
@@ -274,9 +275,9 @@ export class PaymentService {
         // Recargar stats
         this.loadStats();
       }),
-      catchError((error) => {
+      catchError((error: unknown) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.deletePayment'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.deletePayment')),
         );
         this.isLoadingSignal.set(false);
         return throwError(() => error);
@@ -301,7 +302,7 @@ export class PaymentService {
         }),
         catchError((error: { error?: { message?: string } }) => {
           this.errorSignal.set(
-            error.error?.message || this.transloco.translate('common.errors.bulkAction'),
+            getApiErrorMessage(error, this.transloco.translate('common.errors.bulkAction')),
           );
           this.isLoadingSignal.set(false);
           return throwError(() => error);

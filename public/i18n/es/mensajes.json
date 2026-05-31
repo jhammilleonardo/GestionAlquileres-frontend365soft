@@ -4,6 +4,8 @@
   "new": "Nuevo mensaje",
   "broadcast": "Mensaje a todos",
   "loading": "Cargando mensajes...",
+  "loadOlder": "Cargar mensajes anteriores",
+  "loadingOlder": "Cargando...",
   "empty": "Sin conversaciones",
   "selectThread": "Selecciona una conversación",
   "typeMessage": "Escribe un mensaje...",

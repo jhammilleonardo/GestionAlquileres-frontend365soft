@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { TranslocoService } from '@jsverse/transloco';
 
@@ -11,6 +13,11 @@ import {
   PaymentType,
 } from '../../../core/models/payment.model';
 import { Contract, ContractStatus } from '../../../core/services/tenant/tenant-contract.service';
+import { FormatService } from '../../../core/services/format.service';
+import { SlugService } from '../../../core/services/slug.service';
+import { TenantContractService } from '../../../core/services/tenant/tenant-contract.service';
+import { TenantPaymentService } from '../../../core/services/tenant/tenant-payment.service';
+import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
 import { TenantCreatePaymentFacade } from './tenant-create-payment.facade';
 
 describe('TenantCreatePaymentFacade', () => {
@@ -25,6 +32,56 @@ describe('TenantCreatePaymentFacade', () => {
           useValue: {
             getActiveLang: () => 'es',
             translate: (key: string) => key,
+          },
+        },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              queryParamMap: {
+                get: () => null,
+              },
+            },
+          },
+        },
+        {
+          provide: TenantPaymentService,
+          useValue: {
+            loadPayments: () => undefined,
+            payments: () => [],
+            getAvailablePaymentMethods: () => of([]),
+            getPayment: () => of(null),
+            clearError: () => undefined,
+          },
+        },
+        {
+          provide: TenantQrPaymentService,
+          useValue: {
+            clearActiveQr: () => undefined,
+            activeQr: () => null,
+            isTerminalStatus: () => false,
+            generateQr: () => of(null),
+            verifyQr: () => of(null),
+            cancelQr: () => of(null),
+          },
+        },
+        {
+          provide: TenantContractService,
+          useValue: {
+            currentContract: () => makeContract(),
+            loadCurrentContract: () => undefined,
+          },
+        },
+        {
+          provide: SlugService,
+          useValue: {
+            navigateTo: () => undefined,
+          },
+        },
+        {
+          provide: FormatService,
+          useValue: {
+            formatDateTime: (value: string) => value,
           },
         },
       ],

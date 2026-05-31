@@ -9,6 +9,9 @@ import {
   ArrowLeft,
 } from 'lucide-angular';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { finalize } from 'rxjs';
+import { AuthService } from '../../core/services/auth.service';
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 import { LanguageService } from '../../core/services/language.service';
 import { AppButtonComponent, AppTextFieldComponent } from '../../shared/ui';
 
@@ -316,6 +319,7 @@ export class ForgotPasswordComponent {
   readonly languageService = inject(LanguageService);
   private fb = inject(FormBuilder);
   private transloco = inject(TranslocoService);
+  private authService = inject(AuthService);
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
@@ -337,13 +341,20 @@ export class ForgotPasswordComponent {
 
     const email = this.forgotForm.value.email!;
 
-    // TODO: Replace with actual API endpoint when available
-    // this.http.post(`${environment.apiUrl}auth/forgot-password`, { email })
-
-    // Simulated API call
-    setTimeout(() => {
-      this.isLoading.set(false);
-      this.successMessage.set(this.transloco.translate('auth.forgotPasswordSentMsg', { email }));
-    }, 1500);
+    this.authService
+      .requestPasswordReset(email)
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: () => {
+          this.successMessage.set(
+            this.transloco.translate('auth.forgotPasswordSentMsg', { email }),
+          );
+        },
+        error: (error: unknown) => {
+          this.errorMessage.set(
+            getApiErrorMessage(error, this.transloco.translate('auth.forgotPasswordError')),
+          );
+        },
+      });
   }
 }

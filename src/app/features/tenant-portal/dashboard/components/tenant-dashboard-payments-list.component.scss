@@ -1,0 +1,124 @@
+.recent-card {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.card-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--app-color-text);
+  margin: 0;
+}
+
+.view-all {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--app-color-primary);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--app-color-text-muted);
+}
+
+.empty-state lucide-icon {
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.payments-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--app-color-border);
+}
+
+.payment-item:last-child {
+  border-bottom: none;
+}
+
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-info .date {
+  font-size: 12px;
+  color: var(--app-color-text-muted);
+}
+
+.payment-info .amount {
+  color: var(--app-color-text);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.skeleton-list {
+  padding: 16px 0;
+}
+
+.skeleton-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--app-color-border);
+}
+
+.skeleton-item:last-child {
+  border-bottom: none;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  margin-bottom: 12px;
+}
+
+.skeleton-line.short {
+  width: 40%;
+}
+
+.skeleton-line.medium {
+  width: 70%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .view-all {
+    font-size: 13px;
+  }
+}

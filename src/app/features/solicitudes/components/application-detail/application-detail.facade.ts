@@ -3,6 +3,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { Application, ApplicationStatus } from '../../../../core/models/application.model';
 import { ApplicationService } from '../../../../core/services/admin/application.service';
 
+import { getApiErrorMessage } from '../../../../core/http/http-error.util';
 @Injectable()
 export class ApplicationDetailFacade {
   private readonly applicationService = inject(ApplicationService);
@@ -27,7 +28,7 @@ export class ApplicationDetailFacade {
         this.loading.set(false);
       },
       error: (error: { error?: { message?: string }; message?: string }) => {
-        this.error.set(error.error?.message ?? error.message ?? 'Error al cargar la solicitud');
+        this.error.set(getApiErrorMessage(error, error.message ?? 'Error al cargar la solicitud'));
         this.loading.set(false);
       },
     });

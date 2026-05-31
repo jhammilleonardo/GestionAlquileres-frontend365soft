@@ -15,6 +15,22 @@ import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-pick
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
+
+/** Valor crudo del formulario de creación de contrato. */
+interface ContractCreateFormValue {
+  tenant_id: number | null;
+  property_id: number | null;
+  start_date: Date | string;
+  end_date: Date | string;
+  key_delivery_date: Date | string | null;
+  monthly_rent: string;
+  payment_day: string | null;
+  payment_method: string | null;
+  included_services: string[] | null;
+  late_fee_percentage: string | null;
+  grace_days: string | null;
+}
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -165,10 +181,10 @@ export class ContractCreateComponent {
       return;
     }
 
-    // Validar fechas
-    const startDate = this.contractForm.value.start_date;
-    const endDate = this.contractForm.value.end_date;
+    const formData = this.contractForm.getRawValue() as ContractCreateFormValue;
+    const { start_date: startDate, end_date: endDate } = formData;
 
+    // Validar fechas
     if (endDate <= startDate) {
       this.errorMessage.set(this.transloco.translate('contracts.create.dateRangeError'));
       return;
@@ -177,15 +193,12 @@ export class ContractCreateComponent {
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
 
-    // Preparar datos
-    const formData = this.contractForm.getRawValue();
-
     // Convertir fechas a string YYYY-MM-DD
     const contractData: CreateContractDTO = {
-      tenant_id: formData.tenant_id,
-      property_id: formData.property_id,
-      start_date: this.formatDate(formData.start_date),
-      end_date: this.formatDate(formData.end_date),
+      tenant_id: formData.tenant_id!,
+      property_id: formData.property_id!,
+      start_date: this.formatDate(startDate),
+      end_date: this.formatDate(endDate),
       key_delivery_date: formData.key_delivery_date
         ? this.formatDate(formData.key_delivery_date)
         : undefined,
@@ -204,7 +217,7 @@ export class ContractCreateComponent {
         this.isSubmitting.set(false);
         // El contrato queda en BORRADOR para que el inquilino lo revise y firme
         const contractUrl = this.slugService.buildUrl(`/contratos/${contract.id}`);
-        this.router.navigateByUrl(contractUrl);
+        void this.router.navigateByUrl(contractUrl);
       },
       error: (error: unknown) => {
         this.isSubmitting.set(false);
@@ -215,7 +228,7 @@ export class ContractCreateComponent {
 
   goBack(): void {
     const contractsUrl = this.slugService.buildUrl('/contratos');
-    this.router.navigateByUrl(contractsUrl);
+    void this.router.navigateByUrl(contractsUrl);
   }
 
   private formatDate(date: Date | string): string {
@@ -230,19 +243,6 @@ export class ContractCreateComponent {
   }
 
   private resolveErrorMessage(error: unknown): string {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'error' in error &&
-      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
-    ) {
-      return (error as { error: { message: string } }).error.message;
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    return this.transloco.translate('contracts.create.submitError');
+    return getApiErrorMessage(error, this.transloco.translate('contracts.create.submitError'));
   }
 }

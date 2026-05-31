@@ -642,7 +642,7 @@ export class TenantCreateRequestComponent {
     this.maintenanceService.createRequest(dto).subscribe({
       next: (created) => {
         const url = this.slugService.buildUrl(`/portal/mantenimiento/${created.id}`);
-        this.router.navigateByUrl(url);
+        void this.router.navigateByUrl(url);
       },
       error: () => {
         // Error is handled by the service

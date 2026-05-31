@@ -7,7 +7,6 @@ import {
   PropertySubtype,
   PropertyStatus,
   PropertyFilters,
-  PropertyOwner,
   RentalApplication,
   TenantInfo,
   SortOption,
@@ -87,27 +86,23 @@ export class PropertyService {
 
     const endpoint = this.slugService.buildApiEndpoint('catalog/properties');
 
-    return (
-      this.apiClient
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .get<any>(endpoint, { params })
-        .pipe(
-          map((response) => {
-            // El backend puede devolver { data: [], total } o un arreglo directo
-            const items =
-              response?.data || response?.items || (Array.isArray(response) ? response : []);
-            const total = response?.total !== undefined ? response.total : items.length;
+    return this.apiClient.get<unknown>(endpoint, { params }).pipe(
+      map((response) => {
+        // El backend puede devolver { data: [], total }, { items: [] } o un arreglo directo
+        const body = this.asRecord(response);
+        const rawItems = Array.isArray(response)
+          ? (response as unknown[])
+          : this.asArray(body['data'] ?? body['items']);
+        const total = typeof body['total'] === 'number' ? body['total'] : rawItems.length;
 
-            return {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              items: items.map((p: any) => this.transformProperty(p)),
-              total,
-            };
-          }),
-          catchError(() => {
-            return of({ items: [], total: 0 });
-          }),
-        )
+        return {
+          items: rawItems.map((item) => this.transformProperty(item)),
+          total,
+        };
+      }),
+      catchError(() => {
+        return of({ items: [], total: 0 });
+      }),
     );
   }
 
@@ -165,23 +160,25 @@ export class PropertyService {
   submitPropertyContact(
     propertyId: number,
     contactData: { name: string; email: string; phone: string; message: string },
-  ): Observable<any> {
+  ): Observable<unknown> {
     const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${propertyId}/contact`);
-    return this.apiClient.post(endpoint, contactData);
+    return this.apiClient.post<unknown>(endpoint, contactData);
   }
 
   /**
    * Enviar solicitud de alquiler
    */
   submitApplication(
-    _application: RentalApplication,
+    application: RentalApplication,
   ): Observable<{ success: boolean; message: string }> {
-    // TODO: Implementar endpoint para enviar solicitudes
-    // Por ahora retornamos un Observable simulado
-    return of({
-      success: true,
-      message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.',
-    }).pipe(
+    const endpoint = this.slugService.buildApiEndpoint('applications');
+    const payload = this.toApplicationPayload(application);
+
+    return this.apiClient.post<unknown>(endpoint, payload).pipe(
+      map(() => ({
+        success: true,
+        message: 'Su solicitud ha sido enviada correctamente. Nos pondremos en contacto pronto.',
+      })),
       catchError(() => {
         return of({
           success: false,
@@ -189,6 +186,54 @@ export class PropertyService {
         });
       }),
     );
+  }
+
+  private toApplicationPayload(application: RentalApplication): {
+    property_id: number;
+    personal_data: {
+      full_name: string;
+      phone: string;
+      identity_document: string;
+      current_address: string;
+    };
+    employment_data: {
+      employer_name: string;
+      position: string;
+      monthly_income: number;
+      employment_duration: string;
+      employer_phone: string;
+    };
+    rental_history: {
+      previous_address: string;
+      previous_landlord_name: string;
+      previous_landlord_phone: string;
+      reason_for_leaving: string;
+      previous_rent_amount: number;
+    }[];
+    references: { name: string; relationship: string; phone: string }[];
+    additional_notes?: string;
+  } {
+    const applicant = application.applicantInfo;
+
+    return {
+      property_id: application.propertyId,
+      personal_data: {
+        full_name: `${applicant.firstName} ${applicant.lastName}`.trim(),
+        phone: applicant.phone,
+        identity_document: applicant.email,
+        current_address: applicant.currentAddress,
+      },
+      employment_data: {
+        employer_name: applicant.employmentStatus || 'No especificado',
+        position: applicant.employmentStatus || 'No especificado',
+        monthly_income: Number(applicant.monthlyIncome) || 0,
+        employment_duration: 'No especificado',
+        employer_phone: applicant.phone,
+      },
+      rental_history: [],
+      references: [],
+      additional_notes: application.additionalInfo || undefined,
+    };
   }
 
   /**
@@ -224,151 +269,174 @@ export class PropertyService {
    * El backend devuelve formatos variables (images como string/array/objeto,
    * montos como string), por eso se normaliza aquí en el borde del sistema.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private transformProperty(property: any): Property {
-    // Asegurar que las fechas sean objetos Date
-    if (typeof property.created_at === 'string') {
-      property.created_at = new Date(property.created_at);
-    }
-    if (typeof property.updated_at === 'string') {
-      property.updated_at = new Date(property.updated_at);
-    }
-    if (property.availability_date && typeof property.availability_date === 'string') {
-      property.availability_date = new Date(property.availability_date);
-    }
+  private transformProperty(input: unknown): Property {
+    const raw = this.asRecord(input);
 
-    // Normalizar images según el formato que venga del backend
-    if (typeof property.images === 'string') {
-      // Puede venir como JSON string: '["url1","url2"]' o comma-separated: 'url1,url2'
+    // Se preservan los campos originales (...raw) y se sobrescriben los que
+    // requieren normalización por venir en formatos variables del backend.
+    return {
+      ...raw,
+      created_at: this.toDate(raw['created_at']),
+      updated_at: this.toDate(raw['updated_at']),
+      availability_date: raw['availability_date']
+        ? this.toDate(raw['availability_date'])
+        : raw['availability_date'],
+      images: this.normalizeImages(raw['images']),
+      amenities: this.asArray(raw['amenities']),
+      included_items: this.asArray(raw['included_items']),
+      addresses: this.normalizeAddresses(raw['addresses']),
+      owners: this.normalizeOwners(raw['owners']),
+      property_type: this.normalizePropertyType(raw),
+      property_subtype: this.normalizePropertySubtype(raw),
+      active: raw['active'] === undefined ? raw['status'] === 'DISPONIBLE' : raw['active'],
+      description: this.asString(raw['description']) || 'Sin descripción disponible',
+    } as unknown as Property;
+  }
+
+  // ---- Helpers de normalización (borde del sistema: datos sin tipar) ----
+
+  private asRecord(value: unknown): Record<string, unknown> {
+    return value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  }
+
+  private asArray(value: unknown): unknown[] {
+    return Array.isArray(value) ? (value as unknown[]) : [];
+  }
+
+  private asString(value: unknown): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  private toDate(value: unknown): unknown {
+    return typeof value === 'string' ? new Date(value) : value;
+  }
+
+  /** Normaliza images: array, JSON string, CSV string u objeto indexado → string[]. */
+  private normalizeImages(value: unknown): string[] {
+    if (Array.isArray(value)) {
+      return value.filter((item): item is string => typeof item === 'string');
+    }
+    if (typeof value === 'string') {
       try {
-        const parsed = JSON.parse(property.images);
-        property.images = Array.isArray(parsed) ? parsed : [];
+        const parsed: unknown = JSON.parse(value);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((item): item is string => typeof item === 'string');
+        }
       } catch {
-        property.images = property.images
-          ? property.images
-              .split(',')
-              .map((s: string) => s.trim())
-              .filter(Boolean)
-          : [];
+        /* no es JSON: se trata como CSV abajo */
       }
-    } else if (
-      property.images &&
-      typeof property.images === 'object' &&
-      !Array.isArray(property.images)
-    ) {
-      // Objeto {0: "path", 1: "path"}
-      const imagesObj = property.images as Record<string, string>;
-      property.images = Object.keys(imagesObj)
+      return value
+        .split(',')
+        .map((segment) => segment.trim())
+        .filter(Boolean);
+    }
+    if (value !== null && typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      return Object.keys(obj)
         .sort()
-        .map((key) => imagesObj[key]);
+        .map((key) => obj[key])
+        .filter((item): item is string => typeof item === 'string');
     }
+    return [];
+  }
 
-    // Asegurar que arrays existan
-    if (!property.images || !Array.isArray(property.images)) property.images = [];
-    if (!property.amenities || !Array.isArray(property.amenities)) property.amenities = [];
-    if (!property.included_items || !Array.isArray(property.included_items))
-      property.included_items = [];
-
-    // Asegurar addresses - agregar una dirección por defecto si no existe
-    if (
-      !property.addresses ||
-      !Array.isArray(property.addresses) ||
-      property.addresses.length === 0
-    ) {
-      property.addresses = [
-        {
-          address_type: 'primary',
-          street_address: 'Dirección no disponible',
-          city: 'N/A',
-          state: '',
-          zip_code: '',
-          country: '',
-        },
-      ];
+  private normalizeAddresses(value: unknown): unknown[] {
+    const addresses = this.asArray(value);
+    if (addresses.length > 0) {
+      return addresses;
     }
+    return [
+      {
+        address_type: 'primary',
+        street_address: 'Dirección no disponible',
+        city: 'N/A',
+        state: '',
+        zip_code: '',
+        country: '',
+      },
+    ];
+  }
 
-    // Asegurar owners - normalizar estructura y agregar un owner por defecto si no existe
-    if (property.owners && Array.isArray(property.owners) && property.owners.length > 0) {
-      // Flatten: si el owner tiene rental_owner anidado, traer sus campos al nivel superior
-      property.owners = property.owners.map(
-        (owner: PropertyOwner & { rental_owner?: PropertyOwner }) => {
-          const ro = owner.rental_owner;
-          return {
-            ...owner,
-            name: owner.name || (ro && ro.name) || 'No disponible',
-            primary_email: owner.primary_email || (ro && ro.primary_email) || '',
-            phone_number: owner.phone_number || (ro && ro.phone_number) || '',
-          };
-        },
-      );
-    } else {
-      property.owners = [
-        {
-          id: 0,
-          name: 'No disponible',
-          company_name: '',
-          is_company: false,
-          primary_email: '',
-          phone_number: '',
-          secondary_email: '',
-          secondary_phone: '',
-          notes: '',
-          ownership_percentage: 100,
-          is_primary: true,
-          created_at: new Date(),
-        },
-      ];
-    }
-
-    // Si la respuesta tiene property_type_name/code en lugar del objeto, construirlo
-    if (!property.property_type || !property.property_type.name) {
-      if (property.property_type_name) {
-        property.property_type = {
-          id: property.property_type_id,
-          name: property.property_type_name,
-          description: property.property_type_code || '',
+  private normalizeOwners(value: unknown): unknown[] {
+    const owners = this.asArray(value);
+    if (owners.length > 0) {
+      // Flatten: si el owner tiene rental_owner anidado, traer sus campos arriba
+      return owners.map((item) => {
+        const owner = this.asRecord(item);
+        const rentalOwner = this.asRecord(owner['rental_owner']);
+        return {
+          ...owner,
+          name:
+            this.asString(owner['name']) || this.asString(rentalOwner['name']) || 'No disponible',
+          primary_email:
+            this.asString(owner['primary_email']) ||
+            this.asString(rentalOwner['primary_email']) ||
+            '',
+          phone_number:
+            this.asString(owner['phone_number']) ||
+            this.asString(rentalOwner['phone_number']) ||
+            '',
         };
-      } else {
-        // Crear objeto por defecto
-        property.property_type = {
-          id: property.property_type_id || 0,
-          name: 'Tipo no especificado',
-          description: '',
-        };
-      }
+      });
     }
+    return [
+      {
+        id: 0,
+        name: 'No disponible',
+        company_name: '',
+        is_company: false,
+        primary_email: '',
+        phone_number: '',
+        secondary_email: '',
+        secondary_phone: '',
+        notes: '',
+        ownership_percentage: 100,
+        is_primary: true,
+        created_at: new Date(),
+      },
+    ];
+  }
 
-    // Si la respuesta tiene property_subtype_name/code en lugar del objeto, construirlo
-    if (!property.property_subtype || !property.property_subtype.name) {
-      if (property.property_subtype_name) {
-        property.property_subtype = {
-          id: property.property_subtype_id,
-          name: property.property_subtype_name,
-          description: property.property_subtype_code || '',
-          property_type_id: property.property_type_id,
-        };
-      } else {
-        // Crear objeto por defecto
-        property.property_subtype = {
-          id: property.property_subtype_id || 0,
-          name: 'Subtipo no especificado',
-          description: '',
-          property_type_id: property.property_type_id,
-        };
-      }
+  private normalizePropertyType(raw: Record<string, unknown>): unknown {
+    const existing = this.asRecord(raw['property_type']);
+    if (this.asString(existing['name'])) {
+      return existing;
     }
-
-    // Asegurar que active tenga un valor
-    if (property.active === undefined) {
-      property.active = property.status === 'DISPONIBLE';
+    const name = this.asString(raw['property_type_name']);
+    if (name) {
+      return {
+        id: raw['property_type_id'],
+        name,
+        description: this.asString(raw['property_type_code']) || '',
+      };
     }
+    return {
+      id: raw['property_type_id'] || 0,
+      name: 'Tipo no especificado',
+      description: '',
+    };
+  }
 
-    // Asegurar description tenga un valor
-    if (!property.description) {
-      property.description = 'Sin descripción disponible';
+  private normalizePropertySubtype(raw: Record<string, unknown>): unknown {
+    const existing = this.asRecord(raw['property_subtype']);
+    if (this.asString(existing['name'])) {
+      return existing;
     }
-
-    return property as Property;
+    const name = this.asString(raw['property_subtype_name']);
+    if (name) {
+      return {
+        id: raw['property_subtype_id'],
+        name,
+        description: this.asString(raw['property_subtype_code']) || '',
+        property_type_id: raw['property_type_id'],
+      };
+    }
+    return {
+      id: raw['property_subtype_id'] || 0,
+      name: 'Subtipo no especificado',
+      description: '',
+      property_type_id: raw['property_type_id'],
+    };
   }
 
   /**
@@ -416,8 +484,9 @@ export class PropertyService {
       typeof property.images === 'object' &&
       Object.keys(property.images).length > index
     ) {
-      const keys = Object.keys(property.images);
-      imagePath = (property.images as any)[keys[index]];
+      const imagesRecord = property.images as unknown as Record<string, string>;
+      const keys = Object.keys(imagesRecord);
+      imagePath = imagesRecord[keys[index]];
     } else if (property.first_image && index === 0) {
       imagePath = property.first_image;
     }

@@ -82,7 +82,7 @@
                   [src]="getPropertyImageUrl(property) || 'assets/placeholder.jpg'"
                   [alt]="property.title"
                   class="property-img"
-                  (error)="$any($event.target).src = 'assets/placeholder.jpg'"
+                  (error)="setPlaceholderImage($event)"
                 />
                 <span class="badge-status">{{ 'public.home.available' | transloco }}</span>
                 @if (property.monthly_rent) {

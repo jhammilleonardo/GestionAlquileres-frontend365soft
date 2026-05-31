@@ -11,6 +11,7 @@ import {
 } from '../../models/payment.model';
 import { SlugService } from '../slug.service';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 @Injectable({
   providedIn: 'root',
 })
@@ -56,7 +57,7 @@ export class TenantQrPaymentService {
         }),
         catchError((err) => {
           this.errorSignal.set(
-            err.error?.message || this.transloco.translate('common.errors.loadQR'),
+            getApiErrorMessage(err, this.transloco.translate('common.errors.loadQR')),
           );
           this.isLoadingSignal.set(false);
           return [];
@@ -80,7 +81,7 @@ export class TenantQrPaymentService {
         this.isLoadingSignal.set(false);
       }),
       catchError((err) => {
-        const msg = err.error?.message || 'Error al generar el QR';
+        const msg = getApiErrorMessage(err, 'Error al generar el QR');
         this.errorSignal.set(msg);
         this.isLoadingSignal.set(false);
         return throwError(() => new Error(msg));
@@ -101,7 +102,7 @@ export class TenantQrPaymentService {
           this.activeQrSignal.set(qr);
         }
       }),
-      catchError((err) => throwError(() => err)),
+      catchError((err: unknown) => throwError(() => err)),
     );
   }
 
@@ -117,7 +118,7 @@ export class TenantQrPaymentService {
           this.activeQrSignal.set(qr);
         }
       }),
-      catchError((err) => throwError(() => err)),
+      catchError((err: unknown) => throwError(() => err)),
     );
   }
 

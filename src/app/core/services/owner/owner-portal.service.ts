@@ -54,7 +54,24 @@ export class OwnerPortalService {
     return this.http.get(url, { responseType: 'blob' });
   }
 
+  /** Descarga un contrato firmado usando el `pdf_url` devuelto por el backend. */
+  downloadContractPdf(record: OwnerPortalRecord): Observable<Blob> {
+    const pdfUrl = this.asString(record['pdf_url']);
+    if (!pdfUrl) {
+      throw new Error('El contrato no tiene PDF disponible');
+    }
+
+    const url = pdfUrl.startsWith('http')
+      ? pdfUrl
+      : `${environment.apiUrl}${pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`}`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
   private endpoint(path: string): string {
     return this.slugService.buildApiEndpoint(path);
+  }
+
+  private asString(value: unknown): string {
+    return typeof value === 'string' ? value : '';
   }
 }

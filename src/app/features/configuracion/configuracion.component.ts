@@ -263,7 +263,10 @@ export class ConfiguracionComponent {
     try {
       const stored = localStorage.getItem(SETTINGS_KEY);
       if (stored) {
-        this.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        this.settings = {
+          ...DEFAULT_SETTINGS,
+          ...(JSON.parse(stored) as Partial<typeof DEFAULT_SETTINGS>),
+        };
       }
     } catch {
       this.settings = { ...DEFAULT_SETTINGS };

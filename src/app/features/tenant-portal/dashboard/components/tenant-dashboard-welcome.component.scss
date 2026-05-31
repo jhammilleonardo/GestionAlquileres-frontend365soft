@@ -1,0 +1,81 @@
+.welcome-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.welcome-content h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--app-color-text);
+  margin: 0 0 4px;
+}
+
+.welcome-content p {
+  color: var(--app-color-text-muted);
+  margin: 0;
+}
+
+.property-card {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: var(--app-color-primary);
+  color: #fff;
+}
+
+.property-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+
+.property-content h2 {
+  font-size: 1.5rem;
+  margin: 0 0 8px;
+}
+
+.property-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.property-meta .meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+}
+
+.contract-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .welcome-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .property-card {
+    padding: 16px;
+  }
+
+  .property-content h2 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-content h1 {
+    font-size: 1.35rem;
+  }
+}

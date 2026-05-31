@@ -93,6 +93,12 @@ export class HomeComponent {
     return `http://localhost:3000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
   }
 
+  setPlaceholderImage(event: Event): void {
+    if (event.target instanceof HTMLImageElement) {
+      event.target.src = 'assets/placeholder.jpg';
+    }
+  }
+
   getPropertyAddress(property: Property): string {
     if (property.addresses?.length) {
       const addr = property.addresses[0];

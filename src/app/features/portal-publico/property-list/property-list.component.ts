@@ -131,6 +131,19 @@ export class PropertyListComponent {
     this.loadProperties();
   }
 
+  inputValue(event: Event): string {
+    return event.target instanceof HTMLInputElement ? event.target.value : '';
+  }
+
+  setSortFromEvent(event: Event): void {
+    const value =
+      event.target instanceof HTMLSelectElement
+        ? (event.target.value as SortOption)
+        : SortOption.CREATED_AT;
+    this.sortBy.set(value);
+    this.applyFilters();
+  }
+
   toggleFavorite(propertyId: number, event: Event): void {
     event.stopPropagation();
     this.propertyService.toggleFavorite(propertyId);

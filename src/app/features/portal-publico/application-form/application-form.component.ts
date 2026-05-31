@@ -16,6 +16,7 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 interface ApplicationPayload {
   property_id: number;
   personal_data: {
@@ -276,8 +277,10 @@ export class ApplicationFormComponent {
         },
         error: (err: { error?: { message?: string } }) => {
           this.error.set(
-            err.error?.message ??
+            getApiErrorMessage(
+              err,
               this.translocoService.translate('public.applicationForm.errSubmit'),
+            ),
           );
           this.submitting.set(false);
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -313,7 +316,10 @@ export class ApplicationFormComponent {
     try {
       const savedData = localStorage.getItem(this.FORM_DATA_KEY);
       if (savedData) {
-        const parsed = JSON.parse(savedData);
+        const parsed = JSON.parse(savedData) as {
+          formData: CreateApplicationDto;
+          propertyId: number;
+        };
         this.formData = parsed.formData;
         this.propertyId.set(parsed.propertyId);
         this.clearSavedFormData();
@@ -332,7 +338,7 @@ export class ApplicationFormComponent {
     const slug = this.slugService.getSlug();
     const currentUrl = this.router.url.split('?')[0];
     const loginUrl = `/${slug}/login?returnUrl=${encodeURIComponent(currentUrl + '?restoreForm=true')}`;
-    this.router.navigateByUrl(loginUrl);
+    void this.router.navigateByUrl(loginUrl);
   }
 
   // Validation Methods

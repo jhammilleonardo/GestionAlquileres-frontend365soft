@@ -1,0 +1,40 @@
+<section class="recent-card">
+  <div class="card-header">
+    <h3>{{ 'public.tenantDashboard.recentPayments' | transloco }}</h3>
+    <a [routerLink]="viewAllUrl()" class="view-all">
+      {{ 'public.tenantDashboard.viewAllPayments' | transloco }}
+      <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton-list">
+      @for (item of [1, 2, 3]; track item) {
+        <div class="skeleton-item">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line medium"></div>
+        </div>
+      }
+    </div>
+  } @else if (payments().length === 0) {
+    <div class="empty-state">
+      <lucide-icon [img]="CreditCard" [size]="48"></lucide-icon>
+      <p>{{ 'public.tenantDashboard.noPayments' | transloco }}</p>
+    </div>
+  } @else {
+    <div class="payments-list">
+      @for (payment of payments().slice(0, 5); track payment.id) {
+        <div class="payment-item">
+          <div class="payment-info">
+            <span class="date">{{ payment.payment_date | tenantDate }}</span>
+            <span class="amount">{{ payment.amount | tenantCurrency }}</span>
+          </div>
+          <app-status-badge
+            [label]="statusLabels()[payment.status] || payment.status"
+            [tone]="statusTone()(payment.status)"
+          />
+        </div>
+      }
+    </div>
+  }
+</section>

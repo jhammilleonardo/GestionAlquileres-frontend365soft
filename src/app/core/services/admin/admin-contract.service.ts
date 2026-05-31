@@ -14,6 +14,7 @@ import {
   ContractFilters,
 } from '../../models/contract.model';
 
+import { getApiErrorMessage } from '../../http/http-error.util';
 /**
  * Respuesta del endpoint de generación de PDF
  */
@@ -164,7 +165,7 @@ export class AdminContractService {
       }),
       catchError((error) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.createContract'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.createContract')),
         );
         this.isLoadingSignal.set(false);
         throw error;
@@ -203,7 +204,7 @@ export class AdminContractService {
       }),
       catchError((error) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.updateContract'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.updateContract')),
         );
         this.isLoadingSignal.set(false);
         throw error;
@@ -242,7 +243,7 @@ export class AdminContractService {
       }),
       catchError((error) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.changeStatus'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.changeStatus')),
         );
         this.isLoadingSignal.set(false);
         throw error;
@@ -286,7 +287,7 @@ export class AdminContractService {
       }),
       catchError((error) => {
         this.errorSignal.set(
-          error.error?.message || this.transloco.translate('common.errors.renewContract'),
+          getApiErrorMessage(error, this.transloco.translate('common.errors.renewContract')),
         );
         this.isLoadingSignal.set(false);
         throw error;

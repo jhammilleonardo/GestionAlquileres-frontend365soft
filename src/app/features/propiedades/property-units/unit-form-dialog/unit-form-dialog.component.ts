@@ -17,6 +17,7 @@ import { AppDialogComponent } from '../../../../shared/ui/dialog/dialog.componen
 import { AppSelectComponent, AppSelectOption } from '../../../../shared/ui/select/select.component';
 import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-field.component';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
+import { getApiErrorMessage } from '../../../../core/http/http-error.util';
 
 @Component({
   selector: 'app-unit-form-dialog',
@@ -171,19 +172,6 @@ export class UnitFormDialogComponent {
   }
 
   private resolveErrorMessage(error: unknown, fallback: string): string {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'error' in error &&
-      typeof (error as { error?: { message?: unknown } }).error?.message === 'string'
-    ) {
-      return (error as { error: { message: string } }).error.message;
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-
-    return fallback;
+    return getApiErrorMessage(error, fallback);
   }
 }

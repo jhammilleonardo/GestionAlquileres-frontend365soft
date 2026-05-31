@@ -36,6 +36,7 @@ import {
 } from '../../shared/ui/status-badge/status-badge.component';
 import { environment } from '../../../environments/environment';
 
+import { getApiErrorMessage } from '../../core/http/http-error.util';
 @Component({
   selector: 'app-violations',
   standalone: true,
@@ -233,7 +234,7 @@ export class ViolationsComponent {
       },
       error: (err: { error?: { message?: string } }) => {
         this.saving.set(false);
-        this.toast.error(err.error?.message ?? this.transloco.translate('violations.saveError'));
+        this.toast.error(getApiErrorMessage(err, this.transloco.translate('violations.saveError')));
       },
     });
   }
@@ -253,6 +254,10 @@ export class ViolationsComponent {
 
   closeResolve(): void {
     this.resolveDialogOpen.set(false);
+  }
+
+  textareaValue(event: Event): string {
+    return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
   }
 
   confirmResolve(): void {

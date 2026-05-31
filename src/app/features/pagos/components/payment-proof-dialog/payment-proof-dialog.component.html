@@ -1,0 +1,49 @@
+<app-dialog [open]="true" [title]="'payments.receipt' | transloco" (closed)="closed.emit()">
+  <div class="proof-content">
+    @if (loading()) {
+      <div class="proof-loading">
+        <app-loading-state [label]="'common.loading' | transloco" />
+      </div>
+    } @else if (error()) {
+      <p class="proof-error" aria-live="polite">{{ error() }}</p>
+    } @else if (objectUrl() && isPdf()) {
+      <object class="proof-pdf" [data]="objectUrl()" type="application/pdf"></object>
+    } @else {
+      <div class="proof-toolbar">
+        <div class="zoom-controls">
+          <app-button
+            appearance="flat"
+            size="s"
+            [disabled]="!canZoomOut()"
+            ariaLabel="Alejar comprobante"
+            (clicked)="zoomedOut.emit()"
+          >
+            <lucide-icon [img]="Minus" [size]="16"></lucide-icon>
+          </app-button>
+          <span class="zoom-value">{{ (zoom() * 100).toFixed(0) }}%</span>
+          <app-button
+            appearance="flat"
+            size="s"
+            [disabled]="!canZoomIn()"
+            ariaLabel="Acercar comprobante"
+            (clicked)="zoomedIn.emit()"
+          >
+            <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
+          </app-button>
+        </div>
+        <app-button appearance="flat" size="s" (clicked)="zoomReset.emit()">
+          {{ 'payments.resetZoom' | transloco }}
+        </app-button>
+      </div>
+
+      <div class="proof-image-wrap">
+        <img
+          class="proof-image"
+          [src]="objectUrl()"
+          [alt]="'payments.receipt' | transloco"
+          [style.width.%]="zoom() * 100"
+        />
+      </div>
+    }
+  </div>
+</app-dialog>

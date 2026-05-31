@@ -143,6 +143,17 @@
     </a>
 
     <div class="udp-footer-actions">
+      @if (isShortTerm()) {
+        <app-button
+          appearance="outline"
+          size="s"
+          (clicked)="onManageDates()"
+          ariaLabel="Gestionar disponibilidad de la unidad"
+        >
+          <lucide-icon [img]="CalendarDays" [size]="15"></lucide-icon>
+          Fechas
+        </app-button>
+      }
       <app-button
         appearance="destructive"
         size="s"

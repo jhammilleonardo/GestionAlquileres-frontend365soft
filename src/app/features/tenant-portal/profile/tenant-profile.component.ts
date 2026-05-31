@@ -23,8 +23,8 @@ import {
 type TenantProfileTab = 'personal' | 'password';
 
 function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const newPassword = control.get('new_password')?.value;
-  const confirmPassword = control.get('confirm_password')?.value;
+  const newPassword = control.get('new_password')?.value as string | undefined;
+  const confirmPassword = control.get('confirm_password')?.value as string | undefined;
 
   if (newPassword && confirmPassword && newPassword !== confirmPassword) {
     return { passwordMismatch: true };

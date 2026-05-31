@@ -3,21 +3,20 @@ import { TestBed } from '@angular/core/testing';
 import { PropertyService } from './property.service';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { Property } from '../../models/property.model';
 
 describe('PropertyService Helpers', () => {
   let service: PropertyService;
-  let apiClientMock: any;
-  let slugServiceMock: any;
 
   beforeEach(() => {
-    apiClientMock = {
+    const apiClientMock = {
       get: vi.fn(),
       post: vi.fn(),
       patch: vi.fn(),
       delete: vi.fn(),
     };
-    slugServiceMock = {
-      buildApiEndpoint: vi.fn((path) => `soft-prueba/${path}`),
+    const slugServiceMock = {
+      buildApiEndpoint: vi.fn((path: string) => `soft-prueba/${path}`),
       getSlug: vi.fn(() => 'soft-prueba'),
     };
 
@@ -40,7 +39,7 @@ describe('PropertyService Helpers', () => {
     currency: 'USD',
     square_meters: 100,
     property_type: { name: 'Casa' },
-  } as any;
+  } as unknown as Property;
 
   it('should build image URL correctly', () => {
     const url = service.getPropertyImageUrl(mockProperty);

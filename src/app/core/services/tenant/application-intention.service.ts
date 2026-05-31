@@ -104,7 +104,11 @@ export class ApplicationIntentionService {
       const stored = localStorage.getItem(this.INTENTION_KEY);
 
       if (stored) {
-        const intention = JSON.parse(stored);
+        const intention = JSON.parse(stored) as {
+          timestamp: string | number | Date;
+          propertyId: number | null;
+          propertyTitle: string | null;
+        };
 
         // Verificar que la intención no sea muy vieja (24 horas máximo)
         const intentionTime = new Date(intention.timestamp);
