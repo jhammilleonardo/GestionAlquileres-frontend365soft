@@ -1,0 +1,30 @@
+@if (bars().length > 0) {
+  <div class="chart-card">
+    <div class="chart-head">
+      <h3>{{ 'accounting.chartTitle' | transloco }}</h3>
+      <div class="chart-legend">
+        <span class="legend income">{{ 'accounting.income' | transloco }}</span>
+        <span class="legend expense">{{ 'accounting.expenses' | transloco }}</span>
+      </div>
+    </div>
+    <div class="chart-bars">
+      @for (bar of bars(); track bar.label) {
+        <div class="chart-col">
+          <div class="bar-pair">
+            <span
+              class="bar income"
+              [style.height.%]="bar.incomeHeight"
+              [attr.title]="bar.income | number: '1.0-0'"
+            ></span>
+            <span
+              class="bar expense"
+              [style.height.%]="bar.expenseHeight"
+              [attr.title]="bar.expenses | number: '1.0-0'"
+            ></span>
+          </div>
+          <span class="bar-label">{{ bar.label }}</span>
+        </div>
+      }
+    </div>
+  </div>
+}

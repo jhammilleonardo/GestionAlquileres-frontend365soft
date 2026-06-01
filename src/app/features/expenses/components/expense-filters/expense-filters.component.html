@@ -1,0 +1,24 @@
+<form class="filters" [formGroup]="form()">
+  <app-select
+    formControlName="property_id"
+    [label]="'accounting.property' | transloco"
+    [placeholder]="'common.all' | transloco"
+    [options]="propertyOptions()"
+  />
+  <app-select
+    formControlName="category"
+    [label]="'accounting.categoryLabel' | transloco"
+    [placeholder]="'accounting.allCategories' | transloco"
+    [options]="categoryOptions()"
+  />
+  <app-date-picker formControlName="from" [label]="'accounting.from' | transloco" />
+  <app-date-picker formControlName="to" [label]="'accounting.to' | transloco" />
+  <div class="filter-actions">
+    <app-button size="s" (clicked)="filtersApplied.emit()">
+      {{ 'common.apply' | transloco }}
+    </app-button>
+    <app-button size="s" appearance="secondary" (clicked)="filtersCleared.emit()">
+      {{ 'common.clear' | transloco }}
+    </app-button>
+  </div>
+</form>

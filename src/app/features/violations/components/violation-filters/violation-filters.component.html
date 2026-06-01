@@ -1,0 +1,28 @@
+<form class="filters" [formGroup]="form()">
+  <app-select
+    formControlName="property_id"
+    [label]="'violations.property' | transloco"
+    [placeholder]="'common.all' | transloco"
+    [options]="propertyOptions()"
+  />
+  <app-select
+    formControlName="status"
+    [label]="'violations.statusLabel' | transloco"
+    [placeholder]="'violations.allStatuses' | transloco"
+    [options]="statusOptions()"
+  />
+  <app-select
+    formControlName="type"
+    [label]="'violations.typeLabel' | transloco"
+    [placeholder]="'violations.allTypes' | transloco"
+    [options]="typeOptions()"
+  />
+  <div class="filter-actions">
+    <app-button size="s" (clicked)="filtersApplied.emit()">
+      {{ 'common.apply' | transloco }}
+    </app-button>
+    <app-button size="s" appearance="secondary" (clicked)="filtersCleared.emit()">
+      {{ 'common.clear' | transloco }}
+    </app-button>
+  </div>
+</form>

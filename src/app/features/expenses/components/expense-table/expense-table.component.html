@@ -1,0 +1,58 @@
+<div class="table-wrapper">
+  <table class="expenses-table">
+    <thead>
+      <tr>
+        <th>{{ 'accounting.date' | transloco }}</th>
+        <th>{{ 'accounting.categoryLabel' | transloco }}</th>
+        <th>{{ 'accounting.vendor' | transloco }}</th>
+        <th>{{ 'accounting.description' | transloco }}</th>
+        <th class="num">{{ 'accounting.amount' | transloco }}</th>
+        <th class="actions-col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (expense of expenses(); track expense.id) {
+        <tr>
+          <td>{{ expense.date }}</td>
+          <td>
+            <span class="cat-chip">
+              {{ 'accounting.category.' + expense.category | transloco }}
+            </span>
+          </td>
+          <td>{{ expense.vendor_name || '-' }}</td>
+          <td class="desc-cell">{{ expense.description || '-' }}</td>
+          <td class="num">{{ expense.amount | number: '1.2-2' }} {{ expense.currency }}</td>
+          <td class="actions-col">
+            @if (expense.receipt_url) {
+              <a
+                class="icon-btn"
+                [href]="expense.receipt_url"
+                target="_blank"
+                rel="noopener"
+                [attr.aria-label]="'accounting.viewReceipt' | transloco"
+              >
+                <lucide-icon [img]="Receipt" [size]="16" />
+              </a>
+            }
+            <button
+              type="button"
+              class="icon-btn"
+              [attr.aria-label]="'common.edit' | transloco"
+              (click)="editRequested.emit(expense)"
+            >
+              <lucide-icon [img]="Pencil" [size]="16" />
+            </button>
+            <button
+              type="button"
+              class="icon-btn danger"
+              [attr.aria-label]="'common.delete' | transloco"
+              (click)="deleteRequested.emit(expense)"
+            >
+              <lucide-icon [img]="Trash2" [size]="16" />
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

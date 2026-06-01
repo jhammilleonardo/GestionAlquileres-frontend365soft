@@ -1,0 +1,75 @@
+<app-dialog
+  [open]="open()"
+  [title]="'inspections.compareTitle' | transloco"
+  (closed)="closed.emit()"
+>
+  <div class="compare-body">
+    <form [formGroup]="form()" class="compare-selects">
+      <app-select
+        formControlName="move_in"
+        [label]="'inspections.type.move_in' | transloco"
+        [placeholder]="'inspections.selectInspection' | transloco"
+        [options]="moveInOptions()"
+      />
+      <app-select
+        formControlName="move_out"
+        [label]="'inspections.type.move_out' | transloco"
+        [placeholder]="'inspections.selectInspection' | transloco"
+        [options]="moveOutOptions()"
+      />
+      <app-button size="s" [disabled]="comparing()" (clicked)="compared.emit()">
+        {{ 'inspections.runCompare' | transloco }}
+      </app-button>
+    </form>
+
+    @if (comparison(); as rows) {
+      @if (rows.length === 0) {
+        <app-empty-state [title]="'inspections.noCompareData' | transloco" />
+      } @else {
+        <div class="table-wrapper">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>{{ 'inspections.item' | transloco }}</th>
+                <th>{{ 'inspections.type.move_in' | transloco }}</th>
+                <th>{{ 'inspections.type.move_out' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.area + row.item_name) {
+                <tr [class.changed]="row.changed">
+                  <td>
+                    <span class="area-chip">
+                      {{ 'inspections.area.' + row.area | transloco }}
+                    </span>
+                    {{ row.item_name }}
+                  </td>
+                  <td>
+                    {{
+                      row.move_in_condition
+                        ? ('inspections.condition.' + row.move_in_condition | transloco)
+                        : '-'
+                    }}
+                  </td>
+                  <td [class.worse]="row.changed">
+                    {{
+                      row.move_out_condition
+                        ? ('inspections.condition.' + row.move_out_condition | transloco)
+                        : '-'
+                    }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </div>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.close' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

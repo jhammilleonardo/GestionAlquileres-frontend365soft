@@ -1,0 +1,23 @@
+<div class="balance-card">
+  <div class="balance-item income">
+    <span class="balance-label">{{ 'accounting.periodIncome' | transloco }}</span>
+    <strong class="balance-value">{{ totalIncome() | number: '1.0-0' }}</strong>
+  </div>
+  <span class="balance-op">-</span>
+  <div class="balance-item expense">
+    <span class="balance-label">{{ 'accounting.periodExpenses' | transloco }}</span>
+    <strong class="balance-value">{{ totalExpenses() | number: '1.0-0' }}</strong>
+  </div>
+  <span class="balance-op">=</span>
+  <div
+    class="balance-item net"
+    [class.positive]="netResult() >= 0"
+    [class.negative]="netResult() < 0"
+  >
+    <span class="balance-label">
+      {{ 'accounting.netResult' | transloco }}
+      <lucide-icon [img]="netResult() >= 0 ? TrendingUp : TrendingDown" [size]="14" />
+    </span>
+    <strong class="balance-value">{{ netResult() | number: '1.0-0' }}</strong>
+  </div>
+</div>

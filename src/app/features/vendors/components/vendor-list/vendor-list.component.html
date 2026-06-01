@@ -1,0 +1,65 @@
+<div class="vendors-grid">
+  @for (vendor of vendors(); track vendor.id) {
+    <article
+      class="vendor-card"
+      role="button"
+      tabindex="0"
+      (click)="detailRequested.emit(vendor)"
+      (keyup.enter)="detailRequested.emit(vendor)"
+    >
+      <div class="vendor-card__head">
+        <div>
+          <h3 class="vendor-name">{{ vendor.name }}</h3>
+          <app-status-badge
+            [label]="'vendors.specialty.' + vendor.specialty | transloco"
+            tone="info"
+          />
+        </div>
+        <div class="vendor-card__actions">
+          <button
+            type="button"
+            class="icon-btn"
+            [attr.aria-label]="'common.edit' | transloco"
+            (click)="editRequested.emit({ vendor, event: $event })"
+          >
+            <lucide-icon [img]="Pencil" [size]="16" />
+          </button>
+          <button
+            type="button"
+            class="icon-btn danger"
+            [attr.aria-label]="'vendors.deactivate' | transloco"
+            (click)="deactivateRequested.emit({ vendor, event: $event })"
+          >
+            <lucide-icon [img]="Trash2" [size]="16" />
+          </button>
+        </div>
+      </div>
+
+      <div class="vendor-rating" [attr.aria-label]="'vendors.rating' | transloco">
+        @for (s of stars; track s) {
+          <lucide-icon
+            [img]="Star"
+            [size]="16"
+            class="star"
+            [class.filled]="s <= filledStars(vendor.average_rating)"
+          />
+        }
+        <span class="rating-value">
+          {{ vendor.average_rating ? (vendor.average_rating | number: '1.1-1') : '-' }}
+        </span>
+      </div>
+
+      <div class="vendor-meta">
+        @if (vendor.phone) {
+          <span class="meta-item"
+            ><lucide-icon [img]="Phone" [size]="14" /> {{ vendor.phone }}</span
+          >
+        }
+        <span class="meta-item">
+          <lucide-icon [img]="Wrench" [size]="14" />
+          {{ vendor.total_orders ?? 0 }} {{ 'vendors.jobsDone' | transloco }}
+        </span>
+      </div>
+    </article>
+  }
+</div>

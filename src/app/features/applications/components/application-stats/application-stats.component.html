@@ -1,0 +1,41 @@
+<section class="stats-grid" aria-label="Resumen de solicitudes">
+  <article class="stat-card total-card">
+    <div class="stat-icon">
+      <lucide-icon [img]="FileText" [size]="30" />
+    </div>
+    <div class="stat-info">
+      <h2 class="stat-value">{{ metrics().total }}</h2>
+      <p class="stat-label">{{ 'solicitudes.totalRequests' | transloco }}</p>
+    </div>
+  </article>
+
+  <article class="stat-card pending-card">
+    <div class="stat-icon">
+      <lucide-icon [img]="Clock" [size]="30" />
+    </div>
+    <div class="stat-info">
+      <h2 class="stat-value">{{ metrics().pendientes }}</h2>
+      <p class="stat-label">{{ 'solicitudes.pending' | transloco }}</p>
+    </div>
+  </article>
+
+  <article class="stat-card approved-card">
+    <div class="stat-icon">
+      <lucide-icon [img]="CheckCircle2" [size]="30" />
+    </div>
+    <div class="stat-info">
+      <h2 class="stat-value">{{ metrics().aprobadas }}</h2>
+      <p class="stat-label">{{ 'solicitudes.approved' | transloco }}</p>
+    </div>
+  </article>
+
+  <article class="stat-card rejected-card">
+    <div class="stat-icon">
+      <lucide-icon [img]="XCircle" [size]="30" />
+    </div>
+    <div class="stat-info">
+      <h2 class="stat-value">{{ metrics().rechazadas }}</h2>
+      <p class="stat-label">{{ 'solicitudes.rejected' | transloco }}</p>
+    </div>
+  </article>
+</section>

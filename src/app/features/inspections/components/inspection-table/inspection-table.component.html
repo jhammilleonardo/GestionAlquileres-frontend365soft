@@ -1,0 +1,46 @@
+<div class="table-wrapper">
+  <table class="inspections-table">
+    <thead>
+      <tr>
+        <th>{{ 'inspections.property' | transloco }}</th>
+        <th>{{ 'inspections.typeLabel' | transloco }}</th>
+        <th>{{ 'inspections.date' | transloco }}</th>
+        <th>{{ 'inspections.inspector' | transloco }}</th>
+        <th>{{ 'inspections.statusLabel' | transloco }}</th>
+        <th class="actions-col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (inspection of inspections(); track inspection.id) {
+        <tr class="clickable" (click)="detailRequested.emit(inspection.id)">
+          <td>
+            {{ inspection.property_title }}
+            @if (inspection.unit_number) {
+              - {{ inspection.unit_number }}
+            }
+          </td>
+          <td>{{ 'inspections.type.' + inspection.type | transloco }}</td>
+          <td>{{ inspection.scheduled_date | slice: 0 : 10 }}</td>
+          <td>{{ inspection.inspector_name || '-' }}</td>
+          <td>
+            <app-status-badge
+              [label]="'inspections.status.' + inspection.status | transloco"
+              [tone]="statusTone(inspection.status)"
+            />
+          </td>
+          <td class="actions-col">
+            <app-button
+              size="s"
+              appearance="secondary"
+              (click)="$event.stopPropagation()"
+              (clicked)="detailRequested.emit(inspection.id)"
+            >
+              <lucide-icon [img]="ClipboardCheck" [size]="14" />
+              {{ 'inspections.open' | transloco }}
+            </app-button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

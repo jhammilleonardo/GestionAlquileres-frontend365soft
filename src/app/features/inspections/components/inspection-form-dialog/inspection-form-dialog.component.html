@@ -1,0 +1,36 @@
+<app-dialog
+  [open]="open()"
+  [title]="'inspections.createTitle' | transloco"
+  (closed)="closed.emit()"
+>
+  <form [formGroup]="form()" class="inspection-form" (ngSubmit)="saved.emit()">
+    <app-select
+      formControlName="property_id"
+      [label]="'inspections.property' | transloco"
+      [placeholder]="'inspections.selectProperty' | transloco"
+      [options]="propertyOptions()"
+    />
+    <app-select
+      formControlName="type"
+      [label]="'inspections.typeLabel' | transloco"
+      [options]="typeOptions()"
+    />
+    <app-date-picker formControlName="scheduled_date" [label]="'inspections.date' | transloco" />
+    <app-select
+      formControlName="inspector_user_id"
+      [label]="'inspections.inspector' | transloco"
+      [placeholder]="'inspections.selectInspector' | transloco"
+      [options]="inspectorOptions()"
+    />
+    <p class="form-hint">{{ 'inspections.checklistHint' | transloco }}</p>
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="saved.emit()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

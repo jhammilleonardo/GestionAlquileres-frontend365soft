@@ -1,0 +1,44 @@
+<app-dialog
+  [open]="open()"
+  [title]="(editing() ? 'vendors.editTitle' : 'vendors.createTitle') | transloco"
+  (closed)="closed.emit()"
+>
+  <form [formGroup]="form()" class="vendor-form" (ngSubmit)="saved.emit()">
+    <app-text-field
+      formControlName="name"
+      [label]="'vendors.name' | transloco"
+      [placeholder]="'vendors.namePlaceholder' | transloco"
+    />
+    <app-select
+      formControlName="specialty"
+      [label]="'vendors.specialtyLabel' | transloco"
+      [options]="specialtyOptions()"
+    />
+    <div class="form-row">
+      <app-text-field formControlName="phone" [label]="'vendors.phone' | transloco" type="tel" />
+      <app-text-field formControlName="email" [label]="'vendors.email' | transloco" type="email" />
+    </div>
+    <div class="form-row">
+      <app-text-field
+        formControlName="rate_per_hour"
+        [label]="'vendors.ratePerHour' | transloco"
+        type="number"
+      />
+      <app-text-field
+        formControlName="rate_flat"
+        [label]="'vendors.rateFlat' | transloco"
+        type="number"
+      />
+    </div>
+    <app-textarea formControlName="notes" [label]="'vendors.notes' | transloco" />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="saved.emit()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

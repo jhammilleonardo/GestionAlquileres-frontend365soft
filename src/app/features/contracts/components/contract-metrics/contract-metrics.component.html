@@ -1,0 +1,75 @@
+<div class="dashboard-grid">
+  <article class="metric-card total">
+    <div class="metric-content">
+      <div class="metric-icon-wrap">
+        <lucide-icon [img]="FileText" [size]="20" />
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ dashboard().total_contracts }}</span>
+        <span class="metric-label">{{ 'contracts.totalContracts' | transloco }}</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="metric-card active">
+    <div class="metric-content">
+      <div class="metric-icon-wrap">
+        <lucide-icon [img]="CheckCircle2" [size]="20" />
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ dashboard().active_contracts }}</span>
+        <span class="metric-label">{{ 'contracts.activeContracts' | transloco }}</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="metric-card draft">
+    <div class="metric-content">
+      <div class="metric-icon-wrap">
+        <lucide-icon [img]="Pencil" [size]="20" />
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ dashboard().draft_contracts }}</span>
+        <span class="metric-label">{{ 'contracts.draftContracts' | transloco }}</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="metric-card revenue">
+    <div class="metric-content">
+      <div class="metric-icon-wrap">
+        <lucide-icon [img]="DollarSign" [size]="20" />
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ dashboard().monthly_revenue | tenantCurrency }}</span>
+        <span class="metric-label">{{ 'contracts.monthlyRevenue' | transloco }}</span>
+      </div>
+    </div>
+  </article>
+
+  <article class="metric-card avg">
+    <div class="metric-content">
+      <div class="metric-icon-wrap">
+        <lucide-icon [img]="TrendingUp" [size]="20" />
+      </div>
+      <div class="metric-body">
+        <span class="metric-value">{{ dashboard().avg_rent | tenantCurrency }}</span>
+        <span class="metric-label">{{ 'contracts.avgRent' | transloco }}</span>
+      </div>
+    </div>
+  </article>
+
+  @if (dashboard().contracts_expiring_soon > 0) {
+    <article class="metric-card warning">
+      <div class="metric-content">
+        <div class="metric-icon-wrap">
+          <lucide-icon [img]="AlertTriangle" [size]="20" />
+        </div>
+        <div class="metric-body">
+          <span class="metric-value">{{ dashboard().contracts_expiring_soon }}</span>
+          <span class="metric-label">{{ 'contracts.expiringSoon' | transloco }}</span>
+        </div>
+      </div>
+    </article>
+  }
+</div>

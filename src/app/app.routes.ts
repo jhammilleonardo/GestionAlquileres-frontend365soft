@@ -45,7 +45,7 @@ export const routes: Routes = [
       {
         path: 'register',
         loadComponent: () =>
-          import('./features/portal-publico/tenant-register/tenant-register.component').then(
+          import('./features/public-portal/tenant-register/tenant-register.component').then(
             (m) => m.TenantRegisterComponent,
           ),
       },
@@ -54,8 +54,8 @@ export const routes: Routes = [
       {
         path: 'publico',
         loadChildren: () =>
-          import('./features/portal-publico/portal-publico.routes').then(
-            (m) => m.PORTAL_PUBLICO_ROUTES,
+          import('./features/public-portal/public-portal.routes').then(
+            (m) => m.PUBLIC_PORTAL_ROUTES,
           ),
       },
 
@@ -90,7 +90,7 @@ export const routes: Routes = [
       {
         path: 'configuracion/inicio',
         loadComponent: () =>
-          import('./features/configuracion/wizard-setup/wizard-setup.component').then(
+          import('./features/configuration/wizard-setup/wizard-setup.component').then(
             (m) => m.WizardSetupComponent,
           ),
         canActivate: [wizardGuard],

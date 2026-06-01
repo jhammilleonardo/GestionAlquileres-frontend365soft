@@ -1,0 +1,38 @@
+<section class="filters-card">
+  <div class="filters-content">
+    <app-text-field
+      class="search-field"
+      [ngModel]="searchTerm()"
+      [label]="'contracts.search' | transloco"
+      [placeholder]="'contracts.searchPlaceholder' | transloco"
+      type="search"
+      autocomplete="off"
+      (ngModelChange)="searchTermChanged.emit($event)"
+    />
+
+    <app-select
+      class="status-field"
+      [ngModel]="statusFilter()"
+      [label]="'contracts.statusFilter' | transloco"
+      [options]="statusOptions()"
+      (ngModelChange)="statusFilterChanged.emit($event ?? '')"
+    />
+
+    @if (hasActiveFilters()) {
+      <app-button appearance="flat" class="clear-btn" (clicked)="filtersCleared.emit()">
+        <lucide-icon [img]="X" [size]="14" />
+        {{ 'contracts.clear' | transloco }}
+      </app-button>
+    }
+
+    <span class="filters-spacer"></span>
+
+    <app-button
+      appearance="flat"
+      [ariaLabel]="'contracts.refresh' | transloco"
+      (clicked)="refreshed.emit()"
+    >
+      <lucide-icon [img]="RefreshCw" [size]="16" />
+    </app-button>
+  </div>
+</section>

@@ -1,0 +1,38 @@
+<app-dialog [open]="open()" [title]="'violations.createTitle' | transloco" (closed)="closed.emit()">
+  <form [formGroup]="form()" class="violation-form" (ngSubmit)="saved.emit()">
+    <app-select
+      formControlName="property_id"
+      [label]="'violations.property' | transloco"
+      [placeholder]="'violations.selectProperty' | transloco"
+      [options]="propertyOptions()"
+    />
+    <app-select
+      formControlName="tenant_id"
+      [label]="'violations.tenant' | transloco"
+      [placeholder]="'violations.selectTenant' | transloco"
+      [options]="tenantOptions()"
+    />
+    <app-select
+      formControlName="type"
+      [label]="'violations.typeLabel' | transloco"
+      [options]="typeOptions()"
+    />
+    <app-textarea formControlName="description" [label]="'violations.description' | transloco" />
+    <app-file-upload
+      [label]="'violations.uploadEvidence' | transloco"
+      [hint]="'violations.uploadHint' | transloco"
+      accept="image/*,application/pdf"
+      [multiple]="true"
+      (filesSelected)="filesSelected.emit($event)"
+    />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="saved.emit()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

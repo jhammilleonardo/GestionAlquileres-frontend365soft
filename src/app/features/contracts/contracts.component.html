@@ -1,0 +1,44 @@
+<div class="contracts-container">
+  <app-page-header
+    [title]="'contracts.title' | transloco"
+    [description]="'contracts.subtitle' | transloco"
+  >
+    <app-button actions class="create-button" (clicked)="facade.createContract()">
+      <lucide-icon [img]="Plus" [size]="17" />
+      {{ 'contracts.new' | transloco }}
+    </app-button>
+  </app-page-header>
+
+  @if (facade.isLoading() && facade.contracts().length === 0) {
+    <div class="loading-container">
+      <app-loading-state [label]="'contracts.loading' | transloco" />
+    </div>
+  } @else {
+    @if (facade.dashboard(); as dashboard) {
+      <app-contract-metrics [dashboard]="dashboard" />
+    }
+
+    <app-contract-filters
+      [searchTerm]="facade.searchTerm()"
+      [statusFilter]="facade.statusFilter()"
+      [statusOptions]="statusFilterOptions"
+      [hasActiveFilters]="facade.hasActiveFilters()"
+      (searchTermChanged)="facade.searchTerm.set($event)"
+      (statusFilterChanged)="facade.onStatusChange($event)"
+      (filtersCleared)="facade.clearFilters()"
+      (refreshed)="facade.loadContracts()"
+    />
+
+    <app-contract-list
+      [contracts]="facade.filteredContracts()"
+      [loading]="facade.isLoading()"
+      [emptyLoading]="facade.isLoading() && facade.contracts().length === 0"
+      [detailUrl]="facade.buildDetailUrl"
+      [editUrl]="facade.buildEditUrl"
+      [statusTone]="getStatusTone"
+      (createRequested)="facade.createContract()"
+      (pdfRequested)="facade.downloadPDF($event)"
+      (renewRequested)="facade.renewContract($event)"
+    />
+  }
+</div>

@@ -1,0 +1,23 @@
+<app-dialog
+  [open]="open()"
+  [title]="'violations.resolveTitle' | transloco"
+  (closed)="closed.emit()"
+>
+  <div class="resolve-form">
+    <p>{{ 'violations.resolveIntro' | transloco }}</p>
+    <textarea
+      class="resolve-comment"
+      rows="3"
+      [placeholder]="'violations.resolveCommentPlaceholder' | transloco"
+      [value]="notes()"
+      (input)="notesChanged.emit(textareaValue($event))"
+    ></textarea>
+  </div>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button (clicked)="confirmed.emit()">{{ 'violations.resolve' | transloco }}</app-button>
+  </div>
+</app-dialog>

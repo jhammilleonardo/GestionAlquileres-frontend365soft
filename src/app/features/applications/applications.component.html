@@ -1,0 +1,25 @@
+<div class="solicitudes-container">
+  <app-page-header
+    [title]="'solicitudes.title' | transloco"
+    [description]="'solicitudes.subtitle' | transloco"
+  />
+
+  <app-application-stats [metrics]="facade.metrics()" />
+
+  <app-application-filters
+    [searchTerm]="facade.searchTerm()"
+    [selectedStatus]="facade.selectedStatus()"
+    [statusOptions]="statusOptions"
+    (searchTermChanged)="facade.searchTerm.set($event)"
+    (selectedStatusChanged)="facade.selectedStatus.set($event)"
+    (searchCleared)="facade.clearSearch()"
+  />
+
+  <app-application-table
+    [applications]="facade.filteredApplications()"
+    [total]="facade.metrics().total"
+    [loading]="facade.loading()"
+    [error]="facade.error()"
+    (retryRequested)="facade.loadApplications()"
+  />
+</div>

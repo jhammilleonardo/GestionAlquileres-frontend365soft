@@ -1,0 +1,90 @@
+<section class="table-card">
+  @if (loading()) {
+    <div class="loading-container">
+      <app-loading-state [label]="'solicitudes.loading' | transloco" />
+    </div>
+  } @else if (error()) {
+    <div class="error-container">
+      <lucide-icon [img]="XCircle" [size]="40" />
+      <p>{{ error() }}</p>
+      <app-button appearance="outline" (clicked)="retryRequested.emit()">
+        {{ 'solicitudes.retry' | transloco }}
+      </app-button>
+    </div>
+  } @else if (applications().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon-wrapper">
+        <lucide-icon [img]="FileText" [size]="48" />
+      </div>
+      <h3>{{ 'solicitudes.empty' | transloco }}</h3>
+      <p>{{ 'solicitudes.emptyHint' | transloco }}</p>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table class="applications-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ 'solicitudes.applicant' | transloco }}</th>
+            <th>{{ 'solicitudes.property' | transloco }}</th>
+            <th>{{ 'solicitudes.income' | transloco }}</th>
+            <th>{{ 'solicitudes.date' | transloco }}</th>
+            <th>{{ 'common.status' | transloco }}</th>
+            <th class="actions-header">{{ 'solicitudes.actions' | transloco }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (application of applications(); track application.id) {
+            <tr class="table-row">
+              <td class="id-cell">#{{ application.id }}</td>
+              <td>
+                <div class="applicant-info">
+                  <div class="applicant-avatar">
+                    {{ application.personal_data.full_name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="applicant-details">
+                    <p class="applicant-name">{{ application.personal_data.full_name }}</p>
+                    <p class="applicant-email">{{ application.applicant_email }}</p>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="property-title">{{ application.property_title }}</span>
+              </td>
+              <td>
+                <span class="income-badge">
+                  {{ application.employment_data.monthly_income | tenantCurrency }}
+                </span>
+              </td>
+              <td class="date-cell">
+                <lucide-icon [img]="Clock" [size]="14" class="date-icon" />
+                {{ application.created_at | tenantDate }}
+              </td>
+              <td>
+                <app-status-badge
+                  [label]="'solicitudes.status.' + application.status | transloco"
+                  [tone]="getStatusTone(application.status)"
+                />
+              </td>
+              <td class="actions-cell">
+                <a
+                  class="action-btn"
+                  [routerLink]="['../solicitudes', application.id]"
+                  [attr.aria-label]="'solicitudes.viewDetail' | transloco"
+                >
+                  <lucide-icon [img]="Eye" [size]="20" />
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <p>
+        {{ 'solicitudes.showing' | transloco: { shown: applications().length, total: total() } }}
+      </p>
+    </div>
+  }
+</section>

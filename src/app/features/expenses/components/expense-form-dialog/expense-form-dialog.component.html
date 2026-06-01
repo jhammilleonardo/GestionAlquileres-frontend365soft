@@ -1,0 +1,46 @@
+<app-dialog
+  [open]="open()"
+  [title]="(editing() ? 'accounting.editTitle' : 'accounting.createTitle') | transloco"
+  (closed)="closed.emit()"
+>
+  <form [formGroup]="form()" class="expense-form" (ngSubmit)="saved.emit()">
+    <app-select
+      formControlName="property_id"
+      [label]="'accounting.property' | transloco"
+      [placeholder]="'accounting.selectProperty' | transloco"
+      [options]="propertyOptions()"
+    />
+    <div class="form-row">
+      <app-select
+        formControlName="category"
+        [label]="'accounting.categoryLabel' | transloco"
+        [options]="categoryOptions()"
+      />
+      <app-text-field
+        formControlName="amount"
+        [label]="'accounting.amount' | transloco"
+        type="number"
+      />
+    </div>
+    <div class="form-row">
+      <app-date-picker formControlName="date" [label]="'accounting.date' | transloco" />
+      <app-select
+        formControlName="vendor_id"
+        [label]="'accounting.vendor' | transloco"
+        [placeholder]="'accounting.selectVendor' | transloco"
+        [options]="vendorOptions()"
+      />
+    </div>
+    <app-text-field formControlName="receipt_url" [label]="'accounting.receiptUrl' | transloco" />
+    <app-textarea formControlName="description" [label]="'accounting.description' | transloco" />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving()" (clicked)="saved.emit()">
+      {{ 'common.save' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

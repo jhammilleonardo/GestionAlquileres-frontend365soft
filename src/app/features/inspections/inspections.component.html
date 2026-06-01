@@ -16,179 +16,42 @@
     </div>
   </app-page-header>
 
-  <form class="filters" [formGroup]="filterForm">
-    <app-select
-      formControlName="property_id"
-      [label]="'inspections.property' | transloco"
-      [placeholder]="'common.all' | transloco"
-      [options]="propertyOptions()"
-    />
-    <app-select
-      formControlName="status"
-      [label]="'inspections.statusLabel' | transloco"
-      [placeholder]="'inspections.allStatuses' | transloco"
-      [options]="statusFilterOptions"
-    />
-    <app-select
-      formControlName="type"
-      [label]="'inspections.typeLabel' | transloco"
-      [placeholder]="'common.all' | transloco"
-      [options]="typeOptions"
-    />
-    <div class="filter-actions">
-      <app-button size="s" (clicked)="applyFilters()">{{ 'common.apply' | transloco }}</app-button>
-      <app-button size="s" appearance="secondary" (clicked)="clearFilters()">
-        {{ 'common.clear' | transloco }}
-      </app-button>
-    </div>
-  </form>
+  <app-inspection-filters
+    [form]="filterForm"
+    [propertyOptions]="propertyOptions()"
+    [statusOptions]="statusFilterOptions"
+    [typeOptions]="typeOptions"
+    (filtersApplied)="applyFilters()"
+    (filtersCleared)="clearFilters()"
+  />
 
   @if (isLoading()) {
     <app-loading-state [label]="'inspections.loading' | transloco" />
   } @else if (inspections().length === 0) {
     <app-empty-state [title]="'inspections.empty' | transloco" />
   } @else {
-    <div class="table-wrapper">
-      <table class="inspections-table">
-        <thead>
-          <tr>
-            <th>{{ 'inspections.property' | transloco }}</th>
-            <th>{{ 'inspections.typeLabel' | transloco }}</th>
-            <th>{{ 'inspections.date' | transloco }}</th>
-            <th>{{ 'inspections.inspector' | transloco }}</th>
-            <th>{{ 'inspections.statusLabel' | transloco }}</th>
-            <th class="actions-col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (i of inspections(); track i.id) {
-            <tr class="clickable" (click)="openDetail(i.id)">
-              <td>
-                {{ i.property_title }}
-                @if (i.unit_number) {
-                  · {{ i.unit_number }}
-                }
-              </td>
-              <td>{{ 'inspections.type.' + i.type | transloco }}</td>
-              <td>{{ i.scheduled_date | slice: 0 : 10 }}</td>
-              <td>{{ i.inspector_name || '—' }}</td>
-              <td>
-                <app-status-badge
-                  [label]="'inspections.status.' + i.status | transloco"
-                  [tone]="statusTone(i.status)"
-                />
-              </td>
-              <td class="actions-col">
-                <app-button size="s" appearance="secondary" (clicked)="openDetail(i.id)">
-                  <lucide-icon [img]="ClipboardCheck" [size]="14" />
-                  {{ 'inspections.open' | transloco }}
-                </app-button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+    <app-inspection-table [inspections]="inspections()" (detailRequested)="openDetail($event)" />
   }
 </div>
 
-<!-- Crear inspección -->
-<app-dialog
+<app-inspection-form-dialog
   [open]="dialogOpen()"
-  [title]="'inspections.createTitle' | transloco"
+  [form]="form"
+  [propertyOptions]="propertyOptions()"
+  [typeOptions]="typeOptions"
+  [inspectorOptions]="inspectorOptions()"
+  [saving]="saving()"
   (closed)="closeDialog()"
->
-  <form [formGroup]="form" class="inspection-form" (ngSubmit)="save()">
-    <app-select
-      formControlName="property_id"
-      [label]="'inspections.property' | transloco"
-      [placeholder]="'inspections.selectProperty' | transloco"
-      [options]="propertyOptions()"
-    />
-    <app-select
-      formControlName="type"
-      [label]="'inspections.typeLabel' | transloco"
-      [options]="typeOptions"
-    />
-    <app-date-picker formControlName="scheduled_date" [label]="'inspections.date' | transloco" />
-    <app-select
-      formControlName="inspector_user_id"
-      [label]="'inspections.inspector' | transloco"
-      [placeholder]="'inspections.selectInspector' | transloco"
-      [options]="inspectorOptions()"
-    />
-    <p class="form-hint">{{ 'inspections.checklistHint' | transloco }}</p>
-  </form>
+  (saved)="save()"
+/>
 
-  <div dialog-actions>
-    <app-button appearance="secondary" (clicked)="closeDialog()">
-      {{ 'common.cancel' | transloco }}
-    </app-button>
-    <app-button [disabled]="saving()" (clicked)="save()">{{
-      'common.save' | transloco
-    }}</app-button>
-  </div>
-</app-dialog>
-
-<!-- Comparativo entrada vs salida -->
-<app-dialog
+<app-inspection-compare-dialog
   [open]="compareOpen()"
-  [title]="'inspections.compareTitle' | transloco"
+  [form]="compareForm"
+  [moveInOptions]="moveInOptions()"
+  [moveOutOptions]="moveOutOptions()"
+  [comparing]="comparing()"
+  [comparison]="comparison()"
   (closed)="closeCompare()"
->
-  <div class="compare-body">
-    <form [formGroup]="compareForm" class="compare-selects">
-      <app-select
-        formControlName="move_in"
-        [label]="'inspections.type.move_in' | transloco"
-        [placeholder]="'inspections.selectInspection' | transloco"
-        [options]="moveInOptions()"
-      />
-      <app-select
-        formControlName="move_out"
-        [label]="'inspections.type.move_out' | transloco"
-        [placeholder]="'inspections.selectInspection' | transloco"
-        [options]="moveOutOptions()"
-      />
-      <app-button size="s" [disabled]="comparing()" (clicked)="runCompare()">
-        {{ 'inspections.runCompare' | transloco }}
-      </app-button>
-    </form>
-
-    @if (comparison(); as rows) {
-      @if (rows.length === 0) {
-        <app-empty-state [title]="'inspections.noCompareData' | transloco" />
-      } @else {
-        <div class="table-wrapper">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th>{{ 'inspections.item' | transloco }}</th>
-                <th>{{ 'inspections.type.move_in' | transloco }}</th>
-                <th>{{ 'inspections.type.move_out' | transloco }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of rows; track row.area + row.item_name) {
-                <tr [class.changed]="row.changed">
-                  <td>
-                    <span class="area-chip">{{ 'inspections.area.' + row.area | transloco }}</span>
-                    {{ row.item_name }}
-                  </td>
-                  <td>{{ conditionLabel(row.move_in_condition) }}</td>
-                  <td [class.worse]="row.changed">{{ conditionLabel(row.move_out_condition) }}</td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      }
-    }
-  </div>
-
-  <div dialog-actions>
-    <app-button appearance="secondary" (clicked)="closeCompare()">
-      {{ 'common.close' | transloco }}
-    </app-button>
-  </div>
-</app-dialog>
+  (compared)="runCompare()"
+/>

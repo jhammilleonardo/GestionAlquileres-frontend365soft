@@ -33,6 +33,26 @@ arquitectura similar en calidad a la del backend:
 
 ## Hecho
 
+### Estructura De Nombres
+
+- [x] Carpetas principales de `src/app/features` normalizadas a ingles:
+  `applications`, `configuration`, `contracts`, `employees`, `maintenance`,
+  `payments`, `profile`, `properties`, `public-portal` y `tenants`.
+- [x] Archivos, clases y selectors principales normalizados a ingles en esos
+  modulos:
+  - [x] `ApplicationsComponent` / `ApplicationsFacade`.
+  - [x] `ContractsComponent` / `ContractsFacade`.
+  - [x] `PropertiesComponent` / `PropertiesFacade`.
+  - [x] `PaymentsComponent` / `PaymentsFacade`.
+  - [x] `MaintenanceComponent`.
+  - [x] `EmployeesComponent`.
+  - [x] `ConfigurationComponent`.
+  - [x] `AdminProfileComponent`.
+  - [x] `TenantsComponent`.
+  - [x] `TechnicianMaintenanceComponent`.
+- [x] Las rutas visibles se mantienen en espanol para no romper UX/enlaces
+  existentes (`/pagos`, `/propiedades`, `/solicitudes`, etc.).
+
 ### Base Visual
 
 - [x] Instalada la fuente `@fontsource-variable/plus-jakarta-sans`.
@@ -170,7 +190,7 @@ Pendiente:
 
 ### Empleados
 
-- [x] `features/empleados/empleados.component.*` ya no importa Angular
+- [x] `features/employees/employees.component.*` ya no importa Angular
   Material.
 - [x] Header usa `app-page-header` y acciones con `app-button`.
 - [x] Tabla Material reemplazada por tabla HTML semantica responsive.
@@ -191,13 +211,13 @@ Pendiente:
 
 ### Configuracion / Wizard Setup
 
-- [x] `features/configuracion/configuracion.component.ts` ya no importa
+- [x] `features/configuration/configuration.component.ts` ya no importa
   Angular Material.
 - [x] Pantalla general de configuracion usa `app-page-header`,
   `app-checkbox` y `app-select`.
 - [x] Cards/dividers/toggles/selects Material reemplazados por UI propia.
 - [x] `console.error` productivo eliminado del flujo de guardado local.
-- [x] `features/configuracion/wizard-setup/wizard-setup.component.ts` ya no
+- [x] `features/configuration/wizard-setup/wizard-setup.component.ts` ya no
   importa Angular Material.
 - [x] `mat-stepper` reemplazado por `app-stepper` y navegacion con signal
   `currentStep`.
@@ -214,7 +234,7 @@ Pendiente:
 
 ### Perfil Admin
 
-- [x] `features/perfil/admin-perfil.component.ts` ya no importa Angular
+- [x] `features/profile/admin-profile.component.ts` ya no importa Angular
   Material.
 - [x] Header usa `app-page-header`.
 - [x] Tabs Material reemplazados por `app-tabs`.
@@ -235,7 +255,7 @@ Pendiente:
   - [x] Respuestas crudas tipadas antes de normalizar montos.
   - [x] `metadata` usa `unknown` en vez de `any`.
   - [x] Errores se propagan con `throwError(() => error)`.
-- [x] `features/pagos/pagos.component.ts` empezo limpieza sin cambiar aun toda
+- [x] `features/payments/payments.component.ts` empezo limpieza sin cambiar aun toda
   la UI:
   - [x] Autocomplete de inquilinos tipado con `AdminTenantUser`.
   - [x] Removidos `console.*` productivos de acciones de pagos.
@@ -243,7 +263,7 @@ Pendiente:
   - [x] Eliminado cast `payment.tenant as any`.
   - [x] Feedback de exito usa `ToastService` propio en vez de `MatSnackBar`.
   - [x] Confirmaciones y prompts de pagos usan `ConfirmDialogService`.
-  - [x] Ya no hay `alert/confirm/prompt` en `features/pagos`.
+  - [x] Ya no hay `alert/confirm/prompt` en `features/payments`.
   - [x] Header de pagos usa `app-page-header` y `app-button`.
   - [x] Estadisticas extraidas a `components/payment-stats`.
   - [x] Filtros principales y filtros de aprobacion usan `app-select`,
@@ -253,7 +273,7 @@ Pendiente:
     `app-button`.
   - [x] Tabla Material reemplazada por `components/payment-table`.
   - [x] `mat-card`, `mat-table`, `mat-checkbox`, `mat-chip` y `mat-tooltip`
-    eliminados de `features/pagos`.
+    eliminados de `features/payments`.
   - [x] Modales de detalle, comprobante, rechazo y creacion usan `app-dialog`.
   - [x] Formulario de rechazo usa `app-textarea`.
   - [x] Formulario de creacion manual reemplazo campos principales, datos de
@@ -262,8 +282,8 @@ Pendiente:
     `components/payment-create-dialog`.
   - [x] Visor de comprobantes/PDF/zoom extraido a
     `components/payment-proof-dialog`.
-  - [x] `features/pagos/pagos.component.ts` ya no importa Angular Material.
-  - [x] `pagos.facade.ts` creado:
+  - [x] `features/payments/payments.component.ts` ya no importa Angular Material.
+  - [x] `payments.facade.ts` creado:
     - [x] Carga inicial de pagos/stats/tenants.
     - [x] Filtros principales y filtros de pendientes.
     - [x] Seleccion masiva y bulk actions.
@@ -271,17 +291,17 @@ Pendiente:
     - [x] Export CSV.
     - [x] Visor de comprobantes, zoom y ciclo de URL temporal.
     - [x] Creacion manual admin y busqueda de inquilino/contrato.
-  - [x] `pagos.component.ts` queda como capa visual de ~80 lineas.
+  - [x] `payments.component.ts` queda como capa visual de ~80 lineas.
 
 Pendiente:
 
 - [ ] Separar pantalla de pagos en `pages`, `dialogs`, `facades/models` si el
   modulo sigue creciendo.
-- [ ] Agregar tests de `pagos.facade.ts` y flujo aprobar/rechazar.
+- [ ] Agregar tests de `payments.facade.ts` y flujo aprobar/rechazar.
 
 ### Contratos
 
-- [x] `features/contratos/contratos.component.ts` ya no importa Angular
+- [x] `features/contracts/contracts.component.ts` ya no importa Angular
   Material.
 - [x] Header usa `app-page-header` y accion principal con `app-button`.
 - [x] Cards metricas y contenedor de listado dejaron de usar `mat-card`.
@@ -290,7 +310,9 @@ Pendiente:
 - [x] Acciones de tabla usan botones/enlaces nativos con iconos Lucide.
 - [x] Listado/tabla extraido a
   `components/contract-list/contract-list.component.*`.
-- [x] `contratos.component.ts` queda como page container de ~85 lineas.
+- [x] Metricas extraidas a `components/contract-metrics`.
+- [x] Filtros extraidos a `components/contract-filters`.
+- [x] `contracts.component.ts` queda como page container liviano.
 - [x] Renovacion reemplazo `confirm/alert` por `ConfirmDialogService` y
   `ToastService`.
 - [x] `contract-detail` empezo limpieza de acciones criticas:
@@ -336,7 +358,7 @@ Pendiente:
 
 ### Propiedades Y Unidades
 
-- [x] Vista principal `features/propiedades/propiedades.component.html`
+- [x] Vista principal `features/properties/properties.component.html`
   modernizada:
   - [x] Header usa `app-page-header`.
   - [x] Filtros usan `app-text-field`, `app-select` y `app-button`.
@@ -358,7 +380,7 @@ Pendiente:
     `components/property-form-dialog`.
   - [x] Panel de errores de validacion del formulario vive dentro de
     `property-form-dialog`.
-  - [x] `propiedades.facade.ts` creado:
+  - [x] `properties.facade.ts` creado:
     - [x] Carga de propiedades, tipos y subtipos.
     - [x] Filtros de estado/tipo.
     - [x] Apertura de crear/editar desde UI o query param.
@@ -366,7 +388,7 @@ Pendiente:
     - [x] Validacion del formulario y errores presentables.
   - [x] Payload de guardado separado en `models/property-form.model.ts` y
     `mappers/property-save.mapper.ts`.
-  - [x] `propiedades.component.ts` queda como capa visual de ~43 lineas.
+  - [x] `properties.component.ts` queda como capa visual de ~43 lineas.
 - [x] `property-detail-admin` modernizado:
   - [x] Loading usa `app-loading-state`.
   - [x] Tabs usan `app-tabs`.
@@ -385,7 +407,7 @@ Pendiente:
 
 Pendiente:
 
-- [x] Separar `propiedades.component` en `components/facade/models`.
+- [x] Separar `properties.component` en `components/facade/models`.
 - [x] Extraer formulario crear/editar propiedad a componente dedicado.
 - [x] Extraer cards y filtros a componentes presentacionales.
 - [x] Extraer facade de propiedades para carga, filtros, guardado, imagenes y
@@ -394,7 +416,7 @@ Pendiente:
 
 ### Mantenimiento
 
-- [x] `features/mantenimiento/mantenimiento.component.ts` ya no importa Angular
+- [x] `features/maintenance/maintenance.component.ts` ya no importa Angular
   Material.
 - [x] Header usa `app-page-header`.
 - [x] Filtros usan `app-text-field`, `app-select` y `app-button`.
@@ -556,10 +578,14 @@ Pendiente:
 
 ### Solicitudes / Applications
 
-- [x] `features/solicitudes/solicitudes.component.*` ya no importa Angular
+- [x] `features/applications/applications.component.*` ya no importa Angular
   Material.
 - [x] Cards metricas, filtros, loading, error y tabla reemplazados por UI propia
   y wrappers compartidos.
+- [x] Listado separado en componentes presentacionales:
+  - [x] `application-stats`.
+  - [x] `application-filters`.
+  - [x] `application-table`.
 - [x] Estado de solicitud usa `app-status-badge`.
 - [x] Filtros usan `app-text-field` y `app-select`.
 - [x] Tabla Material reemplazada por tabla HTML semantica responsive.
@@ -587,7 +613,7 @@ Pendiente:
 
 Pendiente:
 
-- [ ] Separar listado en `pages`, `components`, `facade`, `models`.
+- [ ] Separar carpeta `pages` si el modulo crece con mas vistas.
 - [ ] Revisar flujo de aprobacion/rechazo completo con tests.
 
 ### Modulos Que Aun No Existen Como Frontend Completo
@@ -620,13 +646,36 @@ modernizacion:
 - [x] Expenses / gastos frontend inicial.
 - [x] Violations / violaciones frontend inicial.
 - [x] Inspections / inspecciones frontend inicial.
+- [x] Vendors:
+  - [x] `VendorsFacade` creada.
+  - [x] Componente queda como capa visual/icons.
+  - [x] Template grande partido en `vendor-list`, `vendor-detail-panel` y
+    `vendor-form-dialog`.
+  - [x] Tests de carga, filtros, crear, editar y desactivar.
+- [x] Expenses:
+  - [x] `ExpensesFacade` creada.
+  - [x] Componente queda como capa visual/icons.
+  - [x] Template grande partido en `expense-balance-card`, `expense-chart`,
+    `expense-filters`, `expense-table` y `expense-form-dialog`.
+  - [x] Tests de carga, filtros, balance, crear, editar y borrar.
+- [x] Violations:
+  - [x] `ViolationsFacade` creada.
+  - [x] Componente queda como capa visual/icons.
+  - [x] Template grande partido en `violation-filters`, `violation-list`,
+    `violation-form-dialog` y `violation-resolve-dialog`.
+  - [x] Tests de carga, creacion con evidencia, resolver y notificar.
+- [x] Inspections:
+  - [x] `InspectionsFacade` creada.
+  - [x] Componente queda como capa visual/icons.
+  - [x] Template grande partido en `inspection-filters`, `inspection-table`,
+    `inspection-form-dialog` y `inspection-compare-dialog`.
+  - [x] Tests de carga, crear con checklist por defecto y comparar.
 
 Pendiente de estos modulos:
 
-- [ ] Formularios completos de creacion/edicion.
-- [ ] Detalles por registro.
+- [ ] Detalles por registro donde aun falten vistas profundas.
 - [ ] Validar exportaciones PDF/Excel reales con backend/staging donde aplique.
-- [ ] Tests por servicio y flujo.
+- [ ] E2E por flujo critico en staging.
 
 ### Notifications
 
@@ -677,7 +726,7 @@ Pendiente de estos modulos:
 - [x] `reports`: export CSV del reporte activo.
 - [x] Tests: 71 -> 180 (31 archivos spec). Nuevos: moduleGuard, permissions,
   slug, solicitudes/contratos facades, admin-operations, payment, unit y
-  admin-contract services, `pagos.facade` y mapper de propiedades.
+  admin-contract services, `payments.facade` y mapper de propiedades.
 
 ### Tests (cuarta ronda)
 
@@ -685,8 +734,8 @@ Pendiente de estos modulos:
   maintenance), EMPLEADO con/sin permiso, sin slug y fallo de carga.
 - [x] `PermissionsService` — canView, role/allowedModules computed, clear.
 - [x] `SlugService` — buildUrl, buildApiEndpoint (con/sin slug, sin duplicar).
-- [x] `SolicitudesFacade` — carga, metricas, filtrado por estado/busqueda.
-- [x] `ContratosFacade` — filtrado, hasActiveFilters, URLs, renovacion con/sin
+- [x] `ApplicationsFacade` — carga, metricas, filtrado por estado/busqueda.
+- [x] `ContractsFacade` — filtrado, hasActiveFilters, URLs, renovacion con/sin
   confirmacion.
 - Total de tests: 71 -> 106 (15 archivos spec).
 - Regresion corregida: `pagos` tenia `confirm`/`prompt`/`alert` nativos tras un
@@ -695,7 +744,7 @@ Pendiente de estos modulos:
 
 ### Refactor Arquitectonico (tercera ronda)
 
-- [x] `solicitudes` extraido a `solicitudes.facade.ts` con signals/computed;
+- [x] `solicitudes` extraido a `applications.facade.ts` con signals/computed;
   componente reducido a orquestador, sin `ChangeDetectorRef`.
 - [x] `contratos` y sus 3 subcomponentes (detail, edit, create) con template y
   estilos extraidos a `.html`/`.scss`; el `.ts` principal bajo de 1049 a 103
@@ -766,9 +815,9 @@ Principales candidatos actuales despues del corte actual:
   template/estilos inline y dejarlo como page container puro.
 - `tenant-create-payment.facade.ts`: ~515 lineas. Ya concentra submit, QR,
   polling y retry.
-- `pagos.component.ts`: ~80 lineas; `pagos.facade.ts`: ~722 lineas.
-- `propiedades.component.ts`: ~43 lineas; `propiedades.facade.ts`: ~556 lineas.
-- `contratos.component.ts`: ~85 lineas; listado extraido.
+- `payments.component.ts`: ~80 lineas; `payments.facade.ts`: ~722 lineas.
+- `properties.component.ts`: ~43 lineas; `properties.facade.ts`: ~556 lineas.
+- `contracts.component.ts`: ~85 lineas; listado extraido.
 - `tenant-dashboard.component.ts`: ~27 lineas; widgets/cards extraidos.
 
 Regla: al tocar una pantalla grande, extraer primero componentes
@@ -812,18 +861,19 @@ Motivo: sera el ejemplo para el resto de modulos admin.
 
 Orden sugerido:
 
-1. Completar modulos nuevos: Owner Portal y Reports ya tienen facade/login
-   inicial; faltan Vendors, Expenses, Violations e Inspections a nivel CRUD
-   completo.
+1. Completar modulos nuevos: Owner Portal, Reports, Vendors, Expenses,
+   Violations e Inspections ya tienen facades, tests y templates partidos en
+   componentes presentacionales. Falta validar flujos contra backend/staging y
+   completar detalles profundos donde aplique.
 2. Pagos. Facade creada; falta tests de facade y separar pages/dialogs si el
    modulo crece.
-3. Contratos. Listado extraido; detalle ya tiene facade y mappers testeados.
-   Falta extraer UI de formularios create/edit y separar firma si se agrega
-   flujo admin dedicado.
+3. Contratos. Listado, metricas y filtros extraidos; detalle ya tiene facade y
+   mappers testeados. Falta extraer UI de formularios create/edit y separar
+   firma si se agrega flujo admin dedicado.
 4. Propiedades/unidades. Facade, cards, filtros y formulario grande extraidos;
    faltan tests de facade/form/mapper.
-5. Solicitudes. UI avanzada; falta separar listado en
-   `pages/components/facade/models` y tests.
+5. Solicitudes. Listado separado en componentes; faltan tests de
+   aprobacion/rechazo y separar `pages` si crece.
 6. Pantallas Material restantes: portal publico, tenant messages,
    tenant notifications y QR generate.
 7. Sitio publico.

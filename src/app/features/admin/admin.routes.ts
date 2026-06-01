@@ -21,14 +21,14 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'propiedades',
         loadComponent: () =>
-          import('../propiedades/propiedades.component').then((m) => m.PropiedadesComponent),
+          import('../properties/properties.component').then((m) => m.PropertiesComponent),
         canActivate: [moduleGuard],
         data: { module: 'properties' },
       },
       {
         path: 'propiedades/:id',
         loadComponent: () =>
-          import('../propiedades/property-detail-admin.component').then(
+          import('../properties/property-detail-admin.component').then(
             (m) => m.PropertyDetailAdminComponent,
           ),
         canActivate: [moduleGuard],
@@ -36,22 +36,21 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'inquilinos',
-        loadComponent: () =>
-          import('../inquilinos/inquilinos.component').then((m) => m.InquilinosComponent),
+        loadComponent: () => import('../tenants/tenants.component').then((m) => m.TenantsComponent),
         canActivate: [moduleGuard],
         data: { module: 'users' },
       },
       {
         path: 'contratos',
         loadComponent: () =>
-          import('../contratos/contratos.component').then((m) => m.ContratosComponent),
+          import('../contracts/contracts.component').then((m) => m.ContractsComponent),
         canActivate: [moduleGuard],
         data: { module: 'contracts' },
       },
       {
         path: 'contratos/nuevo',
         loadComponent: () =>
-          import('../contratos/contract-create/contract-create.component').then(
+          import('../contracts/contract-create/contract-create.component').then(
             (m) => m.ContractCreateComponent,
           ),
         canActivate: [moduleGuard],
@@ -60,7 +59,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'contratos/:id',
         loadComponent: () =>
-          import('../contratos/contract-detail/contract-detail.component').then(
+          import('../contracts/contract-detail/contract-detail.component').then(
             (m) => m.ContractDetailComponent,
           ),
         canActivate: [moduleGuard],
@@ -69,7 +68,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'contratos/:id/editar',
         loadComponent: () =>
-          import('../contratos/contract-edit/contract-edit.component').then(
+          import('../contracts/contract-edit/contract-edit.component').then(
             (m) => m.ContractEditComponent,
           ),
         canActivate: [moduleGuard],
@@ -78,14 +77,14 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'solicitudes',
         loadComponent: () =>
-          import('../solicitudes/solicitudes.component').then((m) => m.SolicitudesComponent),
+          import('../applications/applications.component').then((m) => m.ApplicationsComponent),
         canActivate: [moduleGuard],
         data: { module: 'applications' },
       },
       {
         path: 'solicitudes/:id',
         loadComponent: () =>
-          import('../solicitudes/components/application-detail/application-detail.component').then(
+          import('../applications/components/application-detail/application-detail.component').then(
             (m) => m.ApplicationDetailComponent,
           ),
         canActivate: [moduleGuard],
@@ -94,7 +93,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'solicitudes/:id/aprobar',
         loadComponent: () =>
-          import('../solicitudes/components/approve-dialog/approve-dialog.component').then(
+          import('../applications/components/approve-dialog/approve-dialog.component').then(
             (m) => m.ApproveDialogComponent,
           ),
         canActivate: [moduleGuard],
@@ -103,7 +102,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'solicitudes/:id/rechazar',
         loadComponent: () =>
-          import('../solicitudes/components/reject-dialog/reject-dialog.component').then(
+          import('../applications/components/reject-dialog/reject-dialog.component').then(
             (m) => m.RejectDialogComponent,
           ),
         canActivate: [moduleGuard],
@@ -111,14 +110,15 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'pagos',
-        loadComponent: () => import('../pagos/pagos.component').then((m) => m.PagosComponent),
+        loadComponent: () =>
+          import('../payments/payments.component').then((m) => m.PaymentsComponent),
         canActivate: [moduleGuard],
         data: { module: 'payments' },
       },
       {
         path: 'mantenimiento',
         loadComponent: () =>
-          import('../mantenimiento/mantenimiento.component').then((m) => m.MantenimientoComponent),
+          import('../maintenance/maintenance.component').then((m) => m.MaintenanceComponent),
         canActivate: [moduleGuard],
         data: { module: 'maintenance' },
       },
@@ -187,14 +187,14 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'configuracion',
         loadComponent: () =>
-          import('../configuracion/configuracion.component').then((m) => m.ConfiguracionComponent),
+          import('../configuration/configuration.component').then((m) => m.ConfigurationComponent),
         canActivate: [moduleGuard],
         data: { module: 'config' },
       },
       {
         path: 'empleados',
         loadComponent: () =>
-          import('../empleados/empleados.component').then((m) => m.EmpleadosComponent),
+          import('../employees/employees.component').then((m) => m.EmployeesComponent),
         canActivate: [moduleGuard],
         data: { module: 'employees' },
       },
@@ -206,7 +206,7 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'perfil',
         loadComponent: () =>
-          import('../perfil/admin-perfil.component').then((m) => m.AdminPerfilComponent),
+          import('../profile/admin-profile.component').then((m) => m.AdminProfileComponent),
       },
     ],
   },
