@@ -1,0 +1,21 @@
+<div class="payment-toolbar">
+  <app-button appearance="secondary" (clicked)="refreshed.emit()" [disabled]="loading()">
+    <lucide-icon [img]="RefreshCw" [size]="20"></lucide-icon>
+    {{ 'common.refresh' | transloco }}
+  </app-button>
+
+  <app-button appearance="secondary" (clicked)="exported.emit()" [disabled]="loading()">
+    <lucide-icon [img]="Download" [size]="20"></lucide-icon>
+    {{ 'payments.exportCsv' | transloco }}
+  </app-button>
+
+  <app-button appearance="accent" (clicked)="createOpened.emit()">
+    <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
+    {{ 'payments.register' | transloco }}
+  </app-button>
+
+  <app-button (clicked)="filtersToggled.emit()">
+    <lucide-icon [img]="Filter" [size]="20"></lucide-icon>
+    {{ 'common.filters' | transloco }}
+  </app-button>
+</div>

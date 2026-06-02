@@ -32,118 +32,16 @@
   } @else if (currentContract()) {
     <section class="form-card">
       <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
-        <!-- Información Básica -->
         <div class="form-section">
           <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
-
-          <div class="info-readonly">
-            <div class="info-item">
-              <label>{{ 'contracts.edit.tenantLabel' | transloco }}</label>
-              <span>{{
-                currentContract()!.tenant?.name || currentContract()!.tenant_name || 'N/A'
-              }}</span>
-            </div>
-            <div class="info-item">
-              <label>{{ 'contracts.edit.propertyLabel' | transloco }}</label>
-              <span>{{
-                currentContract()!.property?.title || currentContract()!.property_title || 'N/A'
-              }}</span>
-            </div>
-          </div>
-
-          <!-- Fechas -->
-          <div class="form-row">
-            <div>
-              <app-date-picker
-                formControlName="start_date"
-                [label]="'contracts.create.startDate' | transloco"
-              />
-              @if (hasError('start_date')) {
-                <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
-              }
-            </div>
-
-            <div>
-              <app-date-picker
-                formControlName="end_date"
-                [label]="'contracts.create.endDate' | transloco"
-              />
-              @if (hasError('end_date')) {
-                <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
-              }
-            </div>
-
-            <app-date-picker
-              formControlName="key_delivery_date"
-              [label]="'contracts.create.keyDelivery' | transloco"
-            />
-          </div>
-
-          <!-- Alquiler -->
-          <div class="form-row">
-            <div>
-              <app-text-field
-                type="number"
-                formControlName="monthly_rent"
-                [label]="'contracts.create.monthlyRent' | transloco"
-              />
-              @if (hasError('monthly_rent')) {
-                <p class="field-error">{{ 'contracts.create.amountRequired' | transloco }}</p>
-              }
-            </div>
-
-            <app-text-field
-              type="number"
-              formControlName="payment_day"
-              [label]="'contracts.create.paymentDay' | transloco"
-            />
-          </div>
-
-          <!-- Método de pago -->
-          <app-text-field
-            class="full-width"
-            formControlName="payment_method"
-            [label]="'contracts.create.paymentMethod' | transloco"
-          />
+          <app-contract-readonly-summary [contract]="currentContract()!" />
         </div>
 
-        <!-- Condiciones de Pago -->
-        <div class="form-section">
-          <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
+        <app-contract-date-rent-section [form]="contractForm" [showTitle]="false" />
 
-          <div class="form-row">
-            <app-text-field
-              type="number"
-              formControlName="late_fee_percentage"
-              [label]="'contracts.create.lateFee' | transloco"
-              placeholder="5"
-            />
+        <app-contract-payment-conditions-section [form]="contractForm" />
 
-            <app-text-field
-              type="number"
-              formControlName="grace_days"
-              [label]="'contracts.create.graceDays' | transloco"
-              placeholder="3"
-            />
-          </div>
-        </div>
-
-        <!-- Servicios Incluidos -->
-        <div class="form-section">
-          <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
-          <div class="services-grid">
-            @for (service of serviceOptions; track service) {
-              <label class="service-option">
-                <input
-                  type="checkbox"
-                  [checked]="isServiceSelected(service)"
-                  (change)="toggleService(service, $event)"
-                />
-                <span>{{ service }}</span>
-              </label>
-            }
-          </div>
-        </div>
+        <app-contract-services-section [form]="contractForm" [serviceOptions]="serviceOptions" />
 
         <!-- Responsabilidades -->
         <div class="form-section">
@@ -275,28 +173,13 @@
           </div>
         }
 
-        <!-- Acciones -->
-        <div class="form-actions">
-          <app-button
-            type="submit"
-            [disabled]="contractForm.invalid || isSubmitting"
-            [loading]="isSubmitting"
-          >
-            @if (!isSubmitting) {
-              <lucide-icon [img]="Save" [size]="18"></lucide-icon>
-            }
-            {{ (isSubmitting ? 'common.saving' : 'common.saveChanges') | transloco }}
-          </app-button>
-          <app-button
-            type="button"
-            appearance="outline"
-            (clicked)="goBack()"
-            [disabled]="isSubmitting"
-          >
-            <lucide-icon [img]="X" [size]="18"></lucide-icon>
-            {{ 'common.cancel' | transloco }}
-          </app-button>
-        </div>
+        <app-contract-form-actions
+          [invalid]="contractForm.invalid"
+          [submitting]="isSubmitting"
+          idleLabelKey="common.saveChanges"
+          submittingLabelKey="common.saving"
+          (cancelled)="goBack()"
+        />
       </form>
     </section>
   }

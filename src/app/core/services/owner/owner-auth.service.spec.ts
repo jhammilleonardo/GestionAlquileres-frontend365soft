@@ -68,4 +68,26 @@ describe('OwnerAuthService', () => {
     expect(sessionToken.clearToken).toHaveBeenCalledWith('owner');
     expect(localStorage.getItem('owner_user')).toBeNull();
   });
+
+  it('requires the owner session to match the current slug', () => {
+    http.post.mockReturnValue(
+      of({
+        access_token: 'owner-token',
+        user: {
+          id: 1,
+          email: 'owner@test.com',
+          name: 'Owner',
+          role: 'PROPIETARIO',
+          tenant_slug: 'demo',
+          rental_owner_id: 10,
+        },
+      }),
+    );
+    sessionToken.getToken.mockReturnValue('owner-token');
+
+    service.login('demo', 'owner@test.com', 'secret', true).subscribe();
+
+    expect(service.hasSessionForSlug('demo')).toBe(true);
+    expect(service.hasSessionForSlug('other')).toBe(false);
+  });
 });

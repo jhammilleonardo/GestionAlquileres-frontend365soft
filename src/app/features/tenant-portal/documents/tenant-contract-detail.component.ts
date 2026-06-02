@@ -23,6 +23,7 @@ import {
 } from '../../../core/services/tenant/tenant-contract.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { FileDownloadService } from '../../../core/services/file-download.service';
 import { FormatService } from '../../../core/services/format.service';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
@@ -597,6 +598,7 @@ export class TenantContractDetailComponent {
   private readonly authService = inject(TenantAuthService);
   private readonly slugService = inject(SlugService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly translocoService = inject(TranslocoService);
   private readonly formatService = inject(FormatService);
   private readonly toast = inject(ToastService);
@@ -711,8 +713,7 @@ export class TenantContractDetailComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          window.open(url, '_blank', 'noopener,noreferrer');
+          this.fileDownload.openBlob(blob);
         },
         error: () => {
           this.toast.error(this.translocoService.translate('tenantContracts.details.pdfError'));

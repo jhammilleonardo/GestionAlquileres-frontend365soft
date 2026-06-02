@@ -20,6 +20,7 @@ import {
   InspectionStatus,
   ItemCondition,
 } from '../../core/models/inspection.model';
+import { FileDownloadService } from '../../core/services/file-download.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
 import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
@@ -63,6 +64,7 @@ export class InspectionDetailComponent {
   private readonly router = inject(Router);
   private readonly slugService = inject(SlugService);
   private readonly inspectionService = inject(InspectionService);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
 
@@ -187,12 +189,7 @@ export class InspectionDetailComponent {
     if (!inspection) return;
     this.inspectionService.downloadPdf(inspection.id).subscribe({
       next: (blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `inspeccion_${inspection.id}.pdf`;
-        link.click();
-        URL.revokeObjectURL(url);
+        this.fileDownload.downloadBlob(blob, `inspeccion_${inspection.id}.pdf`);
       },
       error: () => this.toast.error(this.transloco.translate('inspections.pdfError')),
     });

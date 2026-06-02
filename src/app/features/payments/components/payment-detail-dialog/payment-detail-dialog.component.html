@@ -1,0 +1,110 @@
+<app-dialog
+  [open]="true"
+  [title]="'payments.detailTitle' | transloco: { id: payment().id }"
+  (closed)="closed.emit()"
+>
+  <div class="payment-detail">
+    <div class="payment-detail__item">
+      <label>{{ 'payments.tenant' | transloco }}:</label>
+      <p>{{ getTenantName(payment()) }}</p>
+    </div>
+
+    <div class="payment-detail__item">
+      <label>{{ 'common.property' | transloco }}:</label>
+      <p>{{ getPropertyName(payment()) }}</p>
+    </div>
+
+    <div class="payment-detail__item">
+      <label>{{ 'common.amount' | transloco }}:</label>
+      <p>
+        <strong>{{ payment().amount | tenantCurrency }}</strong>
+      </p>
+    </div>
+
+    <div class="payment-detail__item">
+      <label>{{ 'common.currency' | transloco }}:</label>
+      <p>{{ payment().currency || 'USD' }} - {{ getCurrencyLabel(payment().currency || 'USD') }}</p>
+    </div>
+
+    <div class="payment-detail__item">
+      <label>{{ 'common.type' | transloco }}:</label>
+      <p>{{ getTypeLabel(payment().payment_type) }}</p>
+    </div>
+
+    <div class="payment-detail__item">
+      <label>{{ 'payments.method' | transloco }}:</label>
+      <p>{{ getMethodLabel(payment().payment_method) }}</p>
+    </div>
+
+    <div class="payment-detail__item">
+      <label>{{ 'payments.paymentDate' | transloco }}:</label>
+      <p>{{ payment().payment_date | tenantDate }}</p>
+    </div>
+
+    @if (payment().reference_number) {
+      <div class="payment-detail__item">
+        <label>{{ 'payments.referenceNumber' | transloco }}:</label>
+        <p>{{ payment().reference_number }}</p>
+      </div>
+    }
+
+    @if (payment().check_number) {
+      <div class="payment-detail__item">
+        <label>{{ 'payments.checkNumber' | transloco }}:</label>
+        <p>{{ payment().check_number }}</p>
+      </div>
+    }
+
+    <div class="payment-detail__item">
+      <label>{{ 'common.status' | transloco }}:</label>
+      <p>
+        <app-status-badge
+          [label]="getStatusLabel(payment().status)"
+          [tone]="getStatusTone(payment().status)"
+        />
+      </p>
+    </div>
+
+    @if (payment().notes) {
+      <div class="payment-detail__item payment-detail__item--full">
+        <label>{{ 'payments.tenantNotes' | transloco }}</label>
+        <p>{{ payment().notes }}</p>
+      </div>
+    }
+
+    @if (payment().admin_notes) {
+      <div class="payment-detail__item payment-detail__item--full">
+        <label>{{ 'payments.adminNotes' | transloco }}</label>
+        <p>{{ payment().admin_notes }}</p>
+      </div>
+    }
+
+    @if (payment().proof_file) {
+      <div class="payment-detail__item payment-detail__item--full">
+        <label>{{ 'payments.receipt' | transloco }}</label>
+        <p>
+          <app-button appearance="outline" (clicked)="proofOpened.emit(payment())">
+            <lucide-icon [img]="ExternalLink" [size]="18"></lucide-icon>
+            {{ 'payments.viewReceipt' | transloco }}
+          </app-button>
+        </p>
+      </div>
+    }
+  </div>
+
+  <div dialog-actions class="payment-detail__actions">
+    @if (payment().status === PaymentStatus.PENDING) {
+      <app-button (clicked)="approved.emit(payment())">
+        <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+        {{ 'common.approve' | transloco }}
+      </app-button>
+      <app-button appearance="destructive" (clicked)="rejected.emit(payment())">
+        <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
+        {{ 'common.reject' | transloco }}
+      </app-button>
+    }
+    <app-button appearance="flat" (clicked)="closed.emit()">
+      {{ 'common.close' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

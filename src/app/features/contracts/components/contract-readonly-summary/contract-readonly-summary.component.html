@@ -1,0 +1,11 @@
+<div class="contract-readonly-summary">
+  <div class="contract-readonly-summary__item">
+    <label>{{ 'contracts.edit.tenantLabel' | transloco }}</label>
+    <span>{{ contract().tenant?.name || contract().tenant_name || 'N/A' }}</span>
+  </div>
+
+  <div class="contract-readonly-summary__item">
+    <label>{{ 'contracts.edit.propertyLabel' | transloco }}</label>
+    <span>{{ contract().property?.title || contract().property_title || 'N/A' }}</span>
+  </div>
+</div>

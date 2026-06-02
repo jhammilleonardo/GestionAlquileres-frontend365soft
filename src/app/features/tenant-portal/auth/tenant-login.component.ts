@@ -16,6 +16,7 @@ import {
 } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
+import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
 import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 import {
@@ -567,6 +568,7 @@ export class TenantLoginComponent {
   private fb = inject(FormBuilder);
   private location = inject(Location);
   private intentionService = inject(ApplicationIntentionService);
+  private reservationIntentionService = inject(ReservationIntentionService);
   private destroyRef = inject(DestroyRef);
 
   showPassword = signal(false);
@@ -631,8 +633,9 @@ export class TenantLoginComponent {
 
     this.authService.login(slug, email!, password!).subscribe({
       next: () => {
-        // Verificar si hay una intención de aplicación guardada
-        if (this.intentionService.hasIntention()) {
+        if (this.reservationIntentionService.hasIntention()) {
+          this.reservationIntentionService.navigateToReservation(slug);
+        } else if (this.intentionService.hasIntention()) {
           // Hay intención -> Redirigir al formulario de aplicación
           this.intentionService.navigateToApplication(slug);
         } else {

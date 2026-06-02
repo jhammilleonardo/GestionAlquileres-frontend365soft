@@ -1,0 +1,60 @@
+<div class="form-section" [formGroup]="form()">
+  @if (showTitle()) {
+    <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
+  }
+
+  <div class="form-row">
+    <div>
+      <app-date-picker
+        formControlName="start_date"
+        [label]="'contracts.create.startDate' | transloco"
+      />
+      @if (hasError('start_date')) {
+        <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
+      }
+    </div>
+
+    <div>
+      <app-date-picker
+        formControlName="end_date"
+        [label]="'contracts.create.endDate' | transloco"
+      />
+      @if (hasError('end_date')) {
+        <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
+      }
+    </div>
+
+    <app-date-picker
+      formControlName="key_delivery_date"
+      [label]="'contracts.create.keyDelivery' | transloco"
+    />
+  </div>
+
+  <div class="form-row">
+    <div>
+      <app-text-field
+        type="number"
+        formControlName="monthly_rent"
+        [label]="'contracts.create.monthlyRent' | transloco"
+        placeholder="1200.00"
+      />
+      @if (hasError('monthly_rent')) {
+        <p class="field-error">{{ 'contracts.create.amountRequired' | transloco }}</p>
+      }
+    </div>
+
+    <app-text-field
+      type="number"
+      formControlName="payment_day"
+      [label]="'contracts.create.paymentDay' | transloco"
+      placeholder="5"
+    />
+  </div>
+
+  <app-text-field
+    class="full-width"
+    formControlName="payment_method"
+    [label]="'contracts.create.paymentMethod' | transloco"
+    [placeholder]="'contracts.create.paymentMethodPlaceholder' | transloco"
+  />
+</div>

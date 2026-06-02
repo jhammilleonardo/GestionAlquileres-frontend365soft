@@ -53,14 +53,14 @@
         <button
           class="pu-filter-btn"
           [class.pu-filter-btn--active]="statusFilter() === 'all'"
-          (click)="statusFilter.set('all')"
+          (click)="setStatusFilter('all')"
         >
           Todos ({{ counters().total }})
         </button>
         <button
           class="pu-filter-btn pu-filter-btn--available"
           [class.pu-filter-btn--active]="statusFilter() === UnitStatus.AVAILABLE"
-          (click)="statusFilter.set(UnitStatus.AVAILABLE)"
+          (click)="setStatusFilter(UnitStatus.AVAILABLE)"
         >
           <span class="pu-filter-dot"></span>
           Disponible ({{ counters().available }})
@@ -68,7 +68,7 @@
         <button
           class="pu-filter-btn pu-filter-btn--occupied"
           [class.pu-filter-btn--active]="statusFilter() === UnitStatus.OCCUPIED"
-          (click)="statusFilter.set(UnitStatus.OCCUPIED)"
+          (click)="setStatusFilter(UnitStatus.OCCUPIED)"
         >
           <span class="pu-filter-dot"></span>
           Ocupada ({{ counters().occupied }})
@@ -76,7 +76,7 @@
         <button
           class="pu-filter-btn pu-filter-btn--maintenance"
           [class.pu-filter-btn--active]="statusFilter() === UnitStatus.MAINTENANCE"
-          (click)="statusFilter.set(UnitStatus.MAINTENANCE)"
+          (click)="setStatusFilter(UnitStatus.MAINTENANCE)"
         >
           <span class="pu-filter-dot"></span>
           Mantenimiento ({{ counters().maintenance }})
@@ -84,7 +84,7 @@
         <button
           class="pu-filter-btn pu-filter-btn--reserved"
           [class.pu-filter-btn--active]="statusFilter() === UnitStatus.RESERVED"
-          (click)="statusFilter.set(UnitStatus.RESERVED)"
+          (click)="setStatusFilter(UnitStatus.RESERVED)"
         >
           <span class="pu-filter-dot"></span>
           Reservada ({{ counters().reserved }})

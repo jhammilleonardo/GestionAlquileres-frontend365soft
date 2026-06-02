@@ -13,6 +13,7 @@ import {
 } from '../../models/property.model';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { PropertyFavoritesService } from './property-favorites.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,6 +24,7 @@ export class PropertyService {
 
   private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
+  private propertyFavorites = inject(PropertyFavoritesService);
 
   constructor() {
     this.loadFavoritesFromStorage();
@@ -286,6 +288,7 @@ export class PropertyService {
       included_items: this.asArray(raw['included_items']),
       addresses: this.normalizeAddresses(raw['addresses']),
       owners: this.normalizeOwners(raw['owners']),
+      units: this.normalizeUnits(raw['units']),
       property_type: this.normalizePropertyType(raw),
       property_subtype: this.normalizePropertySubtype(raw),
       active: raw['active'] === undefined ? raw['status'] === 'DISPONIBLE' : raw['active'],
@@ -397,6 +400,25 @@ export class PropertyService {
     ];
   }
 
+  private normalizeUnits(value: unknown): unknown[] {
+    return this.asArray(value).map((item) => {
+      const unit = this.asRecord(item);
+      return {
+        ...unit,
+        price_per_night: this.toNumberOrNull(unit['price_per_night']),
+        cleaning_fee: this.toNumberOrNull(unit['cleaning_fee']),
+        min_nights: this.toNumberOrNull(unit['min_nights']),
+        max_nights: this.toNumberOrNull(unit['max_nights']),
+      };
+    });
+  }
+
+  private toNumberOrNull(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
   private normalizePropertyType(raw: Record<string, unknown>): unknown {
     const existing = this.asRecord(raw['property_type']);
     if (this.asString(existing['name'])) {
@@ -443,30 +465,14 @@ export class PropertyService {
    * Guardar favoritos en localStorage
    */
   private saveFavoritesToStorage(favorites: Set<number>): void {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('property_favorites', JSON.stringify(Array.from(favorites)));
-      }
-    } catch {
-      /* ignore storage errors */
-    }
+    this.propertyFavorites.save(favorites);
   }
 
   /**
    * Cargar favoritos desde localStorage
    */
   private loadFavoritesFromStorage(): void {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        const stored = localStorage.getItem('property_favorites');
-        if (stored) {
-          const favArray = JSON.parse(stored) as number[];
-          this.favoritesSubject.next(new Set(favArray));
-        }
-      }
-    } catch {
-      /* ignore storage errors */
-    }
+    this.favoritesSubject.next(this.propertyFavorites.load());
   }
 
   // ==================== SHARED HELPERS ====================

@@ -78,15 +78,19 @@ describe('InspectionsFacade', () => {
 
     facade.save();
 
-    expect(service.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        property_id: 10,
-        type: InspectionType.PERIODIC,
-        scheduled_date: '2026-05-02',
-        inspector_user_id: 2,
-        items: expect.any(Array),
-      }),
-    );
+    const createPayload = service.create.mock.calls[0]?.[0] as {
+      property_id: number;
+      type: InspectionType;
+      scheduled_date: string;
+      inspector_user_id: number;
+      items: unknown[];
+    };
+
+    expect(createPayload.property_id).toBe(10);
+    expect(createPayload.type).toBe(InspectionType.PERIODIC);
+    expect(createPayload.scheduled_date).toBe('2026-05-02');
+    expect(createPayload.inspector_user_id).toBe(2);
+    expect(Array.isArray(createPayload.items)).toBe(true);
     expect(router.navigate).toHaveBeenCalledWith(['demo', 'inspecciones', 1]);
   });
 

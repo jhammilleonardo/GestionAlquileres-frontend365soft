@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Bath,
   Bed,
+  CalendarCheck,
   Home,
   MapPin,
   Maximize,
@@ -13,11 +14,14 @@ import {
 } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { PropertyService } from '../../../core/services/admin/property.service';
-import { Property } from '../../../core/models/property.model';
+import { CatalogUnit, Property } from '../../../core/models/property.model';
 import { SlugService } from '../../../core/services/slug.service';
+import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
+import { AvailabilityCalendarComponent } from '../../public-portal/availability-calendar/availability-calendar.component';
 import {
   AppButtonComponent,
+  AppDialogComponent,
   AppEmptyStateComponent,
   AppLoadingStateComponent,
   AppPageHeaderComponent,
@@ -28,10 +32,12 @@ import {
 } from '../../../shared/ui';
 
 type MarketplaceSort = 'created_at' | 'price_asc' | 'price_desc' | 'area';
+type RentalModeFilter = 'ALL' | 'LONG_TERM' | 'SHORT_TERM';
 
 interface MarketplaceFilters {
   search: string;
   propertyType: string;
+  rentalMode: RentalModeFilter;
   sort: MarketplaceSort;
 }
 
@@ -45,11 +51,13 @@ interface MarketplaceFilters {
     TranslocoModule,
     TenantCurrencyPipe,
     AppButtonComponent,
+    AppDialogComponent,
     AppEmptyStateComponent,
     AppLoadingStateComponent,
     AppPageHeaderComponent,
     AppSelectComponent,
     AppTextFieldComponent,
+    AvailabilityCalendarComponent,
   ],
   providers: [provideTranslocoScope('rentalApp')],
   template: `
@@ -76,6 +84,13 @@ interface MarketplaceFilters {
           [(ngModel)]="filters.propertyType"
           [label]="'tenantApplications.marketplace.typePlaceholder' | transloco"
           [options]="propertyTypeOptions()"
+          (ngModelChange)="resetPage()"
+        />
+
+        <app-select
+          [(ngModel)]="filters.rentalMode"
+          label="Modalidad"
+          [options]="rentalModeOptions()"
           (ngModelChange)="resetPage()"
         />
 
@@ -109,12 +124,7 @@ interface MarketplaceFilters {
       } @else {
         <div class="properties-grid">
           @for (property of paginatedProperties(); track property.id) {
-            <article
-              class="property-card"
-              tabindex="0"
-              (click)="selectProperty(property)"
-              (keydown.enter)="selectProperty(property)"
-            >
+            <article class="property-card">
               <div class="property-image">
                 @if (property.first_image) {
                   <img [src]="property.first_image" [alt]="property.title" />
@@ -125,8 +135,13 @@ interface MarketplaceFilters {
                 }
 
                 <div class="property-price">
-                  <strong>{{ property.monthly_rent | tenantCurrency }}</strong>
-                  <span>{{ 'tenantApplications.marketplace.priceMonth' | transloco }}</span>
+                  @if (supportsLongTerm(property)) {
+                    <strong>{{ property.monthly_rent | tenantCurrency }}</strong>
+                    <span>{{ 'tenantApplications.marketplace.priceMonth' | transloco }}</span>
+                  } @else {
+                    <strong>Corto plazo</strong>
+                    <span>por noche</span>
+                  }
                 </div>
               </div>
 
@@ -142,6 +157,10 @@ interface MarketplaceFilters {
                 </p>
 
                 <div class="property-features">
+                  <span class="rental-mode">
+                    <lucide-icon [img]="CalendarCheck" [size]="16"></lucide-icon>
+                    {{ rentalModeLabel(property) }}
+                  </span>
                   @if (property.bedrooms) {
                     <span>
                       <lucide-icon [img]="Bed" [size]="16"></lucide-icon>
@@ -181,14 +200,29 @@ interface MarketplaceFilters {
                   }
                 </div>
 
-                <app-button
-                  appearance="primary"
-                  [fullWidth]="true"
-                  (clicked)="selectProperty(property)"
-                >
-                  {{ 'tenantApplications.marketplace.apply' | transloco }}
-                  <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
-                </app-button>
+                <div class="property-actions">
+                  @if (supportsLongTerm(property)) {
+                    <app-button
+                      appearance="primary"
+                      [fullWidth]="true"
+                      (clicked)="applyLongTerm(property)"
+                    >
+                      {{ 'tenantApplications.marketplace.apply' | transloco }}
+                      <lucide-icon [img]="ArrowRight" [size]="16"></lucide-icon>
+                    </app-button>
+                  }
+
+                  @if (supportsShortTerm(property)) {
+                    <app-button
+                      appearance="outline"
+                      [fullWidth]="true"
+                      (clicked)="reserveShortTerm(property)"
+                    >
+                      Reservar estadía
+                      <lucide-icon [img]="CalendarCheck" [size]="16"></lucide-icon>
+                    </app-button>
+                  }
+                </div>
               </div>
             </article>
           }
@@ -217,6 +251,66 @@ interface MarketplaceFilters {
           </nav>
         }
       }
+
+      <app-dialog
+        [open]="reservationDialogOpen()"
+        [title]="reservationDialogTitle()"
+        [showFooter]="false"
+        (closed)="closeReservationDialog()"
+      >
+        @if (isLoadingReservationProperty()) {
+          <app-loading-state label="Cargando disponibilidad..." />
+        } @else if (selectedReservationProperty(); as reservationProperty) {
+          @if (shortTermUnits().length === 0) {
+            <app-empty-state
+              title="No hay unidades de corto plazo"
+              description="Esta propiedad no tiene unidades configuradas con precio por noche."
+            />
+          } @else {
+            <div class="reservation-panel">
+              @if (shortTermUnits().length > 1) {
+                <app-select
+                  [ngModel]="selectedReservationUnitId()"
+                  label="Unidad"
+                  [options]="shortTermUnitOptions()"
+                  (ngModelChange)="selectedReservationUnitId.set($event)"
+                />
+              }
+
+              @if (selectedReservationUnit(); as unit) {
+                <div class="reservation-summary">
+                  <div>
+                    <span>Precio por noche</span>
+                    <strong>{{ unit.price_per_night ?? 0 | tenantCurrency }}</strong>
+                  </div>
+                  <div>
+                    <span>Limpieza</span>
+                    <strong>{{ unit.cleaning_fee ?? 0 | tenantCurrency }}</strong>
+                  </div>
+                  <div>
+                    <span>Estadía mínima</span>
+                    <strong>{{ unit.min_nights ?? 1 }} noche(s)</strong>
+                  </div>
+                </div>
+
+                <app-availability-calendar
+                  [propertyId]="reservationProperty.id"
+                  [unitId]="unit.id"
+                  [propertyTitle]="reservationProperty.title"
+                  [unitNumber]="unit.unit_number"
+                  [pricePerNight]="unit.price_per_night ?? 0"
+                  [cleaningFee]="unit.cleaning_fee ?? 0"
+                  [minNights]="unit.min_nights ?? 1"
+                  [currency]="reservationProperty.currency ?? 'USD'"
+                  [initialCheckin]="initialReservationCheckin()"
+                  [initialCheckout]="initialReservationCheckout()"
+                  (reservationCreated)="closeReservationDialog()"
+                />
+              }
+            </div>
+          }
+        }
+      </app-dialog>
     </section>
   `,
   styles: `
@@ -227,7 +321,9 @@ interface MarketplaceFilters {
 
     .filters-panel {
       display: grid;
-      grid-template-columns: minmax(260px, 2fr) minmax(180px, 1fr) minmax(180px, 1fr) auto;
+      grid-template-columns:
+        minmax(220px, 2fr) minmax(160px, 1fr) minmax(160px, 1fr)
+        minmax(160px, 1fr) auto;
       gap: var(--app-space-3);
       align-items: end;
       margin-block-end: var(--app-space-6);
@@ -351,6 +447,47 @@ interface MarketplaceFilters {
       min-block-size: 1.5rem;
     }
 
+    .rental-mode {
+      color: var(--app-color-primary) !important;
+      font-weight: 800;
+    }
+
+    .property-actions {
+      display: grid;
+      gap: var(--app-space-2);
+    }
+
+    .reservation-panel {
+      display: grid;
+      gap: var(--app-space-4);
+    }
+
+    .reservation-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--app-space-3);
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-md);
+      background: var(--app-color-surface-muted);
+      padding: var(--app-space-3);
+    }
+
+    .reservation-summary div {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .reservation-summary span {
+      color: var(--app-color-text-muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .reservation-summary strong {
+      color: var(--app-color-text);
+      font-size: 0.95rem;
+    }
+
     .pagination {
       display: flex;
       align-items: center;
@@ -368,6 +505,10 @@ interface MarketplaceFilters {
       .filters-panel {
         grid-template-columns: 1fr;
       }
+
+      .reservation-summary {
+        grid-template-columns: 1fr;
+      }
     }
   `,
 })
@@ -380,20 +521,28 @@ export class NewApplicationComponent {
   protected readonly Maximize = Maximize;
   protected readonly ArrowRight = ArrowRight;
   protected readonly SlidersHorizontal = SlidersHorizontal;
+  protected readonly CalendarCheck = CalendarCheck;
 
   private readonly slugService = inject(SlugService);
   private readonly propertyService = inject(PropertyService);
+  private readonly reservationIntentionService = inject(ReservationIntentionService);
   private readonly translocoService = inject(TranslocoService);
   private readonly toast = inject(ToastService);
 
   protected readonly isLoading = signal(false);
+  protected readonly isLoadingReservationProperty = signal(false);
   protected readonly allProperties = signal<Property[]>([]);
+  protected readonly selectedReservationProperty = signal<Property | null>(null);
+  protected readonly selectedReservationUnitId = signal<number | null>(null);
+  protected readonly initialReservationCheckin = signal<string | null>(null);
+  protected readonly initialReservationCheckout = signal<string | null>(null);
   protected readonly currentPage = signal(0);
   protected readonly pageSize = signal(12);
 
   protected filters: MarketplaceFilters = {
     search: '',
     propertyType: 'ALL',
+    rentalMode: 'ALL',
     sort: 'created_at',
   };
 
@@ -432,6 +581,46 @@ export class NewApplicationComponent {
     },
   ]);
 
+  protected readonly rentalModeOptions = computed<readonly AppSelectOption<RentalModeFilter>[]>(
+    () => [
+      { label: 'Todas las modalidades', value: 'ALL' },
+      { label: 'Largo plazo', value: 'LONG_TERM' },
+      { label: 'Corto plazo', value: 'SHORT_TERM' },
+    ],
+  );
+
+  protected readonly reservationDialogOpen = computed(
+    () => this.isLoadingReservationProperty() || this.selectedReservationProperty() !== null,
+  );
+
+  protected readonly reservationDialogTitle = computed(() => {
+    const property = this.selectedReservationProperty();
+    return property ? `Reservar ${property.title}` : 'Reservar estadía';
+  });
+
+  protected readonly shortTermUnits = computed<CatalogUnit[]>(() =>
+    (this.selectedReservationProperty()?.units ?? []).filter(
+      (unit) =>
+        this.supportsShortTermType(unit.rental_type) && Number(unit.price_per_night ?? 0) > 0,
+    ),
+  );
+
+  protected readonly shortTermUnitOptions = computed<readonly AppSelectOption<number>[]>(() =>
+    this.shortTermUnits().map((unit) => ({
+      value: unit.id,
+      label: `${unit.unit_number} - ${unit.price_per_night ?? 0}/noche`,
+    })),
+  );
+
+  protected readonly selectedReservationUnit = computed<CatalogUnit | null>(() => {
+    const selectedId = this.selectedReservationUnitId();
+    return (
+      this.shortTermUnits().find((unit) => unit.id === selectedId) ??
+      this.shortTermUnits()[0] ??
+      null
+    );
+  });
+
   protected filteredProperties(): Property[] {
     const search = this.filters.search.trim().toLowerCase();
     const propertyType = this.filters.propertyType;
@@ -448,7 +637,12 @@ export class NewApplicationComponent {
         property.property_type?.name === propertyType ||
         property.property_type_name === propertyType;
 
-      return matchesSearch && matchesType;
+      const matchesRentalMode =
+        this.filters.rentalMode === 'ALL' ||
+        (this.filters.rentalMode === 'LONG_TERM' && this.supportsLongTerm(property)) ||
+        (this.filters.rentalMode === 'SHORT_TERM' && this.supportsShortTerm(property));
+
+      return matchesSearch && matchesType && matchesRentalMode;
     });
 
     return this.sortProperties(filtered);
@@ -465,6 +659,7 @@ export class NewApplicationComponent {
 
   constructor() {
     this.loadProperties();
+    this.openReservationIntentionIfAny();
   }
 
   protected loadProperties(): void {
@@ -491,6 +686,7 @@ export class NewApplicationComponent {
     this.filters = {
       search: '',
       propertyType: 'ALL',
+      rentalMode: 'ALL',
       sort: 'created_at',
     };
     this.currentPage.set(0);
@@ -504,8 +700,111 @@ export class NewApplicationComponent {
     this.currentPage.update((page) => Math.min(this.totalPages() - 1, page + 1));
   }
 
-  protected selectProperty(property: Property): void {
+  protected applyLongTerm(property: Property): void {
     this.slugService.navigateTo(['portal', 'application-wizard', property.id.toString()]);
+  }
+
+  protected reserveShortTerm(property: Property): void {
+    this.initialReservationCheckin.set(null);
+    this.initialReservationCheckout.set(null);
+    this.isLoadingReservationProperty.set(true);
+    this.selectedReservationProperty.set(null);
+    this.selectedReservationUnitId.set(null);
+
+    this.propertyService.getPropertyById(property.id).subscribe({
+      next: (propertyDetail) => {
+        this.isLoadingReservationProperty.set(false);
+        const detail = propertyDetail ?? property;
+        this.selectedReservationProperty.set(detail);
+        const firstUnit = (detail.units ?? []).find(
+          (unit) =>
+            this.supportsShortTermType(unit.rental_type) && Number(unit.price_per_night ?? 0) > 0,
+        );
+        this.selectedReservationUnitId.set(firstUnit?.id ?? null);
+      },
+      error: () => {
+        this.isLoadingReservationProperty.set(false);
+        this.toast.error('No se pudo cargar la disponibilidad de la propiedad.');
+      },
+    });
+  }
+
+  protected closeReservationDialog(): void {
+    this.isLoadingReservationProperty.set(false);
+    this.selectedReservationProperty.set(null);
+    this.selectedReservationUnitId.set(null);
+    this.initialReservationCheckin.set(null);
+    this.initialReservationCheckout.set(null);
+    this.reservationIntentionService.clearIntention();
+  }
+
+  protected supportsLongTerm(property: Property): boolean {
+    const type = this.normalizeRentalType(property.rental_type);
+    return !type || type === 'LONG_TERM' || type === 'BOTH';
+  }
+
+  protected supportsShortTerm(property: Property): boolean {
+    const type = this.normalizeRentalType(property.rental_type);
+    return type === 'SHORT_TERM' || type === 'BOTH';
+  }
+
+  protected rentalModeLabel(property: Property): string {
+    const type = this.normalizeRentalType(property.rental_type);
+    if (type === 'SHORT_TERM') return 'Corto plazo';
+    if (type === 'LONG_TERM') return 'Largo plazo';
+    if (type === 'BOTH') return 'Largo y corto plazo';
+    return 'Largo plazo';
+  }
+
+  private supportsShortTermType(type: string | null | undefined): boolean {
+    const normalized = this.normalizeRentalType(type);
+    return normalized === 'SHORT_TERM' || normalized === 'BOTH';
+  }
+
+  private normalizeRentalType(
+    type: string | null | undefined,
+  ): 'SHORT_TERM' | 'LONG_TERM' | 'BOTH' | null {
+    const normalized = (type ?? '').toUpperCase();
+    if (normalized === 'SHORT_TERM' || normalized === 'SHORT') return 'SHORT_TERM';
+    if (normalized === 'LONG_TERM' || normalized === 'LONG') return 'LONG_TERM';
+    if (normalized === 'BOTH') return 'BOTH';
+    return null;
+  }
+
+  private openReservationIntentionIfAny(): void {
+    const intention = this.reservationIntentionService.getIntention();
+    if (!intention) return;
+
+    this.isLoadingReservationProperty.set(true);
+    this.selectedReservationProperty.set(null);
+    this.selectedReservationUnitId.set(null);
+    this.initialReservationCheckin.set(intention.checkinDate);
+    this.initialReservationCheckout.set(intention.checkoutDate);
+
+    this.propertyService.getPropertyById(intention.propertyId).subscribe({
+      next: (propertyDetail) => {
+        this.isLoadingReservationProperty.set(false);
+        if (!propertyDetail) {
+          this.toast.error('No se pudo recuperar la propiedad de la reserva.');
+          this.reservationIntentionService.clearIntention();
+          return;
+        }
+
+        this.selectedReservationProperty.set(propertyDetail);
+        const units = propertyDetail.units ?? [];
+        const intendedUnit = units.find((unit) => unit.id === intention.unitId);
+        const fallbackUnit = units.find(
+          (unit) =>
+            this.supportsShortTermType(unit.rental_type) && Number(unit.price_per_night ?? 0) > 0,
+        );
+        this.selectedReservationUnitId.set(intendedUnit?.id ?? fallbackUnit?.id ?? null);
+      },
+      error: () => {
+        this.isLoadingReservationProperty.set(false);
+        this.toast.error('No se pudo recuperar la reserva pendiente.');
+        this.reservationIntentionService.clearIntention();
+      },
+    });
   }
 
   private sortProperties(properties: Property[]): Property[] {

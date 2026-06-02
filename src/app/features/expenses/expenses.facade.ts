@@ -9,6 +9,7 @@ import {
   ExpenseCategory,
   MonthlyBalancePoint,
 } from '../../core/models/expense.model';
+import { FileDownloadService } from '../../core/services/file-download.service';
 import { ExpenseService } from '../../core/services/admin/expense.service';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { VendorService } from '../../core/services/admin/vendor.service';
@@ -31,6 +32,7 @@ export class ExpensesFacade {
   private readonly vendorService = inject(VendorService);
   private readonly propertyService = inject(PropertyService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
 
@@ -243,12 +245,7 @@ export class ExpensesFacade {
     const bom = String.fromCharCode(0xfeff);
     const csv = bom + [header.join(','), ...lines].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `gastos-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    this.fileDownload.downloadBlob(blob, `gastos-${new Date().toISOString().slice(0, 10)}.csv`);
   }
 
   categoryLabel(category: string): string {

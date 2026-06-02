@@ -1,0 +1,87 @@
+<section class="pending-approval">
+  <div class="pending-approval__header">
+    <h2>{{ 'payments.pendingApprovalTitle' | transloco }}</h2>
+    <span class="pending-approval__badge">{{ payments().length }}</span>
+  </div>
+
+  <form class="pending-approval__filters" [formGroup]="form()" (ngSubmit)="filtersApplied.emit()">
+    <app-select
+      formControlName="property_id"
+      [label]="'common.property' | transloco"
+      [placeholder]="'common.all' | transloco"
+      [options]="propertyOptions()"
+    />
+
+    <app-date-picker formControlName="date_from" [label]="'payments.dateFrom' | transloco" />
+    <app-date-picker formControlName="date_to" [label]="'payments.dateTo' | transloco" />
+
+    <div class="pending-approval__filter-actions">
+      <app-button type="button" appearance="flat" (clicked)="filtersCleared.emit()">
+        {{ 'common.clearFilters' | transloco }}
+      </app-button>
+      <app-button type="submit">
+        {{ 'common.applyFilters' | transloco }}
+      </app-button>
+    </div>
+  </form>
+
+  @if (payments().length === 0) {
+    <div class="pending-approval__empty">
+      <lucide-icon [img]="CheckCircle2" [size]="26"></lucide-icon>
+      <span>{{ 'payments.noPendingApproval' | transloco }}</span>
+    </div>
+  } @else {
+    <div class="pending-approval__cards">
+      @for (payment of payments(); track payment.id) {
+        <article class="pending-approval__item">
+          <div class="pending-approval__item-header">
+            <span>#{{ payment.id }}</span>
+            <app-status-badge
+              [label]="getStatusLabel(payment.status)"
+              [tone]="getStatusTone(payment.status)"
+            />
+          </div>
+
+          <div class="pending-approval__item-content">
+            <p>
+              <strong>{{ 'payments.tenant' | transloco }}:</strong> {{ getTenantName(payment) }}
+            </p>
+            <p>
+              <strong>{{ 'common.property' | transloco }}:</strong> {{ getPropertyName(payment) }}
+            </p>
+            <p>
+              <strong>{{ 'payments.unit' | transloco }}:</strong> {{ getUnitName(payment) }}
+            </p>
+            <p>
+              <strong>{{ 'common.amount' | transloco }}:</strong>
+              {{ formatCurrency(payment.amount, payment.currency) }}
+            </p>
+            <p>
+              <strong>{{ 'payments.method' | transloco }}:</strong>
+              {{ getMethodLabel(payment.payment_method) }}
+            </p>
+            <p>
+              <strong>{{ 'payments.registeredAt' | transloco }}:</strong>
+              {{ getRegisteredDate(payment) | tenantDate }}
+            </p>
+          </div>
+
+          <div class="pending-approval__item-actions">
+            @if (payment.proof_file) {
+              <app-button appearance="outline" (clicked)="proofOpened.emit(payment)">
+                <lucide-icon [img]="ExternalLink" [size]="18"></lucide-icon>
+                {{ 'payments.viewReceipt' | transloco }}
+              </app-button>
+            }
+            <app-button (clicked)="approved.emit(payment)">
+              {{ 'common.approve' | transloco }}
+            </app-button>
+            <app-button appearance="destructive" (clicked)="rejected.emit(payment)">
+              {{ 'common.reject' | transloco }}
+            </app-button>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

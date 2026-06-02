@@ -1,5 +1,4 @@
 <div class="contract-create-container">
-  <!-- Header -->
   <div class="page-header">
     <app-button appearance="flat" (clicked)="goBack()">
       <lucide-icon [img]="ArrowLeft" [size]="20"></lucide-icon>
@@ -15,136 +14,18 @@
       </div>
     } @else {
       <form [formGroup]="contractForm" (ngSubmit)="onSubmit()">
-        <!-- Información Básica -->
-        <div class="form-section">
-          <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
+        <app-contract-party-select-section
+          [form]="contractForm"
+          [tenantOptions]="tenantOptions()"
+          [propertyOptions]="propertyOptions()"
+        />
 
-          <!-- Inquilino -->
-          <div class="full-width">
-            <app-select
-              formControlName="tenant_id"
-              [label]="'contracts.create.tenant' | transloco"
-              [placeholder]="'contracts.create.selectTenant' | transloco"
-              [options]="tenantOptions()"
-              [required]="true"
-            />
-            @if (hasError('tenant_id')) {
-              <p class="field-error">{{ 'contracts.create.tenantRequired' | transloco }}</p>
-            }
-          </div>
+        <app-contract-date-rent-section [form]="contractForm" [showTitle]="false" />
 
-          <!-- Propiedad -->
-          <div class="full-width">
-            <app-select
-              formControlName="property_id"
-              [label]="'contracts.create.property' | transloco"
-              [placeholder]="'contracts.create.selectProperty' | transloco"
-              [options]="propertyOptions()"
-              [required]="true"
-            />
-            @if (hasError('property_id')) {
-              <p class="field-error">{{ 'contracts.create.propertyRequired' | transloco }}</p>
-            }
-          </div>
+        <app-contract-services-section [form]="contractForm" [serviceOptions]="serviceOptions" />
 
-          <!-- Fechas -->
-          <div class="form-row">
-            <div>
-              <app-date-picker
-                formControlName="start_date"
-                [label]="'contracts.create.startDate' | transloco"
-              />
-              @if (hasError('start_date')) {
-                <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
-              }
-            </div>
+        <app-contract-payment-conditions-section [form]="contractForm" />
 
-            <div>
-              <app-date-picker
-                formControlName="end_date"
-                [label]="'contracts.create.endDate' | transloco"
-              />
-              @if (hasError('end_date')) {
-                <p class="field-error">{{ 'contracts.create.dateRequired' | transloco }}</p>
-              }
-            </div>
-
-            <app-date-picker
-              formControlName="key_delivery_date"
-              [label]="'contracts.create.keyDelivery' | transloco"
-            />
-          </div>
-
-          <!-- Alquiler -->
-          <div class="form-row">
-            <div>
-              <app-text-field
-                type="number"
-                formControlName="monthly_rent"
-                [label]="'contracts.create.monthlyRent' | transloco"
-                placeholder="1200.00"
-              />
-              @if (hasError('monthly_rent')) {
-                <p class="field-error">{{ 'contracts.create.amountRequired' | transloco }}</p>
-              }
-            </div>
-
-            <app-text-field
-              type="number"
-              formControlName="payment_day"
-              [label]="'contracts.create.paymentDay' | transloco"
-              placeholder="5"
-            />
-          </div>
-
-          <!-- Método de pago -->
-          <app-text-field
-            class="full-width"
-            formControlName="payment_method"
-            [label]="'contracts.create.paymentMethod' | transloco"
-            [placeholder]="'contracts.create.paymentMethodPlaceholder' | transloco"
-          />
-        </div>
-
-        <!-- Servicios Incluidos -->
-        <div class="form-section">
-          <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
-          <div class="services-grid">
-            @for (service of serviceOptions; track service) {
-              <label class="service-option">
-                <input
-                  type="checkbox"
-                  [checked]="isServiceSelected(service)"
-                  (change)="toggleService(service, $event)"
-                />
-                <span>{{ service }}</span>
-              </label>
-            }
-          </div>
-        </div>
-
-        <!-- Condiciones Adicionales -->
-        <div class="form-section">
-          <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
-
-          <div class="form-row">
-            <app-text-field
-              type="number"
-              formControlName="late_fee_percentage"
-              [label]="'contracts.create.lateFee' | transloco"
-              placeholder="5"
-            />
-
-            <app-text-field
-              type="number"
-              formControlName="grace_days"
-              [label]="'contracts.create.graceDays' | transloco"
-              placeholder="3"
-            />
-          </div>
-        </div>
-
-        <!-- Errores -->
         @if (errorMessage()) {
           <div class="error-message">
             <lucide-icon [img]="AlertCircle" [size]="18" class="error-icon"></lucide-icon>
@@ -152,30 +33,13 @@
           </div>
         }
 
-        <!-- Acciones -->
-        <div class="form-actions">
-          <app-button
-            type="submit"
-            [disabled]="contractForm.invalid || isSubmitting()"
-            [loading]="isSubmitting()"
-          >
-            @if (!isSubmitting()) {
-              <lucide-icon [img]="Save" [size]="18"></lucide-icon>
-            }
-            {{
-              (isSubmitting() ? 'contracts.create.creating' : 'contracts.create.submit') | transloco
-            }}
-          </app-button>
-          <app-button
-            type="button"
-            appearance="outline"
-            (clicked)="goBack()"
-            [disabled]="isSubmitting()"
-          >
-            <lucide-icon [img]="X" [size]="18"></lucide-icon>
-            {{ 'common.cancel' | transloco }}
-          </app-button>
-        </div>
+        <app-contract-form-actions
+          [invalid]="contractForm.invalid"
+          [submitting]="isSubmitting()"
+          idleLabelKey="contracts.create.submit"
+          submittingLabelKey="contracts.create.creating"
+          (cancelled)="goBack()"
+        />
       </form>
     }
   </section>

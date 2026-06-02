@@ -27,16 +27,7 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   if (isAuthenticated && hasToken) {
     // Validate URL slug matches the authenticated user's tenant slug
-    let userSlug: string | null = null;
-    const userJson = localStorage.getItem('admin_user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson) as { tenant_slug?: string };
-        userSlug = user.tenant_slug ?? null;
-      } catch {
-        /* ignore */
-      }
-    }
+    const userSlug = authService.currentUser()?.tenant_slug ?? null;
 
     if (userSlug && slug !== userSlug) {
       // URL slug doesn't match user's tenant — redirect to correct URL
@@ -79,19 +70,9 @@ export const adminLoginGuard: CanActivateFn = (_route, _state) => {
   // Si ya está autenticado, redirigir al dashboard
   if (authService.isAuth()) {
     // Try to get the slug from the stored user first, then fall back to SlugService
-    let userSlug: string | null = null;
+    let userSlug = authService.currentUser()?.tenant_slug ?? null;
 
-    const userJson = localStorage.getItem('admin_user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson) as { tenant_slug?: string };
-        userSlug = user.tenant_slug ?? null;
-      } catch {
-        /* ignore parse errors */
-      }
-    }
-
-    // Fallback to SlugService (loaded from localStorage)
+    // Fallback to SlugService when the user state is still being restored.
     if (!userSlug) {
       userSlug = slugService.getSlug();
     }

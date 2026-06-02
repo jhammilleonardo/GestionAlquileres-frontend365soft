@@ -23,6 +23,7 @@ export interface Property {
   property_subtype_id: number;
   status: PropertyStatus;
   active?: boolean;
+  rental_type?: string | null;
 
   // Ubicación
   latitude?: number;
@@ -149,7 +150,7 @@ export interface PropertyFilters {
   min_price?: number;
   max_price?: number;
   bedrooms?: number;
-  rental_type?: 'short_term' | 'long_term' | 'any';
+  rental_type?: 'SHORT_TERM' | 'LONG_TERM' | 'BOTH' | 'short_term' | 'long_term' | 'any';
 }
 
 export enum SortOption {

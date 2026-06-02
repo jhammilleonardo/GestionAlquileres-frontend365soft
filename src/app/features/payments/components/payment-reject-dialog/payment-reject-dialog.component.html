@@ -1,0 +1,28 @@
+<app-dialog
+  [open]="true"
+  [title]="'payments.rejectPaymentTitle' | transloco: { id: payment().id }"
+  (closed)="closed.emit()"
+>
+  <form class="payment-reject" [formGroup]="form()" (ngSubmit)="submitted.emit()">
+    <app-textarea
+      formControlName="reason"
+      [label]="'payments.rejectionReason' | transloco"
+      [placeholder]="'payments.rejectionReasonHint' | transloco"
+      [minRows]="4"
+      [maxRows]="6"
+    />
+
+    @if (form().controls['reason'].hasError('required') && form().controls['reason'].touched) {
+      <p class="payment-reject__error" aria-live="polite">{{ 'common.required' | transloco }}</p>
+    }
+
+    <div dialog-actions class="payment-reject__actions">
+      <app-button type="button" appearance="flat" (clicked)="closed.emit()">
+        {{ 'common.cancel' | transloco }}
+      </app-button>
+      <app-button type="submit" appearance="destructive">
+        {{ 'common.reject' | transloco }}
+      </app-button>
+    </div>
+  </form>
+</app-dialog>

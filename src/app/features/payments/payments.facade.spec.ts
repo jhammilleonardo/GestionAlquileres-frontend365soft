@@ -13,6 +13,7 @@ import {
 } from '../../core/models/payment.model';
 import { ContractService } from '../../core/services/admin/contract.service';
 import { PaymentService } from '../../core/services/admin/payment.service';
+import { FileDownloadService } from '../../core/services/file-download.service';
 import { FormatService } from '../../core/services/format.service';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
@@ -22,10 +23,62 @@ import { PaymentsFacade } from './payments.facade';
 describe('PaymentsFacade', () => {
   let facade: PaymentsFacade;
   let loadPayments: ReturnType<typeof vi.fn>;
+  let paymentService: {
+    payments: typeof payments;
+    stats: ReturnType<typeof signal<null>>;
+    isLoading: ReturnType<typeof signal<boolean>>;
+    error: ReturnType<typeof signal<null>>;
+    loadPayments: ReturnType<typeof vi.fn>;
+    loadStats: ReturnType<typeof vi.fn>;
+    bulkAction: ReturnType<typeof vi.fn>;
+    exportCsv: ReturnType<typeof vi.fn>;
+    getProofUrl: ReturnType<typeof vi.fn>;
+    downloadProof: ReturnType<typeof vi.fn>;
+    updatePaymentStatus: ReturnType<typeof vi.fn>;
+    deletePayment: ReturnType<typeof vi.fn>;
+    createPaymentAsAdmin: ReturnType<typeof vi.fn>;
+  };
+  let confirmDialog: {
+    confirm: ReturnType<typeof vi.fn>;
+    open: ReturnType<typeof vi.fn>;
+  };
+  let toast: {
+    success: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
+  let fileDownload: {
+    downloadBlob: ReturnType<typeof vi.fn>;
+  };
   const payments = signal<Payment[]>([]);
 
   beforeEach(() => {
     loadPayments = vi.fn();
+    paymentService = {
+      payments,
+      stats: signal(null),
+      isLoading: signal(false),
+      error: signal(null),
+      loadPayments,
+      loadStats: vi.fn(),
+      bulkAction: vi.fn(() => of({ processed: 1, errors: 0 })),
+      exportCsv: vi.fn(() => of(new Blob())),
+      getProofUrl: vi.fn(() => null),
+      downloadProof: vi.fn(() => of(new Blob(['proof'], { type: 'application/pdf' }))),
+      updatePaymentStatus: vi.fn(() => of({})),
+      deletePayment: vi.fn(() => of({})),
+      createPaymentAsAdmin: vi.fn(() => of({})),
+    };
+    confirmDialog = {
+      confirm: vi.fn(() => Promise.resolve(true)),
+      open: vi.fn(() => Promise.resolve({ confirmed: true, value: 'ok' })),
+    };
+    toast = {
+      success: vi.fn(),
+      error: vi.fn(),
+    };
+    fileDownload = {
+      downloadBlob: vi.fn(),
+    };
     payments.set([
       makePayment({ id: 1, status: PaymentStatus.PENDING }),
       makePayment({ id: 2, status: PaymentStatus.APPROVED }),
@@ -36,21 +89,7 @@ describe('PaymentsFacade', () => {
         PaymentsFacade,
         {
           provide: PaymentService,
-          useValue: {
-            payments,
-            stats: signal(null),
-            isLoading: signal(false),
-            error: signal(null),
-            loadPayments,
-            loadStats: vi.fn(),
-            bulkAction: vi.fn(() => of({ processed: 1, errors: 0 })),
-            exportCsv: vi.fn(() => of(new Blob())),
-            getProofUrl: vi.fn(() => null),
-            downloadProof: vi.fn(() => of(new Blob())),
-            updatePaymentStatus: vi.fn(() => of({})),
-            deletePayment: vi.fn(() => of({})),
-            createPaymentAsAdmin: vi.fn(() => of({})),
-          },
+          useValue: paymentService,
         },
         {
           provide: TenantUserService,
@@ -75,17 +114,15 @@ describe('PaymentsFacade', () => {
         },
         {
           provide: ConfirmDialogService,
-          useValue: {
-            confirm: vi.fn(() => Promise.resolve(true)),
-            open: vi.fn(() => Promise.resolve({ confirmed: true, value: 'ok' })),
-          },
+          useValue: confirmDialog,
         },
         {
           provide: ToastService,
-          useValue: {
-            success: vi.fn(),
-            error: vi.fn(),
-          },
+          useValue: toast,
+        },
+        {
+          provide: FileDownloadService,
+          useValue: fileDownload,
         },
       ],
     });
@@ -135,6 +172,112 @@ describe('PaymentsFacade', () => {
     expect(facade.activeFilters()).toEqual({});
     expect(facade.selectedIds()).toEqual([]);
     expect(loadPayments).toHaveBeenCalledWith();
+  });
+
+  it('aprueba un pago pendiente y muestra feedback', () => {
+    const payment = payments()[0];
+
+    facade.approvePayment(payment);
+
+    expect(paymentService.updatePaymentStatus).toHaveBeenCalledWith(1, {
+      status: PaymentStatus.APPROVED,
+      admin_notes: 'Pago aprobado por administrador',
+    });
+    expect(toast.success).toHaveBeenCalledWith('Pago de Inquilino #1 aprobado');
+  });
+
+  it('rechaza un pago con motivo obligatorio', () => {
+    const payment = payments()[0];
+    facade.rejectPayment(payment);
+    facade.rejectForm.controls.reason.setValue('Comprobante ilegible');
+
+    facade.submitRejectPayment();
+
+    expect(paymentService.updatePaymentStatus).toHaveBeenCalledWith(1, {
+      status: PaymentStatus.REJECTED,
+      admin_notes: 'Comprobante ilegible',
+      rejection_reason: 'Comprobante ilegible',
+    });
+    expect(facade.rejectionPayment()).toBeNull();
+    expect(toast.error).toHaveBeenCalledWith('Pago de Inquilino #1 rechazado');
+  });
+
+  it('no rechaza si el motivo no fue informado', () => {
+    facade.rejectPayment(payments()[0]);
+    facade.rejectForm.controls.reason.setValue('');
+
+    facade.submitRejectPayment();
+
+    expect(paymentService.updatePaymentStatus).not.toHaveBeenCalled();
+    expect(facade.rejectForm.controls.reason.touched).toBe(true);
+  });
+
+  it('ejecuta accion masiva de aprobar despues de confirmar', async () => {
+    facade.selectedIds.set([1]);
+
+    await facade.executeBulkAction('approve');
+
+    expect(confirmDialog.confirm).toHaveBeenCalled();
+    expect(paymentService.bulkAction).toHaveBeenCalledWith({
+      ids: [1],
+      action: 'approve',
+      admin_notes: undefined,
+    });
+    expect(facade.selectedIds()).toEqual([]);
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('ejecuta accion masiva de rechazar con motivo', async () => {
+    facade.selectedIds.set([1]);
+
+    await facade.executeBulkAction('reject');
+
+    expect(confirmDialog.open).toHaveBeenCalled();
+    expect(paymentService.bulkAction).toHaveBeenCalledWith({
+      ids: [1],
+      action: 'reject',
+      admin_notes: 'ok',
+    });
+  });
+
+  it('no ejecuta accion masiva si el usuario cancela', async () => {
+    confirmDialog.confirm.mockResolvedValue(false);
+    facade.selectedIds.set([1]);
+
+    await facade.executeBulkAction('delete');
+
+    expect(paymentService.bulkAction).not.toHaveBeenCalled();
+  });
+
+  it('exporta CSV con los filtros activos', () => {
+    facade.activeFilters.set({ status: PaymentStatus.PENDING });
+
+    facade.exportCsv();
+
+    expect(paymentService.exportCsv).toHaveBeenCalledWith({ status: PaymentStatus.PENDING });
+    expect(fileDownload.downloadBlob).toHaveBeenCalledWith(
+      expect.any(Blob),
+      expect.stringMatching(/^pagos_.*\.csv$/),
+    );
+  });
+
+  it('carga comprobante como URL temporal y permite cerrar el visor', () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:proof');
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    paymentService.getProofUrl.mockReturnValue('/proof.pdf');
+
+    facade.openProof({ ...payments()[0], proof_file: 'proof.pdf' });
+
+    expect(paymentService.downloadProof).toHaveBeenCalled();
+    expect(createObjectUrl).toHaveBeenCalled();
+    expect(facade.proofObjectUrl()).toBe('blob:proof');
+    expect(facade.proofLoading()).toBe(false);
+    expect(facade.isProofPdf({ ...payments()[0], proof_file: 'proof.pdf' })).toBe(true);
+
+    facade.closeProof();
+
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:proof');
+    expect(facade.selectedProofPayment()).toBeNull();
   });
 });
 

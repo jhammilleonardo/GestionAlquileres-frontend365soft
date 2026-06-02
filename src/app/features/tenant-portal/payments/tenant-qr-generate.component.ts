@@ -26,6 +26,7 @@ import { TranslocoModule } from '@jsverse/transloco';
 
 import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { FileDownloadService } from '../../../core/services/file-download.service';
 import { TenantContractService } from '../../../core/services/tenant/tenant-contract.service';
 import {
   Currency,
@@ -616,6 +617,7 @@ export class TenantQrGenerateComponent {
   readonly qrService = inject(TenantQrPaymentService);
   private readonly fb = inject(FormBuilder);
   private readonly slugService = inject(SlugService);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly destroyRef = inject(DestroyRef);
   readonly contractService = inject(TenantContractService);
@@ -730,10 +732,7 @@ export class TenantQrGenerateComponent {
     if (!raw) return;
     const href =
       raw.startsWith('http') || raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
-    const a = document.createElement('a');
-    a.href = href;
-    a.download = `QR-pago-${qr.id}.png`;
-    a.click();
+    this.fileDownload.downloadUrl(href, `QR-pago-${qr.id}.png`);
   }
 
   resetQr(): void {

@@ -12,6 +12,27 @@ export interface MyPermissions {
   allowedModules: string[];
 }
 
+const ADMIN_MODULES = [
+  'properties',
+  'units',
+  'users',
+  'contracts',
+  'payments',
+  'maintenance',
+  'reports',
+  'config',
+  'employees',
+  'owners',
+  'inspections',
+  'violations',
+  'expenses',
+  'vendors',
+  'messages',
+  'audit',
+  'website',
+  'applications',
+];
+
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
   private http = inject(HttpClient);
@@ -74,6 +95,32 @@ export class PermissionsService {
 
     return this.http
       .get<MyPermissions>(`${environment.apiUrl}${slug}/admin/employees/my-permissions`)
-      .pipe(catchError(() => of(null)));
+      .pipe(catchError(() => of(this.getFallbackPermissions())));
+  }
+
+  private getFallbackPermissions(): MyPermissions | null {
+    const user = this.getStoredAdminUser();
+    const role = user?.role;
+
+    if (role === 'ADMIN' || role === 'SUPERADMIN') {
+      return { role, allowedModules: ADMIN_MODULES };
+    }
+
+    if (role === 'TECNICO') {
+      return { role, allowedModules: ['maintenance'] };
+    }
+
+    return role ? { role, allowedModules: [] } : null;
+  }
+
+  private getStoredAdminUser(): { role?: UserRole } | null {
+    const raw = localStorage.getItem('admin_user') ?? sessionStorage.getItem('admin_user');
+    if (!raw) return null;
+
+    try {
+      return JSON.parse(raw) as { role?: UserRole };
+    } catch {
+      return null;
+    }
   }
 }

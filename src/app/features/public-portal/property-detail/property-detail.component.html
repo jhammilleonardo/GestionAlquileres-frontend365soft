@@ -269,6 +269,8 @@
             <app-availability-calendar
               [propertyId]="property()!.id"
               [unitId]="unit.id"
+              [propertyTitle]="property()!.title"
+              [unitNumber]="unit.unit_number"
               [pricePerNight]="unit.price_per_night ?? 0"
               [cleaningFee]="unit.cleaning_fee ?? 0"
               [minNights]="unit.min_nights ?? 1"
@@ -325,9 +327,11 @@
           </div>
 
           <div class="cta-actions-new">
-            <button type="button" class="btn-apply-now" (click)="openApplicationModal()">
-              {{ 'public.propertyDetail.applyNow' | transloco }}
-            </button>
+            @if (supportsLongTermProperty(prop)) {
+              <button type="button" class="btn-apply-now" (click)="openApplicationModal()">
+                {{ 'public.propertyDetail.applyNow' | transloco }}
+              </button>
+            }
             <button type="button" class="btn-message-now" (click)="openContactModal()">
               <lucide-icon [img]="MessageSquare" class="btn-icon-small" />
               {{ 'public.propertyDetail.sendMessage' | transloco }}

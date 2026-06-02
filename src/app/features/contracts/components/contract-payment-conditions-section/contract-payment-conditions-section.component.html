@@ -1,0 +1,19 @@
+<div class="form-section" [formGroup]="form()">
+  <h2>{{ 'contracts.create.paymentConditions' | transloco }}</h2>
+
+  <div class="form-row">
+    <app-text-field
+      type="number"
+      formControlName="late_fee_percentage"
+      [label]="'contracts.create.lateFee' | transloco"
+      placeholder="5"
+    />
+
+    <app-text-field
+      type="number"
+      formControlName="grace_days"
+      [label]="'contracts.create.graceDays' | transloco"
+      placeholder="3"
+    />
+  </div>
+</div>

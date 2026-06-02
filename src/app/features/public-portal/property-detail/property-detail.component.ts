@@ -84,7 +84,7 @@ export class PropertyDetailComponent {
   /** Primera unidad de alquiler corto plazo con precio configurado (para el calendario). */
   readonly shortTermUnit = computed(() =>
     (this.property()?.units ?? []).find(
-      (u) => (u.rental_type ?? '').toUpperCase().includes('SHORT') && (u.price_per_night ?? 0) > 0,
+      (u) => this.supportsShortTerm(u.rental_type) && Number(u.price_per_night ?? 0) > 0,
     ),
   );
 
@@ -104,6 +104,16 @@ export class PropertyDetailComponent {
   private readonly authService = inject(TenantAuthService);
   private readonly toast = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+
+  private supportsShortTerm(type: string | null | undefined): boolean {
+    const normalized = (type ?? '').toUpperCase();
+    return normalized === 'SHORT_TERM' || normalized === 'BOTH';
+  }
+
+  protected supportsLongTermProperty(property: Property): boolean {
+    const normalized = (property.rental_type ?? '').toUpperCase();
+    return !normalized || normalized === 'LONG_TERM' || normalized === 'BOTH';
+  }
 
   constructor() {
     this.loadPropertyFromRoute();

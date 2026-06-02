@@ -11,6 +11,7 @@ import {
   FileText,
 } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
+import { FileDownloadService } from '../../../core/services/file-download.service';
 import { TenantDocumentService } from '../../../core/services/tenant/tenant-document.service';
 import { FormatService } from '../../../core/services/format.service';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
@@ -362,6 +363,7 @@ export class TenantDocumentsComponent {
   readonly FileCheck = FileCheck;
 
   protected readonly documentService = inject(TenantDocumentService);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly translocoService = inject(TranslocoService);
   private readonly formatService = inject(FormatService);
   private readonly confirmDialog = inject(ConfirmDialogService);
@@ -399,12 +401,7 @@ export class TenantDocumentsComponent {
   protected downloadDocument(document: TenantDocument): void {
     this.documentService.downloadDocument(document.id).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const link = window.document.createElement('a');
-        link.href = url;
-        link.download = document.file_name;
-        link.click();
-        window.URL.revokeObjectURL(url);
+        this.fileDownload.downloadBlob(blob, document.file_name);
       },
       error: () => {
         this.toast.error(this.translocoService.translate('tenantDocuments.downloadError'));

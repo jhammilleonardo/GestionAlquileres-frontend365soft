@@ -1,0 +1,40 @@
+.payment-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.payment-detail__item {
+  label {
+    display: block;
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    color: #1e293b;
+  }
+}
+
+.payment-detail__item--full {
+  grid-column: 1 / -1;
+}
+
+.payment-detail__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .payment-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-detail__actions {
+    flex-direction: column-reverse;
+  }
+}

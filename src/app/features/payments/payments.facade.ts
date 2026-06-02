@@ -25,6 +25,7 @@ import {
 import { AdminTenantUser } from '../../core/models/tenant-user.model';
 import { Contract, ContractService } from '../../core/services/admin/contract.service';
 import { PaymentService } from '../../core/services/admin/payment.service';
+import { FileDownloadService } from '../../core/services/file-download.service';
 import { FormatService } from '../../core/services/format.service';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
@@ -37,6 +38,7 @@ export class PaymentsFacade {
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly fileDownload = inject(FileDownloadService);
   readonly paymentService = inject(PaymentService);
   readonly tenantUserService = inject(TenantUserService);
   readonly contractService = inject(ContractService);
@@ -360,14 +362,7 @@ export class PaymentsFacade {
     const filters = this.activeFilters();
     this.paymentService.exportCsv(filters).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `pagos_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        this.fileDownload.downloadBlob(blob, `pagos_${new Date().toISOString().split('T')[0]}.csv`);
       },
       error: (error: HttpErrorResponse) => {
         let msg = `Error ${error.status || ''}: `;

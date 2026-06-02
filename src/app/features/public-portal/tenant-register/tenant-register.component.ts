@@ -24,6 +24,9 @@ import {
 import { environment } from '../../../../environments/environment';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SlugService } from '../../../core/services/slug.service';
+import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
+import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
@@ -35,7 +38,7 @@ interface RegisterResponse {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role: 'TENANT' | 'INQUILINO';
   phone: string;
   tenant_id: number;
   created_at: string;
@@ -678,6 +681,9 @@ export class TenantRegisterComponent implements OnInit {
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
   private slugService = inject(SlugService);
+  private applicationIntentionService = inject(ApplicationIntentionService);
+  private reservationIntentionService = inject(ReservationIntentionService);
+  private tenantAuthService = inject(TenantAuthService);
   private translocoService = inject(TranslocoService);
 
   showPassword = signal(false);
@@ -787,9 +793,11 @@ export class TenantRegisterComponent implements OnInit {
 
           // If API returns access_token, save it and redirect to dashboard
           if (response.access_token) {
-            // Save token and user data
-            localStorage.setItem('tenant_access_token', response.access_token);
-            localStorage.setItem('tenant_user', JSON.stringify(response));
+            this.tenantAuthService.setSessionFromToken(
+              response.access_token,
+              response,
+              this.slug ?? undefined,
+            );
 
             this.successMessage.set(
               this.translocoService.translate('public.tenantRegister.redirectingMsg'),
@@ -797,9 +805,7 @@ export class TenantRegisterComponent implements OnInit {
 
             // Redirect to tenant dashboard after 1 second
             setTimeout(() => {
-              void this.router.navigate(['/', this.slug, 'portal', 'dashboard'], {
-                replaceUrl: true,
-              });
+              this.navigateAfterAuthenticatedRegister();
             }, 1000);
           } else {
             // No token returned, redirect to login
@@ -826,5 +832,23 @@ export class TenantRegisterComponent implements OnInit {
           );
         },
       });
+  }
+
+  private navigateAfterAuthenticatedRegister(): void {
+    if (!this.slug) return;
+
+    if (this.reservationIntentionService.hasIntention()) {
+      this.reservationIntentionService.navigateToReservation(this.slug);
+      return;
+    }
+
+    if (this.applicationIntentionService.hasIntention()) {
+      this.applicationIntentionService.navigateToApplication(this.slug);
+      return;
+    }
+
+    void this.router.navigate(['/', this.slug, 'portal', 'home'], {
+      replaceUrl: true,
+    });
   }
 }

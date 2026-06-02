@@ -2,10 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  AdminOperationsService,
-  ApiRecord,
-} from '../../core/services/admin/admin-operations.service';
+import { AdminOperationsService } from '../../core/services/admin/admin-operations.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { ReportsFacade } from './reports.facade';
 
@@ -38,7 +35,7 @@ describe('ReportsFacade', () => {
     facade = TestBed.inject(ReportsFacade);
   });
 
-  it('loads kpis and the active report with filters', () => {
+  it('loads kpis and builds the executive summary with filters', () => {
     facade.filterForm.patchValue({
       property_id: '44',
       status: 'active',
@@ -55,9 +52,9 @@ describe('ReportsFacade', () => {
       to: '2026-01-31',
     };
     expect(operations.getReportsKpis).toHaveBeenCalledWith(params);
-    expect(operations.getReportRows).toHaveBeenCalledWith('rent-roll', params);
+    expect(operations.getReportRows).not.toHaveBeenCalled();
     expect(facade.kpis().occupancyRateValue).toBe(0.9);
-    expect(facade.rows()).toEqual([{ id: 1, property: 'Casa Centro' } as ApiRecord]);
+    expect(facade.rows()[0]).toMatchObject({ metric: 'Ingresos del mes' });
   });
 
   it('switches report type and reloads rows', () => {
@@ -65,6 +62,13 @@ describe('ReportsFacade', () => {
 
     expect(facade.activeReport()).toBe('pnl');
     expect(operations.getReportRows).toHaveBeenCalledWith('pnl', {});
+  });
+
+  it('uses backend exports only for backend-backed reports', () => {
+    facade.downloadReport('pdf');
+
+    expect(operations.downloadReport).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('Este reporte todavia no tiene exportacion backend');
   });
 
   it('clears filters and reloads dashboard', () => {
@@ -84,6 +88,7 @@ describe('ReportsFacade', () => {
   it('shows export errors from backend downloads', () => {
     operations.downloadReport.mockReturnValue(throwError(() => new Error('fail')));
 
+    facade.loadReport('pnl');
     facade.downloadReport('pdf');
 
     expect(toast.error).toHaveBeenCalledWith('No se pudo exportar el reporte');

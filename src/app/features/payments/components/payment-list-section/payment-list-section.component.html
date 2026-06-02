@@ -1,0 +1,29 @@
+<section class="payment-list">
+  @if (loading()) {
+    <div class="payment-list__loading">
+      <app-loading-state [label]="'payments.loading' | transloco" />
+    </div>
+  } @else if (payments().length === 0) {
+    <div class="payment-list__empty">
+      <lucide-icon [img]="DollarSign" [size]="48"></lucide-icon>
+      <h3>{{ 'payments.empty' | transloco }}</h3>
+      <p>{{ 'payments.emptyHint' | transloco }}</p>
+    </div>
+  } @else {
+    <app-payment-table
+      [payments]="payments()"
+      [selectedIds]="selectedIds()"
+      [pendingPaymentIds]="pendingPaymentIds()"
+      (rowSelected)="rowSelected.emit($event)"
+      (selectionToggled)="selectionToggled.emit($event)"
+      (selectAllToggled)="selectAllToggled.emit($event)"
+      (approved)="approved.emit($event)"
+      (rejected)="rejected.emit($event)"
+    />
+
+    <div class="payment-list__footer">
+      <p>{{ 'payments.totalCount' | transloco: { count: payments().length } }}</p>
+      <p>{{ 'payments.totalAmount' | transloco: { amount: formatCurrency(totalAmount()) } }}</p>
+    </div>
+  }
+</section>

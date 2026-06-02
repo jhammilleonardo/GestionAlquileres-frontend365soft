@@ -1,0 +1,29 @@
+@if (selectedCount() > 0) {
+  <div class="payment-bulk-actions">
+    <span class="payment-bulk-actions__count">
+      {{ 'payments.selected' | transloco: { count: selectedCount() } }}
+    </span>
+
+    <div class="payment-bulk-actions__buttons">
+      <app-button (clicked)="actionSelected.emit('approve')">
+        <lucide-icon [img]="CheckCircle2" [size]="18"></lucide-icon>
+        {{ 'payments.approveAll' | transloco }}
+      </app-button>
+
+      <app-button appearance="destructive" (clicked)="actionSelected.emit('reject')">
+        <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
+        {{ 'payments.rejectAll' | transloco }}
+      </app-button>
+
+      <app-button appearance="outline" (clicked)="actionSelected.emit('delete')">
+        <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
+        {{ 'payments.deleteAll' | transloco }}
+      </app-button>
+
+      <app-button appearance="flat" (clicked)="selectionCleared.emit()">
+        <lucide-icon [img]="X" [size]="18"></lucide-icon>
+        {{ 'common.cancel' | transloco }}
+      </app-button>
+    </div>
+  </div>
+}

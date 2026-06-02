@@ -1,0 +1,42 @@
+@use '../contract-form-section.shared';
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.service-option {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 0.625rem;
+  min-height: 42px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-color-surface);
+  color: var(--app-color-text);
+  cursor: pointer;
+  font-weight: 650;
+  padding: 0.65rem 0.75rem;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.service-option:hover {
+  border-color: var(--app-color-primary);
+  background: var(--app-color-primary-soft);
+}
+
+.service-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--app-color-primary);
+}
+
+@media (max-width: 768px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}

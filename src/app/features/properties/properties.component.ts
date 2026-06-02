@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { LucideAngularModule, Building2, Plus, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, Plus } from 'lucide-angular';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 
+import { Property } from '../../core/models/property.model';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
-import { AppDialogComponent } from '../../shared/ui/dialog/dialog.component';
-import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
-import { PropertyCardComponent } from './components/property-card/property-card.component';
+import { PropertyDeleteDialogComponent } from './components/property-delete-dialog/property-delete-dialog.component';
 import { PropertyFiltersComponent } from './components/property-filters/property-filters.component';
 import { PropertyFormDialogComponent } from './components/property-form-dialog/property-form-dialog.component';
+import { PropertyListSectionComponent } from './components/property-list-section/property-list-section.component';
 import { PropertiesFacade } from './properties.facade';
 
 @Component({
@@ -19,12 +19,11 @@ import { PropertiesFacade } from './properties.facade';
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
-    AppDialogComponent,
-    AppLoadingStateComponent,
     AppPageHeaderComponent,
-    PropertyCardComponent,
+    PropertyDeleteDialogComponent,
     PropertyFiltersComponent,
     PropertyFormDialogComponent,
+    PropertyListSectionComponent,
   ],
   templateUrl: './properties.component.html',
   styleUrl: './properties.component.scss',
@@ -37,7 +36,7 @@ import { PropertiesFacade } from './properties.facade';
 export class PropertiesComponent {
   readonly propiedades = inject(PropertiesFacade);
 
-  readonly Building2 = Building2;
   readonly Plus = Plus;
-  readonly Trash2 = Trash2;
+  readonly resolvePropertyImage = (property: Property): string =>
+    this.propiedades.getPropertyImage(property);
 }

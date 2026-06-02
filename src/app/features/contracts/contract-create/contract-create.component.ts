@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { LucideAngularModule, AlertCircle, ArrowLeft, Save, X } from 'lucide-angular';
+import { LucideAngularModule, AlertCircle, ArrowLeft } from 'lucide-angular';
 import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
 import { AdminUserService } from '../../../core/services/admin/admin-user.service';
 import { PropertyService } from '../../../core/services/admin/property.service';
@@ -11,13 +11,16 @@ import { provideTranslocoScope } from '@jsverse/transloco';
 import { SERVICE_OPTIONS } from '../../../core/models/contract.model';
 import { Property } from '../../../core/models/property.model';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
-import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
-import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
-import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
+import { AppSelectOption } from '../../../shared/ui/select/select.component';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { ContractCreateFormValue } from '../models/contract-form.model';
 import { hasValidContractDateRange, toCreateContractDto } from '../mappers/contract-form.mapper';
+import { ContractDateRentSectionComponent } from '../components/contract-date-rent-section/contract-date-rent-section.component';
+import { ContractFormActionsComponent } from '../components/contract-form-actions/contract-form-actions.component';
+import { ContractPartySelectSectionComponent } from '../components/contract-party-select-section/contract-party-select-section.component';
+import { ContractPaymentConditionsSectionComponent } from '../components/contract-payment-conditions-section/contract-payment-conditions-section.component';
+import { ContractServicesSectionComponent } from '../components/contract-services-section/contract-services-section.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,10 +31,12 @@ import { hasValidContractDateRange, toCreateContractDto } from '../mappers/contr
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
-    AppDatePickerComponent,
     AppLoadingStateComponent,
-    AppSelectComponent,
-    AppTextFieldComponent,
+    ContractDateRentSectionComponent,
+    ContractFormActionsComponent,
+    ContractPartySelectSectionComponent,
+    ContractPaymentConditionsSectionComponent,
+    ContractServicesSectionComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
   templateUrl: './contract-create.component.html',
@@ -39,8 +44,6 @@ import { hasValidContractDateRange, toCreateContractDto } from '../mappers/contr
 })
 export class ContractCreateComponent {
   readonly ArrowLeft = ArrowLeft;
-  readonly Save = Save;
-  readonly X = X;
   readonly AlertCircle = AlertCircle;
 
   private fb = inject(FormBuilder);
@@ -118,29 +121,6 @@ export class ContractCreateComponent {
     this.userService.loadTenants();
   }
 
-  isServiceSelected(service: string): boolean {
-    const services = (this.contractForm.get('included_services')?.value as string[]) || [];
-    return services.includes(service);
-  }
-
-  toggleService(service: string, event: Event): void {
-    const services = (this.contractForm.get('included_services')?.value as string[]) || [];
-    const index = services.indexOf(service);
-    const checked = (event.target as HTMLInputElement).checked;
-
-    if (checked) {
-      if (index === -1) {
-        services.push(service);
-      }
-    } else {
-      if (index > -1) {
-        services.splice(index, 1);
-      }
-    }
-
-    this.contractForm.patchValue({ included_services: services });
-  }
-
   private loadProperties(): void {
     this.isLoadingProperties.set(true);
 
@@ -155,11 +135,6 @@ export class ContractCreateComponent {
         this.isLoadingProperties.set(false);
       },
     });
-  }
-
-  hasError(controlName: string): boolean {
-    const control = this.contractForm.get(controlName);
-    return Boolean(control?.invalid && control?.touched);
   }
 
   onSubmit(): void {

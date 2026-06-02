@@ -1,0 +1,165 @@
+<div class="create-payment-container">
+  <div class="page-header">
+    <button type="button" (click)="goBack()" class="back-btn">
+      <lucide-icon [img]="ArrowLeft" [size]="24"></lucide-icon>
+    </button>
+    <div>
+      <h1>{{ 'public.tenantCreatePayment.title' | transloco }}</h1>
+      <p>{{ 'public.tenantCreatePayment.subtitle' | transloco }}</p>
+    </div>
+  </div>
+
+  <app-tenant-contract-payment-summary
+    [loading]="contractService.isLoading()"
+    [contract]="contractService.currentContract()"
+  />
+
+  <app-tenant-payment-schedule
+    [loading]="contractService.isLoading()"
+    [schedule]="paymentSchedule()"
+    [expanded]="calendarExpanded()"
+    [paidCount]="paidCount()"
+    (toggleExpanded)="calendarExpanded.set(!calendarExpanded())"
+  />
+
+  @if (paymentService.error()) {
+    <div class="error-alert">
+      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+      <span>{{ paymentService.error() }}</span>
+    </div>
+  }
+  @if (qrError()) {
+    <div class="error-alert">
+      <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
+      <span>{{ qrError() }}</span>
+    </div>
+  }
+
+  @if (qrService.activeQr()?.status === QrStatus.PAGADO) {
+    <app-tenant-payment-success-state
+      kind="qr"
+      [amount]="qrService.activeQr()!.amount"
+      [currencySymbol]="currencySymbol(qrService.activeQr()!.currency)"
+      [transactionId]="qrService.activeQr()!.transaction_id ?? null"
+      (back)="goBack()"
+      (newPayment)="resetForm()"
+    />
+  } @else if (success()) {
+    <app-tenant-payment-success-state kind="manual" (back)="goBack()" (newPayment)="resetForm()" />
+  } @else {
+    <section class="form-card">
+      <div class="form-card-header">
+        <span class="form-card-header-icon">
+          <lucide-icon [img]="CreditCard" [size]="16"></lucide-icon>
+        </span>
+        <span>{{ 'public.tenantCreatePayment.registerPayment' | transloco }}</span>
+      </div>
+
+      <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()" class="form-body">
+        <app-tenant-payment-basic-fields
+          [form]="paymentForm"
+          [paymentTypes]="paymentTypes"
+          [paymentMethods]="paymentMethods"
+          [currencyOptions]="currencySelectOptions"
+          [maxDate]="maxDateInput"
+        />
+
+        @if (isQrMethod()) {
+          <app-tenant-payment-qr-panel
+            [activeQr]="qrService.activeQr()"
+            [safeUrl]="qrSafeUrl()"
+            [currencySymbol]="currencySymbol(qrService.activeQr()?.currency || '')"
+            [formattedExpiration]="
+              qrService.activeQr()?.expires_at ? formatDate(qrService.activeQr()!.expires_at!) : ''
+            "
+            [polling]="qrPolling()"
+            [cancelling]="qrCancelling()"
+            [loading]="qrService.isLoading()"
+            [amountInvalid]="!!paymentForm.get('amount')?.invalid"
+            (reset)="resetQr()"
+            (verify)="manualVerify()"
+            (download)="downloadQr()"
+            (cancel)="onCancelQr()"
+            (back)="goBack()"
+          />
+        }
+
+        @if (!isQrMethod()) {
+          <app-tenant-payment-method-details
+            [form]="paymentForm"
+            [method]="paymentForm.get('payment_method')?.value"
+          />
+        }
+
+        @if (!isQrMethod()) {
+          <div class="form-section last">
+            <div class="section-title">
+              <span class="section-title-accent"></span>
+              <lucide-icon [img]="FileText" [size]="15"></lucide-icon>
+              {{ 'public.tenantCreatePayment.receiptSection' | transloco }}
+            </div>
+
+            <app-tenant-payment-receipt-upload
+              [file]="selectedReceipt()"
+              [error]="receiptError()"
+              [previewKind]="receiptPreviewKind()"
+              [previewUrl]="receiptPreviewSafeUrl()"
+              [modalOpen]="isReceiptModalOpen()"
+              [zoom]="receiptZoom()"
+              [minZoom]="minReceiptZoom"
+              [maxZoom]="maxReceiptZoom"
+              (fileSelected)="onReceiptFileSelected($event)"
+              (openPreview)="openReceiptModal()"
+              (remove)="removeReceipt()"
+              (closeModal)="closeReceiptModal()"
+              (zoomIn)="zoomInReceipt()"
+              (zoomOut)="zoomOutReceipt()"
+              (resetZoom)="resetReceiptZoom()"
+              (wheel)="onReceiptModalWheel($event)"
+            />
+
+            <app-textarea
+              formControlName="notes"
+              [label]="'public.tenantCreatePayment.notesLbl' | transloco"
+              [placeholder]="'public.tenantCreatePayment.notesPlaceholder' | transloco"
+              [minRows]="3"
+              [maxRows]="5"
+              [maxLength]="500"
+            />
+            <p class="field-hint align-end">
+              {{ paymentForm.get('notes')?.value?.length || 0 }} / 500
+            </p>
+          </div>
+
+          <div class="form-actions">
+            <app-button
+              type="submit"
+              [loading]="paymentService.isLoading()"
+              [disabled]="paymentForm.invalid || !selectedReceipt()"
+            >
+              <lucide-icon [img]="CreditCard" [size]="20"></lucide-icon>
+              {{ 'public.tenantCreatePayment.registerPayment' | transloco }}
+            </app-button>
+            <app-button
+              type="button"
+              appearance="outline"
+              [disabled]="paymentService.isLoading()"
+              (clicked)="goBack()"
+            >
+              {{ 'public.tenantCreatePayment.cancel' | transloco }}
+            </app-button>
+          </div>
+
+          @if (paymentService.isLoading() && uploadProgress() > 0) {
+            <div class="upload-progress">
+              <div class="upload-progress-track">
+                <span [style.width.%]="uploadProgress()"></span>
+              </div>
+              <span>{{ uploadProgress() }}%</span>
+            </div>
+          }
+        }
+      </form>
+    </section>
+  }
+</div>

@@ -25,6 +25,7 @@ import {
 } from 'lucide-angular';
 import { TenantMaintenanceService } from '../../../core/services/tenant/tenant-maintenance.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { MaintenanceReadStateService } from '../../../core/services/maintenance/maintenance-read-state.service';
 import {
   MaintenanceCategory,
   MaintenanceMessage,
@@ -529,8 +530,7 @@ export class TenantMaintenanceListComponent implements OnInit {
   }
 
   getUnreadCount(requestId: number, totalVisible: number): number {
-    const read = parseInt(localStorage.getItem(`mnt_read_${requestId}`) ?? '0', 10);
-    return Math.max(0, totalVisible - read);
+    return this.readState.getTenantVisibleUnreadCount(requestId, totalVisible);
   }
 
   getCategoryBg(category: MaintenanceCategory): string {
@@ -543,6 +543,7 @@ export class TenantMaintenanceListComponent implements OnInit {
 
   maintenanceService = inject(TenantMaintenanceService);
   private slugService = inject(SlugService);
+  private readState = inject(MaintenanceReadStateService);
 
   searchQuery = '';
   selectedStatus: MaintenanceFilterStatus = 'all';

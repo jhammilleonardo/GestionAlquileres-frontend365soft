@@ -1,0 +1,27 @@
+<app-dialog
+  [open]="true"
+  [title]="'properties.confirmDelete' | transloco"
+  (closed)="cancelled.emit()"
+>
+  <div class="property-delete">
+    <div class="property-delete__icon">
+      <lucide-icon [img]="Trash2" [size]="28"></lucide-icon>
+    </div>
+
+    <p>
+      {{ 'properties.confirmDeleteMessage' | transloco }}
+      <strong>"{{ property().title }}"</strong>?
+    </p>
+    <p class="property-delete__warning">{{ 'common.irreversible' | transloco }}</p>
+
+    <div dialog-actions class="property-delete__actions">
+      <app-button appearance="flat" (clicked)="cancelled.emit()">
+        {{ 'common.cancel' | transloco }}
+      </app-button>
+      <app-button appearance="destructive" (clicked)="confirmed.emit()">
+        <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
+        {{ 'common.delete' | transloco }}
+      </app-button>
+    </div>
+  </div>
+</app-dialog>

@@ -1,0 +1,29 @@
+<div class="form-section" [formGroup]="form()">
+  <h2>{{ 'contracts.create.basicInfo' | transloco }}</h2>
+
+  <div class="full-width">
+    <app-select
+      formControlName="tenant_id"
+      [label]="'contracts.create.tenant' | transloco"
+      [placeholder]="'contracts.create.selectTenant' | transloco"
+      [options]="tenantOptions()"
+      [required]="true"
+    />
+    @if (hasError('tenant_id')) {
+      <p class="field-error">{{ 'contracts.create.tenantRequired' | transloco }}</p>
+    }
+  </div>
+
+  <div class="full-width">
+    <app-select
+      formControlName="property_id"
+      [label]="'contracts.create.property' | transloco"
+      [placeholder]="'contracts.create.selectProperty' | transloco"
+      [options]="propertyOptions()"
+      [required]="true"
+    />
+    @if (hasError('property_id')) {
+      <p class="field-error">{{ 'contracts.create.propertyRequired' | transloco }}</p>
+    }
+  </div>
+</div>

@@ -1,17 +1,23 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { CurrencyPipe, DecimalPipe } from '@angular/common';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { ApiRecord } from '../../core/services/admin/admin-operations.service';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
 import { AppDatePickerComponent } from '../../shared/ui/date-picker/date-picker.component';
 import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import {
+  AppSegmentedControlComponent,
+  AppSegmentedControlOption,
+} from '../../shared/ui/segmented-control/segmented-control.component';
 import { AppSelectComponent, AppSelectOption } from '../../shared/ui/select/select.component';
-import { AppTableColumn, AppTableComponent } from '../../shared/ui/table/table.component';
+import { AppTableComponent } from '../../shared/ui/table/table.component';
 import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
-import { ReportsFacade } from './reports.facade';
+import { AppToolbarComponent } from '../../shared/ui/toolbar/toolbar.component';
+import { ReportBarChartComponent } from './components/report-bar-chart.component';
+import { ReportDonutChartComponent } from './components/report-donut-chart.component';
+import { ReportLineChartComponent } from './components/report-line-chart.component';
+import { ReportType, ReportsFacade } from './reports.facade';
 
 @Component({
   selector: 'app-reports',
@@ -22,12 +28,16 @@ import { ReportsFacade } from './reports.facade';
     AppEmptyStateComponent,
     AppLoadingStateComponent,
     AppPageHeaderComponent,
+    AppSegmentedControlComponent,
     AppSelectComponent,
     AppTableComponent,
     AppTextFieldComponent,
-    CurrencyPipe,
-    DecimalPipe,
+    AppToolbarComponent,
+    FormsModule,
     ReactiveFormsModule,
+    ReportBarChartComponent,
+    ReportDonutChartComponent,
+    ReportLineChartComponent,
   ],
   providers: [ReportsFacade],
   templateUrl: './reports.component.html',
@@ -45,15 +55,18 @@ export class ReportsComponent {
     { value: 'overdue', label: 'En mora' },
   ];
 
-  readonly columns: AppTableColumn<ApiRecord>[] = [
-    { key: 'property', label: 'Propiedad' },
-    { key: 'unit', label: 'Unidad' },
-    { key: 'tenant', label: 'Inquilino' },
-    { key: 'status', label: 'Estado' },
-    { key: 'amount', label: 'Monto', align: 'right' },
-  ];
+  readonly reportOptions: readonly AppSegmentedControlOption<string>[] = this.facade.reports.map(
+    (report) => ({
+      label: report.label,
+      value: report.type,
+    }),
+  );
 
   constructor() {
     this.facade.loadDashboard();
+  }
+
+  protected selectReport(type: string | null): void {
+    if (type) this.facade.loadReport(type as ReportType);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, input, inject } from '@angular/core';
 import {
   LucideAngularModule,
   Plus,
@@ -14,7 +14,6 @@ import {
 } from 'lucide-angular';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { NgClass } from '@angular/common';
-import { UnitService } from '../../../core/services/admin/unit.service';
 import { Unit, UnitStatus } from '../../../core/models/unit.model';
 import { UnitFormDialogComponent } from './unit-form-dialog/unit-form-dialog.component';
 import { UnitDetailPanelComponent } from './unit-detail-panel/unit-detail-panel.component';
@@ -22,9 +21,7 @@ import { BlockDatesDialogComponent } from './block-dates-dialog/block-dates-dial
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
-import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { getApiErrorMessage } from '../../../core/http/http-error.util';
+import { PropertyUnitsFacade } from './property-units.facade';
 
 @Component({
   selector: 'app-property-units',
@@ -42,9 +39,10 @@ import { getApiErrorMessage } from '../../../core/http/http-error.util';
   ],
   templateUrl: './property-units.component.html',
   styleUrls: ['./property-units.component.scss'],
+  providers: [PropertyUnitsFacade],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PropertyUnitsComponent {
+export class PropertyUnitsComponent implements OnInit {
   readonly Plus = Plus;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
@@ -61,135 +59,65 @@ export class PropertyUnitsComponent {
   propertyId = input.required<number>();
   propertySlug = input.required<string>();
 
-  private unitService = inject(UnitService);
-  private confirmDialog = inject(ConfirmDialogService);
-  private toast = inject(ToastService);
+  protected readonly facade = inject(PropertyUnitsFacade);
 
-  units = signal<Unit[]>([]);
-  isLoading = signal(true);
-  selectedUnit = signal<Unit | null>(null);
-  statusFilter = signal<UnitStatus | 'all'>('all');
-  confirmingDeleteId = signal<number | null>(null);
-  formDialogOpen = signal(false);
-  formDialogUnit = signal<Unit | null>(null);
-  blockDatesOpen = signal(false);
-  blockDatesUnit = signal<Unit | null>(null);
+  readonly counters = this.facade.counters;
+  readonly filteredUnits = this.facade.filteredUnits;
+  readonly isLoading = this.facade.isLoading;
+  readonly selectedUnit = this.facade.selectedUnit;
+  readonly statusFilter = this.facade.statusFilter;
+  readonly confirmingDeleteId = this.facade.confirmingDeleteId;
+  readonly formDialogOpen = this.facade.formDialogOpen;
+  readonly formDialogUnit = this.facade.formDialogUnit;
+  readonly blockDatesOpen = this.facade.blockDatesOpen;
+  readonly blockDatesUnit = this.facade.blockDatesUnit;
 
-  counters = computed(() => {
-    const all = this.units();
-    return {
-      available: all.filter((u) => u.status === UnitStatus.AVAILABLE).length,
-      occupied: all.filter((u) => u.status === UnitStatus.OCCUPIED).length,
-      maintenance: all.filter((u) => u.status === UnitStatus.MAINTENANCE).length,
-      reserved: all.filter((u) => u.status === UnitStatus.RESERVED).length,
-      total: all.length,
-    };
-  });
-
-  filteredUnits = computed(() => {
-    const filter = this.statusFilter();
-    if (filter === 'all') return this.units();
-    return this.units().filter((u) => u.status === filter);
-  });
-
-  constructor() {
+  ngOnInit(): void {
     this.loadUnits();
   }
 
   loadUnits(): void {
-    this.isLoading.set(true);
-    this.unitService.findByProperty(this.propertyId()).subscribe({
-      next: (units) => {
-        this.units.set(units);
-        this.isLoading.set(false);
-        // Si la unidad seleccionada fue actualizada, refrescarla
-        const sel = this.selectedUnit();
-        if (sel) {
-          const refreshed = units.find((u) => u.id === sel.id);
-          this.selectedUnit.set(refreshed ?? null);
-        }
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error('Error al cargar las unidades');
-      },
-    });
+    this.facade.loadUnits(this.propertyId());
   }
 
   openCreateDialog(): void {
-    this.formDialogUnit.set(null);
-    this.formDialogOpen.set(true);
+    this.facade.openCreateDialog();
   }
 
   openEditDialog(unit: Unit): void {
-    this.formDialogUnit.set(unit);
-    this.formDialogOpen.set(true);
+    this.facade.openEditDialog(unit);
   }
 
   closeFormDialog(): void {
-    this.formDialogOpen.set(false);
-    this.formDialogUnit.set(null);
+    this.facade.closeFormDialog();
   }
 
   handleUnitSaved(unit: Unit): void {
-    const wasEdit = Boolean(this.formDialogUnit());
-
-    this.units.update((prev) => {
-      if (!wasEdit) {
-        return [...prev, unit];
-      }
-
-      return prev.map((current) => (current.id === unit.id ? unit : current));
-    });
-
-    this.selectedUnit.set(unit);
-    this.closeFormDialog();
-    this.toast.success(wasEdit ? 'Unidad actualizada exitosamente' : 'Unidad creada exitosamente');
+    this.facade.handleUnitSaved(unit);
   }
 
   selectUnit(unit: Unit): void {
-    this.selectedUnit.set(this.selectedUnit()?.id === unit.id ? null : unit);
+    this.facade.selectUnit(unit);
   }
 
   closePanel(): void {
-    this.selectedUnit.set(null);
+    this.facade.closePanel();
   }
 
   openBlockDates(unit: Unit): void {
-    this.blockDatesUnit.set(unit);
-    this.blockDatesOpen.set(true);
+    this.facade.openBlockDates(unit);
   }
 
   closeBlockDates(): void {
-    this.blockDatesOpen.set(false);
+    this.facade.closeBlockDates();
   }
 
   async deleteUnit(unit: Unit): Promise<void> {
-    const confirmed = await this.confirmDialog.confirm({
-      title: 'Eliminar unidad',
-      message: `Esta accion eliminara la unidad ${unit.unit_number}. No se puede deshacer.`,
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
-      variant: 'danger',
-    });
+    await this.facade.deleteUnit(this.propertyId(), unit);
+  }
 
-    if (!confirmed) return;
-
-    this.confirmingDeleteId.set(unit.id);
-    this.unitService.remove(this.propertyId(), unit.id).subscribe({
-      next: () => {
-        this.units.update((prev) => prev.filter((u) => u.id !== unit.id));
-        if (this.selectedUnit()?.id === unit.id) {
-          this.selectedUnit.set(null);
-        }
-        this.confirmingDeleteId.set(null);
-        this.toast.success('Unidad eliminada');
-      },
-      error: (error: unknown) => {
-        this.confirmingDeleteId.set(null);
-        this.toast.error(this.resolveErrorMessage(error, 'Error al eliminar la unidad'));
-      },
-    });
+  setStatusFilter(status: UnitStatus | 'all'): void {
+    this.facade.setStatusFilter(status);
   }
 
   getStatusConfig(status: UnitStatus): { label: string; cssClass: string } {
@@ -210,9 +138,5 @@ export class PropertyUnitsComponent {
       BOTH: 'Ambos',
     };
     return labels[type] ?? type;
-  }
-
-  private resolveErrorMessage(error: unknown, fallback: string): string {
-    return getApiErrorMessage(error, fallback);
   }
 }

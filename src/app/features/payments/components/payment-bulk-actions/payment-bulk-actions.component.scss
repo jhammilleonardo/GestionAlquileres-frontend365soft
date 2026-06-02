@@ -1,0 +1,23 @@
+.payment-bulk-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.payment-bulk-actions__count {
+  font-size: 0.95rem;
+  color: #1e40af;
+}
+
+.payment-bulk-actions__buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

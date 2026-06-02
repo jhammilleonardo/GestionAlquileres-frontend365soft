@@ -6,11 +6,13 @@ import {
   MaintenanceRequest,
   MaintenanceStatus,
 } from '../../../core/models/maintenance-request.model';
+import { MaintenanceReadStateService } from '../../../core/services/maintenance/maintenance-read-state.service';
 import { TenantMaintenanceService } from '../../../core/services/tenant/tenant-maintenance.service';
 
 @Injectable()
 export class TenantRequestDetailFacade implements OnDestroy {
   private readonly maintenanceService = inject(TenantMaintenanceService);
+  private readonly readState = inject(MaintenanceReadStateService);
 
   readonly request = signal<MaintenanceRequest | null>(null);
   readonly messages = signal<MaintenanceMessage[]>([]);
@@ -235,7 +237,7 @@ export class TenantRequestDetailFacade implements OnDestroy {
   }
 
   private getLastReadId(requestId: number): number {
-    return parseInt(localStorage.getItem(`mnt_lastread_${requestId}`) ?? '0', 10);
+    return this.readState.getTenantLastReadId(requestId);
   }
 
   private computeUnread(messages: MaintenanceMessage[], lastReadId: number): void {
@@ -254,12 +256,8 @@ export class TenantRequestDetailFacade implements OnDestroy {
   }
 
   private markMessagesRead(messages: MaintenanceMessage[], requestId: number): void {
-    if (messages.length > 0) {
-      const lastId = Math.max(...messages.map((message) => message.id));
-      localStorage.setItem(`mnt_lastread_${requestId}`, String(lastId));
-    }
-
-    const adminCount = messages.filter((message) => !this.isMyMessage(message)).length;
-    localStorage.setItem(`mnt_read_${requestId}`, String(adminCount));
+    this.readState.markTenantMessagesRead(requestId, messages, (message) =>
+      this.isMyMessage(message),
+    );
   }
 }

@@ -1,0 +1,13 @@
+.payment-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .payment-toolbar {
+    width: 100%;
+    flex-direction: column;
+  }
+}

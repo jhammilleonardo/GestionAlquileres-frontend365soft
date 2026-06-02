@@ -12,13 +12,14 @@ import {
   AlertCircle,
   CheckCircle2,
   Shield,
+  KeyRound,
   BarChart3,
   Users,
   FileText,
 } from 'lucide-angular';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../core/services/language.service';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService, isAdminMfaRequiredResponse } from '../../core/services/auth.service';
 import { TenantAuthService } from '../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../core/services/slug.service';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
@@ -116,72 +117,120 @@ import { getApiErrorMessage } from '../../core/http/http-error.util';
             </div>
           }
 
-          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-            <div class="field-block">
-              <app-text-field
-                formControlName="email"
-                type="email"
-                autocomplete="email"
-                label="{{ 'auth.email' | transloco }}"
-                placeholder="admin@empresa.com"
-              />
-              @if (
-                loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched
-              ) {
-                <p class="field-error">{{ 'auth.emailRequired' | transloco }}</p>
-              }
-              @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
-                <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
-              }
-            </div>
-
-            <div class="field-block">
-              <div class="password-wrapper">
+          @if (!mfaRequired()) {
+            <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+              <div class="field-block">
                 <app-text-field
-                  formControlName="password"
-                  [type]="showPassword() ? 'text' : 'password'"
-                  autocomplete="current-password"
-                  label="{{ 'auth.password' | transloco }}"
-                  placeholder="••••••••"
+                  formControlName="email"
+                  type="email"
+                  autocomplete="email"
+                  label="{{ 'auth.email' | transloco }}"
+                  placeholder="admin@empresa.com"
                 />
-                <button
-                  type="button"
-                  class="password-toggle"
-                  (click)="togglePassword()"
-                  tabindex="-1"
-                  [attr.aria-label]="'auth.password' | transloco"
-                >
-                  <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
-                </button>
+                @if (
+                  loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched
+                ) {
+                  <p class="field-error">{{ 'auth.emailRequired' | transloco }}</p>
+                }
+                @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+                  <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
+                }
               </div>
-              @if (
-                loginForm.get('password')?.hasError('required') &&
-                loginForm.get('password')?.touched
-              ) {
-                <p class="field-error">{{ 'auth.passwordRequired' | transloco }}</p>
-              }
-            </div>
 
-            <div class="form-options">
-              <app-checkbox
-                formControlName="rememberMe"
-                label="{{ 'auth.rememberMe' | transloco }}"
-              />
-              <a routerLink="/forgot-password" class="forgot-link">{{
-                'auth.forgotPassword' | transloco
-              }}</a>
-            </div>
+              <div class="field-block">
+                <div class="password-wrapper">
+                  <app-text-field
+                    formControlName="password"
+                    [type]="showPassword() ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    label="{{ 'auth.password' | transloco }}"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle"
+                    (click)="togglePassword()"
+                    tabindex="-1"
+                    [attr.aria-label]="'auth.password' | transloco"
+                  >
+                    <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
+                  </button>
+                </div>
+                @if (
+                  loginForm.get('password')?.hasError('required') &&
+                  loginForm.get('password')?.touched
+                ) {
+                  <p class="field-error">{{ 'auth.passwordRequired' | transloco }}</p>
+                }
+              </div>
 
-            <app-button
-              type="submit"
-              class="submit-btn"
-              [fullWidth]="true"
-              [loading]="isLoading()"
-              [disabled]="loginForm.invalid || isLoading()"
-            >
-              {{ isLoading() ? ('auth.loggingIn' | transloco) : ('auth.login' | transloco) }}
-            </app-button>
-          </form>
+              <div class="form-options">
+                <app-checkbox
+                  formControlName="rememberMe"
+                  label="{{ 'auth.rememberMe' | transloco }}"
+                />
+                <a routerLink="/forgot-password" class="forgot-link">{{
+                  'auth.forgotPassword' | transloco
+                }}</a>
+              </div>
+
+              <app-button
+                type="submit"
+                class="submit-btn"
+                [fullWidth]="true"
+                [loading]="isLoading()"
+                [disabled]="loginForm.invalid || isLoading()"
+              >
+                {{ isLoading() ? ('auth.loggingIn' | transloco) : ('auth.login' | transloco) }}
+              </app-button>
+            </form>
+          } @else {
+            <form [formGroup]="mfaForm" (ngSubmit)="verifyMfa()" class="login-form">
+              <div class="mfa-panel">
+                <div class="mfa-icon">
+                  <lucide-icon [img]="KeyRound" [size]="22" />
+                </div>
+                <div>
+                  <h4>{{ 'auth.mfaTitle' | transloco }}</h4>
+                  <p>{{ 'auth.mfaDesc' | transloco: { email: mfaEmailMasked() } }}</p>
+                </div>
+              </div>
+
+              <div class="field-block">
+                <app-text-field
+                  formControlName="code"
+                  type="text"
+                  inputMode="numeric"
+                  [maxLength]="6"
+                  autocomplete="one-time-code"
+                  [label]="'auth.mfaCode' | transloco"
+                  placeholder="000000"
+                />
+                @if (mfaForm.get('code')?.hasError('required') && mfaForm.get('code')?.touched) {
+                  <p class="field-error">{{ 'auth.mfaCodeRequired' | transloco }}</p>
+                }
+                @if (mfaForm.get('code')?.hasError('pattern') && mfaForm.get('code')?.touched) {
+                  <p class="field-error">{{ 'auth.mfaCodeInvalid' | transloco }}</p>
+                }
+              </div>
+
+              <app-button
+                type="submit"
+                class="submit-btn"
+                [fullWidth]="true"
+                [loading]="isLoading()"
+                [disabled]="mfaForm.invalid || isLoading()"
+              >
+                {{
+                  isLoading() ? ('auth.mfaVerifying' | transloco) : ('auth.mfaVerify' | transloco)
+                }}
+              </app-button>
+
+              <button type="button" class="secondary-link" (click)="resetMfa()">
+                {{ 'auth.mfaBack' | transloco }}
+              </button>
+            </form>
+          }
 
           <div class="form-footer">
             <div class="security-badge">
@@ -383,6 +432,55 @@ import { getApiErrorMessage } from '../../core/http/http-error.util';
         border-left: 4px solid #ef4444;
         border-radius: 8px;
         margin-bottom: 24px;
+      }
+
+      .mfa-panel {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        padding: 16px;
+        border: 1px solid #bfdbfe;
+        background: #eff6ff;
+        border-radius: 10px;
+      }
+
+      .mfa-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        color: #1d4ed8;
+        background: #dbeafe;
+        flex: 0 0 auto;
+      }
+
+      .mfa-panel h4 {
+        margin: 0 0 4px;
+        color: #0f172a;
+        font-size: 0.95rem;
+      }
+
+      .mfa-panel p {
+        margin: 0;
+        color: #475569;
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+
+      .secondary-link {
+        align-self: center;
+        border: none;
+        background: transparent;
+        color: #3b82f6;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 4px 8px;
+      }
+
+      .secondary-link:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
       }
 
       .error-alert lucide-icon {
@@ -591,6 +689,7 @@ export class LoginComponent {
   readonly AlertCircle = AlertCircle;
   readonly CheckCircle2 = CheckCircle2;
   readonly Shield = Shield;
+  readonly KeyRound = KeyRound;
   readonly BarChart3 = BarChart3;
   readonly Users = Users;
   readonly FileText = FileText;
@@ -608,6 +707,9 @@ export class LoginComponent {
   showPassword = signal(false);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  mfaRequired = signal(false);
+  mfaChallengeId = signal<string | null>(null);
+  mfaEmailMasked = signal('');
 
   // Slug from URL (null if accessing /login, has value if /:slug/login)
   slug: string | null = null;
@@ -616,6 +718,10 @@ export class LoginComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
     rememberMe: [false],
+  });
+
+  mfaForm = this.fb.group({
+    code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
   });
 
   constructor() {
@@ -696,6 +802,14 @@ export class LoginComponent {
       this.authService.loginAdmin(email!, password!, rememberMe!).subscribe({
         next: (response) => {
           this.isLoading.set(false);
+          if (isAdminMfaRequiredResponse(response)) {
+            this.mfaRequired.set(true);
+            this.mfaChallengeId.set(response.challenge_id);
+            this.mfaEmailMasked.set(response.email_masked);
+            this.mfaForm.reset({ code: '' });
+            return;
+          }
+
           const userSlug = response.user.tenant_slug;
 
           if (userSlug) {
@@ -722,5 +836,47 @@ export class LoginComponent {
         },
       });
     }
+  }
+
+  verifyMfa(): void {
+    if (this.mfaForm.invalid || !this.mfaChallengeId()) {
+      this.mfaForm.markAllAsTouched();
+      return;
+    }
+
+    const rememberMe = this.loginForm.getRawValue().rememberMe ?? false;
+    const code = this.mfaForm.getRawValue().code ?? '';
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.verifyAdminMfa(this.mfaChallengeId()!, code, rememberMe).subscribe({
+      next: (response) => {
+        this.isLoading.set(false);
+        const userSlug = response.user.tenant_slug;
+        if (!userSlug) {
+          this.errorMessage.set(this.transloco.translate('auth.orgNotFound'));
+          return;
+        }
+
+        void this.router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true }).then(() => {
+          this.location.replaceState(`/${userSlug}/dashboard`);
+        });
+      },
+      error: (error: { error?: { message?: string } }) => {
+        this.isLoading.set(false);
+        this.errorMessage.set(
+          getApiErrorMessage(error, this.transloco.translate('auth.mfaInvalid')),
+        );
+      },
+    });
+  }
+
+  resetMfa(): void {
+    this.mfaRequired.set(false);
+    this.mfaChallengeId.set(null);
+    this.mfaEmailMasked.set('');
+    this.mfaForm.reset({ code: '' });
+    this.errorMessage.set(null);
   }
 }

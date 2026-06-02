@@ -1,0 +1,32 @@
+.contract-readonly-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  background: var(--app-color-surface-muted);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg);
+  margin-bottom: 16px;
+}
+
+.contract-readonly-summary__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  label {
+    font-size: 12px;
+    color: var(--app-color-text-muted);
+    font-weight: 500;
+  }
+
+  span {
+    font-weight: 500;
+  }
+}
+
+@media (max-width: 768px) {
+  .contract-readonly-summary {
+    grid-template-columns: 1fr;
+  }
+}

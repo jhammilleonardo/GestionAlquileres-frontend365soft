@@ -1,0 +1,16 @@
+<div class="form-section" [formGroup]="form()">
+  <h2>{{ 'contracts.create.includedServices' | transloco }}</h2>
+
+  <div class="services-grid">
+    @for (service of serviceOptions(); track service) {
+      <label class="service-option">
+        <input
+          type="checkbox"
+          [checked]="isServiceSelected(service)"
+          (change)="toggleService(service, $event)"
+        />
+        <span>{{ service }}</span>
+      </label>
+    }
+  </div>
+</div>

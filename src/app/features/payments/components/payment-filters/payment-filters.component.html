@@ -1,0 +1,45 @@
+<section class="payment-filters">
+  <form [formGroup]="form()" (ngSubmit)="filtersApplied.emit()">
+    <div class="payment-filters__grid">
+      <app-select
+        formControlName="status"
+        [label]="'common.status' | transloco"
+        [placeholder]="'common.all' | transloco"
+        [options]="statusOptions()"
+      />
+
+      <app-select
+        formControlName="type"
+        [label]="'common.type' | transloco"
+        [placeholder]="'common.all' | transloco"
+        [options]="typeOptions()"
+      />
+
+      <app-select
+        formControlName="method"
+        [label]="'payments.method' | transloco"
+        [placeholder]="'common.all' | transloco"
+        [options]="methodOptions()"
+      />
+
+      <app-select
+        formControlName="currency"
+        [label]="'payments.allCurrencies' | transloco"
+        [placeholder]="'common.all' | transloco"
+        [options]="currencyOptions()"
+      />
+
+      <app-date-picker formControlName="date_from" [label]="'payments.dateFrom' | transloco" />
+      <app-date-picker formControlName="date_to" [label]="'payments.dateTo' | transloco" />
+    </div>
+
+    <div class="payment-filters__actions">
+      <app-button type="button" appearance="flat" (clicked)="filtersCleared.emit()">
+        {{ 'common.clearFilters' | transloco }}
+      </app-button>
+      <app-button type="submit">
+        {{ 'common.applyFilters' | transloco }}
+      </app-button>
+    </div>
+  </form>
+</section>

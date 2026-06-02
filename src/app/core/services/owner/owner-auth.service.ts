@@ -77,6 +77,12 @@ export class OwnerAuthService {
     return Boolean(this.sessionToken.getToken('owner'));
   }
 
+  hasSessionForSlug(slug: string | null | undefined): boolean {
+    if (!this.hasToken()) return false;
+    if (!slug) return true;
+    return this.currentOwnerSignal()?.tenant_slug === slug;
+  }
+
   private setSession(response: OwnerLoginResponse, rememberMe: boolean): void {
     this.sessionToken.clearToken('owner');
     this.sessionToken.setToken('owner', response.access_token, rememberMe);

@@ -14,7 +14,7 @@ export const ownerAuthGuard: CanActivateFn = (route) => {
     slugService.setSlug(slug);
   }
 
-  if (ownerAuth.hasToken()) {
+  if (ownerAuth.hasSessionForSlug(slug)) {
     return true;
   }
 
@@ -31,7 +31,7 @@ export const ownerLoginGuard: CanActivateFn = (route) => {
     slugService.setSlug(slug);
   }
 
-  if (!ownerAuth.hasToken()) {
+  if (!ownerAuth.hasSessionForSlug(slug)) {
     return true;
   }
 

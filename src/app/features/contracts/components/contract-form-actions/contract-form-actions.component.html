@@ -1,0 +1,18 @@
+<div class="contract-form-actions">
+  <app-button type="submit" [disabled]="invalid() || submitting()" [loading]="submitting()">
+    @if (!submitting()) {
+      <lucide-icon [img]="Save" [size]="18"></lucide-icon>
+    }
+    {{ (submitting() ? submittingLabelKey() : idleLabelKey()) | transloco }}
+  </app-button>
+
+  <app-button
+    type="button"
+    appearance="outline"
+    (clicked)="cancelled.emit()"
+    [disabled]="submitting()"
+  >
+    <lucide-icon [img]="X" [size]="18"></lucide-icon>
+    {{ 'common.cancel' | transloco }}
+  </app-button>
+</div>

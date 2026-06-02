@@ -4,35 +4,16 @@
     [title]="'payments.title' | transloco"
     [description]="'payments.subtitle' | transloco"
   >
-    <div actions class="payments-header-actions">
-      <app-button
-        appearance="secondary"
-        (clicked)="loadData()"
-        [disabled]="paymentService.isLoading()"
-      >
-        <lucide-icon [img]="RefreshCw" [size]="20"></lucide-icon>
-        {{ 'common.refresh' | transloco }}
-      </app-button>
-      <app-button
-        appearance="secondary"
-        (clicked)="exportCsv()"
-        [disabled]="paymentService.isLoading()"
-      >
-        <lucide-icon [img]="Download" [size]="20"></lucide-icon>
-        {{ 'payments.exportCsv' | transloco }}
-      </app-button>
-      <app-button appearance="accent" (clicked)="openCreateForm()">
-        <lucide-icon [img]="Plus" [size]="20"></lucide-icon>
-        {{ 'payments.register' | transloco }}
-      </app-button>
-      <app-button (clicked)="showFilters.set(!showFilters())">
-        <lucide-icon [img]="Filter" [size]="20"></lucide-icon>
-        {{ 'common.filters' | transloco }}
-      </app-button>
-    </div>
+    <app-payment-toolbar
+      actions
+      [loading]="paymentService.isLoading()"
+      (refreshed)="loadData()"
+      (exported)="exportCsv()"
+      (createOpened)="openCreateForm()"
+      (filtersToggled)="showFilters.set(!showFilters())"
+    />
   </app-page-header>
 
-  <!-- Error Alert -->
   @if (paymentService.error()) {
     <div class="error-alert">
       <lucide-icon [img]="AlertCircle" [size]="20"></lucide-icon>
@@ -44,323 +25,55 @@
     <app-payment-stats [stats]="stats" />
   }
 
-  <!-- Filters -->
   @if (showFilters()) {
-    <section class="filters-card">
-      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()">
-        <div class="filters-grid">
-          <app-select
-            formControlName="status"
-            [label]="'common.status' | transloco"
-            [placeholder]="'common.all' | transloco"
-            [options]="statusOptions"
-          />
-
-          <app-select
-            formControlName="type"
-            [label]="'common.type' | transloco"
-            [placeholder]="'common.all' | transloco"
-            [options]="typeOptions"
-          />
-
-          <app-select
-            formControlName="method"
-            [label]="'payments.method' | transloco"
-            [placeholder]="'common.all' | transloco"
-            [options]="methodOptions"
-          />
-
-          <app-select
-            formControlName="currency"
-            [label]="'payments.allCurrencies' | transloco"
-            [placeholder]="'common.all' | transloco"
-            [options]="currencyOptions"
-          />
-
-          <app-date-picker formControlName="date_from" [label]="'payments.dateFrom' | transloco" />
-
-          <app-date-picker formControlName="date_to" [label]="'payments.dateTo' | transloco" />
-        </div>
-
-        <div class="filters-actions">
-          <app-button type="button" appearance="flat" (clicked)="clearFilters()">
-            {{ 'common.clearFilters' | transloco }}
-          </app-button>
-          <app-button type="submit">
-            {{ 'common.applyFilters' | transloco }}
-          </app-button>
-        </div>
-      </form>
-    </section>
+    <app-payment-filters
+      [form]="filterForm"
+      [statusOptions]="statusOptions"
+      [typeOptions]="typeOptions"
+      [methodOptions]="methodOptions"
+      [currencyOptions]="currencyOptions"
+      (filtersApplied)="applyFilters()"
+      (filtersCleared)="clearFilters()"
+    />
   }
 
-  <section class="pending-approval-card">
-    <div class="pending-header">
-      <h2>{{ 'payments.pendingApprovalTitle' | transloco }}</h2>
-      <span class="pending-badge">{{ pendingPayments().length }}</span>
-    </div>
+  <app-pending-approval-panel
+    [payments]="filteredPendingPayments()"
+    [form]="pendingFilterForm"
+    [propertyOptions]="pendingPropertySelectOptions()"
+    (filtersApplied)="applyPendingFilters()"
+    (filtersCleared)="clearPendingFilters()"
+    (proofOpened)="openProof($event)"
+    (approved)="approvePayment($event)"
+    (rejected)="rejectPayment($event)"
+  />
 
-    <form
-      class="pending-filters"
-      [formGroup]="pendingFilterForm"
-      (ngSubmit)="applyPendingFilters()"
-    >
-      <app-select
-        formControlName="property_id"
-        [label]="'common.property' | transloco"
-        [placeholder]="'common.all' | transloco"
-        [options]="pendingPropertySelectOptions()"
-      />
+  <app-payment-bulk-actions
+    [selectedCount]="selectedIds().length"
+    (actionSelected)="executeBulkAction($event)"
+    (selectionCleared)="clearSelection()"
+  />
 
-      <app-date-picker formControlName="date_from" [label]="'payments.dateFrom' | transloco" />
+  <app-payment-list-section
+    [payments]="paymentService.payments()"
+    [loading]="paymentService.isLoading()"
+    [selectedIds]="selectedIds()"
+    [pendingPaymentIds]="pendingPaymentIds()"
+    (rowSelected)="viewPaymentDetail($event)"
+    (selectionToggled)="toggleSelection($event)"
+    (selectAllToggled)="$event ? selectAll() : clearSelection()"
+    (approved)="approvePayment($event)"
+    (rejected)="rejectPayment($event)"
+  />
 
-      <app-date-picker formControlName="date_to" [label]="'payments.dateTo' | transloco" />
-
-      <div class="pending-filter-actions">
-        <app-button type="button" appearance="flat" (clicked)="clearPendingFilters()">
-          {{ 'common.clearFilters' | transloco }}
-        </app-button>
-        <app-button type="submit">
-          {{ 'common.applyFilters' | transloco }}
-        </app-button>
-      </div>
-    </form>
-
-    @if (filteredPendingPayments().length === 0) {
-      <div class="pending-empty">
-        <lucide-icon [img]="CheckCircle2" [size]="26"></lucide-icon>
-        <span>{{ 'payments.noPendingApproval' | transloco }}</span>
-      </div>
-    } @else {
-      <div class="pending-cards">
-        @for (payment of filteredPendingPayments(); track payment.id) {
-          <article class="pending-item-card">
-            <div class="pending-item-header">
-              <span>#{{ payment.id }}</span>
-              <app-status-badge
-                [label]="getStatusLabel(payment.status)"
-                [tone]="getStatusTone(payment.status)"
-              />
-            </div>
-
-            <div class="pending-item-content">
-              <p>
-                <strong>{{ 'payments.tenant' | transloco }}:</strong> {{ getTenantName(payment) }}
-              </p>
-              <p>
-                <strong>{{ 'common.property' | transloco }}:</strong> {{ getPropertyName(payment) }}
-              </p>
-              <p>
-                <strong>{{ 'payments.unit' | transloco }}:</strong> {{ getUnitName(payment) }}
-              </p>
-              <p>
-                <strong>{{ 'common.amount' | transloco }}:</strong>
-                {{ formatCurrency(payment.amount, payment.currency) }}
-              </p>
-              <p>
-                <strong>{{ 'payments.method' | transloco }}:</strong>
-                {{ getMethodLabel(payment.payment_method) }}
-              </p>
-              <p>
-                <strong>{{ 'payments.registeredAt' | transloco }}:</strong>
-                {{ getRegisteredDate(payment) | tenantDate }}
-              </p>
-            </div>
-
-            <div class="pending-item-actions">
-              @if (payment.proof_file) {
-                <app-button appearance="outline" (clicked)="openProof(payment)">
-                  <lucide-icon [img]="ExternalLink" [size]="18"></lucide-icon>
-                  {{ 'payments.viewReceipt' | transloco }}
-                </app-button>
-              }
-              <app-button (clicked)="approvePayment(payment)">
-                {{ 'common.approve' | transloco }}
-              </app-button>
-              <app-button appearance="destructive" (clicked)="rejectPayment(payment)">
-                {{ 'common.reject' | transloco }}
-              </app-button>
-            </div>
-          </article>
-        }
-      </div>
-    }
-  </section>
-
-  <!-- Bulk Action Bar -->
-  @if (selectedIds().length > 0) {
-    <div class="bulk-action-bar">
-      <span class="bulk-count">
-        {{ 'payments.selected' | transloco: { count: selectedIds().length } }}
-      </span>
-      <div class="bulk-actions">
-        <app-button (clicked)="executeBulkAction('approve')">
-          <lucide-icon [img]="CheckCircle2" [size]="18"></lucide-icon>
-          {{ 'payments.approveAll' | transloco }}
-        </app-button>
-        <app-button appearance="destructive" (clicked)="executeBulkAction('reject')">
-          <lucide-icon [img]="XCircle" [size]="18"></lucide-icon>
-          {{ 'payments.rejectAll' | transloco }}
-        </app-button>
-        <app-button appearance="outline" (clicked)="executeBulkAction('delete')">
-          <lucide-icon [img]="Trash2" [size]="18"></lucide-icon>
-          {{ 'payments.deleteAll' | transloco }}
-        </app-button>
-        <app-button appearance="flat" (clicked)="clearSelection()">
-          <lucide-icon [img]="X" [size]="18"></lucide-icon>
-          {{ 'common.cancel' | transloco }}
-        </app-button>
-      </div>
-    </div>
-  }
-
-  <!-- Payments Table -->
-  <section class="table-card">
-    @if (paymentService.isLoading()) {
-      <div class="loading-container">
-        <app-loading-state [label]="'payments.loading' | transloco" />
-      </div>
-    } @else if (paymentService.payments().length === 0) {
-      <div class="empty-state">
-        <lucide-icon [img]="DollarSign" [size]="48"></lucide-icon>
-        <h3>{{ 'payments.empty' | transloco }}</h3>
-        <p>{{ 'payments.emptyHint' | transloco }}</p>
-      </div>
-    } @else {
-      <app-payment-table
-        [payments]="paymentService.payments()"
-        [selectedIds]="selectedIds()"
-        [pendingPaymentIds]="pendingPaymentIds()"
-        (rowSelected)="viewPaymentDetail($event)"
-        (selectionToggled)="toggleSelection($event)"
-        (selectAllToggled)="$event ? selectAll() : clearSelection()"
-        (approved)="approvePayment($event)"
-        (rejected)="rejectPayment($event)"
-      />
-
-      <!-- Table Summary -->
-      <div class="table-footer">
-        <p>{{ 'payments.totalCount' | transloco: { count: paymentService.payments().length } }}</p>
-        <p>{{ 'payments.totalAmount' | transloco: { amount: formatCurrency(totalAmount()) } }}</p>
-      </div>
-    }
-  </section>
-
-  <!-- Payment Detail Modal -->
   @if (selectedPayment(); as payment) {
-    <app-dialog
-      [open]="true"
-      [title]="'payments.detailTitle' | transloco: { id: payment.id }"
+    <app-payment-detail-dialog
+      [payment]="payment"
       (closed)="selectedPayment.set(null)"
-    >
-      <div class="detail-grid">
-        <div class="detail-item">
-          <label>{{ 'payments.tenant' | transloco }}:</label>
-          <p>{{ getTenantName(payment) }}</p>
-        </div>
-
-        <div class="detail-item">
-          <label>{{ 'common.property' | transloco }}:</label>
-          <p>{{ getPropertyName(payment) }}</p>
-        </div>
-
-        <div class="detail-item">
-          <label>{{ 'common.amount' | transloco }}:</label>
-          <p>
-            <strong>{{ payment.amount | tenantCurrency }}</strong>
-          </p>
-        </div>
-
-        <div class="detail-item">
-          <label>{{ 'common.currency' | transloco }}:</label>
-          <p>
-            {{ payment.currency || 'USD' }} -
-            {{ getCurrencyLabel(payment.currency || Currency.USD) }}
-          </p>
-        </div>
-
-        <div class="detail-item">
-          <label>{{ 'common.type' | transloco }}:</label>
-          <p>{{ getTypeLabel(payment.payment_type) }}</p>
-        </div>
-
-        <div class="detail-item">
-          <label>{{ 'payments.method' | transloco }}:</label>
-          <p>{{ getMethodLabel(payment.payment_method) }}</p>
-        </div>
-
-        <div class="detail-item">
-          <label>{{ 'payments.paymentDate' | transloco }}:</label>
-          <p>{{ payment.payment_date | tenantDate }}</p>
-        </div>
-
-        @if (payment.reference_number) {
-          <div class="detail-item">
-            <label>{{ 'payments.referenceNumber' | transloco }}:</label>
-            <p>{{ payment.reference_number }}</p>
-          </div>
-        }
-
-        @if (payment.check_number) {
-          <div class="detail-item">
-            <label>{{ 'payments.checkNumber' | transloco }}:</label>
-            <p>{{ payment.check_number }}</p>
-          </div>
-        }
-
-        <div class="detail-item">
-          <label>{{ 'common.status' | transloco }}:</label>
-          <p>
-            <app-status-badge
-              [label]="getStatusLabel(payment.status)"
-              [tone]="getStatusTone(payment.status)"
-            />
-          </p>
-        </div>
-
-        @if (payment.notes) {
-          <div class="detail-item full-width">
-            <label>{{ 'payments.tenantNotes' | transloco }}</label>
-            <p>{{ payment.notes }}</p>
-          </div>
-        }
-
-        @if (payment.admin_notes) {
-          <div class="detail-item full-width">
-            <label>{{ 'payments.adminNotes' | transloco }}</label>
-            <p>{{ payment.admin_notes }}</p>
-          </div>
-        }
-
-        @if (payment.proof_file) {
-          <div class="detail-item full-width">
-            <label>{{ 'payments.receipt' | transloco }}</label>
-            <p>
-              <app-button appearance="outline" (clicked)="openProof(payment)">
-                <lucide-icon [img]="ExternalLink" [size]="18"></lucide-icon>
-                {{ 'payments.viewReceipt' | transloco }}
-              </app-button>
-            </p>
-          </div>
-        }
-      </div>
-
-      <div dialog-actions class="modal-actions">
-        @if (payment.status === PaymentStatus.PENDING) {
-          <app-button (clicked)="approvePayment(payment)">
-            <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
-            {{ 'common.approve' | transloco }}
-          </app-button>
-          <app-button appearance="destructive" (clicked)="rejectPayment(payment)">
-            <lucide-icon [img]="XCircle" [size]="20"></lucide-icon>
-            {{ 'common.reject' | transloco }}
-          </app-button>
-        }
-        <app-button appearance="flat" (clicked)="selectedPayment.set(null)">
-          {{ 'common.close' | transloco }}
-        </app-button>
-      </div>
-    </app-dialog>
+      (proofOpened)="openProof($event)"
+      (approved)="approvePayment($event)"
+      (rejected)="rejectPayment($event)"
+    />
   }
 
   @if (selectedProofPayment(); as payment) {
@@ -381,36 +94,12 @@
   }
 
   @if (rejectionPayment(); as payment) {
-    <app-dialog
-      [open]="true"
-      [title]="'payments.rejectPaymentTitle' | transloco: { id: payment.id }"
+    <app-payment-reject-dialog
+      [payment]="payment"
+      [form]="rejectForm"
       (closed)="closeRejectDialog()"
-    >
-      <form class="reject-form" [formGroup]="rejectForm" (ngSubmit)="submitRejectPayment()">
-        <app-textarea
-          formControlName="reason"
-          [label]="'payments.rejectionReason' | transloco"
-          [placeholder]="'payments.rejectionReasonHint' | transloco"
-          [minRows]="4"
-          [maxRows]="6"
-        />
-
-        @if (
-          rejectForm.controls.reason.hasError('required') && rejectForm.controls.reason.touched
-        ) {
-          <p class="field-error" aria-live="polite">{{ 'common.required' | transloco }}</p>
-        }
-
-        <div dialog-actions class="modal-actions">
-          <app-button type="button" appearance="flat" (clicked)="closeRejectDialog()">
-            {{ 'common.cancel' | transloco }}
-          </app-button>
-          <app-button type="submit" appearance="destructive">
-            {{ 'common.reject' | transloco }}
-          </app-button>
-        </div>
-      </form>
-    </app-dialog>
+      (submitted)="submitRejectPayment()"
+    />
   }
 
   @if (showCreateForm()) {

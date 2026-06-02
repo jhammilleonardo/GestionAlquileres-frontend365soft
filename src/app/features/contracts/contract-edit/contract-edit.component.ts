@@ -1,7 +1,7 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { LucideAngularModule, ArrowLeft, Save, X, AlertCircle } from 'lucide-angular';
+import { LucideAngularModule, ArrowLeft, AlertCircle } from 'lucide-angular';
 import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
@@ -13,7 +13,6 @@ import {
   BANK_ACCOUNT_TYPES,
 } from '../../../core/models/contract.model';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
-import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
 import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.component';
@@ -25,6 +24,11 @@ import {
   toContractEditFormValue,
   toUpdateContractDto,
 } from '../mappers/contract-form.mapper';
+import { ContractDateRentSectionComponent } from '../components/contract-date-rent-section/contract-date-rent-section.component';
+import { ContractFormActionsComponent } from '../components/contract-form-actions/contract-form-actions.component';
+import { ContractPaymentConditionsSectionComponent } from '../components/contract-payment-conditions-section/contract-payment-conditions-section.component';
+import { ContractReadonlySummaryComponent } from '../components/contract-readonly-summary/contract-readonly-summary.component';
+import { ContractServicesSectionComponent } from '../components/contract-services-section/contract-services-section.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,11 +39,15 @@ import {
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
-    AppDatePickerComponent,
     AppLoadingStateComponent,
     AppSelectComponent,
     AppTextareaComponent,
     AppTextFieldComponent,
+    ContractDateRentSectionComponent,
+    ContractFormActionsComponent,
+    ContractPaymentConditionsSectionComponent,
+    ContractReadonlySummaryComponent,
+    ContractServicesSectionComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'contratos', alias: 'contracts' })],
   templateUrl: './contract-edit.component.html',
@@ -47,8 +55,6 @@ import {
 })
 export class ContractEditComponent {
   readonly ArrowLeft = ArrowLeft;
-  readonly Save = Save;
-  readonly X = X;
   readonly AlertCircle = AlertCircle;
   readonly ContractStatus = ContractStatus;
 
@@ -126,34 +132,6 @@ export class ContractEditComponent {
 
   private populateForm(contract: Contract): void {
     this.contractForm.patchValue(toContractEditFormValue(contract));
-  }
-
-  isServiceSelected(service: string): boolean {
-    const services = (this.contractForm.get('included_services')?.value as string[]) || [];
-    return services.includes(service);
-  }
-
-  toggleService(service: string, event: Event): void {
-    const services = (this.contractForm.get('included_services')?.value as string[]) || [];
-    const index = services.indexOf(service);
-    const checked = (event.target as HTMLInputElement).checked;
-
-    if (checked) {
-      if (index === -1) {
-        services.push(service);
-      }
-    } else {
-      if (index > -1) {
-        services.splice(index, 1);
-      }
-    }
-
-    this.contractForm.patchValue({ included_services: services });
-  }
-
-  hasError(controlName: string): boolean {
-    const control = this.contractForm.get(controlName);
-    return Boolean(control?.invalid && control?.touched);
   }
 
   onSubmit(): void {

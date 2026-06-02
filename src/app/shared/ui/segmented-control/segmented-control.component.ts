@@ -48,6 +48,7 @@ export interface AppSegmentedControlOption<TValue extends string = string> {
 
     .app-segmented {
       display: inline-flex;
+      flex-wrap: wrap;
       gap: var(--app-space-1);
       padding: var(--app-space-1);
       border: 1px solid var(--app-color-border);

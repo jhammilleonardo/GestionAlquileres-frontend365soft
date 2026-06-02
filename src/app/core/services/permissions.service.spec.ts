@@ -34,6 +34,8 @@ describe('PermissionsService', () => {
   }
 
   afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
     httpMock.match(() => true).forEach((r) => r.flush(null));
     httpMock.verify();
   });
@@ -80,14 +82,35 @@ describe('PermissionsService', () => {
   it('expone role y allowedModules como computed', () => {
     setup();
     service.load();
-    httpMock
-      .expectOne(`${environment.apiUrl}acme/admin/employees/my-permissions`)
-      .flush({
-        role: 'EMPLEADO',
-        allowedModules: ['contracts', 'payments'],
-      } satisfies MyPermissions);
+    httpMock.expectOne(`${environment.apiUrl}acme/admin/employees/my-permissions`).flush({
+      role: 'EMPLEADO',
+      allowedModules: ['contracts', 'payments'],
+    } satisfies MyPermissions);
 
     expect(service.role()).toBe('EMPLEADO');
     expect(service.allowedModules()).toEqual(['contracts', 'payments']);
+  });
+
+  it('usa permisos completos para ADMIN si el endpoint falla', () => {
+    localStorage.setItem('admin_user', JSON.stringify({ role: 'ADMIN' }));
+    TestBed.configureTestingModule({
+      providers: [
+        PermissionsService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: SlugService, useValue: { getSlug: () => 'acme' } },
+        { provide: Router, useValue: { events: new Subject() } },
+      ],
+    });
+    service = TestBed.inject(PermissionsService);
+    httpMock = TestBed.inject(HttpTestingController);
+
+    httpMock
+      .expectOne(`${environment.apiUrl}acme/admin/employees/my-permissions`)
+      .flush({ message: 'error' }, { status: 500, statusText: 'Server error' });
+
+    expect(service.role()).toBe('ADMIN');
+    expect(service.canView('properties')).toBe(true);
+    expect(service.canView('payments')).toBe(true);
   });
 });

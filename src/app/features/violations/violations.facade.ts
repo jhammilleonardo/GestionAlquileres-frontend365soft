@@ -10,6 +10,7 @@ import {
   ViolationStatus,
   ViolationType,
 } from '../../core/models/violation.model';
+import { FileDownloadService } from '../../core/services/file-download.service';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { ViolationService } from '../../core/services/admin/violation.service';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
@@ -25,6 +26,7 @@ export class ViolationsFacade {
   private readonly propertyService = inject(PropertyService);
   private readonly tenantUserService = inject(TenantUserService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
 
@@ -285,11 +287,6 @@ export class ViolationsFacade {
   }
 
   private downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    this.fileDownload.downloadBlob(blob, filename);
   }
 }

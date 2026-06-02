@@ -1,6 +1,7 @@
 import { HttpEventType } from '@angular/common/http';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
@@ -17,6 +18,7 @@ import {
   QrPayment,
 } from '../../../core/models/payment.model';
 import { SlugService } from '../../../core/services/slug.service';
+import { FileDownloadService } from '../../../core/services/file-download.service';
 import { FormatService } from '../../../core/services/format.service';
 import {
   Contract,
@@ -49,9 +51,11 @@ export interface CurrencyOption extends PaymentOption<Currency> {
 export class TenantCreatePaymentFacade {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
+  private readonly sanitizer = inject(DomSanitizer);
   private readonly slugService = inject(SlugService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translocoService = inject(TranslocoService);
+  private readonly fileDownload = inject(FileDownloadService);
   private readonly formatService = inject(FormatService);
   readonly paymentService = inject(TenantPaymentService);
   readonly qrService = inject(TenantQrPaymentService);
@@ -64,6 +68,15 @@ export class TenantCreatePaymentFacade {
   readonly qrError = signal<string | null>(null);
   readonly uploadProgress = signal(0);
   readonly retryPaymentId = signal<number | null>(null);
+  readonly qrSafeUrl = computed<SafeUrl | null>(() => {
+    const qr = this.qrService.activeQr();
+    if (!qr?.qr_image) return null;
+    if (qr.qr_image.startsWith('http')) return this.sanitizer.bypassSecurityTrustUrl(qr.qr_image);
+    const src = qr.qr_image.startsWith('data:')
+      ? qr.qr_image
+      : `data:image/png;base64,${qr.qr_image}`;
+    return this.sanitizer.bypassSecurityTrustUrl(src);
+  });
 
   private readonly paymentScheduleSignal = signal<PaymentScheduleItem[]>([]);
   readonly paymentSchedule = this.paymentScheduleSignal.asReadonly();
@@ -250,10 +263,7 @@ export class TenantCreatePaymentFacade {
     const raw = qr.qr_image;
     const href =
       raw.startsWith('http') || raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
-    const a = document.createElement('a');
-    a.href = href;
-    a.download = `QR-pago-${qr.id}.png`;
-    a.click();
+    this.fileDownload.downloadUrl(href, `QR-pago-${qr.id}.png`);
   }
 
   onCancelQr(): void {

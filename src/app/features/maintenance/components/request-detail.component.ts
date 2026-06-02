@@ -52,6 +52,7 @@ import {
 } from '../../../core/services/admin/admin-user.service';
 import { VendorService } from '../../../core/services/admin/vendor.service';
 import { Vendor } from '../../../core/models/vendor.model';
+import { MaintenanceReadStateService } from '../../../core/services/maintenance/maintenance-read-state.service';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppCheckboxComponent } from '../../../shared/ui/checkbox/checkbox.component';
@@ -183,6 +184,7 @@ export class RequestDetailComponent {
   private readonly maintenanceService = inject(MaintenanceService);
   private readonly adminUserService = inject(AdminUserService);
   private readonly vendorService = inject(VendorService);
+  private readonly readState = inject(MaintenanceReadStateService);
 
   // Proveedores externos para asignación
   readonly vendors = signal<Vendor[]>([]);
@@ -310,7 +312,7 @@ export class RequestDetailComponent {
   }
 
   private getLastReadId(): number {
-    return parseInt(localStorage.getItem(`admin_mnt_lastread_${this.request.id}`) ?? '0', 10);
+    return this.readState.getAdminLastReadId(this.request.id);
   }
 
   private computeUnread(messages: MaintenanceMessage[], lastReadId: number): void {
@@ -325,10 +327,7 @@ export class RequestDetailComponent {
   }
 
   private markAllAsRead(messages: MaintenanceMessage[]): void {
-    if (messages.length > 0) {
-      const lastId = Math.max(...messages.map((m) => m.id));
-      localStorage.setItem(`admin_mnt_lastread_${this.request.id}`, String(lastId));
-    }
+    this.readState.markAdminMessagesRead(this.request.id, messages);
   }
 
   isFirstUnread(msg: MaintenanceMessage): boolean {

@@ -1,5 +1,4 @@
 <div class="propiedades-container">
-  <!-- Header -->
   <app-page-header
     [title]="'properties.title' | transloco"
     [description]="'properties.subtitle' | transloco"
@@ -20,80 +19,27 @@
     (applied)="propiedades.applyFilters()"
   />
 
-  <!-- Loading State -->
-  @if (propiedades.isListLoading()) {
-    <div class="loading-state">
-      <app-loading-state [label]="'properties.loading' | transloco" />
-    </div>
-  }
-
-  <!-- Empty State -->
-  @if (!propiedades.isListLoading() && propiedades.properties().length === 0) {
-    <div class="empty-state">
-      <div class="empty-icon">
-        <lucide-icon [img]="Building2" [size]="40"></lucide-icon>
-      </div>
-      <h3>{{ 'properties.empty' | transloco }}</h3>
-      <p>{{ 'properties.emptyHint' | transloco }}</p>
-      <app-button (clicked)="propiedades.openCreateModal()">
-        <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
-        {{ 'properties.addFirst' | transloco }}
-      </app-button>
-    </div>
-  }
-
-  <!-- Properties Grid -->
-  @if (!propiedades.isListLoading() && propiedades.properties().length > 0) {
-    <div class="properties-grid">
-      @for (property of propiedades.properties(); track property.id) {
-        <app-property-card
-          [property]="property"
-          [imageUrl]="propiedades.getPropertyImage(property)"
-          (viewed)="propiedades.viewPropertyDetail($event)"
-          (edited)="propiedades.openEditModal($event)"
-          (statusToggled)="propiedades.toggleStatus($event)"
-          (deleted)="propiedades.deleteProperty($event)"
-          (imageFailed)="propiedades.onImageError($event.property)"
-        />
-      }
-    </div>
-
-    <div class="results-summary">
-      {{ 'properties.showing' | transloco: { count: propiedades.properties().length } }}
-    </div>
-  }
+  <app-property-list-section
+    [properties]="propiedades.properties()"
+    [loading]="propiedades.isListLoading()"
+    [imageResolver]="resolvePropertyImage"
+    (createOpened)="propiedades.openCreateModal()"
+    (viewed)="propiedades.viewPropertyDetail($event)"
+    (edited)="propiedades.openEditModal($event)"
+    (statusToggled)="propiedades.toggleStatus($event)"
+    (deleted)="propiedades.deleteProperty($event)"
+    (imageFailed)="propiedades.onImageError($event.property)"
+  />
 </div>
 
-<!-- Confirm Delete Dialog -->
-@if (propiedades.deleteConfirmProperty()) {
-  <app-dialog
-    [open]="true"
-    [title]="'properties.confirmDelete' | transloco"
-    (closed)="propiedades.cancelDelete()"
-  >
-    <div class="confirm-dialog">
-      <div class="confirm-icon">
-        <lucide-icon [img]="Trash2" [size]="28"></lucide-icon>
-      </div>
-      <p>
-        {{ 'properties.confirmDeleteMessage' | transloco }}
-        <strong>"{{ propiedades.deleteConfirmProperty()?.title }}"</strong>?
-      </p>
-      <p class="confirm-warning">{{ 'common.irreversible' | transloco }}</p>
-      <div dialog-actions class="confirm-actions">
-        <app-button appearance="flat" (clicked)="propiedades.cancelDelete()">
-          {{ 'common.cancel' | transloco }}
-        </app-button>
-        <app-button appearance="destructive" (clicked)="propiedades.confirmDelete()">
-          <lucide-icon [img]="Trash2" [size]="16"></lucide-icon>
-          {{ 'common.delete' | transloco }}
-        </app-button>
-      </div>
-    </div>
-  </app-dialog>
+@if (propiedades.deleteConfirmProperty(); as property) {
+  <app-property-delete-dialog
+    [property]="property"
+    (cancelled)="propiedades.cancelDelete()"
+    (confirmed)="propiedades.confirmDelete()"
+  />
 }
 
-<!-- Modal -->
 @if (propiedades.showModal()) {
   <app-property-form-dialog
     [form]="propiedades.propertyForm"

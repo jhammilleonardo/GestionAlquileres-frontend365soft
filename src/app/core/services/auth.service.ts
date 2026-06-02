@@ -21,6 +21,21 @@ export interface LoginResponse {
   user: AdminUser;
 }
 
+export interface AdminMfaRequiredResponse {
+  mfa_required: true;
+  challenge_id: string;
+  email_masked: string;
+  expires_in_seconds: number;
+}
+
+export type AdminLoginResponse = LoginResponse | AdminMfaRequiredResponse;
+
+export function isAdminMfaRequiredResponse(
+  response: AdminLoginResponse,
+): response is AdminMfaRequiredResponse {
+  return 'mfa_required' in response && response.mfa_required === true;
+}
+
 export interface RegisterAdminResponse {
   message: string;
   tenant: {
@@ -87,8 +102,12 @@ export class AuthService {
    */
   private cleanupOldData(): void {
     const user = this.loadUserFromStorage();
-    // If user exists but has string id '1' (mock data), clean it up
-    if (user && user.id === '1' && user.email === 'admin@365soft.com') {
+    const token = this.getToken();
+    const isLegacyMockToken = !token || token === 'mock-token' || token.startsWith('mock-');
+
+    // Versiones anteriores guardaban un admin mock con id/email iguales al seed real.
+    // No se debe borrar una sesión válida solo por esos campos; el token decide.
+    if (user && user.id === '1' && user.email === 'admin@365soft.com' && isLegacyMockToken) {
       localStorage.removeItem(this.USER_KEY);
       sessionStorage.removeItem(this.USER_KEY);
       localStorage.removeItem(this.TOKEN_KEY);
@@ -137,16 +156,47 @@ export class AuthService {
     email: string,
     password: string,
     rememberMe: boolean = false,
+  ): Observable<AdminLoginResponse> {
+    this.isLoadingSignal.set(true);
+    this.errorSignal.set(null);
+
+    return this.http
+      .post<AdminLoginResponse>(`${environment.apiUrl}auth/login-admin`, { email, password })
+      .pipe(
+        tap((response) => {
+          if (!isAdminMfaRequiredResponse(response)) {
+            this.setSession(response, rememberMe);
+            // Set slug from response after successful login
+            if (response.user?.tenant_slug) {
+              this.slugService.setSlug(response.user.tenant_slug);
+            }
+          }
+          this.isLoadingSignal.set(false);
+        }),
+        catchError((error: unknown) => {
+          this.isLoadingSignal.set(false);
+          this.errorSignal.set(getApiErrorMessage(error, 'Error al iniciar sesión'));
+          throw error;
+        }),
+      );
+  }
+
+  verifyAdminMfa(
+    challengeId: string,
+    code: string,
+    rememberMe: boolean = false,
   ): Observable<LoginResponse> {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
     return this.http
-      .post<LoginResponse>(`${environment.apiUrl}auth/login-admin`, { email, password })
+      .post<LoginResponse>(`${environment.apiUrl}auth/login-admin/mfa`, {
+        challenge_id: challengeId,
+        code,
+      })
       .pipe(
         tap((response) => {
           this.setSession(response, rememberMe);
-          // Set slug from response after successful login
           if (response.user?.tenant_slug) {
             this.slugService.setSlug(response.user.tenant_slug);
           }
@@ -154,7 +204,7 @@ export class AuthService {
         }),
         catchError((error: unknown) => {
           this.isLoadingSignal.set(false);
-          this.errorSignal.set(getApiErrorMessage(error, 'Error al iniciar sesión'));
+          this.errorSignal.set(getApiErrorMessage(error, 'Codigo de verificacion invalido'));
           throw error;
         }),
       );
@@ -373,6 +423,13 @@ export class AuthService {
   requestPasswordReset(email: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${environment.apiUrl}auth/forgot-password`, {
       email,
+    });
+  }
+
+  resetPassword(token: string, password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}auth/reset-password`, {
+      token,
+      password,
     });
   }
 

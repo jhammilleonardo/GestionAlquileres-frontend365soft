@@ -37,7 +37,15 @@ export class AdminOperationsService {
   }
 
   getReportRows(
-    report: 'rent-roll' | 'vacancies' | 'delinquency' | 'pnl',
+    report:
+      | 'rent-roll'
+      | 'vacancies'
+      | 'delinquency'
+      | 'pnl'
+      | 'maintenance'
+      | 'owners'
+      | 'cash-flow'
+      | 'budget-vs-actual',
     params: QueryParams = {},
   ): Observable<ApiRecord[]> {
     return this.api.get<ApiRecord[]>(this.endpoint(`admin/reports/${report}`), { params });
@@ -102,7 +110,16 @@ export class AdminOperationsService {
    * binario Excel o PDF generado por el backend.
    */
   downloadReport(
-    report: 'rent-roll' | 'vacancies' | 'delinquency' | 'pnl' | 'kpis',
+    report:
+      | 'rent-roll'
+      | 'vacancies'
+      | 'delinquency'
+      | 'pnl'
+      | 'maintenance'
+      | 'owners'
+      | 'cash-flow'
+      | 'budget-vs-actual'
+      | 'kpis',
     format: 'excel' | 'pdf',
     params: QueryParams = {},
   ): Observable<Blob> {

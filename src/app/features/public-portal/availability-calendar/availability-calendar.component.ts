@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   input,
+  output,
   signal,
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
@@ -12,6 +13,9 @@ import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsver
 import { LucideAngularModule, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-angular';
 
 import { AvailabilityStatus, ReservationService } from '../../../core/services/reservation.service';
+import { SlugService } from '../../../core/services/slug.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
+import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 
@@ -45,8 +49,16 @@ export class AvailabilityCalendarComponent implements OnInit {
   readonly cleaningFee = input(0);
   readonly minNights = input(1);
   readonly currency = input('USD');
+  readonly propertyTitle = input('');
+  readonly unitNumber = input('');
+  readonly initialCheckin = input<string | null>(null);
+  readonly initialCheckout = input<string | null>(null);
+  readonly reservationCreated = output<void>();
 
   private readonly reservationService = inject(ReservationService);
+  private readonly tenantAuthService = inject(TenantAuthService);
+  private readonly reservationIntentionService = inject(ReservationIntentionService);
+  private readonly slugService = inject(SlugService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
 
@@ -119,6 +131,7 @@ export class AvailabilityCalendarComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.restoreInitialRange();
     this.loadMonth();
   }
 
@@ -201,6 +214,27 @@ export class AvailabilityCalendarComponent implements OnInit {
       );
       return;
     }
+
+    if (!this.tenantAuthService.isAuthenticated()) {
+      const slug = this.slugService.getSlug();
+      if (!slug) {
+        this.toast.error('No se pudo identificar la inmobiliaria para iniciar sesión.');
+        return;
+      }
+
+      this.reservationIntentionService.setIntention({
+        propertyId: this.propertyId(),
+        propertyTitle: this.propertyTitle().trim() || 'Propiedad seleccionada',
+        unitId: this.unitId(),
+        unitNumber: this.unitNumber().trim() || undefined,
+        checkinDate: this.iso(ci),
+        checkoutDate: this.iso(co),
+      });
+      this.toast.info('Inicia sesión o crea una cuenta para confirmar la reserva.');
+      this.reservationIntentionService.navigateToLogin(slug);
+      return;
+    }
+
     this.submitting.set(true);
     this.reservationService
       .createReservation({
@@ -213,9 +247,11 @@ export class AvailabilityCalendarComponent implements OnInit {
         next: () => {
           this.submitting.set(false);
           this.toast.success(this.transloco.translate('public.availability.requested'));
+          this.reservationIntentionService.clearIntention();
           this.checkin.set(null);
           this.checkout.set(null);
           this.loadMonth();
+          this.reservationCreated.emit();
         },
         error: (err: { error?: { message?: string } }) => {
           this.submitting.set(false);
@@ -224,5 +260,21 @@ export class AvailabilityCalendarComponent implements OnInit {
           );
         },
       });
+  }
+
+  private restoreInitialRange(): void {
+    const checkin = this.parseIsoDate(this.initialCheckin());
+    const checkout = this.parseIsoDate(this.initialCheckout());
+    if (!checkin || !checkout || checkout <= checkin) return;
+
+    this.checkin.set(checkin);
+    this.checkout.set(checkout);
+    this.viewDate.set(new Date(checkin.getFullYear(), checkin.getMonth(), 1));
+  }
+
+  private parseIsoDate(value: string | null): Date | null {
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const [year, month, day] = value.split('-').map(Number);
+    return new Date(year, month - 1, day);
   }
 }

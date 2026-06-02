@@ -1,0 +1,35 @@
+@if (loading()) {
+  <div class="property-list__state">
+    <app-loading-state [label]="'properties.loading' | transloco" />
+  </div>
+} @else if (properties().length === 0) {
+  <div class="property-list__state property-list__state--empty">
+    <div class="property-list__empty-icon">
+      <lucide-icon [img]="Building2" [size]="40"></lucide-icon>
+    </div>
+    <h3>{{ 'properties.empty' | transloco }}</h3>
+    <p>{{ 'properties.emptyHint' | transloco }}</p>
+    <app-button (clicked)="createOpened.emit()">
+      <lucide-icon [img]="Plus" [size]="18"></lucide-icon>
+      {{ 'properties.addFirst' | transloco }}
+    </app-button>
+  </div>
+} @else {
+  <div class="property-list__grid">
+    @for (property of properties(); track property.id) {
+      <app-property-card
+        [property]="property"
+        [imageUrl]="imageResolver()(property)"
+        (viewed)="viewed.emit($event)"
+        (edited)="edited.emit($event)"
+        (statusToggled)="statusToggled.emit($event)"
+        (deleted)="deleted.emit($event)"
+        (imageFailed)="imageFailed.emit($event)"
+      />
+    }
+  </div>
+
+  <div class="property-list__summary">
+    {{ 'properties.showing' | transloco: { count: properties().length } }}
+  </div>
+}
