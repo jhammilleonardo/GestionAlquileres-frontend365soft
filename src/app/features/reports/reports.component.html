@@ -1,11 +1,11 @@
 <section class="page">
   <app-page-header
-    title="Reportes"
-    description="Centro de inteligencia para finanzas, ocupacion, morosidad, owners y operacion."
+    [title]="'reports.title' | transloco"
+    [description]="'reports.description' | transloco"
   >
     <div actions class="header-actions">
       <app-button appearance="secondary" size="s" (clicked)="facade.loadDashboard()">
-        Recargar
+        {{ 'reports.actions.reload' | transloco }}
       </app-button>
       @if (facade.rows().length > 0) {
         <app-button
@@ -13,7 +13,7 @@
           size="s"
           (clicked)="facade.exportCsv(facade.activeColumns())"
         >
-          CSV
+          {{ 'reports.actions.csv' | transloco }}
         </app-button>
         <app-button
           appearance="secondary"
@@ -21,7 +21,7 @@
           [disabled]="facade.exporting() || !facade.canDownloadBackendExport()"
           (clicked)="facade.downloadReport('excel')"
         >
-          Excel
+          {{ 'reports.actions.excel' | transloco }}
         </app-button>
         <app-button
           appearance="secondary"
@@ -29,41 +29,41 @@
           [disabled]="facade.exporting() || !facade.canDownloadBackendExport()"
           (clicked)="facade.downloadReport('pdf')"
         >
-          PDF
+          {{ 'reports.actions.pdf' | transloco }}
         </app-button>
       }
     </div>
   </app-page-header>
 
-  <app-toolbar ariaLabel="Filtros de reportes">
+  <app-toolbar [ariaLabel]="'reports.filters.ariaLabel' | transloco">
     <form class="filters" [formGroup]="facade.filterForm" (ngSubmit)="facade.applyFilters()">
       <app-text-field
         formControlName="property_id"
-        label="Propiedad"
-        placeholder="ID de propiedad"
+        [label]="'reports.filters.propertyLabel' | transloco"
+        [placeholder]="'reports.filters.propertyPlaceholder' | transloco"
         type="number"
       />
       <app-select
         formControlName="status"
-        label="Estado"
-        placeholder="Todos"
-        [options]="statusOptions"
+        [label]="'reports.filters.statusLabel' | transloco"
+        [placeholder]="'reports.filters.statusPlaceholder' | transloco"
+        [options]="statusOptions()"
       />
-      <app-date-picker formControlName="from" label="Desde" />
-      <app-date-picker formControlName="to" label="Hasta" />
+      <app-date-picker formControlName="from" [label]="'reports.filters.fromLabel' | transloco" />
+      <app-date-picker formControlName="to" [label]="'reports.filters.toLabel' | transloco" />
       <div class="filters-actions">
-        <app-button type="submit" size="s">Aplicar</app-button>
+        <app-button type="submit" size="s">{{ 'reports.actions.apply' | transloco }}</app-button>
         <app-button type="button" appearance="outline" size="s" (clicked)="facade.clearFilters()">
-          Limpiar
+          {{ 'reports.actions.clear' | transloco }}
         </app-button>
       </div>
     </form>
   </app-toolbar>
 
   @if (facade.isLoading()) {
-    <app-loading-state label="Cargando reportes..." />
+    <app-loading-state [label]="'reports.ui.loading' | transloco" />
   } @else {
-    <section class="kpi-grid" aria-label="Indicadores ejecutivos">
+    <section class="kpi-grid" [attr.aria-label]="'reports.ui.kpiAriaLabel' | transloco">
       @for (card of facade.kpiCards(); track card.label) {
         <article class="kpi" [attr.data-tone]="card.tone">
           <span>{{ card.label }}</span>
@@ -75,8 +75,8 @@
 
     <section class="report-switcher">
       <app-segmented-control
-        ariaLabel="Tipos de reporte"
-        [options]="reportOptions"
+        [ariaLabel]="'reports.ui.switcherAriaLabel' | transloco"
+        [options]="reportOptions()"
         [ngModel]="facade.activeReport()"
         [ngModelOptions]="{ standalone: true }"
         (valueChanged)="selectReport($event)"
@@ -84,34 +84,34 @@
       <p>{{ facade.activeReportOption().description }}</p>
     </section>
 
-    <section class="charts-grid" aria-label="Graficos de reportes">
+    <section class="charts-grid" [attr.aria-label]="'reports.ui.chartsAriaLabel' | transloco">
       <app-report-line-chart
-        title="Ingresos vs proyeccion"
-        eyebrow="Finanzas"
+        [title]="'reports.charts.incomeTitle' | transloco"
+        [eyebrow]="'reports.charts.incomeEyebrow' | transloco"
         currency="USD"
         [data]="facade.incomeTrend()"
       />
       <app-report-donut-chart
-        title="Ocupacion y atencion operativa"
-        eyebrow="Portafolio"
+        [title]="'reports.charts.occupancyTitle' | transloco"
+        [eyebrow]="'reports.charts.occupancyEyebrow' | transloco"
         [segments]="facade.occupancySegments()"
       />
       <app-report-bar-chart
-        title="Resultado / actividad por propiedad"
-        eyebrow="Performance"
+        [title]="'reports.charts.performanceTitle' | transloco"
+        [eyebrow]="'reports.charts.performanceEyebrow' | transloco"
         currency="USD"
         [data]="facade.financialBars()"
       />
       @if (facade.activeReport() === 'delinquency') {
         <app-report-donut-chart
-          title="Aging de morosidad"
-          eyebrow="Cobranza"
+          [title]="'reports.charts.delinquencyTitle' | transloco"
+          [eyebrow]="'reports.charts.delinquencyEyebrow' | transloco"
           [segments]="facade.delinquencyAgingSegments()"
         />
       } @else {
         <app-report-bar-chart
-          title="Vacancia y disponibilidad"
-          eyebrow="Operacion"
+          [title]="'reports.charts.vacancyTitle' | transloco"
+          [eyebrow]="'reports.charts.vacancyEyebrow' | transloco"
           [data]="facade.vacancyBars()"
         />
       }
@@ -120,27 +120,25 @@
     <section class="table-section">
       <header>
         <div>
-          <span>Detalle</span>
+          <span>{{ 'reports.table.eyebrow' | transloco }}</span>
           <strong>{{ facade.activeReportOption().label }}</strong>
         </div>
         @if (!facade.canDownloadBackendExport()) {
-          <p>
-            CSV disponible ahora. Excel/PDF requiere endpoint backend especifico para este reporte.
-          </p>
+          <p>{{ 'reports.table.exportHint' | transloco }}</p>
         }
       </header>
 
       @if (facade.rows().length === 0) {
         <app-empty-state
-          title="Sin datos"
-          description="No hay filas para el reporte seleccionado."
+          [title]="'reports.table.emptyTitle' | transloco"
+          [description]="'reports.table.emptyDescription' | transloco"
         />
       } @else {
         <app-table
           [columns]="facade.activeColumns()"
           [items]="facade.rows()"
-          emptyText="No hay datos para mostrar."
-          ariaLabel="Reporte financiero"
+          [emptyText]="'reports.table.tableEmpty' | transloco"
+          [ariaLabel]="'reports.table.ariaLabel' | transloco"
         />
       }
     </section>

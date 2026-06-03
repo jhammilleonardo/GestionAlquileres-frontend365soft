@@ -1,5 +1,7 @@
 import { computed, Injectable, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder } from '@angular/forms';
+import { Translation, TranslocoService } from '@jsverse/transloco';
 import { finalize } from 'rxjs';
 
 import {
@@ -58,87 +60,22 @@ const NUMBER_FORMAT = new Intl.NumberFormat('es-BO', {
   maximumFractionDigits: 0,
 });
 
-const TABLE_COLUMNS: Record<ReportType, readonly AppTableColumn<ApiRecord>[]> = {
-  summary: [
-    { key: 'metric', label: 'Métrica' },
-    { key: 'value', label: 'Valor', align: 'right' },
-    { key: 'status', label: 'Lectura' },
-  ],
-  'rent-roll': [
-    { key: 'property_name', label: 'Propiedad' },
-    { key: 'unit_number', label: 'Unidad' },
-    { key: 'tenant_name', label: 'Inquilino' },
-    { key: 'contract_status', label: 'Contrato' },
-    { key: 'rent_amount', label: 'Renta', align: 'right', formatter: moneyCell('rent_amount') },
-    {
-      key: 'current_balance',
-      label: 'Balance',
-      align: 'right',
-      formatter: moneyCell('current_balance'),
-    },
-  ],
-  vacancies: [
-    { key: 'property_name', label: 'Propiedad' },
-    { key: 'unit_number', label: 'Unidad' },
-    { key: 'bedrooms', label: 'Dorm.' },
-    { key: 'bathrooms', label: 'Baños' },
-    {
-      key: 'market_rent',
-      label: 'Renta mercado',
-      align: 'right',
-      formatter: moneyCell('market_rent'),
-    },
-    { key: 'days_vacant', label: 'Días vacante', align: 'right' },
-  ],
-  delinquency: [
-    { key: 'tenant_name', label: 'Inquilino' },
-    { key: 'property_name', label: 'Propiedad' },
-    { key: 'unit_number', label: 'Unidad' },
-    { key: 'total_owed', label: 'Deuda', align: 'right', formatter: moneyCell('total_owed') },
-    { key: 'max_days_late', label: 'Días mora', align: 'right' },
-  ],
-  pnl: [
-    { key: 'property_name', label: 'Propiedad' },
-    { key: 'income', label: 'Ingresos', align: 'right', formatter: moneyCell('income') },
-    { key: 'expenses', label: 'Gastos', align: 'right', formatter: moneyCell('expenses') },
-    { key: 'net_result', label: 'Resultado', align: 'right', formatter: moneyCell('net_result') },
-  ],
-  maintenance: [
-    { key: 'metric', label: 'Métrica' },
-    { key: 'value', label: 'Valor', align: 'right' },
-    { key: 'status', label: 'Lectura' },
-  ],
-  owners: [
-    { key: 'property_name', label: 'Propiedad' },
-    {
-      key: 'gross_income',
-      label: 'Renta bruta',
-      align: 'right',
-      formatter: moneyCell('gross_income'),
-    },
-    { key: 'commission', label: 'Comisión', align: 'right', formatter: moneyCell('commission') },
-    { key: 'deductions', label: 'Deducciones', align: 'right', formatter: moneyCell('deductions') },
-    {
-      key: 'net_transfer',
-      label: 'Neto propietario',
-      align: 'right',
-      formatter: moneyCell('net_transfer'),
-    },
-    { key: 'status', label: 'Estado' },
-  ],
-  'cash-flow': [
-    { key: 'movement', label: 'Movimiento' },
-    { key: 'inflow', label: 'Entrada', align: 'right', formatter: moneyCell('inflow') },
-    { key: 'outflow', label: 'Salida', align: 'right', formatter: moneyCell('outflow') },
-    { key: 'net', label: 'Neto', align: 'right', formatter: moneyCell('net') },
-  ],
-  'budget-vs-actual': [
-    { key: 'line', label: 'Línea' },
-    { key: 'budget', label: 'Presupuesto', align: 'right', formatter: moneyCell('budget') },
-    { key: 'actual', label: 'Real', align: 'right', formatter: moneyCell('actual') },
-    { key: 'variance', label: 'Variación', align: 'right', formatter: moneyCell('variance') },
-  ],
-};
+interface ReportTypeMeta {
+  type: ReportType;
+  backendType?: BackendReportType;
+}
+
+const REPORT_TYPES: readonly ReportTypeMeta[] = [
+  { type: 'summary' },
+  { type: 'rent-roll', backendType: 'rent-roll' },
+  { type: 'pnl', backendType: 'pnl' },
+  { type: 'delinquency', backendType: 'delinquency' },
+  { type: 'vacancies', backendType: 'vacancies' },
+  { type: 'maintenance', backendType: 'maintenance' },
+  { type: 'owners', backendType: 'owners' },
+  { type: 'cash-flow', backendType: 'cash-flow' },
+  { type: 'budget-vs-actual', backendType: 'budget-vs-actual' },
+];
 
 @Injectable()
 export class ReportsFacade {
@@ -146,62 +83,22 @@ export class ReportsFacade {
   private readonly operations = inject(AdminOperationsService);
   private readonly fileDownload = inject(FileDownloadService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
-  readonly reports: readonly ReportOption[] = [
-    {
-      type: 'summary',
-      label: 'Resumen',
-      description: 'Vista ejecutiva con KPIs, ocupación y tendencia financiera.',
-    },
-    {
-      type: 'rent-roll',
-      label: 'Rent Roll',
-      description: 'Unidades, contratos, renta esperada, depósitos y balances.',
-      backendType: 'rent-roll',
-    },
-    {
-      type: 'pnl',
-      label: 'P&L',
-      description: 'Ingresos, gastos y resultado neto por propiedad.',
-      backendType: 'pnl',
-    },
-    {
-      type: 'delinquency',
-      label: 'Morosidad',
-      description: 'Inquilinos con deuda, días de atraso y exposición por propiedad.',
-      backendType: 'delinquency',
-    },
-    {
-      type: 'vacancies',
-      label: 'Vacancias',
-      description: 'Unidades disponibles, días vacantes y renta de mercado.',
-      backendType: 'vacancies',
-    },
-    {
-      type: 'maintenance',
-      label: 'Mantenimiento',
-      description: 'Ordenes activas, presión operativa y costo estimado.',
-      backendType: 'maintenance',
-    },
-    {
-      type: 'owners',
-      label: 'Owners',
-      description: 'Liquidación estimada al propietario y deducciones.',
-      backendType: 'owners',
-    },
-    {
-      type: 'cash-flow',
-      label: 'Cash Flow',
-      description: 'Entradas, salidas y flujo neto operativo.',
-      backendType: 'cash-flow',
-    },
-    {
-      type: 'budget-vs-actual',
-      label: 'Budget vs Actual',
-      description: 'Comparación entre presupuesto esperado y resultado real.',
-      backendType: 'budget-vs-actual',
-    },
-  ];
+  // Mantiene el scope cargado y refresca las etiquetas traducidas al cambiar de idioma.
+  private readonly reportTranslations = toSignal(this.transloco.selectTranslation('reports'), {
+    initialValue: {} as Translation,
+  });
+
+  readonly reports = computed<readonly ReportOption[]>(() => {
+    this.reportTranslations();
+    return REPORT_TYPES.map(({ type, backendType }) => ({
+      type,
+      backendType,
+      label: this.t(`types.${type}.label`),
+      description: this.t(`types.${type}.description`),
+    }));
+  });
 
   readonly filterForm = this.fb.nonNullable.group({
     property_id: [''],
@@ -216,77 +113,85 @@ export class ReportsFacade {
   readonly kpis = signal<ReportKpis>({});
   readonly rows = signal<ApiRecord[]>([]);
 
-  readonly activeReportOption = computed(
-    () => this.reports.find((report) => report.type === this.activeReport()) ?? this.reports[0],
-  );
-  readonly activeColumns = computed(() => TABLE_COLUMNS[this.activeReport()]);
+  readonly activeReportOption = computed(() => {
+    const reports = this.reports();
+    return reports.find((report) => report.type === this.activeReport()) ?? reports[0];
+  });
+  readonly activeColumns = computed<readonly AppTableColumn<ApiRecord>[]>(() => {
+    this.reportTranslations();
+    return this.columnsFor(this.activeReport());
+  });
   readonly canDownloadBackendExport = computed(() =>
     Boolean(this.activeReportOption().backendType),
   );
 
   readonly kpiCards = computed<readonly KpiCard[]>(() => {
+    this.reportTranslations();
     const kpis = this.kpis();
     const income = this.toNumber(kpis.monthlyIncome);
     const previousIncome = this.toNumber(kpis.monthlyIncomePrevious);
     const delta = previousIncome > 0 ? ((income - previousIncome) / previousIncome) * 100 : 0;
+    const deltaLabel = `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
 
     return [
       {
-        label: 'Ingresos del mes',
+        label: this.t('kpis.incomeMonth.label'),
         value: MONEY_FORMAT.format(income),
-        helper: `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}% vs mes anterior`,
+        helper: this.t('kpis.incomeMonth.helper', { delta: deltaLabel }),
         tone: delta >= 0 ? 'success' : 'warning',
       },
       {
-        label: 'Ocupación',
+        label: this.t('kpis.occupancy.label'),
         value: `${((kpis.occupancyRateValue ?? 0) * 100).toFixed(1)}%`,
-        helper: `${NUMBER_FORMAT.format(kpis.occupiedUnits ?? 0)} de ${NUMBER_FORMAT.format(
-          kpis.totalUnits ?? 0,
-        )} unidades`,
+        helper: this.t('kpis.occupancy.helper', {
+          occupied: NUMBER_FORMAT.format(kpis.occupiedUnits ?? 0),
+          total: NUMBER_FORMAT.format(kpis.totalUnits ?? 0),
+        }),
         tone: (kpis.occupancyRateValue ?? 0) >= 0.85 ? 'success' : 'warning',
       },
       {
-        label: 'Morosos',
+        label: this.t('kpis.delinquent.label'),
         value: NUMBER_FORMAT.format(kpis.delinquentCount ?? 0),
-        helper: 'Inquilinos con deuda vencida',
+        helper: this.t('kpis.delinquent.helper'),
         tone: (kpis.delinquentCount ?? 0) > 0 ? 'danger' : 'success',
       },
       {
-        label: 'Mantenimiento',
+        label: this.t('kpis.maintenance.label'),
         value: NUMBER_FORMAT.format(kpis.activeMaintenanceCount ?? 0),
-        helper: 'Solicitudes activas',
+        helper: this.t('kpis.maintenance.helper'),
         tone: (kpis.activeMaintenanceCount ?? 0) > 0 ? 'warning' : 'neutral',
       },
       {
-        label: 'Contratos por vencer',
+        label: this.t('kpis.expiring.label'),
         value: NUMBER_FORMAT.format(kpis.expiringContracts ?? 0),
-        helper: 'Próximos 30 días',
+        helper: this.t('kpis.expiring.helper'),
         tone: (kpis.expiringContracts ?? 0) > 0 ? 'warning' : 'neutral',
       },
       {
-        label: 'Pagos pendientes',
+        label: this.t('kpis.pending.label'),
         value: NUMBER_FORMAT.format(kpis.pendingPaymentsCount ?? 0),
-        helper: 'Requieren revisión',
+        helper: this.t('kpis.pending.helper'),
         tone: (kpis.pendingPaymentsCount ?? 0) > 0 ? 'warning' : 'success',
       },
     ];
   });
 
   readonly occupancySegments = computed<readonly ReportChartSegment[]>(() => {
+    this.reportTranslations();
     const kpis = this.kpis();
     return [
       {
-        label: 'Ocupadas',
+        label: this.t('segments.occupied'),
         value: this.toNumber(kpis.occupiedUnits),
         color: 'var(--app-color-success)',
       },
       {
-        label: 'Disponibles',
+        label: this.t('segments.available'),
         value: this.toNumber(kpis.availableUnits),
         color: 'var(--app-color-primary)',
       },
       {
-        label: 'En atención',
+        label: this.t('segments.inService'),
         value: this.toNumber(kpis.activeMaintenanceCount),
         color: 'var(--app-color-warning)',
       },
@@ -294,6 +199,7 @@ export class ReportsFacade {
   });
 
   readonly delinquencyAgingSegments = computed<readonly ReportChartSegment[]>(() => {
+    this.reportTranslations();
     const buckets = { short: 0, medium: 0, long: 0, severe: 0 };
     for (const row of this.rows()) {
       const days = this.readNumber(row, 'max_days_late');
@@ -309,18 +215,31 @@ export class ReportsFacade {
     }
 
     return [
-      { label: '1-7 días', value: buckets.short, color: 'var(--app-color-success)' },
-      { label: '8-15 días', value: buckets.medium, color: 'var(--app-color-warning)' },
-      { label: '16-30 días', value: buckets.long, color: '#f97316' },
-      { label: '+30 días', value: buckets.severe, color: 'var(--app-color-danger)' },
+      { label: this.t('segments.aging1'), value: buckets.short, color: 'var(--app-color-success)' },
+      {
+        label: this.t('segments.aging2'),
+        value: buckets.medium,
+        color: 'var(--app-color-warning)',
+      },
+      { label: this.t('segments.aging3'), value: buckets.long, color: '#f97316' },
+      {
+        label: this.t('segments.aging4'),
+        value: buckets.severe,
+        color: 'var(--app-color-danger)',
+      },
     ];
   });
 
   readonly financialBars = computed<readonly ReportBarDatum[]>(() => {
+    this.reportTranslations();
     const rows = this.rows();
     if (this.activeReport() === 'pnl' && rows.length > 0) {
       return rows.slice(0, 6).map((row, index) => ({
-        label: this.readString(row, 'property_name', `Propiedad ${index + 1}`),
+        label: this.readString(
+          row,
+          'property_name',
+          this.t('bars.propertyFallback', { n: index + 1 }),
+        ),
         value: this.readNumber(row, 'net_result'),
         color: this.readNumber(row, 'net_result') >= 0 ? 'var(--app-color-success)' : '#f97316',
       }));
@@ -328,17 +247,17 @@ export class ReportsFacade {
 
     return [
       {
-        label: 'Ingresos',
+        label: this.t('bars.income'),
         value: this.toNumber(this.kpis().monthlyIncome),
         color: 'var(--app-color-success)',
       },
       {
-        label: 'Pendientes',
+        label: this.t('bars.pending'),
         value: this.toNumber(this.kpis().pendingPaymentsCount) * 100,
         color: 'var(--app-color-warning)',
       },
       {
-        label: 'Mantenimiento',
+        label: this.t('bars.maintenance'),
         value: this.toNumber(this.kpis().activeMaintenanceCount) * 250,
         color: 'var(--app-color-primary)',
       },
@@ -346,12 +265,13 @@ export class ReportsFacade {
   });
 
   readonly vacancyBars = computed<readonly ReportBarDatum[]>(() => {
+    this.reportTranslations();
     const rows = this.activeReport() === 'vacancies' ? this.rows() : [];
     if (rows.length > 0) {
       return rows.slice(0, 6).map((row, index) => ({
         label:
           this.readString(row, 'unit_number') ||
-          this.readString(row, 'property_name', `Unidad ${index + 1}`),
+          this.readString(row, 'property_name', this.t('bars.unitFallback', { n: index + 1 })),
         value: this.readNumber(row, 'days_vacant'),
         color: 'var(--app-color-warning)',
       }));
@@ -359,12 +279,12 @@ export class ReportsFacade {
 
     return [
       {
-        label: 'Disponibles',
+        label: this.t('bars.available'),
         value: this.toNumber(this.kpis().availableUnits),
         color: 'var(--app-color-primary)',
       },
       {
-        label: 'Ocupadas',
+        label: this.t('bars.occupied'),
         value: this.toNumber(this.kpis().occupiedUnits),
         color: 'var(--app-color-success)',
       },
@@ -372,14 +292,15 @@ export class ReportsFacade {
   });
 
   readonly incomeTrend = computed<readonly ReportLineDatum[]>(() => {
+    this.reportTranslations();
     const previous = this.toNumber(this.kpis().monthlyIncomePrevious);
     const current = this.toNumber(this.kpis().monthlyIncome);
     const projected = current > 0 ? current * 1.06 : previous;
 
     return [
-      { label: 'Mes anterior', value: previous },
-      { label: 'Mes actual', value: current },
-      { label: 'Proyección', value: projected },
+      { label: this.t('trend.previous'), value: previous },
+      { label: this.t('trend.current'), value: current },
+      { label: this.t('trend.projection'), value: projected },
     ];
   });
 
@@ -436,7 +357,7 @@ export class ReportsFacade {
   downloadReport(format: Exclude<ReportExportFormat, 'csv'>): void {
     const backendType = this.activeReportOption().backendType;
     if (!backendType) {
-      this.toast.error('Este reporte todavia no tiene exportacion backend');
+      this.toast.error(this.t('toast.noBackendExport'));
       return;
     }
 
@@ -445,11 +366,11 @@ export class ReportsFacade {
       next: (blob) => {
         this.exporting.set(false);
         this.downloadBlob(blob, this.buildFilename(backendType, format));
-        this.toast.success('Reporte exportado');
+        this.toast.success(this.t('toast.exported'));
       },
       error: () => {
         this.exporting.set(false);
-        this.toast.error('No se pudo exportar el reporte');
+        this.toast.error(this.t('toast.exportError'));
       },
     });
   }
@@ -457,7 +378,7 @@ export class ReportsFacade {
   exportCsv(columns: readonly { key: string; label: string }[]): void {
     const rows = this.rows();
     if (rows.length === 0) {
-      this.toast.error('No hay datos para exportar');
+      this.toast.error(this.t('toast.noDataToExport'));
       return;
     }
 
@@ -469,7 +390,7 @@ export class ReportsFacade {
     const bom = String.fromCharCode(0xfeff);
     const blob = new Blob([`${bom}${header}\n${body}`], { type: 'text/csv;charset=utf-8;' });
     this.downloadBlob(blob, this.buildFilename(this.activeReport(), 'csv'));
-    this.toast.success('Reporte exportado');
+    this.toast.success(this.t('toast.exported'));
   }
 
   private buildVirtualRows(type: ReportType): ApiRecord[] {
@@ -483,12 +404,12 @@ export class ReportsFacade {
       return [
         {
           id: 1,
-          property_name: 'Todas las propiedades',
+          property_name: this.t('virtual.allProperties'),
           gross_income: income,
           commission,
           deductions: maintenanceEstimate,
           net_transfer: Math.max(income - commission - maintenanceEstimate, 0),
-          status: 'Pendiente de cierre',
+          status: this.t('virtual.pendingClose'),
         },
       ];
     }
@@ -497,21 +418,21 @@ export class ReportsFacade {
       return [
         {
           id: 1,
-          movement: 'Rentas aprobadas',
+          movement: this.t('virtual.approvedRents'),
           inflow: income,
           outflow: 0,
           net: income,
         },
         {
           id: 2,
-          movement: 'Pagos pendientes estimados',
+          movement: this.t('virtual.estimatedPendingPayments'),
           inflow: pendingEstimate,
           outflow: 0,
           net: pendingEstimate,
         },
         {
           id: 3,
-          movement: 'Mantenimiento estimado',
+          movement: this.t('virtual.estimatedMaintenance'),
           inflow: 0,
           outflow: maintenanceEstimate,
           net: -maintenanceEstimate,
@@ -525,14 +446,14 @@ export class ReportsFacade {
       return [
         {
           id: 1,
-          line: 'Ingresos',
+          line: this.t('virtual.incomeLine'),
           budget: budgetIncome,
           actual: income,
           variance: income - budgetIncome,
         },
         {
           id: 2,
-          line: 'Gastos operativos',
+          line: this.t('virtual.operatingExpenses'),
           budget: budgetExpenses,
           actual: maintenanceEstimate,
           variance: budgetExpenses - maintenanceEstimate,
@@ -544,15 +465,15 @@ export class ReportsFacade {
       return [
         {
           id: 1,
-          metric: 'Solicitudes activas',
+          metric: this.t('virtual.activeRequests'),
           value: this.toNumber(kpis.activeMaintenanceCount),
-          status: 'Seguimiento operativo',
+          status: this.t('virtual.operationalTracking'),
         },
         {
           id: 2,
-          metric: 'Costo estimado',
+          metric: this.t('virtual.estimatedCost'),
           value: MONEY_FORMAT.format(maintenanceEstimate),
-          status: 'Basado en actividad actual',
+          status: this.t('virtual.basedOnActivity'),
         },
       ];
     }
@@ -560,21 +481,21 @@ export class ReportsFacade {
     return [
       {
         id: 1,
-        metric: 'Ingresos del mes',
+        metric: this.t('virtual.monthIncome'),
         value: MONEY_FORMAT.format(income),
-        status: 'Financiero',
+        status: this.t('virtual.financial'),
       },
       {
         id: 2,
-        metric: 'Ocupacion',
+        metric: this.t('virtual.occupancy'),
         value: `${((kpis.occupancyRateValue ?? 0) * 100).toFixed(1)}%`,
-        status: 'Operativo',
+        status: this.t('virtual.operational'),
       },
       {
         id: 3,
-        metric: 'Mantenimientos activos',
+        metric: this.t('virtual.activeMaintenance'),
         value: this.toNumber(kpis.activeMaintenanceCount),
-        status: 'Operativo',
+        status: this.t('virtual.operational'),
       },
     ];
   }
@@ -589,6 +510,156 @@ export class ReportsFacade {
     if (value.to) params['to'] = value.to;
 
     return params;
+  }
+
+  private t(key: string, params?: Record<string, string | number>): string {
+    return this.transloco.translate(`reports.${key}`, params);
+  }
+
+  private columnsFor(type: ReportType): readonly AppTableColumn<ApiRecord>[] {
+    const columns: Record<ReportType, readonly AppTableColumn<ApiRecord>[]> = {
+      summary: [
+        { key: 'metric', label: this.t('columns.metric') },
+        { key: 'value', label: this.t('columns.value'), align: 'right' },
+        { key: 'status', label: this.t('columns.reading') },
+      ],
+      'rent-roll': [
+        { key: 'property_name', label: this.t('columns.property') },
+        { key: 'unit_number', label: this.t('columns.unit') },
+        { key: 'tenant_name', label: this.t('columns.tenant') },
+        { key: 'contract_status', label: this.t('columns.contract') },
+        {
+          key: 'rent_amount',
+          label: this.t('columns.rent'),
+          align: 'right',
+          formatter: moneyCell('rent_amount'),
+        },
+        {
+          key: 'current_balance',
+          label: this.t('columns.balance'),
+          align: 'right',
+          formatter: moneyCell('current_balance'),
+        },
+      ],
+      vacancies: [
+        { key: 'property_name', label: this.t('columns.property') },
+        { key: 'unit_number', label: this.t('columns.unit') },
+        { key: 'bedrooms', label: this.t('columns.beds') },
+        { key: 'bathrooms', label: this.t('columns.baths') },
+        {
+          key: 'market_rent',
+          label: this.t('columns.marketRent'),
+          align: 'right',
+          formatter: moneyCell('market_rent'),
+        },
+        { key: 'days_vacant', label: this.t('columns.daysVacant'), align: 'right' },
+      ],
+      delinquency: [
+        { key: 'tenant_name', label: this.t('columns.tenant') },
+        { key: 'property_name', label: this.t('columns.property') },
+        { key: 'unit_number', label: this.t('columns.unit') },
+        {
+          key: 'total_owed',
+          label: this.t('columns.debt'),
+          align: 'right',
+          formatter: moneyCell('total_owed'),
+        },
+        { key: 'max_days_late', label: this.t('columns.daysLate'), align: 'right' },
+      ],
+      pnl: [
+        { key: 'property_name', label: this.t('columns.property') },
+        {
+          key: 'income',
+          label: this.t('columns.income'),
+          align: 'right',
+          formatter: moneyCell('income'),
+        },
+        {
+          key: 'expenses',
+          label: this.t('columns.expenses'),
+          align: 'right',
+          formatter: moneyCell('expenses'),
+        },
+        {
+          key: 'net_result',
+          label: this.t('columns.result'),
+          align: 'right',
+          formatter: moneyCell('net_result'),
+        },
+      ],
+      maintenance: [
+        { key: 'metric', label: this.t('columns.metric') },
+        { key: 'value', label: this.t('columns.value'), align: 'right' },
+        { key: 'status', label: this.t('columns.reading') },
+      ],
+      owners: [
+        { key: 'property_name', label: this.t('columns.property') },
+        {
+          key: 'gross_income',
+          label: this.t('columns.grossRent'),
+          align: 'right',
+          formatter: moneyCell('gross_income'),
+        },
+        {
+          key: 'commission',
+          label: this.t('columns.commission'),
+          align: 'right',
+          formatter: moneyCell('commission'),
+        },
+        {
+          key: 'deductions',
+          label: this.t('columns.deductions'),
+          align: 'right',
+          formatter: moneyCell('deductions'),
+        },
+        {
+          key: 'net_transfer',
+          label: this.t('columns.ownerNet'),
+          align: 'right',
+          formatter: moneyCell('net_transfer'),
+        },
+        { key: 'status', label: this.t('columns.state') },
+      ],
+      'cash-flow': [
+        { key: 'movement', label: this.t('columns.movement') },
+        {
+          key: 'inflow',
+          label: this.t('columns.inflow'),
+          align: 'right',
+          formatter: moneyCell('inflow'),
+        },
+        {
+          key: 'outflow',
+          label: this.t('columns.outflow'),
+          align: 'right',
+          formatter: moneyCell('outflow'),
+        },
+        { key: 'net', label: this.t('columns.net'), align: 'right', formatter: moneyCell('net') },
+      ],
+      'budget-vs-actual': [
+        { key: 'line', label: this.t('columns.line') },
+        {
+          key: 'budget',
+          label: this.t('columns.budget'),
+          align: 'right',
+          formatter: moneyCell('budget'),
+        },
+        {
+          key: 'actual',
+          label: this.t('columns.actual'),
+          align: 'right',
+          formatter: moneyCell('actual'),
+        },
+        {
+          key: 'variance',
+          label: this.t('columns.variance'),
+          align: 'right',
+          formatter: moneyCell('variance'),
+        },
+      ],
+    };
+
+    return columns[type];
   }
 
   private buildFilename(report: string, format: ReportExportFormat): string {

@@ -1,0 +1,198 @@
+{
+  "title": "Reports",
+  "description": "Intelligence hub for finances, occupancy, delinquency, owners and operations.",
+  "actions": {
+    "reload": "Reload",
+    "csv": "CSV",
+    "excel": "Excel",
+    "pdf": "PDF",
+    "apply": "Apply",
+    "clear": "Clear"
+  },
+  "filters": {
+    "ariaLabel": "Report filters",
+    "propertyLabel": "Property",
+    "propertyPlaceholder": "Property ID",
+    "statusLabel": "Status",
+    "statusPlaceholder": "All",
+    "fromLabel": "From",
+    "toLabel": "To"
+  },
+  "status": {
+    "active": "Active",
+    "available": "Available",
+    "occupied": "Occupied",
+    "pending": "Pending",
+    "overdue": "Overdue"
+  },
+  "ui": {
+    "loading": "Loading reports...",
+    "kpiAriaLabel": "Executive indicators",
+    "switcherAriaLabel": "Report types",
+    "chartsAriaLabel": "Report charts"
+  },
+  "charts": {
+    "incomeTitle": "Income vs projection",
+    "incomeEyebrow": "Finance",
+    "occupancyTitle": "Occupancy & operations",
+    "occupancyEyebrow": "Portfolio",
+    "performanceTitle": "Result / activity by property",
+    "performanceEyebrow": "Performance",
+    "delinquencyTitle": "Delinquency aging",
+    "delinquencyEyebrow": "Collections",
+    "vacancyTitle": "Vacancy & availability",
+    "vacancyEyebrow": "Operations"
+  },
+  "table": {
+    "eyebrow": "Detail",
+    "exportHint": "CSV available now. Excel/PDF requires a specific backend endpoint for this report.",
+    "emptyTitle": "No data",
+    "emptyDescription": "No rows for the selected report.",
+    "tableEmpty": "No data to display.",
+    "ariaLabel": "Financial report"
+  },
+  "types": {
+    "summary": {
+      "label": "Summary",
+      "description": "Executive view with KPIs, occupancy and financial trend."
+    },
+    "rent-roll": {
+      "label": "Rent Roll",
+      "description": "Units, contracts, expected rent, deposits and balances."
+    },
+    "pnl": {
+      "label": "P&L",
+      "description": "Income, expenses and net result by property."
+    },
+    "delinquency": {
+      "label": "Delinquency",
+      "description": "Tenants with debt, days late and exposure by property."
+    },
+    "vacancies": {
+      "label": "Vacancies",
+      "description": "Available units, days vacant and market rent."
+    },
+    "maintenance": {
+      "label": "Maintenance",
+      "description": "Active orders, operational pressure and estimated cost."
+    },
+    "owners": {
+      "label": "Owners",
+      "description": "Estimated owner settlement and deductions."
+    },
+    "cash-flow": {
+      "label": "Cash Flow",
+      "description": "Inflows, outflows and net operating cash flow."
+    },
+    "budget-vs-actual": {
+      "label": "Budget vs Actual",
+      "description": "Comparison between expected budget and actual result."
+    }
+  },
+  "columns": {
+    "metric": "Metric",
+    "value": "Value",
+    "reading": "Reading",
+    "property": "Property",
+    "unit": "Unit",
+    "tenant": "Tenant",
+    "contract": "Contract",
+    "rent": "Rent",
+    "balance": "Balance",
+    "beds": "Beds",
+    "baths": "Baths",
+    "marketRent": "Market rent",
+    "daysVacant": "Days vacant",
+    "debt": "Debt",
+    "daysLate": "Days late",
+    "income": "Income",
+    "expenses": "Expenses",
+    "result": "Result",
+    "grossRent": "Gross rent",
+    "commission": "Commission",
+    "deductions": "Deductions",
+    "ownerNet": "Owner net",
+    "state": "Status",
+    "movement": "Movement",
+    "inflow": "Inflow",
+    "outflow": "Outflow",
+    "net": "Net",
+    "line": "Line",
+    "budget": "Budget",
+    "actual": "Actual",
+    "variance": "Variance"
+  },
+  "kpis": {
+    "incomeMonth": {
+      "label": "Monthly income",
+      "helper": "{{delta}}% vs last month"
+    },
+    "occupancy": {
+      "label": "Occupancy",
+      "helper": "{{occupied}} of {{total}} units"
+    },
+    "delinquent": {
+      "label": "Delinquent",
+      "helper": "Tenants with overdue debt"
+    },
+    "maintenance": {
+      "label": "Maintenance",
+      "helper": "Active requests"
+    },
+    "expiring": {
+      "label": "Expiring contracts",
+      "helper": "Next 30 days"
+    },
+    "pending": {
+      "label": "Pending payments",
+      "helper": "Require review"
+    }
+  },
+  "segments": {
+    "occupied": "Occupied",
+    "available": "Available",
+    "inService": "In service",
+    "aging1": "1-7 days",
+    "aging2": "8-15 days",
+    "aging3": "16-30 days",
+    "aging4": "+30 days"
+  },
+  "bars": {
+    "income": "Income",
+    "pending": "Pending",
+    "maintenance": "Maintenance",
+    "available": "Available",
+    "occupied": "Occupied",
+    "propertyFallback": "Property {{n}}",
+    "unitFallback": "Unit {{n}}"
+  },
+  "trend": {
+    "previous": "Last month",
+    "current": "Current month",
+    "projection": "Projection"
+  },
+  "virtual": {
+    "allProperties": "All properties",
+    "pendingClose": "Pending close",
+    "approvedRents": "Approved rents",
+    "estimatedPendingPayments": "Estimated pending payments",
+    "estimatedMaintenance": "Estimated maintenance",
+    "incomeLine": "Income",
+    "operatingExpenses": "Operating expenses",
+    "activeRequests": "Active requests",
+    "operationalTracking": "Operational tracking",
+    "estimatedCost": "Estimated cost",
+    "basedOnActivity": "Based on current activity",
+    "monthIncome": "Monthly income",
+    "financial": "Financial",
+    "occupancy": "Occupancy",
+    "operational": "Operational",
+    "activeMaintenance": "Active maintenance"
+  },
+  "toast": {
+    "noBackendExport": "This report does not have backend export yet",
+    "exported": "Report exported",
+    "exportError": "Could not export the report",
+    "noDataToExport": "No data to export"
+  }
+}

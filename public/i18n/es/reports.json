@@ -1,0 +1,198 @@
+{
+  "title": "Reportes",
+  "description": "Centro de inteligencia para finanzas, ocupación, morosidad, owners y operación.",
+  "actions": {
+    "reload": "Recargar",
+    "csv": "CSV",
+    "excel": "Excel",
+    "pdf": "PDF",
+    "apply": "Aplicar",
+    "clear": "Limpiar"
+  },
+  "filters": {
+    "ariaLabel": "Filtros de reportes",
+    "propertyLabel": "Propiedad",
+    "propertyPlaceholder": "ID de propiedad",
+    "statusLabel": "Estado",
+    "statusPlaceholder": "Todos",
+    "fromLabel": "Desde",
+    "toLabel": "Hasta"
+  },
+  "status": {
+    "active": "Activo",
+    "available": "Disponible",
+    "occupied": "Ocupado",
+    "pending": "Pendiente",
+    "overdue": "En mora"
+  },
+  "ui": {
+    "loading": "Cargando reportes...",
+    "kpiAriaLabel": "Indicadores ejecutivos",
+    "switcherAriaLabel": "Tipos de reporte",
+    "chartsAriaLabel": "Gráficos de reportes"
+  },
+  "charts": {
+    "incomeTitle": "Ingresos vs proyección",
+    "incomeEyebrow": "Finanzas",
+    "occupancyTitle": "Ocupación y atención operativa",
+    "occupancyEyebrow": "Portafolio",
+    "performanceTitle": "Resultado / actividad por propiedad",
+    "performanceEyebrow": "Performance",
+    "delinquencyTitle": "Aging de morosidad",
+    "delinquencyEyebrow": "Cobranza",
+    "vacancyTitle": "Vacancia y disponibilidad",
+    "vacancyEyebrow": "Operación"
+  },
+  "table": {
+    "eyebrow": "Detalle",
+    "exportHint": "CSV disponible ahora. Excel/PDF requiere endpoint backend específico para este reporte.",
+    "emptyTitle": "Sin datos",
+    "emptyDescription": "No hay filas para el reporte seleccionado.",
+    "tableEmpty": "No hay datos para mostrar.",
+    "ariaLabel": "Reporte financiero"
+  },
+  "types": {
+    "summary": {
+      "label": "Resumen",
+      "description": "Vista ejecutiva con KPIs, ocupación y tendencia financiera."
+    },
+    "rent-roll": {
+      "label": "Rent Roll",
+      "description": "Unidades, contratos, renta esperada, depósitos y balances."
+    },
+    "pnl": {
+      "label": "P&L",
+      "description": "Ingresos, gastos y resultado neto por propiedad."
+    },
+    "delinquency": {
+      "label": "Morosidad",
+      "description": "Inquilinos con deuda, días de atraso y exposición por propiedad."
+    },
+    "vacancies": {
+      "label": "Vacancias",
+      "description": "Unidades disponibles, días vacantes y renta de mercado."
+    },
+    "maintenance": {
+      "label": "Mantenimiento",
+      "description": "Órdenes activas, presión operativa y costo estimado."
+    },
+    "owners": {
+      "label": "Owners",
+      "description": "Liquidación estimada al propietario y deducciones."
+    },
+    "cash-flow": {
+      "label": "Cash Flow",
+      "description": "Entradas, salidas y flujo neto operativo."
+    },
+    "budget-vs-actual": {
+      "label": "Budget vs Actual",
+      "description": "Comparación entre presupuesto esperado y resultado real."
+    }
+  },
+  "columns": {
+    "metric": "Métrica",
+    "value": "Valor",
+    "reading": "Lectura",
+    "property": "Propiedad",
+    "unit": "Unidad",
+    "tenant": "Inquilino",
+    "contract": "Contrato",
+    "rent": "Renta",
+    "balance": "Balance",
+    "beds": "Dorm.",
+    "baths": "Baños",
+    "marketRent": "Renta mercado",
+    "daysVacant": "Días vacante",
+    "debt": "Deuda",
+    "daysLate": "Días mora",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "result": "Resultado",
+    "grossRent": "Renta bruta",
+    "commission": "Comisión",
+    "deductions": "Deducciones",
+    "ownerNet": "Neto propietario",
+    "state": "Estado",
+    "movement": "Movimiento",
+    "inflow": "Entrada",
+    "outflow": "Salida",
+    "net": "Neto",
+    "line": "Línea",
+    "budget": "Presupuesto",
+    "actual": "Real",
+    "variance": "Variación"
+  },
+  "kpis": {
+    "incomeMonth": {
+      "label": "Ingresos del mes",
+      "helper": "{{delta}}% vs mes anterior"
+    },
+    "occupancy": {
+      "label": "Ocupación",
+      "helper": "{{occupied}} de {{total}} unidades"
+    },
+    "delinquent": {
+      "label": "Morosos",
+      "helper": "Inquilinos con deuda vencida"
+    },
+    "maintenance": {
+      "label": "Mantenimiento",
+      "helper": "Solicitudes activas"
+    },
+    "expiring": {
+      "label": "Contratos por vencer",
+      "helper": "Próximos 30 días"
+    },
+    "pending": {
+      "label": "Pagos pendientes",
+      "helper": "Requieren revisión"
+    }
+  },
+  "segments": {
+    "occupied": "Ocupadas",
+    "available": "Disponibles",
+    "inService": "En atención",
+    "aging1": "1-7 días",
+    "aging2": "8-15 días",
+    "aging3": "16-30 días",
+    "aging4": "+30 días"
+  },
+  "bars": {
+    "income": "Ingresos",
+    "pending": "Pendientes",
+    "maintenance": "Mantenimiento",
+    "available": "Disponibles",
+    "occupied": "Ocupadas",
+    "propertyFallback": "Propiedad {{n}}",
+    "unitFallback": "Unidad {{n}}"
+  },
+  "trend": {
+    "previous": "Mes anterior",
+    "current": "Mes actual",
+    "projection": "Proyección"
+  },
+  "virtual": {
+    "allProperties": "Todas las propiedades",
+    "pendingClose": "Pendiente de cierre",
+    "approvedRents": "Rentas aprobadas",
+    "estimatedPendingPayments": "Pagos pendientes estimados",
+    "estimatedMaintenance": "Mantenimiento estimado",
+    "incomeLine": "Ingresos",
+    "operatingExpenses": "Gastos operativos",
+    "activeRequests": "Solicitudes activas",
+    "operationalTracking": "Seguimiento operativo",
+    "estimatedCost": "Costo estimado",
+    "basedOnActivity": "Basado en actividad actual",
+    "monthIncome": "Ingresos del mes",
+    "financial": "Financiero",
+    "occupancy": "Ocupación",
+    "operational": "Operativo",
+    "activeMaintenance": "Mantenimientos activos"
+  },
+  "toast": {
+    "noBackendExport": "Este reporte todavía no tiene exportación backend",
+    "exported": "Reporte exportado",
+    "exportError": "No se pudo exportar el reporte",
+    "noDataToExport": "No hay datos para exportar"
+  }
+}

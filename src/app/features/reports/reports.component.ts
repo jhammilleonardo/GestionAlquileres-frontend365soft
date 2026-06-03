@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
 import { AppDatePickerComponent } from '../../shared/ui/date-picker/date-picker.component';
@@ -35,31 +37,41 @@ import { ReportType, ReportsFacade } from './reports.facade';
     AppToolbarComponent,
     FormsModule,
     ReactiveFormsModule,
+    TranslocoModule,
     ReportBarChartComponent,
     ReportDonutChartComponent,
     ReportLineChartComponent,
   ],
-  providers: [ReportsFacade],
+  providers: [ReportsFacade, provideTranslocoScope('reports')],
   templateUrl: './reports.component.html',
   styleUrl: './reports.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportsComponent {
   protected readonly facade = inject(ReportsFacade);
+  private readonly transloco = inject(TranslocoService);
 
-  readonly statusOptions: readonly AppSelectOption<string>[] = [
-    { value: 'active', label: 'Activo' },
-    { value: 'available', label: 'Disponible' },
-    { value: 'occupied', label: 'Ocupado' },
-    { value: 'pending', label: 'Pendiente' },
-    { value: 'overdue', label: 'En mora' },
-  ];
+  // Refresca etiquetas traducidas al cargar el scope y al cambiar de idioma.
+  private readonly translations = toSignal(this.transloco.selectTranslation('reports'), {
+    initialValue: {},
+  });
 
-  readonly reportOptions: readonly AppSegmentedControlOption<string>[] = this.facade.reports.map(
-    (report) => ({
+  readonly statusOptions = computed<readonly AppSelectOption<string>[]>(() => {
+    this.translations();
+    return [
+      { value: 'active', label: this.transloco.translate('reports.status.active') },
+      { value: 'available', label: this.transloco.translate('reports.status.available') },
+      { value: 'occupied', label: this.transloco.translate('reports.status.occupied') },
+      { value: 'pending', label: this.transloco.translate('reports.status.pending') },
+      { value: 'overdue', label: this.transloco.translate('reports.status.overdue') },
+    ];
+  });
+
+  readonly reportOptions = computed<readonly AppSegmentedControlOption<string>[]>(() =>
+    this.facade.reports().map((report) => ({
       label: report.label,
       value: report.type,
-    }),
+    })),
   );
 
   constructor() {

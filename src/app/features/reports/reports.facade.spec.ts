@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { TranslocoService } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +16,12 @@ describe('ReportsFacade', () => {
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   let facade: ReportsFacade;
 
+  // El mock devuelve la clave tal cual; así las aserciones validan la rama/clave correcta.
+  const transloco = {
+    translate: (key: string) => key,
+    selectTranslation: () => of({}),
+  };
+
   beforeEach(() => {
     operations = {
       getReportsKpis: vi.fn(),
@@ -30,6 +37,7 @@ describe('ReportsFacade', () => {
         ReportsFacade,
         { provide: AdminOperationsService, useValue: operations },
         { provide: ToastService, useValue: toast },
+        { provide: TranslocoService, useValue: transloco },
       ],
     });
     facade = TestBed.inject(ReportsFacade);
@@ -54,7 +62,7 @@ describe('ReportsFacade', () => {
     expect(operations.getReportsKpis).toHaveBeenCalledWith(params);
     expect(operations.getReportRows).not.toHaveBeenCalled();
     expect(facade.kpis().occupancyRateValue).toBe(0.9);
-    expect(facade.rows()[0]).toMatchObject({ metric: 'Ingresos del mes' });
+    expect(facade.rows()[0]).toMatchObject({ metric: 'reports.virtual.monthIncome' });
   });
 
   it('switches report type and reloads rows', () => {
@@ -68,7 +76,7 @@ describe('ReportsFacade', () => {
     facade.downloadReport('pdf');
 
     expect(operations.downloadReport).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith('Este reporte todavia no tiene exportacion backend');
+    expect(toast.error).toHaveBeenCalledWith('reports.toast.noBackendExport');
   });
 
   it('clears filters and reloads dashboard', () => {
@@ -91,7 +99,7 @@ describe('ReportsFacade', () => {
     facade.loadReport('pnl');
     facade.downloadReport('pdf');
 
-    expect(toast.error).toHaveBeenCalledWith('No se pudo exportar el reporte');
+    expect(toast.error).toHaveBeenCalledWith('reports.toast.exportError');
     expect(facade.exporting()).toBe(false);
   });
 });
