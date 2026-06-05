@@ -43,6 +43,7 @@ export interface Property {
 
   // Financiero (nombres actualizados según API)
   monthly_rent?: number;
+  min_price_per_night?: number | null;
   currency?: string;
   security_deposit_amount?: number;
   account_number?: string;
@@ -82,6 +83,10 @@ export interface Property {
   property_type_code?: string;
   property_subtype_name?: string;
   property_subtype_code?: string;
+  total_units?: number | null;
+  available_units?: number | null;
+  available_short_term_units?: number | null;
+  available_long_term_units?: number | null;
 }
 
 export interface PropertyType {

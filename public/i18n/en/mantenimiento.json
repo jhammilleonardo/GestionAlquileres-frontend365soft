@@ -83,5 +83,16 @@
   "ratingRequired": "Select at least one star",
   "ratingSaved": "Rating saved",
   "ratingError": "Could not save the rating",
-  "ratingCommentPlaceholder": "Comment about the work (optional)"
+  "ratingCommentPlaceholder": "Comment about the work (optional)",
+  "actions": {
+    "newRequestInfo": "The new request form is implemented in the corresponding flow.",
+    "statusUpdated": "Status updated",
+    "statusUpdateError": "Error updating the request status",
+    "priorityUpdated": "Priority updated",
+    "priorityUpdateError": "Error updating the request priority",
+    "deleteTitle": "Delete request",
+    "deleteMessage": "Delete request \"{{title}}\"? This action cannot be undone.",
+    "deleted": "Request deleted",
+    "deleteError": "Error deleting the request"
+  }
 }

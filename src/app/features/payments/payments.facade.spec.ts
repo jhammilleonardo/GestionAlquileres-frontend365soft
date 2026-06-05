@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { TranslocoService } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -124,6 +125,13 @@ describe('PaymentsFacade', () => {
           provide: FileDownloadService,
           useValue: fileDownload,
         },
+        {
+          provide: TranslocoService,
+          useValue: {
+            translate: (key: string, params?: { tenantName?: string }) =>
+              params?.tenantName ? `${key}:${params.tenantName}` : key,
+          },
+        },
       ],
     });
 
@@ -181,9 +189,9 @@ describe('PaymentsFacade', () => {
 
     expect(paymentService.updatePaymentStatus).toHaveBeenCalledWith(1, {
       status: PaymentStatus.APPROVED,
-      admin_notes: 'Pago aprobado por administrador',
+      admin_notes: 'pagos.actions.approvedByAdmin',
     });
-    expect(toast.success).toHaveBeenCalledWith('Pago de Inquilino #1 aprobado');
+    expect(toast.success).toHaveBeenCalledWith('pagos.actions.approvedToast:Inquilino #1');
   });
 
   it('rechaza un pago con motivo obligatorio', () => {
@@ -199,7 +207,7 @@ describe('PaymentsFacade', () => {
       rejection_reason: 'Comprobante ilegible',
     });
     expect(facade.rejectionPayment()).toBeNull();
-    expect(toast.error).toHaveBeenCalledWith('Pago de Inquilino #1 rechazado');
+    expect(toast.error).toHaveBeenCalledWith('pagos.actions.rejectedToast:Inquilino #1');
   });
 
   it('no rechaza si el motivo no fue informado', () => {

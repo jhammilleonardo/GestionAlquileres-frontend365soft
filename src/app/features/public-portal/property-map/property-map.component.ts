@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { Property } from '../../../core/models/property.model';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { LucideAngularModule, MapPin, List, Home } from 'lucide-angular';
 import * as L from 'leaflet';
@@ -30,6 +30,7 @@ export class PropertyMapComponent implements OnInit, OnDestroy {
   public propertyService = inject(PropertyService);
   private cdr = inject(ChangeDetectorRef);
   public slugService = inject(SlugService);
+  private transloco = inject(TranslocoService);
 
   ngOnInit(): void {
     this.loadProperties();
@@ -102,13 +103,17 @@ export class PropertyMapComponent implements OnInit, OnDestroy {
 
     this.properties.forEach((prop) => {
       if (prop.latitude && prop.longitude) {
+        const title = this.escapeHtml(prop.title);
+        const price = this.escapeHtml(this.propertyService.getPropertyPrice(prop));
+        const imageUrl = this.escapeHtml(this.propertyService.getPropertyImageUrl(prop));
+        const viewDetails = this.escapeHtml(this.transloco.translate('public.map.viewDetails'));
         const marker = L.marker([prop.latitude, prop.longitude]).addTo(this.map!).bindPopup(`
             <div class="map-popup">
-              <img src="${this.propertyService.getPropertyImageUrl(prop)}" alt="${prop.title}" class="popup-img">
+              <img src="${imageUrl}" alt="${title}" class="popup-img">
               <div class="popup-info">
-                <h3 class="popup-title">${prop.title}</h3>
-                <p class="popup-price">${this.propertyService.getPropertyPrice(prop)}</p>
-                <a href="/${this.slugService.getSlug()}/publico/propiedades/${prop.id}" class="popup-link">Ver detalles</a>
+                <h3 class="popup-title">${title}</h3>
+                <p class="popup-price">${price}</p>
+                <a href="/${this.slugService.getSlug()}/publico/propiedades/${prop.id}" class="popup-link">${viewDetails}</a>
               </div>
             </div>
           `);
@@ -121,5 +126,19 @@ export class PropertyMapComponent implements OnInit, OnDestroy {
     if (this.markers.length > 0) {
       this.map.fitBounds(bounds, { padding: [50, 50] });
     }
+  }
+
+  private escapeHtml(value: string): string {
+    return value.replace(/[&<>"']/g, (character) => {
+      const entities: Record<string, string> = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;',
+      };
+
+      return entities[character] ?? character;
+    });
   }
 }

@@ -29,8 +29,7 @@ import {
   BellOff,
   ArrowUpRight,
 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { NotificationService, Notification } from '../../core/services/admin/notification.service';
 import { SlugService } from '../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
@@ -66,6 +65,7 @@ export class NotificationsComponent implements AfterViewInit {
   private slugService = inject(SlugService);
   private destroyRef = inject(DestroyRef);
   private confirmDialog = inject(ConfirmDialogService);
+  private transloco = inject(TranslocoService);
 
   @ViewChildren('notifCard') notifCards!: QueryList<ElementRef<HTMLElement>>;
 
@@ -170,10 +170,10 @@ export class NotificationsComponent implements AfterViewInit {
   async deleteNotification(id: number, event: Event): Promise<void> {
     event.stopPropagation();
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Eliminar notificación',
-      message: '¿Eliminar esta notificación?',
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
+      title: this.transloco.translate('notifications.deleteDialog.title'),
+      message: this.transloco.translate('notifications.deleteDialog.message'),
+      confirmLabel: this.transloco.translate('common.delete'),
+      cancelLabel: this.transloco.translate('common.cancel'),
       variant: 'danger',
     });
 
@@ -255,24 +255,7 @@ export class NotificationsComponent implements AfterViewInit {
   }
 
   getNotificationTypeLabel(eventType: string): string {
-    const types: { [key: string]: string } = {
-      'maintenance.request.created': 'Nueva Solicitud',
-      'maintenance.status.changed': 'Estado Actualizado',
-      'maintenance.message.received': 'Nuevo Mensaje',
-      'maintenance.assigned': 'Asignado',
-      'maintenance.completed': 'Completado',
-      'property.status.changed': 'Propiedad Actualizada',
-      'property.available': 'Propiedad Disponible',
-      'user.registered': 'Nuevo Usuario',
-      'user.password.changed': 'Contraseña Cambiada',
-      'payment.created': 'Nuevo Pago',
-      'payment.approved': 'Pago Aprobado',
-      'payment.rejected': 'Pago Rechazado',
-      'contract.created': 'Contrato Creado',
-      'contract.signed': 'Contrato Firmado',
-      'contract.expiring': 'Contrato por Vencer',
-    };
-    return types[eventType] || 'Notificación';
+    return this.transloco.translate(`notifications.type.${eventType}`);
   }
 
   formatNotificationTime(date: Date): string {
@@ -282,11 +265,17 @@ export class NotificationsComponent implements AfterViewInit {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Ahora mismo';
-    if (minutes < 60) return `Hace ${minutes} minuto${minutes !== 1 ? 's' : ''}`;
-    if (hours < 24) return `Hace ${hours} hora${hours !== 1 ? 's' : ''}`;
-    if (days === 1) return 'Ayer';
-    if (days < 7) return `Hace ${days} días`;
+    if (minutes < 1) return this.transloco.translate('notifications.time.now');
+    if (minutes < 60) {
+      return this.transloco.translate('notifications.time.minutesAgo', { count: minutes });
+    }
+    if (hours < 24) {
+      return this.transloco.translate('notifications.time.hoursAgo', { count: hours });
+    }
+    if (days === 1) return this.transloco.translate('notifications.time.yesterday');
+    if (days < 7) {
+      return this.transloco.translate('notifications.time.daysAgo', { count: days });
+    }
     return new Date(date).toLocaleDateString('es-ES', {
       day: 'numeric',
       month: 'short',

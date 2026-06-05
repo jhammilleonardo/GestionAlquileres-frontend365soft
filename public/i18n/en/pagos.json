@@ -83,5 +83,34 @@
   "tenantNotesHint": "Additional information from tenant",
   "adminNotesOptional": "Admin Notes (Optional)",
   "adminNotesHint": "Internal administrative notes",
-  "create": "Create Payment"
+  "create": "Create Payment",
+  "bulk": {
+    "title": "{{action}} {{count}} payment(s)",
+    "message": "{{action}} {{count}} selected payment(s)?",
+    "rejectReasonLabel": "Rejection reason (optional)",
+    "rejectReasonPlaceholder": "Reason...",
+    "defaultRejectReason": "Rejected in bulk action",
+    "completed": "Action completed: {{processed}} processed, {{errors}} errors",
+    "error": "Error: {{message}}"
+  },
+  "actions": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "approvedByAdmin": "Payment approved by admin",
+    "exportCsvError": "Error exporting CSV\n{{msg}}",
+    "proofLoadError": "Could not load the receipt",
+    "approvedToast": "Payment from {{tenantName}} approved",
+    "approveError": "Error approving payment: {{message}}",
+    "rejectedToast": "Payment from {{tenantName}} rejected",
+    "rejectError": "Error rejecting payment: {{message}}",
+    "deleteTitle": "Delete payment",
+    "deleteMessage": "Delete the {{amount}} BOB payment? This action cannot be undone.",
+    "deleted": "Payment deleted",
+    "deleteError": "Error deleting payment",
+    "loadContractsError": "Error loading tenant contracts",
+    "tenantContractRequired": "You must select a tenant and a contract",
+    "requiredFields": "Please complete all required fields",
+    "created": "Payment created successfully",
+    "createError": "Error creating payment"
+  }
 }

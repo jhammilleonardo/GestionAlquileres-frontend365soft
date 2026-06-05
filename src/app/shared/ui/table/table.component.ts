@@ -1,5 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, TemplateRef, input, output } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
 
 export interface AppTableColumn<TItem> {
   key: keyof TItem & string;
@@ -22,7 +23,7 @@ export interface AppTableColumn<TItem> {
             }
 
             @if (hasActions()) {
-              <th class="app-table__actions">Acciones</th>
+              <th class="app-table__actions">{{ 'common.actions' | transloco }}</th>
             }
           </tr>
         </thead>
@@ -59,7 +60,7 @@ export interface AppTableColumn<TItem> {
       </table>
     </div>
   `,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, TranslocoModule],
   styles: `
     :host {
       display: block;

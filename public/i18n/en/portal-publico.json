@@ -1,4 +1,12 @@
 {
+  "brand": {
+    "name": "365Soft"
+  },
+  "language": {
+    "group": "Language selector",
+    "spanish": "Spanish",
+    "english": "English"
+  },
   "nav": {
     "home": "Home",
     "properties": "Properties",
@@ -36,7 +44,7 @@
     "heroSubtitle": "Learn the history and mission behind our rental platform",
     "missionTitle": "Our Mission",
     "missionSubtitle": "Transform the property rental experience",
-    "missionText": "At RentHub, we are dedicated to simplifying the property rental process, connecting owners and tenants efficiently and transparently. Our platform offers modern tools that facilitate every stage of the process, from search to contract and payment management.",
+    "missionText": "At 365Soft, we are dedicated to simplifying the property rental process, connecting owners and tenants efficiently and transparently. Our platform offers modern tools that facilitate every stage of the process, from search to contract and payment management.",
     "valuesTitle": "Our Values",
     "valuesSubtitle": "Principles that guide all our actions",
     "v1Title": "Transparency",
@@ -61,12 +69,51 @@
     "serviceAdmin": "Property Management Services",
     "serviceScreening": "Tenant Screening",
     "serviceMaintenance": "Maintenance",
+    "blog": "Blog",
+    "addressValue": "Cochabamba, Bolivia",
+    "emailValue": "info@365soft.com",
+    "phoneValue": "+591 12345678",
     "hours": "Mon - Fri: 9AM - 6PM",
     "contact": "Contact",
     "rights": "All rights reserved.",
     "privacy": "Privacy",
     "terms": "Terms",
     "cookies": "Cookies"
+  },
+  "map": {
+    "title": "Property map",
+    "subtitle": "Find your next home on the map",
+    "listView": "List view",
+    "loading": "Loading...",
+    "results": "{{count}} results",
+    "viewDetails": "View details",
+    "openMap": "Open in OpenStreetMap",
+    "city": "City",
+    "zipCode": "ZIP code"
+  },
+  "contact": {
+    "heroTitle": "Contact",
+    "heroSubtitle": "We are ready to help you with your next property",
+    "infoTitle": "Let's talk",
+    "infoSubtitle": "Send us a message and our team will reply as soon as possible.",
+    "emailLabel": "Email",
+    "emailValue": "info@365soft.com",
+    "phoneLabel": "Phone",
+    "phoneValue": "+591 12345678",
+    "addressLabel": "Address",
+    "addressValue": "Cochabamba, Bolivia",
+    "formTitle": "Send us a message",
+    "nameLabel": "Name",
+    "namePlaceholder": "Your full name",
+    "emailPlaceholder": "you@email.com",
+    "phonePlaceholder": "+1 (555) 000-0000",
+    "subjectLabel": "Subject",
+    "subjectPlaceholder": "Reason for contact",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Tell us how we can help",
+    "sendBtn": "Send message",
+    "sending": "Sending...",
+    "successMsg": "Message sent. We will reply soon."
   },
   "properties": {
     "heroTitle": "Find Your Ideal Home",
@@ -95,6 +142,7 @@
     "bedrooms": "beds",
     "bathrooms": "baths",
     "priceMonth": "price/month",
+    "priceNight": "price/night",
     "viewDetails": "View Details",
     "locationNotAvailable": "Location not available"
   },
@@ -106,6 +154,7 @@
     "noImages": "No images",
     "imageNumber": "Image {{num}}",
     "perMonth": "/month",
+    "perNight": "/night",
     "totalArea": "Total Area",
     "bedrooms": "Bedrooms",
     "bathrooms": "Bathrooms",
@@ -116,6 +165,7 @@
     "propType": "Property Type",
     "propSubtype": "Subtype",
     "monthlyRent": "Monthly Rent",
+    "nightlyPrice": "Nightly Price",
     "depositAmount": "Security Deposit",
     "yearBuilt": "Year Built",
     "furnished": "Furnished",
@@ -132,6 +182,7 @@
     "callNow": "Call Now",
     "scheduleTitle": "Want to schedule a visit?",
     "scheduleBtn": "Schedule In-Person Visit",
+    "linkCopied": "Link copied to clipboard",
     "rules": "Property Rules",
     "pets": "Pets",
     "smoking": "Smoking",
@@ -400,7 +451,11 @@
     "navDocuments": "Documents",
     "navNotifications": "Notifications",
     "navMessages": "Messages",
-    "myProperty": "My Property"
+    "myProperty": "My Property",
+    "now": "Now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
   },
   "contractSigning": {
     "title": "Contract Signing Confirmation",
@@ -881,7 +936,10 @@
     "minNights": "Minimum {{n}} nights",
     "requested": "Booking request sent",
     "requestError": "Could not create the booking",
-    "title": "Availability"
+    "title": "Availability",
+    "missingSlug": "Could not identify the company to sign in.",
+    "selectedProperty": "Selected property",
+    "loginRequired": "Sign in or create an account to confirm the booking."
   },
   "myProperty": {
     "title": "My property",

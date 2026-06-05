@@ -1,31 +1,52 @@
 import { Routes } from '@angular/router';
-import { PublicLayoutComponent } from './public-layout/public-layout.component';
-import { HomeComponent } from './home/home.component';
-import { PropertyListComponent } from './property-list/property-list.component';
-import { PropertyDetailComponent } from './property-detail/property-detail.component';
-import { AboutComponent } from './about/about.component';
-import { ContactComponent } from './contact/contact.component';
-import { FaqComponent } from './faq/faq.component';
-import { ApplicationFormComponent } from './application-form/application-form.component';
 
 export const PUBLIC_PORTAL_ROUTES: Routes = [
   {
     path: '',
-    component: PublicLayoutComponent,
+    loadComponent: () =>
+      import('./public-layout/public-layout.component').then((m) => m.PublicLayoutComponent),
     children: [
       { path: '', redirectTo: 'inicio', pathMatch: 'full' },
-      { path: 'inicio', component: HomeComponent },
-      { path: 'propiedades', component: PropertyListComponent },
-      { path: 'propiedades/:propertySlug', component: PropertyDetailComponent },
+      {
+        path: 'inicio',
+        loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+      },
+      {
+        path: 'propiedades',
+        loadComponent: () =>
+          import('./property-list/property-list.component').then((m) => m.PropertyListComponent),
+      },
+      {
+        path: 'propiedades/:id',
+        loadComponent: () =>
+          import('./property-detail/property-detail.component').then(
+            (m) => m.PropertyDetailComponent,
+          ),
+      },
       {
         path: 'mapa',
         loadComponent: () =>
           import('./property-map/property-map.component').then((m) => m.PropertyMapComponent),
       },
-      { path: 'solicitud/:propertyId', component: ApplicationFormComponent },
-      { path: 'nosotros', component: AboutComponent },
-      { path: 'contacto', component: ContactComponent },
-      { path: 'faq', component: FaqComponent },
+      {
+        path: 'solicitud/:propertyId',
+        loadComponent: () =>
+          import('./application-form/application-form.component').then(
+            (m) => m.ApplicationFormComponent,
+          ),
+      },
+      {
+        path: 'nosotros',
+        loadComponent: () => import('./about/about.component').then((m) => m.AboutComponent),
+      },
+      {
+        path: 'contacto',
+        loadComponent: () => import('./contact/contact.component').then((m) => m.ContactComponent),
+      },
+      {
+        path: 'faq',
+        loadComponent: () => import('./faq/faq.component').then((m) => m.FaqComponent),
+      },
     ],
   },
 ];

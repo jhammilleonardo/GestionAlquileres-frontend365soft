@@ -54,8 +54,8 @@
         class="lang-btn"
         [class.active]="languageService.isSpanish()"
         (click)="languageService.setLanguage('es')"
-        aria-label="Español"
-        [attr.title]="'Español'"
+        [attr.aria-label]="'common.spanish' | transloco"
+        [attr.title]="'common.spanish' | transloco"
       >
         ES
       </button>
@@ -63,8 +63,8 @@
         class="lang-btn"
         [class.active]="languageService.isEnglish()"
         (click)="languageService.setLanguage('en')"
-        aria-label="English"
-        [attr.title]="'English'"
+        [attr.aria-label]="'common.english' | transloco"
+        [attr.title]="'common.english' | transloco"
       >
         EN
       </button>

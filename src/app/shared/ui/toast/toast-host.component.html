@@ -8,7 +8,7 @@
       <button
         class="toast__close"
         type="button"
-        aria-label="Cerrar notificacion"
+        [attr.aria-label]="'common.closeNotification' | transloco"
         (click)="toastService.dismiss(toast.id)"
       >
         <lucide-icon [img]="X" [size]="16" />

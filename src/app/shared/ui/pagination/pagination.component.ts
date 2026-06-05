@@ -1,11 +1,20 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-pagination',
+  imports: [TranslocoModule],
   template: `
     <nav class="app-pagination" [attr.aria-label]="ariaLabel()">
       <p class="app-pagination__summary">
-        {{ summaryText() }}
+        @if (total() === 0) {
+          {{ 'common.pagination.noResults' | transloco }}
+        } @else {
+          {{
+            'common.pagination.summary'
+              | transloco: { from: fromItem(), to: toItem(), total: total() }
+          }}
+        }
       </p>
 
       <div class="app-pagination__actions">
@@ -15,7 +24,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
           [disabled]="page() <= 1"
           (click)="goTo(page() - 1)"
         >
-          Anterior
+          {{ 'common.previous' | transloco }}
         </button>
 
         <span class="app-pagination__page">{{ page() }} / {{ totalPages() }}</span>
@@ -26,7 +35,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
           [disabled]="page() >= totalPages()"
           (click)="goTo(page() + 1)"
         >
-          Siguiente
+          {{ 'common.next' | transloco }}
         </button>
       </div>
     </nav>
@@ -108,19 +117,12 @@ export class AppPaginationComponent {
   readonly page = input(1);
   readonly pageSize = input(10);
   readonly total = input(0);
-  readonly ariaLabel = input('Paginacion');
+  readonly ariaLabel = input('Pagination');
   readonly pageChange = output<number>();
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize())));
-  readonly summaryText = computed(() => {
-    if (this.total() === 0) {
-      return 'Sin resultados';
-    }
-
-    const from = (this.page() - 1) * this.pageSize() + 1;
-    const to = Math.min(this.page() * this.pageSize(), this.total());
-    return `Mostrando ${from}-${to} de ${this.total()}`;
-  });
+  readonly fromItem = computed(() => (this.page() - 1) * this.pageSize() + 1);
+  readonly toItem = computed(() => Math.min(this.page() * this.pageSize(), this.total()));
 
   protected goTo(page: number): void {
     const nextPage = Math.min(Math.max(page, 1), this.totalPages());

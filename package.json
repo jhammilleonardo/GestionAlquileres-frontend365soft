@@ -11,6 +11,8 @@
     "test:cov": "ng test --coverage",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "lint:check": "eslint \"src/**/*.ts\"",
+    "i18n:audit": "node scripts/check-i18n-hardcoded.mjs",
+    "i18n:audit:strict": "node scripts/check-i18n-hardcoded.mjs --strict",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
     "prepare": "husky",
     "e2e": "playwright test",

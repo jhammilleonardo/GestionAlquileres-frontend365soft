@@ -1,4 +1,4 @@
-<section class="filters-card" aria-label="Filtros de solicitudes">
+<section class="filters-card" [attr.aria-label]="'solicitudes.filtersLabel' | transloco">
   <div class="filters-grid">
     <div class="search-control">
       <app-text-field
@@ -13,7 +13,7 @@
           type="button"
           class="clear-search"
           (click)="searchCleared.emit()"
-          aria-label="Clear"
+          [attr.aria-label]="'common.clear' | transloco"
         >
           <lucide-icon [img]="X" [size]="18" />
         </button>

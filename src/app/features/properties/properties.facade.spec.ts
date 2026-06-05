@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -41,6 +42,7 @@ describe('PropertiesFacade', () => {
         PropertiesFacade,
         { provide: PropertyService, useValue: propertyService },
         { provide: ToastService, useValue: toast },
+        { provide: TranslocoService, useValue: { translate: (key: string) => key } },
         { provide: SlugService, useValue: { getSlug: () => 'demo' } },
         { provide: Router, useValue: router },
         {
@@ -127,7 +129,7 @@ describe('PropertiesFacade', () => {
 
     expect(propertyService.createProperty).toHaveBeenCalled();
     expect(propertyService.getAdminProperties).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith('Propiedad creada exitosamente');
+    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.created');
     expect(facade.isSubmitting()).toBe(false);
   });
 
@@ -139,7 +141,7 @@ describe('PropertiesFacade', () => {
     facade.saveProperty();
 
     expect(propertyService.updateProperty).toHaveBeenCalledWith(1, expect.any(Object));
-    expect(toast.success).toHaveBeenCalledWith('Propiedad actualizada exitosamente');
+    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.updated');
   });
 
   it('muestra errores cuando el formulario es invalido', () => {
@@ -162,7 +164,7 @@ describe('PropertiesFacade', () => {
 
     expect(propertyService.deleteProperty).toHaveBeenCalledWith(1);
     expect(propertyService.getAdminProperties).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith('Propiedad eliminada exitosamente');
+    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.deleted');
   });
 
   it('activa o desactiva una propiedad', () => {
@@ -175,7 +177,7 @@ describe('PropertiesFacade', () => {
       PropertyStatus.INACTIVO,
       false,
     );
-    expect(toast.success).toHaveBeenCalledWith('Propiedad desactivada');
+    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.deactivated');
   });
 
   it('notifica errores al cargar propiedades', () => {
@@ -184,7 +186,7 @@ describe('PropertiesFacade', () => {
     const facade = setup();
 
     expect(facade.isListLoading()).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith('Error al cargar las propiedades');
+    expect(toast.error).toHaveBeenCalledWith('propiedades.actions.loadError');
   });
 });
 

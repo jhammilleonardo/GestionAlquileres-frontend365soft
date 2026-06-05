@@ -3,7 +3,7 @@
     <div class="navbar-brand">
       <a [routerLink]="getPublicPath('inicio')" class="logo">
         <lucide-icon [img]="Home" class="logo-icon"></lucide-icon>
-        <span class="logo-text">RentHub</span>
+        <span class="logo-text">{{ 'public.brand.name' | transloco }}</span>
       </a>
     </div>
 
@@ -59,13 +59,17 @@
       </ul>
 
       <div class="navbar-actions">
-        <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+        <div
+          class="lang-toggle"
+          role="group"
+          [attr.aria-label]="'public.language.group' | transloco"
+        >
           <button
             class="lang-btn"
             [class.active]="languageService.isSpanish()"
             (click)="languageService.setLanguage('es')"
-            aria-label="Español"
-            title="Español"
+            [attr.aria-label]="'public.language.spanish' | transloco"
+            [attr.title]="'public.language.spanish' | transloco"
           >
             ES
           </button>
@@ -73,8 +77,8 @@
             class="lang-btn"
             [class.active]="languageService.isEnglish()"
             (click)="languageService.setLanguage('en')"
-            aria-label="English"
-            title="English"
+            [attr.aria-label]="'public.language.english' | transloco"
+            [attr.title]="'public.language.english' | transloco"
           >
             EN
           </button>

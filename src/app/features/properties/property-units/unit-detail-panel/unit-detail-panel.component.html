@@ -3,9 +3,16 @@
   <div class="udp-header">
     <div class="udp-header-info">
       <lucide-icon [img]="Building2" [size]="18"></lucide-icon>
-      <span class="udp-unit-number">Unidad {{ unit().unit_number }}</span>
+      <span class="udp-unit-number">
+        {{ 'propiedades.units.unitWithNumber' | transloco: { unitNumber: unit().unit_number } }}
+      </span>
     </div>
-    <button class="udp-icon-button" type="button" (click)="onClose()" aria-label="Cerrar panel">
+    <button
+      class="udp-icon-button"
+      type="button"
+      (click)="onClose()"
+      [attr.aria-label]="'propiedades.units.closePanel' | transloco"
+    >
       <lucide-icon [img]="X" [size]="18"></lucide-icon>
     </button>
   </div>
@@ -13,12 +20,12 @@
   <!-- Status Badge -->
   <div class="udp-status-row">
     <span class="udp-status-badge" [ngClass]="statusConfig().cssClass">
-      {{ statusConfig().label }}
+      {{ 'propiedades.units.statuses.' + unit().status | transloco }}
     </span>
     @if (unit().rental_type) {
       <span class="udp-rental-type-badge">
         <lucide-icon [img]="Tag" [size]="12"></lucide-icon>
-        {{ rentalTypeLabel() }}
+        {{ 'propiedades.units.rentalTypes.' + unit().rental_type | transloco }}
       </span>
     }
   </div>
@@ -27,13 +34,13 @@
   <div class="udp-body">
     <!-- Identification -->
     <div class="udp-section">
-      <div class="udp-section-label">Identificación</div>
+      <div class="udp-section-label">{{ 'propiedades.units.identification' | transloco }}</div>
       <div class="udp-detail-grid">
         @if (unit().floor !== undefined && unit().floor !== null) {
           <div class="udp-detail-item">
             <lucide-icon [img]="Layers" [size]="16" class="udp-detail-icon"></lucide-icon>
             <div>
-              <div class="udp-detail-label">Piso</div>
+              <div class="udp-detail-label">{{ 'propiedades.units.floor' | transloco }}</div>
               <div class="udp-detail-value">{{ unit().floor }}</div>
             </div>
           </div>
@@ -45,13 +52,13 @@
 
     <!-- Characteristics -->
     <div class="udp-section">
-      <div class="udp-section-label">Características</div>
+      <div class="udp-section-label">{{ 'propiedades.units.characteristics' | transloco }}</div>
       <div class="udp-detail-grid">
         @if (unit().bedrooms !== undefined && unit().bedrooms !== null) {
           <div class="udp-detail-item">
             <lucide-icon [img]="BedDouble" [size]="16" class="udp-detail-icon"></lucide-icon>
             <div>
-              <div class="udp-detail-label">Dormitorios</div>
+              <div class="udp-detail-label">{{ 'propiedades.units.bedrooms' | transloco }}</div>
               <div class="udp-detail-value">{{ unit().bedrooms }}</div>
             </div>
           </div>
@@ -60,7 +67,7 @@
           <div class="udp-detail-item">
             <lucide-icon [img]="Bath" [size]="16" class="udp-detail-icon"></lucide-icon>
             <div>
-              <div class="udp-detail-label">Baños</div>
+              <div class="udp-detail-label">{{ 'propiedades.units.bathrooms' | transloco }}</div>
               <div class="udp-detail-value">{{ unit().bathrooms }}</div>
             </div>
           </div>
@@ -69,7 +76,9 @@
           <div class="udp-detail-item">
             <lucide-icon [img]="Maximize2" [size]="16" class="udp-detail-icon"></lucide-icon>
             <div>
-              <div class="udp-detail-label">Superficie</div>
+              <div class="udp-detail-label">
+                {{ 'propiedades.units.squareMetersShort' | transloco }}
+              </div>
               <div class="udp-detail-value">{{ unit().square_meters }} m²</div>
             </div>
           </div>
@@ -81,13 +90,15 @@
 
     <!-- Pricing -->
     <div class="udp-section">
-      <div class="udp-section-label">Precios</div>
+      <div class="udp-section-label">{{ 'propiedades.units.prices' | transloco }}</div>
       <div class="udp-prices">
         @if (unit().price_per_month) {
           <div class="udp-price-row">
             <lucide-icon [img]="DollarSign" [size]="16" class="udp-detail-icon"></lucide-icon>
             <div>
-              <div class="udp-detail-label">Precio mensual</div>
+              <div class="udp-detail-label">
+                {{ 'propiedades.units.pricePerMonth' | transloco }}
+              </div>
               <div class="udp-price-value">{{ unit().price_per_month | tenantCurrency }}</div>
             </div>
           </div>
@@ -96,19 +107,23 @@
           <div class="udp-price-row">
             <lucide-icon [img]="Moon" [size]="16" class="udp-detail-icon"></lucide-icon>
             <div>
-              <div class="udp-detail-label">Precio por noche</div>
+              <div class="udp-detail-label">
+                {{ 'propiedades.units.pricePerNight' | transloco }}
+              </div>
               <div class="udp-price-value">{{ unit().price_per_night | tenantCurrency }}</div>
             </div>
           </div>
         }
         @if (unit().deposit_amount) {
           <div class="udp-price-row udp-price-row--deposit">
-            <div class="udp-detail-label">Depósito de garantía</div>
+            <div class="udp-detail-label">
+              {{ 'propiedades.units.securityDeposit' | transloco }}
+            </div>
             <div class="udp-detail-value">{{ unit().deposit_amount | tenantCurrency }}</div>
           </div>
         }
         @if (!unit().price_per_month && !unit().price_per_night) {
-          <p class="udp-empty-text">Sin precio configurado</p>
+          <p class="udp-empty-text">{{ 'propiedades.units.noPriceConfigured' | transloco }}</p>
         }
       </div>
     </div>
@@ -119,11 +134,12 @@
       <div class="udp-section udp-occupied-hint">
         <div class="udp-occupied-badge">
           <span class="udp-occupied-dot"></span>
-          Unidad ocupada
+          {{ 'propiedades.units.occupied' | transloco }}
         </div>
         <p class="udp-occupied-text">
-          Para ver el inquilino actual e historial de contratos, consulta el módulo
-          <strong>Contratos</strong>.
+          {{ 'propiedades.units.occupiedHintPrefix' | transloco }}
+          <strong>{{ 'propiedades.units.contractsModule' | transloco }}</strong
+          >.
         </p>
       </div>
     }
@@ -136,10 +152,10 @@
       target="_blank"
       rel="noopener noreferrer"
       class="udp-catalog-link"
-      aria-label="Ver propiedad en catálogo público"
+      [attr.aria-label]="'propiedades.units.viewPublicCatalog' | transloco"
     >
       <lucide-icon [img]="ExternalLink" [size]="14"></lucide-icon>
-      Ver en catálogo público
+      {{ 'propiedades.units.viewPublicCatalog' | transloco }}
     </a>
 
     <div class="udp-footer-actions">
@@ -148,24 +164,24 @@
           appearance="outline"
           size="s"
           (clicked)="onManageDates()"
-          ariaLabel="Gestionar disponibilidad de la unidad"
+          [ariaLabel]="'propiedades.units.manageAvailability' | transloco"
         >
           <lucide-icon [img]="CalendarDays" [size]="15"></lucide-icon>
-          Fechas
+          {{ 'propiedades.units.dates' | transloco }}
         </app-button>
       }
       <app-button
         appearance="destructive"
         size="s"
         (clicked)="onDelete()"
-        ariaLabel="Eliminar unidad"
+        [ariaLabel]="'propiedades.units.delete' | transloco"
       >
         <lucide-icon [img]="Trash2" [size]="15"></lucide-icon>
-        Eliminar
+        {{ 'propiedades.units.delete' | transloco }}
       </app-button>
-      <app-button size="s" (clicked)="onEdit()" ariaLabel="Editar unidad">
+      <app-button size="s" (clicked)="onEdit()" [ariaLabel]="'propiedades.units.edit' | transloco">
         <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
-        Editar
+        {{ 'propiedades.units.edit' | transloco }}
       </app-button>
     </div>
   </div>

@@ -83,5 +83,16 @@
   "ratingRequired": "Selecciona al menos una estrella",
   "ratingSaved": "Calificación registrada",
   "ratingError": "No se pudo guardar la calificación",
-  "ratingCommentPlaceholder": "Comentario sobre el trabajo (opcional)"
+  "ratingCommentPlaceholder": "Comentario sobre el trabajo (opcional)",
+  "actions": {
+    "newRequestInfo": "El formulario de nueva solicitud se implementa en el flujo correspondiente.",
+    "statusUpdated": "Estado actualizado",
+    "statusUpdateError": "Error al actualizar el estado de la solicitud",
+    "priorityUpdated": "Prioridad actualizada",
+    "priorityUpdateError": "Error al actualizar la prioridad de la solicitud",
+    "deleteTitle": "Eliminar solicitud",
+    "deleteMessage": "¿Eliminar la solicitud \"{{title}}\"? Esta acción no se puede deshacer.",
+    "deleted": "Solicitud eliminada",
+    "deleteError": "Error al eliminar la solicitud"
+  }
 }

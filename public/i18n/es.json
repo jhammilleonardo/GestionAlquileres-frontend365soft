@@ -15,12 +15,15 @@
     "yes": "Sí",
     "no": "No",
     "all": "Todos",
+    "total": "Total",
     "active": "Activo",
     "inactive": "Inactivo",
     "activate": "Activar",
     "deactivate": "Desactivar",
     "required": "Campo requerido",
     "irreversible": "Esta acción no se puede deshacer.",
+    "serverError": "Error del servidor",
+    "unknownError": "Error desconocido",
     "filters": "Filtros",
     "clearFilters": "Limpiar Filtros",
     "applyFilters": "Aplicar Filtros",
@@ -45,6 +48,7 @@
     "saveChanges": "Guardar Cambios",
     "viewDetail": "Ver Detalle",
     "noData": "Sin datos",
+    "notAvailable": "No disponible",
     "never": "Nunca",
     "today": "Hoy",
     "yesterday": "Ayer",
@@ -94,8 +98,19 @@
     "skip": "Omitir",
     "apply": "Aplicar",
     "clear": "Limpiar",
+    "confirm": "Confirmar",
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "progress": "Progreso",
+    "selectedFiles": "Archivos seleccionados",
+    "closeNotification": "Cerrar notificación",
+    "languageSelector": "Selector de idioma",
+    "spanish": "Español",
+    "english": "Inglés",
+    "pagination": {
+      "noResults": "Sin resultados",
+      "summary": "Mostrando {{from}}-{{to}} de {{total}}"
+    }
   },
   "sidebar": {
     "appName": "365Soft",
@@ -298,6 +313,11 @@
       "searchPlaceholder": "Buscar por título, ciudad o dirección...",
       "typePlaceholder": "Tipo de propiedad",
       "allTypes": "Todos los tipos",
+      "rentalMode": "Modalidad",
+      "rentalModeAll": "Todas las modalidades",
+      "rentalModeLong": "Largo plazo",
+      "rentalModeShort": "Corto plazo",
+      "rentalModeBoth": "Largo y corto plazo",
       "sortBy": "Ordenar por",
       "recent": "Más recientes",
       "priceLow": "Precio: Menor a Mayor",
@@ -308,13 +328,28 @@
       "noResultsDesc": "Intenta ajustar los filtros de búsqueda",
       "clearFilters": "Limpiar Filtros",
       "priceMonth": "/mes",
+      "priceNight": "/noche",
       "bedrooms": "{{count}} Dorm",
       "bedroomsPlural": "{{count}} Dorms",
       "bathrooms": "{{count}} Baño",
       "bathroomsPlural": "{{count}} Baños",
       "occupants": "{{count}} pers.",
       "apply": "Aplicar",
-      "paginationLabel": "Propiedades"
+      "reserveStay": "Reservar estadía",
+      "paginationLabel": "Propiedades",
+      "loadingAvailability": "Cargando disponibilidad...",
+      "noShortTermUnitsTitle": "No hay unidades de corto plazo",
+      "noShortTermUnitsDesc": "Esta propiedad no tiene unidades configuradas con precio por noche.",
+      "unit": "Unidad",
+      "nightlyPrice": "Precio por noche",
+      "cleaningFee": "Limpieza",
+      "minStay": "Estadía mínima",
+      "nightsCount": "{{count}} noche(s)",
+      "reservePropertyTitle": "Reservar {{title}}",
+      "unitOption": "{{unit}} - {{price}}/noche",
+      "loadAvailabilityError": "No se pudo cargar la disponibilidad de la propiedad.",
+      "restorePropertyError": "No se pudo recuperar la propiedad de la reserva.",
+      "restoreReservationError": "No se pudo recuperar la reserva pendiente."
     },
     "status": {
       "PENDIENTE": "Pendiente",
@@ -410,6 +445,7 @@
     "sending": "Enviando...",
     "sendInstructions": "Enviar Instrucciones",
     "backToLogin": "Volver al inicio de sesión",
+    "forgotPasswordLink": "Olvidé mi contraseña",
     "forgotPasswordSentMsg": "Se han enviado las instrucciones de recuperación a {{email}}. Por favor revisa tu bandeja de entrada.",
     "forgotPasswordError": "No se pudo solicitar la recuperación. Intenta nuevamente.",
     "resetPasswordEyebrow": "Recuperación segura",
@@ -483,6 +519,95 @@
   },
   "config": {
     "title": "Configuración"
+  },
+  "units": {
+    "loading": "Cargando unidades...",
+    "status": {
+      "available": "Disponible",
+      "availablePlural": "Disponibles",
+      "occupied": "Ocupada",
+      "occupiedPlural": "Ocupadas",
+      "maintenance": "Mantenimiento",
+      "reserved": "Reservada",
+      "reservedPlural": "Reservadas"
+    },
+    "rentalType": {
+      "longTerm": "Largo plazo",
+      "shortTerm": "Corto plazo",
+      "both": "Ambos"
+    },
+    "actions": {
+      "new": "Nueva unidad",
+      "reload": "Recargar unidades",
+      "edit": "Editar unidad",
+      "delete": "Eliminar unidad"
+    },
+    "empty": {
+      "noUnitsTitle": "Sin unidades registradas",
+      "noFilterResultsTitle": "Sin resultados para este filtro",
+      "noUnitsDescription": "Crea la primera unidad para esta propiedad."
+    },
+    "table": {
+      "unit": "Unidad",
+      "floor": "Piso",
+      "bedrooms": "Dormitorios",
+      "bathrooms": "Baños",
+      "type": "Tipo",
+      "price": "Precio",
+      "status": "Estado"
+    },
+    "price": {
+      "perMonth": "/mes",
+      "perNight": "/noche"
+    }
+  },
+  "ownerPortal": {
+    "auth": {
+      "kicker": "Portal propietario",
+      "title": "Acceso a tus propiedades",
+      "signIn": "Iniciar sesión",
+      "subtitle": "Consulta liquidaciones, contratos y autorizaciones de mantenimiento.",
+      "emailPlaceholder": "propietario@empresa.com",
+      "passwordPlaceholder": "Tu contraseña",
+      "rememberMe": "Mantener sesión iniciada",
+      "submit": "Entrar al portal",
+      "missingTenant": "No se encontró el tenant para iniciar sesión.",
+      "loginError": "No se pudo iniciar sesión"
+    },
+    "dashboard": {
+      "title": "Portal del propietario",
+      "description": "Resumen de propiedades, liquidaciones, mantenimiento y documentos.",
+      "loading": "Cargando portal...",
+      "properties": "Propiedades",
+      "activeContracts": "Contratos activos",
+      "pendingBalance": "Saldo pendiente",
+      "maintenance": "Mantenimientos",
+      "sections": "Secciones del propietario"
+    },
+    "tabs": {
+      "properties": "Propiedades",
+      "statements": "Liquidaciones",
+      "maintenance": "Mantenimiento",
+      "contracts": "Documentos"
+    },
+    "empty": {
+      "title": "Sin datos",
+      "description": "No hay información para esta sección."
+    },
+    "properties": {
+      "tenant": "Inquilino",
+      "noTenant": "Sin inquilino",
+      "endsAt": "Vence"
+    },
+    "maintenance": {
+      "authorizeExpense": "Autorizar gasto",
+      "authorized": "Gasto autorizado",
+      "stageLabel": "Etapa: {{stage}}"
+    },
+    "documents": {
+      "downloadPdfError": "No se pudo descargar el PDF",
+      "downloadContractError": "No se pudo descargar el contrato"
+    }
   },
   "public": {
     "properties": {

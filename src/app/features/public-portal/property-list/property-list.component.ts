@@ -25,6 +25,11 @@ import {
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 
+interface PublicPriceDisplay {
+  amount: number;
+  labelKey: string;
+}
+
 @Component({
   selector: 'app-property-list',
   standalone: true,
@@ -183,6 +188,31 @@ export class PropertyListComponent {
     if (!imagePath) return '';
     if (imagePath.startsWith('http')) return imagePath;
     return `http://localhost:3000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
+  }
+
+  getPriceDisplay(property: Property): PublicPriceDisplay | null {
+    if (this.hasShortTermPrice(property)) {
+      return {
+        amount: property.min_price_per_night ?? 0,
+        labelKey: 'public.properties.priceNight',
+      };
+    }
+
+    const monthlyRent = property.monthly_rent ?? property.monthly_rent_amount;
+    if (!monthlyRent) return null;
+
+    return {
+      amount: monthlyRent,
+      labelKey: 'public.properties.priceMonth',
+    };
+  }
+
+  private hasShortTermPrice(property: Property): boolean {
+    const rentalType = (property.rental_type ?? '').toUpperCase();
+    return (
+      (rentalType === 'SHORT_TERM' || rentalType === 'BOTH') &&
+      Number(property.min_price_per_night ?? 0) > 0
+    );
   }
 
   handleImageError(event: Event): void {

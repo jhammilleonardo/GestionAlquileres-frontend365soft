@@ -93,7 +93,9 @@ export class ApplicationIntentionService {
    */
   navigateToLoginWithIntention(slug: string, propertyId: number, propertyTitle: string): void {
     this.setIntention(propertyId, propertyTitle);
-    this.slugService.navigateTo(['portal', 'login']);
+    void this.router.navigate(['/', slug, 'login'], {
+      queryParams: { application: 'true' },
+    });
   }
 
   /**

@@ -1,14 +1,6 @@
-import {
-  Component,
-  inject,
-  DestroyRef,
-  signal,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import {
   LucideAngularModule,
   Home,
@@ -21,28 +13,11 @@ import {
   FileText,
   MessageSquare,
 } from 'lucide-angular';
-import { environment } from '../../../../environments/environment';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { SlugService } from '../../../core/services/slug.service';
-import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
-import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
-import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
-import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
+import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.component';
-
-import { getApiErrorMessage } from '../../../core/http/http-error.util';
-interface RegisterResponse {
-  access_token?: string;
-  id: number;
-  name: string;
-  email: string;
-  role: 'TENANT' | 'INQUILINO';
-  phone: string;
-  tenant_id: number;
-  created_at: string;
-}
+import { TenantRegisterFacade } from './tenant-register.facade';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,7 +31,10 @@ interface RegisterResponse {
     AppButtonComponent,
     AppTextFieldComponent,
   ],
-  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
+  providers: [
+    provideTranslocoScope({ scope: 'portal-publico', alias: 'public' }),
+    TenantRegisterFacade,
+  ],
   template: `
     <div class="register-page">
       <!-- Left Side - Branding -->
@@ -92,13 +70,17 @@ interface RegisterResponse {
       <div class="register-form-container">
         <div class="register-form-wrapper">
           <div class="lang-toggle-row">
-            <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+            <div
+              class="lang-toggle"
+              role="group"
+              [attr.aria-label]="'public.language.group' | transloco"
+            >
               <button
                 class="lang-btn"
                 [class.active]="languageService.isSpanish()"
                 (click)="languageService.setLanguage('es')"
-                aria-label="Español"
-                title="Español"
+                [attr.aria-label]="'public.language.spanish' | transloco"
+                [attr.title]="'public.language.spanish' | transloco"
               >
                 ES
               </button>
@@ -106,8 +88,8 @@ interface RegisterResponse {
                 class="lang-btn"
                 [class.active]="languageService.isEnglish()"
                 (click)="languageService.setLanguage('en')"
-                aria-label="English"
-                title="English"
+                [attr.aria-label]="'public.language.english' | transloco"
+                [attr.title]="'public.language.english' | transloco"
               >
                 EN
               </button>
@@ -675,180 +657,33 @@ export class TenantRegisterComponent implements OnInit {
   readonly MessageSquare = MessageSquare;
 
   readonly languageService = inject(LanguageService);
-  private fb = inject(FormBuilder);
-  private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private http = inject(HttpClient);
-  private destroyRef = inject(DestroyRef);
-  private slugService = inject(SlugService);
-  private applicationIntentionService = inject(ApplicationIntentionService);
-  private reservationIntentionService = inject(ReservationIntentionService);
-  private tenantAuthService = inject(TenantAuthService);
-  private translocoService = inject(TranslocoService);
+  private facade = inject(TenantRegisterFacade);
 
-  showPassword = signal(false);
-  showConfirmPassword = signal(false);
-  isLoading = signal(false);
-  errorMessage = signal<string>('');
-  successMessage = signal<string>('');
+  readonly registerForm = this.facade.registerForm;
+  readonly showPassword = this.facade.showPassword;
+  readonly showConfirmPassword = this.facade.showConfirmPassword;
+  readonly isLoading = this.facade.isLoading;
+  readonly errorMessage = this.facade.errorMessage;
+  readonly successMessage = this.facade.successMessage;
 
-  slug: string | null = null;
-
-  registerForm: FormGroup;
-
-  constructor() {
-    this.registerForm = this.fb.group(
-      {
-        name: ['', [Validators.required, Validators.minLength(3)]],
-        email: ['', [Validators.required, Validators.email]],
-        password: ['', [Validators.required, Validators.minLength(6)]],
-        confirmPassword: ['', [Validators.required]],
-        phone: [''],
-      },
-      { validators: this.passwordMatchValidator.bind(this) },
-    );
+  get slug(): string | null {
+    return this.facade.slug();
   }
-
-  // Palabras reservadas por el sistema de rutas que nunca pueden ser un slug de inquilino
-  private readonly RESERVED_SLUGS = [
-    'login',
-    'register',
-    'dashboard',
-    'portal',
-    'publico',
-    'admin',
-    'api',
-    'forgot-password',
-  ];
 
   ngOnInit(): void {
-    // Get slug from URL — read in ngOnInit to ensure inherited params are available
-    this.slug = this.route.snapshot.paramMap.get('slug');
-
-    if (!this.slug) {
-      this.errorMessage.set(
-        this.translocoService.translate('public.tenantRegister.invalidSlugError'),
-      );
-      return;
-    }
-
-    // Validate that the slug is not a reserved system route segment
-    if (this.RESERVED_SLUGS.includes(this.slug.toLowerCase())) {
-      this.errorMessage.set(
-        this.translocoService.translate('public.tenantRegister.reservedSlugError', {
-          slug: this.slug,
-        }),
-      );
-      this.slug = null; // Prevent form submission with wrong slug
-      return;
-    }
-  }
-
-  passwordMatchValidator(group: FormGroup): { [key: string]: boolean } | null {
-    const password = group.get('password')?.value as string | undefined;
-    const confirmPassword = group.get('confirmPassword')?.value as string | undefined;
-
-    return password === confirmPassword ? null : { passwordMismatch: true };
+    this.facade.initialize(this.route.snapshot.paramMap.get('slug'));
   }
 
   togglePassword(): void {
-    this.showPassword.update((v) => !v);
+    this.facade.togglePassword();
   }
 
   toggleConfirmPassword(): void {
-    this.showConfirmPassword.update((v) => !v);
+    this.facade.toggleConfirmPassword();
   }
 
   onSubmit(): void {
-    if (this.registerForm.invalid || !this.slug) {
-      this.registerForm.markAllAsTouched();
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    this.successMessage.set('');
-
-    const { name, email, password, phone } = this.registerForm.value as {
-      name?: string;
-      email?: string;
-      password?: string;
-      phone?: string;
-    };
-
-    this.http
-      .post<RegisterResponse>(`${environment.apiUrl}auth/${this.slug}/register`, {
-        name,
-        email,
-        password,
-        phone,
-      })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => {
-          this.isLoading.set(false);
-
-          // Set slug in SlugService
-          this.slugService.setSlug(this.slug);
-
-          // If API returns access_token, save it and redirect to dashboard
-          if (response.access_token) {
-            this.tenantAuthService.setSessionFromToken(
-              response.access_token,
-              response,
-              this.slug ?? undefined,
-            );
-
-            this.successMessage.set(
-              this.translocoService.translate('public.tenantRegister.redirectingMsg'),
-            );
-
-            // Redirect to tenant dashboard after 1 second
-            setTimeout(() => {
-              this.navigateAfterAuthenticatedRegister();
-            }, 1000);
-          } else {
-            // No token returned, redirect to login
-            this.successMessage.set(
-              this.translocoService.translate('public.tenantRegister.loginReadyMsg'),
-            );
-
-            // Redirect to login after 2 seconds
-            setTimeout(() => {
-              void this.router.navigate(['/', this.slug, 'login'], {
-                queryParams: { registered: 'true' },
-                replaceUrl: true,
-              });
-            }, 2000);
-          }
-        },
-        error: (error) => {
-          this.isLoading.set(false);
-          this.errorMessage.set(
-            getApiErrorMessage(
-              error,
-              this.translocoService.translate('public.tenantRegister.defaultError'),
-            ),
-          );
-        },
-      });
-  }
-
-  private navigateAfterAuthenticatedRegister(): void {
-    if (!this.slug) return;
-
-    if (this.reservationIntentionService.hasIntention()) {
-      this.reservationIntentionService.navigateToReservation(this.slug);
-      return;
-    }
-
-    if (this.applicationIntentionService.hasIntention()) {
-      this.applicationIntentionService.navigateToApplication(this.slug);
-      return;
-    }
-
-    void this.router.navigate(['/', this.slug, 'portal', 'home'], {
-      replaceUrl: true,
-    });
+    this.facade.submit();
   }
 }

@@ -16,7 +16,7 @@ import {
   Search,
   Star,
 } from 'lucide-angular';
-import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
@@ -26,6 +26,11 @@ import {
   PropertyStatus,
   SortOption,
 } from '../../../core/models/property.model';
+
+interface PublicPriceDisplay {
+  amount: number;
+  periodKey: string;
+}
 
 @Component({
   selector: 'app-home',
@@ -55,6 +60,7 @@ export class HomeComponent {
   private readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
   private readonly slugService = inject(SlugService);
+  private readonly transloco = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
@@ -104,7 +110,32 @@ export class HomeComponent {
       const addr = property.addresses[0];
       return `${addr.street_address}, ${addr.city}`;
     }
-    return 'Dirección no disponible';
+    return this.transloco.translate('public.properties.locationNotAvailable');
+  }
+
+  getPriceDisplay(property: Property): PublicPriceDisplay | null {
+    if (this.hasShortTermPrice(property)) {
+      return {
+        amount: property.min_price_per_night ?? 0,
+        periodKey: 'public.properties.priceNight',
+      };
+    }
+
+    const monthlyRent = property.monthly_rent ?? property.monthly_rent_amount;
+    if (!monthlyRent) return null;
+
+    return {
+      amount: monthlyRent,
+      periodKey: 'public.properties.priceMonth',
+    };
+  }
+
+  private hasShortTermPrice(property: Property): boolean {
+    const rentalType = (property.rental_type ?? '').toUpperCase();
+    return (
+      (rentalType === 'SHORT_TERM' || rentalType === 'BOTH') &&
+      Number(property.min_price_per_night ?? 0) > 0
+    );
   }
 
   viewProperty(propertyId: number): void {

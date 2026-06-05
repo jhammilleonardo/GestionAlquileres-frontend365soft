@@ -21,8 +21,7 @@ import {
   MessageSquare,
   type LucideIconData,
 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
-import { provideTranslocoScope } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { MaintenanceService } from '../../core/services/admin/maintenance.service';
 import { TenantDatePipe } from '../../shared/pipes/tenant-date.pipe';
 import {
@@ -72,6 +71,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 })
 export class MaintenanceComponent {
   private permissionsService = inject(PermissionsService);
+  private readonly transloco = inject(TranslocoService);
   readonly isTecnico = computed(() => this.permissionsService.role() === 'TECNICO');
   // Icons
   readonly Search = Search;
@@ -201,7 +201,7 @@ export class MaintenanceComponent {
   }
 
   openRequestForm(): void {
-    this.toast.info('El formulario de nueva solicitud se implementa en el flujo correspondiente.');
+    this.toast.info(this.transloco.translate('maintenance.actions.newRequestInfo'));
   }
 
   viewRequestDetails(request: MaintenanceRequest): void {
@@ -223,10 +223,10 @@ export class MaintenanceComponent {
   updateRequestStatus(request: MaintenanceRequest, newStatus: MaintenanceStatus): void {
     this.maintenanceService.updateStatus(request.id, newStatus).subscribe({
       next: () => {
-        this.toast.success('Estado actualizado');
+        this.toast.success(this.transloco.translate('maintenance.actions.statusUpdated'));
       },
       error: () => {
-        this.toast.error('Error al actualizar el estado de la solicitud');
+        this.toast.error(this.transloco.translate('maintenance.actions.statusUpdateError'));
       },
     });
   }
@@ -234,19 +234,21 @@ export class MaintenanceComponent {
   updateRequestPriority(request: MaintenanceRequest, newPriority: MaintenancePriority): void {
     this.maintenanceService.updatePriority(request.id, newPriority).subscribe({
       next: () => {
-        this.toast.success('Prioridad actualizada');
+        this.toast.success(this.transloco.translate('maintenance.actions.priorityUpdated'));
       },
       error: () => {
-        this.toast.error('Error al actualizar la prioridad de la solicitud');
+        this.toast.error(this.transloco.translate('maintenance.actions.priorityUpdateError'));
       },
     });
   }
 
   async deleteRequest(request: MaintenanceRequest): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Eliminar solicitud',
-      message: `¿Eliminar la solicitud "${request.title}"? Esta accion no se puede deshacer.`,
-      confirmLabel: 'Eliminar',
+      title: this.transloco.translate('maintenance.actions.deleteTitle'),
+      message: this.transloco.translate('maintenance.actions.deleteMessage', {
+        title: request.title,
+      }),
+      confirmLabel: this.transloco.translate('common.delete'),
       variant: 'danger',
     });
 
@@ -256,10 +258,10 @@ export class MaintenanceComponent {
 
     this.maintenanceService.deleteRequest(request.id).subscribe({
       next: () => {
-        this.toast.success('Solicitud eliminada');
+        this.toast.success(this.transloco.translate('maintenance.actions.deleted'));
       },
       error: () => {
-        this.toast.error('Error al eliminar la solicitud');
+        this.toast.error(this.transloco.translate('maintenance.actions.deleteError'));
       },
     });
   }

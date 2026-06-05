@@ -14,6 +14,7 @@ import {
 } from 'lucide-angular';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { NgClass } from '@angular/common';
+import { TranslocoModule } from '@jsverse/transloco';
 import { Unit, UnitStatus } from '../../../core/models/unit.model';
 import { UnitFormDialogComponent } from './unit-form-dialog/unit-form-dialog.component';
 import { UnitDetailPanelComponent } from './unit-detail-panel/unit-detail-panel.component';
@@ -28,6 +29,7 @@ import { PropertyUnitsFacade } from './property-units.facade';
   standalone: true,
   imports: [
     NgClass,
+    TranslocoModule,
     LucideAngularModule,
     TenantCurrencyPipe,
     UnitDetailPanelComponent,
@@ -120,22 +122,28 @@ export class PropertyUnitsComponent implements OnInit {
     this.facade.setStatusFilter(status);
   }
 
-  getStatusConfig(status: UnitStatus): { label: string; cssClass: string } {
-    const configs: Record<UnitStatus, { label: string; cssClass: string }> = {
-      [UnitStatus.AVAILABLE]: { label: 'Disponible', cssClass: 'status-available' },
-      [UnitStatus.OCCUPIED]: { label: 'Ocupada', cssClass: 'status-occupied' },
-      [UnitStatus.MAINTENANCE]: { label: 'Mantenimiento', cssClass: 'status-maintenance' },
-      [UnitStatus.RESERVED]: { label: 'Reservada', cssClass: 'status-reserved' },
+  getStatusConfig(status: UnitStatus): { labelKey: string; cssClass: string } {
+    const configs: Record<UnitStatus, { labelKey: string; cssClass: string }> = {
+      [UnitStatus.AVAILABLE]: {
+        labelKey: 'units.status.available',
+        cssClass: 'status-available',
+      },
+      [UnitStatus.OCCUPIED]: { labelKey: 'units.status.occupied', cssClass: 'status-occupied' },
+      [UnitStatus.MAINTENANCE]: {
+        labelKey: 'units.status.maintenance',
+        cssClass: 'status-maintenance',
+      },
+      [UnitStatus.RESERVED]: { labelKey: 'units.status.reserved', cssClass: 'status-reserved' },
     };
-    return configs[status] ?? { label: status, cssClass: 'status-default' };
+    return configs[status] ?? { labelKey: status, cssClass: 'status-default' };
   }
 
-  getRentalTypeLabel(type?: string): string {
+  getRentalTypeLabelKey(type?: string): string {
     if (!type) return '—';
     const labels: Record<string, string> = {
-      LONG_TERM: 'Largo Plazo',
-      SHORT_TERM: 'Corto Plazo',
-      BOTH: 'Ambos',
+      LONG_TERM: 'units.rentalType.longTerm',
+      SHORT_TERM: 'units.rentalType.shortTerm',
+      BOTH: 'units.rentalType.both',
     };
     return labels[type] ?? type;
   }

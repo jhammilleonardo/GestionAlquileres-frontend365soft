@@ -197,19 +197,17 @@
                     </div>
                   }
 
-                  @if ((property.square_meters || property.bedrooms) && property.monthly_rent) {
+                  @if ((property.square_meters || property.bedrooms) && getPriceDisplay(property)) {
                     <div class="stat-divider"></div>
                   }
 
-                  @if (property.monthly_rent) {
+                  @if (getPriceDisplay(property); as price) {
                     <div class="stat-block">
                       <span class="stat-value">
                         {{ property.currency || 'BOB' }}
-                        {{ property.monthly_rent | number: '1.0-0' }}
+                        {{ price.amount | number: '1.0-0' }}
                       </span>
-                      <span class="stat-label">{{
-                        'public.properties.priceMonth' | transloco
-                      }}</span>
+                      <span class="stat-label">{{ price.labelKey | transloco }}</span>
                     </div>
                   }
                 </div>

@@ -7,26 +7,26 @@
         <div class="pu-counter pu-counter--available">
           <span class="pu-counter-dot"></span>
           <span class="pu-counter-num">{{ counters().available }}</span>
-          <span class="pu-counter-label">Disponibles</span>
+          <span class="pu-counter-label">{{ 'units.status.availablePlural' | transloco }}</span>
         </div>
         <div class="pu-counter pu-counter--occupied">
           <span class="pu-counter-dot"></span>
           <span class="pu-counter-num">{{ counters().occupied }}</span>
-          <span class="pu-counter-label">Ocupadas</span>
+          <span class="pu-counter-label">{{ 'units.status.occupiedPlural' | transloco }}</span>
         </div>
         <div class="pu-counter pu-counter--maintenance">
           <span class="pu-counter-dot"></span>
           <span class="pu-counter-num">{{ counters().maintenance }}</span>
-          <span class="pu-counter-label">Mantenimiento</span>
+          <span class="pu-counter-label">{{ 'units.status.maintenance' | transloco }}</span>
         </div>
         <div class="pu-counter pu-counter--reserved">
           <span class="pu-counter-dot"></span>
           <span class="pu-counter-num">{{ counters().reserved }}</span>
-          <span class="pu-counter-label">Reservadas</span>
+          <span class="pu-counter-label">{{ 'units.status.reservedPlural' | transloco }}</span>
         </div>
         <div class="pu-counter pu-counter--total">
           <span class="pu-counter-num">{{ counters().total }}</span>
-          <span class="pu-counter-label">Total</span>
+          <span class="pu-counter-label">{{ 'common.total' | transloco }}</span>
         </div>
       </div>
 
@@ -35,13 +35,13 @@
           class="pu-icon-button"
           type="button"
           (click)="loadUnits()"
-          aria-label="Recargar unidades"
+          [attr.aria-label]="'units.actions.reload' | transloco"
         >
           <lucide-icon [img]="RefreshCw" [size]="18"></lucide-icon>
         </button>
         <app-button (clicked)="openCreateDialog()">
           <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-          Nueva Unidad
+          {{ 'units.actions.new' | transloco }}
         </app-button>
       </div>
     </div>
@@ -55,7 +55,7 @@
           [class.pu-filter-btn--active]="statusFilter() === 'all'"
           (click)="setStatusFilter('all')"
         >
-          Todos ({{ counters().total }})
+          {{ 'common.all' | transloco }} ({{ counters().total }})
         </button>
         <button
           class="pu-filter-btn pu-filter-btn--available"
@@ -63,7 +63,7 @@
           (click)="setStatusFilter(UnitStatus.AVAILABLE)"
         >
           <span class="pu-filter-dot"></span>
-          Disponible ({{ counters().available }})
+          {{ 'units.status.available' | transloco }} ({{ counters().available }})
         </button>
         <button
           class="pu-filter-btn pu-filter-btn--occupied"
@@ -71,7 +71,7 @@
           (click)="setStatusFilter(UnitStatus.OCCUPIED)"
         >
           <span class="pu-filter-dot"></span>
-          Ocupada ({{ counters().occupied }})
+          {{ 'units.status.occupied' | transloco }} ({{ counters().occupied }})
         </button>
         <button
           class="pu-filter-btn pu-filter-btn--maintenance"
@@ -79,7 +79,7 @@
           (click)="setStatusFilter(UnitStatus.MAINTENANCE)"
         >
           <span class="pu-filter-dot"></span>
-          Mantenimiento ({{ counters().maintenance }})
+          {{ 'units.status.maintenance' | transloco }} ({{ counters().maintenance }})
         </button>
         <button
           class="pu-filter-btn pu-filter-btn--reserved"
@@ -87,7 +87,7 @@
           (click)="setStatusFilter(UnitStatus.RESERVED)"
         >
           <span class="pu-filter-dot"></span>
-          Reservada ({{ counters().reserved }})
+          {{ 'units.status.reserved' | transloco }} ({{ counters().reserved }})
         </button>
       </div>
     </div>
@@ -95,7 +95,7 @@
     <!-- Loading state -->
     @if (isLoading()) {
       <div class="pu-loading">
-        <app-loading-state label="Cargando unidades..." />
+        <app-loading-state [label]="'units.loading' | transloco" />
       </div>
     }
 
@@ -103,17 +103,19 @@
     @if (!isLoading() && filteredUnits().length === 0) {
       <app-empty-state
         [title]="
-          counters().total === 0 ? 'Sin unidades registradas' : 'Sin resultados para este filtro'
+          counters().total === 0
+            ? ('units.empty.noUnitsTitle' | transloco)
+            : ('units.empty.noFilterResultsTitle' | transloco)
         "
         [description]="
-          counters().total === 0 ? 'Crea la primera unidad para esta propiedad.' : null
+          counters().total === 0 ? ('units.empty.noUnitsDescription' | transloco) : null
         "
       >
         <lucide-icon icon [img]="Building2" [size]="24"></lucide-icon>
         @if (counters().total === 0) {
           <app-button actions (clicked)="openCreateDialog()">
             <lucide-icon [img]="Plus" [size]="16"></lucide-icon>
-            Nueva Unidad
+            {{ 'units.actions.new' | transloco }}
           </app-button>
         }
       </app-empty-state>
@@ -125,22 +127,22 @@
         <table class="pu-table">
           <thead>
             <tr>
-              <th>Unidad</th>
-              <th>Piso</th>
-              <th aria-label="Dormitorios">
+              <th>{{ 'units.table.unit' | transloco }}</th>
+              <th>{{ 'units.table.floor' | transloco }}</th>
+              <th [attr.aria-label]="'units.table.bedrooms' | transloco">
                 <lucide-icon [img]="BedDouble" [size]="14"></lucide-icon>
               </th>
-              <th aria-label="Baños">
+              <th [attr.aria-label]="'units.table.bathrooms' | transloco">
                 <lucide-icon [img]="Bath" [size]="14"></lucide-icon>
               </th>
               <th>
                 <lucide-icon [img]="Maximize2" [size]="14"></lucide-icon>
                 m²
               </th>
-              <th>Tipo</th>
-              <th>Precio</th>
-              <th>Estado</th>
-              <th class="pu-actions-heading">Acciones</th>
+              <th>{{ 'units.table.type' | transloco }}</th>
+              <th>{{ 'units.table.price' | transloco }}</th>
+              <th>{{ 'units.table.status' | transloco }}</th>
+              <th class="pu-actions-heading">{{ 'common.actions' | transloco }}</th>
             </tr>
           </thead>
           <tbody>
@@ -165,7 +167,9 @@
                 <td>{{ unit.square_meters ? unit.square_meters : '—' }}</td>
                 <td>
                   @if (unit.rental_type) {
-                    <span class="pu-type-badge">{{ getRentalTypeLabel(unit.rental_type) }}</span>
+                    <span class="pu-type-badge">{{
+                      getRentalTypeLabelKey(unit.rental_type) | transloco
+                    }}</span>
                   } @else {
                     <span class="pu-null">—</span>
                   }
@@ -174,12 +178,16 @@
                   @if (unit.price_per_month) {
                     <span class="pu-price">
                       {{ unit.price_per_month | tenantCurrency
-                      }}<span class="pu-price-period">/mes</span>
+                      }}<span class="pu-price-period">{{
+                        'units.price.perMonth' | transloco
+                      }}</span>
                     </span>
                   } @else if (unit.price_per_night) {
                     <span class="pu-price">
                       {{ unit.price_per_night | tenantCurrency
-                      }}<span class="pu-price-period">/noche</span>
+                      }}<span class="pu-price-period">{{
+                        'units.price.perNight' | transloco
+                      }}</span>
                     </span>
                   } @else {
                     <span class="pu-null">—</span>
@@ -188,7 +196,7 @@
                 <td>
                   <span class="pu-status-chip" [ngClass]="getStatusConfig(unit.status).cssClass">
                     <span class="pu-status-dot"></span>
-                    {{ getStatusConfig(unit.status).label }}
+                    {{ getStatusConfig(unit.status).labelKey | transloco }}
                   </span>
                 </td>
                 <td class="pu-cell-actions">
@@ -196,7 +204,7 @@
                     class="pu-icon-button"
                     type="button"
                     (click)="openEditDialog(unit); $event.stopPropagation()"
-                    aria-label="Editar unidad"
+                    [attr.aria-label]="'units.actions.edit' | transloco"
                   >
                     <lucide-icon [img]="Pencil" [size]="15"></lucide-icon>
                   </button>
@@ -204,7 +212,7 @@
                     class="pu-icon-button pu-icon-button--danger"
                     type="button"
                     (click)="deleteUnit(unit); $event.stopPropagation()"
-                    aria-label="Eliminar unidad"
+                    [attr.aria-label]="'units.actions.delete' | transloco"
                     [disabled]="confirmingDeleteId() === unit.id"
                   >
                     <lucide-icon [img]="Trash2" [size]="15"></lucide-icon>

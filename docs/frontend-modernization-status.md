@@ -112,6 +112,16 @@ Pendientes posibles segun avance de modernizacion:
 - [x] Pantallas admin cargan con `loadComponent`.
 - [x] Bundle inicial bajo de aproximadamente 2.46 MB a ~693 KB en build
   production.
+- [x] Smoke E2E de rutas principales agregado:
+  - [x] Portal publico.
+  - [x] Admin.
+  - [x] Tenant portal con sesion real.
+  - [x] Owner portal con sesion real.
+- [x] E2E publico corto/largo/BOTH agregado y validado contra backend real:
+  - [x] `SHORT_TERM`: precio por noche, fechas y recuperacion de reserva hacia
+    login.
+  - [x] `LONG_TERM`: renta mensual e intencion de solicitud.
+  - [x] `BOTH`: expone solicitud larga y reserva corta.
 
 ### Seguridad Y Tokens
 
@@ -131,7 +141,10 @@ Pendiente:
 
 - [ ] Revisar si `AuthService` y `TenantAuthService` pueden validar `/auth/me`
   usando interceptor sin headers manuales.
-- [ ] Confirmar flujo owner con `owner_access_token` cuando se migre owner portal.
+- [ ] Validar flujo owner completo de negocio: autorizacion de mantenimiento y
+  descargas PDF de statements/contratos contra backend real.
+- [x] Seed demo backend crea usuarios `PROPIETARIO` idempotentes para poder
+  validar `owner_access_token` en E2E local.
 - [x] Registro tenant ya no escribe `tenant_access_token` / `tenant_user`
   directamente en `localStorage`; delega en `TenantAuthService`.
 - [x] Estado de lectura de mantenimiento centralizado en
@@ -1082,3 +1095,31 @@ Pasos restantes de calidad:
   - kpis.
 - [x] Responsive smoke mobile validado para login, tenant login, owner login,
   dashboard, pagos, propiedades, contratos y reports.
+
+### Corte i18n Y Units
+
+- [x] `applications` usa claves i18n en labels ARIA de filtros y estadisticas.
+- [x] `contracts.facade` usa i18n en confirmacion de renovacion.
+- [x] `maintenance.component` usa i18n en toasts y confirmaciones de estado,
+  prioridad y eliminacion.
+- [x] `notifications.component` usa i18n en dialogos, tipos de evento y tiempo
+  relativo.
+- [x] `payments.facade` usa i18n en bulk actions, aprobacion, rechazo,
+  export CSV, comprobantes, borrado y creacion.
+- [x] `properties.facade` usa i18n en carga, validaciones, imagenes, guardado,
+  eliminacion y activacion/desactivacion.
+- [x] `property-units` usa i18n en facade, formulario, detalle y bloqueo de
+  fechas.
+- [x] Audit de textos hardcodeados reducido de 164 a 80 candidatos.
+- [x] Validacion posterior: `npm run lint`, `npm run test` y `npm run build`
+  pasan.
+
+Pendiente i18n real:
+
+- `register.component.html`: bloque legal/privacidad sigue hardcodeado y es el
+  mayor grupo pendiente.
+- `payment-create-dialog`: quedan placeholders de ejemplo.
+- `property-form-dialog` y `property-detail-admin`: quedan placeholders,
+  aria-labels y toasts puntuales.
+- Pendientes menores: landing demo, modales publicos, tenant messages,
+  tenant notifications y sidebar aria-labels.

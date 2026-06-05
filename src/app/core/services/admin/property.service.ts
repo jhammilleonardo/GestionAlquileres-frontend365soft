@@ -291,6 +291,13 @@ export class PropertyService {
       units: this.normalizeUnits(raw['units']),
       property_type: this.normalizePropertyType(raw),
       property_subtype: this.normalizePropertySubtype(raw),
+      monthly_rent: this.toNumberOrUndefined(raw['monthly_rent']),
+      monthly_rent_amount: this.toNumberOrUndefined(raw['monthly_rent_amount']),
+      min_price_per_night: this.toNumberOrNull(raw['min_price_per_night']),
+      total_units: this.toNumberOrNull(raw['total_units']),
+      available_units: this.toNumberOrNull(raw['available_units']),
+      available_short_term_units: this.toNumberOrNull(raw['available_short_term_units']),
+      available_long_term_units: this.toNumberOrNull(raw['available_long_term_units']),
       active: raw['active'] === undefined ? raw['status'] === 'DISPONIBLE' : raw['active'],
       description: this.asString(raw['description']) || 'Sin descripción disponible',
     } as unknown as Property;
@@ -417,6 +424,11 @@ export class PropertyService {
     if (value === null || value === undefined || value === '') return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  private toNumberOrUndefined(value: unknown): number | undefined {
+    const parsed = this.toNumberOrNull(value);
+    return parsed === null ? undefined : parsed;
   }
 
   private normalizePropertyType(raw: Record<string, unknown>): unknown {

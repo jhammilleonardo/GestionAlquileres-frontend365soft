@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { TranslocoService } from '@jsverse/transloco';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -43,6 +44,7 @@ describe('PropertyUnitsFacade', () => {
         { provide: UnitService, useValue: unitService },
         { provide: ConfirmDialogService, useValue: confirmDialog },
         { provide: ToastService, useValue: toast },
+        { provide: TranslocoService, useValue: { translate: (key: string) => key } },
       ],
     });
     facade = TestBed.inject(PropertyUnitsFacade);

@@ -1,6 +1,10 @@
 <app-dialog
   [open]="open()"
-  [title]="isEditMode() ? 'Editar Unidad' : 'Nueva Unidad'"
+  [title]="
+    isEditMode()
+      ? ('propiedades.units.editUnit' | transloco)
+      : ('propiedades.units.newUnit' | transloco)
+  "
   [showFooter]="false"
   [closeOnBackdrop]="!isSaving()"
   (closed)="onCancel()"
@@ -9,71 +13,93 @@
     <div class="ufd-heading">
       <lucide-icon [img]="Building2" [size]="20"></lucide-icon>
       <div>
-        <p class="ufd-kicker">Propiedad</p>
-        <h3>{{ isEditMode() ? 'Actualizar datos de la unidad' : 'Registrar nueva unidad' }}</h3>
+        <p class="ufd-kicker">{{ 'propiedades.units.property' | transloco }}</p>
+        <h3>
+          {{
+            isEditMode()
+              ? ('propiedades.units.updateUnitHeading' | transloco)
+              : ('propiedades.units.createUnitHeading' | transloco)
+          }}
+        </h3>
       </div>
     </div>
 
     <div class="ufd-body">
-      <div class="ufd-section-title">Identificación</div>
+      <div class="ufd-section-title">{{ 'propiedades.units.identification' | transloco }}</div>
       <div class="ufd-row ufd-row--3">
         <app-text-field
           class="ufd-full"
-          label="Número / Código *"
-          placeholder="Ej: 2A, 301, PH-1"
+          [label]="'propiedades.units.unitNumber' | transloco"
+          [placeholder]="'propiedades.units.unitNumberPlaceholder' | transloco"
           formControlName="unit_number"
         />
-        <app-text-field label="Piso" type="number" placeholder="0" formControlName="floor" />
+        <app-text-field
+          [label]="'propiedades.units.floor' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="floor"
+        />
         <app-select
-          label="Estado *"
+          [label]="'propiedades.units.status' | transloco"
           [options]="statusOptions"
           [required]="true"
           formControlName="status"
         />
       </div>
       @if (isFieldInvalid('unit_number')) {
-        <p class="ufd-error" aria-live="polite">El número de unidad es requerido</p>
+        <p class="ufd-error" aria-live="polite">
+          {{ 'propiedades.units.unitNumberRequired' | transloco }}
+        </p>
       }
 
-      <div class="ufd-section-title">Características</div>
+      <div class="ufd-section-title">{{ 'propiedades.units.characteristics' | transloco }}</div>
       <div class="ufd-row ufd-row--3">
         <app-text-field
-          label="Dormitorios"
+          [label]="'propiedades.units.bedrooms' | transloco"
           type="number"
           placeholder="0"
           formControlName="bedrooms"
         />
-        <app-text-field label="Baños" type="number" placeholder="0" formControlName="bathrooms" />
         <app-text-field
-          label="Superficie (m²)"
+          [label]="'propiedades.units.bathrooms' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="bathrooms"
+        />
+        <app-text-field
+          [label]="'propiedades.units.squareMeters' | transloco"
           type="number"
           placeholder="0"
           formControlName="square_meters"
         />
       </div>
       @if (isFieldInvalid('bedrooms') || isFieldInvalid('bathrooms')) {
-        <p class="ufd-error" aria-live="polite">Dormitorios y baños no pueden ser negativos.</p>
+        <p class="ufd-error" aria-live="polite">
+          {{ 'propiedades.units.roomsNonNegative' | transloco }}
+        </p>
       }
       @if (isFieldInvalid('square_meters')) {
-        <p class="ufd-error" aria-live="polite">La superficie debe ser mayor o igual a 1.</p>
+        <p class="ufd-error" aria-live="polite">
+          {{ 'propiedades.units.areaMin' | transloco }}
+        </p>
       }
 
-      <div class="ufd-section-title">Precio y Alquiler</div>
+      <div class="ufd-section-title">{{ 'propiedades.units.priceAndRental' | transloco }}</div>
       <div class="ufd-row ufd-row--3">
         <app-select
-          label="Tipo de Alquiler"
-          placeholder="Sin especificar"
+          [label]="'propiedades.units.rentalType' | transloco"
+          [placeholder]="'propiedades.units.unspecified' | transloco"
           [options]="rentalTypeOptions"
           formControlName="rental_type"
         />
         <app-text-field
-          label="Precio Mensual"
+          [label]="'propiedades.units.pricePerMonth' | transloco"
           type="number"
           placeholder="0.00"
           formControlName="price_per_month"
         />
         <app-text-field
-          label="Depósito"
+          [label]="'propiedades.units.depositAmount' | transloco"
           type="number"
           placeholder="0.00"
           formControlName="deposit_amount"
@@ -82,37 +108,41 @@
 
       <div class="ufd-row ufd-row--2">
         <app-text-field
-          label="Precio por Noche"
+          [label]="'propiedades.units.pricePerNight' | transloco"
           type="number"
           placeholder="0.00"
           formControlName="price_per_night"
         />
         <app-text-field
-          label="Tarifa de limpieza"
+          [label]="'propiedades.units.cleaningFee' | transloco"
           type="number"
           placeholder="0.00"
           formControlName="cleaning_fee"
         />
       </div>
-      <p class="ufd-help">Configuración de alquiler de corto plazo:</p>
+      <p class="ufd-help">{{ 'propiedades.units.shortTermConfig' | transloco }}</p>
       <div class="ufd-row ufd-row--2">
         <app-text-field
-          label="Mín. noches"
+          [label]="'propiedades.units.minNights' | transloco"
           type="number"
           placeholder="1"
           formControlName="min_nights"
         />
         <app-text-field
-          label="Máx. noches"
+          [label]="'propiedades.units.maxNights' | transloco"
           type="number"
           placeholder="30"
           formControlName="max_nights"
         />
       </div>
       <div class="ufd-row ufd-row--2">
-        <app-text-field label="Hora check-in" placeholder="15:00" formControlName="checkin_time" />
         <app-text-field
-          label="Hora check-out"
+          [label]="'propiedades.units.checkinTime' | transloco"
+          placeholder="15:00"
+          formControlName="checkin_time"
+        />
+        <app-text-field
+          [label]="'propiedades.units.checkoutTime' | transloco"
           placeholder="11:00"
           formControlName="checkout_time"
         />
@@ -122,19 +152,25 @@
         isFieldInvalid('price_per_night') ||
         isFieldInvalid('deposit_amount')
       ) {
-        <p class="ufd-error" aria-live="polite">Los importes no pueden ser negativos.</p>
+        <p class="ufd-error" aria-live="polite">
+          {{ 'propiedades.units.amountsNonNegative' | transloco }}
+        </p>
       }
     </div>
 
     <div class="ufd-footer">
       <app-button type="button" appearance="outline" [disabled]="isSaving()" (clicked)="onCancel()">
-        Cancelar
+        {{ 'common.cancel' | transloco }}
       </app-button>
       <app-button type="submit" [loading]="isSaving()">
         @if (!isSaving()) {
           <lucide-icon [img]="Save" [size]="16"></lucide-icon>
         }
-        {{ isEditMode() ? 'Guardar Cambios' : 'Crear Unidad' }}
+        {{
+          isEditMode()
+            ? ('propiedades.units.saveChanges' | transloco)
+            : ('propiedades.units.createUnit' | transloco)
+        }}
       </app-button>
     </div>
   </form>

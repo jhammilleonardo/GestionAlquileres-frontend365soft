@@ -1,4 +1,12 @@
 {
+  "brand": {
+    "name": "365Soft"
+  },
+  "language": {
+    "group": "Selector de idioma",
+    "spanish": "Español",
+    "english": "Inglés"
+  },
   "nav": {
     "home": "Inicio",
     "properties": "Propiedades",
@@ -36,7 +44,7 @@
     "heroSubtitle": "Conoce la historia y misión detrás de nuestra plataforma de alquileres",
     "missionTitle": "Nuestra Misión",
     "missionSubtitle": "Transformar la experiencia de alquiler de propiedades",
-    "missionText": "En RentHub, nos dedicamos a simplificar el proceso de alquiler de propiedades, conectando propietarios e inquilinos de manera eficiente y transparente. Nuestra plataforma ofrece herramientas modernas que facilitan cada etapa del proceso, desde la búsqueda hasta la gestión de contratos y pagos.",
+    "missionText": "En 365Soft, nos dedicamos a simplificar el proceso de alquiler de propiedades, conectando propietarios e inquilinos de manera eficiente y transparente. Nuestra plataforma ofrece herramientas modernas que facilitan cada etapa del proceso, desde la búsqueda hasta la gestión de contratos y pagos.",
     "valuesTitle": "Nuestros Valores",
     "valuesSubtitle": "Principios que guían cada una de nuestras acciones",
     "v1Title": "Transparencia",
@@ -61,12 +69,51 @@
     "serviceAdmin": "Servicios de Administración",
     "serviceScreening": "Verificación de Inquilinos",
     "serviceMaintenance": "Mantenimiento",
+    "blog": "Blog",
+    "addressValue": "Cochabamba, Bolivia",
+    "emailValue": "info@365soft.com",
+    "phoneValue": "+591 12345678",
     "hours": "Lun - Vie: 9AM - 6PM",
     "contact": "Contacto",
     "rights": "Todos los derechos reservados.",
     "privacy": "Privacidad",
     "terms": "Términos",
     "cookies": "Cookies"
+  },
+  "map": {
+    "title": "Mapa de propiedades",
+    "subtitle": "Encuentra tu próximo hogar en el mapa",
+    "listView": "Ver en lista",
+    "loading": "Cargando...",
+    "results": "{{count}} resultados",
+    "viewDetails": "Ver detalles",
+    "openMap": "Abrir en OpenStreetMap",
+    "city": "Ciudad",
+    "zipCode": "Código postal"
+  },
+  "contact": {
+    "heroTitle": "Contacto",
+    "heroSubtitle": "Estamos listos para ayudarte con tu próxima propiedad",
+    "infoTitle": "Hablemos",
+    "infoSubtitle": "Escríbenos y nuestro equipo responderá lo antes posible.",
+    "emailLabel": "Email",
+    "emailValue": "info@365soft.com",
+    "phoneLabel": "Teléfono",
+    "phoneValue": "+591 12345678",
+    "addressLabel": "Dirección",
+    "addressValue": "Cochabamba, Bolivia",
+    "formTitle": "Envíanos un mensaje",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Tu nombre completo",
+    "emailPlaceholder": "tu@email.com",
+    "phonePlaceholder": "+591 71234567",
+    "subjectLabel": "Asunto",
+    "subjectPlaceholder": "Motivo de contacto",
+    "messageLabel": "Mensaje",
+    "messagePlaceholder": "Cuéntanos cómo podemos ayudarte",
+    "sendBtn": "Enviar mensaje",
+    "sending": "Enviando...",
+    "successMsg": "Mensaje enviado. Te responderemos pronto."
   },
   "properties": {
     "heroTitle": "Encuentra tu Hogar Ideal",
@@ -95,6 +142,7 @@
     "bedrooms": "habs.",
     "bathrooms": "baños",
     "priceMonth": "precio/mes",
+    "priceNight": "precio/noche",
     "viewDetails": "Ver Detalles",
     "locationNotAvailable": "Ubicación no disponible"
   },
@@ -106,6 +154,7 @@
     "noImages": "Sin imágenes",
     "imageNumber": "Imagen {{num}}",
     "perMonth": "/mes",
+    "perNight": "/noche",
     "totalArea": "Área Total",
     "bedrooms": "Habitaciones",
     "bathrooms": "Baños",
@@ -116,6 +165,7 @@
     "propType": "Tipo de Propiedad",
     "propSubtype": "Subtipo",
     "monthlyRent": "Renta Mensual",
+    "nightlyPrice": "Precio por noche",
     "depositAmount": "Depósito de Seguridad",
     "yearBuilt": "Año de Construcción",
     "furnished": "Amueblado",
@@ -132,6 +182,7 @@
     "callNow": "Llamar Ahora",
     "scheduleTitle": "¿Quieres agendar una visita?",
     "scheduleBtn": "Agendar Visita Presencial",
+    "linkCopied": "Enlace copiado al portapapeles",
     "rules": "Reglas de la Propiedad",
     "pets": "Mascotas",
     "smoking": "Fumar",
@@ -400,7 +451,11 @@
     "navDocuments": "Documentos",
     "navNotifications": "Notificaciones",
     "navMessages": "Mensajes",
-    "myProperty": "Mi Propiedad"
+    "myProperty": "Mi Propiedad",
+    "now": "Ahora",
+    "minutesAgo": "Hace {{count}}m",
+    "hoursAgo": "Hace {{count}}h",
+    "daysAgo": "Hace {{count}}d"
   },
   "contractSigning": {
     "title": "Confirmación de Firma del Contrato",
@@ -881,7 +936,10 @@
     "minNights": "Mínimo {{n}} noches",
     "requested": "Solicitud de reserva enviada",
     "requestError": "No se pudo crear la reserva",
-    "title": "Disponibilidad"
+    "title": "Disponibilidad",
+    "missingSlug": "No se pudo identificar la inmobiliaria para iniciar sesión.",
+    "selectedProperty": "Propiedad seleccionada",
+    "loginRequired": "Inicia sesión o crea una cuenta para confirmar la reserva."
   },
   "myProperty": {
     "title": "Mi propiedad",

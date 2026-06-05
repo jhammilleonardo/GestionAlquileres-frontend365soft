@@ -218,19 +218,21 @@ export class AvailabilityCalendarComponent implements OnInit {
     if (!this.tenantAuthService.isAuthenticated()) {
       const slug = this.slugService.getSlug();
       if (!slug) {
-        this.toast.error('No se pudo identificar la inmobiliaria para iniciar sesión.');
+        this.toast.error(this.transloco.translate('public.availability.missingSlug'));
         return;
       }
 
       this.reservationIntentionService.setIntention({
         propertyId: this.propertyId(),
-        propertyTitle: this.propertyTitle().trim() || 'Propiedad seleccionada',
+        propertyTitle:
+          this.propertyTitle().trim() ||
+          this.transloco.translate('public.availability.selectedProperty'),
         unitId: this.unitId(),
         unitNumber: this.unitNumber().trim() || undefined,
         checkinDate: this.iso(ci),
         checkoutDate: this.iso(co),
       });
-      this.toast.info('Inicia sesión o crea una cuenta para confirmar la reserva.');
+      this.toast.info(this.transloco.translate('public.availability.loginRequired'));
       this.reservationIntentionService.navigateToLogin(slug);
       return;
     }

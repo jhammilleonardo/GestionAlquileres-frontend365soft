@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DestroyRef, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { TranslocoService } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 import { debounceTime, startWith, switchMap } from 'rxjs/operators';
 
@@ -43,6 +44,7 @@ export class PaymentsFacade {
   readonly tenantUserService = inject(TenantUserService);
   readonly contractService = inject(ContractService);
   private readonly formatService = inject(FormatService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly showFilters = signal(false);
   readonly showCreateForm = signal(false);
@@ -317,27 +319,36 @@ export class PaymentsFacade {
     if (ids.length === 0) return;
 
     const labels: Record<string, string> = {
-      approve: 'Aprobar',
-      reject: 'Rechazar',
-      delete: 'Eliminar',
+      approve: this.transloco.translate('pagos.actions.approve'),
+      reject: this.transloco.translate('pagos.actions.reject'),
+      delete: this.transloco.translate('common.delete'),
     };
     const verb = labels[action];
     let adminNotes: string | undefined;
 
     if (action === 'reject') {
       const result = await this.confirmDialog.open({
-        title: `${verb} ${ids.length} pago(s)`,
-        message: `¿${verb} ${ids.length} pago(s) seleccionado(s)?`,
+        title: this.transloco.translate('pagos.bulk.title', { action: verb, count: ids.length }),
+        message: this.transloco.translate('pagos.bulk.message', {
+          action: verb,
+          count: ids.length,
+        }),
         confirmLabel: verb,
         variant: 'danger',
-        input: { label: 'Motivo de rechazo (opcional)', placeholder: 'Motivo...' },
+        input: {
+          label: this.transloco.translate('pagos.bulk.rejectReasonLabel'),
+          placeholder: this.transloco.translate('pagos.bulk.rejectReasonPlaceholder'),
+        },
       });
       if (!result.confirmed) return;
-      adminNotes = result.value || 'Rechazado en acción masiva';
+      adminNotes = result.value || this.transloco.translate('pagos.bulk.defaultRejectReason');
     } else {
       const confirmed = await this.confirmDialog.confirm({
-        title: `${verb} ${ids.length} pago(s)`,
-        message: `¿${verb} ${ids.length} pago(s) seleccionado(s)?`,
+        title: this.transloco.translate('pagos.bulk.title', { action: verb, count: ids.length }),
+        message: this.transloco.translate('pagos.bulk.message', {
+          action: verb,
+          count: ids.length,
+        }),
         confirmLabel: verb,
         variant: action === 'delete' ? 'danger' : 'default',
       });
@@ -348,12 +359,14 @@ export class PaymentsFacade {
     this.paymentService.bulkAction(payload).subscribe({
       next: (result) => {
         this.selectedIds.set([]);
-        this.toast.success(
-          `Acción completada: ${result.processed} procesados, ${result.errors} errores`,
-        );
+        this.toast.success(this.transloco.translate('pagos.bulk.completed', result));
       },
       error: (error: unknown) => {
-        this.toast.error(`Error: ${getApiErrorMessage(error, 'Error del servidor')}`);
+        this.toast.error(
+          this.transloco.translate('pagos.bulk.error', {
+            message: getApiErrorMessage(error, this.transloco.translate('common.serverError')),
+          }),
+        );
       },
     });
   }
@@ -373,13 +386,13 @@ export class PaymentsFacade {
               const json = JSON.parse(text) as { message?: string };
               msg += json.message || text;
             } catch {
-              msg += 'Error del servidor';
+              msg += this.transloco.translate('common.serverError');
             }
-            this.toast.error('Error al exportar el CSV\n' + msg);
+            this.toast.error(this.transloco.translate('pagos.actions.exportCsvError', { msg }));
           });
         } else {
-          msg += getApiErrorMessage(error, 'Error desconocido');
-          this.toast.error('Error al exportar el CSV\n' + msg);
+          msg += getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
+          this.toast.error(this.transloco.translate('pagos.actions.exportCsvError', { msg }));
         }
       },
     });
@@ -406,7 +419,9 @@ export class PaymentsFacade {
       },
       error: (error: { message?: string }) => {
         this.proofLoading.set(false);
-        this.proofLoadError.set(error.message || 'No se pudo cargar el comprobante');
+        this.proofLoadError.set(
+          error.message || this.transloco.translate('pagos.actions.proofLoadError'),
+        );
       },
     });
   }
@@ -459,16 +474,20 @@ export class PaymentsFacade {
     this.paymentService
       .updatePaymentStatus(payment.id, {
         status: PaymentStatus.APPROVED,
-        admin_notes: 'Pago aprobado por administrador',
+        admin_notes: this.transloco.translate('pagos.actions.approvedByAdmin'),
       })
       .subscribe({
         next: () => {
           this.rejectionPayment.set(null);
-          this.toast.success(`Pago de ${tenantName} aprobado`);
+          this.toast.success(
+            this.transloco.translate('pagos.actions.approvedToast', { tenantName }),
+          );
         },
         error: (error: unknown) => {
           this.toast.error(
-            `Error al aprobar el pago: ${getApiErrorMessage(error, 'Error del servidor')}`,
+            this.transloco.translate('pagos.actions.approveError', {
+              message: getApiErrorMessage(error, this.transloco.translate('common.serverError')),
+            }),
           );
         },
       });
@@ -501,11 +520,13 @@ export class PaymentsFacade {
         next: () => {
           this.rejectionPayment.set(null);
           this.rejectForm.reset({ reason: '' });
-          this.toast.error(`Pago de ${tenantName} rechazado`);
+          this.toast.error(this.transloco.translate('pagos.actions.rejectedToast', { tenantName }));
         },
         error: (error: unknown) => {
           this.toast.error(
-            `Error al rechazar el pago: ${getApiErrorMessage(error, 'Error del servidor')}`,
+            this.transloco.translate('pagos.actions.rejectError', {
+              message: getApiErrorMessage(error, this.transloco.translate('common.serverError')),
+            }),
           );
         },
       });
@@ -518,16 +539,16 @@ export class PaymentsFacade {
 
   async deletePayment(payment: Payment): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Eliminar pago',
-      message: `¿Eliminar el pago de ${payment.amount} BOB? Esta acción no se puede deshacer.`,
-      confirmLabel: 'Eliminar',
+      title: this.transloco.translate('pagos.actions.deleteTitle'),
+      message: this.transloco.translate('pagos.actions.deleteMessage', { amount: payment.amount }),
+      confirmLabel: this.transloco.translate('common.delete'),
       variant: 'danger',
     });
     if (!confirmed) return;
 
     this.paymentService.deletePayment(payment.id).subscribe({
-      next: () => this.toast.success('Pago eliminado'),
-      error: () => this.toast.error('Error al eliminar el pago'),
+      next: () => this.toast.success(this.transloco.translate('pagos.actions.deleted')),
+      error: () => this.toast.error(this.transloco.translate('pagos.actions.deleteError')),
     });
   }
 
@@ -543,7 +564,7 @@ export class PaymentsFacade {
       },
       error: () => {
         this.loadingContracts.set(false);
-        this.toast.error('Error al cargar los contratos del inquilino');
+        this.toast.error(this.transloco.translate('pagos.actions.loadContractsError'));
       },
     });
   }
@@ -589,12 +610,12 @@ export class PaymentsFacade {
     const contract = this.selectedContract();
 
     if (!tenant || !contract) {
-      this.toast.error('Debes seleccionar un inquilino y un contrato');
+      this.toast.error(this.transloco.translate('pagos.actions.tenantContractRequired'));
       return;
     }
 
     if (this.createPaymentForm.invalid) {
-      this.toast.error('Por favor completa todos los campos requeridos');
+      this.toast.error(this.transloco.translate('pagos.actions.requiredFields'));
       return;
     }
 
@@ -626,10 +647,12 @@ export class PaymentsFacade {
     this.paymentService.createPaymentAsAdmin(payload).subscribe({
       next: () => {
         this.closeCreateForm();
-        this.toast.success('Pago creado exitosamente');
+        this.toast.success(this.transloco.translate('pagos.actions.created'));
       },
       error: (error: unknown) => {
-        this.toast.error(getApiErrorMessage(error, 'Error al crear el pago'));
+        this.toast.error(
+          getApiErrorMessage(error, this.transloco.translate('pagos.actions.createError')),
+        );
       },
     });
   }

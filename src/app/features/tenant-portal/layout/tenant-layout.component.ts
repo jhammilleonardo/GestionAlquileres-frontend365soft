@@ -28,7 +28,7 @@ import { SlugService } from '../../../core/services/slug.service';
 import { ContractService } from '../../../core/services/admin/contract.service';
 import { TenantConfigService } from '../../../core/services/admin/tenant-config.service';
 import { FormatService } from '../../../core/services/format.service';
-import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 
 interface NavItem {
@@ -58,13 +58,17 @@ interface NavItem {
 
         <div class="header-right">
           <!-- Language switcher -->
-          <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+          <div
+            class="lang-toggle"
+            role="group"
+            [attr.aria-label]="'public.language.group' | transloco"
+          >
             <button
               class="lang-btn"
               [class.active]="languageService.isSpanish()"
               (click)="languageService.setLanguage('es')"
-              aria-label="Español"
-              title="Español"
+              [attr.aria-label]="'public.language.spanish' | transloco"
+              [attr.title]="'public.language.spanish' | transloco"
             >
               ES
             </button>
@@ -72,8 +76,8 @@ interface NavItem {
               class="lang-btn"
               [class.active]="languageService.isEnglish()"
               (click)="languageService.setLanguage('en')"
-              aria-label="English"
-              title="English"
+              [attr.aria-label]="'public.language.english' | transloco"
+              [attr.title]="'public.language.english' | transloco"
             >
               EN
             </button>
@@ -902,6 +906,7 @@ export class TenantLayoutComponent implements OnDestroy {
   private slugService = inject(SlugService);
   private tenantConfigService = inject(TenantConfigService);
   private formatService = inject(FormatService);
+  private translocoService = inject(TranslocoService);
 
   sidebarCollapsed = false;
   isNotificationsDropdownOpen = false;
@@ -1131,10 +1136,14 @@ export class TenantLayoutComponent implements OnDestroy {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Ahora';
-    if (minutes < 60) return `Hace ${minutes}m`;
-    if (hours < 24) return `Hace ${hours}h`;
-    return `Hace ${days}d`;
+    if (minutes < 1) return this.translocoService.translate('public.tenantLayout.now');
+    if (minutes < 60) {
+      return this.translocoService.translate('public.tenantLayout.minutesAgo', { count: minutes });
+    }
+    if (hours < 24) {
+      return this.translocoService.translate('public.tenantLayout.hoursAgo', { count: hours });
+    }
+    return this.translocoService.translate('public.tenantLayout.daysAgo', { count: days });
   }
 
   getNotificationIcon(eventType: string): string {

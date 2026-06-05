@@ -85,13 +85,13 @@
       </div>
 
       <div class="header-side-info">
-        @if (prop.monthly_rent || prop.monthly_rent_amount) {
+        @if (getPriceDisplay(prop); as price) {
           <div class="price-section-new">
             <span class="price-value">
               {{ prop.currency || 'BOB' }}
-              {{ prop.monthly_rent || prop.monthly_rent_amount | number: '1.0-0' }}
+              {{ price.amount | number: '1.0-0' }}
             </span>
-            <span class="price-label">{{ 'public.propertyDetail.perMonth' | transloco }}</span>
+            <span class="price-label">{{ price.labelKey | transloco }}</span>
           </div>
         }
 
@@ -208,6 +208,16 @@
                 <span class="detail-value">
                   {{ prop.currency || 'BOB' }}
                   {{ prop.monthly_rent || prop.monthly_rent_amount | number: '1.0-0' }}
+                </span>
+              </div>
+            }
+            @if (hasShortTermPrice(prop)) {
+              <div class="detail-row">
+                <span class="detail-label">{{
+                  'public.propertyDetail.nightlyPrice' | transloco
+                }}</span>
+                <span class="detail-value">
+                  {{ prop.currency || 'BOB' }} {{ prop.min_price_per_night | number: '1.0-0' }}
                 </span>
               </div>
             }

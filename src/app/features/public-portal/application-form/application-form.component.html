@@ -350,7 +350,7 @@
                   type="button"
                   class="btn-remove"
                   (click)="removeRentalHistory(i)"
-                  title="Eliminar"
+                  [attr.title]="'public.applicationForm.deleteBtn' | transloco"
                 >
                   {{ 'public.applicationForm.deleteBtn' | transloco }}
                 </button>
@@ -478,7 +478,7 @@
                     type="button"
                     class="btn-remove"
                     (click)="removePersonalReference(i)"
-                    title="Eliminar"
+                    [attr.title]="'public.applicationForm.deleteBtn' | transloco"
                   >
                     {{ 'public.applicationForm.deleteBtn' | transloco }}
                   </button>
@@ -561,7 +561,7 @@
                     type="button"
                     class="btn-remove"
                     (click)="removeProfessionalReference(i)"
-                    title="Eliminar"
+                    [attr.title]="'public.applicationForm.deleteBtn' | transloco"
                   >
                     {{ 'public.applicationForm.deleteBtn' | transloco }}
                   </button>

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { Upload } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-file-upload',
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, TranslocoModule],
   template: `
     <label class="app-file" [class.app-file--disabled]="disabled()">
       <input
@@ -28,7 +29,7 @@ import { LucideAngularModule } from 'lucide-angular';
     </label>
 
     @if (selectedNames().length > 0) {
-      <ul class="app-file__list" aria-label="Archivos seleccionados">
+      <ul class="app-file__list" [attr.aria-label]="'common.selectedFiles' | transloco">
         @for (name of selectedNames(); track name) {
           <li>{{ name }}</li>
         }

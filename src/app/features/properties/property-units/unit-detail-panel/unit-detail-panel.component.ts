@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { NgClass } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 import {
   LucideAngularModule,
   X,
@@ -23,7 +24,7 @@ import { AppButtonComponent } from '../../../../shared/ui/button/button.componen
 @Component({
   selector: 'app-unit-detail-panel',
   standalone: true,
-  imports: [NgClass, LucideAngularModule, TenantCurrencyPipe, AppButtonComponent],
+  imports: [NgClass, LucideAngularModule, TenantCurrencyPipe, AppButtonComponent, TranslocoPipe],
   templateUrl: './unit-detail-panel.component.html',
   styleUrls: ['./unit-detail-panel.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,22 +63,13 @@ export class UnitDetailPanelComponent {
 
   statusConfig = computed(() => {
     const status = this.unit().status;
-    const configs: Record<UnitStatus, { label: string; cssClass: string }> = {
-      [UnitStatus.AVAILABLE]: { label: 'Disponible', cssClass: 'status-available' },
-      [UnitStatus.OCCUPIED]: { label: 'Ocupada', cssClass: 'status-occupied' },
-      [UnitStatus.MAINTENANCE]: { label: 'Mantenimiento', cssClass: 'status-maintenance' },
-      [UnitStatus.RESERVED]: { label: 'Reservada', cssClass: 'status-reserved' },
+    const configs: Record<UnitStatus, { cssClass: string }> = {
+      [UnitStatus.AVAILABLE]: { cssClass: 'status-available' },
+      [UnitStatus.OCCUPIED]: { cssClass: 'status-occupied' },
+      [UnitStatus.MAINTENANCE]: { cssClass: 'status-maintenance' },
+      [UnitStatus.RESERVED]: { cssClass: 'status-reserved' },
     };
-    return configs[status] ?? { label: status, cssClass: 'status-default' };
-  });
-
-  rentalTypeLabel = computed(() => {
-    const labels: Record<RentalType, string> = {
-      [RentalType.LONG_TERM]: 'Largo Plazo',
-      [RentalType.SHORT_TERM]: 'Corto Plazo',
-      [RentalType.BOTH]: 'Ambos',
-    };
-    return this.unit().rental_type ? labels[this.unit().rental_type!] : '—';
+    return configs[status] ?? { cssClass: 'status-default' };
   });
 
   publicCatalogUrl = computed(

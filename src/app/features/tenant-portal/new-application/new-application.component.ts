@@ -1,6 +1,6 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
 import {
   ArrowRight,
   Bath,
@@ -13,10 +13,7 @@ import {
   Users,
 } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
-import { PropertyService } from '../../../core/services/admin/property.service';
-import { CatalogUnit, Property } from '../../../core/models/property.model';
-import { SlugService } from '../../../core/services/slug.service';
-import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
+import { Property } from '../../../core/models/property.model';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { AvailabilityCalendarComponent } from '../../public-portal/availability-calendar/availability-calendar.component';
 import {
@@ -26,20 +23,9 @@ import {
   AppLoadingStateComponent,
   AppPageHeaderComponent,
   AppSelectComponent,
-  AppSelectOption,
   AppTextFieldComponent,
-  ToastService,
 } from '../../../shared/ui';
-
-type MarketplaceSort = 'created_at' | 'price_asc' | 'price_desc' | 'area';
-type RentalModeFilter = 'ALL' | 'LONG_TERM' | 'SHORT_TERM';
-
-interface MarketplaceFilters {
-  search: string;
-  propertyType: string;
-  rentalMode: RentalModeFilter;
-  sort: MarketplaceSort;
-}
+import { NewApplicationFacade } from './new-application.facade';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,7 +45,7 @@ interface MarketplaceFilters {
     AppTextFieldComponent,
     AvailabilityCalendarComponent,
   ],
-  providers: [provideTranslocoScope('rentalApp')],
+  providers: [provideTranslocoScope('rentalApp'), NewApplicationFacade],
   template: `
     <section class="marketplace-page">
       <app-page-header
@@ -89,7 +75,7 @@ interface MarketplaceFilters {
 
         <app-select
           [(ngModel)]="filters.rentalMode"
-          label="Modalidad"
+          [label]="'tenantApplications.marketplace.rentalMode' | transloco"
           [options]="rentalModeOptions()"
           (ngModelChange)="resetPage()"
         />
@@ -139,8 +125,8 @@ interface MarketplaceFilters {
                     <strong>{{ property.monthly_rent | tenantCurrency }}</strong>
                     <span>{{ 'tenantApplications.marketplace.priceMonth' | transloco }}</span>
                   } @else {
-                    <strong>Corto plazo</strong>
-                    <span>por noche</span>
+                    <strong>{{ getShortTermPrice(property) | tenantCurrency }}</strong>
+                    <span>{{ 'tenantApplications.marketplace.priceNight' | transloco }}</span>
                   }
                 </div>
               </div>
@@ -218,7 +204,7 @@ interface MarketplaceFilters {
                       [fullWidth]="true"
                       (clicked)="reserveShortTerm(property)"
                     >
-                      Reservar estadía
+                      {{ 'tenantApplications.marketplace.reserveStay' | transloco }}
                       <lucide-icon [img]="CalendarCheck" [size]="16"></lucide-icon>
                     </app-button>
                   }
@@ -238,7 +224,7 @@ interface MarketplaceFilters {
               [disabled]="currentPage() === 0"
               (clicked)="previousPage()"
             >
-              Anterior
+              {{ 'common.previous' | transloco }}
             </app-button>
             <span>{{ currentPage() + 1 }} / {{ totalPages() }}</span>
             <app-button
@@ -246,7 +232,7 @@ interface MarketplaceFilters {
               [disabled]="currentPage() + 1 >= totalPages()"
               (clicked)="nextPage()"
             >
-              Siguiente
+              {{ 'common.next' | transloco }}
             </app-button>
           </nav>
         }
@@ -259,19 +245,21 @@ interface MarketplaceFilters {
         (closed)="closeReservationDialog()"
       >
         @if (isLoadingReservationProperty()) {
-          <app-loading-state label="Cargando disponibilidad..." />
+          <app-loading-state
+            [label]="'tenantApplications.marketplace.loadingAvailability' | transloco"
+          />
         } @else if (selectedReservationProperty(); as reservationProperty) {
           @if (shortTermUnits().length === 0) {
             <app-empty-state
-              title="No hay unidades de corto plazo"
-              description="Esta propiedad no tiene unidades configuradas con precio por noche."
+              [title]="'tenantApplications.marketplace.noShortTermUnitsTitle' | transloco"
+              [description]="'tenantApplications.marketplace.noShortTermUnitsDesc' | transloco"
             />
           } @else {
             <div class="reservation-panel">
               @if (shortTermUnits().length > 1) {
                 <app-select
                   [ngModel]="selectedReservationUnitId()"
-                  label="Unidad"
+                  [label]="'tenantApplications.marketplace.unit' | transloco"
                   [options]="shortTermUnitOptions()"
                   (ngModelChange)="selectedReservationUnitId.set($event)"
                 />
@@ -280,16 +268,19 @@ interface MarketplaceFilters {
               @if (selectedReservationUnit(); as unit) {
                 <div class="reservation-summary">
                   <div>
-                    <span>Precio por noche</span>
+                    <span>{{ 'tenantApplications.marketplace.nightlyPrice' | transloco }}</span>
                     <strong>{{ unit.price_per_night ?? 0 | tenantCurrency }}</strong>
                   </div>
                   <div>
-                    <span>Limpieza</span>
+                    <span>{{ 'tenantApplications.marketplace.cleaningFee' | transloco }}</span>
                     <strong>{{ unit.cleaning_fee ?? 0 | tenantCurrency }}</strong>
                   </div>
                   <div>
-                    <span>Estadía mínima</span>
-                    <strong>{{ unit.min_nights ?? 1 }} noche(s)</strong>
+                    <span>{{ 'tenantApplications.marketplace.minStay' | transloco }}</span>
+                    <strong>{{
+                      'tenantApplications.marketplace.nightsCount'
+                        | transloco: { count: unit.min_nights ?? 1 }
+                    }}</strong>
                   </div>
                 </div>
 
@@ -523,303 +514,89 @@ export class NewApplicationComponent {
   protected readonly SlidersHorizontal = SlidersHorizontal;
   protected readonly CalendarCheck = CalendarCheck;
 
-  private readonly slugService = inject(SlugService);
-  private readonly propertyService = inject(PropertyService);
-  private readonly reservationIntentionService = inject(ReservationIntentionService);
-  private readonly translocoService = inject(TranslocoService);
-  private readonly toast = inject(ToastService);
+  private readonly facade = inject(NewApplicationFacade);
 
-  protected readonly isLoading = signal(false);
-  protected readonly isLoadingReservationProperty = signal(false);
-  protected readonly allProperties = signal<Property[]>([]);
-  protected readonly selectedReservationProperty = signal<Property | null>(null);
-  protected readonly selectedReservationUnitId = signal<number | null>(null);
-  protected readonly initialReservationCheckin = signal<string | null>(null);
-  protected readonly initialReservationCheckout = signal<string | null>(null);
-  protected readonly currentPage = signal(0);
-  protected readonly pageSize = signal(12);
+  protected readonly isLoading = this.facade.isLoading;
+  protected readonly isLoadingReservationProperty = this.facade.isLoadingReservationProperty;
+  protected readonly selectedReservationProperty = this.facade.selectedReservationProperty;
+  protected readonly selectedReservationUnitId = this.facade.selectedReservationUnitId;
+  protected readonly initialReservationCheckin = this.facade.initialReservationCheckin;
+  protected readonly initialReservationCheckout = this.facade.initialReservationCheckout;
+  protected readonly currentPage = this.facade.currentPage;
+  protected readonly propertyTypeOptions = this.facade.propertyTypeOptions;
+  protected readonly sortOptions = this.facade.sortOptions;
+  protected readonly rentalModeOptions = this.facade.rentalModeOptions;
+  protected readonly reservationDialogOpen = this.facade.reservationDialogOpen;
+  protected readonly reservationDialogTitle = this.facade.reservationDialogTitle;
+  protected readonly shortTermUnits = this.facade.shortTermUnits;
+  protected readonly shortTermUnitOptions = this.facade.shortTermUnitOptions;
+  protected readonly selectedReservationUnit = this.facade.selectedReservationUnit;
 
-  protected filters: MarketplaceFilters = {
-    search: '',
-    propertyType: 'ALL',
-    rentalMode: 'ALL',
-    sort: 'created_at',
-  };
-
-  protected readonly propertyTypes = signal<string[]>([
-    'Apartamento',
-    'Casa',
-    'Estudio',
-    'Loft',
-    'Penthouse',
-  ]);
-
-  protected readonly propertyTypeOptions = computed<readonly AppSelectOption<string>[]>(() => [
-    {
-      label: this.translocoService.translate('tenantApplications.marketplace.allTypes'),
-      value: 'ALL',
-    },
-    ...this.propertyTypes().map((type) => ({ label: type, value: type })),
-  ]);
-
-  protected readonly sortOptions = computed<readonly AppSelectOption<MarketplaceSort>[]>(() => [
-    {
-      label: this.translocoService.translate('tenantApplications.marketplace.recent'),
-      value: 'created_at',
-    },
-    {
-      label: this.translocoService.translate('tenantApplications.marketplace.priceLow'),
-      value: 'price_asc',
-    },
-    {
-      label: this.translocoService.translate('tenantApplications.marketplace.priceHigh'),
-      value: 'price_desc',
-    },
-    {
-      label: this.translocoService.translate('tenantApplications.marketplace.area'),
-      value: 'area',
-    },
-  ]);
-
-  protected readonly rentalModeOptions = computed<readonly AppSelectOption<RentalModeFilter>[]>(
-    () => [
-      { label: 'Todas las modalidades', value: 'ALL' },
-      { label: 'Largo plazo', value: 'LONG_TERM' },
-      { label: 'Corto plazo', value: 'SHORT_TERM' },
-    ],
-  );
-
-  protected readonly reservationDialogOpen = computed(
-    () => this.isLoadingReservationProperty() || this.selectedReservationProperty() !== null,
-  );
-
-  protected readonly reservationDialogTitle = computed(() => {
-    const property = this.selectedReservationProperty();
-    return property ? `Reservar ${property.title}` : 'Reservar estadía';
-  });
-
-  protected readonly shortTermUnits = computed<CatalogUnit[]>(() =>
-    (this.selectedReservationProperty()?.units ?? []).filter(
-      (unit) =>
-        this.supportsShortTermType(unit.rental_type) && Number(unit.price_per_night ?? 0) > 0,
-    ),
-  );
-
-  protected readonly shortTermUnitOptions = computed<readonly AppSelectOption<number>[]>(() =>
-    this.shortTermUnits().map((unit) => ({
-      value: unit.id,
-      label: `${unit.unit_number} - ${unit.price_per_night ?? 0}/noche`,
-    })),
-  );
-
-  protected readonly selectedReservationUnit = computed<CatalogUnit | null>(() => {
-    const selectedId = this.selectedReservationUnitId();
-    return (
-      this.shortTermUnits().find((unit) => unit.id === selectedId) ??
-      this.shortTermUnits()[0] ??
-      null
-    );
-  });
+  protected get filters() {
+    return this.facade.filters;
+  }
 
   protected filteredProperties(): Property[] {
-    const search = this.filters.search.trim().toLowerCase();
-    const propertyType = this.filters.propertyType;
-
-    const filtered = this.allProperties().filter((property) => {
-      const matchesSearch =
-        !search ||
-        property.title.toLowerCase().includes(search) ||
-        property.addresses?.[0]?.city?.toLowerCase().includes(search) ||
-        property.addresses?.[0]?.street_address?.toLowerCase().includes(search);
-
-      const matchesType =
-        propertyType === 'ALL' ||
-        property.property_type?.name === propertyType ||
-        property.property_type_name === propertyType;
-
-      const matchesRentalMode =
-        this.filters.rentalMode === 'ALL' ||
-        (this.filters.rentalMode === 'LONG_TERM' && this.supportsLongTerm(property)) ||
-        (this.filters.rentalMode === 'SHORT_TERM' && this.supportsShortTerm(property));
-
-      return matchesSearch && matchesType && matchesRentalMode;
-    });
-
-    return this.sortProperties(filtered);
+    return this.facade.filteredProperties();
   }
 
   protected paginatedProperties(): Property[] {
-    const start = this.currentPage() * this.pageSize();
-    return this.filteredProperties().slice(start, start + this.pageSize());
+    return this.facade.paginatedProperties();
   }
 
   protected totalPages(): number {
-    return Math.ceil(this.filteredProperties().length / this.pageSize());
+    return this.facade.totalPages();
   }
 
   constructor() {
-    this.loadProperties();
-    this.openReservationIntentionIfAny();
+    this.facade.initialize();
   }
 
   protected loadProperties(): void {
-    this.isLoading.set(true);
-    this.propertyService.getProperties().subscribe({
-      next: (properties) => {
-        this.allProperties.set(properties);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error(
-          this.translocoService.translate('tenantApplications.marketplace.loadError'),
-        );
-      },
-    });
+    this.facade.loadProperties();
   }
 
   protected resetPage(): void {
-    this.currentPage.set(0);
+    this.facade.resetPage();
   }
 
   protected clearFilters(): void {
-    this.filters = {
-      search: '',
-      propertyType: 'ALL',
-      rentalMode: 'ALL',
-      sort: 'created_at',
-    };
-    this.currentPage.set(0);
+    this.facade.clearFilters();
   }
 
   protected previousPage(): void {
-    this.currentPage.update((page) => Math.max(0, page - 1));
+    this.facade.previousPage();
   }
 
   protected nextPage(): void {
-    this.currentPage.update((page) => Math.min(this.totalPages() - 1, page + 1));
+    this.facade.nextPage();
   }
 
   protected applyLongTerm(property: Property): void {
-    this.slugService.navigateTo(['portal', 'application-wizard', property.id.toString()]);
+    this.facade.applyLongTerm(property);
   }
 
   protected reserveShortTerm(property: Property): void {
-    this.initialReservationCheckin.set(null);
-    this.initialReservationCheckout.set(null);
-    this.isLoadingReservationProperty.set(true);
-    this.selectedReservationProperty.set(null);
-    this.selectedReservationUnitId.set(null);
-
-    this.propertyService.getPropertyById(property.id).subscribe({
-      next: (propertyDetail) => {
-        this.isLoadingReservationProperty.set(false);
-        const detail = propertyDetail ?? property;
-        this.selectedReservationProperty.set(detail);
-        const firstUnit = (detail.units ?? []).find(
-          (unit) =>
-            this.supportsShortTermType(unit.rental_type) && Number(unit.price_per_night ?? 0) > 0,
-        );
-        this.selectedReservationUnitId.set(firstUnit?.id ?? null);
-      },
-      error: () => {
-        this.isLoadingReservationProperty.set(false);
-        this.toast.error('No se pudo cargar la disponibilidad de la propiedad.');
-      },
-    });
+    this.facade.reserveShortTerm(property);
   }
 
   protected closeReservationDialog(): void {
-    this.isLoadingReservationProperty.set(false);
-    this.selectedReservationProperty.set(null);
-    this.selectedReservationUnitId.set(null);
-    this.initialReservationCheckin.set(null);
-    this.initialReservationCheckout.set(null);
-    this.reservationIntentionService.clearIntention();
+    this.facade.closeReservationDialog();
   }
 
   protected supportsLongTerm(property: Property): boolean {
-    const type = this.normalizeRentalType(property.rental_type);
-    return !type || type === 'LONG_TERM' || type === 'BOTH';
+    return this.facade.supportsLongTerm(property);
   }
 
   protected supportsShortTerm(property: Property): boolean {
-    const type = this.normalizeRentalType(property.rental_type);
-    return type === 'SHORT_TERM' || type === 'BOTH';
+    return this.facade.supportsShortTerm(property);
   }
 
   protected rentalModeLabel(property: Property): string {
-    const type = this.normalizeRentalType(property.rental_type);
-    if (type === 'SHORT_TERM') return 'Corto plazo';
-    if (type === 'LONG_TERM') return 'Largo plazo';
-    if (type === 'BOTH') return 'Largo y corto plazo';
-    return 'Largo plazo';
+    return this.facade.rentalModeLabel(property);
   }
 
-  private supportsShortTermType(type: string | null | undefined): boolean {
-    const normalized = this.normalizeRentalType(type);
-    return normalized === 'SHORT_TERM' || normalized === 'BOTH';
-  }
-
-  private normalizeRentalType(
-    type: string | null | undefined,
-  ): 'SHORT_TERM' | 'LONG_TERM' | 'BOTH' | null {
-    const normalized = (type ?? '').toUpperCase();
-    if (normalized === 'SHORT_TERM' || normalized === 'SHORT') return 'SHORT_TERM';
-    if (normalized === 'LONG_TERM' || normalized === 'LONG') return 'LONG_TERM';
-    if (normalized === 'BOTH') return 'BOTH';
-    return null;
-  }
-
-  private openReservationIntentionIfAny(): void {
-    const intention = this.reservationIntentionService.getIntention();
-    if (!intention) return;
-
-    this.isLoadingReservationProperty.set(true);
-    this.selectedReservationProperty.set(null);
-    this.selectedReservationUnitId.set(null);
-    this.initialReservationCheckin.set(intention.checkinDate);
-    this.initialReservationCheckout.set(intention.checkoutDate);
-
-    this.propertyService.getPropertyById(intention.propertyId).subscribe({
-      next: (propertyDetail) => {
-        this.isLoadingReservationProperty.set(false);
-        if (!propertyDetail) {
-          this.toast.error('No se pudo recuperar la propiedad de la reserva.');
-          this.reservationIntentionService.clearIntention();
-          return;
-        }
-
-        this.selectedReservationProperty.set(propertyDetail);
-        const units = propertyDetail.units ?? [];
-        const intendedUnit = units.find((unit) => unit.id === intention.unitId);
-        const fallbackUnit = units.find(
-          (unit) =>
-            this.supportsShortTermType(unit.rental_type) && Number(unit.price_per_night ?? 0) > 0,
-        );
-        this.selectedReservationUnitId.set(intendedUnit?.id ?? fallbackUnit?.id ?? null);
-      },
-      error: () => {
-        this.isLoadingReservationProperty.set(false);
-        this.toast.error('No se pudo recuperar la reserva pendiente.');
-        this.reservationIntentionService.clearIntention();
-      },
-    });
-  }
-
-  private sortProperties(properties: Property[]): Property[] {
-    return [...properties].sort((a, b) => {
-      if (this.filters.sort === 'price_asc') {
-        return Number(a.monthly_rent || 0) - Number(b.monthly_rent || 0);
-      }
-      if (this.filters.sort === 'price_desc') {
-        return Number(b.monthly_rent || 0) - Number(a.monthly_rent || 0);
-      }
-      if (this.filters.sort === 'area') {
-        return Number(b.square_meters || 0) - Number(a.square_meters || 0);
-      }
-
-      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
-    });
+  protected getShortTermPrice(property: Property): number {
+    return this.facade.getShortTermPrice(property);
   }
 }

@@ -31,6 +31,7 @@
         <button
           type="button"
           class="cal-day"
+          [attr.data-date]="cell.iso"
           [attr.data-status]="cell.status"
           [class.in-range]="cell.inRange"
           [class.is-checkin]="cell.isCheckin"
@@ -54,8 +55,8 @@
     <span class="lg lg-booked">{{ 'public.availability.booked' | transloco }}</span>
   </div>
 
-  @if (checkin() && checkout()) {
-    <div class="cal-summary">
+  <div class="cal-summary">
+    @if (checkin() && checkout()) {
       <div class="sum-row">
         <span
           >{{ nights() }} {{ 'public.availability.nights' | transloco }} ×
@@ -73,12 +74,16 @@
         <span>{{ 'public.availability.total' | transloco }}</span>
         <strong>{{ totalCost() | number: '1.0-2' }} {{ currency() }}</strong>
       </div>
-      <app-button [disabled]="submitting()" (clicked)="requestReservation()">
-        <lucide-icon [img]="CalendarCheck" [size]="16" />
-        {{ 'public.availability.request' | transloco }}
-      </app-button>
-    </div>
-  } @else {
-    <p class="cal-hint">{{ 'public.availability.selectDates' | transloco }}</p>
-  }
+    } @else {
+      <p class="cal-hint">{{ 'public.availability.selectDates' | transloco }}</p>
+    }
+
+    <app-button
+      [disabled]="submitting() || !checkin() || !checkout()"
+      (clicked)="requestReservation()"
+    >
+      <lucide-icon [img]="CalendarCheck" [size]="16" />
+      {{ 'public.availability.request' | transloco }}
+    </app-button>
+  </div>
 </div>

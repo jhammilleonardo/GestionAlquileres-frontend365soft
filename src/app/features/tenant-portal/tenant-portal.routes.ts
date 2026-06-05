@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import {
   tenantAuthGuard,
+  tenantContractDocumentGuard,
   tenantLoginGuard,
   tenantPreContractGuard,
   tenantWithContractGuard,
@@ -135,6 +136,7 @@ export const TENANT_PORTAL_ROUTES: Routes = [
           // Contratos accesibles con BORRADOR o ACTIVO (para firma y visualización)
           {
             path: 'contratos',
+            canActivate: [tenantContractDocumentGuard],
             loadComponent: () =>
               import('./documents/tenant-contract-list.component').then(
                 (m) => m.TenantContractListComponent,
@@ -142,6 +144,7 @@ export const TENANT_PORTAL_ROUTES: Routes = [
           },
           {
             path: 'contratos/:id',
+            canActivate: [tenantContractDocumentGuard],
             loadComponent: () =>
               import('./documents/tenant-contract-detail.component').then(
                 (m) => m.TenantContractDetailComponent,

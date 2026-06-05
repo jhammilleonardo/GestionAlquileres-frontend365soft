@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
 import { TuiLoader } from '@taiga-ui/core';
 
 @Component({
   selector: 'app-loading-state',
-  imports: [TuiLoader],
+  imports: [TuiLoader, TranslocoModule],
   template: `
     <div class="loading-state" role="status" aria-live="polite">
       <tui-loader [inheritColor]="true" [loading]="true" size="m" />
-      <span>{{ label() }}</span>
+      <span>{{ label() ?? ('common.loading' | transloco) }}</span>
     </div>
   `,
   styles: `
@@ -26,5 +27,5 @@ import { TuiLoader } from '@taiga-ui/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppLoadingStateComponent {
-  readonly label = input('Cargando...');
+  readonly label = input<string | null>(null);
 }

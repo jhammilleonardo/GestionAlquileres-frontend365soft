@@ -7,6 +7,8 @@
   "rejected": "Rejected",
   "searchLabel": "Search application",
   "searchPlaceholder": "Name, email or property...",
+  "filtersLabel": "Application filters",
+  "statsLabel": "Applications summary",
   "loading": "Loading applications...",
   "empty": "No applications found",
   "emptyHint": "Try changing the search filters to see more results.",

@@ -14,5 +14,53 @@
   "markReadShort": "Marcar leídas",
   "noPending": "Sin notificaciones pendientes",
   "viewAll": "Ver todas las notificaciones",
-  "delete": "Eliminar"
+  "delete": "Eliminar",
+  "deleteDialog": {
+    "title": "Eliminar notificación",
+    "message": "¿Eliminar esta notificación?"
+  },
+  "type": {
+    "maintenance": {
+      "request": {
+        "created": "Nueva solicitud"
+      },
+      "status": {
+        "changed": "Estado actualizado"
+      },
+      "message": {
+        "received": "Nuevo mensaje"
+      },
+      "assigned": "Asignado",
+      "completed": "Completado"
+    },
+    "property": {
+      "status": {
+        "changed": "Propiedad actualizada"
+      },
+      "available": "Propiedad disponible"
+    },
+    "user": {
+      "registered": "Nuevo usuario",
+      "password": {
+        "changed": "Contraseña cambiada"
+      }
+    },
+    "payment": {
+      "created": "Nuevo pago",
+      "approved": "Pago aprobado",
+      "rejected": "Pago rechazado"
+    },
+    "contract": {
+      "created": "Contrato creado",
+      "signed": "Contrato firmado",
+      "expiring": "Contrato por vencer"
+    }
+  },
+  "time": {
+    "now": "Ahora mismo",
+    "minutesAgo": "Hace {{count}} minuto(s)",
+    "hoursAgo": "Hace {{count}} hora(s)",
+    "yesterday": "Ayer",
+    "daysAgo": "Hace {{count}} días"
+  }
 }

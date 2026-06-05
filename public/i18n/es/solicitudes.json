@@ -7,6 +7,8 @@
   "rejected": "Rechazadas",
   "searchLabel": "Buscar solicitud",
   "searchPlaceholder": "Nombre, email o propiedad...",
+  "filtersLabel": "Filtros de solicitudes",
+  "statsLabel": "Resumen de solicitudes",
   "loading": "Cargando solicitudes...",
   "empty": "No se encontraron solicitudes",
   "emptyHint": "Intenta cambiar los filtros de búsqueda para ver más resultados.",

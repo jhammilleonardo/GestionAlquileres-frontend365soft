@@ -1,4 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
 import { AlertTriangle, CheckCircle2, Info, LucideAngularModule, X, XCircle } from 'lucide-angular';
 import { AppToast, ToastService } from './toast.service';
 
@@ -6,7 +7,7 @@ import { AppToast, ToastService } from './toast.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-toast-host',
   standalone: true,
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, TranslocoModule],
   templateUrl: './toast-host.component.html',
   styleUrl: './toast-host.component.scss',
 })

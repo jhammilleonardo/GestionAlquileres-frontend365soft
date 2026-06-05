@@ -15,12 +15,15 @@
     "yes": "Yes",
     "no": "No",
     "all": "All",
+    "total": "Total",
     "active": "Active",
     "inactive": "Inactive",
     "activate": "Activate",
     "deactivate": "Deactivate",
     "required": "Required field",
     "irreversible": "This action cannot be undone.",
+    "serverError": "Server error",
+    "unknownError": "Unknown error",
     "filters": "Filters",
     "clearFilters": "Clear Filters",
     "applyFilters": "Apply Filters",
@@ -45,6 +48,7 @@
     "saveChanges": "Save Changes",
     "viewDetail": "View Detail",
     "noData": "No data",
+    "notAvailable": "Not available",
     "never": "Never",
     "today": "Today",
     "yesterday": "Yesterday",
@@ -94,8 +98,19 @@
     "skip": "Skip",
     "apply": "Apply",
     "clear": "Clear",
+    "confirm": "Confirm",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "progress": "Progress",
+    "selectedFiles": "Selected files",
+    "closeNotification": "Close notification",
+    "languageSelector": "Language selector",
+    "spanish": "Spanish",
+    "english": "English",
+    "pagination": {
+      "noResults": "No results",
+      "summary": "Showing {{from}}-{{to}} of {{total}}"
+    }
   },
   "sidebar": {
     "appName": "365Soft",
@@ -298,6 +313,11 @@
       "searchPlaceholder": "Search by title, city or address...",
       "typePlaceholder": "Property type",
       "allTypes": "All types",
+      "rentalMode": "Rental mode",
+      "rentalModeAll": "All modes",
+      "rentalModeLong": "Long-term",
+      "rentalModeShort": "Short-term",
+      "rentalModeBoth": "Long and short-term",
       "sortBy": "Sort by",
       "recent": "Most recent",
       "priceLow": "Price: Low to High",
@@ -308,13 +328,28 @@
       "noResultsDesc": "Try adjusting search filters",
       "clearFilters": "Clear Filters",
       "priceMonth": "/month",
+      "priceNight": "/night",
       "bedrooms": "{{count}} Bed",
       "bedroomsPlural": "{{count}} Beds",
       "bathrooms": "{{count}} Bath",
       "bathroomsPlural": "{{count}} Baths",
       "occupants": "{{count}} pers.",
       "apply": "Apply",
-      "paginationLabel": "Properties"
+      "reserveStay": "Book stay",
+      "paginationLabel": "Properties",
+      "loadingAvailability": "Loading availability...",
+      "noShortTermUnitsTitle": "No short-term units",
+      "noShortTermUnitsDesc": "This property has no units configured with nightly pricing.",
+      "unit": "Unit",
+      "nightlyPrice": "Nightly price",
+      "cleaningFee": "Cleaning",
+      "minStay": "Minimum stay",
+      "nightsCount": "{{count}} night(s)",
+      "reservePropertyTitle": "Book {{title}}",
+      "unitOption": "{{unit}} - {{price}}/night",
+      "loadAvailabilityError": "Could not load property availability.",
+      "restorePropertyError": "Could not restore the booking property.",
+      "restoreReservationError": "Could not restore the pending booking."
     },
     "status": {
       "PENDIENTE": "Pending",
@@ -410,6 +445,7 @@
     "sending": "Sending...",
     "sendInstructions": "Send Instructions",
     "backToLogin": "Back to sign in",
+    "forgotPasswordLink": "Forgot my password",
     "forgotPasswordSentMsg": "Recovery instructions have been sent to {{email}}. Please check your inbox.",
     "forgotPasswordError": "Could not request password recovery. Please try again.",
     "resetPasswordEyebrow": "Secure recovery",
@@ -483,6 +519,95 @@
   },
   "config": {
     "title": "Settings"
+  },
+  "units": {
+    "loading": "Loading units...",
+    "status": {
+      "available": "Available",
+      "availablePlural": "Available",
+      "occupied": "Occupied",
+      "occupiedPlural": "Occupied",
+      "maintenance": "Maintenance",
+      "reserved": "Reserved",
+      "reservedPlural": "Reserved"
+    },
+    "rentalType": {
+      "longTerm": "Long term",
+      "shortTerm": "Short term",
+      "both": "Both"
+    },
+    "actions": {
+      "new": "New unit",
+      "reload": "Reload units",
+      "edit": "Edit unit",
+      "delete": "Delete unit"
+    },
+    "empty": {
+      "noUnitsTitle": "No units registered",
+      "noFilterResultsTitle": "No results for this filter",
+      "noUnitsDescription": "Create the first unit for this property."
+    },
+    "table": {
+      "unit": "Unit",
+      "floor": "Floor",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Bathrooms",
+      "type": "Type",
+      "price": "Price",
+      "status": "Status"
+    },
+    "price": {
+      "perMonth": "/month",
+      "perNight": "/night"
+    }
+  },
+  "ownerPortal": {
+    "auth": {
+      "kicker": "Owner portal",
+      "title": "Access your properties",
+      "signIn": "Sign in",
+      "subtitle": "Review statements, contracts, and maintenance authorizations.",
+      "emailPlaceholder": "owner@company.com",
+      "passwordPlaceholder": "Your password",
+      "rememberMe": "Keep me signed in",
+      "submit": "Enter portal",
+      "missingTenant": "Tenant was not found for sign in.",
+      "loginError": "Could not sign in"
+    },
+    "dashboard": {
+      "title": "Owner portal",
+      "description": "Summary of properties, statements, maintenance, and documents.",
+      "loading": "Loading portal...",
+      "properties": "Properties",
+      "activeContracts": "Active contracts",
+      "pendingBalance": "Pending balance",
+      "maintenance": "Maintenance",
+      "sections": "Owner sections"
+    },
+    "tabs": {
+      "properties": "Properties",
+      "statements": "Statements",
+      "maintenance": "Maintenance",
+      "contracts": "Documents"
+    },
+    "empty": {
+      "title": "No data",
+      "description": "There is no information for this section."
+    },
+    "properties": {
+      "tenant": "Tenant",
+      "noTenant": "No tenant",
+      "endsAt": "Ends"
+    },
+    "maintenance": {
+      "authorizeExpense": "Authorize expense",
+      "authorized": "Expense authorized",
+      "stageLabel": "Stage: {{stage}}"
+    },
+    "documents": {
+      "downloadPdfError": "Could not download the PDF",
+      "downloadContractError": "Could not download the contract"
+    }
   },
   "public": {
     "properties": {

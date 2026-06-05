@@ -27,6 +27,13 @@
   "tooltipEdit": "Editar",
   "tooltipDownload": "Descargar PDF",
   "tooltipRenew": "Renovar contrato",
+  "renewDialog": {
+    "title": "Renovar contrato",
+    "message": "Se creará un nuevo contrato basado en el contrato actual.",
+    "confirm": "Renovar",
+    "success": "Contrato renovado exitosamente",
+    "error": "Error al renovar el contrato"
+  },
   "emptyTitle": "No se encontraron contratos",
   "emptySub": "Crea el primer contrato para comenzar",
   "createFirst": "Crear Primer Contrato",

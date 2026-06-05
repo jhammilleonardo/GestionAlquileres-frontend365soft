@@ -32,13 +32,17 @@ import { AppButtonComponent, AppTextFieldComponent } from '../../shared/ui';
     <div class="forgot-page">
       <div class="forgot-container">
         <div class="lang-toggle-row">
-          <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+          <div
+            class="lang-toggle"
+            role="group"
+            [attr.aria-label]="'common.languageSelector' | transloco"
+          >
             <button
               class="lang-btn"
               [class.active]="languageService.isSpanish()"
               (click)="languageService.setLanguage('es')"
-              aria-label="Español"
-              title="Español"
+              [attr.aria-label]="'common.spanish' | transloco"
+              [attr.title]="'common.spanish' | transloco"
             >
               ES
             </button>
@@ -46,8 +50,8 @@ import { AppButtonComponent, AppTextFieldComponent } from '../../shared/ui';
               class="lang-btn"
               [class.active]="languageService.isEnglish()"
               (click)="languageService.setLanguage('en')"
-              aria-label="English"
-              title="English"
+              [attr.aria-label]="'common.english' | transloco"
+              [attr.title]="'common.english' | transloco"
             >
               EN
             </button>

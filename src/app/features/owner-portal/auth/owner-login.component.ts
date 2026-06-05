@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Building2, LockKeyhole, Mail } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { OwnerAuthService } from '../../../core/services/owner/owner-auth.service';
@@ -20,6 +21,7 @@ import { AppTextFieldComponent } from '../../../shared/ui/text-field/text-field.
     LucideAngularModule,
     ReactiveFormsModule,
     RouterLink,
+    TranslocoModule,
   ],
   templateUrl: './owner-login.component.html',
   styleUrl: './owner-login.component.scss',
@@ -30,6 +32,7 @@ export class OwnerLoginComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly ownerAuth = inject(OwnerAuthService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly Building2 = Building2;
   readonly LockKeyhole = LockKeyhole;
@@ -52,7 +55,7 @@ export class OwnerLoginComponent {
 
     const slug = this.route.snapshot.paramMap.get('slug');
     if (!slug) {
-      this.errorMessage.set('No se encontró el tenant para iniciar sesión.');
+      this.errorMessage.set(this.transloco.translate('ownerPortal.auth.missingTenant'));
       return;
     }
 
@@ -61,7 +64,9 @@ export class OwnerLoginComponent {
     this.ownerAuth.login(slug, value.email, value.password, value.rememberMe).subscribe({
       next: () => void this.router.navigate(['/', slug, 'owner']),
       error: (error: unknown) =>
-        this.errorMessage.set(getApiErrorMessage(error, 'No se pudo iniciar sesión')),
+        this.errorMessage.set(
+          getApiErrorMessage(error, this.transloco.translate('ownerPortal.auth.loginError')),
+        ),
     });
   }
 }

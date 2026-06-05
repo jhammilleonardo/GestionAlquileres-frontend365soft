@@ -2,6 +2,7 @@ import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core'
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 import { forkJoin } from 'rxjs';
 
 import { PropertyService } from '../../core/services/admin/property.service';
@@ -29,6 +30,7 @@ export class PropertiesFacade {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly validationErrors = signal<string[]>([]);
   readonly deleteConfirmProperty = signal<Property | null>(null);
@@ -65,13 +67,6 @@ export class PropertiesFacade {
     { value: 'EUR', label: 'EUR - Euro' },
   ];
 
-  private readonly fieldLabels: Record<string, string> = {
-    title: 'Título',
-    property_type_id: 'Tipo de Propiedad',
-    property_subtype_id: 'Subtipo',
-    monthly_rent: 'Renta mensual',
-  };
-
   constructor() {
     this.loadProperties();
     this.loadPropertyTypes();
@@ -91,7 +86,7 @@ export class PropertiesFacade {
       },
       error: () => {
         this.isListLoading.set(false);
-        this.toast.error('Error al cargar las propiedades');
+        this.toast.error(this.transloco.translate('propiedades.actions.loadError'));
       },
     });
   }
@@ -100,7 +95,7 @@ export class PropertiesFacade {
     this.propertyService.getPropertyTypes().subscribe({
       next: (types) => this.propertyTypes.set(types),
       error: () => {
-        this.toast.error('No se pudieron cargar los tipos de propiedad. Recarga la página.');
+        this.toast.error(this.transloco.translate('propiedades.actions.loadTypesError'));
       },
     });
   }
@@ -108,7 +103,8 @@ export class PropertiesFacade {
   loadPropertySubtypes(): void {
     this.propertyService.getPropertySubtypes().subscribe({
       next: (subtypes) => this.propertySubtypes.set(subtypes),
-      error: () => this.toast.error('No se pudieron cargar los subtipos de propiedad'),
+      error: () =>
+        this.toast.error(this.transloco.translate('propiedades.actions.loadSubtypesError')),
     });
   }
 
@@ -181,7 +177,7 @@ export class PropertiesFacade {
 
     const filesArray = files.length > 10 ? files.slice(0, 10) : files;
     if (files.length > 10) {
-      this.toast.warning('Máximo 10 imágenes permitidas');
+      this.toast.warning(this.transloco.translate('propiedades.actions.maxImages'));
     }
 
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -191,7 +187,7 @@ export class PropertiesFacade {
     );
 
     if (invalidFiles.length > 0) {
-      this.toast.warning('Solo se permiten imágenes JPG, PNG, GIF, WebP menores a 5MB');
+      this.toast.warning(this.transloco.translate('propiedades.actions.invalidImages'));
     }
 
     this.selectedImages = filesArray.filter((file) => !invalidFiles.includes(file));
@@ -214,9 +210,12 @@ export class PropertiesFacade {
 
     if (!formValue.title || !propertyTypeId || !propertySubtypeId) {
       const missing: string[] = [];
-      if (!formValue.title) missing.push('Título');
-      if (!propertyTypeId) missing.push('Tipo de Propiedad');
-      if (!propertySubtypeId) missing.push('Subtipo');
+      if (!formValue.title)
+        missing.push(this.transloco.translate('propiedades.validation.fields.title'));
+      if (!propertyTypeId)
+        missing.push(this.transloco.translate('propiedades.validation.fields.propertyType'));
+      if (!propertySubtypeId)
+        missing.push(this.transloco.translate('propiedades.validation.fields.subtype'));
       this.validationErrors.set(missing);
       this.isSubmitting.set(false);
       this.scrollToValidationErrors();
@@ -224,7 +223,9 @@ export class PropertiesFacade {
     }
 
     if (!formValue.addresses || formValue.addresses.length === 0) {
-      this.validationErrors.set(['Se requiere al menos una dirección']);
+      this.validationErrors.set([
+        this.transloco.translate('propiedades.validation.addressRequired'),
+      ]);
       this.isSubmitting.set(false);
       this.scrollToValidationErrors();
       return;
@@ -243,9 +244,15 @@ export class PropertiesFacade {
       next: (savedProperty) => this.uploadImagesOrFinish(savedProperty.id),
       error: (error: unknown) => {
         this.isSubmitting.set(false);
-        const errorMessage = getApiErrorMessage(error, 'Error desconocido');
-        const action = this.modalMode === 'create' ? 'crear' : 'actualizar';
-        this.toast.error(`Error al ${action} propiedad: ${errorMessage}`);
+        const errorMessage = getApiErrorMessage(
+          error,
+          this.transloco.translate('common.unknownError'),
+        );
+        const key =
+          this.modalMode === 'create'
+            ? 'propiedades.actions.createError'
+            : 'propiedades.actions.updateError';
+        this.toast.error(this.transloco.translate(key, { message: errorMessage }));
       },
     });
   }
@@ -267,11 +274,11 @@ export class PropertiesFacade {
     this.propertyService.deleteProperty(property.id).subscribe({
       next: () => {
         this.loadProperties();
-        this.toast.success('Propiedad eliminada exitosamente');
+        this.toast.success(this.transloco.translate('propiedades.actions.deleted'));
       },
       error: (error: unknown) => {
-        const message = getApiErrorMessage(error, 'Error desconocido');
-        this.toast.error(`Error al eliminar: ${message}`);
+        const message = getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
+        this.toast.error(this.transloco.translate('propiedades.actions.deleteError', { message }));
       },
     });
   }
@@ -287,12 +294,12 @@ export class PropertiesFacade {
     this.propertyService.updatePropertyStatus(property.id, newStatus, newActive).subscribe({
       next: () => {
         this.loadProperties();
-        const msg = newActive ? 'Propiedad activada exitosamente' : 'Propiedad desactivada';
-        this.toast.success(msg);
+        const key = newActive ? 'propiedades.actions.activated' : 'propiedades.actions.deactivated';
+        this.toast.success(this.transloco.translate(key));
       },
       error: (error: unknown) => {
-        const message = getApiErrorMessage(error, 'Error desconocido');
-        this.toast.error(`Error al actualizar estado: ${message}`);
+        const message = getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
+        this.toast.error(this.transloco.translate('propiedades.actions.statusError', { message }));
       },
     });
   }
@@ -442,8 +449,11 @@ export class PropertiesFacade {
       next: () => this.finishSave(this.modalMode),
       error: () => {
         this.isSubmitting.set(false);
-        const action = this.modalMode === 'create' ? 'creada' : 'actualizada';
-        this.toast.warning(`Propiedad ${action}, pero algunas imágenes no se pudieron subir`);
+        const key =
+          this.modalMode === 'create'
+            ? 'propiedades.actions.createdImagesFailed'
+            : 'propiedades.actions.updatedImagesFailed';
+        this.toast.warning(this.transloco.translate(key));
         this.loadProperties();
         this.closeModal();
       },
@@ -454,9 +464,8 @@ export class PropertiesFacade {
     this.loadProperties();
     this.closeModal();
     this.isSubmitting.set(false);
-    const msg =
-      mode === 'create' ? 'Propiedad creada exitosamente' : 'Propiedad actualizada exitosamente';
-    this.toast.success(msg);
+    const key = mode === 'create' ? 'propiedades.actions.created' : 'propiedades.actions.updated';
+    this.toast.success(this.transloco.translate(key));
   }
 
   private collectValidationErrors(): string[] {
@@ -490,15 +499,34 @@ export class PropertiesFacade {
     const addrMatch = key.match(/^addresses\[(\d+)\]\.(.+)$/);
     if (addrMatch) {
       const addrFieldLabels: Record<string, string> = {
-        street_address: 'Calle / Dirección',
-        city: 'Ciudad',
-        country: 'País',
+        street_address: this.transloco.translate('propiedades.validation.fields.streetAddress'),
+        city: this.transloco.translate('propiedades.validation.fields.city'),
+        country: this.transloco.translate('propiedades.validation.fields.country'),
       };
       const idx = +addrMatch[1] + 1;
       const fieldName = addrFieldLabels[addrMatch[2]] || addrMatch[2];
-      return `Dirección ${idx} — ${fieldName}`;
+      return this.transloco.translate('propiedades.validation.addressField', {
+        index: idx,
+        field: fieldName,
+      });
     }
-    return this.fieldLabels[key] ?? key;
+    const labelKey = this.getFieldLabelKey(key);
+    return labelKey ? this.transloco.translate(labelKey) : key;
+  }
+
+  private getFieldLabelKey(key: string): string | null {
+    switch (key) {
+      case 'title':
+        return 'propiedades.validation.fields.title';
+      case 'property_type_id':
+        return 'propiedades.validation.fields.propertyType';
+      case 'property_subtype_id':
+        return 'propiedades.validation.fields.subtype';
+      case 'monthly_rent':
+        return 'propiedades.validation.fields.monthlyRent';
+      default:
+        return null;
+    }
   }
 
   private markFormGroupTouched(formGroup: FormGroup | FormArray): void {

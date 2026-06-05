@@ -5,7 +5,7 @@
       <div class="footer-section">
         <div class="footer-logo">
           <lucide-icon [img]="Home" class="logo-icon"></lucide-icon>
-          <span class="logo-text">RentHub</span>
+          <span class="logo-text">{{ 'public.brand.name' | transloco }}</span>
         </div>
         <p class="footer-description">
           {{ 'public.footer.desc' | transloco }}
@@ -35,7 +35,9 @@
           <li>
             <a href="/faq">{{ 'public.nav.faq' | transloco }}</a>
           </li>
-          <li><a href="/blog">Blog</a></li>
+          <li>
+            <a href="/blog">{{ 'public.footer.blog' | transloco }}</a>
+          </li>
         </ul>
       </div>
 
@@ -67,15 +69,15 @@
         <ul class="footer-contact">
           <li>
             <lucide-icon [img]="MapPin" class="contact-icon"></lucide-icon>
-            <span>Cochabamba, Bolivia</span>
+            <span>{{ 'public.footer.addressValue' | transloco }}</span>
           </li>
           <li>
             <lucide-icon [img]="Mail" class="contact-icon"></lucide-icon>
-            <span>info@renthub.com</span>
+            <span>{{ 'public.footer.emailValue' | transloco }}</span>
           </li>
           <li>
             <lucide-icon [img]="Phone" class="contact-icon"></lucide-icon>
-            <span>+591 12345678</span>
+            <span>{{ 'public.footer.phoneValue' | transloco }}</span>
           </li>
           <li>
             <lucide-icon [img]="Clock" class="contact-icon"></lucide-icon>
@@ -89,7 +91,8 @@
     <div class="footer-bottom">
       <div class="footer-bottom-content">
         <p class="copyright">
-          © {{ currentYear }} RentHub. {{ 'public.footer.rights' | transloco }}
+          © {{ currentYear }} {{ 'public.brand.name' | transloco }}.
+          {{ 'public.footer.rights' | transloco }}
         </p>
         <div class="footer-legal">
           <a href="/privacy">{{ 'public.footer.privacy' | transloco }}</a>

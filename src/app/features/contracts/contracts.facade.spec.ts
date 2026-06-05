@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { of } from 'rxjs';
 
 import { ContractsFacade } from './contracts.facade';
@@ -65,6 +66,7 @@ describe('ContractsFacade', () => {
         { provide: Router, useValue: { navigateByUrl: navigateByUrlSpy } },
         { provide: ConfirmDialogService, useValue: { confirm: confirmSpy } },
         { provide: ToastService, useValue: { success: toastSuccess, error: toastError } },
+        { provide: TranslocoService, useValue: { translate: (key: string) => key } },
       ],
     });
     return TestBed.inject(ContractsFacade);

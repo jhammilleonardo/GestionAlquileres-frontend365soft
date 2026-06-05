@@ -48,13 +48,18 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
     <div class="reset-page">
       <section class="reset-card">
         <div class="lang-toggle-row">
-          <div class="lang-toggle" role="group" aria-label="Language / Idioma">
+          <div
+            class="lang-toggle"
+            role="group"
+            [attr.aria-label]="'common.languageSelector' | transloco"
+          >
             <button
               type="button"
               class="lang-btn"
               [class.active]="languageService.isSpanish()"
               (click)="languageService.setLanguage('es')"
-              aria-label="Español"
+              [attr.aria-label]="'common.spanish' | transloco"
+              [attr.title]="'common.spanish' | transloco"
             >
               ES
             </button>
@@ -63,7 +68,8 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
               class="lang-btn"
               [class.active]="languageService.isEnglish()"
               (click)="languageService.setLanguage('en')"
-              aria-label="English"
+              [attr.aria-label]="'common.english' | transloco"
+              [attr.title]="'common.english' | transloco"
             >
               EN
             </button>

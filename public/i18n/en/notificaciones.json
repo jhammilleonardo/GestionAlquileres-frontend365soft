@@ -14,5 +14,53 @@
   "markReadShort": "Mark read",
   "noPending": "No pending notifications",
   "viewAll": "View all notifications",
-  "delete": "Delete"
+  "delete": "Delete",
+  "deleteDialog": {
+    "title": "Delete notification",
+    "message": "Delete this notification?"
+  },
+  "type": {
+    "maintenance": {
+      "request": {
+        "created": "New request"
+      },
+      "status": {
+        "changed": "Status updated"
+      },
+      "message": {
+        "received": "New message"
+      },
+      "assigned": "Assigned",
+      "completed": "Completed"
+    },
+    "property": {
+      "status": {
+        "changed": "Property updated"
+      },
+      "available": "Property available"
+    },
+    "user": {
+      "registered": "New user",
+      "password": {
+        "changed": "Password changed"
+      }
+    },
+    "payment": {
+      "created": "New payment",
+      "approved": "Payment approved",
+      "rejected": "Payment rejected"
+    },
+    "contract": {
+      "created": "Contract created",
+      "signed": "Contract signed",
+      "expiring": "Contract expiring"
+    }
+  },
+  "time": {
+    "now": "Just now",
+    "minutesAgo": "{{count}} minute(s) ago",
+    "hoursAgo": "{{count}} hour(s) ago",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago"
+  }
 }

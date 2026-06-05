@@ -1,53 +1,56 @@
 <section class="owner-page">
   <app-page-header
-    title="Portal del propietario"
-    description="Resumen de propiedades, liquidaciones, mantenimiento y documentos."
+    [title]="'ownerPortal.dashboard.title' | transloco"
+    [description]="'ownerPortal.dashboard.description' | transloco"
   >
-    <app-button actions appearance="secondary" size="s" (clicked)="facade.load()"
-      >Recargar</app-button
-    >
+    <app-button actions appearance="secondary" size="s" (clicked)="facade.load()">{{
+      'common.refresh' | transloco
+    }}</app-button>
   </app-page-header>
 
   @if (facade.isLoading()) {
-    <app-loading-state label="Cargando portal..." />
+    <app-loading-state [label]="'ownerPortal.dashboard.loading' | transloco" />
   } @else {
     <div class="kpi-grid">
       <article class="kpi">
-        <span>Propiedades</span>
+        <span>{{ 'ownerPortal.dashboard.properties' | transloco }}</span>
         <strong>{{ facade.dashboard().properties_count ?? facade.properties().length }}</strong>
       </article>
       <article class="kpi">
-        <span>Contratos activos</span>
+        <span>{{ 'ownerPortal.dashboard.activeContracts' | transloco }}</span>
         <strong>{{
           facade.dashboard().active_contracts_count ?? facade.contracts().length
         }}</strong>
       </article>
       <article class="kpi">
-        <span>Saldo pendiente</span>
+        <span>{{ 'ownerPortal.dashboard.pendingBalance' | transloco }}</span>
         <strong>{{ facade.dashboard().pending_balance ?? 0 | currency: 'USD' }}</strong>
       </article>
       <article class="kpi">
-        <span>Mantenimientos</span>
+        <span>{{ 'ownerPortal.dashboard.maintenance' | transloco }}</span>
         <strong>{{
           facade.dashboard().active_maintenance_count ?? facade.maintenance().length
         }}</strong>
       </article>
     </div>
 
-    <nav class="tabs" aria-label="Secciones del propietario">
+    <nav class="tabs" [attr.aria-label]="'ownerPortal.dashboard.sections' | transloco">
       @for (tab of facade.tabs; track tab.id) {
         <button
           type="button"
           [class.active]="facade.activeTab() === tab.id"
           (click)="facade.activeTab.set(tab.id)"
         >
-          {{ tab.label }}
+          {{ tab.labelKey | transloco }}
         </button>
       }
     </nav>
 
     @if (facade.activeCount() === 0) {
-      <app-empty-state title="Sin datos" description="No hay información para esta sección." />
+      <app-empty-state
+        [title]="'ownerPortal.empty.title' | transloco"
+        [description]="'ownerPortal.empty.description' | transloco"
+      />
     } @else {
       @switch (facade.activeTab()) {
         <!-- Mis propiedades -->
@@ -65,12 +68,23 @@
                 </div>
                 <dl class="info-card__body">
                   <div>
-                    <dt><lucide-icon [img]="User" [size]="13" /> Inquilino</dt>
-                    <dd>{{ facade.str(prop, 'current_tenant') || 'Sin inquilino' }}</dd>
+                    <dt>
+                      <lucide-icon [img]="User" [size]="13" />
+                      {{ 'ownerPortal.properties.tenant' | transloco }}
+                    </dt>
+                    <dd>
+                      {{
+                        facade.str(prop, 'current_tenant') ||
+                          ('ownerPortal.properties.noTenant' | transloco)
+                      }}
+                    </dd>
                   </div>
                   @if (facade.str(prop, 'contract_end_date')) {
                     <div>
-                      <dt><lucide-icon [img]="Calendar" [size]="13" /> Vence</dt>
+                      <dt>
+                        <lucide-icon [img]="Calendar" [size]="13" />
+                        {{ 'ownerPortal.properties.endsAt' | transloco }}
+                      </dt>
                       <dd>{{ facade.str(prop, 'contract_end_date') }}</dd>
                     </div>
                   }
@@ -124,13 +138,16 @@
                       (clicked)="facade.authorize(mr)"
                     >
                       <lucide-icon [img]="CheckCircle2" [size]="15" />
-                      Autorizar gasto
+                      {{ 'ownerPortal.maintenance.authorizeExpense' | transloco }}
                     </app-button>
                   }
                 </div>
                 <ol
                   class="stage-timeline"
-                  [attr.aria-label]="'Etapa: ' + facade.str(mr, 'current_stage')"
+                  [attr.aria-label]="
+                    'ownerPortal.maintenance.stageLabel'
+                      | transloco: { stage: facade.str(mr, 'current_stage') }
+                  "
                 >
                   @for (stage of facade.stages; track stage; let i = $index) {
                     <li class="stage" [class.done]="i <= facade.stageIndex(mr)">

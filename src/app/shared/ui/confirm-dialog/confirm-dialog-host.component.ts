@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { AlertTriangle, LucideAngularModule } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
 import { AppDialogComponent } from '../dialog/dialog.component';
 import { ConfirmDialogService } from './confirm-dialog.service';
 
 @Component({
   selector: 'app-confirm-dialog-host',
   standalone: true,
-  imports: [LucideAngularModule, AppDialogComponent],
+  imports: [LucideAngularModule, AppDialogComponent, TranslocoModule],
   templateUrl: './confirm-dialog-host.component.html',
   styleUrl: './confirm-dialog-host.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

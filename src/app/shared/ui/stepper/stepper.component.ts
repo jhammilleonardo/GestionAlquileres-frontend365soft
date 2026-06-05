@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
   selector: 'app-stepper',
+  imports: [TranslocoModule],
   template: `
-    <ol class="app-stepper" aria-label="Progreso">
+    <ol class="app-stepper" [attr.aria-label]="'common.progress' | transloco">
       @for (step of steps(); track step; let index = $index) {
         <li
           class="app-stepper__item"

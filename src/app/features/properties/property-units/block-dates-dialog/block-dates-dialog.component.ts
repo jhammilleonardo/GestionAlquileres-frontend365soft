@@ -8,6 +8,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideAngularModule, ChevronLeft, ChevronRight, Lock, LockOpen } from 'lucide-angular';
 
 import {
@@ -35,7 +36,7 @@ interface CalendarCell {
   selector: 'app-block-dates-dialog',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [LucideAngularModule, AppDialogComponent, AppButtonComponent],
+  imports: [LucideAngularModule, AppDialogComponent, AppButtonComponent, TranslocoPipe],
   templateUrl: './block-dates-dialog.component.html',
   styleUrl: './block-dates-dialog.component.scss',
 })
@@ -54,6 +55,7 @@ export class BlockDatesDialogComponent {
 
   private readonly reservationService = inject(ReservationService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly viewDate = signal(new Date());
   readonly availability = signal<Map<string, AvailabilityStatus>>(new Map());
@@ -164,7 +166,9 @@ export class BlockDatesDialogComponent {
       next: () => {
         this.submitting.set(false);
         this.toast.success(
-          block ? 'Fechas bloqueadas correctamente.' : 'Fechas desbloqueadas correctamente.',
+          this.transloco.translate(
+            block ? 'propiedades.units.datesBlocked' : 'propiedades.units.datesUnblocked',
+          ),
         );
         this.selected.set(new Set());
         this.loadMonth();
@@ -172,7 +176,9 @@ export class BlockDatesDialogComponent {
       },
       error: (err: unknown) => {
         this.submitting.set(false);
-        this.toast.error(getApiErrorMessage(err, 'No se pudieron actualizar las fechas.'));
+        this.toast.error(
+          getApiErrorMessage(err, this.transloco.translate('propiedades.units.datesUpdateError')),
+        );
       },
     });
   }

@@ -21,7 +21,7 @@
         </label>
 
         @if (inputInvalid()) {
-          <p class="confirm-dialog__error">Este campo es obligatorio.</p>
+          <p class="confirm-dialog__error">{{ 'common.required' | transloco }}</p>
         }
       }
     </div>
@@ -32,7 +32,7 @@
         type="button"
         (click)="close()"
       >
-        {{ dialog.cancelLabel ?? 'Cancelar' }}
+        {{ dialog.cancelLabel ?? ('common.cancel' | transloco) }}
       </button>
       <button
         class="confirm-dialog__button"
@@ -41,7 +41,7 @@
         [disabled]="inputInvalid()"
         (click)="confirm()"
       >
-        {{ dialog.confirmLabel ?? 'Confirmar' }}
+        {{ dialog.confirmLabel ?? ('common.confirm' | transloco) }}
       </button>
     </div>
   </app-dialog>

@@ -4,34 +4,37 @@
       <lucide-icon [img]="Building2" [size]="28" />
     </span>
     <div>
-      <p>Portal propietario</p>
-      <h1>Acceso a tus propiedades</h1>
+      <p>{{ 'ownerPortal.auth.kicker' | transloco }}</p>
+      <h1>{{ 'ownerPortal.auth.title' | transloco }}</h1>
     </div>
   </div>
 
   <form class="login-card" [formGroup]="form" (ngSubmit)="submit()">
     <header>
-      <h2>Iniciar sesión</h2>
-      <p>Consulta liquidaciones, contratos y autorizaciones de mantenimiento.</p>
+      <h2>{{ 'ownerPortal.auth.signIn' | transloco }}</h2>
+      <p>{{ 'ownerPortal.auth.subtitle' | transloco }}</p>
     </header>
 
     <app-text-field
       formControlName="email"
-      label="Correo"
+      [label]="'auth.email' | transloco"
       autocomplete="email"
       type="email"
-      placeholder="propietario@empresa.com"
+      [placeholder]="'ownerPortal.auth.emailPlaceholder' | transloco"
     />
 
     <app-text-field
       formControlName="password"
-      label="Contraseña"
+      [label]="'auth.password' | transloco"
       autocomplete="current-password"
       type="password"
-      placeholder="Tu contraseña"
+      [placeholder]="'ownerPortal.auth.passwordPlaceholder' | transloco"
     />
 
-    <app-checkbox formControlName="rememberMe" label="Mantener sesión iniciada" />
+    <app-checkbox
+      formControlName="rememberMe"
+      [label]="'ownerPortal.auth.rememberMe' | transloco"
+    />
 
     @if (errorMessage()) {
       <p class="error">{{ errorMessage() }}</p>
@@ -41,12 +44,12 @@
       @if (!isLoading()) {
         <lucide-icon [img]="LockKeyhole" [size]="18" />
       }
-      Entrar al portal
+      {{ 'ownerPortal.auth.submit' | transloco }}
     </app-button>
 
     <a routerLink="/forgot-password" class="forgot">
       <lucide-icon [img]="Mail" [size]="16" />
-      Olvidé mi contraseña
+      {{ 'auth.forgotPasswordLink' | transloco }}
     </a>
   </form>
 </section>

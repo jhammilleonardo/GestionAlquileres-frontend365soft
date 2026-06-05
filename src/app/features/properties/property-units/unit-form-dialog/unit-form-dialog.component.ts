@@ -9,6 +9,7 @@ import {
   effect,
 } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { LucideAngularModule, Save, Building2 } from 'lucide-angular';
 import { UnitService } from '../../../../core/services/admin/unit.service';
 import { Unit, UnitStatus, RentalType, UnitFormData } from '../../../../core/models/unit.model';
@@ -29,6 +30,7 @@ import { getApiErrorMessage } from '../../../../core/http/http-error.util';
     AppDialogComponent,
     AppSelectComponent,
     AppTextFieldComponent,
+    TranslocoPipe,
   ],
   templateUrl: './unit-form-dialog.component.html',
   styleUrls: ['./unit-form-dialog.component.scss'],
@@ -44,6 +46,7 @@ export class UnitFormDialogComponent {
   private fb = inject(FormBuilder);
   private unitService = inject(UnitService);
   private toast = inject(ToastService);
+  private transloco = inject(TranslocoService);
 
   open = input(false);
   propertyId = input.required<number>();
@@ -97,16 +100,37 @@ export class UnitFormDialogComponent {
   });
 
   readonly statusOptions: AppSelectOption<UnitStatus>[] = [
-    { value: UnitStatus.AVAILABLE, label: 'Disponible' },
-    { value: UnitStatus.OCCUPIED, label: 'Ocupada' },
-    { value: UnitStatus.MAINTENANCE, label: 'Mantenimiento' },
-    { value: UnitStatus.RESERVED, label: 'Reservada' },
+    {
+      value: UnitStatus.AVAILABLE,
+      label: this.transloco.translate('propiedades.units.statuses.available'),
+    },
+    {
+      value: UnitStatus.OCCUPIED,
+      label: this.transloco.translate('propiedades.units.statuses.occupied'),
+    },
+    {
+      value: UnitStatus.MAINTENANCE,
+      label: this.transloco.translate('propiedades.units.statuses.maintenance'),
+    },
+    {
+      value: UnitStatus.RESERVED,
+      label: this.transloco.translate('propiedades.units.statuses.reserved'),
+    },
   ];
 
   readonly rentalTypeOptions: AppSelectOption<RentalType>[] = [
-    { value: RentalType.LONG_TERM, label: 'Largo Plazo' },
-    { value: RentalType.SHORT_TERM, label: 'Corto Plazo' },
-    { value: RentalType.BOTH, label: 'Ambos' },
+    {
+      value: RentalType.LONG_TERM,
+      label: this.transloco.translate('propiedades.units.rentalTypes.LONG_TERM'),
+    },
+    {
+      value: RentalType.SHORT_TERM,
+      label: this.transloco.translate('propiedades.units.rentalTypes.SHORT_TERM'),
+    },
+    {
+      value: RentalType.BOTH,
+      label: this.transloco.translate('propiedades.units.rentalTypes.BOTH'),
+    },
   ];
 
   isFieldInvalid(field: string): boolean {
@@ -153,7 +177,9 @@ export class UnitFormDialogComponent {
       },
       error: (error: unknown) => {
         this.isSaving.set(false);
-        this.toast.error(this.resolveErrorMessage(error, 'Error al guardar la unidad'));
+        this.toast.error(
+          this.resolveErrorMessage(error, this.transloco.translate('propiedades.units.saveError')),
+        );
       },
     });
   }

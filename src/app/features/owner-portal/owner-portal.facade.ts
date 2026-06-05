@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { finalize, forkJoin } from 'rxjs';
 
 import {
@@ -16,13 +17,14 @@ export class OwnerPortalFacade {
   private readonly ownerPortal = inject(OwnerPortalService);
   private readonly fileDownload = inject(FileDownloadService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly stages = ['REPORTED', 'ASSIGNED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
-  readonly tabs: { id: OwnerTab; label: string }[] = [
-    { id: 'properties', label: 'Propiedades' },
-    { id: 'statements', label: 'Liquidaciones' },
-    { id: 'maintenance', label: 'Mantenimiento' },
-    { id: 'contracts', label: 'Documentos' },
+  readonly tabs: { id: OwnerTab; labelKey: string }[] = [
+    { id: 'properties', labelKey: 'ownerPortal.tabs.properties' },
+    { id: 'statements', labelKey: 'ownerPortal.tabs.statements' },
+    { id: 'maintenance', labelKey: 'ownerPortal.tabs.maintenance' },
+    { id: 'contracts', labelKey: 'ownerPortal.tabs.contracts' },
   ];
 
   readonly isLoading = signal(true);
@@ -96,7 +98,7 @@ export class OwnerPortalFacade {
     this.ownerPortal.authorizeMaintenance(record.id).subscribe({
       next: () => {
         this.authorizingId.set(null);
-        this.toast.success('Gasto autorizado');
+        this.toast.success(this.transloco.translate('ownerPortal.maintenance.authorized'));
         this.load();
       },
       error: (error: Error) => {
@@ -115,7 +117,7 @@ export class OwnerPortalFacade {
       },
       error: () => {
         this.downloadingId.set(null);
-        this.toast.error('No se pudo descargar el PDF');
+        this.toast.error(this.transloco.translate('ownerPortal.documents.downloadPdfError'));
       },
     });
   }
@@ -133,7 +135,9 @@ export class OwnerPortalFacade {
       },
       error: (error: Error) => {
         this.downloadingContractId.set(null);
-        this.toast.error(error.message || 'No se pudo descargar el contrato');
+        this.toast.error(
+          error.message || this.transloco.translate('ownerPortal.documents.downloadContractError'),
+        );
       },
     });
   }

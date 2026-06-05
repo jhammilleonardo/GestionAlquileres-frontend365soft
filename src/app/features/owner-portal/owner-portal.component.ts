@@ -1,6 +1,7 @@
 import { CurrencyPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { LucideAngularModule, Download, CheckCircle2, Home, User, Calendar } from 'lucide-angular';
+import { TranslocoModule } from '@jsverse/transloco';
 
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
 import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
@@ -14,6 +15,7 @@ import { OwnerPortalFacade } from './owner-portal.facade';
   standalone: true,
   imports: [
     CurrencyPipe,
+    TranslocoModule,
     LucideAngularModule,
     AppButtonComponent,
     AppEmptyStateComponent,

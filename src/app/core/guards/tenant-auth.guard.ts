@@ -1,9 +1,20 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
+import { Router, CanActivateFn, ActivatedRouteSnapshot } from '@angular/router';
 import { map, catchError, of } from 'rxjs';
 import { TenantAuthService } from '../services/tenant/tenant-auth.service';
 import { SlugService } from '../services/slug.service';
 import { ContractService } from '../services/admin/contract.service';
+
+const ACTIVE_TENANT_CONTRACT_STATUSES = new Set(['ACTIVO', 'FIRMADO', 'POR_VENCER']);
+const DRAFT_TENANT_CONTRACT_STATUSES = new Set(['BORRADOR', 'PENDIENTE']);
+
+function getRouteSlug(route: ActivatedRouteSnapshot): string | null {
+  for (const snapshot of route.pathFromRoot) {
+    const slug = snapshot.paramMap.get('slug');
+    if (slug) return slug;
+  }
+  return null;
+}
 
 export const tenantAuthGuard: CanActivateFn = (route, state) => {
   const authService = inject(TenantAuthService);
@@ -11,7 +22,7 @@ export const tenantAuthGuard: CanActivateFn = (route, state) => {
   const router = inject(Router);
 
   // Get slug from URL
-  const slug = route.paramMap.get('slug');
+  const slug = getRouteSlug(route);
 
   // Check if slug exists in URL
   if (!slug) {
@@ -57,7 +68,7 @@ export const tenantLoginGuard: CanActivateFn = (route, _state) => {
   const router = inject(Router);
 
   // Get slug from URL
-  const slug = route.paramMap.get('slug');
+  const slug = getRouteSlug(route);
 
   // Check if slug exists in URL
   if (slug) {
@@ -102,12 +113,12 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
   const slugService = inject(SlugService);
 
   const currentUser = authService.currentUser();
-  const slug = route.paramMap.get('slug');
+  const slug = getRouteSlug(route);
 
   // Si no está autenticado, redirigir al login
   if (!currentUser) {
     if (slug) {
-      void router.navigate(['/', slug, 'portal', 'login'], {
+      void router.navigate(['/', slug, 'login'], {
         queryParams: { returnUrl: state.url },
       });
     }
@@ -124,7 +135,9 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
   return contractService.hasAnyContracts().pipe(
     map((contracts) => {
       if (contracts && contracts.length > 0) {
-        const hasActive = contracts.some((c) => c.status === 'ACTIVO');
+        const hasActive = contracts.some((c) =>
+          ACTIVE_TENANT_CONTRACT_STATUSES.has(String(c.status)),
+        );
         if (hasActive) {
           slugService.navigateTo(['portal', 'dashboard']);
         } else {
@@ -145,16 +158,17 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
  */
 export const tenantWithContractGuard: CanActivateFn = (route, state) => {
   const authService = inject(TenantAuthService);
+  const contractService = inject(ContractService);
   const router = inject(Router);
   const slugService = inject(SlugService);
 
   const currentUser = authService.currentUser();
+  const slug = getRouteSlug(route);
 
   // Si no está autenticado, redirigir al login
   if (!currentUser) {
-    const slug = route.paramMap.get('slug');
     if (slug) {
-      void router.navigate(['/', slug, 'portal', 'login'], {
+      void router.navigate(['/', slug, 'login'], {
         queryParams: { returnUrl: state.url },
       });
     }
@@ -163,10 +177,67 @@ export const tenantWithContractGuard: CanActivateFn = (route, state) => {
 
   // Si NO tiene contrato, bloquear acceso inmediatamente
   if (!currentUser.contract) {
-    slugService.navigateTo(['portal', 'home']);
-    return false;
+    return contractService.hasAnyContracts().pipe(
+      map((contracts) => {
+        const hasActive = contracts.some((contract) =>
+          ACTIVE_TENANT_CONTRACT_STATUSES.has(String(contract.status)),
+        );
+
+        if (hasActive) return true;
+
+        const hasDraft = contracts.some((contract) =>
+          DRAFT_TENANT_CONTRACT_STATUSES.has(String(contract.status)),
+        );
+        slugService.navigateTo(
+          hasDraft ? ['portal', 'documentos', 'contratos'] : ['portal', 'home'],
+        );
+        return false;
+      }),
+      catchError(() => {
+        slugService.navigateTo(['portal', 'home']);
+        return of(false);
+      }),
+    );
   }
 
   // Tiene contrato, permitir acceso
   return true;
+};
+
+/**
+ * Permite ver contratos del tenant si existe al menos un contrato asociado.
+ * Es distinto de tenantWithContractGuard porque BORRADOR/PENDIENTE debe poder
+ * abrirse para revisión/firma sin habilitar pagos, mantenimiento o dashboard.
+ */
+export const tenantContractDocumentGuard: CanActivateFn = (route, state) => {
+  const authService = inject(TenantAuthService);
+  const contractService = inject(ContractService);
+  const router = inject(Router);
+  const slugService = inject(SlugService);
+
+  const currentUser = authService.currentUser();
+  const slug = getRouteSlug(route);
+
+  if (!currentUser) {
+    if (slug) {
+      void router.navigate(['/', slug, 'login'], {
+        queryParams: { returnUrl: state.url },
+      });
+    }
+    return false;
+  }
+
+  if (currentUser.contract) return true;
+
+  return contractService.hasAnyContracts().pipe(
+    map((contracts) => {
+      if (contracts.length > 0) return true;
+      slugService.navigateTo(['portal', 'home']);
+      return false;
+    }),
+    catchError(() => {
+      slugService.navigateTo(['portal', 'home']);
+      return of(false);
+    }),
+  );
 };

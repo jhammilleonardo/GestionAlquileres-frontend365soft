@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TranslocoService } from '@jsverse/transloco';
 
 import {
   OwnerPortalRecord,
@@ -21,6 +22,7 @@ describe('OwnerPortalFacade', () => {
     downloadContractPdf: ReturnType<typeof vi.fn>;
   };
   let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+  let transloco: { translate: ReturnType<typeof vi.fn> };
   let facade: OwnerPortalFacade;
 
   beforeEach(() => {
@@ -35,12 +37,14 @@ describe('OwnerPortalFacade', () => {
       downloadContractPdf: vi.fn().mockReturnValue(of(new Blob(['pdf']))),
     };
     toast = { success: vi.fn(), error: vi.fn() };
+    transloco = { translate: vi.fn((key: string) => key) };
 
     TestBed.configureTestingModule({
       providers: [
         OwnerPortalFacade,
         { provide: OwnerPortalService, useValue: ownerPortal },
         { provide: ToastService, useValue: toast },
+        { provide: TranslocoService, useValue: transloco },
       ],
     });
 
@@ -72,7 +76,7 @@ describe('OwnerPortalFacade', () => {
     facade.authorize(record({ id: 99, current_stage: 'SCHEDULED' }));
 
     expect(ownerPortal.authorizeMaintenance).toHaveBeenCalledWith(99);
-    expect(toast.success).toHaveBeenCalledWith('Gasto autorizado');
+    expect(toast.success).toHaveBeenCalledWith('ownerPortal.maintenance.authorized');
     expect(facade.authorizingId()).toBeNull();
     expect(ownerPortal.getDashboard).toHaveBeenCalled();
   });

@@ -85,10 +85,10 @@
                   (error)="setPlaceholderImage($event)"
                 />
                 <span class="badge-status">{{ 'public.home.available' | transloco }}</span>
-                @if (property.monthly_rent) {
+                @if (getPriceDisplay(property); as price) {
                   <div class="price-badge">
                     {{ property.currency || 'USD' }}
-                    {{ property.monthly_rent | number: '1.0-0' }}/{{ 'common.month' | transloco }}
+                    {{ price.amount | number: '1.0-0' }} {{ price.periodKey | transloco }}
                   </div>
                 }
               </div>

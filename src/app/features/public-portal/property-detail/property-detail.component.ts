@@ -27,7 +27,7 @@ import {
   Share2,
   User,
 } from 'lucide-angular';
-import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
+import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
@@ -43,6 +43,11 @@ import { AvailabilityCalendarComponent } from '../availability-calendar/availabi
 interface PropertyLocation {
   coordinates: { lat: number; lng: number };
   address: string;
+}
+
+interface PublicPriceDisplay {
+  amount: number;
+  labelKey: string;
 }
 
 @Component({
@@ -103,6 +108,7 @@ export class PropertyDetailComponent {
   private readonly intentionService = inject(ApplicationIntentionService);
   private readonly authService = inject(TenantAuthService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
   private readonly destroyRef = inject(DestroyRef);
 
   private supportsShortTerm(type: string | null | undefined): boolean {
@@ -113,6 +119,31 @@ export class PropertyDetailComponent {
   protected supportsLongTermProperty(property: Property): boolean {
     const normalized = (property.rental_type ?? '').toUpperCase();
     return !normalized || normalized === 'LONG_TERM' || normalized === 'BOTH';
+  }
+
+  protected getPriceDisplay(property: Property): PublicPriceDisplay | null {
+    if (this.hasShortTermPrice(property)) {
+      return {
+        amount: property.min_price_per_night ?? 0,
+        labelKey: 'public.propertyDetail.perNight',
+      };
+    }
+
+    const monthlyRent = property.monthly_rent ?? property.monthly_rent_amount;
+    if (!monthlyRent) return null;
+
+    return {
+      amount: monthlyRent,
+      labelKey: 'public.propertyDetail.perMonth',
+    };
+  }
+
+  protected hasShortTermPrice(property: Property): boolean {
+    const normalized = (property.rental_type ?? '').toUpperCase();
+    return (
+      (normalized === 'SHORT_TERM' || normalized === 'BOTH') &&
+      Number(property.min_price_per_night ?? 0) > 0
+    );
   }
 
   constructor() {
@@ -265,7 +296,9 @@ export class PropertyDetailComponent {
     } else {
       void navigator.clipboard
         .writeText(window.location.href)
-        .then(() => this.toast.success('¡Enlace copiado al portapapeles!'));
+        .then(() =>
+          this.toast.success(this.transloco.translate('public.propertyDetail.linkCopied')),
+        );
     }
   }
 
@@ -294,7 +327,7 @@ export class PropertyDetailComponent {
   }
 
   getOwnerName(): string {
-    return this.property()?.owners?.[0]?.name ?? 'No disponible';
+    return this.property()?.owners?.[0]?.name ?? this.transloco.translate('common.notAvailable');
   }
 
   getOwnerEmail(): string {
@@ -306,7 +339,7 @@ export class PropertyDetailComponent {
   }
 
   getPropertyTypeName(): string {
-    return this.property()?.property_type?.name ?? 'N/A';
+    return this.property()?.property_type?.name ?? this.transloco.translate('common.notAvailable');
   }
 
   getPropertySubtypeName(): string {

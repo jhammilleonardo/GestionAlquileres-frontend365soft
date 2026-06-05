@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { Unit, UnitStatus } from '../../../core/models/unit.model';
@@ -11,6 +12,7 @@ export class PropertyUnitsFacade {
   private readonly unitService = inject(UnitService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly units = signal<Unit[]>([]);
   readonly isLoading = signal(true);
@@ -54,7 +56,7 @@ export class PropertyUnitsFacade {
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.error('Error al cargar las unidades');
+        this.toast.error(this.transloco.translate('propiedades.units.errorLoad'));
       },
     });
   }
@@ -84,7 +86,8 @@ export class PropertyUnitsFacade {
     );
     this.selectedUnit.set(unit);
     this.closeFormDialog();
-    this.toast.success(wasEdit ? 'Unidad actualizada exitosamente' : 'Unidad creada exitosamente');
+    const key = wasEdit ? 'propiedades.units.updated' : 'propiedades.units.created';
+    this.toast.success(this.transloco.translate(key));
   }
 
   selectUnit(unit: Unit): void {
@@ -106,10 +109,12 @@ export class PropertyUnitsFacade {
 
   async deleteUnit(propertyId: number, unit: Unit): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Eliminar unidad',
-      message: `Esta accion eliminara la unidad ${unit.unit_number}. No se puede deshacer.`,
-      confirmLabel: 'Eliminar',
-      cancelLabel: 'Cancelar',
+      title: this.transloco.translate('propiedades.units.deleteTitle'),
+      message: this.transloco.translate('propiedades.units.deleteMessage', {
+        unitNumber: unit.unit_number,
+      }),
+      confirmLabel: this.transloco.translate('common.delete'),
+      cancelLabel: this.transloco.translate('common.cancel'),
       variant: 'danger',
     });
 
@@ -125,11 +130,13 @@ export class PropertyUnitsFacade {
           this.selectedUnit.set(null);
         }
         this.confirmingDeleteId.set(null);
-        this.toast.success('Unidad eliminada');
+        this.toast.success(this.transloco.translate('propiedades.units.deleted'));
       },
       error: (error: unknown) => {
         this.confirmingDeleteId.set(null);
-        this.toast.error(getApiErrorMessage(error, 'Error al eliminar la unidad'));
+        this.toast.error(
+          getApiErrorMessage(error, this.transloco.translate('propiedades.units.errorDelete')),
+        );
       },
     });
   }

@@ -83,5 +83,34 @@
   "tenantNotesHint": "Información adicional del inquilino",
   "adminNotesOptional": "Notas del Admin (Opcional)",
   "adminNotesHint": "Notas administrativas internas",
-  "create": "Crear Pago"
+  "create": "Crear Pago",
+  "bulk": {
+    "title": "{{action}} {{count}} pago(s)",
+    "message": "¿{{action}} {{count}} pago(s) seleccionado(s)?",
+    "rejectReasonLabel": "Motivo de rechazo (opcional)",
+    "rejectReasonPlaceholder": "Motivo...",
+    "defaultRejectReason": "Rechazado en acción masiva",
+    "completed": "Acción completada: {{processed}} procesados, {{errors}} errores",
+    "error": "Error: {{message}}"
+  },
+  "actions": {
+    "approve": "Aprobar",
+    "reject": "Rechazar",
+    "approvedByAdmin": "Pago aprobado por administrador",
+    "exportCsvError": "Error al exportar el CSV\n{{msg}}",
+    "proofLoadError": "No se pudo cargar el comprobante",
+    "approvedToast": "Pago de {{tenantName}} aprobado",
+    "approveError": "Error al aprobar el pago: {{message}}",
+    "rejectedToast": "Pago de {{tenantName}} rechazado",
+    "rejectError": "Error al rechazar el pago: {{message}}",
+    "deleteTitle": "Eliminar pago",
+    "deleteMessage": "¿Eliminar el pago de {{amount}} BOB? Esta acción no se puede deshacer.",
+    "deleted": "Pago eliminado",
+    "deleteError": "Error al eliminar el pago",
+    "loadContractsError": "Error al cargar los contratos del inquilino",
+    "tenantContractRequired": "Debes seleccionar un inquilino y un contrato",
+    "requiredFields": "Por favor completa todos los campos requeridos",
+    "created": "Pago creado exitosamente",
+    "createError": "Error al crear el pago"
+  }
 }

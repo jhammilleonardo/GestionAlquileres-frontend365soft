@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslocoService } from '@jsverse/transloco';
 import { AdminContractService } from '../../core/services/admin/admin-contract.service';
 import { SlugService } from '../../core/services/slug.service';
 import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
@@ -13,6 +14,7 @@ export class ContractsFacade {
   private readonly slugService = inject(SlugService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly isLoading = this.contractService.isLoading;
   readonly contracts = this.contractService.contracts;
@@ -92,18 +94,18 @@ export class ContractsFacade {
 
   async renewContract(id: number): Promise<void> {
     const confirmed = await this.confirmDialog.confirm({
-      title: 'Renovar contrato',
-      message: 'Se creará un nuevo contrato basado en el contrato actual.',
-      confirmLabel: 'Renovar',
+      title: this.transloco.translate('contracts.renewDialog.title'),
+      message: this.transloco.translate('contracts.renewDialog.message'),
+      confirmLabel: this.transloco.translate('contracts.renewDialog.confirm'),
     });
     if (!confirmed) return;
 
     this.contractService.renewContract(id).subscribe({
       next: (response) => {
-        this.toast.success('Contrato renovado exitosamente');
+        this.toast.success(this.transloco.translate('contracts.renewDialog.success'));
         void this.router.navigateByUrl(this.slugService.buildUrl(`/contratos/${response.id}`));
       },
-      error: () => this.toast.error('Error al renovar el contrato'),
+      error: () => this.toast.error(this.transloco.translate('contracts.renewDialog.error')),
     });
   }
 }
