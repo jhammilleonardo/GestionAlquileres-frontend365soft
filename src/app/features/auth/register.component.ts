@@ -22,6 +22,7 @@ import { catchError, tap } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
+import { SessionTokenService } from '../../core/services/session-token.service';
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
   AppButtonComponent,
@@ -66,6 +67,7 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private transloco = inject(TranslocoService);
+  private sessionTokens = inject(SessionTokenService);
 
   showPassword = signal(false);
   showConfirmPassword = signal(false);
@@ -171,9 +173,11 @@ export class RegisterComponent {
 
   goToTenantPortal(): void {
     // Clear tenant session before navigating to login
-    localStorage.removeItem('tenant_access_token');
+    this.sessionTokens.clearToken('tenant');
     localStorage.removeItem('tenant_user');
+    sessionStorage.removeItem('tenant_user');
     localStorage.removeItem('tenant_slug');
+    sessionStorage.removeItem('tenant_slug');
     const slug = this.authService.getCurrentSlug();
     void this.router.navigate(slug ? ['/', slug, 'login'] : ['/login']);
   }

@@ -7,7 +7,12 @@
         </div>
         <h2>{{ (mode() === 'create' ? 'properties.new' : 'properties.edit') | transloco }}</h2>
       </div>
-      <button type="button" class="btn-close" (click)="closed.emit()" aria-label="Cerrar">
+      <button
+        type="button"
+        class="btn-close"
+        (click)="closed.emit()"
+        [attr.aria-label]="'common.close' | transloco"
+      >
         <lucide-icon [img]="X" [size]="22"></lucide-icon>
       </button>
     </div>
@@ -291,7 +296,7 @@
                 <div>
                   <app-text-field
                     [label]="'properties.city' | transloco"
-                    placeholder="Santa Cruz"
+                    [placeholder]="'properties.cityPlaceholder' | transloco"
                     formControlName="city"
                   />
                   @if (getAddressError(i, 'city')) {
@@ -300,7 +305,7 @@
                 </div>
                 <app-text-field
                   [label]="'properties.state' | transloco"
-                  placeholder="Santa Cruz de la Sierra"
+                  [placeholder]="'properties.statePlaceholder' | transloco"
                   formControlName="state"
                 />
                 <app-text-field
@@ -311,7 +316,7 @@
                 <div>
                   <app-text-field
                     [label]="'properties.country' | transloco"
-                    placeholder="Bolivia"
+                    [placeholder]="'properties.countryPlaceholder' | transloco"
                     formControlName="country"
                   />
                   @if (getAddressError(i, 'country')) {
@@ -336,13 +341,13 @@
                 <div [formGroupName]="i" class="form-grid-2">
                   <app-text-field
                     [label]="'common.name' | transloco"
-                    placeholder="Carlos Gonzalez"
+                    [placeholder]="'properties.ownerNamePlaceholder' | transloco"
                     formControlName="name"
                   />
                   <app-text-field
                     [label]="'common.email' | transloco"
                     type="email"
-                    placeholder="carlos@example.com"
+                    [placeholder]="'properties.ownerEmailPlaceholder' | transloco"
                     formControlName="primary_email"
                   />
                   <app-text-field

@@ -1,5 +1,7 @@
 import { expect, test, Page } from '@playwright/test';
-import { getAdminSession, loginAsAdmin } from './helpers';
+import { getAdminSession, loginAsAdmin, loginAsOwner } from './helpers';
+
+const API_URL = process.env.E2E_API_URL ?? 'http://localhost:3000/';
 
 test.describe('Modulos operativos admin', () => {
   test('reports permite filtrar y navegar entre vistas', async ({ page }) => {
@@ -40,7 +42,7 @@ test.describe('Modulos operativos admin', () => {
 
     for (const report of reports) {
       const pdf = await page.request.get(
-        `http://localhost:3000/${slug}/admin/reports/${report}?format=pdf`,
+        new URL(`${slug}/admin/reports/${report}?format=pdf`, API_URL).toString(),
         { headers: { Authorization: `Bearer ${session.access_token}` } },
       );
       expect(pdf.ok(), `${report} PDF export failed`).toBe(true);
@@ -48,7 +50,7 @@ test.describe('Modulos operativos admin', () => {
       expect((await pdf.body()).byteLength).toBeGreaterThan(100);
 
       const excel = await page.request.get(
-        `http://localhost:3000/${slug}/admin/reports/${report}?format=excel`,
+        new URL(`${slug}/admin/reports/${report}?format=excel`, API_URL).toString(),
         { headers: { Authorization: `Bearer ${session.access_token}` } },
       );
       expect(excel.ok(), `${report} Excel export failed`).toBe(true);
@@ -120,6 +122,42 @@ test.describe('Owner portal', () => {
     await expect(page.getByRole('heading', { name: /iniciar sesión/i })).toBeVisible();
     await expect(page.getByLabel(/correo/i)).toBeVisible();
     await expect(page.getByLabel(/contraseña/i)).toBeVisible();
+  });
+
+  test('propietario autenticado navega dashboard, mantenimiento, statements y contratos', async ({
+    page,
+  }) => {
+    const slug = await loginAsOwner(page);
+    await page.goto(`/${slug}/owner`);
+
+    await expect(page.locator('app-page-header, h1, h2').first()).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.locator('body')).not.toHaveText(/cannot match any routes|application error/i);
+
+    await page.getByRole('button', { name: /propiedades|properties/i }).click();
+    await expect(page.locator('app-empty-state, .owner-card, .property-card').first()).toBeVisible();
+
+    await page.getByRole('button', { name: /liquidaciones|statements/i }).click();
+    await expect(page.locator('app-empty-state, table, .statement-card').first()).toBeVisible();
+
+    const statementPdf = page.getByRole('button', { name: /pdf|descargar|download/i }).first();
+    if ((await statementPdf.count()) > 0) {
+      await expect(statementPdf).toBeVisible();
+    }
+
+    await page.getByRole('button', { name: /mantenimiento|maintenance/i }).click();
+    await expect(page.locator('app-empty-state, .maintenance-card, table').first()).toBeVisible();
+
+    const authorizeButton = page
+      .getByRole('button', { name: /autorizar|authorize/i })
+      .first();
+    if ((await authorizeButton.count()) > 0) {
+      await expect(authorizeButton).toBeVisible();
+    }
+
+    await page.getByRole('button', { name: /contratos|contracts/i }).click();
+    await expect(page.locator('app-empty-state, table, .contract-card').first()).toBeVisible();
   });
 });
 

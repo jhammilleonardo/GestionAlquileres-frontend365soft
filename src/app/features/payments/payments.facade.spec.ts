@@ -19,6 +19,8 @@ import { FormatService } from '../../core/services/format.service';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { PaymentAdminCreateFacade } from './payment-admin-create.facade';
+import { PaymentProofViewerFacade } from './payment-proof-viewer.facade';
 import { PaymentsFacade } from './payments.facade';
 
 describe('PaymentsFacade', () => {
@@ -88,6 +90,8 @@ describe('PaymentsFacade', () => {
     TestBed.configureTestingModule({
       providers: [
         PaymentsFacade,
+        PaymentAdminCreateFacade,
+        PaymentProofViewerFacade,
         {
           provide: PaymentService,
           useValue: paymentService,

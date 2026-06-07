@@ -4,6 +4,7 @@ import { LucideAngularModule, ArrowLeft, CreditCard, AlertCircle, FileText } fro
 import { PaymentMethod, QrPaymentStatus } from '../../../core/models/payment.model';
 import { TranslocoModule } from '@jsverse/transloco';
 import { TenantCreatePaymentFacade } from './tenant-create-payment.facade';
+import { TenantPaymentQrFlowFacade } from './tenant-payment-qr-flow.facade';
 import { TenantPaymentReceiptPreviewFacade } from './tenant-payment-receipt-preview.facade';
 import { TenantPaymentScheduleComponent } from './components/tenant-payment-schedule.component';
 import { TenantPaymentReceiptUploadComponent } from './components/tenant-payment-receipt-upload.component';
@@ -18,7 +19,11 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-tenant-create-payment',
   standalone: true,
-  providers: [TenantCreatePaymentFacade, TenantPaymentReceiptPreviewFacade],
+  providers: [
+    TenantCreatePaymentFacade,
+    TenantPaymentQrFlowFacade,
+    TenantPaymentReceiptPreviewFacade,
+  ],
   imports: [
     FormsModule,
     ReactiveFormsModule,

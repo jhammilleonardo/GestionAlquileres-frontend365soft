@@ -68,7 +68,12 @@
     <div class="error-message" role="alert">
       <lucide-icon [img]="Bell" [size]="16" />
       <span>{{ error() }}</span>
-      <button type="button" class="icon-btn" (click)="clearError()" aria-label="Cerrar error">
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="clearError()"
+        [attr.aria-label]="'public.tenantNotifications.closeError' | transloco"
+      >
         <lucide-icon [img]="Trash2" [size]="16" />
       </button>
     </div>

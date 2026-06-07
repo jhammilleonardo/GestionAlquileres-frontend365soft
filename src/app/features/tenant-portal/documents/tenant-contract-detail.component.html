@@ -1,0 +1,277 @@
+<section class="contract-detail">
+  <header class="detail-header">
+    <app-button appearance="outline" size="s" (clicked)="goBack()">
+      <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+      {{ 'tenantContracts.details.back' | transloco }}
+    </app-button>
+
+    @if (contract(); as c) {
+      <div class="detail-header__identity">
+        <h1>{{ c.contract_number }}</h1>
+        <app-status-badge
+          [label]="'tenantContracts.status.' + c.status | transloco"
+          [tone]="statusTone(c.status)"
+        />
+      </div>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="state-box">
+      <app-loading-state [label]="'tenantContracts.details.loading' | transloco" />
+    </div>
+  } @else if (error()) {
+    <app-empty-state [title]="'tenantContracts.details.error' | transloco" [description]="error()">
+      <lucide-icon icon [img]="X" [size]="28"></lucide-icon>
+      <app-button actions appearance="primary" (clicked)="goBack()">
+        {{ 'tenantContracts.details.back' | transloco }}
+      </app-button>
+    </app-empty-state>
+  } @else if (contract(); as c) {
+    <div class="contract-content">
+      @if (c.status === ContractStatus.BORRADOR) {
+        <section class="banner banner--warning">
+          <lucide-icon [img]="AlertTriangle" [size]="28"></lucide-icon>
+          <div>
+            <h2>{{ 'tenantContracts.details.pendingAlertTitle' | transloco }}</h2>
+            <p>
+              {{ 'tenantContracts.details.pendingAlertDescBefore' | transloco }}
+              <strong>{{ 'tenantContracts.details.pendingAlertDescButton' | transloco }}</strong>
+              {{ 'tenantContracts.details.pendingAlertDescAfter' | transloco }}
+            </p>
+          </div>
+          <app-button appearance="primary" [loading]="isSigning()" (clicked)="signContract()">
+            <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
+            {{ 'tenantContracts.details.signButton' | transloco }}
+          </app-button>
+        </section>
+      }
+
+      @if (c.status === ContractStatus.ACTIVO && c.signed_at) {
+        <section class="banner banner--success">
+          <lucide-icon [img]="CheckCircle2" [size]="28"></lucide-icon>
+          <div>
+            <h2>{{ 'tenantContracts.details.signedTitle' | transloco }}</h2>
+            <p>
+              {{
+                'tenantContracts.details.signedDesc' | transloco: { date: formatDate(c.signed_at) }
+              }}
+            </p>
+          </div>
+        </section>
+      }
+
+      <div class="detail-grid">
+        <article class="info-card">
+          <header>
+            <lucide-icon [img]="Home" [size]="22"></lucide-icon>
+            <h2>{{ 'tenantContracts.details.propertyTitle' | transloco }}</h2>
+          </header>
+          <div class="info-card__body">
+            <h3>
+              {{ c.property?.title || ('tenantContracts.propertyNotSpecified' | transloco) }}
+            </h3>
+            @if (c.property?.address) {
+              <p>{{ c.property?.address }}</p>
+            }
+          </div>
+        </article>
+
+        <article class="info-card">
+          <header>
+            <lucide-icon [img]="Calendar" [size]="22"></lucide-icon>
+            <h2>{{ 'tenantContracts.details.validityTitle' | transloco }}</h2>
+          </header>
+          <dl class="info-list">
+            <div>
+              <dt>{{ 'tenantContracts.details.startLabel' | transloco }}</dt>
+              <dd>{{ c.start_date | tenantDate }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'tenantContracts.details.endLabel' | transloco }}</dt>
+              <dd>{{ c.end_date | tenantDate }}</dd>
+            </div>
+            @if (c.key_delivery_date) {
+              <div>
+                <dt>{{ 'tenantContracts.details.keyDeliveryLabel' | transloco }}</dt>
+                <dd>{{ c.key_delivery_date | tenantDate }}</dd>
+              </div>
+            }
+            @if (c.signed_at) {
+              <div>
+                <dt>{{ 'tenantContracts.details.signDateLabel' | transloco }}</dt>
+                <dd>{{ c.signed_at | tenantDate }}</dd>
+              </div>
+            }
+          </dl>
+        </article>
+
+        <article class="info-card info-card--wide">
+          <header>
+            <lucide-icon [img]="DollarSign" [size]="22"></lucide-icon>
+            <h2>{{ 'tenantContracts.details.economicTitle' | transloco }}</h2>
+          </header>
+
+          <dl class="terms-grid">
+            <div>
+              <dt>{{ 'tenantContracts.details.rentLabel' | transloco }}</dt>
+              <dd class="amount">
+                {{ c.monthly_rent | tenantCurrency }}
+                @if (c.currency) {
+                  {{ c.currency }}
+                }
+              </dd>
+            </div>
+            @if (c.deposit_amount) {
+              <div>
+                <dt>{{ 'tenantContracts.details.depositLabel' | transloco }}</dt>
+                <dd>
+                  {{ c.deposit_amount | tenantCurrency }}
+                  @if (c.currency) {
+                    {{ c.currency }}
+                  }
+                </dd>
+              </div>
+            }
+            @if (c.payment_day) {
+              <div>
+                <dt>{{ 'tenantContracts.details.paymentDayLabel' | transloco }}</dt>
+                <dd>
+                  {{
+                    'tenantContracts.details.paymentDayValue' | transloco: { day: c.payment_day }
+                  }}
+                </dd>
+              </div>
+            }
+            @if (c.payment_method) {
+              <div>
+                <dt>{{ 'tenantContracts.details.methodLabel' | transloco }}</dt>
+                <dd>{{ c.payment_method }}</dd>
+              </div>
+            }
+          </dl>
+
+          @if (c.bank_name || c.bank_account_number) {
+            <div class="bank-section">
+              <h3>{{ 'tenantContracts.details.bankTitle' | transloco }}</h3>
+              <dl class="info-list">
+                @if (c.bank_name) {
+                  <div>
+                    <dt>{{ 'tenantContracts.details.bankLabel' | transloco }}</dt>
+                    <dd>{{ c.bank_name }}</dd>
+                  </div>
+                }
+                @if (c.bank_account_holder) {
+                  <div>
+                    <dt>{{ 'tenantContracts.details.holderLabel' | transloco }}</dt>
+                    <dd>{{ c.bank_account_holder }}</dd>
+                  </div>
+                }
+                @if (c.bank_account_type && c.bank_account_number) {
+                  <div>
+                    <dt>{{ 'tenantContracts.details.accountLabel' | transloco }}</dt>
+                    <dd>{{ c.bank_account_type }} - {{ c.bank_account_number }}</dd>
+                  </div>
+                }
+              </dl>
+            </div>
+          }
+        </article>
+
+        @if (c.included_services && c.included_services.length > 0) {
+          <article class="info-card">
+            <header>
+              <lucide-icon [img]="Info" [size]="22"></lucide-icon>
+              <h2>{{ 'tenantContracts.details.servicesTitle' | transloco }}</h2>
+            </header>
+            <ul class="check-list">
+              @for (service of c.included_services; track service) {
+                <li>{{ service }}</li>
+              }
+            </ul>
+          </article>
+        }
+
+        @if (c.tenant_responsibilities) {
+          <article class="info-card">
+            <header>
+              <lucide-icon [img]="FileText" [size]="22"></lucide-icon>
+              <h2>{{ 'tenantContracts.details.responsibilitiesTitle' | transloco }}</h2>
+            </header>
+            <p class="long-text">{{ c.tenant_responsibilities }}</p>
+          </article>
+        }
+
+        @if (c.prohibitions) {
+          <article class="info-card info-card--danger">
+            <header>
+              <lucide-icon [img]="AlertTriangle" [size]="22"></lucide-icon>
+              <h2>{{ 'tenantContracts.details.prohibitionsTitle' | transloco }}</h2>
+            </header>
+            <p class="long-text">{{ c.prohibitions }}</p>
+          </article>
+        }
+
+        @if (c.renewal_terms || c.termination_terms || c.jurisdiction) {
+          <article class="info-card info-card--wide">
+            <header>
+              <lucide-icon [img]="Info" [size]="22"></lucide-icon>
+              <h2>{{ 'tenantContracts.details.additionalTitle' | transloco }}</h2>
+            </header>
+            <div class="additional-grid">
+              @if (c.renewal_terms) {
+                <section>
+                  <h3>{{ 'tenantContracts.details.renewalLabel' | transloco }}</h3>
+                  <p>{{ c.renewal_terms }}</p>
+                </section>
+              }
+              @if (c.termination_terms) {
+                <section>
+                  <h3>{{ 'tenantContracts.details.terminationLabel' | transloco }}</h3>
+                  <p>{{ c.termination_terms }}</p>
+                </section>
+              }
+              @if (c.jurisdiction) {
+                <section>
+                  <h3>{{ 'tenantContracts.details.jurisdictionLabel' | transloco }}</h3>
+                  <p>{{ c.jurisdiction }}</p>
+                </section>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      <footer class="detail-actions">
+        <app-button appearance="outline" (clicked)="viewPDF()">
+          <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
+          {{ 'tenantContracts.details.viewPdf' | transloco }}
+        </app-button>
+        <app-button appearance="outline" (clicked)="downloadPDF()">
+          <lucide-icon [img]="Download" [size]="18"></lucide-icon>
+          {{ 'tenantContracts.details.downloadPdf' | transloco }}
+        </app-button>
+        @if (c.status === ContractStatus.BORRADOR) {
+          <app-button appearance="primary" [loading]="isSigning()" (clicked)="signContract()">
+            <lucide-icon [img]="FileCheck" [size]="18"></lucide-icon>
+            {{ 'tenantContracts.details.signButton' | transloco }}
+          </app-button>
+        }
+      </footer>
+    </div>
+  }
+</section>
+
+<app-contract-signing-dialog
+  [open]="isSigningDialogOpen()"
+  [contract]="contract()"
+  [isSigning]="isSigning()"
+  (cancelled)="closeSigningDialog()"
+  (confirmed)="confirmSigning()"
+/>
+
+<app-signing-success-dialog
+  [open]="isSuccessDialogOpen()"
+  [contract]="signedContract()"
+  (closed)="closeSuccessDialog()"
+/>

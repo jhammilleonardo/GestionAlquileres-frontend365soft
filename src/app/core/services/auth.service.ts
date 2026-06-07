@@ -7,6 +7,7 @@ import { User, UserRole } from '../models/user.model';
 import { SlugService } from './slug.service';
 import { PermissionsService } from './permissions.service';
 import { getApiErrorMessage } from '../http/http-error.util';
+import { SessionTokenService } from './session-token.service';
 
 export interface AdminUser {
   id: number;
@@ -57,8 +58,8 @@ export class AuthService {
   private router = inject(Router);
   private slugService = inject(SlugService);
   private permissionsService = inject(PermissionsService);
+  private sessionTokens = inject(SessionTokenService);
 
-  private readonly TOKEN_KEY = 'admin_access_token';
   private readonly USER_KEY = 'admin_user';
 
   // Reactive state with signals
@@ -108,10 +109,7 @@ export class AuthService {
     // Versiones anteriores guardaban un admin mock con id/email iguales al seed real.
     // No se debe borrar una sesión válida solo por esos campos; el token decide.
     if (user && user.id === '1' && user.email === 'admin@365soft.com' && isLegacyMockToken) {
-      localStorage.removeItem(this.USER_KEY);
-      sessionStorage.removeItem(this.USER_KEY);
-      localStorage.removeItem(this.TOKEN_KEY);
-      sessionStorage.removeItem(this.TOKEN_KEY);
+      this.clearStoredAdminSession();
     }
   }
 
@@ -222,10 +220,7 @@ export class AuthService {
    * Logout and clear session
    */
   logout(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
-    sessionStorage.removeItem(this.TOKEN_KEY);
-    sessionStorage.removeItem(this.USER_KEY);
+    this.clearStoredAdminSession();
     this.currentUserSignal.set(null);
 
     // Limpiar slug y permisos en caché
@@ -240,7 +235,7 @@ export class AuthService {
    * Get stored JWT token
    */
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY) || sessionStorage.getItem(this.TOKEN_KEY);
+    return this.sessionTokens.getToken('admin');
   }
 
   /**
@@ -309,10 +304,7 @@ export class AuthService {
           // Only clear storage if token is invalid (401)
           // Don't clear on network errors to avoid logout on connection issues
           if (error.status === 401) {
-            localStorage.removeItem(this.TOKEN_KEY);
-            localStorage.removeItem(this.USER_KEY);
-            sessionStorage.removeItem(this.TOKEN_KEY);
-            sessionStorage.removeItem(this.USER_KEY);
+            this.clearStoredAdminSession();
             this.currentUserSignal.set(null);
             this.slugService.clearSlug();
           }
@@ -354,12 +346,12 @@ export class AuthService {
     // Save token in the correct place based on role
     if (response.user.role === 'INQUILINO') {
       // Inquilino - save in tenant_access_token
-      storage.setItem('tenant_access_token', response.access_token);
+      this.sessionTokens.setToken('tenant', response.access_token, rememberMe);
       // Also save tenant user data
       storage.setItem('tenant_user', JSON.stringify(response.user));
     } else {
       // Admin - save in admin_access_token
-      storage.setItem(this.TOKEN_KEY, response.access_token);
+      this.sessionTokens.setToken('admin', response.access_token, rememberMe);
       this.saveUserToStorage(user, storage);
       this.currentUserSignal.set(user);
     }
@@ -382,7 +374,15 @@ export class AuthService {
    * Save user to storage
    */
   private saveUserToStorage(user: User, storage: Storage = localStorage): void {
+    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
     storage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  private clearStoredAdminSession(): void {
+    this.sessionTokens.clearToken('admin');
+    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
   }
 
   /**

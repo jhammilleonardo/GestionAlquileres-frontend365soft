@@ -35,7 +35,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
             <app-text-field
               formControlName="card_holder_name"
               [label]="'public.tenantCreatePayment.cardHolder' | transloco"
-              placeholder="Juan Pérez"
+              [placeholder]="'public.tenantCreatePayment.cardHolderPlaceholder' | transloco"
             />
           </div>
 
@@ -53,7 +53,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
             <app-text-field
               formControlName="reference_number"
               [label]="'public.tenantCreatePayment.authCode' | transloco"
-              placeholder="Ej: AUTH-123456"
+              [placeholder]="'public.tenantCreatePayment.authCodePlaceholder' | transloco"
             />
           </div>
         }
@@ -63,13 +63,13 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
             <app-text-field
               formControlName="check_number"
               [label]="'public.tenantCreatePayment.checkNumber' | transloco"
-              placeholder="Ej: CHK-001"
+              [placeholder]="'public.tenantCreatePayment.checkNumberPlaceholder' | transloco"
             />
 
             <app-text-field
               formControlName="bank_name"
               [label]="'public.tenantCreatePayment.bankName' | transloco"
-              placeholder="Banco Nacional"
+              [placeholder]="'public.tenantCreatePayment.bankNamePlaceholder' | transloco"
             />
           </div>
 
@@ -89,7 +89,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
             <app-text-field
               formControlName="reference_number"
               [label]="'public.tenantCreatePayment.refNumber' | transloco"
-              placeholder="Ej: TRF-12345"
+              [placeholder]="'public.tenantCreatePayment.refNumberPlaceholder' | transloco"
             />
             <p class="field-hint">{{ 'public.tenantCreatePayment.refHint' | transloco }}</p>
           </div>
@@ -98,7 +98,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
             <app-text-field
               formControlName="bank_name"
               [label]="'public.tenantCreatePayment.originBank' | transloco"
-              placeholder="Tu banco"
+              [placeholder]="'public.tenantCreatePayment.originBankPlaceholder' | transloco"
             />
 
             <app-text-field
@@ -117,7 +117,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
               <app-text-field
                 formControlName="received_by"
                 [label]="'public.tenantCreatePayment.receivedBy' | transloco"
-                placeholder="Nombre de quien recibió"
+                [placeholder]="'public.tenantCreatePayment.receivedByPlaceholder' | transloco"
               />
               <p class="field-hint">
                 {{ 'public.tenantCreatePayment.receivedByHint' | transloco }}
@@ -127,7 +127,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
             <app-text-field
               formControlName="reference_number"
               [label]="'public.tenantCreatePayment.receiptNumber' | transloco"
-              placeholder="Ej: REC-001"
+              [placeholder]="'public.tenantCreatePayment.receiptNumberPlaceholder' | transloco"
             />
           </div>
         }

@@ -84,6 +84,19 @@
   "adminNotesOptional": "Notas del Admin (Opcional)",
   "adminNotesHint": "Notas administrativas internas",
   "create": "Crear Pago",
+  "placeholders": {
+    "cardHolder": "Ej: Juan Perez",
+    "authCode": "Ej: 123456",
+    "checkNumber": "Ej: 001234",
+    "bankName": "Banco Nacional",
+    "transferReference": "Ej: TRF-12345678",
+    "walletConfirmation": "Ej: ZMEMO123456",
+    "senderContact": "Ej: +1 555-1234",
+    "processorTransaction": "Ej: PAYID-1234ABCD",
+    "moneyOrder": "Ej: MO-001234",
+    "issuingEntity": "Ej: Western Union",
+    "receiptNumber": "Ej: REC-001"
+  },
   "bulk": {
     "title": "{{action}} {{count}} pago(s)",
     "message": "¿{{action}} {{count}} pago(s) seleccionado(s)?",

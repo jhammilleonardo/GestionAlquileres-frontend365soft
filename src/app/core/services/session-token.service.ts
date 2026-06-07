@@ -17,6 +17,7 @@ export class SessionTokenService {
   }
 
   setToken(context: AuthContext, token: string, persistent = true): void {
+    this.clearToken(context);
     const storage = persistent ? localStorage : sessionStorage;
     storage.setItem(TOKEN_KEYS[context][0], token);
   }

@@ -12,6 +12,8 @@
   "dashboardPaymentApproved": "Payment approved",
   "dashboardNewRequest": "New request",
   "dashboardContractSigned": "Contract signed",
+  "dashboardRequestExample": "Plumbing",
+  "dashboardUnitExample": "Unit 4B",
   "stat1Num": "500+",
   "stat1Desc": "Managed properties",
   "stat2Num": "1,200+",

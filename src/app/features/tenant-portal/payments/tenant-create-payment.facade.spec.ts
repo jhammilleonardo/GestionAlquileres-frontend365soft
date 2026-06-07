@@ -19,6 +19,7 @@ import { TenantContractService } from '../../../core/services/tenant/tenant-cont
 import { TenantPaymentService } from '../../../core/services/tenant/tenant-payment.service';
 import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
 import { TenantCreatePaymentFacade } from './tenant-create-payment.facade';
+import { TenantPaymentQrFlowFacade } from './tenant-payment-qr-flow.facade';
 
 describe('TenantCreatePaymentFacade', () => {
   let facade: TenantCreatePaymentFacade;
@@ -27,6 +28,7 @@ describe('TenantCreatePaymentFacade', () => {
     TestBed.configureTestingModule({
       providers: [
         TenantCreatePaymentFacade,
+        TenantPaymentQrFlowFacade,
         {
           provide: TranslocoService,
           useValue: {

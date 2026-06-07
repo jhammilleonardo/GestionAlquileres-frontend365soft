@@ -51,7 +51,11 @@ import { PaymentScheduleItem } from '../tenant-create-payment.facade';
             <span class="cal-stepper-label">{{ paidCount() }}/{{ schedule().length }}</span>
           </div>
 
-          <button type="button" class="cal-toggle-btn" aria-label="Toggle calendar">
+          <button
+            type="button"
+            class="cal-toggle-btn"
+            [attr.aria-label]="'public.tenantPayments.toggleCalendar' | transloco"
+          >
             @if (expanded()) {
               <lucide-icon [img]="ChevronUp" [size]="20"></lucide-icon>
             } @else {

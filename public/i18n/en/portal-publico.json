@@ -259,7 +259,8 @@
     "submit": "Submit Application",
     "submitting": "Submitting...",
     "successTitle": "Application Submitted!",
-    "successMsg": "We have received your rental application. The agent will contact you soon."
+    "successMsg": "We have received your rental application. The agent will contact you soon.",
+    "submitError": "There was an error submitting the application. Please try again."
   },
   "contactModal": {
     "title": "Send Message",
@@ -279,7 +280,8 @@
     "submit": "Send Message",
     "submitting": "Sending...",
     "successTitle": "Message Sent!",
-    "successMsg": "The agent will receive your message and will contact you soon."
+    "successMsg": "The agent will receive your message and will contact you soon.",
+    "submitError": "There was an error sending your message. Please try again later."
   },
   "applicationForm": {
     "successTitle": "Application Submitted!",
@@ -686,13 +688,15 @@
     "qrRecordsCount": "{{count}} records",
     "reload": "Reload",
     "txn": "TXN:",
-    "cancelQr": "Cancel QR"
+    "cancelQr": "Cancel QR",
+    "toggleCalendar": "Toggle calendar"
   },
   "tenantQrGenerate": {
     "qrPayTitle": "Pay with QR",
     "qrPaySubtitle": "Generate a QR code and scan it with your banking app",
     "paymentDataTitle": "Payment Data",
     "qrCompatibilityInfoBefore": "The QR code is compatible with",
+    "qrCompatibilityName": "MC4 / SIP Bolivia",
     "qrCompatibilityInfoAfter": "You can scan it from any banking app that supports interbank QR payments.",
     "amountFieldLabel": "Amount *",
     "invalidAmountError": "Enter a valid amount",
@@ -701,6 +705,7 @@
     "notesFieldLabel": "Note (optional)",
     "notesPlaceholder": "Ex. January payment",
     "generatingQr": "Generating...",
+    "generateQr": "Generate QR",
     "cancel": "Cancel",
     "paymentConfirmedTitle": "Payment Confirmed!",
     "paymentProcessedDescBefore": "Your payment for",
@@ -714,6 +719,7 @@
     "qrCancelledDesc": "This QR code was cancelled.",
     "totalToPayLabel": "Total to pay",
     "waitingForPayment": "Waiting for payment...",
+    "qrImageAlt": "Payment QR code",
     "qrNotAvailable": "QR not available",
     "step1": "Open your banking app or digital wallet",
     "step2Before": "Select the",
@@ -724,7 +730,8 @@
     "expiresAtLabel": "Expires:",
     "pollingStatusLabel": "Checking every {{seconds}}s",
     "verifyNow": "Verify now",
-    "downloadQr": "Download QR"
+    "downloadQr": "Download QR",
+    "cancelQr": "Cancel QR"
   },
   "tenantCreatePayment": {
     "title": "Register Payment",
@@ -796,18 +803,26 @@
     "last4Digits": "Last 4 digits",
     "last4Hint": "Card digits",
     "cardHolder": "Card Holder Name",
+    "cardHolderPlaceholder": "John Doe",
     "expiryDate": "Expiry Date",
     "expiryHint": "Format: MM/YY",
     "authCode": "Authorization Code (Optional)",
+    "authCodePlaceholder": "e.g. AUTH-123456",
     "checkNumber": "Check Number",
+    "checkNumberPlaceholder": "e.g. CHK-001",
     "bankName": "Issuing Bank",
+    "bankNamePlaceholder": "National Bank",
     "accTitle": "Last 4 digits account",
     "refNumber": "Reference Number",
+    "refNumberPlaceholder": "e.g. TRF-12345",
     "refHint": "Bank transaction number",
     "originBank": "Origin Bank",
+    "originBankPlaceholder": "Your bank",
     "receivedBy": "Received by",
+    "receivedByPlaceholder": "Name of person who received it",
     "receivedByHint": "Person who received the payment",
     "receiptNumber": "Receipt Number (Optional)",
+    "receiptNumberPlaceholder": "e.g. REC-001",
     "additionalNotes": "Additional Notes",
     "notesLbl": "Payment Notes (Optional)",
     "notesPlaceholder": "Additional information about the payment...",
@@ -837,6 +852,7 @@
     "markAsReadTitle": "Mark as read",
     "deleteTitle": "Delete",
     "confirmDelete": "Delete this notification?",
+    "closeError": "Close error",
     "now": "Just now",
     "minutesAgo": "{{count}} minute ago",
     "minutesAgoPlural": "{{count}} minutes ago",

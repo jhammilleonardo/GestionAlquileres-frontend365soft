@@ -1,14 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { DestroyRef, computed, inject, signal } from '@angular/core';
-import { FormBuilder, FormControl, Validators } from '@angular/forms';
+import { computed, inject, signal } from '@angular/core';
+import { FormBuilder, Validators } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
-import { Observable, of } from 'rxjs';
-import { debounceTime, startWith, switchMap } from 'rxjs/operators';
 
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
   BulkPaymentActionDto,
-  CreatePaymentAsAdminDto,
   Currency,
   CurrencyLabels,
   CurrencySymbols,
@@ -16,7 +13,6 @@ import {
   PaymentFilters,
   PaymentMethod,
   PaymentMethodLabels,
-  PaymentProcessor,
   PaymentStatus,
   PaymentStatusColors,
   PaymentStatusLabels,
@@ -24,41 +20,38 @@ import {
   PaymentTypeLabels,
 } from '../../core/models/payment.model';
 import { AdminTenantUser } from '../../core/models/tenant-user.model';
-import { Contract, ContractService } from '../../core/services/admin/contract.service';
+import { Contract } from '../../core/services/admin/contract.service';
 import { PaymentService } from '../../core/services/admin/payment.service';
 import { FileDownloadService } from '../../core/services/file-download.service';
 import { FormatService } from '../../core/services/format.service';
-import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { AppSelectOption } from '../../shared/ui/select/select.component';
 import { AppStatusTone } from '../../shared/ui/status-badge/status-badge.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { PaymentAdminCreateFacade } from './payment-admin-create.facade';
+import { PaymentProofViewerFacade } from './payment-proof-viewer.facade';
 
 export class PaymentsFacade {
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly fileDownload = inject(FileDownloadService);
+  private readonly adminCreate = inject(PaymentAdminCreateFacade);
+  private readonly proofViewer = inject(PaymentProofViewerFacade);
   readonly paymentService = inject(PaymentService);
-  readonly tenantUserService = inject(TenantUserService);
-  readonly contractService = inject(ContractService);
   private readonly formatService = inject(FormatService);
   private readonly transloco = inject(TranslocoService);
 
   readonly showFilters = signal(false);
-  readonly showCreateForm = signal(false);
+  readonly showCreateForm = this.adminCreate.showCreateForm;
   readonly selectedPayment = signal<Payment | null>(null);
-  readonly selectedProofPayment = signal<Payment | null>(null);
   readonly rejectionPayment = signal<Payment | null>(null);
-  readonly proofObjectUrl = signal<string | null>(null);
-  readonly proofMimeType = signal<string | null>(null);
-  readonly proofLoadError = signal<string | null>(null);
-  readonly proofLoading = signal(false);
-  readonly proofZoom = signal(1);
-  private readonly proofZoomStep = 0.2;
-  private readonly proofZoomMin = 1;
-  private readonly proofZoomMax = 2;
+  readonly selectedProofPayment = this.proofViewer.selectedProofPayment;
+  readonly proofObjectUrl = this.proofViewer.proofObjectUrl;
+  readonly proofMimeType = this.proofViewer.proofMimeType;
+  readonly proofLoadError = this.proofViewer.proofLoadError;
+  readonly proofLoading = this.proofViewer.proofLoading;
+  readonly proofZoom = this.proofViewer.proofZoom;
 
   readonly selectedIds = signal<number[]>([]);
   readonly activeFilters = signal<PaymentFilters>({});
@@ -100,12 +93,12 @@ export class PaymentsFacade {
     });
   });
 
-  readonly tenantSearchControl = new FormControl('');
-  filteredTenants$: Observable<AdminTenantUser[]> = of([]);
-  readonly selectedTenant = signal<AdminTenantUser | null>(null);
-  readonly availableContracts = signal<Contract[]>([]);
-  readonly selectedContract = signal<Contract | null>(null);
-  readonly loadingContracts = signal(false);
+  readonly tenantSearchControl = this.adminCreate.tenantSearchControl;
+  readonly filteredTenants$ = this.adminCreate.filteredTenants$;
+  readonly selectedTenant = this.adminCreate.selectedTenant;
+  readonly availableContracts = this.adminCreate.availableContracts;
+  readonly selectedContract = this.adminCreate.selectedContract;
+  readonly loadingContracts = this.adminCreate.loadingContracts;
 
   readonly PaymentStatus = PaymentStatus;
   readonly PaymentType = PaymentType;
@@ -172,29 +165,8 @@ export class PaymentsFacade {
     reason: ['', [Validators.required, Validators.maxLength(400)]],
   });
 
-  readonly createPaymentForm = this.fb.group({
-    amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
-    currency: [Currency.BOB, Validators.required],
-    payment_type: [PaymentType.RENT, Validators.required],
-    payment_method: [PaymentMethod.TRANSFER, Validators.required],
-    status: [PaymentStatus.APPROVED],
-    payment_date: [new Date(), Validators.required],
-    due_date: [null as Date | null],
-    reference_number: [''],
-    check_number: [''],
-    notes: [''],
-    admin_notes: [''],
-    card_last_4_digits: [''],
-    card_holder_name: [''],
-    card_expiry: [''],
-    bank_name: [''],
-    bank_account_last_4: [''],
-    received_by: [''],
-  });
-
-  readonly selectedPaymentMethod = computed(() => {
-    return this.createPaymentForm.get('payment_method')?.value as PaymentMethod;
-  });
+  readonly createPaymentForm = this.adminCreate.createPaymentForm;
+  readonly selectedPaymentMethod = this.adminCreate.selectedPaymentMethod;
 
   readonly paymentStatuses = Object.values(PaymentStatus);
   readonly paymentTypes = Object.values(PaymentType);
@@ -207,8 +179,6 @@ export class PaymentsFacade {
 
   constructor() {
     this.loadData();
-    this.setupTenantSearch();
-    this.destroyRef.onDestroy(() => this.cleanupProofObjectUrl());
   }
 
   getStatusTone(status: PaymentStatus): AppStatusTone {
@@ -221,34 +191,10 @@ export class PaymentsFacade {
     return map[status] ?? 'neutral';
   }
 
-  setupTenantSearch(): void {
-    this.filteredTenants$ = this.tenantSearchControl.valueChanges.pipe(
-      startWith(''),
-      debounceTime(300),
-      switchMap((value) => {
-        if (typeof value !== 'string') {
-          return of([]);
-        }
-        const searchTerm = value || '';
-        const allTenants = this.tenantUserService.users();
-        if (!searchTerm.trim()) {
-          return of(allTenants.slice(0, 10));
-        }
-        const term = searchTerm.toLowerCase();
-        const filtered = allTenants.filter((tenant) => {
-          const name = tenant.name.toLowerCase();
-          const email = tenant.email.toLowerCase();
-          return name.includes(term) || email.includes(term);
-        });
-        return of(filtered.slice(0, 10));
-      }),
-    );
-  }
-
   loadData(): void {
     this.paymentService.loadPayments();
     this.paymentService.loadStats();
-    this.tenantUserService.loadAllUsers();
+    this.adminCreate.loadTenants();
   }
 
   applyFilters(): void {
@@ -399,70 +345,39 @@ export class PaymentsFacade {
   }
 
   getProofUrl(payment: Payment): string | null {
-    return this.paymentService.getProofUrl(payment);
+    return this.proofViewer.getProofUrl(payment);
   }
 
   openProof(payment: Payment): void {
-    if (!this.getProofUrl(payment)) return;
-    this.selectedProofPayment.set(payment);
-    this.proofLoading.set(true);
-    this.proofLoadError.set(null);
-    this.proofZoom.set(1);
-    this.cleanupProofObjectUrl();
-
-    this.paymentService.downloadProof(payment).subscribe({
-      next: (blob) => {
-        const objectUrl = URL.createObjectURL(blob);
-        this.proofObjectUrl.set(objectUrl);
-        this.proofMimeType.set(blob.type || null);
-        this.proofLoading.set(false);
-      },
-      error: (error: { message?: string }) => {
-        this.proofLoading.set(false);
-        this.proofLoadError.set(
-          error.message || this.transloco.translate('pagos.actions.proofLoadError'),
-        );
-      },
-    });
+    this.proofViewer.openProof(payment);
   }
 
   closeProof(): void {
-    this.selectedProofPayment.set(null);
-    this.proofLoading.set(false);
-    this.proofLoadError.set(null);
-    this.proofZoom.set(1);
-    this.cleanupProofObjectUrl();
+    this.proofViewer.closeProof();
   }
 
   isProofPdf(payment: Payment): boolean {
-    const mimeType = this.proofMimeType()?.toLowerCase() ?? '';
-    if (mimeType.includes('pdf')) return true;
-    const proofFile = payment.proof_file?.toLowerCase() ?? '';
-    return proofFile.endsWith('.pdf');
+    return this.proofViewer.isProofPdf(payment);
   }
 
   zoomInProof(): void {
-    this.proofZoom.update((zoom) =>
-      Math.min(Number((zoom + this.proofZoomStep).toFixed(2)), this.proofZoomMax),
-    );
+    this.proofViewer.zoomInProof();
   }
 
   zoomOutProof(): void {
-    this.proofZoom.update((zoom) =>
-      Math.max(Number((zoom - this.proofZoomStep).toFixed(2)), this.proofZoomMin),
-    );
+    this.proofViewer.zoomOutProof();
   }
 
   resetProofZoom(): void {
-    this.proofZoom.set(1);
+    this.proofViewer.resetProofZoom();
   }
 
   canZoomInProof(): boolean {
-    return this.proofZoom() < this.proofZoomMax;
+    return this.proofViewer.canZoomInProof();
   }
 
   canZoomOutProof(): boolean {
-    return this.proofZoom() > this.proofZoomMin;
+    return this.proofViewer.canZoomOutProof();
   }
 
   viewPaymentDetail(payment: Payment): void {
@@ -553,108 +468,31 @@ export class PaymentsFacade {
   }
 
   onTenantSelected(tenant: AdminTenantUser): void {
-    this.selectedTenant.set(tenant);
-    this.selectedContract.set(null);
-    this.availableContracts.set([]);
-    this.loadingContracts.set(true);
-    this.contractService.getContractsByTenantId(tenant.id).subscribe({
-      next: (contracts) => {
-        this.availableContracts.set(contracts);
-        this.loadingContracts.set(false);
-      },
-      error: () => {
-        this.loadingContracts.set(false);
-        this.toast.error(this.transloco.translate('pagos.actions.loadContractsError'));
-      },
-    });
+    this.adminCreate.onTenantSelected(tenant);
   }
 
   onContractSelected(contract: Contract): void {
-    this.selectedContract.set(contract);
+    this.adminCreate.onContractSelected(contract);
   }
 
   displayTenantFn(tenant: AdminTenantUser | null): string {
-    return tenant ? `${tenant.name} (${tenant.email})` : '';
+    return this.adminCreate.displayTenantFn(tenant);
   }
 
   displayContractFn(contract: Contract): string {
-    return this.contractService.formatContractDisplay(contract);
+    return this.adminCreate.displayContractFn(contract);
   }
 
   openCreateForm(): void {
-    this.showCreateForm.set(true);
-    this.tenantSearchControl.reset('');
-    this.selectedTenant.set(null);
-    this.selectedContract.set(null);
-    this.availableContracts.set([]);
-    this.createPaymentForm.reset({
-      currency: Currency.BOB,
-      payment_type: PaymentType.RENT,
-      payment_method: PaymentMethod.TRANSFER,
-      status: PaymentStatus.APPROVED,
-      payment_date: new Date(),
-    });
+    this.adminCreate.openCreateForm();
   }
 
   closeCreateForm(): void {
-    this.showCreateForm.set(false);
-    this.tenantSearchControl.reset('');
-    this.selectedTenant.set(null);
-    this.selectedContract.set(null);
-    this.availableContracts.set([]);
-    this.createPaymentForm.reset();
+    this.adminCreate.closeCreateForm();
   }
 
   submitCreatePayment(): void {
-    const tenant = this.selectedTenant();
-    const contract = this.selectedContract();
-
-    if (!tenant || !contract) {
-      this.toast.error(this.transloco.translate('pagos.actions.tenantContractRequired'));
-      return;
-    }
-
-    if (this.createPaymentForm.invalid) {
-      this.toast.error(this.transloco.translate('pagos.actions.requiredFields'));
-      return;
-    }
-
-    const formValue = this.createPaymentForm.value;
-    const payload: CreatePaymentAsAdminDto = {
-      tenant_id: tenant.id,
-      contract_id: contract.id,
-      property_id: contract.property_id,
-      amount: formValue.amount!,
-      currency: formValue.currency as Currency,
-      payment_type: formValue.payment_type as PaymentType,
-      payment_method: formValue.payment_method as PaymentMethod,
-      status: formValue.status as PaymentStatus,
-      payment_date: formValue.payment_date!,
-      due_date: formValue.due_date || undefined,
-      reference_number: formValue.reference_number || undefined,
-      check_number: formValue.check_number || undefined,
-      notes: formValue.notes || undefined,
-      admin_notes: formValue.admin_notes || undefined,
-      payment_processor: PaymentProcessor.MANUAL,
-      card_last_4_digits: formValue.card_last_4_digits || undefined,
-      card_holder_name: formValue.card_holder_name || undefined,
-      card_expiry: formValue.card_expiry || undefined,
-      bank_name: formValue.bank_name || undefined,
-      bank_account_last_4: formValue.bank_account_last_4 || undefined,
-      received_by: formValue.received_by || undefined,
-    };
-
-    this.paymentService.createPaymentAsAdmin(payload).subscribe({
-      next: () => {
-        this.closeCreateForm();
-        this.toast.success(this.transloco.translate('pagos.actions.created'));
-      },
-      error: (error: unknown) => {
-        this.toast.error(
-          getApiErrorMessage(error, this.transloco.translate('pagos.actions.createError')),
-        );
-      },
-    });
+    this.adminCreate.submitCreatePayment();
   }
 
   formatDate(date: Date): string {
@@ -727,14 +565,5 @@ export class PaymentsFacade {
     const normalized = new Date(date);
     normalized.setHours(23, 59, 59, 999);
     return normalized;
-  }
-
-  private cleanupProofObjectUrl(): void {
-    const currentObjectUrl = this.proofObjectUrl();
-    if (currentObjectUrl) {
-      URL.revokeObjectURL(currentObjectUrl);
-    }
-    this.proofObjectUrl.set(null);
-    this.proofMimeType.set(null);
   }
 }

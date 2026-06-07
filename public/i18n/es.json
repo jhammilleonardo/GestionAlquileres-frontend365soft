@@ -92,6 +92,7 @@
       "loadConversations": "Error al cargar las conversaciones",
       "loadProperties": "Error al cargar las propiedades",
       "loadQR": "Error al cargar los QR",
+      "generateQr": "Error al generar el QR",
       "orgNotFound": "La organización \"{{slug}}\" no existe",
       "generatePdf": "Error al generar el PDF"
     },
@@ -116,6 +117,8 @@
     "appName": "365Soft",
     "appSubtitle": "Gestión de Alquileres",
     "language": "Idioma",
+    "mainMenu": "Menú principal",
+    "pendingPayments": "Pagos pendientes",
     "menu": {
       "dashboard": "Dashboard",
       "properties": "Propiedades",
@@ -173,6 +176,12 @@
     "loadError": "No se pudo cargar la configuración. Se usarán los valores por defecto.",
     "finishError": "Error al finalizar la configuración.",
     "saveConfigError": "Error al guardar la configuración.",
+    "countries": {
+      "BO": "Bolivia",
+      "US": "Estados Unidos",
+      "GT": "Guatemala",
+      "HN": "Honduras"
+    },
     "paymentMethods": {
       "qr_accl": "QR Pago (ACCL)",
       "transferencia": "Transferencia bancaria",
@@ -488,6 +497,7 @@
     "adminStepTitle": "Tu información personal",
     "fullName": "Nombre Completo",
     "fullNamePlaceholder": "Juan Pérez",
+    "adminEmailPlaceholder": "admin@empresa.com",
     "phoneOptional": "Teléfono (opcional)",
     "phonePlaceholder": "+1 234 567 8900",
     "minChars2": "Mínimo 2 caracteres",
@@ -509,6 +519,10 @@
     "back": "Atrás",
     "termsTitle": "Términos y Condiciones",
     "privacyTitle": "Política de Privacidad",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "termsHtml": "<p class=\"last-updated\">Última actualización: Febrero 8, 2026</p><h3>1. Aceptación de los Términos</h3><p>Al acceder y utilizar 365Soft, usted acepta estar sujeto a estos Términos y Condiciones de uso. Si no está de acuerdo con estos términos, no debe utilizar el Servicio.</p><h3>2. Descripción del Servicio</h3><p>365Soft es una plataforma de gestión de propiedades que permite a los administradores gestionar propiedades, inquilinos, contratos, pagos y mantenimiento de manera eficiente.</p><h3>3. Registro de Cuenta</h3><p>Para utilizar el Servicio, debe crear una cuenta proporcionando información precisa y completa. Usted es responsable de mantener la confidencialidad de su cuenta y contraseña.</p><h3>4. Uso Aceptable</h3><p>Usted se compromete a:</p><ul><li>Utilizar el Servicio únicamente para fines legales</li><li>No compartir su cuenta con terceros no autorizados</li><li>Mantener la información de su cuenta actualizada</li><li>No intentar acceder a áreas no autorizadas del sistema</li><li>No utilizar el Servicio para actividades fraudulentas o ilegales</li></ul><h3>5. Propiedad Intelectual</h3><p>Todo el contenido, características y funcionalidad del Servicio son propiedad exclusiva de 365Soft y están protegidos por las leyes de propiedad intelectual.</p><h3>6. Privacidad y Seguridad de Datos</h3><p>Nos comprometemos a proteger su información personal de acuerdo con nuestra Política de Privacidad. Implementamos medidas de seguridad técnicas y organizativas para proteger sus datos.</p><h3>7. Limitación de Responsabilidad</h3><p>365Soft no será responsable por daños indirectos, incidentales, especiales o consecuentes que resulten del uso o la imposibilidad de usar el Servicio.</p><h3>8. Modificaciones del Servicio</h3><p>Nos reservamos el derecho de modificar o discontinuar el Servicio en cualquier momento, con o sin previo aviso.</p><h3>9. Terminación</h3><p>Podemos suspender o terminar su acceso al Servicio si viola estos términos o por cualquier otra razón a nuestra discreción.</p><h3>10. Ley Aplicable</h3><p>Estos términos se rigen por las leyes aplicables en su jurisdicción.</p><h3>11. Contacto</h3><p>Para preguntas sobre estos términos, contacte a: soporte@365soft.com</p>",
+    "privacyHtml": "<p class=\"last-updated\">Última actualización: Febrero 8, 2026</p><h3>1. Introducción</h3><p>En 365Soft, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, usamos, compartimos y protegemos su información personal.</p><h3>2. Información que Recopilamos</h3><p>Recopilamos la siguiente información:</p><ul><li><strong>Información de cuenta:</strong> nombre, correo electrónico, teléfono, nombre de empresa</li><li><strong>Información de propiedades:</strong> direcciones, datos de propiedades y contratos</li><li><strong>Información de inquilinos:</strong> datos de contacto y documentación necesaria</li><li><strong>Información de pago:</strong> historial de transacciones y métodos de pago</li><li><strong>Datos de uso:</strong> cómo interactúa con nuestro Servicio</li><li><strong>Información técnica:</strong> dirección IP, tipo de navegador, sistema operativo</li></ul><h3>3. Cómo Usamos su Información</h3><p>Utilizamos su información para:</p><ul><li>Proporcionar y mantener el Servicio</li><li>Procesar transacciones y enviar notificaciones relacionadas</li><li>Mejorar y personalizar su experiencia</li><li>Comunicarnos con usted sobre actualizaciones y novedades</li><li>Detectar y prevenir fraudes o abuso del Servicio</li><li>Cumplir con obligaciones legales</li></ul><h3>4. Compartir Información</h3><p>No vendemos su información personal. Podemos compartir su información con:</p><ul><li><strong>Proveedores de servicios:</strong> que nos ayudan a operar el Servicio</li><li><strong>Autoridades legales:</strong> cuando sea requerido por ley</li><li><strong>Socios comerciales:</strong> con su consentimiento explícito</li></ul><h3>5. Seguridad de Datos</h3><p>Implementamos medidas de seguridad técnicas y organizativas para proteger su información.</p><h3>6. Retención de Datos</h3><p>Conservamos su información personal mientras su cuenta esté activa o según sea necesario para cumplir con obligaciones legales.</p><h3>7. Sus Derechos</h3><p>Usted puede solicitar acceso, corrección, eliminación, oposición al procesamiento, portabilidad de datos o retiro de consentimiento.</p><h3>8. Cookies y Tecnologías Similares</h3><p>Utilizamos cookies y tecnologías similares para mejorar su experiencia y analizar el uso del Servicio.</p><h3>9. Privacidad de Menores</h3><p>Nuestro Servicio no está dirigido a menores de 18 años. No recopilamos intencionalmente información de menores.</p><h3>10. Contacto</h3><p>Para preguntas o inquietudes sobre esta política: privacidad@365soft.com</p>",
     "close": "Cerrar"
   },
   "notifications": {
@@ -552,6 +566,7 @@
       "floor": "Piso",
       "bedrooms": "Dormitorios",
       "bathrooms": "Baños",
+      "areaUnit": "m²",
       "type": "Tipo",
       "price": "Precio",
       "status": "Estado"

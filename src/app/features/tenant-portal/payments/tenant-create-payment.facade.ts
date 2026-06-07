@@ -1,7 +1,6 @@
 import { HttpEventType } from '@angular/common/http';
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
@@ -15,10 +14,8 @@ import {
   PaymentStatus,
   PaymentType,
   PaymentTypeLabels,
-  QrPayment,
 } from '../../../core/models/payment.model';
 import { SlugService } from '../../../core/services/slug.service';
-import { FileDownloadService } from '../../../core/services/file-download.service';
 import { FormatService } from '../../../core/services/format.service';
 import {
   Contract,
@@ -26,17 +23,10 @@ import {
 } from '../../../core/services/tenant/tenant-contract.service';
 import { TenantPaymentService } from '../../../core/services/tenant/tenant-payment.service';
 import { TenantQrPaymentService } from '../../../core/services/tenant/tenant-qr-payment.service';
+import { TenantPaymentQrFlowFacade } from './tenant-payment-qr-flow.facade';
+import { buildTenantPaymentSchedule, PaymentScheduleItem } from './tenant-payment-schedule.builder';
 
-export interface PaymentScheduleItem {
-  label: string;
-  year: number;
-  month: number;
-  dueDate: Date;
-  amount: number;
-  currency: string;
-  status: 'paid' | 'overdue' | 'current' | 'upcoming';
-  statusLabel: string;
-}
+export type { PaymentScheduleItem } from './tenant-payment-schedule.builder';
 
 export interface PaymentOption<TValue extends string = string> {
   value: TValue;
@@ -51,39 +41,29 @@ export interface CurrencyOption extends PaymentOption<Currency> {
 export class TenantCreatePaymentFacade {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
-  private readonly sanitizer = inject(DomSanitizer);
   private readonly slugService = inject(SlugService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translocoService = inject(TranslocoService);
-  private readonly fileDownload = inject(FileDownloadService);
   private readonly formatService = inject(FormatService);
+  private readonly qrFlow = inject(TenantPaymentQrFlowFacade);
   readonly paymentService = inject(TenantPaymentService);
   readonly qrService = inject(TenantQrPaymentService);
   readonly contractService = inject(TenantContractService);
 
   readonly calendarExpanded = signal(true);
   readonly success = signal(false);
-  readonly qrPolling = signal(false);
-  readonly qrCancelling = signal(false);
-  readonly qrError = signal<string | null>(null);
+  readonly qrPolling = this.qrFlow.polling;
+  readonly qrCancelling = this.qrFlow.cancelling;
+  readonly qrError = this.qrFlow.error;
   readonly uploadProgress = signal(0);
   readonly retryPaymentId = signal<number | null>(null);
-  readonly qrSafeUrl = computed<SafeUrl | null>(() => {
-    const qr = this.qrService.activeQr();
-    if (!qr?.qr_image) return null;
-    if (qr.qr_image.startsWith('http')) return this.sanitizer.bypassSecurityTrustUrl(qr.qr_image);
-    const src = qr.qr_image.startsWith('data:')
-      ? qr.qr_image
-      : `data:image/png;base64,${qr.qr_image}`;
-    return this.sanitizer.bypassSecurityTrustUrl(src);
-  });
+  readonly qrSafeUrl = this.qrFlow.safeUrl;
 
   private readonly paymentScheduleSignal = signal<PaymentScheduleItem[]>([]);
   readonly paymentSchedule = this.paymentScheduleSignal.asReadonly();
   readonly paidCount = computed(
     () => this.paymentSchedule().filter((item) => item.status === 'paid').length,
   );
-  private qrPollTimer?: ReturnType<typeof setInterval>;
 
   readonly paymentTypes: PaymentOption<PaymentType>[] = Object.values(PaymentType).map((value) => ({
     value,
@@ -135,7 +115,7 @@ export class TenantCreatePaymentFacade {
     this.paymentService.loadPayments();
     this.loadRetryPayment();
     this.prefillFromCurrentContract();
-    this.destroyRef.onDestroy(() => this.stopPolling());
+    this.destroyRef.onDestroy(() => this.qrFlow.stopPolling());
   }
 
   normalizeCurrency(value?: string): Currency | null {
@@ -252,42 +232,23 @@ export class TenantCreatePaymentFacade {
   }
 
   manualVerify(): void {
-    const qr = this.qrService.activeQr();
-    if (qr) this.doVerify(qr);
+    this.qrFlow.verifyActive();
   }
 
   downloadQr(): void {
-    const qr = this.qrService.activeQr();
-    if (!qr?.qr_image) return;
-
-    const raw = qr.qr_image;
-    const href =
-      raw.startsWith('http') || raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
-    this.fileDownload.downloadUrl(href, `QR-pago-${qr.id}.png`);
+    this.qrFlow.downloadActive();
   }
 
   onCancelQr(): void {
-    const qr = this.qrService.activeQr();
-    if (!qr) return;
-
-    this.qrCancelling.set(true);
-    this.stopPolling();
-    this.qrService.cancelQr(qr.id).subscribe({
-      next: () => this.qrCancelling.set(false),
-      error: () => this.qrCancelling.set(false),
-    });
+    this.qrFlow.cancelActive();
   }
 
   resetQr(): void {
-    this.stopPolling();
-    this.qrService.clearActiveQr();
-    this.qrError.set(null);
+    this.qrFlow.clearActiveQr();
   }
 
   resetForm(removeReceipt: () => void): void {
-    this.stopPolling();
-    this.qrService.clearActiveQr();
-    this.qrError.set(null);
+    this.qrFlow.clearActiveQr();
     removeReceipt();
     this.retryPaymentId.set(null);
     this.paymentForm.reset({
@@ -319,60 +280,17 @@ export class TenantCreatePaymentFacade {
   }
 
   buildPaymentSchedule(contract: Contract, existingPayments: readonly Payment[]): void {
-    const start = new Date(contract.start_date);
-    const end = new Date(contract.end_date);
-    const payDay = contract.payment_day || 1;
-    const now = new Date();
-    const paidRentInstallments = existingPayments.filter(
-      (payment) =>
-        payment.payment_type === PaymentType.RENT &&
-        (payment.status === PaymentStatus.APPROVED ||
-          payment.status === PaymentStatus.PENDING ||
-          payment.status === PaymentStatus.PROCESSING),
-    ).length;
     const activeLang = this.translocoService.getActiveLang();
     const monthLocale = activeLang.startsWith('en') ? 'en-US' : 'es-BO';
-    const items: PaymentScheduleItem[] = [];
 
-    let assignedPaidInstallments = 0;
-    let cursor = new Date(start.getFullYear(), start.getMonth(), 1);
-    const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
-
-    while (cursor <= endMonth) {
-      const year = cursor.getFullYear();
-      const month = cursor.getMonth();
-      const lastDay = new Date(year, month + 1, 0).getDate();
-      const dueDate = new Date(year, month, Math.min(payDay, lastDay));
-      const isPaid = assignedPaidInstallments < paidRentInstallments;
-
-      if (isPaid) {
-        assignedPaidInstallments += 1;
-      }
-
-      const status = this.resolveInstallmentStatus({
-        dueDate,
-        isPaid,
-        month,
-        now,
-        year,
-      });
-
-      const raw = cursor.toLocaleDateString(monthLocale, { month: 'short', year: 'numeric' });
-      items.push({
-        label: raw.charAt(0).toUpperCase() + raw.slice(1),
-        year,
-        month,
-        dueDate,
-        amount: this.toNumber(contract.monthly_rent) ?? 0,
-        currency: contract.currency || Currency.USD,
-        status,
-        statusLabel: this.getScheduleStatusLabel(status),
-      });
-
-      cursor = new Date(year, month + 1, 1);
-    }
-
-    this.paymentScheduleSignal.set(items);
+    this.paymentScheduleSignal.set(
+      buildTenantPaymentSchedule({
+        contract,
+        existingPayments,
+        labels: this.getScheduleStatusLabels(),
+        locale: monthLocale,
+      }),
+    );
   }
 
   private loadAvailablePaymentMethods(): void {
@@ -438,77 +356,21 @@ export class TenantCreatePaymentFacade {
       return;
     }
 
-    this.qrError.set(null);
-    this.qrService
-      .generateQr({
-        amount,
-        currency: value.currency ?? Currency.USD,
-        payment_type: value.payment_type ?? PaymentType.RENT,
-        notes: value.notes || undefined,
-      })
-      .subscribe({
-        next: () => this.startPolling(),
-        error: (error: unknown) =>
-          this.qrError.set(getApiErrorMessage(error, 'Error al generar el QR.')),
-      });
-  }
-
-  private startPolling(): void {
-    this.stopPolling();
-    this.qrPollTimer = setInterval(() => {
-      const qr = this.qrService.activeQr();
-      if (!qr || this.qrService.isTerminalStatus(qr.status)) {
-        this.stopPolling();
-        return;
-      }
-      this.doVerify(qr);
-    }, 5000);
-  }
-
-  private stopPolling(): void {
-    if (this.qrPollTimer !== undefined) {
-      clearInterval(this.qrPollTimer);
-      this.qrPollTimer = undefined;
-    }
-    this.qrPolling.set(false);
-  }
-
-  private doVerify(qr: QrPayment): void {
-    this.qrPolling.set(true);
-    this.qrService.verifyQr({ qr_id: qr.id }).subscribe({
-      next: (updated) => {
-        this.qrPolling.set(false);
-        if (this.qrService.isTerminalStatus(updated.status)) this.stopPolling();
-      },
-      error: () => this.qrPolling.set(false),
+    this.qrFlow.generate({
+      amount,
+      currency: value.currency ?? Currency.USD,
+      paymentType: value.payment_type ?? PaymentType.RENT,
+      notes: value.notes || undefined,
     });
   }
 
-  private resolveInstallmentStatus(params: {
-    dueDate: Date;
-    isPaid: boolean;
-    month: number;
-    now: Date;
-    year: number;
-  }): PaymentScheduleItem['status'] {
-    if (params.isPaid) return 'paid';
-
-    const isCurrent =
-      params.now.getFullYear() === params.year && params.now.getMonth() === params.month;
-    if (isCurrent) return 'current';
-
-    return params.dueDate < params.now ? 'overdue' : 'upcoming';
-  }
-
-  private getScheduleStatusLabel(status: PaymentScheduleItem['status']): string {
-    const labels: Record<PaymentScheduleItem['status'], string> = {
+  private getScheduleStatusLabels(): Record<PaymentScheduleItem['status'], string> {
+    return {
       paid: this.translocoService.translate('public.tenantPayments.calPaid'),
       current: this.translocoService.translate('public.tenantPayments.calCurrent'),
       overdue: this.translocoService.translate('public.tenantPayments.calOverdue'),
       upcoming: this.translocoService.translate('public.tenantPayments.calUpcoming'),
     };
-
-    return labels[status];
   }
 
   private toNumber(value: number | string): number | null {

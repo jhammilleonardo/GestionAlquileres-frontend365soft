@@ -1,0 +1,249 @@
+<div class="qr-container">
+  <!-- Header -->
+  <div class="page-header">
+    <button
+      type="button"
+      class="back-btn"
+      (click)="goBack()"
+      [attr.aria-label]="'common.back' | transloco"
+    >
+      <lucide-icon [img]="ArrowLeft" [size]="24" />
+    </button>
+    <div>
+      <h1>{{ 'public.tenantQrGenerate.qrPayTitle' | transloco }}</h1>
+      <p>{{ 'public.tenantQrGenerate.qrPaySubtitle' | transloco }}</p>
+    </div>
+  </div>
+
+  @if (qrService.error()) {
+    <div class="alert alert-error" role="alert">
+      <lucide-icon [img]="AlertCircle" [size]="18" />
+      <span>{{ qrService.error() }}</span>
+    </div>
+  }
+
+  <!-- PASO 1: Formulario -->
+  @if (!qrService.activeQr()) {
+    <div class="form-card">
+      <div class="card-header">
+        <lucide-icon [img]="QrCode" [size]="24" class="icon-primary" />
+        <h2>{{ 'public.tenantQrGenerate.paymentDataTitle' | transloco }}</h2>
+      </div>
+      <hr class="divider" />
+
+      <div class="info-banner">
+        <lucide-icon [img]="Info" [size]="16" />
+        <span>
+          {{ 'public.tenantQrGenerate.qrCompatibilityInfoBefore' | transloco }}
+          <strong>{{ 'public.tenantQrGenerate.qrCompatibilityName' | transloco }}</strong
+          >.
+          {{ 'public.tenantQrGenerate.qrCompatibilityInfoAfter' | transloco }}
+        </span>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onGenerate()" class="qr-form">
+        <div class="form-row">
+          <div class="field-group">
+            <app-text-field
+              formControlName="amount"
+              [label]="'public.tenantQrGenerate.amountFieldLabel' | transloco"
+              type="number"
+              placeholder="0.00"
+            />
+            @if (form.get('amount')?.invalid && form.get('amount')?.touched) {
+              <span class="field-error">{{
+                'public.tenantQrGenerate.invalidAmountError' | transloco
+              }}</span>
+            }
+          </div>
+
+          <app-select
+            formControlName="currency"
+            [label]="'public.tenantQrGenerate.currencyFieldLabel' | transloco"
+            [options]="currencyOptions"
+          />
+        </div>
+
+        <app-select
+          formControlName="payment_type"
+          [label]="'public.tenantQrGenerate.paymentTypeLabel' | transloco"
+          [options]="paymentTypeOptions"
+        />
+
+        <app-text-field
+          formControlName="notes"
+          [label]="'public.tenantQrGenerate.notesFieldLabel' | transloco"
+          [placeholder]="'public.tenantQrGenerate.notesPlaceholder' | transloco"
+        />
+
+        <div class="form-actions">
+          <app-button
+            type="submit"
+            [disabled]="form.invalid || qrService.isLoading()"
+            [loading]="qrService.isLoading()"
+          >
+            <lucide-icon [img]="QrCode" [size]="20" />
+            {{
+              qrService.isLoading()
+                ? ('public.tenantQrGenerate.generatingQr' | transloco)
+                : ('public.tenantQrGenerate.generateQr' | transloco)
+            }}
+          </app-button>
+          <app-button type="button" appearance="secondary" (clicked)="goBack()">
+            {{ 'public.tenantQrGenerate.cancel' | transloco }}
+          </app-button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- PASO 2: QR generado -->
+  @if (qrService.activeQr(); as qr) {
+    @if (qr.status === QrStatus.PAGADO) {
+      <div class="result-card success">
+        <lucide-icon [img]="CheckCircle2" [size]="56" class="result-icon" />
+        <h2>{{ 'public.tenantQrGenerate.paymentConfirmedTitle' | transloco }}</h2>
+        <p>
+          {{ 'public.tenantQrGenerate.paymentProcessedDescBefore' | transloco }}
+          <strong>{{ currencySymbol(qr.currency) }}{{ qr.amount | number: '1.2-2' }}</strong>
+          {{ 'public.tenantQrGenerate.paymentProcessedDescAfter' | transloco }}
+        </p>
+        @if (qr.transaction_id) {
+          <span class="tx-id">TXN: {{ qr.transaction_id }}</span>
+        }
+        <div class="result-actions">
+          <app-button (clicked)="goBack()">
+            {{ 'public.tenantQrGenerate.backToPayments' | transloco }}
+          </app-button>
+          <app-button appearance="secondary" (clicked)="resetQr()">
+            {{ 'public.tenantQrGenerate.generateAnotherQr' | transloco }}
+          </app-button>
+        </div>
+      </div>
+    }
+
+    @if (qr.status === QrStatus.EXPIRADO) {
+      <div class="result-card expired">
+        <lucide-icon [img]="Clock" [size]="56" class="result-icon" />
+        <h2>{{ 'public.tenantQrGenerate.qrExpiredTitle' | transloco }}</h2>
+        <p>{{ 'public.tenantQrGenerate.qrExpiredDesc' | transloco }}</p>
+        <app-button (clicked)="resetQr()">
+          {{ 'public.tenantQrGenerate.generateNewQr' | transloco }}
+        </app-button>
+      </div>
+    }
+
+    @if (qr.status === QrStatus.CANCELADO) {
+      <div class="result-card cancelled">
+        <lucide-icon [img]="XCircle" [size]="56" class="result-icon" />
+        <h2>{{ 'public.tenantQrGenerate.qrCancelledTitle' | transloco }}</h2>
+        <p>{{ 'public.tenantQrGenerate.qrCancelledDesc' | transloco }}</p>
+        <app-button (clicked)="resetQr()">
+          {{ 'public.tenantQrGenerate.generateNewQr' | transloco }}
+        </app-button>
+      </div>
+    }
+
+    @if (qr.status === QrStatus.PENDIENTE) {
+      <div class="qr-display-card">
+        <div class="qr-display-header">
+          <div class="qr-amount">
+            <span class="qr-amount-label">{{
+              'public.tenantQrGenerate.totalToPayLabel' | transloco
+            }}</span>
+            <span class="qr-amount-value">
+              {{ currencySymbol(qr.currency) }}{{ qr.amount | number: '1.2-2' }}
+              <small>{{ qr.currency }}</small>
+            </span>
+          </div>
+          <div class="qr-status-chip pending">
+            <lucide-icon [img]="Clock" [size]="14" />
+            <span>{{ 'public.tenantQrGenerate.waitingForPayment' | transloco }}</span>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="qr-image-wrapper">
+          @if (qrSafeUrl()) {
+            <img
+              [src]="qrSafeUrl()!"
+              [attr.alt]="'public.tenantQrGenerate.qrImageAlt' | transloco"
+              class="qr-image"
+            />
+          } @else {
+            <div class="qr-placeholder">
+              <lucide-icon [img]="QrCode" [size]="80" />
+              <span>{{ 'public.tenantQrGenerate.qrNotAvailable' | transloco }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="qr-steps">
+          <div class="step">
+            <span class="step-no">1</span>{{ 'public.tenantQrGenerate.step1' | transloco }}
+          </div>
+          <div class="step">
+            <span class="step-no">2</span>
+            <span>
+              {{ 'public.tenantQrGenerate.step2Before' | transloco }}
+              <strong>{{ 'public.tenantQrGenerate.step2Action' | transloco }}</strong>
+              {{ 'public.tenantQrGenerate.step2After' | transloco }}
+            </span>
+          </div>
+          <div class="step">
+            <span class="step-no">3</span>{{ 'public.tenantQrGenerate.step3' | transloco }}
+          </div>
+          <div class="step">
+            <span class="step-no">4</span>{{ 'public.tenantQrGenerate.step4' | transloco }}
+          </div>
+        </div>
+
+        @if (qr.expires_at) {
+          <div class="expires-row">
+            <lucide-icon [img]="Clock" [size]="14" />
+            <span>
+              {{ 'public.tenantQrGenerate.expiresAtLabel' | transloco }}
+              {{ qr.expires_at | tenantDate: true }}
+            </span>
+            <span class="poll-label">
+              {{
+                'public.tenantQrGenerate.pollingStatusLabel'
+                  | transloco: { seconds: pollIntervalSec }
+              }}
+            </span>
+          </div>
+        }
+
+        <hr class="divider" />
+
+        <div class="qr-actions">
+          <app-button
+            appearance="secondary"
+            (clicked)="manualVerify(qr)"
+            [disabled]="polling()"
+            [loading]="polling()"
+          >
+            <lucide-icon [img]="RefreshCw" [size]="16" />
+            {{ 'public.tenantQrGenerate.verifyNow' | transloco }}
+          </app-button>
+          @if (qrSafeUrl()) {
+            <app-button appearance="secondary" (clicked)="downloadQr(qr)">
+              <lucide-icon [img]="Download" [size]="16" />
+              {{ 'public.tenantQrGenerate.downloadQr' | transloco }}
+            </app-button>
+          }
+          <app-button
+            appearance="outline"
+            (clicked)="onCancel(qr)"
+            [disabled]="cancelling()"
+            [loading]="cancelling()"
+          >
+            <lucide-icon [img]="XCircle" [size]="16" />
+            {{ 'public.tenantQrGenerate.cancelQr' | transloco }}
+          </app-button>
+        </div>
+      </div>
+    }
+  }
+</div>

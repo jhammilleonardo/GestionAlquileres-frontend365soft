@@ -170,7 +170,7 @@
               <app-text-field
                 formControlName="card_holder_name"
                 [label]="'payments.cardHolder' | transloco"
-                placeholder="Ej: Juan Perez"
+                [placeholder]="'payments.placeholders.cardHolder' | transloco"
               />
 
               <app-text-field
@@ -198,7 +198,7 @@
                 <app-text-field
                   formControlName="reference_number"
                   [label]="'payments.authCode' | transloco"
-                  placeholder="Ej: 123456"
+                  [placeholder]="'payments.placeholders.authCode' | transloco"
                 />
                 <p class="field-hint">{{ 'payments.authCodeHint' | transloco }}</p>
               </div>
@@ -210,13 +210,13 @@
               <app-text-field
                 formControlName="check_number"
                 [label]="'payments.checkNumber' | transloco"
-                placeholder="Ej: 001234"
+                [placeholder]="'payments.placeholders.checkNumber' | transloco"
               />
 
               <app-text-field
                 formControlName="bank_name"
                 [label]="'payments.issuingBank' | transloco"
-                placeholder="Banco Nacional"
+                [placeholder]="'payments.placeholders.bankName' | transloco"
               />
             </div>
 
@@ -242,7 +242,7 @@
               <app-text-field
                 formControlName="reference_number"
                 [label]="'payments.referenceNumber' | transloco"
-                placeholder="Ej: TRF-12345678"
+                [placeholder]="'payments.placeholders.transferReference' | transloco"
               />
               <p class="field-hint">{{ 'payments.bankConfirmationHint' | transloco }}</p>
             </div>
@@ -270,7 +270,7 @@
                 <app-text-field
                   formControlName="reference_number"
                   [label]="'payments.confirmationCode' | transloco"
-                  placeholder="Ej: ZMEMO123456"
+                  [placeholder]="'payments.placeholders.walletConfirmation' | transloco"
                 />
                 <p class="field-hint">{{ 'payments.transactionId' | transloco }}</p>
               </div>
@@ -279,7 +279,7 @@
                 <app-text-field
                   formControlName="received_by"
                   [label]="'payments.sentFrom' | transloco"
-                  placeholder="Ej: +1 555-1234"
+                  [placeholder]="'payments.placeholders.senderContact' | transloco"
                   type="tel"
                 />
                 <p class="field-hint">{{ 'payments.senderPhone' | transloco }}</p>
@@ -292,7 +292,7 @@
               <app-text-field
                 formControlName="reference_number"
                 [label]="'payments.transactionIdLabel' | transloco"
-                placeholder="Ej: PAYID-1234ABCD"
+                [placeholder]="'payments.placeholders.processorTransaction' | transloco"
               />
               <p class="field-hint">{{ 'payments.transactionIdHint' | transloco }}</p>
             </div>
@@ -303,13 +303,13 @@
               <app-text-field
                 formControlName="reference_number"
                 [label]="'payments.moneyOrderNumber' | transloco"
-                placeholder="Ej: MO-001234"
+                [placeholder]="'payments.placeholders.moneyOrder' | transloco"
               />
 
               <app-text-field
                 formControlName="bank_name"
                 [label]="'payments.issuingEntity' | transloco"
-                placeholder="Ej: Western Union"
+                [placeholder]="'payments.placeholders.issuingEntity' | transloco"
               />
             </div>
           }
@@ -328,7 +328,7 @@
               <app-text-field
                 formControlName="reference_number"
                 [label]="'payments.receiptNumber' | transloco"
-                placeholder="Ej: REC-001"
+                [placeholder]="'payments.placeholders.receiptNumber' | transloco"
               />
             </div>
           }

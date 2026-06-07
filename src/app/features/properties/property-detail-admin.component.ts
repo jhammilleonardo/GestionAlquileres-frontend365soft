@@ -27,7 +27,7 @@ import {
   Shield,
   Building2,
 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { SlugService } from '../../core/services/slug.service';
@@ -91,16 +91,20 @@ export class PropertyDetailAdminComponent {
   isLoading = signal(true);
   slug = signal('');
   activeTab: PropertyDetailTab = 'information';
-  readonly tabs: AppTabOption<PropertyDetailTab>[] = [
-    { label: 'Informacion', value: 'information' },
-    { label: 'Unidades', value: 'units' },
-  ];
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
   private readonly slugService = inject(SlugService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
+
+  get tabs(): AppTabOption<PropertyDetailTab>[] {
+    return [
+      { label: this.transloco.translate('properties.units.infoTabLabel'), value: 'information' },
+      { label: this.transloco.translate('properties.units.tabLabel'), value: 'units' },
+    ];
+  }
 
   constructor() {
     this.slug.set(this.slugService.getSlug() ?? '');
@@ -118,13 +122,13 @@ export class PropertyDetailAdminComponent {
         if (property) {
           this.property.set(property);
         } else {
-          this.toast.error('Propiedad no encontrada');
+          this.toast.error(this.transloco.translate('properties.actions.notFound'));
           this.goBack();
         }
         this.isLoading.set(false);
       },
       error: () => {
-        this.toast.error('Error al cargar la propiedad');
+        this.toast.error(this.transloco.translate('properties.actions.loadDetailError'));
         this.isLoading.set(false);
         this.goBack();
       },
@@ -192,7 +196,7 @@ export class PropertyDetailAdminComponent {
       const addr = prop.addresses[0];
       return `${addr.street_address}, ${addr.city}, ${addr.country}`;
     }
-    return 'Sin dirección';
+    return this.transloco.translate('common.notAvailable');
   }
 
   getStatusClass(): string {

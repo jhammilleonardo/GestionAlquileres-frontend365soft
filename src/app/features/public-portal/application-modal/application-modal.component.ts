@@ -8,7 +8,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { Property, RentalApplication } from '../../../core/models/property.model';
 import { PropertyService } from '../../../core/services/admin/property.service';
@@ -47,6 +47,7 @@ export class ApplicationModalComponent implements OnInit {
 
   private propertyService = inject(PropertyService);
   private toast = inject(ToastService);
+  private transloco = inject(TranslocoService);
 
   ngOnInit() {
     this.application.propertyId = this.property().id;
@@ -68,7 +69,7 @@ export class ApplicationModalComponent implements OnInit {
         this.isSubmitting.set(false);
       },
       error: () => {
-        this.toast.error('Hubo un error al enviar la solicitud. Por favor intente nuevamente.');
+        this.toast.error(this.transloco.translate('public.applicationModal.submitError'));
         this.isSubmitting.set(false);
       },
     });

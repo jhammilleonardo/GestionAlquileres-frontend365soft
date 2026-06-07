@@ -13,7 +13,7 @@
     </div>
   </div>
 
-  <nav class="sidebar-nav" aria-label="Menú principal">
+  <nav class="sidebar-nav" [attr.aria-label]="'sidebar.mainMenu' | transloco">
     <ul class="nav-list" role="list">
       @for (option of menuOptions(); track option.route) {
         <li class="nav-item" role="listitem">
@@ -34,7 +34,7 @@
               <span class="nav-label">{{ option.label | transloco }}</span>
             }
             @if (option.badgeCount) {
-              <span class="nav-badge" aria-label="Pending payments">
+              <span class="nav-badge" [attr.aria-label]="'sidebar.pendingPayments' | transloco">
                 {{ formatBadgeCount(option.badgeCount) }}
               </span>
             }

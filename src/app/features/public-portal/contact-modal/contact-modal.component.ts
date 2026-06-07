@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { Property } from '../../../core/models/property.model';
 import { PropertyService } from '../../../core/services/admin/property.service';
@@ -33,6 +33,7 @@ export class ContactModalComponent {
   constructor(
     private propertyService: PropertyService,
     private toast: ToastService,
+    private transloco: TranslocoService,
   ) {}
 
   submitForm() {
@@ -59,7 +60,7 @@ export class ContactModalComponent {
         },
         error: () => {
           this.isSubmitting = false;
-          this.toast.error('Hubo un error al enviar su mensaje. Por favor intente más tarde.');
+          this.toast.error(this.transloco.translate('public.contactModal.submitError'));
         },
       });
   }

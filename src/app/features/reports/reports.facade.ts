@@ -16,6 +16,7 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 import { ReportBarDatum } from './components/report-bar-chart.component';
 import { ReportChartSegment } from './components/report-donut-chart.component';
 import { ReportLineDatum } from './components/report-line-chart.component';
+import { buildReportColumns, buildVirtualReportRows } from './reports-data.builders';
 
 export type BackendReportType =
   | 'rent-roll'
@@ -119,7 +120,7 @@ export class ReportsFacade {
   });
   readonly activeColumns = computed<readonly AppTableColumn<ApiRecord>[]>(() => {
     this.reportTranslations();
-    return this.columnsFor(this.activeReport());
+    return buildReportColumns(this.activeReport(), (key, params) => this.t(key, params));
   });
   readonly canDownloadBackendExport = computed(() =>
     Boolean(this.activeReportOption().backendType),
@@ -312,7 +313,11 @@ export class ReportsFacade {
       next: (kpis) => {
         this.kpis.set(kpis);
         if (!this.activeReportOption().backendType) {
-          this.rows.set(this.buildVirtualRows(this.activeReport()));
+          this.rows.set(
+            buildVirtualReportRows(this.activeReport(), this.kpis(), (key, params) =>
+              this.t(key, params),
+            ),
+          );
         }
       },
       error: (error: Error) => this.toast.error(error.message),
@@ -324,7 +329,9 @@ export class ReportsFacade {
     this.activeReport.set(type);
     const backendType = this.activeReportOption().backendType;
     if (!backendType) {
-      this.rows.set(this.buildVirtualRows(type));
+      this.rows.set(
+        buildVirtualReportRows(type, this.kpis(), (key, params) => this.t(key, params)),
+      );
       this.isLoading.set(false);
       return;
     }
@@ -393,113 +400,6 @@ export class ReportsFacade {
     this.toast.success(this.t('toast.exported'));
   }
 
-  private buildVirtualRows(type: ReportType): ApiRecord[] {
-    const kpis = this.kpis();
-    const income = this.toNumber(kpis.monthlyIncome);
-    const pendingEstimate = this.toNumber(kpis.pendingPaymentsCount) * 100;
-    const maintenanceEstimate = this.toNumber(kpis.activeMaintenanceCount) * 250;
-    const commission = income * 0.1;
-
-    if (type === 'owners') {
-      return [
-        {
-          id: 1,
-          property_name: this.t('virtual.allProperties'),
-          gross_income: income,
-          commission,
-          deductions: maintenanceEstimate,
-          net_transfer: Math.max(income - commission - maintenanceEstimate, 0),
-          status: this.t('virtual.pendingClose'),
-        },
-      ];
-    }
-
-    if (type === 'cash-flow') {
-      return [
-        {
-          id: 1,
-          movement: this.t('virtual.approvedRents'),
-          inflow: income,
-          outflow: 0,
-          net: income,
-        },
-        {
-          id: 2,
-          movement: this.t('virtual.estimatedPendingPayments'),
-          inflow: pendingEstimate,
-          outflow: 0,
-          net: pendingEstimate,
-        },
-        {
-          id: 3,
-          movement: this.t('virtual.estimatedMaintenance'),
-          inflow: 0,
-          outflow: maintenanceEstimate,
-          net: -maintenanceEstimate,
-        },
-      ];
-    }
-
-    if (type === 'budget-vs-actual') {
-      const budgetIncome = Math.max(this.toNumber(kpis.monthlyIncomePrevious) * 1.05, income);
-      const budgetExpenses = maintenanceEstimate * 1.15;
-      return [
-        {
-          id: 1,
-          line: this.t('virtual.incomeLine'),
-          budget: budgetIncome,
-          actual: income,
-          variance: income - budgetIncome,
-        },
-        {
-          id: 2,
-          line: this.t('virtual.operatingExpenses'),
-          budget: budgetExpenses,
-          actual: maintenanceEstimate,
-          variance: budgetExpenses - maintenanceEstimate,
-        },
-      ];
-    }
-
-    if (type === 'maintenance') {
-      return [
-        {
-          id: 1,
-          metric: this.t('virtual.activeRequests'),
-          value: this.toNumber(kpis.activeMaintenanceCount),
-          status: this.t('virtual.operationalTracking'),
-        },
-        {
-          id: 2,
-          metric: this.t('virtual.estimatedCost'),
-          value: MONEY_FORMAT.format(maintenanceEstimate),
-          status: this.t('virtual.basedOnActivity'),
-        },
-      ];
-    }
-
-    return [
-      {
-        id: 1,
-        metric: this.t('virtual.monthIncome'),
-        value: MONEY_FORMAT.format(income),
-        status: this.t('virtual.financial'),
-      },
-      {
-        id: 2,
-        metric: this.t('virtual.occupancy'),
-        value: `${((kpis.occupancyRateValue ?? 0) * 100).toFixed(1)}%`,
-        status: this.t('virtual.operational'),
-      },
-      {
-        id: 3,
-        metric: this.t('virtual.activeMaintenance'),
-        value: this.toNumber(kpis.activeMaintenanceCount),
-        status: this.t('virtual.operational'),
-      },
-    ];
-  }
-
   private buildParams(): QueryParams {
     const value = this.filterForm.getRawValue();
     const params: QueryParams = {};
@@ -514,152 +414,6 @@ export class ReportsFacade {
 
   private t(key: string, params?: Record<string, string | number>): string {
     return this.transloco.translate(`reports.${key}`, params);
-  }
-
-  private columnsFor(type: ReportType): readonly AppTableColumn<ApiRecord>[] {
-    const columns: Record<ReportType, readonly AppTableColumn<ApiRecord>[]> = {
-      summary: [
-        { key: 'metric', label: this.t('columns.metric') },
-        { key: 'value', label: this.t('columns.value'), align: 'right' },
-        { key: 'status', label: this.t('columns.reading') },
-      ],
-      'rent-roll': [
-        { key: 'property_name', label: this.t('columns.property') },
-        { key: 'unit_number', label: this.t('columns.unit') },
-        { key: 'tenant_name', label: this.t('columns.tenant') },
-        { key: 'contract_status', label: this.t('columns.contract') },
-        {
-          key: 'rent_amount',
-          label: this.t('columns.rent'),
-          align: 'right',
-          formatter: moneyCell('rent_amount'),
-        },
-        {
-          key: 'current_balance',
-          label: this.t('columns.balance'),
-          align: 'right',
-          formatter: moneyCell('current_balance'),
-        },
-      ],
-      vacancies: [
-        { key: 'property_name', label: this.t('columns.property') },
-        { key: 'unit_number', label: this.t('columns.unit') },
-        { key: 'bedrooms', label: this.t('columns.beds') },
-        { key: 'bathrooms', label: this.t('columns.baths') },
-        {
-          key: 'market_rent',
-          label: this.t('columns.marketRent'),
-          align: 'right',
-          formatter: moneyCell('market_rent'),
-        },
-        { key: 'days_vacant', label: this.t('columns.daysVacant'), align: 'right' },
-      ],
-      delinquency: [
-        { key: 'tenant_name', label: this.t('columns.tenant') },
-        { key: 'property_name', label: this.t('columns.property') },
-        { key: 'unit_number', label: this.t('columns.unit') },
-        {
-          key: 'total_owed',
-          label: this.t('columns.debt'),
-          align: 'right',
-          formatter: moneyCell('total_owed'),
-        },
-        { key: 'max_days_late', label: this.t('columns.daysLate'), align: 'right' },
-      ],
-      pnl: [
-        { key: 'property_name', label: this.t('columns.property') },
-        {
-          key: 'income',
-          label: this.t('columns.income'),
-          align: 'right',
-          formatter: moneyCell('income'),
-        },
-        {
-          key: 'expenses',
-          label: this.t('columns.expenses'),
-          align: 'right',
-          formatter: moneyCell('expenses'),
-        },
-        {
-          key: 'net_result',
-          label: this.t('columns.result'),
-          align: 'right',
-          formatter: moneyCell('net_result'),
-        },
-      ],
-      maintenance: [
-        { key: 'metric', label: this.t('columns.metric') },
-        { key: 'value', label: this.t('columns.value'), align: 'right' },
-        { key: 'status', label: this.t('columns.reading') },
-      ],
-      owners: [
-        { key: 'property_name', label: this.t('columns.property') },
-        {
-          key: 'gross_income',
-          label: this.t('columns.grossRent'),
-          align: 'right',
-          formatter: moneyCell('gross_income'),
-        },
-        {
-          key: 'commission',
-          label: this.t('columns.commission'),
-          align: 'right',
-          formatter: moneyCell('commission'),
-        },
-        {
-          key: 'deductions',
-          label: this.t('columns.deductions'),
-          align: 'right',
-          formatter: moneyCell('deductions'),
-        },
-        {
-          key: 'net_transfer',
-          label: this.t('columns.ownerNet'),
-          align: 'right',
-          formatter: moneyCell('net_transfer'),
-        },
-        { key: 'status', label: this.t('columns.state') },
-      ],
-      'cash-flow': [
-        { key: 'movement', label: this.t('columns.movement') },
-        {
-          key: 'inflow',
-          label: this.t('columns.inflow'),
-          align: 'right',
-          formatter: moneyCell('inflow'),
-        },
-        {
-          key: 'outflow',
-          label: this.t('columns.outflow'),
-          align: 'right',
-          formatter: moneyCell('outflow'),
-        },
-        { key: 'net', label: this.t('columns.net'), align: 'right', formatter: moneyCell('net') },
-      ],
-      'budget-vs-actual': [
-        { key: 'line', label: this.t('columns.line') },
-        {
-          key: 'budget',
-          label: this.t('columns.budget'),
-          align: 'right',
-          formatter: moneyCell('budget'),
-        },
-        {
-          key: 'actual',
-          label: this.t('columns.actual'),
-          align: 'right',
-          formatter: moneyCell('actual'),
-        },
-        {
-          key: 'variance',
-          label: this.t('columns.variance'),
-          align: 'right',
-          formatter: moneyCell('variance'),
-        },
-      ],
-    };
-
-    return columns[type];
   }
 
   private buildFilename(report: string, format: ReportExportFormat): string {
@@ -695,15 +449,4 @@ export class ReportsFacade {
     if (typeof value === 'number' || typeof value === 'boolean') return String(value);
     return fallback;
   }
-}
-
-function moneyCell(key: string): (row: ApiRecord) => string {
-  return (row: ApiRecord) => MONEY_FORMAT.format(readNumberFromRow(row, key));
-}
-
-function readNumberFromRow(row: ApiRecord, key: string): number {
-  const value = row[key];
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
 }

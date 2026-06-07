@@ -33,6 +33,15 @@ describe('SessionTokenService', () => {
     expect(service.getToken('tenant')).toBe('tenant-token');
   });
 
+  it('elimina tokens persistentes anteriores al guardar una sesion temporal', () => {
+    service.setToken('admin', 'persistent-token', true);
+    service.setToken('admin', 'session-token', false);
+
+    expect(localStorage.getItem('admin_access_token')).toBeNull();
+    expect(sessionStorage.getItem('admin_access_token')).toBe('session-token');
+    expect(service.getToken('admin')).toBe('session-token');
+  });
+
   it('limpia el token en ambos storages', () => {
     localStorage.setItem('owner_access_token', 'local-owner-token');
     sessionStorage.setItem('owner_access_token', 'session-owner-token');

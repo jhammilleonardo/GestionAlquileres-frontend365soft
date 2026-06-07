@@ -84,9 +84,10 @@ export class OwnerAuthService {
   }
 
   private setSession(response: OwnerLoginResponse, rememberMe: boolean): void {
-    this.sessionToken.clearToken('owner');
     this.sessionToken.setToken('owner', response.access_token, rememberMe);
     const storage = rememberMe ? localStorage : sessionStorage;
+    localStorage.removeItem(this.ownerUserKey);
+    sessionStorage.removeItem(this.ownerUserKey);
     storage.setItem(this.ownerUserKey, JSON.stringify(response.user));
     this.currentOwnerSignal.set(response.user);
   }

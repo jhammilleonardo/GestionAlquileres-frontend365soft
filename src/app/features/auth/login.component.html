@@ -1,0 +1,213 @@
+<div class="login-page">
+  <!-- Left Side - Branding -->
+  <div class="login-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
+      </div>
+      <h1>365Soft</h1>
+      <h2>{{ 'auth.adminPanel' | transloco }}</h2>
+      <p class="brand-tagline">
+        {{ 'auth.tagline' | transloco }}
+      </p>
+
+      <div class="features">
+        <div class="feature-item">
+          <lucide-icon [img]="BarChart3" [size]="20"></lucide-icon>
+          <span>{{ 'auth.feature1' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="Users" [size]="20"></lucide-icon>
+          <span>{{ 'auth.feature2' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
+          <span>{{ 'auth.feature3' | transloco }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Login Form -->
+  <div class="login-form-container">
+    <div class="login-form-wrapper">
+      <div class="lang-toggle-row">
+        <div
+          class="lang-toggle"
+          role="group"
+          [attr.aria-label]="'common.languageSelector' | transloco"
+        >
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isSpanish()"
+            (click)="languageService.setLanguage('es')"
+            [attr.aria-label]="'common.spanish' | transloco"
+            [attr.title]="'common.spanish' | transloco"
+          >
+            ES
+          </button>
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isEnglish()"
+            (click)="languageService.setLanguage('en')"
+            [attr.aria-label]="'common.english' | transloco"
+            [attr.title]="'common.english' | transloco"
+          >
+            EN
+          </button>
+        </div>
+      </div>
+      <div class="form-header">
+        <h3>{{ 'auth.loginTitle' | transloco }}</h3>
+        <p>
+          {{
+            slug
+              ? ('auth.loginSubtitleTenant' | transloco)
+              : ('auth.loginSubtitleAdmin' | transloco)
+          }}
+        </p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="error-alert">
+          <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
+          <div class="error-content">
+            <strong>{{ 'auth.loginError' | transloco }}</strong>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      @if (!mfaRequired()) {
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <div class="field-block">
+            <app-text-field
+              formControlName="email"
+              type="email"
+              autocomplete="email"
+              label="{{ 'auth.email' | transloco }}"
+              [placeholder]="'auth.adminEmailPlaceholder' | transloco"
+            />
+            @if (loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched) {
+              <p class="field-error">{{ 'auth.emailRequired' | transloco }}</p>
+            }
+            @if (loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched) {
+              <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
+            }
+          </div>
+
+          <div class="field-block">
+            <div class="password-wrapper">
+              <app-text-field
+                formControlName="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                autocomplete="current-password"
+                label="{{ 'auth.password' | transloco }}"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                (click)="togglePassword()"
+                tabindex="-1"
+                [attr.aria-label]="
+                  showPassword()
+                    ? ('auth.hidePassword' | transloco)
+                    : ('auth.showPassword' | transloco)
+                "
+              >
+                <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
+              </button>
+            </div>
+            @if (
+              loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched
+            ) {
+              <p class="field-error">{{ 'auth.passwordRequired' | transloco }}</p>
+            }
+          </div>
+
+          <div class="form-options">
+            <app-checkbox
+              formControlName="rememberMe"
+              label="{{ 'auth.rememberMe' | transloco }}"
+            />
+            <a routerLink="/forgot-password" class="forgot-link">{{
+              'auth.forgotPassword' | transloco
+            }}</a>
+          </div>
+
+          <app-button
+            type="submit"
+            class="submit-btn"
+            [fullWidth]="true"
+            [loading]="isLoading()"
+            [disabled]="loginForm.invalid || isLoading()"
+          >
+            {{ isLoading() ? ('auth.loggingIn' | transloco) : ('auth.login' | transloco) }}
+          </app-button>
+        </form>
+      } @else {
+        <form [formGroup]="mfaForm" (ngSubmit)="verifyMfa()" class="login-form">
+          <div class="mfa-panel">
+            <div class="mfa-icon">
+              <lucide-icon [img]="KeyRound" [size]="22" />
+            </div>
+            <div>
+              <h4>{{ 'auth.mfaTitle' | transloco }}</h4>
+              <p>{{ 'auth.mfaDesc' | transloco: { email: mfaEmailMasked() } }}</p>
+            </div>
+          </div>
+
+          <div class="field-block">
+            <app-text-field
+              formControlName="code"
+              type="text"
+              inputMode="numeric"
+              [maxLength]="6"
+              autocomplete="one-time-code"
+              [label]="'auth.mfaCode' | transloco"
+              placeholder="000000"
+            />
+            @if (mfaForm.get('code')?.hasError('required') && mfaForm.get('code')?.touched) {
+              <p class="field-error">{{ 'auth.mfaCodeRequired' | transloco }}</p>
+            }
+            @if (mfaForm.get('code')?.hasError('pattern') && mfaForm.get('code')?.touched) {
+              <p class="field-error">{{ 'auth.mfaCodeInvalid' | transloco }}</p>
+            }
+          </div>
+
+          <app-button
+            type="submit"
+            class="submit-btn"
+            [fullWidth]="true"
+            [loading]="isLoading()"
+            [disabled]="mfaForm.invalid || isLoading()"
+          >
+            {{ isLoading() ? ('auth.mfaVerifying' | transloco) : ('auth.mfaVerify' | transloco) }}
+          </app-button>
+
+          <button type="button" class="secondary-link" (click)="resetMfa()">
+            {{ 'auth.mfaBack' | transloco }}
+          </button>
+        </form>
+      }
+
+      <div class="form-footer">
+        <div class="security-badge">
+          <lucide-icon [img]="Shield" [size]="16"></lucide-icon>
+          <span>{{ 'auth.sslBadge' | transloco }}</span>
+        </div>
+        <div class="help-links">
+          @if (!slug) {
+            <a routerLink="/register" class="help-link">{{ 'auth.noAccount' | transloco }}</a>
+          } @else {
+            <a [routerLink]="['/', slug, 'register']" class="help-link">{{
+              'auth.noAccount' | transloco
+            }}</a>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+`

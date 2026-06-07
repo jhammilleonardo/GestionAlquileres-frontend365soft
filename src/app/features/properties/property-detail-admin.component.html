@@ -2,7 +2,7 @@
   <!-- Loading State -->
   @if (isLoading()) {
     <div class="pd-loading">
-      <app-loading-state label="Cargando propiedad..." />
+      <app-loading-state [label]="'properties.loadingDetail' | transloco" />
     </div>
   }
 
@@ -50,7 +50,11 @@
       </div>
 
       <div class="pd-tabs">
-        <app-tabs [(ngModel)]="activeTab" [tabs]="tabs" ariaLabel="Detalle de propiedad" />
+        <app-tabs
+          [(ngModel)]="activeTab"
+          [tabs]="tabs"
+          [ariaLabel]="'properties.detailTabsLabel' | transloco"
+        />
       </div>
 
       @if (activeTab === 'information') {
@@ -85,7 +89,7 @@
                       type="button"
                       (click)="previousImage()"
                       class="pd-gallery-nav pd-gallery-nav--prev"
-                      aria-label="Imagen anterior"
+                      [attr.aria-label]="'properties.previousImage' | transloco"
                     >
                       <lucide-icon [img]="ChevronLeft" [size]="24"></lucide-icon>
                     </button>
@@ -93,7 +97,7 @@
                       type="button"
                       (click)="nextImage()"
                       class="pd-gallery-nav pd-gallery-nav--next"
-                      aria-label="Imagen siguiente"
+                      [attr.aria-label]="'properties.nextImage' | transloco"
                     >
                       <lucide-icon [img]="ChevronRight" [size]="24"></lucide-icon>
                     </button>

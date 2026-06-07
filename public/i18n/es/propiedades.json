@@ -58,10 +58,15 @@
   "fullAddress": "Dirección Completa *",
   "fullAddressPlaceholder": "Av. Principal 1234, Piso 5",
   "city": "Ciudad *",
+  "cityPlaceholder": "Santa Cruz",
   "state": "Estado / Provincia",
+  "statePlaceholder": "Santa Cruz de la Sierra",
   "zip": "Código Postal",
   "country": "País *",
+  "countryPlaceholder": "Bolivia",
   "ownerInfo": "Información del Propietario",
+  "ownerNamePlaceholder": "Carlos Gonzalez",
+  "ownerEmailPlaceholder": "carlos@example.com",
   "ownerPercent": "% de Propiedad",
   "characteristics": "Características",
   "features": {
@@ -84,6 +89,10 @@
   "monthlyPrice": "Precio Mensual",
   "depositLabel": "Depósito:",
   "showing": "Mostrando {{count}} propiedades",
+  "loadingDetail": "Cargando propiedad...",
+  "detailTabsLabel": "Detalle de propiedad",
+  "previousImage": "Imagen anterior",
+  "nextImage": "Imagen siguiente",
   "actions": {
     "loadError": "Error al cargar las propiedades",
     "loadTypesError": "No se pudieron cargar los tipos de propiedad. Recarga la página.",
@@ -100,7 +109,9 @@
     "deleteError": "Error al eliminar: {{message}}",
     "activated": "Propiedad activada exitosamente",
     "deactivated": "Propiedad desactivada",
-    "statusError": "Error al actualizar estado: {{message}}"
+    "statusError": "Error al actualizar estado: {{message}}",
+    "notFound": "Propiedad no encontrada",
+    "loadDetailError": "Error al cargar la propiedad"
   },
   "validation": {
     "addressRequired": "Se requiere al menos una dirección",

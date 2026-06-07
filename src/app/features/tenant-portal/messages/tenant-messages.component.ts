@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { LucideAngularModule, Send, MessageSquare } from 'lucide-angular';
 
 import { InternalMessageService } from '../../../core/services/internal-message.service';
@@ -166,6 +166,7 @@ export class TenantMessagesComponent {
   private readonly messageService = inject(InternalMessageService);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
 
   readonly isLoading = signal(true);
   readonly messages = signal<InternalMessage[]>([]);
@@ -232,7 +233,7 @@ export class TenantMessagesComponent {
       },
       error: () => {
         this.sending.set(false);
-        this.toast.error('No se pudo enviar el mensaje');
+        this.toast.error(this.transloco.translate('messages.sendError'));
       },
     });
   }

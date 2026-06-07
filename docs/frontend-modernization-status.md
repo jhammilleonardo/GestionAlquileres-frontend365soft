@@ -77,6 +77,9 @@ arquitectura similar en calidad a la del backend:
   - [x] `header` ya no usa `mat-toolbar` ni botones Material.
   - [x] `header` ya no usa `mat-menu`.
   - [x] Menu de usuario del header reemplazado por panel propio con overlay.
+- [x] `tenant-layout.component.ts` ya no tiene template ni estilos inline;
+  queda separado en `tenant-layout.component.html` y
+  `tenant-layout.component.scss` (TS reducido de 1155 a ~321 lineas).
 
 ### Wrappers UI Creados
 
@@ -126,7 +129,15 @@ Pendientes posibles segun avance de modernizacion:
 ### Seguridad Y Tokens
 
 - [x] `SessionTokenService` creado para `admin`, `tenant` y `owner`.
+- [x] `SessionTokenService.setToken` limpia el storage opuesto antes de guardar,
+  evitando que tokens persistentes viejos ganen prioridad sobre sesiones
+  temporales nuevas.
 - [x] `authInterceptor` usa `SessionTokenService`.
+- [x] `AuthService` delega tokens admin/tenant en `SessionTokenService`.
+- [x] `OwnerAuthService` limpia `owner_user` en ambos storages antes de guardar
+  una nueva sesion.
+- [x] `register.component.ts` ya no borra `tenant_access_token` manualmente;
+  usa `SessionTokenService.clearToken('tenant')`.
 - [x] `module.guard.ts` falla cerrado ante error de permisos.
 - [x] Redirect sin slug corregido a `/login`.
 - [x] Headers `Authorization` manuales eliminados en servicios seleccionados:
@@ -139,10 +150,8 @@ Pendientes posibles segun avance de modernizacion:
 
 Pendiente:
 
-- [ ] Revisar si `AuthService` y `TenantAuthService` pueden validar `/auth/me`
-  usando interceptor sin headers manuales.
-- [ ] Validar flujo owner completo de negocio: autorizacion de mantenimiento y
-  descargas PDF de statements/contratos contra backend real.
+- [ ] Validar flujo owner completo de negocio con backend/staging:
+  autorizacion de mantenimiento y descargas PDF de statements/contratos.
 - [x] Seed demo backend crea usuarios `PROPIETARIO` idempotentes para poder
   validar `owner_access_token` en E2E local.
 - [x] Registro tenant ya no escribe `tenant_access_token` / `tenant_user`
@@ -190,6 +199,9 @@ Pendiente:
 
 - [x] `features/auth/login.component.ts` usa wrappers `app-*` en inputs,
   checkbox y boton principal.
+- [x] `features/auth/login.component.ts` ya no tiene template ni estilos
+  inline; queda separado en `login.component.html` y `login.component.scss`
+  (TS reducido de 886 a ~245 lineas).
 - [x] `features/auth/forgot-password.component.ts` usa wrappers `app-*` y ya
   no depende de Material.
 - [x] `features/tenant-portal/auth/tenant-login.component.ts` usa wrappers
@@ -244,6 +256,10 @@ Pendiente:
 - [x] `console.error` productivo eliminado del flujo de guardado local.
 - [x] `features/configuration/wizard-setup/wizard-setup.component.ts` ya no
   importa Angular Material.
+- [x] `wizard-setup.component.ts` ya no tiene template ni estilos inline;
+  queda separado en `wizard-setup.component.html` y
+  `wizard-setup.component.scss` (TS reducido de 733 a ~282 lineas).
+- [x] Opciones de pais del wizard salen de i18n.
 - [x] `mat-stepper` reemplazado por `app-stepper` y navegacion con signal
   `currentStep`.
 - [x] Selects, inputs numericos y acciones migrados a `app-select`,
@@ -322,7 +338,7 @@ Pendiente:
   - [x] Rechazo de pago extraido a
     `components/payment-reject-dialog`.
   - [x] `features/payments/payments.component.ts` ya no importa Angular Material.
-  - [x] `payments.facade.ts` creado:
+- [x] `payments.facade.ts` creado:
     - [x] Carga inicial de pagos/stats/tenants.
     - [x] Filtros principales y filtros de pendientes.
     - [x] Seleccion masiva y bulk actions.
@@ -330,6 +346,9 @@ Pendiente:
     - [x] Export CSV.
     - [x] Visor de comprobantes, zoom y ciclo de URL temporal.
     - [x] Creacion manual admin y busqueda de inquilino/contrato.
+  - [x] `PaymentProofViewerFacade` extraida para comprobantes/PDF/zoom.
+  - [x] `PaymentAdminCreateFacade` extraida para creacion manual admin,
+    busqueda de inquilino y contratos.
   - [x] `payments.component.html` baja de ~436 lineas a ~125 lineas y queda
     como composicion de secciones.
   - [x] `payments.component.ts` queda como capa visual de ~29 lineas.
@@ -568,12 +587,13 @@ Pendiente:
   - [x] Ultimo corte de orquestacion:
     - [x] Formulario, submit manual y progreso de upload viven en
       `tenant-create-payment.facade.ts`.
-    - [x] Generacion QR, verificacion manual, polling, cancelacion y reset QR
-      viven en la facade.
+    - [x] Generacion QR, verificacion manual, polling, cancelacion, descarga y
+      reset QR viven en `tenant-payment-qr-flow.facade.ts`.
+    - [x] Calendario de cuotas vive en `tenant-payment-schedule.builder.ts`.
     - [x] Retry de pago rechazado y navegacion post-pago viven en la facade.
     - [x] Preview, validacion, zoom y object URL del comprobante viven en
       `tenant-payment-receipt-preview.facade.ts`.
-    - [x] Safe URL del QR vive en `tenant-create-payment.facade.ts`.
+    - [x] Safe URL del QR vive en `tenant-payment-qr-flow.facade.ts`.
     - [x] El componente queda como orquestador de layout y eventos.
 - [x] Documentos y contratos tenant modernizados:
   - [x] `tenant-documents.component.ts` usa `app-page-header`, `app-tabs`,
@@ -626,7 +646,7 @@ Pendiente:
 
 Pendiente:
 
-- [ ] Modernizar pagos del tenant:
+- [x] Modernizar pagos del tenant:
   - [x] `tenant-payments-list`.
   - [x] `tenant-create-payment` formulario base y datos de metodo.
   - [x] `tenant-create-payment` estados de exito.
@@ -637,7 +657,7 @@ Pendiente:
   - [x] Comprobante/recibos dentro de `tenant-create-payment`.
 - [x] Modernizar documentos/contratos tenant.
 - [x] Modernizar perfil/configuracion tenant.
-- [ ] Modernizar wizard de solicitudes del tenant:
+- [x] Modernizar wizard de solicitudes del tenant:
   - [x] Entrada/marketplace `new-application`.
   - [x] `application-wizard.component.ts`.
   - [x] Steps internos `step-1`, `step-2`, `step-3`.
@@ -737,6 +757,8 @@ modernizacion:
     Budget vs Actual.
   - [x] Template/SCSS separados.
   - [x] Tests basicos de `ReportsFacade`.
+  - [x] Columnas y filas virtuales extraidas a `reports-data.builders.ts`
+    para reducir `ReportsFacade`.
 - [x] Vendors / proveedores frontend inicial.
 - [x] Expenses / gastos frontend inicial.
 - [x] Violations / violaciones frontend inicial.
@@ -772,6 +794,8 @@ Pendiente de estos modulos:
 - [ ] Validar exportaciones PDF/Excel reales con backend/staging donde aplique.
 - [x] E2E base por flujo critico agregado para login, pagos, solicitudes,
   propiedades, contratos y mantenimiento.
+- [x] E2E operativo owner autenticado agregado: dashboard, propiedades,
+  liquidaciones, mantenimiento y contratos.
 - [ ] Ejecutar E2E completo contra backend/staging con datos reales.
 
 ### Notifications
@@ -801,6 +825,9 @@ Pendiente de estos modulos:
   `app-button`, `app-loading-state`, `app-empty-state` y `ConfirmDialogService`.
 - [x] `tenant-portal/payments/tenant-qr-generate` ya no importa Angular Material;
   usa `app-button`, `app-select`, `app-text-field` y tokens propios.
+- [x] `tenant-portal/payments/tenant-qr-generate` ya no tiene template ni
+  estilos inline; queda separado en `.html` y `.scss` (TS reducido de 779 a
+  ~236 lineas).
 - [x] `tenant-portal/messages/tenant-messages` ya no importa Angular Material;
   migrado de 973 lineas a componente limpio con `app-button`, `app-select`,
   `app-text-field`, `app-textarea` y `ToastService`.
@@ -840,11 +867,23 @@ Pendiente de estos modulos:
   `git checkout`; migrados a `ConfirmDialogService` + `ToastService`.
 - `application-modal` migrado de `alert()` a `ToastService`.
 
-### Corte Actual: Arquitectura Y E2E Operativos
+### Corte Actual: Arquitectura, I18n, Storage Y E2E Operativos
 
-- [x] `tenant-create-payment.component.ts` dejo de tener template y estilos
-  inline. Quedo como page container de 233 lineas con `.html` y `.scss`
-  dedicados.
+- [x] `tenant-create-payment.facade.ts` reducido de 527 a ~392 lineas:
+  - [x] QR/polling/cancelacion/descarga en `tenant-payment-qr-flow.facade.ts`.
+  - [x] Calendario de cuotas en `tenant-payment-schedule.builder.ts`.
+- [x] `payments.facade.ts` reducido con:
+  - [x] `PaymentProofViewerFacade`.
+  - [x] `PaymentAdminCreateFacade`.
+- [x] `reports.facade.ts` reducido con `reports-data.builders.ts`.
+- [x] `tenant-contract-detail.component.ts` ya no tiene template ni estilos
+  inline; TS reducido de 735 a ~216 lineas.
+- [x] `tenant-qr-generate.component.ts` ya no tiene template ni estilos inline;
+  TS reducido de 779 a ~236 lineas.
+- [x] `wizard-setup.component.ts` ya no tiene template ni estilos inline; TS
+  reducido de 733 a ~282 lineas.
+- [x] `npm run i18n:audit` queda en 0 textos visibles hardcodeados.
+- [x] `SessionTokenService` evita tokens duplicados entre local/session storage.
 - [x] E2E ampliado a modulos operativos:
   - [x] Reports: filtros y navegacion entre vistas.
   - [x] Vendors: formulario y detalle/historial cuando hay registros.
@@ -852,6 +891,8 @@ Pendiente de estos modulos:
   - [x] Violations: formulario y filtros.
   - [x] Inspections: crear y comparar.
   - [x] Owner Portal: ruta protegida redirige a login propietario.
+  - [x] Owner Portal: sesion owner real navega dashboard, propiedades,
+    liquidaciones, mantenimiento y contratos.
 - [x] E2E corre serial en local para evitar interferencias por sesion y
   throttling del backend.
 - [x] `AuthService.cleanupOldData()` ya no borra tokens reales al refrescar la
@@ -895,12 +936,12 @@ Pendiente de estos modulos:
 Ultima verificacion local:
 
 - [x] `npm run build` pasa.
-- [x] `npm run lint:check` pasa con `0 errors`.
-- [x] `npm run test -- --watch=false` pasa: 44 archivos, 244 tests.
-- [x] `npm run e2e` pasa contra Docker/dev server: 17 tests E2E en 7 archivos.
-  Incluye login, rutas criticas admin, modulos operativos, exports PDF/Excel de
-  reports y smoke responsive mobile.
-- [x] `git diff --check` pasa.
+- [x] `npm run lint` pasa.
+- [x] `npm run i18n:audit` pasa con 0 textos visibles hardcodeados.
+- [x] `npm run test` pasa: 53 archivos, 282 tests.
+- [ ] `npm run e2e` contra Docker/dev server pendiente en esta sesion: Docker
+  no expone `/var/run/docker.sock`, por lo que no se pudo levantar/consultar
+  contenedores.
 
 Estado lint:
 
@@ -931,17 +972,17 @@ Riesgo:
 
 Principales candidatos actuales despues del corte actual:
 
-- `tenant-create-payment.component.ts`: ~165 lineas. Ya tiene template/estilos
-  extraidos y preview de comprobante separado; queda pendiente testear flujo
-  manual + QR con datos reales.
-- `tenant-create-payment.facade.ts`: ~515 lineas. Ya concentra submit, QR,
-  polling y retry.
-- `payments.component.html`: ~125 lineas; `payments.facade.ts`: ~722 lineas.
+- `tenant-create-payment.component.ts`: ~163 lineas; queda como orquestador
+  visual.
+- `tenant-create-payment.facade.ts`: ~392 lineas. Submit manual y retry viven
+  aqui; QR/polling y calendario ya estan extraidos.
+- `payments.component.html`: ~125 lineas; `payments.facade.ts`: ~570 lineas.
 - `properties.component.html`: ~58 lineas; `properties.facade.ts`: ~556 lineas.
 - `contracts.component.ts`: ~85 lineas; listado extraido.
 - `contract-create.component.html`: ~49 lineas; create/edit usan secciones
   reutilizables.
 - `tenant-dashboard.component.ts`: ~27 lineas; widgets/cards extraidos.
+- `reports.facade.ts`: ~450 lineas; columnas/filas virtuales ya extraidas.
 
 Regla: al tocar una pantalla grande, extraer primero componentes
 presentacionales/facades antes de sumar mas comportamiento.
@@ -1080,10 +1121,11 @@ Pasos restantes de calidad:
 
 ### Validacion Docker/E2E
 
-- [x] Backend levantado con `docker compose up --build`.
-- [x] Frontend levantado con `docker compose up --build`.
-- [x] Playwright completo pasa contra `localhost:4200` y `localhost:3000`.
-- [x] Reports exporta PDF y Excel reales para:
+- [ ] Backend/frontend Docker pendiente en esta sesion: `docker compose ps`
+  falla porque `/var/run/docker.sock` no existe.
+- [ ] Playwright completo contra `localhost:4200` y `localhost:3000` pendiente
+  hasta levantar backend/frontend.
+- [x] Reports tiene rutas/export preparados en frontend/E2E para:
   - rent-roll;
   - vacancies;
   - delinquency;
@@ -1110,16 +1152,20 @@ Pasos restantes de calidad:
   eliminacion y activacion/desactivacion.
 - [x] `property-units` usa i18n en facade, formulario, detalle y bloqueo de
   fechas.
-- [x] Audit de textos hardcodeados reducido de 164 a 80 candidatos.
+- [x] `register.component.html` ya no mantiene textos legales visibles
+  hardcodeados; terminos y privacidad pasan por `auth.termsHtml` y
+  `auth.privacyHtml`.
+- [x] `payment-create-dialog`, `property-form-dialog`, `property-detail-admin`,
+  landing, modales publicos, tenant messages, tenant notifications y sidebar
+  migrados a claves i18n en placeholders, toasts y labels ARIA.
+- [x] Audit de textos hardcodeados reducido de 164 a 0 candidatos.
 - [x] Validacion posterior: `npm run lint`, `npm run test` y `npm run build`
   pasan.
 
 Pendiente i18n real:
 
-- `register.component.html`: bloque legal/privacidad sigue hardcodeado y es el
-  mayor grupo pendiente.
-- `payment-create-dialog`: quedan placeholders de ejemplo.
-- `property-form-dialog` y `property-detail-admin`: quedan placeholders,
-  aria-labels y toasts puntuales.
-- Pendientes menores: landing demo, modales publicos, tenant messages,
-  tenant notifications y sidebar aria-labels.
+- [ ] Hacer revision visual/manual de traducciones en navegador para detectar
+  textos generados por datos backend o labels dinamicos que el audit estatico no
+  puede ver.
+- [ ] Revisar si textos legales deben versionarse en documentos separados o CMS
+  cuando el producto salga a produccion.

@@ -58,10 +58,15 @@
   "fullAddress": "Full Address *",
   "fullAddressPlaceholder": "123 Main St, Apt 5",
   "city": "City *",
+  "cityPlaceholder": "Miami",
   "state": "State / Province",
+  "statePlaceholder": "Florida",
   "zip": "ZIP Code",
   "country": "Country *",
+  "countryPlaceholder": "United States",
   "ownerInfo": "Owner Information",
+  "ownerNamePlaceholder": "Carlos Gonzalez",
+  "ownerEmailPlaceholder": "carlos@example.com",
   "ownerPercent": "Ownership %",
   "characteristics": "Characteristics",
   "features": {
@@ -84,6 +89,10 @@
   "monthlyPrice": "Monthly Price",
   "depositLabel": "Deposit:",
   "showing": "Showing {{count}} properties",
+  "loadingDetail": "Loading property...",
+  "detailTabsLabel": "Property detail",
+  "previousImage": "Previous image",
+  "nextImage": "Next image",
   "actions": {
     "loadError": "Error loading properties",
     "loadTypesError": "Could not load property types. Reload the page.",
@@ -100,7 +109,9 @@
     "deleteError": "Error deleting: {{message}}",
     "activated": "Property activated successfully",
     "deactivated": "Property deactivated",
-    "statusError": "Error updating status: {{message}}"
+    "statusError": "Error updating status: {{message}}",
+    "notFound": "Property not found",
+    "loadDetailError": "Error loading property"
   },
   "validation": {
     "addressRequired": "At least one address is required",

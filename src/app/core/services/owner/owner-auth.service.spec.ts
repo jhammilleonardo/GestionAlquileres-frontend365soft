@@ -54,7 +54,6 @@ describe('OwnerAuthService', () => {
 
     service.login('demo', 'owner@test.com', 'secret', true).subscribe();
 
-    expect(sessionToken.clearToken).toHaveBeenCalledWith('owner');
     expect(sessionToken.setToken).toHaveBeenCalledWith('owner', 'owner-token', true);
     expect(service.currentOwner()?.rental_owner_id).toBe(10);
     expect(localStorage.getItem('owner_user')).toContain('owner@test.com');

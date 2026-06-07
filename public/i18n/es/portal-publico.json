@@ -259,7 +259,8 @@
     "submit": "Enviar Solicitud",
     "submitting": "Enviando...",
     "successTitle": "¡Solicitud Enviada!",
-    "successMsg": "Hemos recibido tu solicitud de alquiler. El agente se pondrá en contacto contigo pronto."
+    "successMsg": "Hemos recibido tu solicitud de alquiler. El agente se pondrá en contacto contigo pronto.",
+    "submitError": "Hubo un error al enviar la solicitud. Por favor intente nuevamente."
   },
   "contactModal": {
     "title": "Enviar Mensaje",
@@ -279,7 +280,8 @@
     "submit": "Enviar Mensaje",
     "submitting": "Enviando...",
     "successTitle": "¡Mensaje Enviado!",
-    "successMsg": "El agente recibirá tu mensaje y se pondrá en contacto contigo pronto."
+    "successMsg": "El agente recibirá tu mensaje y se pondrá en contacto contigo pronto.",
+    "submitError": "Hubo un error al enviar su mensaje. Por favor intente más tarde."
   },
   "applicationForm": {
     "successTitle": "¡Solicitud Enviada!",
@@ -686,13 +688,15 @@
     "qrRecordsCount": "{{count}} registros",
     "reload": "Recargar",
     "txn": "TXN:",
-    "cancelQr": "Cancelar QR"
+    "cancelQr": "Cancelar QR",
+    "toggleCalendar": "Alternar calendario"
   },
   "tenantQrGenerate": {
     "qrPayTitle": "Pagar con QR",
     "qrPaySubtitle": "Genera un código QR y escanéalo con tu app bancaria",
     "paymentDataTitle": "Datos del Pago",
     "qrCompatibilityInfoBefore": "El código QR es compatible con",
+    "qrCompatibilityName": "MC4 / SIP Bolivia",
     "qrCompatibilityInfoAfter": "Puedes escanearlo desde cualquier app bancaria que soporte QR de pago interbancario.",
     "amountFieldLabel": "Monto *",
     "invalidAmountError": "Ingresa un monto válido",
@@ -701,6 +705,7 @@
     "notesFieldLabel": "Nota (opcional)",
     "notesPlaceholder": "Ej. Pago de enero",
     "generatingQr": "Generando...",
+    "generateQr": "Generar QR",
     "cancel": "Cancelar",
     "paymentConfirmedTitle": "¡Pago Confirmado!",
     "paymentProcessedDescBefore": "Tu pago por",
@@ -714,6 +719,7 @@
     "qrCancelledDesc": "Este código QR fue cancelado.",
     "totalToPayLabel": "Total a pagar",
     "waitingForPayment": "Esperando pago...",
+    "qrImageAlt": "Código QR de pago",
     "qrNotAvailable": "QR no disponible",
     "step1": "Abre tu app bancaria o billetera digital",
     "step2Before": "Selecciona la opción",
@@ -724,7 +730,8 @@
     "expiresAtLabel": "Vence:",
     "pollingStatusLabel": "Verificando cada {{seconds}}s",
     "verifyNow": "Verificar ahora",
-    "downloadQr": "Descargar QR"
+    "downloadQr": "Descargar QR",
+    "cancelQr": "Cancelar QR"
   },
   "tenantCreatePayment": {
     "title": "Registrar Pago",
@@ -796,18 +803,26 @@
     "last4Digits": "Últimos 4 dígitos",
     "last4Hint": "Dígitos de la tarjeta",
     "cardHolder": "Nombre del Titular",
+    "cardHolderPlaceholder": "Juan Pérez",
     "expiryDate": "Fecha de Expiración",
     "expiryHint": "Formato: MM/YY",
     "authCode": "Código de Autorización (Opcional)",
+    "authCodePlaceholder": "Ej: AUTH-123456",
     "checkNumber": "Número de Cheque",
+    "checkNumberPlaceholder": "Ej: CHK-001",
     "bankName": "Banco Emisor",
+    "bankNamePlaceholder": "Banco Nacional",
     "accTitle": "Últimos 4 dígitos cuenta",
     "refNumber": "Número de Referencia",
+    "refNumberPlaceholder": "Ej: TRF-12345",
     "refHint": "Número de transacción bancaria",
     "originBank": "Banco de Origen",
+    "originBankPlaceholder": "Tu banco",
     "receivedBy": "Recibido por",
+    "receivedByPlaceholder": "Nombre de quien recibió",
     "receivedByHint": "Persona que recibió el pago",
     "receiptNumber": "Número de Recibo (Opcional)",
+    "receiptNumberPlaceholder": "Ej: REC-001",
     "additionalNotes": "Notas Adicionales",
     "notesLbl": "Notas del Pago (Opcional)",
     "notesPlaceholder": "Información adicional sobre el pago...",
@@ -837,6 +852,7 @@
     "markAsReadTitle": "Marcar como leída",
     "deleteTitle": "Eliminar",
     "confirmDelete": "¿Eliminar esta notificación?",
+    "closeError": "Cerrar error",
     "now": "Ahora mismo",
     "minutesAgo": "Hace {{count}} minuto",
     "minutesAgoPlural": "Hace {{count}} minutos",

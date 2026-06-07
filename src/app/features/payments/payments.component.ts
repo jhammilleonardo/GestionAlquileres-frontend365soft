@@ -13,6 +13,8 @@ import { PaymentRejectDialogComponent } from './components/payment-reject-dialog
 import { PaymentStatsComponent } from './components/payment-stats/payment-stats.component';
 import { PaymentToolbarComponent } from './components/payment-toolbar/payment-toolbar.component';
 import { PendingApprovalPanelComponent } from './components/pending-approval-panel/pending-approval-panel.component';
+import { PaymentAdminCreateFacade } from './payment-admin-create.facade';
+import { PaymentProofViewerFacade } from './payment-proof-viewer.facade';
 import { PaymentsFacade } from './payments.facade';
 
 @Component({
@@ -33,7 +35,11 @@ import { PaymentsFacade } from './payments.facade';
     PaymentToolbarComponent,
     PendingApprovalPanelComponent,
   ],
-  providers: [provideTranslocoScope({ scope: 'pagos', alias: 'payments' })],
+  providers: [
+    provideTranslocoScope({ scope: 'pagos', alias: 'payments' }),
+    PaymentAdminCreateFacade,
+    PaymentProofViewerFacade,
+  ],
   templateUrl: './payments.component.html',
   styleUrl: './payments.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
