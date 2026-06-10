@@ -1,4 +1,42 @@
 {
+  "propertySteps": {
+    "basic": "Basic info",
+    "images": "Images",
+    "financial": "Financial",
+    "details": "Details",
+    "address": "Address",
+    "owner": "Owner",
+    "next": "Next",
+    "back": "Back",
+    "saving": "Saving..."
+  },
+  "imageUploader": {
+    "dropTitle": "Drag images here or click to upload",
+    "dropHint": "Up to {{max}} images (JPG, PNG, WebP, GIF — max {{size}}MB each)",
+    "limitReached": "You reached the maximum of {{max}} images",
+    "rejectedInvalid": "{{count}} file(s) ignored due to invalid format or size",
+    "rejectedMax": "{{count}} file(s) ignored for exceeding the limit",
+    "selectedCount": "{{count}} of {{max}} images selected",
+    "cover": "Cover",
+    "makeCover": "Set as cover",
+    "edit": "Edit image",
+    "remove": "Remove image",
+    "reorder": "Reorder image",
+    "cropTitle": "Edit and crop image",
+    "cropFrame": "Crop area",
+    "aspect": "Aspect ratio",
+    "aspectFree": "Free",
+    "aspect43": "4:3",
+    "aspect11": "1:1",
+    "aspect169": "16:9",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right",
+    "flip": "Flip horizontally",
+    "reset": "Reset",
+    "applyCrop": "Apply crop"
+  },
   "common": {
     "error": "Error",
     "myProfile": "My Profile",
@@ -143,7 +181,37 @@
   },
   "tenants": {
     "title": "Tenants",
-    "subtitle": "Manage all your tenants' information"
+    "subtitle": "Manage tenants, active leases, open balances and contact details",
+    "loading": "Loading tenants...",
+    "searchLabel": "Search tenant",
+    "searchPlaceholder": "Name, email, phone, property or unit",
+    "noProperty": "No property assigned",
+    "noUnit": "No unit",
+    "unit": "Unit {{unit}}",
+    "monthlyRent": "Monthly rent",
+    "balanceDue": "Balance due",
+    "leaseEnd": "Lease end",
+    "emptyTitle": "No tenants to show",
+    "emptySubtitle": "Approved applications and contracts will appear in this list.",
+    "metrics": {
+      "total": "Total tenants",
+      "activeLeases": "Active leases",
+      "pendingPayments": "With pending payments",
+      "balanceDue": "Balance to collect"
+    },
+    "filters": {
+      "label": "Tenant filters",
+      "all": "All",
+      "active": "Active",
+      "pending": "Pending",
+      "past": "Past"
+    },
+    "leaseStatus": {
+      "active": "Active lease",
+      "pending": "Pending application",
+      "past": "Past lease",
+      "none": "No lease"
+    }
   },
   "wizard": {
     "subtitle": "Set up your workspace in just a few steps",
@@ -240,6 +308,7 @@
     "signNow": "Sign Now",
     "details": {
       "back": "Back",
+      "heading": "Contract Details",
       "loading": "Loading contract...",
       "error": "Error",
       "pendingAlertTitle": "Contract pending your signature",
@@ -274,8 +343,13 @@
       "terminationLabel": "Termination",
       "jurisdictionLabel": "Jurisdiction",
       "viewPDF": "View PDF",
+      "viewPdf": "View PDF",
+      "downloadPdf": "Download PDF",
       "signError": "Error signing the contract. Please try again.",
-      "pdfError": "Error viewing the PDF. Please try again."
+      "pdfError": "Error viewing the PDF. Please try again.",
+      "downloadPdfError": "Error downloading the PDF. Please try again.",
+      "pdfPopupBlocked": "The browser blocked the PDF tab, so the file was downloaded instead.",
+      "pdfFilePrefix": "contract"
     },
     "status": {
       "BORRADOR": "Draft (Pending signature)",
@@ -317,6 +391,7 @@
       "signContract": "View and Sign Contract"
     },
     "marketplace": {
+      "eyebrow": "Marketplace",
       "title": "New Rental Application",
       "subtitle": "Select a property to send your application",
       "searchPlaceholder": "Search by title, city or address...",
@@ -358,7 +433,26 @@
       "unitOption": "{{unit}} - {{price}}/night",
       "loadAvailabilityError": "Could not load property availability.",
       "restorePropertyError": "Could not restore the booking property.",
-      "restoreReservationError": "Could not restore the pending booking."
+      "restoreReservationError": "Could not restore the pending booking.",
+      "loadError": "Could not load properties.",
+      "viewDetails": "View details",
+      "loadingDetail": "Loading property details...",
+      "imageCounter": "{{current}} / {{total}}",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "noImage": "No image",
+      "descriptionTitle": "Description",
+      "noDescription": "This property has no description.",
+      "featuresTitle": "Features",
+      "amenitiesTitle": "Amenities",
+      "includedTitle": "Included",
+      "featureBedrooms": "Bedrooms",
+      "featureBathrooms": "Bathrooms",
+      "featureArea": "Area (m²)",
+      "featureParking": "Parking",
+      "featureOccupants": "Max occupants",
+      "featureFurnished": "Furnished",
+      "featureYear": "Year built"
     },
     "status": {
       "PENDIENTE": "Pending",

@@ -1,0 +1,39 @@
+<section class="vendor-profile">
+  <header class="profile-header">
+    <div class="avatar">{{ initials() }}</div>
+    <div>
+      <h1>{{ 'vendorPortal.profile.title' | transloco }}</h1>
+      <p>{{ 'vendorPortal.profile.subtitle' | transloco }}</p>
+    </div>
+  </header>
+
+  @if (vendor(); as v) {
+    <div class="info-card">
+      <p class="info-row">
+        <lucide-icon [img]="User" [size]="18" />
+        <span class="label">{{ 'vendorPortal.profile.name' | transloco }}</span>
+        <strong>{{ v.name }}</strong>
+      </p>
+      <p class="info-row">
+        <lucide-icon [img]="Mail" [size]="18" />
+        <span class="label">{{ 'vendorPortal.profile.email' | transloco }}</span>
+        <strong>{{ v.email }}</strong>
+      </p>
+      @if (v.phone) {
+        <p class="info-row">
+          <lucide-icon [img]="Phone" [size]="18" />
+          <span class="label">{{ 'vendorPortal.profile.phone' | transloco }}</span>
+          <strong>{{ v.phone }}</strong>
+        </p>
+      }
+    </div>
+
+    <div class="info-card account-card">
+      <h2 class="info-title">
+        <lucide-icon [img]="KeyRound" [size]="18" />
+        {{ 'vendorPortal.profile.account' | transloco }}
+      </h2>
+      <p class="account-hint">{{ 'vendorPortal.profile.accountHint' | transloco }}</p>
+    </div>
+  }
+</section>

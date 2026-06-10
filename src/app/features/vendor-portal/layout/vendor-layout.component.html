@@ -1,0 +1,98 @@
+<div class="vendor-layout">
+  <!-- Header -->
+  <header class="vendor-header">
+    <div class="header-left">
+      <button type="button" class="icon-button menu-toggle" (click)="toggleSidebar()">
+        <lucide-icon [img]="Menu" [size]="24"></lucide-icon>
+      </button>
+      <div class="brand">
+        <span class="brand-text">{{ 'vendorPortal.layout.portalName' | transloco }}</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div
+        class="lang-toggle"
+        role="group"
+        [attr.aria-label]="'common.languageSelector' | transloco"
+      >
+        <button
+          class="lang-btn"
+          [class.active]="languageService.isSpanish()"
+          (click)="languageService.setLanguage('es')"
+          [attr.aria-label]="'common.spanish' | transloco"
+        >
+          ES
+        </button>
+        <button
+          class="lang-btn"
+          [class.active]="languageService.isEnglish()"
+          (click)="languageService.setLanguage('en')"
+          [attr.aria-label]="'common.english' | transloco"
+        >
+          EN
+        </button>
+      </div>
+
+      <div class="user-menu-container">
+        <button type="button" class="user-btn" (click)="toggleUserMenu()">
+          <div class="user-avatar">{{ initials() }}</div>
+          <span class="user-name">{{ vendor()?.name }}</span>
+        </button>
+
+        @if (isUserMenuOpen()) {
+          <div class="user-dropdown">
+            <button type="button" class="user-menu-item logout-btn" (click)="logout()">
+              <lucide-icon [img]="LogOut" [size]="18"></lucide-icon>
+              <span>{{ 'vendorPortal.layout.logout' | transloco }}</span>
+            </button>
+          </div>
+          <div class="dropdown-overlay" (click)="closeUserMenu()"></div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <div class="layout-body">
+    @if (!sidebarCollapsed()) {
+      <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+    }
+
+    <!-- Sidebar -->
+    <aside class="vendor-sidebar" [class.collapsed]="sidebarCollapsed()">
+      <nav class="sidebar-nav">
+        <a
+          class="nav-item"
+          [routerLink]="homeUrl()"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="onNavItemClick()"
+        >
+          <lucide-icon [img]="Home" [size]="20"></lucide-icon>
+          <span class="nav-label">{{ 'vendorPortal.layout.navHome' | transloco }}</span>
+        </a>
+        <a
+          class="nav-item"
+          [routerLink]="profileUrl()"
+          routerLinkActive="active"
+          (click)="onNavItemClick()"
+        >
+          <lucide-icon [img]="UserCircle" [size]="20"></lucide-icon>
+          <span class="nav-label">{{ 'vendorPortal.layout.navProfile' | transloco }}</span>
+        </a>
+      </nav>
+
+      @if (vendor(); as v) {
+        <div class="vendor-info">
+          <div class="vendor-info-label">{{ 'vendorPortal.layout.vendorLabel' | transloco }}</div>
+          <div class="vendor-info-value">{{ v.name }}</div>
+        </div>
+      }
+    </aside>
+
+    <!-- Main Content -->
+    <main class="vendor-main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

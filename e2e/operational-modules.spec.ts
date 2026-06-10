@@ -1,5 +1,5 @@
 import { expect, test, Page } from '@playwright/test';
-import { getAdminSession, loginAsAdmin, loginAsOwner } from './helpers';
+import { getAdminSession, getWithRetry, loginAsAdmin, loginAsOwner } from './helpers';
 
 const API_URL = process.env.E2E_API_URL ?? 'http://localhost:3000/';
 
@@ -40,18 +40,21 @@ test.describe('Modulos operativos admin', () => {
       'kpis',
     ];
 
+    const authHeaders = { Authorization: `Bearer ${session.access_token}` };
     for (const report of reports) {
-      const pdf = await page.request.get(
+      const pdf = await getWithRetry(
+        page,
         new URL(`${slug}/admin/reports/${report}?format=pdf`, API_URL).toString(),
-        { headers: { Authorization: `Bearer ${session.access_token}` } },
+        { headers: authHeaders },
       );
       expect(pdf.ok(), `${report} PDF export failed`).toBe(true);
       expect(pdf.headers()['content-type']).toContain('application/pdf');
       expect((await pdf.body()).byteLength).toBeGreaterThan(100);
 
-      const excel = await page.request.get(
+      const excel = await getWithRetry(
+        page,
         new URL(`${slug}/admin/reports/${report}?format=excel`, API_URL).toString(),
-        { headers: { Authorization: `Bearer ${session.access_token}` } },
+        { headers: authHeaders },
       );
       expect(excel.ok(), `${report} Excel export failed`).toBe(true);
       expect(excel.headers()['content-type']).toContain('spreadsheetml.sheet');
@@ -135,29 +138,37 @@ test.describe('Owner portal', () => {
     });
     await expect(page.locator('body')).not.toHaveText(/cannot match any routes|application error/i);
 
-    await page.getByRole('button', { name: /propiedades|properties/i }).click();
-    await expect(page.locator('app-empty-state, .owner-card, .property-card').first()).toBeVisible();
+    // Cada pestaña muestra su contenedor (cards-grid/info-card o record-list) o
+    // el estado vacío. Cubrimos ambos estados para no depender de datos.
+    const tabContent = page.locator(
+      'app-empty-state, .cards-grid, .info-card, .record-list, .record-item',
+    );
+    // Acotamos los clicks a la barra de pestañas para no chocar con textos
+    // similares en los KPIs o en el contenido de cada sección.
+    const tabs = page.locator('nav.tabs');
 
-    await page.getByRole('button', { name: /liquidaciones|statements/i }).click();
-    await expect(page.locator('app-empty-state, table, .statement-card').first()).toBeVisible();
+    await tabs.getByRole('button', { name: /propiedades|properties/i }).click();
+    await expect(tabContent.first()).toBeVisible();
+
+    await tabs.getByRole('button', { name: /liquidaciones|statements/i }).click();
+    await expect(tabContent.first()).toBeVisible();
 
     const statementPdf = page.getByRole('button', { name: /pdf|descargar|download/i }).first();
     if ((await statementPdf.count()) > 0) {
       await expect(statementPdf).toBeVisible();
     }
 
-    await page.getByRole('button', { name: /mantenimiento|maintenance/i }).click();
-    await expect(page.locator('app-empty-state, .maintenance-card, table').first()).toBeVisible();
+    await tabs.getByRole('button', { name: /mantenimiento|maintenance/i }).click();
+    await expect(tabContent.first()).toBeVisible();
 
-    const authorizeButton = page
-      .getByRole('button', { name: /autorizar|authorize/i })
-      .first();
+    const authorizeButton = page.getByRole('button', { name: /autorizar|authorize/i }).first();
     if ((await authorizeButton.count()) > 0) {
       await expect(authorizeButton).toBeVisible();
     }
 
-    await page.getByRole('button', { name: /contratos|contracts/i }).click();
-    await expect(page.locator('app-empty-state, table, .contract-card').first()).toBeVisible();
+    // La pestaña de contratos se rotula "Documentos" en español.
+    await tabs.getByRole('button', { name: /documentos|contratos|contracts/i }).click();
+    await expect(tabContent.first()).toBeVisible();
   });
 });
 

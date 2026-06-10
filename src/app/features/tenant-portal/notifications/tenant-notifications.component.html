@@ -126,8 +126,8 @@
               </span>
             </div>
 
-            <h3 class="notification-title">{{ notification.title }}</h3>
-            <p class="notification-message">{{ notification.message }}</p>
+            <h3 class="notification-title">{{ getNotificationTitle(notification) }}</h3>
+            <p class="notification-message">{{ getNotificationMessage(notification) }}</p>
 
             @if (notification.metadata) {
               <div class="notification-metadata">

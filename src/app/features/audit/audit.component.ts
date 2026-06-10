@@ -21,6 +21,7 @@ import {
 
 interface DiffRow {
   key: string;
+  label: string;
   before: string;
   after: string;
   changed: boolean;
@@ -107,7 +108,7 @@ export class AuditComponent {
     return keys.map((key) => {
       const b = this.fmt(before[key]);
       const a = this.fmt(after[key]);
-      return { key, before: b, after: a, changed: b !== a };
+      return { key, label: this.fieldLabel(key), before: b, after: a, changed: b !== a };
     });
   });
 
@@ -159,6 +160,38 @@ export class AuditComponent {
     this.load(false);
   }
 
+  userLabel(log: AuditLog): string {
+    if (log.user_name) return log.user_name;
+    if (log.user_email) return log.user_email;
+    if (log.user_id != null) {
+      return `${this.transloco.translate('audit.userId')} #${log.user_id}`;
+    }
+    return this.transloco.translate('audit.system');
+  }
+
+  roleLabel(role: string | null): string | null {
+    if (!role) return null;
+    return this.translateOrRaw('audit.role.', role);
+  }
+
+  entityLabel(log: AuditLog): string {
+    const typeName = this.translateOrRaw('audit.entityType.', log.entity_type);
+    // Si la entidad sigue existiendo mostramos su nombre/número legible; si fue
+    // eliminada caemos al id interno para no perder la trazabilidad.
+    return log.entity_label ? `${typeName}: ${log.entity_label}` : `${typeName} #${log.entity_id}`;
+  }
+
+  fieldLabel(key: string): string {
+    return this.translateOrRaw('audit.fields.', key);
+  }
+
+  /** Traduce un token con el prefijo dado; si no hay traducción, devuelve el valor crudo. */
+  private translateOrRaw(prefix: string, token: string): string {
+    const key = `${prefix}${token}`;
+    const translated = this.transloco.translate(key);
+    return translated === key ? token : translated;
+  }
+
   actionTone(action: string): AppStatusTone {
     switch (action) {
       case 'created':
@@ -188,8 +221,11 @@ export class AuditComponent {
 
   private fmt(value: unknown): string {
     if (value === null || value === undefined) return '—';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (typeof value === 'boolean') {
+      return this.transloco.translate(value ? 'common.yes' : 'common.no');
+    }
+    if (typeof value === 'string') return this.translateOrRaw('audit.value.', value);
+    if (typeof value === 'number') return String(value);
     return JSON.stringify(value);
   }
 }

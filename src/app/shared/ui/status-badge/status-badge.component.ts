@@ -15,6 +15,7 @@ export type AppStatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger
       align-items: center;
       min-block-size: 1.5rem;
       padding: 0 0.625rem;
+      border: 1px solid transparent;
       border-radius: 999px;
       font-size: 0.75rem;
       font-weight: 700;
@@ -38,8 +39,9 @@ export type AppStatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger
     }
 
     .status-badge.warning {
-      background: var(--tui-status-warning-pale);
-      color: var(--tui-status-warning);
+      border-color: #ffca00;
+      background: #ffca00;
+      color: #4a3200;
     }
 
     .status-badge.danger {

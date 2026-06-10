@@ -23,6 +23,7 @@
   "notifyMessage": "¿Enviar notificación formal a {{name}}? Se generará la carta y se marcará como notificada.",
   "notified": "Notificación enviada",
   "pdf": "PDF",
+  "viewPdf": "Ver PDF",
   "pdfError": "No se pudo generar el PDF",
   "resolve": "Resolver",
   "resolveTitle": "Resolver violación",

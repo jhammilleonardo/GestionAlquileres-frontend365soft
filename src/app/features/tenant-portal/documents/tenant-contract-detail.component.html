@@ -7,7 +7,7 @@
 
     @if (contract(); as c) {
       <div class="detail-header__identity">
-        <h1>{{ c.contract_number }}</h1>
+        <h1>{{ c.property?.title || ('tenantContracts.details.heading' | transloco) }}</h1>
         <app-status-badge
           [label]="'tenantContracts.status.' + c.status | transloco"
           [tone]="statusTone(c.status)"
@@ -267,7 +267,7 @@
   [contract]="contract()"
   [isSigning]="isSigning()"
   (cancelled)="closeSigningDialog()"
-  (confirmed)="confirmSigning()"
+  (confirmed)="confirmSigning($event)"
 />
 
 <app-signing-success-dialog

@@ -38,6 +38,8 @@ describe('PaymentsFacade', () => {
     getProofUrl: ReturnType<typeof vi.fn>;
     downloadProof: ReturnType<typeof vi.fn>;
     updatePaymentStatus: ReturnType<typeof vi.fn>;
+    approvePayment: ReturnType<typeof vi.fn>;
+    rejectPayment: ReturnType<typeof vi.fn>;
     deletePayment: ReturnType<typeof vi.fn>;
     createPaymentAsAdmin: ReturnType<typeof vi.fn>;
   };
@@ -68,6 +70,8 @@ describe('PaymentsFacade', () => {
       getProofUrl: vi.fn(() => null),
       downloadProof: vi.fn(() => of(new Blob(['proof'], { type: 'application/pdf' }))),
       updatePaymentStatus: vi.fn(() => of({})),
+      approvePayment: vi.fn(() => of({})),
+      rejectPayment: vi.fn(() => of({})),
       deletePayment: vi.fn(() => of({})),
       createPaymentAsAdmin: vi.fn(() => of({})),
     };
@@ -191,10 +195,7 @@ describe('PaymentsFacade', () => {
 
     facade.approvePayment(payment);
 
-    expect(paymentService.updatePaymentStatus).toHaveBeenCalledWith(1, {
-      status: PaymentStatus.APPROVED,
-      admin_notes: 'pagos.actions.approvedByAdmin',
-    });
+    expect(paymentService.approvePayment).toHaveBeenCalledWith(1, 'pagos.actions.approvedByAdmin');
     expect(toast.success).toHaveBeenCalledWith('pagos.actions.approvedToast:Inquilino #1');
   });
 
@@ -205,11 +206,11 @@ describe('PaymentsFacade', () => {
 
     facade.submitRejectPayment();
 
-    expect(paymentService.updatePaymentStatus).toHaveBeenCalledWith(1, {
-      status: PaymentStatus.REJECTED,
-      admin_notes: 'Comprobante ilegible',
-      rejection_reason: 'Comprobante ilegible',
-    });
+    expect(paymentService.rejectPayment).toHaveBeenCalledWith(
+      1,
+      'Comprobante ilegible',
+      'Comprobante ilegible',
+    );
     expect(facade.rejectionPayment()).toBeNull();
     expect(toast.error).toHaveBeenCalledWith('pagos.actions.rejectedToast:Inquilino #1');
   });
@@ -220,7 +221,7 @@ describe('PaymentsFacade', () => {
 
     facade.submitRejectPayment();
 
-    expect(paymentService.updatePaymentStatus).not.toHaveBeenCalled();
+    expect(paymentService.rejectPayment).not.toHaveBeenCalled();
     expect(facade.rejectForm.controls.reason.touched).toBe(true);
   });
 

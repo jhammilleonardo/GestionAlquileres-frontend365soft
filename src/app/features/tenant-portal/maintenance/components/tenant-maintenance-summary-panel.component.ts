@@ -1,14 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import {
-  AlertCircle,
-  Clock,
-  FileText,
-  Home,
-  Link,
-  LucideAngularModule,
-  Wrench,
-} from 'lucide-angular';
+import { AlertCircle, Clock, Home, Link, LucideAngularModule, Wrench } from 'lucide-angular';
 
 import {
   MaintenancePriority,
@@ -79,19 +71,6 @@ import { AppStatusBadgeComponent, AppStatusTone } from '../../../../shared/ui';
                     'public.tenantMaintenance.property' | transloco
                   }}</span>
                   <span class="meta-val">{{ request().property!.title }}</span>
-                </div>
-              </div>
-            }
-            @if (request().contract) {
-              <div class="meta-card">
-                <div class="meta-icon contract">
-                  <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
-                </div>
-                <div class="meta-text">
-                  <span class="meta-lbl">{{
-                    'public.tenantMaintenance.contract' | transloco
-                  }}</span>
-                  <span class="meta-val">{{ request().contract!.contract_number }}</span>
                 </div>
               </div>
             }
@@ -389,7 +368,6 @@ export class TenantMaintenanceSummaryPanelComponent {
 
   readonly AlertCircle = AlertCircle;
   readonly Clock = Clock;
-  readonly FileText = FileText;
   readonly Home = Home;
   readonly Link = Link;
   readonly Wrench = Wrench;

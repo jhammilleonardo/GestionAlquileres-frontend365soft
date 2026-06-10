@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
-import { AlertCircle, CheckCircle2, FileText, Home, User } from 'lucide-angular';
+import { AlertCircle, CheckCircle2, Home, User } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import {
@@ -73,10 +73,6 @@ function passwordMatchValidator(control: AbstractControl): ValidationErrors | nu
                 <div class="summary-row">
                   <lucide-icon [img]="Home" [size]="16"></lucide-icon>
                   <span>{{ user.contract.property_title }}</span>
-                </div>
-                <div class="summary-row">
-                  <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
-                  <span>{{ user.contract.contract_number }}</span>
                 </div>
                 <app-status-badge
                   [label]="user.contract.status"
@@ -454,7 +450,6 @@ export class TenantProfileComponent {
   protected readonly CheckCircle2 = CheckCircle2;
   protected readonly AlertCircle = AlertCircle;
   protected readonly Home = Home;
-  protected readonly FileText = FileText;
 
   protected readonly tabs: readonly AppTabOption<TenantProfileTab>[] = [
     {

@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 
-export type AuthContext = 'admin' | 'owner' | 'tenant';
+export type AuthContext = 'admin' | 'owner' | 'tenant' | 'vendor';
 
 const TOKEN_KEYS: Record<AuthContext, readonly string[]> = {
   admin: ['admin_access_token'],
   tenant: ['tenant_access_token'],
   owner: ['owner_access_token'],
+  vendor: ['vendor_access_token'],
 };
 
 @Injectable({
@@ -48,6 +49,10 @@ export class SessionTokenService {
 
     if (normalized.includes('/owner/')) {
       return 'owner';
+    }
+
+    if (normalized.includes('/vendor/')) {
+      return 'vendor';
     }
 
     if (normalized.includes('/admin/')) {

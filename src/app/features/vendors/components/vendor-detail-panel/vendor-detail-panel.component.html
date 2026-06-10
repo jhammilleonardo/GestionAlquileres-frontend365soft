@@ -49,6 +49,53 @@
       }
     </div>
 
+    <h3 class="detail-section-title">{{ 'vendors.account.title' | transloco }}</h3>
+    @if (accountCredentials(); as creds) {
+      <div class="account-credentials" role="status">
+        <p class="account-hint">{{ 'vendors.account.shareHint' | transloco }}</p>
+        <p class="account-row">
+          <span>{{ 'vendors.email' | transloco }}</span>
+          <code>{{ creds.email }}</code>
+        </p>
+        <p class="account-row">
+          <span>{{ 'vendors.account.password' | transloco }}</span>
+          <code>{{ creds.temporaryPassword }}</code>
+        </p>
+        <p class="account-row">
+          <span>{{ 'vendors.account.loginLabel' | transloco }}</span>
+          <code>{{ loginUrl() }}</code>
+        </p>
+      </div>
+    } @else {
+      @if (vendor().has_account) {
+        <p class="account-active">
+          <lucide-icon [img]="CheckCircle2" [size]="16" />
+          {{ 'vendors.account.alreadyHas' | transloco }}
+        </p>
+        <app-button
+          appearance="outline"
+          [loading]="creatingAccount()"
+          (click)="accountRequested.emit()"
+        >
+          <lucide-icon [img]="KeyRound" [size]="16" />
+          {{ 'vendors.account.regenerate' | transloco }}
+        </app-button>
+      } @else {
+        <app-button
+          appearance="secondary"
+          [loading]="creatingAccount()"
+          [disabled]="!vendor().email"
+          (click)="accountRequested.emit()"
+        >
+          <lucide-icon [img]="KeyRound" [size]="16" />
+          {{ 'vendors.account.create' | transloco }}
+        </app-button>
+        @if (!vendor().email) {
+          <p class="account-warning">{{ 'vendors.account.needsEmail' | transloco }}</p>
+        }
+      }
+    }
+
     <h3 class="detail-section-title">{{ 'vendors.orderHistory' | transloco }}</h3>
     @if (historyLoading()) {
       <app-loading-state [label]="'vendors.loading' | transloco" />

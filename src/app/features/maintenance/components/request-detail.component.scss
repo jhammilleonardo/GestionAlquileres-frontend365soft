@@ -6,6 +6,7 @@
   flex-direction: column;
   width: 100%;
   height: 100%;
+  min-height: 0;
   background: #f1f5f9;
   overflow: hidden;
 }
@@ -88,11 +89,13 @@
 .rd-body {
   display: grid;
   grid-template-columns: 1fr 420px;
+  align-items: start;
   gap: 20px;
   padding: 20px 24px 20px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ════════════════════════════════════
@@ -102,8 +105,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  min-width: 0;
+  overflow: visible;
 }
 
 /* ─── Hero Banner ─── */
@@ -222,7 +225,7 @@
   flex-direction: column;
   gap: 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .content-card > .rd-divider {
@@ -529,11 +532,15 @@
    RIGHT COLUMN — Conversation
 ════════════════════════════════════ */
 .rd-right {
+  position: sticky;
+  top: 0;
   background: white;
   border-radius: 14px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
   display: flex;
   flex-direction: column;
+  min-height: 520px;
+  max-height: calc(90vh - 190px);
   overflow: hidden;
   border: 1px solid #e2e8f0;
 }
@@ -719,6 +726,28 @@
     padding-left: 0;
     padding-right: 4px;
   }
+}
+
+.role-tag {
+  margin-left: 5px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.role-tag.role-vendor {
+  color: #b45309;
+}
+
+.role-tag.role-tenant {
+  color: #dc2626;
+}
+
+.role-tag.role-owner {
+  color: #7c3aed;
+}
+
+.role-tag.role-staff {
+  color: #2563eb;
 }
 
 .msg-bubble {
@@ -996,6 +1025,10 @@
   margin-top: 5px;
 }
 
+.msg-attachments-mine {
+  justify-content: flex-end;
+}
+
 .att-chip {
   display: inline-flex;
   align-items: center;
@@ -1007,6 +1040,7 @@
   font-size: 12px;
   color: #475569;
   text-decoration: none;
+  cursor: pointer;
   transition:
     background 0.15s,
     color 0.15s;
@@ -1022,6 +1056,48 @@
     white-space: nowrap;
     max-width: 130px;
   }
+}
+
+.att-preview {
+  display: inline-grid;
+  gap: 5px;
+  width: 132px;
+  padding: 0;
+  border: 1px solid #dbe3ef;
+  border-radius: 12px;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+
+  img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    background: #f1f5f9;
+  }
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 8px 7px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  &:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+  }
+}
+
+.att-preview-mine {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .att-chip.att-chip-mine {
@@ -1043,7 +1119,9 @@
     gap: 16px;
   }
   .rd-right {
+    position: static;
     min-height: 400px;
+    max-height: none;
   }
   .meta-grid,
   .mgmt-grid {

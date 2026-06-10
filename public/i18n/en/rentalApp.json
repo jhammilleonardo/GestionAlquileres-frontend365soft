@@ -84,6 +84,7 @@
   "backToStep1": "Back to Step 1",
   "submitting": "Submitting...",
   "submitBtn": "Submit Application",
+  "submitError": "Could not submit the application. Check your session and try again.",
   "maritalStatus": {
     "soltero": "Single",
     "casado": "Married",

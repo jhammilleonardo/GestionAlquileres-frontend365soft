@@ -1,4 +1,140 @@
-<div class="inquilinos">
-  <h1>{{ 'tenants.title' | transloco }}</h1>
-  <p>{{ 'tenants.subtitle' | transloco }}</p>
-</div>
+<section class="tenants-page">
+  <app-page-header
+    [title]="'tenants.title' | transloco"
+    [description]="'tenants.subtitle' | transloco"
+  >
+    <app-button actions appearance="secondary" (clicked)="reload()">
+      {{ 'common.refresh' | transloco }}
+    </app-button>
+  </app-page-header>
+
+  <div class="tenant-metrics">
+    <article class="metric-card">
+      <span>{{ 'tenants.metrics.total' | transloco }}</span>
+      <strong>{{ stats()?.total_users ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>{{ 'tenants.metrics.activeLeases' | transloco }}</span>
+      <strong>{{ stats()?.users_with_active_contracts ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>{{ 'tenants.metrics.pendingPayments' | transloco }}</span>
+      <strong>{{ stats()?.users_with_pending_payments ?? 0 }}</strong>
+    </article>
+    <article class="metric-card">
+      <span>{{ 'tenants.metrics.balanceDue' | transloco }}</span>
+      <strong>{{ stats()?.total_balance_due ?? 0 | currency: 'BOB' : 'symbol' : '1.2-2' }}</strong>
+    </article>
+  </div>
+
+  <div class="tenant-toolbar">
+    <app-text-field
+      [label]="'tenants.searchLabel' | transloco"
+      [placeholder]="'tenants.searchPlaceholder' | transloco"
+      type="search"
+      [ngModel]="search()"
+      (ngModelChange)="updateSearch($event)"
+    />
+
+    <div class="filter-tabs" role="tablist" [attr.aria-label]="'tenants.filters.label' | transloco">
+      <button
+        type="button"
+        [class.active]="statusFilter() === 'all'"
+        (click)="setStatusFilter('all')"
+      >
+        {{ 'tenants.filters.all' | transloco }}
+      </button>
+      <button
+        type="button"
+        [class.active]="statusFilter() === 'active'"
+        (click)="setStatusFilter('active')"
+      >
+        {{ 'tenants.filters.active' | transloco }}
+      </button>
+      <button
+        type="button"
+        [class.active]="statusFilter() === 'pending'"
+        (click)="setStatusFilter('pending')"
+      >
+        {{ 'tenants.filters.pending' | transloco }}
+      </button>
+      <button
+        type="button"
+        [class.active]="statusFilter() === 'past'"
+        (click)="setStatusFilter('past')"
+      >
+        {{ 'tenants.filters.past' | transloco }}
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'tenants.loading' | transloco" />
+  } @else {
+    <div class="tenant-list">
+      @for (tenant of filteredTenants(); track tenant.id) {
+        <article class="tenant-row">
+          <div class="tenant-row__main">
+            <div class="tenant-avatar" aria-hidden="true">
+              {{ tenant.name.slice(0, 1).toUpperCase() }}
+            </div>
+
+            <div>
+              <h2>{{ tenant.name }}</h2>
+              <p>{{ tenant.email }}</p>
+              @if (tenant.phone) {
+                <span>{{ tenant.phone }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="tenant-row__lease">
+            <app-status-badge
+              [label]="leaseLabelKey(tenant.lease_status) | transloco"
+              [tone]="leaseTone(tenant.lease_status)"
+            />
+            <strong>{{ tenant.property_title || ('tenants.noProperty' | transloco) }}</strong>
+            <span>
+              @if (tenant.unit_number) {
+                {{ 'tenants.unit' | transloco: { unit: tenant.unit_number } }}
+              } @else {
+                {{ 'tenants.noUnit' | transloco }}
+              }
+            </span>
+          </div>
+
+          <div class="tenant-row__finance">
+            <span>{{ 'tenants.monthlyRent' | transloco }}</span>
+            <strong>
+              {{ monthlyRent(tenant) | currency: tenant.currency || 'BOB' : 'symbol' : '1.2-2' }}
+            </strong>
+          </div>
+
+          <div class="tenant-row__finance">
+            <span>{{ 'tenants.balanceDue' | transloco }}</span>
+            <app-status-badge
+              [label]="moneyLabel(balanceDue(tenant), tenant.currency)"
+              [tone]="balanceTone(tenant)"
+            />
+          </div>
+
+          <div class="tenant-row__dates">
+            <span>{{ 'tenants.leaseEnd' | transloco }}</span>
+            <strong>
+              @if (tenant.end_date) {
+                {{ tenant.end_date | date: 'mediumDate' }}
+              } @else {
+                {{ 'common.notAvailable' | transloco }}
+              }
+            </strong>
+          </div>
+        </article>
+      } @empty {
+        <div class="empty-state">
+          <h2>{{ 'tenants.emptyTitle' | transloco }}</h2>
+          <p>{{ 'tenants.emptySubtitle' | transloco }}</p>
+        </div>
+      }
+    </div>
+  }
+</section>

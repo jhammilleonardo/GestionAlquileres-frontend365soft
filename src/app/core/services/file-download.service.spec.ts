@@ -29,4 +29,33 @@ describe('FileDownloadService', () => {
     expect(clickSpy).toHaveBeenCalled();
     expect(revokeSpy).toHaveBeenCalledWith(objectUrl);
   });
+
+  it('opens a blob in a new tab when the browser allows it', () => {
+    vi.useFakeTimers();
+    const objectUrl = 'blob:pdf';
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue(objectUrl);
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue({} as Window);
+
+    const opened = service.openBlob(new Blob(['pdf']));
+
+    expect(opened).toBe(true);
+    expect(openSpy).toHaveBeenCalledWith(objectUrl, '_blank');
+
+    vi.advanceTimersByTime(60_000);
+    expect(revokeSpy).toHaveBeenCalledWith(objectUrl);
+    vi.useRealTimers();
+  });
+
+  it('reports a blocked popup and releases the object url', () => {
+    const objectUrl = 'blob:blocked';
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue(objectUrl);
+    const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(window, 'open').mockReturnValue(null);
+
+    const opened = service.openBlob(new Blob(['pdf']));
+
+    expect(opened).toBe(false);
+    expect(revokeSpy).toHaveBeenCalledWith(objectUrl);
+  });
 });

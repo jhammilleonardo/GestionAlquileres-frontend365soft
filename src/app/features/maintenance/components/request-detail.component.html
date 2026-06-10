@@ -300,212 +300,31 @@
     </div>
 
     <!-- ════ RIGHT: Conversation ════ -->
+    <!-- ════ RIGHT: Conversation (componente compartido) ════ -->
     <div class="rd-right">
-      <div class="conv-header">
-        <div class="conv-title">
-          <lucide-icon [img]="MessageSquare" [size]="17"></lucide-icon>
-          <span>{{ 'maintenance.conversation' | transloco }}</span>
-        </div>
-        @if (messages().length > 0) {
-          <span class="conv-count">{{ messages().length }}</span>
-        }
-      </div>
-
-      <div class="conv-messages-wrap">
-        <div class="conv-messages" #msgContainer (scroll)="onMessagesScroll($event)">
-          @if (isLoadingMessages()) {
-            <div class="conv-center">
-              <app-loading-state [label]="'common.loading' | transloco" />
-            </div>
-          } @else if (messages().length === 0) {
-            <div class="conv-center empty">
-              <div class="empty-icon-wrap">
-                <lucide-icon [img]="MessageSquare" [size]="28"></lucide-icon>
-              </div>
-              <p>{{ 'maintenance.noMessages' | transloco }}</p>
-              <span>{{ 'maintenance.noMessagesHint' | transloco }}</span>
-            </div>
-          } @else {
-            @for (msg of messages(); track msg.id) {
-              @if (isFirstPollingNew(msg)) {
-                <div class="new-polling-divider">
-                  <div class="new-polling-line"></div>
-                  <span class="new-polling-label">{{
-                    'maintenance.newMessages' | transloco: { count: '' }
-                  }}</span>
-                  <div class="new-polling-line"></div>
-                </div>
-              }
-              @if (isFirstUnread(msg)) {
-                <div class="unread-divider">
-                  <div class="unread-line"></div>
-                  <span class="unread-label">{{
-                    'maintenance.unreadMessages' | transloco: { count: unreadCountFromHere }
-                  }}</span>
-                  <div class="unread-line"></div>
-                </div>
-              }
-              @if (isMessageInternal(msg)) {
-                <!-- Internal note -->
-                <div class="internal-note">
-                  <div class="internal-note-header">
-                    <lucide-icon [img]="Lock" [size]="11"></lucide-icon>
-                    {{ 'maintenance.internalNote' | transloco }}
-                  </div>
-                  <p class="internal-note-text">{{ msg.message }}</p>
-                  @if (msg.attachments && msg.attachments.length > 0) {
-                    <div class="msg-attachments">
-                      @for (att of msg.attachments; track att.id) {
-                        <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip">
-                          <lucide-icon
-                            [img]="isImageAttachment(att.file_type) ? Image : FileText"
-                            [size]="12"
-                          ></lucide-icon>
-                          <span>{{ att.file_name }}</span>
-                        </a>
-                      }
-                    </div>
-                  }
-                  <span class="msg-time">{{ msg.created_at | tenantDate: true }}</span>
-                </div>
-              } @else if (isFromTenant(msg)) {
-                <!-- Tenant message (left) -->
-                <div class="msg-row">
-                  <div class="msg-avatar tenant-msg-avatar">
-                    {{ (request.tenant?.name ?? 'I').charAt(0).toUpperCase() }}
-                  </div>
-                  <div class="msg-group">
-                    <span class="msg-sender">{{ request.tenant?.name ?? 'Inquilino' }}</span>
-                    <div class="msg-bubble">{{ msg.message }}</div>
-                    @if (msg.attachments && msg.attachments.length > 0) {
-                      <div class="msg-attachments">
-                        @for (att of msg.attachments; track att.id) {
-                          <a [href]="getFileUrl(att.file_url)" target="_blank" class="att-chip">
-                            <lucide-icon
-                              [img]="isImageAttachment(att.file_type) ? Image : FileText"
-                              [size]="12"
-                            ></lucide-icon>
-                            <span>{{ att.file_name }}</span>
-                          </a>
-                        }
-                      </div>
-                    }
-                    <span class="msg-time">{{ msg.created_at | tenantDate: true }}</span>
-                  </div>
-                </div>
-              } @else {
-                <!-- Admin message (right, blue) -->
-                <div class="msg-row msg-mine">
-                  <div class="msg-group">
-                    <span class="msg-sender msg-sender-mine">{{
-                      'maintenance.you' | transloco
-                    }}</span>
-                    <div class="msg-bubble bubble-mine">{{ msg.message }}</div>
-                    @if (msg.attachments && msg.attachments.length > 0) {
-                      <div class="msg-attachments msg-attachments-mine">
-                        @for (att of msg.attachments; track att.id) {
-                          <a
-                            [href]="getFileUrl(att.file_url)"
-                            target="_blank"
-                            class="att-chip att-chip-mine"
-                          >
-                            <lucide-icon
-                              [img]="isImageAttachment(att.file_type) ? Image : FileText"
-                              [size]="12"
-                            ></lucide-icon>
-                            <span>{{ att.file_name }}</span>
-                          </a>
-                        }
-                      </div>
-                    }
-                    <span class="msg-time">{{ msg.created_at | tenantDate: true }}</span>
-                  </div>
-                  <div class="msg-avatar admin-msg-avatar">A</div>
-                </div>
-              }
-            }
-          }
-        </div>
-      </div>
-      <!-- /conv-messages-wrap -->
-
-      @if (newMessagesCount() > 0) {
-        <div class="new-msg-bar">
-          <button class="new-msg-btn" (click)="scrollToNewMessages()">
-            {{ 'maintenance.newMessages' | transloco: { count: newMessagesCount() } }}
-          </button>
-        </div>
-      }
-
-      <div class="conv-send">
-        <input
-          #fileInputRef
-          type="file"
-          multiple
-          accept="image/jpeg,image/png,image/webp,application/pdf"
-          style="display: none"
-          (change)="onFileSelected($event)"
-        />
-
-        @if (selectedFiles().length > 0) {
-          <div class="file-preview">
-            @for (file of selectedFiles(); track $index; let i = $index) {
-              <div class="file-chip">
-                <lucide-icon [img]="Paperclip" [size]="11"></lucide-icon>
-                <span>{{ file.name }}</span>
-                <button class="file-remove" (click)="removeFile(i)">
-                  <lucide-icon [img]="X" [size]="10"></lucide-icon>
-                </button>
-              </div>
-            }
-          </div>
-        }
-
-        <div class="send-input-wrap">
-          <textarea
-            class="send-textarea"
-            [ngModel]="newMessage()"
-            (ngModelChange)="newMessage.set($event)"
-            [attr.placeholder]="'maintenance.messagePlaceholder' | transloco"
-            rows="2"
-            (keydown.enter)="$event.preventDefault(); addMessage()"
-          ></textarea>
-        </div>
-
-        <div class="send-row">
-          <div class="send-row-left">
-            <app-checkbox [ngModel]="isInternalNote()" (ngModelChange)="isInternalNote.set($event)">
-              <span class="check-lbl">
-                <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
-                {{ 'maintenance.staffOnly' | transloco }}
-              </span>
-            </app-checkbox>
-            <button
-              class="attach-btn"
-              type="button"
-              (click)="fileInputRef.click()"
-              [disabled]="selectedFiles().length >= 3"
-              [title]="'maintenance.attachFile' | transloco"
-            >
-              <lucide-icon [img]="Paperclip" [size]="14"></lucide-icon>
-              @if (selectedFiles().length > 0) {
-                <span class="attach-count">{{ selectedFiles().length }}/3</span>
-              }
-            </button>
-          </div>
-          <app-button
-            appearance="primary"
-            size="s"
-            class="send-btn"
-            (clicked)="addMessage()"
-            [disabled]="!newMessage() || isSendingMessage()"
-            [loading]="isSendingMessage()"
-          >
-            <lucide-icon [img]="Send" [size]="14"></lucide-icon>
-            {{ 'common.send' | transloco }}
-          </app-button>
-        </div>
-      </div>
+      <app-tenant-maintenance-conversation
+        [messages]="messages()"
+        [isLoading]="isLoadingMessages()"
+        [isSending]="isSendingMessage()"
+        [selectedFiles]="selectedFiles()"
+        [canSendMessage]="true"
+        [newMessagesCount]="newMessagesCount()"
+        [pollingNewFromId]="pollingNewFromId()"
+        [firstUnreadMessageId]="firstUnreadMessageId"
+        [unreadCountFromHere]="unreadCountFromHere"
+        [scrollVersion]="scrollVersion()"
+        [sentVersion]="sentVersion()"
+        [isMyMessage]="isMyMessage"
+        [context]="'admin'"
+        [allowInternalNote]="true"
+        [internalNote]="isInternalNote()"
+        (internalNoteChange)="isInternalNote.set($event)"
+        (filesSelected)="addFiles($event)"
+        (removeFile)="removeFile($event)"
+        (messageSubmitted)="sendMessage($event)"
+        (newMessagesOpened)="onNewMessagesOpened()"
+        (conversationAtBottomChange)="onConversationAtBottom($event)"
+      />
     </div>
   </div>
 </div>

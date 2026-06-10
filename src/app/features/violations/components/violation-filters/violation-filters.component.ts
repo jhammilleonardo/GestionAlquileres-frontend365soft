@@ -19,6 +19,5 @@ export class ViolationFiltersComponent {
   readonly statusOptions = input.required<readonly AppSelectOption<string>[]>();
   readonly typeOptions = input.required<readonly AppSelectOption<string>[]>();
 
-  readonly filtersApplied = output<void>();
   readonly filtersCleared = output<void>();
 }

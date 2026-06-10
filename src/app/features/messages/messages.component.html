@@ -62,44 +62,26 @@
             <strong>{{ activeName() }}</strong>
           </header>
 
-          <div class="conversation-body">
-            @if (loadingThread()) {
-              <app-loading-state [label]="'messages.loading' | transloco" />
-            } @else {
-              @if (hasMoreMessages()) {
-                <button
-                  type="button"
-                  class="load-older"
-                  [disabled]="loadingOlder()"
-                  (click)="loadOlderMessages()"
-                >
-                  {{
-                    (loadingOlder() ? 'messages.loadingOlder' : 'messages.loadOlder') | transloco
-                  }}
-                </button>
-              }
-              @for (message of messages(); track message.id) {
-                <div class="bubble-row" [class.mine]="isMine(message)">
-                  <div class="bubble">
-                    <p>{{ message.body }}</p>
-                    <span class="bubble-time">{{ message.created_at | date: 'short' }}</span>
-                  </div>
-                </div>
-              }
-            }
-          </div>
-
-          <form class="composer" (ngSubmit)="send()">
-            <textarea
-              rows="1"
-              [placeholder]="'messages.typeMessage' | transloco"
-              [value]="draft()"
-              (input)="draft.set(textareaValue($event))"
-            ></textarea>
-            <app-button type="submit" [disabled]="sending() || !draft().trim()" (clicked)="send()">
-              <lucide-icon [img]="Send" [size]="16" />
-            </app-button>
-          </form>
+          @if (loadingThread()) {
+            <app-loading-state [label]="'messages.loading' | transloco" />
+          } @else {
+            <app-conversation
+              [messages]="messages()"
+              [currentUserId]="currentUserId"
+              [peerName]="activeName()"
+              [emptyTitle]="'messages.empty' | transloco"
+              [isSending]="sending()"
+              [selectedFiles]="selectedFiles()"
+              [hasMore]="hasMoreMessages()"
+              [isLoadingOlder]="loadingOlder()"
+              [sentVersion]="sentVersion()"
+              fileContext="admin"
+              (filesSelected)="addFiles($event)"
+              (removeFile)="removeFile($event)"
+              (loadOlder)="loadOlderMessages()"
+              (messageSubmitted)="send($event)"
+            />
+          }
         }
       </section>
     </div>
@@ -126,13 +108,56 @@
       [value]="composeBody()"
       (input)="composeBody.set(textareaValue($event))"
     ></textarea>
+    <div class="compose-tools">
+      <input
+        #composeFileInput
+        type="file"
+        multiple
+        accept="image/*,.pdf"
+        class="sr-only"
+        (change)="onComposeFileSelected($event)"
+      />
+      <button
+        type="button"
+        class="compose-attach"
+        [attr.aria-label]="'messages.attach' | transloco"
+        (click)="composeFileInput.click()"
+      >
+        <lucide-icon [img]="Paperclip" [size]="16" />
+        {{ 'messages.attach' | transloco }}
+      </button>
+      @if (composeFiles().length > 0) {
+        <span class="compose-files-count">
+          {{ 'common.selectedFiles' | transloco: { count: composeFiles().length } }}
+        </span>
+      }
+    </div>
+    @if (composeFiles().length > 0) {
+      <div class="compose-files">
+        @for (file of composeFiles(); track file.name + file.size + $index) {
+          <span class="compose-file">
+            {{ file.name }}
+            <button
+              type="button"
+              class="file-remove"
+              [attr.aria-label]="'common.remove' | transloco"
+              (click)="removeComposeFile($index)"
+            >
+              <lucide-icon [img]="X" [size]="14" />
+            </button>
+          </span>
+        }
+      </div>
+    }
   </div>
   <div dialog-actions>
     <app-button appearance="secondary" (clicked)="closeCompose()">{{
       'common.cancel' | transloco
     }}</app-button>
     <app-button
-      [disabled]="sending() || !composeRecipient() || !composeBody().trim()"
+      [disabled]="
+        sending() || !composeRecipient() || (!composeBody().trim() && composeFiles().length === 0)
+      "
       (clicked)="sendNew()"
     >
       {{ 'messages.send' | transloco }}

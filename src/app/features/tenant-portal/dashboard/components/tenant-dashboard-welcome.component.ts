@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { FileText, Home, LucideAngularModule } from 'lucide-angular';
+import { Home, LucideAngularModule } from 'lucide-angular';
 
 import { TenantUser } from '../../../../core/services/tenant/tenant-auth.service';
 
@@ -17,5 +17,4 @@ export class TenantDashboardWelcomeComponent {
   readonly contract = input<TenantUser['contract'] | null | undefined>(null);
 
   readonly Home = Home;
-  readonly FileText = FileText;
 }

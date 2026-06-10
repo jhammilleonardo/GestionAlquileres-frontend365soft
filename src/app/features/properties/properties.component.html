@@ -39,7 +39,6 @@
     (confirmed)="propiedades.confirmDelete()"
   />
 }
-
 @if (propiedades.showModal()) {
   <app-property-form-dialog
     [form]="propiedades.propertyForm"
@@ -48,11 +47,11 @@
     [propertyTypeOptions]="propiedades.propertyTypeOptions()"
     [propertySubtypeOptions]="propiedades.propertySubtypeOptions()"
     [currencyOptions]="propiedades.currencyOptions"
-    [selectedImages]="propiedades.selectedImages"
+    [images]="propiedades.selectedImages()"
     [validationErrors]="propiedades.validationErrors()"
     (closed)="propiedades.closeModal()"
     (saved)="propiedades.saveProperty()"
     (propertyTypeChanged)="propiedades.onPropertyTypeChange($event)"
-    (imagesSelected)="propiedades.onImagesSelected($event)"
+    (imagesChanged)="propiedades.onImagesChanged($event)"
   />
 }

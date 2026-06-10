@@ -160,10 +160,13 @@ export class TenantAuthService {
    * Validate current token with backend
    */
   private validateToken(): void {
-    if (!this.getToken()) return;
+    const token = this.getToken();
+    if (!token) return;
 
     this.http
-      .get<TenantUser>(`${environment.apiUrl}auth/me`)
+      .get<TenantUser>(`${environment.apiUrl}auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .pipe(
         catchError(() => {
           this.logout();
@@ -183,20 +186,28 @@ export class TenantAuthService {
    * Call this when you need to update user info (e.g., after contract creation)
    */
   refreshUserData(): Observable<TenantUser | null> {
-    if (!this.getToken()) {
+    const token = this.getToken();
+    if (!token) {
       return of(null);
     }
 
-    return this.http.get<RawTenantUser>(`${environment.apiUrl}auth/me`).pipe(
-      map((user) => {
-        if (!user) return null;
-        const normalizedUser = this.normalizeUserData(user);
-        this.currentUserSignal.set(normalizedUser);
-        this.saveUserToStorage(normalizedUser);
-        return normalizedUser;
-      }),
-      catchError(() => of(null)),
-    );
+    // auth/me es un endpoint compartido sin /tenant/ en la URL: el interceptor
+    // no puede inferir el contexto y caería al token de admin. Forzamos el de
+    // inquilino explícitamente (el interceptor respeta un Authorization ya puesto).
+    return this.http
+      .get<RawTenantUser>(`${environment.apiUrl}auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .pipe(
+        map((user) => {
+          if (!user) return null;
+          const normalizedUser = this.normalizeUserData(user);
+          this.currentUserSignal.set(normalizedUser);
+          this.saveUserToStorage(normalizedUser);
+          return normalizedUser;
+        }),
+        catchError(() => of(null)),
+      );
   }
 
   /**
@@ -204,10 +215,13 @@ export class TenantAuthService {
    * Clears invalid tokens without redirecting to prevent 401 loops
    */
   private validateTokenSilently(): void {
-    if (!this.getToken()) return;
+    const token = this.getToken();
+    if (!token) return;
 
     this.http
-      .get<RawTenantUser>(`${environment.apiUrl}auth/me`)
+      .get<RawTenantUser>(`${environment.apiUrl}auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .pipe(
         catchError((error: { status?: number }) => {
           // Only clear storage if token is invalid (401)

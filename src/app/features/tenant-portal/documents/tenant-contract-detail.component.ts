@@ -37,6 +37,7 @@ import {
 } from '../../../shared/ui';
 import { ContractSigningDialogComponent } from '../dialogs/contract-signing-dialog.component';
 import { SigningSuccessDialogComponent } from '../dialogs/signing-success-dialog.component';
+import type { SignatureResult } from '../dialogs/signature-pad.component';
 
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 @Component({
@@ -134,19 +135,22 @@ export class TenantContractDetailComponent {
     this.isSigningDialogOpen.set(false);
   }
 
-  protected confirmSigning(): void {
+  protected confirmSigning(signature: SignatureResult): void {
     const contract = this.contract();
     if (!contract || this.isSigning()) return;
 
     this.isSigningDialogOpen.set(false);
-    this.performSigning(contract.id);
+    this.performSigning(contract.id, signature);
   }
 
-  private performSigning(contractId: Contract['id']): void {
+  private performSigning(contractId: Contract['id'], signature: SignatureResult): void {
     this.isSigning.set(true);
 
     this.contractService
-      .signContract(contractId)
+      .signContract(contractId, {
+        signatureImage: signature.image,
+        signatureMethod: signature.method,
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
@@ -178,14 +182,6 @@ export class TenantContractDetailComponent {
   }
 
   protected downloadPDF(): void {
-    this.openContractPdf();
-  }
-
-  protected viewPDF(): void {
-    this.openContractPdf();
-  }
-
-  private openContractPdf(): void {
     const contract = this.contract();
     if (!contract) return;
 
@@ -194,12 +190,43 @@ export class TenantContractDetailComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (blob) => {
-          this.fileDownload.openBlob(blob);
+          this.fileDownload.downloadBlob(blob, this.getContractPdfFileName(contract));
+        },
+        error: () => {
+          this.toast.error(
+            this.translocoService.translate('tenantContracts.details.downloadPdfError'),
+          );
+        },
+      });
+  }
+
+  protected viewPDF(): void {
+    const contract = this.contract();
+    if (!contract) return;
+
+    this.contractService
+      .downloadContractPDF(contract.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (blob) => {
+          const opened = this.fileDownload.openBlob(blob);
+
+          if (!opened) {
+            this.fileDownload.downloadBlob(blob, this.getContractPdfFileName(contract));
+            this.toast.info(
+              this.translocoService.translate('tenantContracts.details.pdfPopupBlocked'),
+            );
+          }
         },
         error: () => {
           this.toast.error(this.translocoService.translate('tenantContracts.details.pdfError'));
         },
       });
+  }
+
+  private getContractPdfFileName(contract: Contract): string {
+    const number = contract.contract_number.replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `${this.translocoService.translate('tenantContracts.details.pdfFilePrefix')}_${number}.pdf`;
   }
 
   protected statusTone(status: ContractStatus): AppStatusTone {

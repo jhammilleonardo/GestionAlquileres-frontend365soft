@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { getWithRetry } from './helpers';
 
 const API_URL = process.env.E2E_API_URL ?? 'http://localhost:3000/';
 const SLUG = process.env.E2E_TENANT_SLUG ?? 'demo';
@@ -162,7 +163,8 @@ async function getCatalogProperties(
   page: Page,
   rentalType: 'SHORT_TERM' | 'LONG_TERM' | 'any',
 ): Promise<CatalogProperty[]> {
-  const response = await page.request.get(
+  const response = await getWithRetry(
+    page,
     new URL(`${SLUG}/catalog/properties?rental_type=${rentalType}&sort=price_asc`, API_URL).toString(),
   );
   expect(response.ok()).toBe(true);
@@ -175,7 +177,8 @@ async function getCatalogPropertyDetail(
   page: Page,
   propertyId: number,
 ): Promise<CatalogProperty> {
-  const response = await page.request.get(
+  const response = await getWithRetry(
+    page,
     new URL(`${SLUG}/catalog/properties/${propertyId}`, API_URL).toString(),
   );
   expect(response.ok()).toBe(true);
@@ -190,7 +193,8 @@ async function findAvailableStay(
   const today = new Date();
   const month = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   const earliestCheckin = toIsoDate(addDays(today, 1));
-  const response = await page.request.get(
+  const response = await getWithRetry(
+    page,
     new URL(
       `${SLUG}/catalog/properties/${propertyId}/availability?month=${month}&unit_id=${unitId}`,
       API_URL,

@@ -1,0 +1,146 @@
+<div class="login-page">
+  <!-- Left Side - Branding -->
+  <div class="login-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <lucide-icon [img]="Wrench" [size]="56"></lucide-icon>
+      </div>
+      <h1>365Soft</h1>
+      <h2>{{ 'vendorPortal.auth.kicker' | transloco }}</h2>
+      <p class="brand-tagline">{{ 'vendorPortal.auth.title' | transloco }}</p>
+
+      <div class="features">
+        <div class="feature-item">
+          <lucide-icon [img]="ClipboardList" [size]="20"></lucide-icon>
+          <span>{{ 'vendorPortal.auth.feature1' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="CheckCircle2" [size]="20"></lucide-icon>
+          <span>{{ 'vendorPortal.auth.feature2' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="Camera" [size]="20"></lucide-icon>
+          <span>{{ 'vendorPortal.auth.feature3' | transloco }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side - Login Form -->
+  <div class="login-form-container">
+    <div class="login-form-wrapper">
+      <div class="lang-toggle-row">
+        <div
+          class="lang-toggle"
+          role="group"
+          [attr.aria-label]="'common.languageSelector' | transloco"
+        >
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isSpanish()"
+            (click)="languageService.setLanguage('es')"
+            [attr.aria-label]="'common.spanish' | transloco"
+            [attr.title]="'common.spanish' | transloco"
+          >
+            ES
+          </button>
+          <button
+            class="lang-btn"
+            [class.active]="languageService.isEnglish()"
+            (click)="languageService.setLanguage('en')"
+            [attr.aria-label]="'common.english' | transloco"
+            [attr.title]="'common.english' | transloco"
+          >
+            EN
+          </button>
+        </div>
+      </div>
+
+      <div class="form-header">
+        <h3>{{ 'vendorPortal.auth.signIn' | transloco }}</h3>
+        <p>{{ 'vendorPortal.auth.subtitle' | transloco }}</p>
+      </div>
+
+      @if (errorMessage()) {
+        <div class="error-alert">
+          <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
+          <div class="error-content">
+            <strong>{{ 'auth.loginError' | transloco }}</strong>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+        <div class="field-block">
+          <app-text-field
+            formControlName="email"
+            type="email"
+            autocomplete="email"
+            [label]="'auth.email' | transloco"
+            [placeholder]="'vendorPortal.auth.emailPlaceholder' | transloco"
+          />
+          @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+            <p class="field-error">{{ 'auth.emailRequired' | transloco }}</p>
+          }
+          @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
+            <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
+          }
+        </div>
+
+        <div class="field-block">
+          <div class="password-wrapper">
+            <app-text-field
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              autocomplete="current-password"
+              [label]="'auth.password' | transloco"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePassword()"
+              tabindex="-1"
+              [attr.aria-label]="
+                showPassword()
+                  ? ('auth.hidePassword' | transloco)
+                  : ('auth.showPassword' | transloco)
+              "
+            >
+              <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
+            </button>
+          </div>
+          @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+            <p class="field-error">{{ 'auth.passwordRequired' | transloco }}</p>
+          }
+        </div>
+
+        <div class="form-options form-options--end">
+          <a routerLink="/forgot-password" class="forgot-link">{{
+            'auth.forgotPassword' | transloco
+          }}</a>
+        </div>
+
+        <app-button
+          type="submit"
+          class="submit-btn"
+          [fullWidth]="true"
+          [loading]="isLoading()"
+          [disabled]="form.invalid || isLoading()"
+        >
+          {{
+            isLoading() ? ('auth.loggingIn' | transloco) : ('vendorPortal.auth.submit' | transloco)
+          }}
+        </app-button>
+      </form>
+
+      <div class="form-footer">
+        <div class="security-badge">
+          <lucide-icon [img]="Shield" [size]="16"></lucide-icon>
+          <span>{{ 'auth.sslBadge' | transloco }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

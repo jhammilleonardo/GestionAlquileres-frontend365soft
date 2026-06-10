@@ -38,8 +38,18 @@
   "unreadMessages": "{{count}} mensaje(s) no leído(s)",
   "internalNote": "Nota interna · Admin",
   "you": "Tú (Admin)",
+  "senderRole": {
+    "ADMIN": "Admin",
+    "EMPLEADO": "Empleado",
+    "TECNICO": "Técnico",
+    "INQUILINO": "Inquilino",
+    "VENDOR": "Proveedor",
+    "PROPIETARIO": "Propietario",
+    "SUPERADMIN": "Admin"
+  },
   "messagePlaceholder": "Escribe tu mensaje...",
-  "staffOnly": "Solo staff",
+  "staffOnly": "Nota interna",
+  "staffOnlyHint": "Solo visible para administradores y técnicos",
   "attachFile": "Adjuntar archivo (máx. 3)",
   "status": {
     "NEW": "Nuevo",
@@ -76,6 +86,7 @@
   "assignVendor": "Proveedor externo",
   "selectVendor": "Seleccionar proveedor...",
   "externalVendor": "Proveedor externo",
+  "staffAssigned": "Orden asignada a {{name}}",
   "vendorAssigned": "Orden asignada a {{name}}",
   "rateVendorTitle": "Calificar al proveedor",
   "rateVendorIntro": "¿Cómo calificarías el trabajo de {{name}}?",
@@ -86,6 +97,7 @@
   "ratingCommentPlaceholder": "Comentario sobre el trabajo (opcional)",
   "actions": {
     "newRequestInfo": "El formulario de nueva solicitud se implementa en el flujo correspondiente.",
+    "detailLoadError": "No se pudo cargar el detalle completo. Se muestran los datos disponibles.",
     "statusUpdated": "Estado actualizado",
     "statusUpdateError": "Error al actualizar el estado de la solicitud",
     "priorityUpdated": "Prioridad actualizada",

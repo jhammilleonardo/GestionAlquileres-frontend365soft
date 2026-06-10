@@ -47,6 +47,13 @@ export interface TenantNotificationStats {
   by_type?: { [key: string]: number };
 }
 
+const APPLICATION_STATUS_LABEL_KEYS: Record<string, string> = {
+  PENDIENTE: 'public.tenantNotifications.status.PENDIENTE',
+  EN_REVISION: 'public.tenantNotifications.status.EN_REVISION',
+  APROBADA: 'public.tenantNotifications.status.APROBADA',
+  RECHAZADA: 'public.tenantNotifications.status.RECHAZADA',
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -276,6 +283,123 @@ export class TenantNotificationService {
    */
   clearError(): void {
     this.errorSignal.set(null);
+  }
+
+  getDisplayTitle(notification: TenantNotification): string {
+    const eventType = notification.event_type;
+
+    if (eventType === 'maintenance.message.received') {
+      return this.transloco.translate(
+        'public.tenantNotifications.messages.maintenanceMessageTitle',
+      );
+    }
+
+    if (eventType === 'application.status.changed') {
+      return this.transloco.translate(
+        'public.tenantNotifications.messages.applicationStatusChangedTitle',
+      );
+    }
+
+    if (eventType === 'contract.created') {
+      return this.transloco.translate('public.tenantNotifications.messages.contractCreatedTitle');
+    }
+
+    if (eventType === 'contract.signed') {
+      return this.transloco.translate('public.tenantNotifications.messages.contractSignedTitle');
+    }
+
+    if (eventType === 'payment.approved') {
+      return this.transloco.translate('public.tenantNotifications.messages.paymentApprovedTitle');
+    }
+
+    if (eventType === 'payment.rejected') {
+      return this.transloco.translate('public.tenantNotifications.messages.paymentRejectedTitle');
+    }
+
+    return notification.title;
+  }
+
+  getDisplayMessage(notification: TenantNotification): string {
+    const eventType = notification.event_type;
+    const metadata = notification.metadata ?? {};
+
+    if (eventType === 'maintenance.message.received') {
+      const sender =
+        this.getStringMetadata(metadata, 'sender_name') ??
+        this.transloco.translate('public.tenantNotifications.messages.maintenanceMessageSender');
+      const ticket = this.getStringMetadata(metadata, 'ticket_number') ?? '';
+      const preview = this.getStringMetadata(metadata, 'message_preview') ?? '';
+
+      return this.transloco.translate(
+        'public.tenantNotifications.messages.maintenanceMessageBody',
+        { sender, ticket, preview },
+      );
+    }
+
+    if (eventType === 'application.status.changed') {
+      const status = this.getStringMetadata(metadata, 'status');
+      const propertyTitle =
+        this.getStringMetadata(metadata, 'property_title') ??
+        this.extractApplicationPropertyTitle(notification.message);
+      const statusLabel = status ? this.translateApplicationStatus(status) : null;
+
+      if (propertyTitle && statusLabel) {
+        return this.transloco.translate(
+          'public.tenantNotifications.messages.applicationStatusChangedMessage',
+          { property: propertyTitle, status: statusLabel },
+        );
+      }
+
+      if (statusLabel) {
+        return this.transloco.translate(
+          'public.tenantNotifications.messages.applicationStatusChangedMessageGeneric',
+          { status: statusLabel },
+        );
+      }
+    }
+
+    if (eventType === 'contract.created') {
+      return this.transloco.translate(
+        'public.tenantNotifications.messages.contractCreatedMessage',
+        {
+          contract: this.getStringMetadata(metadata, 'contract_number') ?? '',
+        },
+      );
+    }
+
+    if (eventType === 'contract.signed') {
+      return this.transloco.translate('public.tenantNotifications.messages.contractSignedMessage', {
+        contract: this.getStringMetadata(metadata, 'contract_number') ?? '',
+      });
+    }
+
+    if (eventType === 'payment.approved') {
+      return this.transloco.translate('public.tenantNotifications.messages.paymentApprovedMessage');
+    }
+
+    if (eventType === 'payment.rejected') {
+      return this.transloco.translate('public.tenantNotifications.messages.paymentRejectedMessage');
+    }
+
+    return notification.message;
+  }
+
+  private translateApplicationStatus(status: string): string {
+    const key = APPLICATION_STATUS_LABEL_KEYS[status];
+    return key ? this.transloco.translate(key) : status;
+  }
+
+  private getStringMetadata(
+    metadata: TenantNotificationMetadata,
+    key: keyof TenantNotificationMetadata,
+  ): string | null {
+    const value = metadata[key];
+    return typeof value === 'string' && value.trim() ? value : null;
+  }
+
+  private extractApplicationPropertyTitle(message: string): string | null {
+    const match = message.match(/propiedad\s+(.+?)\s+ha cambiado/i);
+    return match?.[1]?.trim() || null;
   }
 
   /**

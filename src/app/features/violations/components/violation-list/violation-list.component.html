@@ -27,9 +27,11 @@
       @if (violation.evidence_photos.length > 0) {
         <div class="vc-photos">
           @for (photo of violation.evidence_photos; track photo) {
-            <a [href]="photoUrl(photo)" target="_blank" rel="noopener" class="vc-photo">
-              <img [src]="photoUrl(photo)" alt="evidencia" loading="lazy" />
-            </a>
+            @if (photoSrc(photo); as src) {
+              <a [href]="src" target="_blank" rel="noopener" class="vc-photo">
+                <img [src]="src" [alt]="'violations.uploadEvidence' | transloco" loading="lazy" />
+              </a>
+            }
           }
         </div>
       }
@@ -56,10 +58,10 @@
           size="s"
           appearance="secondary"
           [disabled]="busyId() === violation.id"
-          (clicked)="pdfRequested.emit(violation)"
+          (clicked)="pdfViewRequested.emit(violation)"
         >
-          <lucide-icon [img]="FileText" [size]="14" />
-          {{ 'violations.pdf' | transloco }}
+          <lucide-icon [img]="Eye" [size]="14" />
+          {{ 'violations.viewPdf' | transloco }}
         </app-button>
         @if (!isResolved(violation)) {
           <app-button size="s" (clicked)="resolveRequested.emit(violation)">

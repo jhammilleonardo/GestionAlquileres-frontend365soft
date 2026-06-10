@@ -23,6 +23,7 @@
   "notifyMessage": "Send a formal notice to {{name}}? The letter will be generated and marked as notified.",
   "notified": "Notice sent",
   "pdf": "PDF",
+  "viewPdf": "View PDF",
   "pdfError": "Could not generate the PDF",
   "resolve": "Resolve",
   "resolveTitle": "Resolve violation",

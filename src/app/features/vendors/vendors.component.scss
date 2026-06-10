@@ -260,6 +260,58 @@
   justify-content: flex-end;
 }
 
+.account-credentials {
+  background: var(--app-color-primary-soft);
+  border: 1px solid var(--app-color-primary-softer);
+  border-radius: var(--app-radius-md);
+  display: grid;
+  gap: var(--app-space-2);
+  padding: var(--app-space-3);
+}
+
+.account-hint {
+  color: var(--app-color-text-secondary);
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.account-row {
+  align-items: center;
+  display: flex;
+  gap: var(--app-space-2);
+  justify-content: space-between;
+  margin: 0;
+}
+
+.account-row span {
+  color: var(--app-color-text-muted);
+  font-size: 0.82rem;
+}
+
+.account-row code {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-sm);
+  font-weight: 700;
+  padding: 2px 8px;
+}
+
+.account-warning {
+  color: var(--app-color-warning);
+  font-size: 0.8rem;
+  margin: var(--app-space-2) 0 0;
+}
+
+.account-active {
+  align-items: center;
+  color: var(--app-color-success);
+  display: flex;
+  font-size: 0.85rem;
+  font-weight: 650;
+  gap: var(--app-space-2);
+  margin: 0 0 var(--app-space-2);
+}
+
 @media (max-width: 640px) {
   .vendors-page {
     padding: var(--app-space-4, 1rem);

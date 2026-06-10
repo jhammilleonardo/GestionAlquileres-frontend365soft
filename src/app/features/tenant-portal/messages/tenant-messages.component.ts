@@ -1,29 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, signal } from '@angular/core';
+import { Subscription, interval } from 'rxjs';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
-import { LucideAngularModule, Send, MessageSquare } from 'lucide-angular';
+import { LucideAngularModule, MessageSquare } from 'lucide-angular';
 
 import { InternalMessageService } from '../../../core/services/internal-message.service';
+import { NotificationSocketService } from '../../../core/services/notification-socket.service';
 import { InternalMessage, MessageRecipient } from '../../../core/models/internal-message.model';
-import { AuthService } from '../../../core/services/auth.service';
+import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
-import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
+import { AppConversationComponent } from '../../../shared/ui/conversation/conversation.component';
+
+const POLL_INTERVAL_MS = 8000;
 
 @Component({
   selector: 'app-tenant-messages',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DatePipe,
-    FormsModule,
     TranslocoModule,
     LucideAngularModule,
-    AppButtonComponent,
     AppLoadingStateComponent,
-    AppEmptyStateComponent,
+    AppConversationComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'mensajes', alias: 'messages' })],
   template: `
@@ -36,54 +34,39 @@ import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-sta
       @if (isLoading()) {
         <app-loading-state [label]="'messages.loading' | transloco" />
       } @else {
-        <div class="tm-body">
-          <div class="tm-messages">
-            @if (messages().length === 0) {
-              <app-empty-state [title]="'messages.tenantEmpty' | transloco" />
-            } @else {
-              @for (message of messages(); track message.id) {
-                <div class="bubble-row" [class.mine]="isMine(message)">
-                  <div class="bubble">
-                    <p>{{ message.body }}</p>
-                    <span class="bubble-time">{{ message.created_at | date: 'short' }}</span>
-                  </div>
-                </div>
-              }
-            }
-          </div>
-
-          <form class="tm-composer" (ngSubmit)="send()">
-            <textarea
-              rows="2"
-              [placeholder]="'messages.typeMessage' | transloco"
-              [value]="draft()"
-              (input)="draft.set(textareaValue($event))"
-            ></textarea>
-            <app-button
-              type="submit"
-              [disabled]="sending() || !draft().trim() || !adminId()"
-              (clicked)="send()"
-            >
-              <lucide-icon [img]="Send" [size]="16" />
-              {{ 'messages.send' | transloco }}
-            </app-button>
-          </form>
-          @if (!adminId()) {
-            <p class="tm-warn">
-              <lucide-icon [img]="MessageSquare" [size]="14" /> {{ 'messages.noAdmin' | transloco }}
-            </p>
-          }
+        <div class="tm-card">
+          <app-conversation
+            [messages]="messages()"
+            [currentUserId]="currentUserId"
+            [peerName]="'messages.management' | transloco"
+            [emptyTitle]="'messages.tenantEmpty' | transloco"
+            [isSending]="sending()"
+            [selectedFiles]="selectedFiles()"
+            [canSend]="!!adminId()"
+            [sentVersion]="sentVersion()"
+            fileContext="tenant"
+            (filesSelected)="addFiles($event)"
+            (removeFile)="removeFile($event)"
+            (messageSubmitted)="send($event)"
+          />
         </div>
+        @if (!adminId()) {
+          <p class="tm-warn">
+            <lucide-icon [img]="MessageSquare" [size]="14" /> {{ 'messages.noAdmin' | transloco }}
+          </p>
+        }
       }
     </section>
   `,
   styles: `
     .tm-page {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 1rem;
       padding: 1.25rem;
-      max-width: 760px;
+      max-width: 820px;
       margin: 0 auto;
+      height: 100%;
     }
     .tm-header h1 {
       margin: 0;
@@ -93,61 +76,15 @@ import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-sta
       margin: 0.25rem 0 0;
       color: var(--app-color-text-muted);
     }
-    .tm-body {
-      display: grid;
-      gap: 0.75rem;
-    }
-    .tm-messages {
+    .tm-card {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
-      min-height: 40vh;
-      max-height: 60vh;
-      overflow-y: auto;
+      min-height: 0;
+      height: 68vh;
       border: 1px solid var(--app-color-border);
       border-radius: 14px;
       background: var(--app-color-surface);
-      padding: 1rem;
-    }
-    .bubble-row {
-      display: flex;
-    }
-    .bubble-row.mine {
-      justify-content: flex-end;
-    }
-    .bubble {
-      max-width: 75%;
-      padding: 0.55rem 0.8rem;
-      border-radius: 12px;
-      background: var(--app-color-surface-muted, #f1f5f9);
-    }
-    .bubble p {
-      margin: 0;
-      font-size: 0.9rem;
-      white-space: pre-wrap;
-    }
-    .bubble-row.mine .bubble {
-      background: var(--app-color-primary, #2563eb);
-      color: #fff;
-    }
-    .bubble-time {
-      display: block;
-      margin-top: 3px;
-      font-size: 0.68rem;
-      opacity: 0.7;
-    }
-    .tm-composer {
-      display: flex;
-      gap: 0.5rem;
-      align-items: stretch;
-    }
-    .tm-composer textarea {
-      flex: 1;
-      border: 1px solid var(--app-color-border);
-      border-radius: 10px;
-      padding: 0.55rem 0.75rem;
-      font: inherit;
-      resize: none;
+      overflow: hidden;
     }
     .tm-warn {
       display: flex;
@@ -159,39 +96,46 @@ import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-sta
     }
   `,
 })
-export class TenantMessagesComponent {
-  readonly Send = Send;
+export class TenantMessagesComponent implements OnDestroy {
   readonly MessageSquare = MessageSquare;
 
   private readonly messageService = inject(InternalMessageService);
-  private readonly auth = inject(AuthService);
+  private readonly auth = inject(TenantAuthService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
+  private readonly notificationSocket = inject(NotificationSocketService);
 
   readonly isLoading = signal(true);
   readonly messages = signal<InternalMessage[]>([]);
-  readonly draft = signal('');
   readonly sending = signal(false);
   readonly adminId = signal<number | null>(null);
+  readonly selectedFiles = signal<File[]>([]);
+  readonly sentVersion = signal(0);
 
-  private readonly currentUserId = Number(this.auth.currentUser()?.id ?? 0);
+  readonly currentUserId = Number(this.auth.currentUser()?.id ?? 0);
 
-  textareaValue(event: Event): string {
-    return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
-  }
+  private pollSub: Subscription | null = null;
+  private realtimeSub: Subscription | null = null;
 
   constructor() {
     this.init();
   }
 
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+    this.realtimeSub?.unsubscribe();
+  }
+
   private init(): void {
     this.isLoading.set(true);
-    // Resolver el admin destinatario y cargar la conversación existente
-    this.messageService.getRecipients().subscribe({
+    this.notificationSocket.connect('tenant');
+    this.listenForRealtimeMessages();
+    this.messageService.getRecipients('tenant').subscribe({
       next: (recipients: MessageRecipient[]) => {
         const admin = recipients.find((r) => r.role === 'ADMIN') ?? recipients[0];
         this.adminId.set(admin?.id ?? null);
         this.loadConversation();
+        this.startPolling();
       },
       error: () => {
         this.adminId.set(null);
@@ -206,35 +150,99 @@ export class TenantMessagesComponent {
       this.isLoading.set(false);
       return;
     }
-    this.messageService.getThread(adminId).subscribe({
+    this.messageService.getThread(adminId, {}, 'tenant').subscribe({
       next: (messages) => {
         this.messages.set(messages);
         this.isLoading.set(false);
-        this.messageService.refreshUnread().subscribe();
+        this.messageService.refreshUnread('tenant').subscribe();
       },
       error: () => this.isLoading.set(false),
     });
   }
 
-  isMine(message: InternalMessage): boolean {
-    return message.sender_id === this.currentUserId;
+  private startPolling(): void {
+    const adminId = this.adminId();
+    if (!adminId) return;
+    this.pollSub?.unsubscribe();
+    this.pollSub = interval(POLL_INTERVAL_MS).subscribe(() => {
+      if (document.hidden || this.sending()) return;
+      this.messageService.getThread(adminId, {}, 'tenant').subscribe({
+        next: (messages) => this.messages.set(messages),
+        error: () => undefined,
+      });
+    });
   }
 
-  send(): void {
-    const body = this.draft().trim();
-    const adminId = this.adminId();
-    if (!body || !adminId) return;
-    this.sending.set(true);
-    this.messageService.send(adminId, body).subscribe({
-      next: (message) => {
-        this.sending.set(false);
-        this.messages.update((msgs) => [...msgs, message]);
-        this.draft.set('');
-      },
-      error: () => {
-        this.sending.set(false);
-        this.toast.error(this.transloco.translate('messages.sendError'));
-      },
+  private listenForRealtimeMessages(): void {
+    this.realtimeSub = this.notificationSocket.events$.subscribe((event) => {
+      if (event.type !== 'message.new') {
+        return;
+      }
+      const adminId = this.adminId();
+      if (!adminId) {
+        return;
+      }
+      const peerUserId = Number(event.payload.peerUserId);
+      if (Number.isFinite(peerUserId) && peerUserId !== adminId) {
+        return;
+      }
+      this.messageService.getThread(adminId, {}, 'tenant').subscribe({
+        next: (messages) => this.messages.set(messages),
+        error: () => undefined,
+      });
     });
+  }
+
+  addFiles(files: File[]): void {
+    const remaining = 3 - this.selectedFiles().length;
+    if (remaining <= 0) return;
+    this.selectedFiles.update((current) => [...current, ...files.slice(0, remaining)]);
+  }
+
+  removeFile(index: number): void {
+    this.selectedFiles.update((files) => files.filter((_, i) => i !== index));
+  }
+
+  send(body: string): void {
+    const adminId = this.adminId();
+    const files = this.selectedFiles();
+    if (!adminId || this.sending() || (!body && files.length === 0)) return;
+
+    this.sending.set(true);
+
+    const dispatch = (fileUrls: string[]) => {
+      this.messageService.send(adminId, body, fileUrls, 'tenant').subscribe({
+        next: (message) => {
+          this.appendMessage(message);
+          this.selectedFiles.set([]);
+          this.sentVersion.update((version) => version + 1);
+          this.sending.set(false);
+        },
+        error: () => {
+          this.sending.set(false);
+          this.toast.error(this.transloco.translate('messages.sendError'));
+        },
+      });
+    };
+
+    if (files.length > 0) {
+      this.messageService.uploadFiles(files, 'tenant').subscribe({
+        next: (attachments) => dispatch(attachments.map((a) => a.file_url)),
+        error: () => {
+          this.sending.set(false);
+          this.toast.error(this.transloco.translate('messages.sendError'));
+        },
+      });
+      return;
+    }
+
+    dispatch([]);
+  }
+
+  /** Inserta evitando duplicados por id (defensa ante polling concurrente). */
+  private appendMessage(message: InternalMessage): void {
+    this.messages.update((msgs) =>
+      msgs.some((m) => m.id === message.id) ? msgs : [...msgs, message],
+    );
   }
 }

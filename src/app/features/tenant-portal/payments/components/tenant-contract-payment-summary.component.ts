@@ -31,7 +31,6 @@ import { AppLoadingStateComponent } from '../../../../shared/ui/loading-state/lo
             <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
           </span>
           <h2>{{ 'public.tenantCreatePayment.contractSummaryTitle' | transloco }}</h2>
-          <span class="contract-number">{{ c.contract_number }}</span>
         </div>
 
         <div class="summary-grid">
@@ -195,18 +194,6 @@ import { AppLoadingStateComponent } from '../../../../shared/ui/loading-state/lo
       background: rgba(255, 255, 255, 0.15);
       border-radius: 8px;
       padding: 6px;
-    }
-
-    .contract-number {
-      margin-left: auto;
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.15);
-      color: rgba(255, 255, 255, 0.74);
-      padding: 3px 10px;
-      font-size: 0.75rem;
-      font-weight: 650;
-      letter-spacing: 0.03em;
     }
 
     .summary-grid {

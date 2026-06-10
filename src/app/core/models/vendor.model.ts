@@ -21,6 +21,7 @@ export interface Vendor {
   is_active: boolean;
   average_rating?: number | null;
   total_orders?: number | null;
+  has_account?: boolean;
 }
 
 export interface VendorHistoryItem {

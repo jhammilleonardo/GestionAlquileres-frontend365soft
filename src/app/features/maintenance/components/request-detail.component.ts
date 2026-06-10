@@ -8,6 +8,7 @@ import {
   output,
   signal,
   ChangeDetectionStrategy,
+  OnInit,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '../../../../environments/environment';
@@ -41,6 +42,7 @@ import {
   MaintenancePriority,
   MaintenanceCategory,
   MaintenanceMessage,
+  MaintenanceAttachment,
   CreateMessageDto,
 } from '../../../core/models/maintenance-request.model';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
@@ -53,13 +55,14 @@ import {
 import { VendorService } from '../../../core/services/admin/vendor.service';
 import { Vendor } from '../../../core/models/vendor.model';
 import { MaintenanceReadStateService } from '../../../core/services/maintenance/maintenance-read-state.service';
+import { SecureFileService } from '../../../core/services/secure-file.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { TenantMaintenanceConversationComponent } from '../../tenant-portal/maintenance/components/tenant-maintenance-conversation.component';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
-import { AppCheckboxComponent } from '../../../shared/ui/checkbox/checkbox.component';
 import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
 import { AppDialogComponent } from '../../../shared/ui/dialog/dialog.component';
-import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 import { AppSelectComponent, AppSelectOption } from '../../../shared/ui/select/select.component';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
@@ -71,20 +74,19 @@ import { ToastService } from '../../../shared/ui/toast/toast.service';
     NgClass,
     FormsModule,
     AppButtonComponent,
-    AppCheckboxComponent,
     AppDatePickerComponent,
     AppDialogComponent,
-    AppLoadingStateComponent,
     AppSelectComponent,
     LucideAngularModule,
     TranslocoModule,
     TenantDatePipe,
+    TenantMaintenanceConversationComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'mantenimiento', alias: 'maintenance' })],
   templateUrl: './request-detail.component.html',
   styleUrl: './request-detail.component.scss',
 })
-export class RequestDetailComponent {
+export class RequestDetailComponent implements OnInit {
   readonly initialRequest = input.required<MaintenanceRequest>();
   readonly closed = output<void>();
   readonly changed = output<MaintenanceRequest>();
@@ -121,6 +123,32 @@ export class RequestDetailComponent {
   private transloco = inject(TranslocoService);
   private confirmDialog = inject(ConfirmDialogService);
   private toast = inject(ToastService);
+  private authService = inject(AuthService);
+
+  /** Scroll-to-bottom trigger para el chat reutilizado. */
+  readonly scrollVersion = signal(0);
+  readonly sentVersion = signal(0);
+
+  /** Marca los mensajes propios del admin logueado (alineados a la derecha). */
+  readonly isMyMessage = (message: MaintenanceMessage): boolean =>
+    Number(this.authService.currentUser()?.id) === message.user_id;
+
+  addFiles(files: File[]): void {
+    this.selectedFiles.update((current) => [...current, ...files].slice(0, 3));
+  }
+
+  onNewMessagesOpened(): void {
+    this.newMessagesCount.set(0);
+    this.scrollVersion.update((v) => v + 1);
+    setTimeout(() => this.pollingNewFromId.set(0), 2500);
+  }
+
+  onConversationAtBottom(atBottom: boolean): void {
+    if (atBottom) {
+      this.newMessagesCount.set(0);
+      this.pollingNewFromId.set(0);
+    }
+  }
 
   // State
   request!: MaintenanceRequest;
@@ -185,6 +213,7 @@ export class RequestDetailComponent {
   private readonly adminUserService = inject(AdminUserService);
   private readonly vendorService = inject(VendorService);
   private readonly readState = inject(MaintenanceReadStateService);
+  private readonly secureFile = inject(SecureFileService);
 
   // Proveedores externos para asignación
   readonly vendors = signal<Vendor[]>([]);
@@ -194,6 +223,7 @@ export class RequestDetailComponent {
   readonly ratingDialogOpen = signal(false);
   readonly ratingValue = signal(0);
   readonly ratingComment = signal('');
+  readonly attachmentObjectUrls = signal<Record<string, string>>({});
 
   textareaValue(event: Event): string {
     return event.target instanceof HTMLTextAreaElement ? event.target.value : '';
@@ -201,24 +231,22 @@ export class RequestDetailComponent {
   readonly ratingSaving = signal(false);
 
   constructor() {
-    queueMicrotask(() => {
-      this.request = { ...this.initialRequest() };
-      this.loadMessages();
-    });
     this.loadStaffMembers();
     this.loadVendors();
+  }
+
+  ngOnInit(): void {
+    this.request = { ...this.initialRequest() };
+    this.loadMessages();
   }
 
   private loadStaffMembers(): void {
     this.adminUserService.listUsers().subscribe({
       next: (users) => {
-        const staff = users.filter(
-          (user) =>
-            user.role === 'TECNICO' ||
-            user.role === 'EMPLEADO' ||
-            user.role === 'ADMIN' ||
-            user.role === 'SUPERADMIN',
-        );
+        // Solo personal que ejecuta/coordina el trabajo en campo. ADMIN y
+        // SUPERADMIN gestionan desde el panel y no se asignan como ejecutores;
+        // para externos existe el campo "Proveedor externo".
+        const staff = users.filter((user) => user.role === 'TECNICO' || user.role === 'EMPLEADO');
         this.staffMembers.set(staff);
         this.staffOptions.set(
           staff.map((user) => ({
@@ -279,6 +307,7 @@ export class RequestDetailComponent {
               const firstNew = messages.find((m) => m.id > oldLastId);
               if (firstNew) this.pollingNewFromId.set(firstNew.id);
               this.messages.set(messages);
+              this.prepareAttachmentPreviews(messages);
               if (atBottom) {
                 this.scrollToBottom();
                 this.newMessagesCount.set(0);
@@ -344,7 +373,7 @@ export class RequestDetailComponent {
         this.messages.set(messages);
         this.isLoadingMessages.set(false);
         this.markAllAsRead(messages);
-        this.scrollToBottom();
+        this.scrollVersion.update((v) => v + 1);
         this.startPolling();
       },
       error: () => {
@@ -428,16 +457,26 @@ export class RequestDetailComponent {
   }
 
   getFileUrl(url: string): string {
-    return environment.apiUrl.replace(/\/$/, '') + url;
+    return this.attachmentObjectUrls()[url] ?? environment.apiUrl.replace(/\/$/, '') + url;
   }
 
   isImageAttachment(fileType: string): boolean {
     return fileType === 'image';
   }
 
-  addMessage(): void {
-    const messageText = this.newMessage().trim();
-    if (!messageText) return;
+  openAttachment(attachment: MaintenanceAttachment): void {
+    this.secureFile.open(attachment.file_url, 'admin');
+  }
+
+  downloadAttachment(attachment: MaintenanceAttachment): void {
+    this.secureFile.download(attachment.file_url, attachment.file_name, 'admin');
+  }
+
+  sendMessage(text: string): void {
+    const messageText = text.trim();
+    const files = this.selectedFiles();
+
+    if (!messageText && files.length === 0) return;
 
     this.isSendingMessage.set(true);
 
@@ -449,13 +488,15 @@ export class RequestDetailComponent {
       };
       this.maintenanceService.addMessage(this.request.id, dto).subscribe({
         next: (message) => {
+          // Inserción optimista: el mensaje devuelto ya trae adjuntos y remitente.
           this.messages.update((msgs) => [...msgs, message]);
           this.lastMessageId = message.id;
           this.newMessage.set('');
           this.isInternalNote.set(false);
           this.selectedFiles.set([]);
           this.isSendingMessage.set(false);
-          this.scrollToBottom();
+          this.sentVersion.update((version) => version + 1);
+          this.scrollVersion.update((v) => v + 1);
         },
         error: () => {
           this.toast.error(this.transloco.translate('maintenance.errorSendMessage'));
@@ -464,8 +505,8 @@ export class RequestDetailComponent {
       });
     };
 
-    if (this.selectedFiles().length > 0) {
-      this.maintenanceService.uploadFiles(this.request.id, this.selectedFiles()).subscribe({
+    if (files.length > 0) {
+      this.maintenanceService.uploadFiles(this.request.id, files).subscribe({
         next: (attachments) => send(attachments.map((a) => a.file_url)),
         error: () => {
           this.toast.error(this.transloco.translate('maintenance.errorUploadFiles'));
@@ -487,12 +528,29 @@ export class RequestDetailComponent {
       this.request.assigned_to = null;
       return;
     }
-    this.request.assigned_to = staffId;
-    // Asignar técnico interno excluye al proveedor externo
-    if (this.request.vendor_id) {
-      this.request.vendor_id = null;
-      this.request.vendor_name = null;
-    }
+    this.isUpdating.set(true);
+    this.maintenanceService.assignVendor(this.request.id, { assigned_to: staffId }).subscribe({
+      next: (updated) => {
+        this.request = {
+          ...this.request,
+          ...updated,
+          assigned_to: staffId,
+          vendor_id: null,
+          vendor_name: null,
+        };
+        this.isUpdating.set(false);
+        this.changed.emit(this.request);
+        this.toast.success(
+          this.transloco.translate('maintenance.staffAssigned', {
+            name: this.getStaffName(staffId),
+          }),
+        );
+      },
+      error: () => {
+        this.isUpdating.set(false);
+        this.toast.error(this.transloco.translate('maintenance.errorUpdateRequest'));
+      },
+    });
   }
 
   getVendorName(vendorId: number): string {
@@ -517,6 +575,37 @@ export class RequestDetailComponent {
       },
       error: () => this.toast.error(this.transloco.translate('maintenance.errorUpdateRequest')),
     });
+  }
+
+  canSendConversationMessage(): boolean {
+    return (
+      (this.newMessage().trim().length > 0 || this.selectedFiles().length > 0) &&
+      !this.isSendingMessage()
+    );
+  }
+
+  private prepareAttachmentPreviews(messages: MaintenanceMessage[]): void {
+    const imageAttachments = messages.flatMap((message) =>
+      (message.attachments ?? []).filter((attachment) =>
+        this.isImageAttachment(attachment.file_type),
+      ),
+    );
+
+    for (const attachment of imageAttachments) {
+      if (this.attachmentObjectUrls()[attachment.file_url]) {
+        continue;
+      }
+
+      this.secureFile.getObjectUrl(attachment.file_url, 'admin').subscribe({
+        next: (objectUrl) => {
+          this.attachmentObjectUrls.update((urls) => ({
+            ...urls,
+            [attachment.file_url]: objectUrl,
+          }));
+        },
+        error: () => undefined,
+      });
+    }
   }
 
   private shouldPromptRating(): boolean {
@@ -625,15 +714,58 @@ export class RequestDetailComponent {
     return !message.send_to_resident;
   }
 
+  private readonly STAFF_ROLES = ['ADMIN', 'EMPLEADO', 'TECNICO', 'SUPERADMIN'];
+
   isFromTenant(message: MaintenanceMessage): boolean {
     return message.user_id === this.request.tenant_id;
   }
 
-  getSenderName(message: MaintenanceMessage): string {
-    if (this.isFromTenant(message)) {
-      return this.request.tenant?.name ?? `Inquilino #${this.request.tenant_id}`;
+  /** Mensaje del personal interno (admin/empleado/técnico) → lado derecho. */
+  isFromStaff(message: MaintenanceMessage): boolean {
+    if (message.sender_role) {
+      return this.STAFF_ROLES.includes(message.sender_role);
     }
-    return 'Tú (Admin)';
+    // Sin rol (datos antiguos): si no es del inquilino, asumir staff.
+    return !this.isFromTenant(message);
+  }
+
+  getSenderName(message: MaintenanceMessage): string {
+    return (
+      message.sender_name ??
+      (this.isFromTenant(message) ? this.request.tenant?.name : null) ??
+      `Usuario #${message.user_id}`
+    );
+  }
+
+  getSenderInitial(message: MaintenanceMessage): string {
+    const name = message.sender_name ?? this.request.tenant?.name ?? 'U';
+    return name.charAt(0).toUpperCase();
+  }
+
+  /** Etiqueta de rol traducida para el badge del remitente. */
+  getSenderRoleText(message: MaintenanceMessage): string {
+    return this.senderRoleLabel(message.sender_role);
+  }
+
+  /** Clase de color del badge según el rol del remitente. */
+  getSenderRoleClass(message: MaintenanceMessage): string {
+    switch (message.sender_role) {
+      case 'VENDOR':
+        return 'role-vendor';
+      case 'INQUILINO':
+        return 'role-tenant';
+      case 'PROPIETARIO':
+        return 'role-owner';
+      default:
+        return 'role-staff';
+    }
+  }
+
+  private senderRoleLabel(role: string | null | undefined): string {
+    if (!role) return '';
+    const key = `maintenance.senderRole.${role}`;
+    const label = this.transloco.translate(key);
+    return label === key ? '' : label;
   }
 
   getMessageIcon(message: MaintenanceMessage): LucideIconData {

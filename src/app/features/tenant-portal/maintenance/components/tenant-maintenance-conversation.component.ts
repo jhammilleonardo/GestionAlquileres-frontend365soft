@@ -3,16 +3,23 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  OnChanges,
+  SimpleChanges,
   ViewChild,
+  inject,
   input,
+  model,
   output,
+  signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
+import { AuthContext } from '../../../../core/services/session-token.service';
 import {
   CheckCircle2,
   FileText,
   Image,
+  Lock,
   LucideAngularModule,
   MessageSquare,
   Paperclip,
@@ -20,8 +27,11 @@ import {
   X,
 } from 'lucide-angular';
 
-import { environment } from '../../../../../environments/environment';
-import { MaintenanceMessage } from '../../../../core/models/maintenance-request.model';
+import {
+  MaintenanceAttachment,
+  MaintenanceMessage,
+} from '../../../../core/models/maintenance-request.model';
+import { SecureFileService } from '../../../../core/services/secure-file.service';
 import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
 
 @Component({
@@ -86,38 +96,58 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
                 }
                 <div class="msg-row" [class.msg-mine]="isMyMessage()(message)">
                   @if (!isMyMessage()(message)) {
-                    <div class="msg-avatar admin-avatar">A</div>
+                    <div class="msg-avatar admin-avatar">{{ otherInitial(message) }}</div>
                   }
                   <div class="msg-group">
                     <span class="msg-sender" [class.msg-sender-mine]="isMyMessage()(message)">
-                      {{
-                        isMyMessage()(message)
-                          ? ('public.tenantMaintenance.you' | transloco)
-                          : ('public.tenantMaintenance.admin' | transloco)
-                      }}
+                      @if (isMyMessage()(message)) {
+                        {{ 'public.tenantMaintenance.you' | transloco }}
+                      } @else if (isStaffSender(message)) {
+                        <span class="role-tag role-staff">{{ staffLabel(message) }}</span>
+                      } @else {
+                        {{ otherName(message) }}
+                        @if (otherRoleText(message)) {
+                          <span class="role-tag" [class]="otherRoleClass(message)">{{
+                            otherRoleText(message)
+                          }}</span>
+                        }
+                      }
                     </span>
-                    <div class="msg-bubble" [class.bubble-mine]="isMyMessage()(message)">
-                      {{ message.message }}
-                    </div>
+                    @if (message.message.trim()) {
+                      <div class="msg-bubble" [class.bubble-mine]="isMyMessage()(message)">
+                        {{ message.message }}
+                      </div>
+                    }
                     @if (message.attachments && message.attachments.length > 0) {
                       <div
                         class="msg-attachments"
                         [class.msg-attachments-mine]="isMyMessage()(message)"
                       >
                         @for (attachment of message.attachments; track attachment.id) {
-                          <a
-                            [href]="getFileUrl(attachment.file_url)"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="att-chip"
-                            [class.att-chip-mine]="isMyMessage()(message)"
-                          >
-                            <lucide-icon
-                              [img]="isImageAttachment(attachment.file_type) ? Image : FileText"
-                              [size]="12"
-                            ></lucide-icon>
-                            <span>{{ attachment.file_name }}</span>
-                          </a>
+                          @if (isImageAttachment(attachment.file_type)) {
+                            <button
+                              type="button"
+                              class="att-preview"
+                              [class.att-preview-mine]="isMyMessage()(message)"
+                              (click)="openAttachment(attachment)"
+                            >
+                              <img
+                                [src]="getFileUrl(attachment.file_url)"
+                                [alt]="attachment.file_name"
+                              />
+                              <span>{{ attachment.file_name }}</span>
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="att-chip"
+                              [class.att-chip-mine]="isMyMessage()(message)"
+                              (click)="downloadAttachment(attachment)"
+                            >
+                              <lucide-icon [img]="FileText" [size]="12"></lucide-icon>
+                              <span>{{ attachment.file_name }}</span>
+                            </button>
+                          }
                         }
                       </div>
                     }
@@ -168,13 +198,25 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
               </div>
             }
 
+            @if (allowInternalNote()) {
+              <label class="internal-toggle">
+                <input
+                  type="checkbox"
+                  [ngModel]="internalNote()"
+                  (ngModelChange)="internalNote.set($event)"
+                />
+                <lucide-icon [img]="Lock" [size]="12"></lucide-icon>
+                {{ 'public.tenantMaintenance.internalNote' | transloco }}
+              </label>
+            }
+
             <div class="conv-input-area">
               <button
                 class="attach-btn"
                 type="button"
                 (click)="fileInputRef.click()"
                 [disabled]="selectedFiles().length >= 3"
-                title="Adjuntar archivo (max. 3)"
+                [title]="'public.tenantMaintenance.attachFile' | transloco"
               >
                 <lucide-icon [img]="Paperclip" [size]="15"></lucide-icon>
                 @if (selectedFiles().length > 0) {
@@ -192,7 +234,7 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
                 class="send-btn"
                 type="button"
                 (click)="submitMessage()"
-                [disabled]="!draftMessage.trim() || isSending()"
+                [disabled]="!canSubmitMessage() || isSending()"
               >
                 @if (isSending()) {
                   <span class="send-spinner" aria-hidden="true"></span>
@@ -410,6 +452,28 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
       text-align: right;
     }
 
+    .role-tag {
+      margin-left: 5px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .role-tag.role-vendor {
+      color: #b45309;
+    }
+
+    .role-tag.role-tenant {
+      color: #dc2626;
+    }
+
+    .role-tag.role-owner {
+      color: #7c3aed;
+    }
+
+    .role-tag.role-staff {
+      color: #2563eb;
+    }
+
     .msg-bubble {
       padding: 10px 14px;
       border-radius: 4px 14px 14px 14px;
@@ -561,6 +625,21 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
 
     .file-remove:hover {
       color: #1d4ed8;
+    }
+
+    .internal-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 12px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .internal-toggle input {
+      cursor: pointer;
     }
 
     .conv-input-area {
@@ -720,6 +799,7 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
       font-size: 11px;
       color: #475569;
       text-decoration: none;
+      cursor: pointer;
       transition: background 0.15s;
     }
 
@@ -744,6 +824,51 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
     .att-chip.att-chip-mine:hover {
       background: #cbd5e1;
       color: #0f172a;
+    }
+
+    .att-preview {
+      display: inline-grid;
+      gap: 5px;
+      width: 132px;
+      padding: 0;
+      border: 1px solid #dbe3ef;
+      border-radius: 12px;
+      background: #fff;
+      color: #475569;
+      cursor: pointer;
+      overflow: hidden;
+      text-align: left;
+      transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+    }
+
+    .att-preview img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      background: #f1f5f9;
+    }
+
+    .att-preview span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding: 0 8px 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
+    .att-preview:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    }
+
+    .att-preview-mine {
+      border-color: rgba(255, 255, 255, 0.45);
+      background: rgba(255, 255, 255, 0.18);
+      color: #fff;
     }
 
     @keyframes spin {
@@ -773,8 +898,9 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
 })
-export class TenantMaintenanceConversationComponent implements AfterViewChecked {
+export class TenantMaintenanceConversationComponent implements AfterViewChecked, OnChanges {
   @ViewChild('msgContainer') private msgContainer?: ElementRef<HTMLElement>;
 
   readonly messages = input.required<MaintenanceMessage[]>();
@@ -787,13 +913,21 @@ export class TenantMaintenanceConversationComponent implements AfterViewChecked 
   readonly firstUnreadMessageId = input(0);
   readonly unreadCountFromHere = input(0);
   readonly scrollVersion = input(0);
+  readonly sentVersion = input(0);
   readonly isMyMessage = input.required<(message: MaintenanceMessage) => boolean>();
+  /** Contexto de auth para descargar adjuntos privados (tenant/admin/vendor). */
+  readonly context = input<AuthContext>('tenant');
+  /** Muestra el toggle de "Nota interna" (solo admin). */
+  readonly allowInternalNote = input(false);
+  /** Estado bidireccional del toggle de nota interna. */
+  readonly internalNote = model(false);
 
   readonly filesSelected = output<File[]>();
   readonly removeFile = output<number>();
   readonly messageSubmitted = output<string>();
   readonly conversationAtBottomChange = output<boolean>();
   readonly newMessagesOpened = output<void>();
+  readonly attachmentObjectUrls = signal<Record<string, string>>({});
 
   readonly CheckCircle2 = CheckCircle2;
   readonly FileText = FileText;
@@ -801,10 +935,78 @@ export class TenantMaintenanceConversationComponent implements AfterViewChecked 
   readonly MessageSquare = MessageSquare;
   readonly Paperclip = Paperclip;
   readonly Send = Send;
+  readonly Lock = Lock;
   readonly X = X;
 
   protected draftMessage = '';
   private handledScrollVersion = -1;
+  private handledSentVersion = 0;
+  private readonly secureFile = inject(SecureFileService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly STAFF_ROLES = ['ADMIN', 'EMPLEADO', 'TECNICO', 'SUPERADMIN'];
+
+  /** El personal interno (admin/empleado/técnico) se muestra solo por su rol,
+   *  sin nombre personal. Inquilino/proveedor se muestran con nombre + rol. */
+  protected isStaffSender(message: MaintenanceMessage): boolean {
+    return this.STAFF_ROLES.includes(message.sender_role ?? '');
+  }
+
+  /** Etiqueta de un staff (ej. "Administrador") — sin nombre. */
+  protected staffLabel(message: MaintenanceMessage): string {
+    return (
+      this.roleLabel(message.sender_role) ||
+      this.transloco.translate('public.tenantMaintenance.admin')
+    );
+  }
+
+  /** Nombre del remitente (inquilino/proveedor). */
+  protected otherName(message: MaintenanceMessage): string {
+    return message.sender_name ?? this.transloco.translate('public.tenantMaintenance.admin');
+  }
+
+  protected otherInitial(message: MaintenanceMessage): string {
+    if (this.isStaffSender(message)) {
+      return this.staffLabel(message).charAt(0).toUpperCase();
+    }
+    return (message.sender_name ?? 'U').charAt(0).toUpperCase();
+  }
+
+  /** Etiqueta de rol para inquilino/proveedor/propietario (no staff). */
+  protected otherRoleText(message: MaintenanceMessage): string {
+    const role = message.sender_role;
+    if (!role || this.STAFF_ROLES.includes(role)) return '';
+    return this.roleLabel(role);
+  }
+
+  protected otherRoleClass(message: MaintenanceMessage): string {
+    switch (message.sender_role) {
+      case 'VENDOR':
+        return 'role-vendor';
+      case 'INQUILINO':
+        return 'role-tenant';
+      case 'PROPIETARIO':
+        return 'role-owner';
+      default:
+        return 'role-staff';
+    }
+  }
+
+  private roleLabel(role: string | null | undefined): string {
+    if (!role) return '';
+    const key = `public.tenantMaintenance.senderRole.${role}`;
+    const label = this.transloco.translate(key);
+    return label === key ? '' : label;
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('messages' in changes) {
+      this.prepareAttachmentPreviews();
+    }
+    if ('sentVersion' in changes && this.sentVersion() !== this.handledSentVersion) {
+      this.handledSentVersion = this.sentVersion();
+      this.draftMessage = '';
+    }
+  }
 
   ngAfterViewChecked(): void {
     const version = this.scrollVersion();
@@ -840,20 +1042,31 @@ export class TenantMaintenanceConversationComponent implements AfterViewChecked 
   protected submitMessage(): void {
     const message = this.draftMessage.trim();
 
-    if (!message) {
+    if (!message && this.selectedFiles().length === 0) {
       return;
     }
 
     this.messageSubmitted.emit(message);
-    this.draftMessage = '';
+  }
+
+  protected canSubmitMessage(): boolean {
+    return this.draftMessage.trim().length > 0 || this.selectedFiles().length > 0;
   }
 
   protected getFileUrl(url: string): string {
-    return environment.apiUrl.replace(/\/$/, '') + url;
+    return this.attachmentObjectUrls()[url] ?? '';
   }
 
   protected isImageAttachment(fileType: string): boolean {
     return fileType === 'image';
+  }
+
+  protected openAttachment(attachment: MaintenanceAttachment): void {
+    this.secureFile.open(attachment.file_url, this.context());
+  }
+
+  protected downloadAttachment(attachment: MaintenanceAttachment): void {
+    this.secureFile.download(attachment.file_url, attachment.file_name, this.context());
   }
 
   private scrollToBottom(): void {
@@ -873,5 +1086,29 @@ export class TenantMaintenanceConversationComponent implements AfterViewChecked 
 
   protected isFirstPollingNew(message: MaintenanceMessage): boolean {
     return this.pollingNewFromId() > 0 && message.id === this.pollingNewFromId();
+  }
+
+  private prepareAttachmentPreviews(): void {
+    const imageAttachments = this.messages().flatMap((message) =>
+      (message.attachments ?? []).filter((attachment) =>
+        this.isImageAttachment(attachment.file_type),
+      ),
+    );
+
+    for (const attachment of imageAttachments) {
+      if (this.attachmentObjectUrls()[attachment.file_url]) {
+        continue;
+      }
+
+      this.secureFile.getObjectUrl(attachment.file_url, this.context()).subscribe({
+        next: (objectUrl) => {
+          this.attachmentObjectUrls.update((urls) => ({
+            ...urls,
+            [attachment.file_url]: objectUrl,
+          }));
+        },
+        error: () => undefined,
+      });
+    }
   }
 }

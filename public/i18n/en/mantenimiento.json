@@ -38,8 +38,18 @@
   "unreadMessages": "{{count}} unread message(s)",
   "internalNote": "Internal note · Admin",
   "you": "You (Admin)",
+  "senderRole": {
+    "ADMIN": "Admin",
+    "EMPLEADO": "Employee",
+    "TECNICO": "Technician",
+    "INQUILINO": "Tenant",
+    "VENDOR": "Vendor",
+    "PROPIETARIO": "Owner",
+    "SUPERADMIN": "Admin"
+  },
   "messagePlaceholder": "Write your message...",
-  "staffOnly": "Staff only",
+  "staffOnly": "Internal note",
+  "staffOnlyHint": "Only visible to admins and technicians",
   "attachFile": "Attach file (max. 3)",
   "status": {
     "NEW": "New",
@@ -76,6 +86,7 @@
   "assignVendor": "External vendor",
   "selectVendor": "Select vendor...",
   "externalVendor": "External vendor",
+  "staffAssigned": "Order assigned to {{name}}",
   "vendorAssigned": "Order assigned to {{name}}",
   "rateVendorTitle": "Rate the vendor",
   "rateVendorIntro": "How would you rate {{name}}’s work?",
@@ -86,6 +97,7 @@
   "ratingCommentPlaceholder": "Comment about the work (optional)",
   "actions": {
     "newRequestInfo": "The new request form is implemented in the corresponding flow.",
+    "detailLoadError": "Could not load the full detail. Showing available data.",
     "statusUpdated": "Status updated",
     "statusUpdateError": "Error updating the request status",
     "priorityUpdated": "Priority updated",

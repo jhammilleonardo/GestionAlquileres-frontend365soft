@@ -3,6 +3,13 @@
   "subtitle": "Gestiona todas las propiedades de tu cartera",
   "new": "Nueva Propiedad",
   "edit": "Editar Propiedad",
+  "errors": {
+    "amount": "Máximo 99 999 999,99",
+    "count": "Valor fuera de rango (0–999)",
+    "year": "El año debe estar entre 1800 y 2100",
+    "latitude": "La latitud debe estar entre -90 y 90",
+    "longitude": "La longitud debe estar entre -180 y 180"
+  },
   "backToList": "Volver a Propiedades",
   "search": "Título, dirección...",
   "allStatuses": "Todos los estados",

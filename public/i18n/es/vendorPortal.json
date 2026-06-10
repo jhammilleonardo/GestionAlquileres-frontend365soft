@@ -1,0 +1,93 @@
+{
+  "auth": {
+    "kicker": "Portal de proveedores",
+    "title": "Gestiona tus órdenes asignadas",
+    "signIn": "Iniciar sesión",
+    "subtitle": "Ingresa con las credenciales que te compartió la inmobiliaria.",
+    "emailPlaceholder": "correo@ejemplo.com",
+    "passwordPlaceholder": "Tu contraseña",
+    "rememberMe": "Mantener sesión iniciada",
+    "submit": "Entrar",
+    "missingTenant": "No se pudo identificar la empresa.",
+    "loginError": "Credenciales inválidas o cuenta no habilitada.",
+    "feature1": "Consulta tus órdenes asignadas",
+    "feature2": "Avanza y completa el trabajo",
+    "feature3": "Sube fotos y deja notas del avance"
+  },
+  "layout": {
+    "portalName": "Portal del Proveedor",
+    "navHome": "Inicio",
+    "navProfile": "Mi perfil",
+    "logout": "Cerrar sesión",
+    "vendorLabel": "Proveedor"
+  },
+  "profile": {
+    "title": "Mi perfil",
+    "subtitle": "Tus datos de proveedor y acceso",
+    "name": "Nombre",
+    "specialty": "Especialidad",
+    "email": "Correo",
+    "phone": "Teléfono",
+    "rating": "Calificación",
+    "jobs": "Trabajos realizados",
+    "account": "Acceso",
+    "accountHint": "Si necesitas cambiar tu contraseña, contacta a la inmobiliaria."
+  },
+  "dashboard": {
+    "kicker": "Proveedor",
+    "greeting": "Hola, {{name}}",
+    "welcome": "Estas son tus órdenes asignadas",
+    "refresh": "Actualizar",
+    "logout": "Cerrar sesión",
+    "total": "Total",
+    "new": "Nuevas",
+    "inProgress": "En curso",
+    "completed": "Hechas",
+    "tabAll": "Todas",
+    "tabNew": "Nuevas",
+    "tabInProgress": "En curso",
+    "tabCompleted": "Completadas",
+    "loading": "Cargando órdenes...",
+    "empty": "No tienes órdenes en esta categoría"
+  },
+  "status": {
+    "NEW": "Nueva",
+    "IN_PROGRESS": "En curso",
+    "COMPLETED": "Completada"
+  },
+  "detail": {
+    "back": "Volver",
+    "statusTitle": "Estado del trabajo",
+    "propertyTitle": "Propiedad",
+    "openMap": "Ver en el mapa",
+    "chatTitle": "Conversación",
+    "you": "Tú",
+    "team": "Administración",
+    "senderRole": {
+      "ADMIN": "Admin",
+      "EMPLEADO": "Empleado",
+      "TECNICO": "Técnico",
+      "INQUILINO": "Inquilino",
+      "PROPIETARIO": "Propietario",
+      "SUPERADMIN": "Admin"
+    },
+    "noChat": "Aún no hay mensajes. Escribe para coordinar el trabajo.",
+    "description": "Descripción",
+    "startWork": "Iniciar trabajo",
+    "markCompleted": "Marcar como completada",
+    "allDone": "Trabajo finalizado",
+    "notesTitle": "Notas y fotos",
+    "loadingNotes": "Cargando notas...",
+    "noNotes": "Aún no hay notas",
+    "removePhoto": "Quitar foto",
+    "notePlaceholder": "Escribe una nota sobre el avance...",
+    "send": "Enviar",
+    "started": "Trabajo iniciado",
+    "completed": "Orden completada",
+    "errorAdvance": "No se pudo actualizar la etapa",
+    "errorUpload": "No se pudieron subir las fotos",
+    "photosUploaded": "Fotos subidas",
+    "noteSent": "Nota enviada",
+    "errorNote": "No se pudo enviar la nota"
+  }
+}

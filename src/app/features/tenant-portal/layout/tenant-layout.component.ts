@@ -116,11 +116,6 @@ export class TenantLayoutComponent implements OnDestroy {
         icon: this.Home,
       },
       {
-        labelKey: 'public.myProperty.title',
-        route: this.slugService.buildUrl('/portal/mi-propiedad'),
-        icon: this.Home,
-      },
-      {
         labelKey: 'public.tenantLayout.navMaintenance',
         route: this.slugService.buildUrl('/portal/mantenimiento'),
         icon: this.Wrench,
@@ -166,7 +161,7 @@ export class TenantLayoutComponent implements OnDestroy {
     }
 
     // Contador de mensajes internos no leídos
-    this.messageService.refreshUnread().subscribe({ error: () => undefined });
+    this.messageService.refreshUnread('tenant').subscribe({ error: () => undefined });
 
     // Check if user has contracts by querying the contract service directly
     const currentUser = this.authService.currentUser();
@@ -312,10 +307,17 @@ export class TenantLayoutComponent implements OnDestroy {
     return this.translocoService.translate('public.tenantLayout.daysAgo', { count: days });
   }
 
-  getNotificationIcon(eventType: string): string {
-    if (eventType.includes('maintenance')) return '🔧';
-    if (eventType.includes('contract')) return '📄';
-    if (eventType.includes('payment')) return '💳';
-    return '🔔';
+  getNotificationIcon(eventType: string): typeof Bell {
+    if (eventType.includes('maintenance')) return this.Wrench;
+    if (eventType.includes('contract')) return this.FileText;
+    if (eventType.includes('payment')) return this.CreditCard;
+    return this.Bell;
+  }
+
+  getNotificationIconClass(eventType: string): string {
+    if (eventType.includes('maintenance')) return 'icon-maintenance';
+    if (eventType.includes('contract')) return 'icon-contract';
+    if (eventType.includes('payment')) return 'icon-payment';
+    return 'icon-default';
   }
 }

@@ -18,9 +18,13 @@ export type AuditAction =
 export interface AuditLog {
   id: number;
   user_id: number | null;
+  user_name: string | null;
+  user_email: string | null;
+  user_role: string | null;
   action: AuditAction;
   entity_type: string;
   entity_id: number;
+  entity_label: string | null;
   old_values: Record<string, unknown> | null;
   new_values: Record<string, unknown> | null;
   ip_address: string | null;

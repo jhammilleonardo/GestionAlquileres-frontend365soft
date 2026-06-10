@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 
 import { InternalMessageService } from './internal-message.service';
 import { ApiClientService } from '../http/api-client.service';
 import { SlugService } from './slug.service';
+import { SessionTokenService } from './session-token.service';
 
 describe('InternalMessageService', () => {
   let service: InternalMessageService;
@@ -15,9 +17,17 @@ describe('InternalMessageService', () => {
     post = vi.fn().mockReturnValue(of({ id: 1 }));
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
         InternalMessageService,
         { provide: ApiClientService, useValue: { get, post } },
-        { provide: SlugService, useValue: { buildApiEndpoint: (p: string) => `acme/${p}` } },
+        {
+          provide: SlugService,
+          useValue: {
+            buildApiEndpoint: (p: string) => `acme/${p}`,
+            getSlug: () => 'acme',
+          },
+        },
+        { provide: SessionTokenService, useValue: { getToken: () => null } },
       ],
     });
     service = TestBed.inject(InternalMessageService);
@@ -25,7 +35,7 @@ describe('InternalMessageService', () => {
 
   it('getThreads pide la bandeja', () => {
     service.getThreads().subscribe();
-    expect(get).toHaveBeenCalledWith('acme/messages/threads');
+    expect(get).toHaveBeenCalledWith('acme/messages/threads', {});
   });
 
   it('getThread pide la conversación con un usuario', () => {
@@ -42,19 +52,19 @@ describe('InternalMessageService', () => {
 
   it('send envía un mensaje con recipient y body', () => {
     service.send(5, 'Hola').subscribe();
-    expect(post).toHaveBeenCalledWith('acme/messages', { recipient_id: 5, body: 'Hola' });
+    expect(post).toHaveBeenCalledWith('acme/messages', { recipient_id: 5, body: 'Hola' }, {});
   });
 
   it('broadcast envía a todos', () => {
     post.mockReturnValue(of({ count: 3 }));
     service.broadcast('Aviso').subscribe();
-    expect(post).toHaveBeenCalledWith('acme/messages/broadcast', { body: 'Aviso' });
+    expect(post).toHaveBeenCalledWith('acme/messages/broadcast', { body: 'Aviso' }, {});
   });
 
   it('refreshUnread actualiza la signal de no leídos', () => {
     get.mockReturnValue(of({ count: 7 }));
     service.refreshUnread().subscribe();
-    expect(get).toHaveBeenCalledWith('acme/messages/unread-count');
+    expect(get).toHaveBeenCalledWith('acme/messages/unread-count', {});
     expect(service.unread()).toBe(7);
   });
 });

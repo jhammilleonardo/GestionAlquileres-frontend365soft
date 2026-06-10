@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 import {
@@ -20,6 +20,7 @@ import {
   AppDialogComponent,
   AppLoadingStateComponent,
 } from '../../../shared/ui';
+import { SignaturePadComponent, SignatureResult } from './signature-pad.component';
 
 @Component({
   selector: 'app-contract-signing-dialog',
@@ -34,6 +35,7 @@ import {
     AppCheckboxComponent,
     AppDialogComponent,
     AppLoadingStateComponent,
+    SignaturePadComponent,
   ],
   template: `
     <app-dialog
@@ -61,10 +63,6 @@ import {
             </h3>
 
             <dl class="summary-grid">
-              <div>
-                <dt>{{ 'public.contractSigning.contractNumber' | transloco }}</dt>
-                <dd class="mono">{{ c.contract_number }}</dd>
-              </div>
               <div>
                 <dt>{{ 'public.contractSigning.property' | transloco }}</dt>
                 <dd>
@@ -201,6 +199,14 @@ import {
                 </li>
               }
             </ul>
+
+            <div class="signature-confirmation">
+              <label>
+                {{ 'public.contractSigning.signaturePhraseLabel' | transloco }}
+              </label>
+              <p>{{ 'public.contractSigning.signatureConsent' | transloco }}</p>
+              <app-signature-pad (signatureChange)="onSignatureChange($event)" />
+            </div>
           </section>
         </div>
       }
@@ -211,7 +217,7 @@ import {
         </app-button>
         <app-button
           appearance="primary"
-          [disabled]="!acceptedTerms || isSigning()"
+          [disabled]="!canSign()"
           [loading]="isSigning()"
           (clicked)="confirm()"
         >
@@ -245,8 +251,11 @@ import {
 
     .notice {
       grid-template-columns: auto minmax(0, 1fr);
-      background: var(--tui-status-warning-pale);
-      color: var(--tui-status-warning);
+      gap: var(--app-space-4);
+      border: 1px solid #ffca00;
+      background: #ffca00;
+      color: #4a3200;
+      padding: var(--app-space-4) var(--app-space-6);
     }
 
     .notice p,
@@ -365,6 +374,55 @@ import {
       line-height: 1.5;
     }
 
+    .signature-confirmation {
+      display: grid;
+      gap: var(--app-space-2);
+      border-top: 1px solid var(--app-color-border);
+      padding-block-start: var(--app-space-3);
+    }
+
+    .signature-confirmation label {
+      color: var(--app-color-text);
+      font-weight: 800;
+    }
+
+    .signature-confirmation p {
+      margin: 0;
+      color: var(--app-color-text-muted);
+    }
+
+    .signature-confirmation strong {
+      color: var(--app-color-text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 850;
+    }
+
+    .signature-confirmation input {
+      inline-size: 100%;
+      min-block-size: 2.75rem;
+      border: 1px solid var(--app-color-border);
+      border-radius: var(--app-radius-md);
+      background: var(--app-color-surface);
+      color: var(--app-color-text);
+      font: inherit;
+      font-weight: 700;
+      padding: 0 var(--app-space-3);
+      outline: none;
+      transition:
+        border-color 150ms ease,
+        box-shadow 150ms ease;
+    }
+
+    .signature-confirmation input:focus {
+      border-color: var(--app-color-primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--app-color-primary) 18%, transparent);
+    }
+
+    .signature-confirmation small {
+      color: var(--app-color-danger);
+      font-weight: 700;
+    }
+
     [dialog-actions] {
       display: flex;
       flex-wrap: wrap;
@@ -387,7 +445,7 @@ export class ContractSigningDialogComponent {
   readonly isSigning = input(false);
 
   readonly cancelled = output<void>();
-  readonly confirmed = output<void>();
+  readonly confirmed = output<SignatureResult>();
 
   protected readonly FileCheck = FileCheck;
   protected readonly DollarSign = DollarSign;
@@ -398,16 +456,31 @@ export class ContractSigningDialogComponent {
   protected readonly Check = Check;
 
   protected acceptedTerms = false;
+  protected readonly signature = signal<SignatureResult | null>(null);
+
+  protected onSignatureChange(result: SignatureResult | null): void {
+    this.signature.set(result);
+  }
 
   protected cancel(): void {
-    this.acceptedTerms = false;
+    this.resetConfirmation();
     this.cancelled.emit();
   }
 
   protected confirm(): void {
-    if (!this.acceptedTerms || this.isSigning()) return;
+    const signature = this.signature();
+    if (!this.canSign() || !signature) return;
 
+    this.confirmed.emit(signature);
+    this.resetConfirmation();
+  }
+
+  protected canSign(): boolean {
+    return this.acceptedTerms && this.signature() !== null && !this.isSigning();
+  }
+
+  private resetConfirmation(): void {
     this.acceptedTerms = false;
-    this.confirmed.emit();
+    this.signature.set(null);
   }
 }

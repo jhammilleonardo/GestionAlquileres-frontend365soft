@@ -6,6 +6,7 @@ export * from './date-picker/date-picker.component';
 export * from './dialog/dialog.component';
 export * from './empty-state/empty-state.component';
 export * from './file-upload/file-upload.component';
+export * from './image-uploader/image-uploader.component';
 export * from './loading-state/loading-state.component';
 export * from './page-header/page-header.component';
 export * from './pagination/pagination.component';

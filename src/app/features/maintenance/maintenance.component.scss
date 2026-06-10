@@ -369,6 +369,12 @@
     border-color: #cbd5e1;
   }
 
+  &.loading-detail {
+    cursor: wait;
+    opacity: 0.72;
+    pointer-events: none;
+  }
+
   .request-content {
     padding: 24px;
     flex: 1;
@@ -588,6 +594,11 @@
     background: #eff6ff;
     color: #2563eb;
     outline: none;
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.55;
   }
 
   &.danger {

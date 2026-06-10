@@ -119,7 +119,11 @@
       } @else {
         <div class="requests-grid">
           @for (request of filteredRequests(); track request.id) {
-            <div class="request-card" (click)="viewRequestDetails(request)">
+            <div
+              class="request-card"
+              [class.loading-detail]="openingRequestId() === request.id"
+              (click)="openingRequestId() === request.id ? null : viewRequestDetails(request)"
+            >
               <div class="request-content">
                 <div class="request-header">
                   <div class="request-id-section">
@@ -130,6 +134,7 @@
                     <button
                       type="button"
                       class="quick-action"
+                      [disabled]="openingRequestId() === request.id"
                       (click)="viewRequestDetails(request)"
                       [attr.aria-label]="'maintenance.viewDetail' | transloco"
                     >

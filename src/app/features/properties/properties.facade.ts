@@ -21,6 +21,17 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 import { buildPropertySavePayloads } from './mappers/property-save.mapper';
 import { PropertyFormValue } from './models/property-form.model';
 
+/**
+ * Rangos alineados con la precisión de las columnas numeric en PostgreSQL.
+ * Sin estos límites, un valor demasiado grande provoca "numeric field overflow" (500) en el backend.
+ */
+const MONEY_MAX = 99_999_999.99; // numeric(10,2)
+const COORD_LAT = [Validators.min(-90), Validators.max(90)]; // numeric(10,8)
+const COORD_LNG = [Validators.min(-180), Validators.max(180)]; // numeric(11,8)
+const MONEY = [Validators.min(0), Validators.max(MONEY_MAX)];
+const COUNT = [Validators.min(0), Validators.max(999)];
+const YEAR = [Validators.min(1800), Validators.max(2100)];
+
 @Injectable()
 export class PropertiesFacade {
   private readonly propertyService = inject(PropertyService);
@@ -46,7 +57,7 @@ export class PropertiesFacade {
 
   modalMode: 'create' | 'edit' = 'create';
   selectedProperty: Property | null = null;
-  selectedImages: File[] = [];
+  readonly selectedImages = signal<File[]>([]);
 
   filters: PropertyFilters = this.createDefaultFilters();
   propertyForm: FormGroup = this.createForm();
@@ -144,6 +155,7 @@ export class PropertiesFacade {
   openCreateModal(): void {
     this.modalMode = 'create';
     this.selectedProperty = null;
+    this.selectedImages.set([]);
     this.filteredSubtypes.set([]);
     this.showModal.set(false);
     this.propertyForm = this.createForm();
@@ -153,6 +165,7 @@ export class PropertiesFacade {
   openEditModal(property: Property): void {
     this.modalMode = 'edit';
     this.selectedProperty = property;
+    this.selectedImages.set([]);
     this.showModal.set(false);
 
     this.propertyService.getAdminPropertyById(property.id).subscribe({
@@ -168,29 +181,16 @@ export class PropertiesFacade {
   closeModal(): void {
     this.showModal.set(false);
     this.selectedProperty = null;
-    this.selectedImages = [];
+    this.selectedImages.set([]);
     this.validationErrors.set([]);
   }
 
-  onImagesSelected(files: File[]): void {
-    if (files.length === 0) return;
-
-    const filesArray = files.length > 10 ? files.slice(0, 10) : files;
-    if (files.length > 10) {
-      this.toast.warning(this.transloco.translate('propiedades.actions.maxImages'));
-    }
-
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024;
-    const invalidFiles = filesArray.filter(
-      (file) => !validTypes.includes(file.type) || file.size > maxSize,
-    );
-
-    if (invalidFiles.length > 0) {
-      this.toast.warning(this.transloco.translate('propiedades.actions.invalidImages'));
-    }
-
-    this.selectedImages = filesArray.filter((file) => !invalidFiles.includes(file));
+  /**
+   * Recibe la lista completa de imágenes ya validadas y editadas por el uploader.
+   * La validación de tipo, tamaño y cantidad vive en el componente AppImageUploader.
+   */
+  onImagesChanged(files: File[]): void {
+    this.selectedImages.set(files);
   }
 
   saveProperty(): void {
@@ -335,26 +335,26 @@ export class PropertiesFacade {
       property_type_id: ['', Validators.required],
       property_subtype_id: ['', Validators.required],
       active: [true],
-      monthly_rent: [null, [Validators.min(0)]],
+      monthly_rent: [null, MONEY],
       currency: ['BOB'],
-      security_deposit_amount: [null],
+      security_deposit_amount: [null, MONEY],
       account_number: [''],
       account_type: [''],
       account_holder_name: [''],
-      square_meters: [null],
-      bedrooms: [null],
-      bathrooms: [null],
-      parking_spaces: [null],
-      year_built: [null],
+      square_meters: [null, MONEY],
+      bedrooms: [null, COUNT],
+      bathrooms: [null, COUNT],
+      parking_spaces: [null, COUNT],
+      year_built: [null, YEAR],
       is_furnished: [false],
       pets_allowed: [false],
       smoking_allowed: [false],
-      max_occupants: [null],
-      min_lease_months: [null],
+      max_occupants: [null, COUNT],
+      min_lease_months: [null, COUNT],
       amenities: [[]],
       included_items: [[]],
-      latitude: [null],
-      longitude: [null],
+      latitude: [null, COORD_LAT],
+      longitude: [null, COORD_LNG],
       addresses: this.fb.array([this.createAddressGroup()]),
       new_owners: this.fb.array([this.createOwnerGroup()]),
     });
@@ -394,26 +394,26 @@ export class PropertiesFacade {
       property_type_id: [p.property_type_id, Validators.required],
       property_subtype_id: [p.property_subtype_id, Validators.required],
       active: [p.active],
-      monthly_rent: [p.monthly_rent ?? null, [Validators.min(0)]],
+      monthly_rent: [p.monthly_rent ?? null, MONEY],
       currency: [p.currency || 'BOB'],
-      security_deposit_amount: [p.security_deposit_amount ?? null],
+      security_deposit_amount: [p.security_deposit_amount ?? null, MONEY],
       account_number: [p.account_number || ''],
       account_type: [p.account_type || ''],
       account_holder_name: [p.account_holder_name || ''],
-      square_meters: [p.square_meters ?? null],
-      bedrooms: [p.bedrooms ?? null],
-      bathrooms: [p.bathrooms ?? null],
-      parking_spaces: [p.parking_spaces ?? null],
-      year_built: [p.year_built ?? null],
+      square_meters: [p.square_meters ?? null, MONEY],
+      bedrooms: [p.bedrooms ?? null, COUNT],
+      bathrooms: [p.bathrooms ?? null, COUNT],
+      parking_spaces: [p.parking_spaces ?? null, COUNT],
+      year_built: [p.year_built ?? null, YEAR],
       is_furnished: [p.is_furnished ?? false],
       pets_allowed: [p.property_rules?.pets_allowed ?? false],
       smoking_allowed: [p.property_rules?.smoking_allowed ?? false],
-      max_occupants: [p.property_rules?.max_occupants ?? null],
-      min_lease_months: [p.property_rules?.min_lease_months ?? null],
+      max_occupants: [p.property_rules?.max_occupants ?? null, COUNT],
+      min_lease_months: [p.property_rules?.min_lease_months ?? null, COUNT],
       amenities: [p.amenities || []],
       included_items: [p.included_items || []],
-      latitude: [p.latitude],
-      longitude: [p.longitude],
+      latitude: [p.latitude, COORD_LAT],
+      longitude: [p.longitude, COORD_LNG],
       addresses: this.fb.array(
         p.addresses && p.addresses.length > 0
           ? p.addresses.map((addr) =>
@@ -436,12 +436,13 @@ export class PropertiesFacade {
   }
 
   private uploadImagesOrFinish(savedPropertyId: number): void {
-    if (this.selectedImages.length === 0) {
+    const images = this.selectedImages();
+    if (images.length === 0) {
       this.finishSave(this.modalMode);
       return;
     }
 
-    const uploads = this.selectedImages.map((img) =>
+    const uploads = images.map((img) =>
       this.propertyService.uploadPropertyImage(savedPropertyId, img),
     );
 

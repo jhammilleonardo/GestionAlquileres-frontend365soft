@@ -61,7 +61,10 @@ describe('ViolationsFacade', () => {
         },
         { provide: ConfirmDialogService, useValue: confirm },
         { provide: ToastService, useValue: toast },
-        { provide: TranslocoService, useValue: { translate: (key: string) => key } },
+        {
+          provide: TranslocoService,
+          useValue: { translate: (key: string) => key, events$: of() },
+        },
       ],
     });
     facade = TestBed.inject(ViolationsFacade);

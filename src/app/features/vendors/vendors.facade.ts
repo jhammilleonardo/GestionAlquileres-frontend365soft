@@ -1,6 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
+import { filter } from 'rxjs';
 
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
@@ -32,6 +34,9 @@ export class VendorsFacade {
   readonly history = signal<VendorHistoryItem[]>([]);
   readonly historyLoading = signal(false);
 
+  readonly creatingAccount = signal(false);
+  readonly accountCredentials = signal<{ email: string; temporaryPassword: string } | null>(null);
+
   readonly dialogOpen = signal(false);
   readonly editingId = signal<number | null>(null);
   readonly saving = signal(false);
@@ -46,14 +51,27 @@ export class VendorsFacade {
     notes: [''],
   });
 
-  readonly specialtyOptions: AppSelectOption<string>[] = Object.values(VendorSpecialty).map(
-    (value) => ({ value, label: this.transloco.translate(`vendors.specialty.${value}`) }),
+  // Recalcula las etiquetas cuando el scope lazy termina de cargar o cambia el
+  // idioma. Sin esto, las opciones se construirían antes de que el JSON del
+  // scope esté disponible y mostrarían las claves crudas (ej. "vendors.specialty.painting").
+  private readonly translationsReady = toSignal(
+    this.transloco.events$.pipe(
+      filter((event) => event.type === 'translationLoadSuccess' || event.type === 'langChanged'),
+    ),
   );
 
-  readonly specialtyFilterOptions: AppSelectOption<string>[] = [
+  readonly specialtyOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return Object.values(VendorSpecialty).map((value) => ({
+      value,
+      label: this.transloco.translate(`vendors.specialty.${value}`),
+    }));
+  });
+
+  readonly specialtyFilterOptions = computed<AppSelectOption<string>[]>(() => [
     { value: '', label: this.transloco.translate('vendors.allSpecialties') },
-    ...this.specialtyOptions,
-  ];
+    ...this.specialtyOptions(),
+  ]);
 
   readonly filteredVendors = computed(() => {
     const specialty = this.specialtyFilter();
@@ -162,9 +180,28 @@ export class VendorsFacade {
     });
   }
 
+  createAccount(vendor: Vendor): void {
+    this.creatingAccount.set(true);
+    this.accountCredentials.set(null);
+    this.vendorService.createAccount(vendor.id).subscribe({
+      next: (credentials) => {
+        this.creatingAccount.set(false);
+        this.accountCredentials.set(credentials);
+        this.toast.success(this.transloco.translate('vendors.account.created'));
+      },
+      error: (err: unknown) => {
+        this.creatingAccount.set(false);
+        this.toast.error(
+          getApiErrorMessage(err, this.transloco.translate('vendors.account.error')),
+        );
+      },
+    });
+  }
+
   openDetail(vendor: Vendor): void {
     this.selectedVendor.set(vendor);
     this.history.set([]);
+    this.accountCredentials.set(null);
     this.historyLoading.set(true);
     this.vendorService.getHistory(vendor.id).subscribe({
       next: (history) => {

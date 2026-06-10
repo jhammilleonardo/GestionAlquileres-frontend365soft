@@ -43,6 +43,13 @@ export class VendorService {
     return this.api.delete<{ message: string }>(this.endpoint(`admin/vendors/${id}`));
   }
 
+  createAccount(id: number): Observable<{ email: string; temporaryPassword: string }> {
+    return this.api.post<{ email: string; temporaryPassword: string }, object>(
+      this.endpoint(`admin/vendors/${id}/account`),
+      {},
+    );
+  }
+
   /** Los montos y el rating llegan como string desde Postgres numeric. */
   private normalize(vendor: Vendor): Vendor {
     return {

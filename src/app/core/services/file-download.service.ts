@@ -21,8 +21,20 @@ export class FileDownloadService {
     link.click();
   }
 
-  openBlob(blob: Blob): void {
+  openBlob(blob: Blob): boolean {
     const url = URL.createObjectURL(blob);
-    window.open(url, '_blank', 'noopener,noreferrer');
+    // No se usa la opción `noopener`: con ella window.open devuelve null
+    // aunque la pestaña sí se abra, lo que provocaría un falso "popup bloqueado"
+    // y una descarga de respaldo. Se corta la referencia al opener manualmente.
+    const openedWindow = window.open(url, '_blank');
+
+    if (!openedWindow) {
+      URL.revokeObjectURL(url);
+      return false;
+    }
+
+    openedWindow.opener = null;
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    return true;
   }
 }

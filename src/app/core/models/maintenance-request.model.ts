@@ -44,6 +44,8 @@ export interface MaintenanceMessage {
   send_to_resident: boolean; // true = visible to tenant, false = internal note
   created_at: Date;
   attachments: MaintenanceAttachment[];
+  sender_name?: string | null;
+  sender_role?: string | null;
 }
 
 // Attachment model
@@ -66,7 +68,13 @@ export interface PropertyReference {
   id: number;
   title: string;
   status?: string;
-  address?: string;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip_code?: string | null;
+  country?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }
 
 // Tenant reference model

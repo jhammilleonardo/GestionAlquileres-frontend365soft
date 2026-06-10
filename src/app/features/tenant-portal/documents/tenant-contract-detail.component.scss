@@ -37,7 +37,7 @@
 
 .contract-content {
   display: grid;
-  gap: var(--app-space-5);
+  gap: var(--app-space-6);
 }
 
 .banner {
@@ -45,8 +45,17 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--app-space-4);
+  border: 1px solid transparent;
   border-radius: var(--app-radius-lg);
   padding: var(--app-space-4);
+}
+
+// El svg de lucide ocupa el 100% del host; sin un tamaño fijo, el `stretch`
+// del grid (en móvil) lo agranda a toda la celda. Se ancla a 28px.
+.banner > lucide-icon {
+  inline-size: 28px;
+  block-size: 28px;
+  justify-self: start;
 }
 
 .banner h2,
@@ -65,14 +74,27 @@
 }
 
 .banner--warning {
-  background: var(--tui-status-warning-pale);
-  color: var(--tui-status-warning);
+  border-color: #ffca00;
+  background: #ffca00;
+  color: #1f2933;
+}
+
+.banner--warning > lucide-icon,
+.banner--warning h2,
+.banner--warning strong {
+  color: #4a3200;
 }
 
 .banner--success {
-  background: var(--tui-status-positive-pale);
-  color: var(--tui-status-positive);
+  border-color: #9fd8b3;
+  background: #ecfdf3;
+  color: var(--app-color-text);
   grid-template-columns: auto minmax(0, 1fr);
+}
+
+.banner--success > lucide-icon,
+.banner--success h2 {
+  color: #106c35;
 }
 
 .detail-grid {
@@ -207,7 +229,7 @@
   justify-content: flex-end;
   gap: var(--app-space-2);
   border-top: 1px solid var(--app-color-border);
-  padding-block-start: var(--app-space-5);
+  padding-block-start: var(--app-space-4);
 }
 
 @media (max-width: 820px) {

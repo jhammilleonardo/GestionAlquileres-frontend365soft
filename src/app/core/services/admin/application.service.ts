@@ -12,6 +12,7 @@ import {
 } from '../../models/application.model';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { SessionTokenService } from '../session-token.service';
 
 @Injectable({
   providedIn: 'root',
@@ -19,6 +20,7 @@ import { SlugService } from '../slug.service';
 export class ApplicationService {
   private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
+  private sessionToken = inject(SessionTokenService);
 
   // ==================== ADMIN ENDPOINTS ====================
 
@@ -84,7 +86,7 @@ export class ApplicationService {
    */
   createApplication(data: CreateApplicationDto): Observable<Application> {
     const endpoint = this.slugService.buildApiEndpoint('applications');
-    return this.apiClient.post<Application>(endpoint, data);
+    return this.apiClient.post<Application>(endpoint, data, this.tenantRequestOptions());
   }
 
   /**
@@ -94,7 +96,10 @@ export class ApplicationService {
   getMyApplications(status?: string): Observable<ApplicationListItem[]> {
     const params = status ? { status } : {};
     const endpoint = this.slugService.buildApiEndpoint('applications/my-applications');
-    return this.apiClient.get<ApplicationListItem[]>(endpoint, { params });
+    return this.apiClient.get<ApplicationListItem[]>(endpoint, {
+      params,
+      ...this.tenantRequestOptions(),
+    });
   }
 
   /**
@@ -103,7 +108,17 @@ export class ApplicationService {
    */
   getMyApplicationById(id: number): Observable<Application> {
     const endpoint = this.slugService.buildApiEndpoint(`applications/${id}`);
-    return this.apiClient.get<Application>(endpoint);
+    return this.apiClient.get<Application>(endpoint, this.tenantRequestOptions());
+  }
+
+  private tenantRequestOptions(): { headers: Record<string, string> } {
+    const token = this.sessionToken.getToken('tenant');
+
+    return {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : 'Bearer ',
+      },
+    };
   }
 
   // ==================== HELPER METHODS ====================

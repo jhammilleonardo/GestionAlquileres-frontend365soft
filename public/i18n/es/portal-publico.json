@@ -493,10 +493,27 @@
     "termsAccept4": "Reconozco que este contrato tiene validez legal y es vinculante.",
     "termsAccept5": "Me comprometo a cumplir con todas las responsabilidades establecidas en el contrato.",
     "termsAccept6Prefix": "Entiendo que los pagos tardíos tendrán una penalidad del",
+    "signaturePhraseLabel": "Firma electrónica",
+    "signatureConsent": "Al firmar de forma electrónica, consiento usar firma electrónica con la misma validez legal que una firma manuscrita. Se registrarán mi firma, fecha, hora y dirección IP como evidencia.",
     "cancel": "Cancelar",
     "signing": "Firmando...",
     "signContract": "Firmar Contrato",
     "nextPaymentNotSpecified": "No especificado"
+  },
+  "signaturePad": {
+    "modeLabel": "Método de firma",
+    "draw": "Dibujar",
+    "type": "Escribir",
+    "upload": "Subir",
+    "drawHint": "Dibuja tu firma aquí",
+    "drawAria": "Lienzo para dibujar tu firma",
+    "typePlaceholder": "Escribe tu nombre completo",
+    "typeAria": "Escribe tu nombre para generar la firma",
+    "typeHint": "Tu firma aparecerá aquí",
+    "uploadHint": "Haz clic para subir una imagen de tu firma (PNG o JPG)",
+    "uploadPreviewAlt": "Vista previa de la firma subida",
+    "uploadError": "No se pudo cargar la imagen. Usa un PNG o JPG menor a 1.5 MB.",
+    "clear": "Limpiar"
   },
   "signingSuccess": {
     "title": "¡Contrato Firmado Exitosamente!",
@@ -573,6 +590,16 @@
     "unreadMessages": "{{count}} mensaje(s) no leído(s)",
     "you": "Tú",
     "admin": "Administración",
+    "internalNote": "Nota interna",
+    "senderRole": {
+      "ADMIN": "Administrador",
+      "EMPLEADO": "Empleado",
+      "TECNICO": "Técnico",
+      "INQUILINO": "Inquilino",
+      "VENDOR": "Proveedor",
+      "PROPIETARIO": "Propietario",
+      "SUPERADMIN": "Administrador"
+    },
     "writeMessage": "Escribe tu mensaje...",
     "requestClosed": "Esta solicitud está cerrada",
     "notFound": "Solicitud no encontrada",
@@ -872,7 +899,30 @@
       "paymentCreated": "Pago Registrado",
       "paymentApproved": "Pago Aprobado",
       "paymentRejected": "Pago Rechazado",
+      "violationNotified": "Infracción notificada",
       "default": "Notificación"
+    },
+    "status": {
+      "PENDIENTE": "Pendiente",
+      "EN_REVISION": "En revisión",
+      "APROBADA": "Aprobada",
+      "RECHAZADA": "Rechazada"
+    },
+    "messages": {
+      "applicationStatusChangedTitle": "Actualización de tu solicitud",
+      "applicationStatusChangedMessage": "Tu solicitud para {{property}} cambió a: {{status}}.",
+      "applicationStatusChangedMessageGeneric": "Tu solicitud cambió a: {{status}}.",
+      "contractCreatedTitle": "Nuevo contrato disponible",
+      "contractCreatedMessage": "Se creó el contrato {{contract}}. Revísalo y fírmalo.",
+      "contractSignedTitle": "Contrato firmado",
+      "contractSignedMessage": "El contrato {{contract}} fue firmado correctamente.",
+      "paymentApprovedTitle": "Pago aprobado",
+      "paymentApprovedMessage": "Tu pago fue aprobado.",
+      "paymentRejectedTitle": "Pago rechazado",
+      "paymentRejectedMessage": "Tu pago fue rechazado. Revisa el detalle e inténtalo nuevamente.",
+      "maintenanceMessageTitle": "Nuevo mensaje en solicitud",
+      "maintenanceMessageSender": "Alguien",
+      "maintenanceMessageBody": "{{sender}} respondió a tu solicitud {{ticket}}: {{preview}}"
     }
   },
   "tenantProfile": {
@@ -956,17 +1006,5 @@
     "missingSlug": "No se pudo identificar la inmobiliaria para iniciar sesión.",
     "selectedProperty": "Propiedad seleccionada",
     "loginRequired": "Inicia sesión o crea una cuenta para confirmar la reserva."
-  },
-  "myProperty": {
-    "title": "Mi propiedad",
-    "subtitle": "Información de tu unidad, amenidades, reglas y contacto del administrador",
-    "loading": "Cargando tu propiedad...",
-    "noProperty": "No tienes una propiedad asignada",
-    "property": "Propiedad",
-    "amenities": "Amenidades",
-    "rules": "Reglas del edificio",
-    "admin": "Administrador",
-    "adminHint": "¿Dudas sobre tu propiedad? Escribe a la administración.",
-    "contactAdmin": "Contactar administración"
   }
 }

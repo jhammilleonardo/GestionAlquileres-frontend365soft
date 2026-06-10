@@ -1,0 +1,129 @@
+@if (selectedRequest(); as request) {
+  <app-vendor-order-detail
+    [request]="request"
+    (closed)="closeOrder()"
+    (statusAdvanced)="onStatusAdvanced($event)"
+  />
+} @else {
+  <section class="vendor-portal">
+    <header class="portal-welcome">
+      <div>
+        <h1>{{ 'vendorPortal.dashboard.greeting' | transloco: { name: vendor()?.name } }}</h1>
+        <p>{{ 'vendorPortal.dashboard.welcome' | transloco }}</p>
+      </div>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="refresh()"
+        [attr.aria-label]="'vendorPortal.dashboard.refresh' | transloco"
+      >
+        <lucide-icon [img]="RefreshCw" [size]="18" />
+      </button>
+    </header>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="stat-value">{{ counts().total }}</span>
+        <span class="stat-label">{{ 'vendorPortal.dashboard.total' | transloco }}</span>
+      </div>
+      <div class="stat stat-new">
+        <span class="stat-value">{{ counts().new }}</span>
+        <span class="stat-label">{{ 'vendorPortal.dashboard.new' | transloco }}</span>
+      </div>
+      <div class="stat stat-progress">
+        <span class="stat-value">{{ counts().inProgress }}</span>
+        <span class="stat-label">{{ 'vendorPortal.dashboard.inProgress' | transloco }}</span>
+      </div>
+      <div class="stat stat-done">
+        <span class="stat-value">{{ counts().completed }}</span>
+        <span class="stat-label">{{ 'vendorPortal.dashboard.completed' | transloco }}</span>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === 'all'"
+        (click)="setTab('all')"
+      >
+        {{ 'vendorPortal.dashboard.tabAll' | transloco }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === MaintenanceStatus.NEW"
+        (click)="setTab(MaintenanceStatus.NEW)"
+      >
+        {{ 'vendorPortal.dashboard.tabNew' | transloco }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === MaintenanceStatus.IN_PROGRESS"
+        (click)="setTab(MaintenanceStatus.IN_PROGRESS)"
+      >
+        {{ 'vendorPortal.dashboard.tabInProgress' | transloco }}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [class.active]="activeTab() === MaintenanceStatus.COMPLETED"
+        (click)="setTab(MaintenanceStatus.COMPLETED)"
+      >
+        {{ 'vendorPortal.dashboard.tabCompleted' | transloco }}
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <app-loading-state [label]="'vendorPortal.dashboard.loading' | transloco" />
+    } @else if (filteredRequests().length === 0) {
+      <div class="empty">
+        <lucide-icon [img]="Wrench" [size]="40" />
+        <p>{{ 'vendorPortal.dashboard.empty' | transloco }}</p>
+      </div>
+    } @else {
+      <ul class="order-list">
+        @for (request of filteredRequests(); track request.id) {
+          <li>
+            <button type="button" class="order-card" (click)="openOrder(request)">
+              <div class="order-main">
+                <div class="order-top">
+                  <span class="ticket">{{ request.ticket_number }}</span>
+                  @switch (request.status) {
+                    @case (MaintenanceStatus.NEW) {
+                      <span class="badge badge-new">
+                        <lucide-icon [img]="AlertCircle" [size]="13" />
+                        {{ 'vendorPortal.status.NEW' | transloco }}
+                      </span>
+                    }
+                    @case (MaintenanceStatus.IN_PROGRESS) {
+                      <span class="badge badge-progress">
+                        <lucide-icon [img]="Clock" [size]="13" />
+                        {{ 'vendorPortal.status.IN_PROGRESS' | transloco }}
+                      </span>
+                    }
+                    @case (MaintenanceStatus.COMPLETED) {
+                      <span class="badge badge-done">
+                        <lucide-icon [img]="CheckCircle2" [size]="13" />
+                        {{ 'vendorPortal.status.COMPLETED' | transloco }}
+                      </span>
+                    }
+                    @default {
+                      <span class="badge">{{ request.status }}</span>
+                    }
+                  }
+                </div>
+                <h3 class="order-title">{{ request.title }}</h3>
+                @if (request.property?.title) {
+                  <p class="order-property">{{ request.property?.title }}</p>
+                }
+              </div>
+              <lucide-icon [img]="ChevronRight" [size]="20" class="chevron" />
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+}

@@ -77,13 +77,23 @@
                     [class.unread]="!notification.is_read"
                     (click)="handleNotificationClick(notification)"
                   >
-                    <div class="notification-icon">
-                      {{ getNotificationIcon(notification.event_type) }}
+                    <div
+                      class="notification-icon"
+                      [class]="getNotificationIconClass(notification.event_type)"
+                    >
+                      <lucide-icon
+                        [img]="getNotificationIcon(notification.event_type)"
+                        [size]="20"
+                      ></lucide-icon>
                     </div>
 
                     <div class="notification-content">
-                      <h4 class="notification-title">{{ notification.title }}</h4>
-                      <p class="notification-message">{{ notification.message }}</p>
+                      <h4 class="notification-title">
+                        {{ notificationService.getDisplayTitle(notification) }}
+                      </h4>
+                      <p class="notification-message">
+                        {{ notificationService.getDisplayMessage(notification) }}
+                      </p>
                       <span class="notification-time">
                         {{ formatNotificationTime(notification.created_at) }}
                       </span>
@@ -185,9 +195,6 @@
           <div class="contract-label">{{ 'public.tenantLayout.myProperty' | transloco }}</div>
           <div class="contract-value">
             {{ authService.currentUser()?.contract?.property_title }}
-          </div>
-          <div class="contract-number">
-            {{ authService.currentUser()?.contract?.contract_number }}
           </div>
         </div>
       }

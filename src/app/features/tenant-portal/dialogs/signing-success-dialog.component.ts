@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { CheckCircle, FileText } from 'lucide-angular';
+import { CheckCircle } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { Contract } from '../../../core/services/tenant/tenant-contract.service';
 import { AppButtonComponent, AppDialogComponent } from '../../../shared/ui';
@@ -22,14 +22,6 @@ import { AppButtonComponent, AppDialogComponent } from '../../../shared/ui';
         </div>
 
         <p class="success-message">{{ 'public.signingSuccess.message' | transloco }}</p>
-
-        @if (contract(); as c) {
-          <div class="contract-info">
-            <lucide-icon [img]="FileText" [size]="18"></lucide-icon>
-            <span>{{ 'public.signingSuccess.contractNumber' | transloco }}</span>
-            <strong>{{ c.contract_number }}</strong>
-          </div>
-        }
 
         <div class="success-details">
           <p>{{ 'public.signingSuccess.storageMessage' | transloco }}</p>
@@ -72,30 +64,6 @@ import { AppButtonComponent, AppDialogComponent } from '../../../shared/ui';
       line-height: 1.6;
     }
 
-    .contract-info {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      gap: var(--app-space-2);
-      inline-size: 100%;
-      border-radius: var(--app-radius-md);
-      background: var(--app-color-surface-muted);
-      padding: var(--app-space-3);
-      text-align: start;
-    }
-
-    .contract-info span {
-      color: var(--app-color-text-muted);
-      font-weight: 650;
-    }
-
-    .contract-info strong {
-      color: var(--app-color-text);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-weight: 800;
-    }
-
     .success-details {
       border-radius: var(--app-radius-md);
       background: var(--tui-status-positive-pale);
@@ -122,5 +90,4 @@ export class SigningSuccessDialogComponent {
   readonly closed = output<void>();
 
   protected readonly CheckCircle = CheckCircle;
-  protected readonly FileText = FileText;
 }

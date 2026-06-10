@@ -84,6 +84,7 @@
   "backToStep1": "Volver al Paso 1",
   "submitting": "Enviando...",
   "submitBtn": "Enviar Solicitud",
+  "submitError": "No se pudo enviar la solicitud. Verifica tu sesión y vuelve a intentarlo.",
   "maritalStatus": {
     "soltero": "Soltero/a",
     "casado": "Casado/a",

@@ -104,6 +104,7 @@ export class MaintenanceComponent {
   selectedPriority = signal<MaintenancePriority | 'all'>('all');
   selectedCategory = signal<MaintenanceCategory | 'all'>('all');
   selectedRequest = signal<MaintenanceRequest | null>(null);
+  openingRequestId = signal<number | null>(null);
 
   // Services
   private maintenanceService = inject(MaintenanceService);
@@ -205,7 +206,18 @@ export class MaintenanceComponent {
   }
 
   viewRequestDetails(request: MaintenanceRequest): void {
-    this.selectedRequest.set(request);
+    this.openingRequestId.set(request.id);
+    this.maintenanceService.getRequestById(request.id).subscribe({
+      next: (fullRequest) => {
+        this.selectedRequest.set(fullRequest);
+        this.openingRequestId.set(null);
+      },
+      error: () => {
+        this.selectedRequest.set(request);
+        this.openingRequestId.set(null);
+        this.toast.error(this.transloco.translate('maintenance.actions.detailLoadError'));
+      },
+    });
   }
 
   closeRequestDetails(): void {

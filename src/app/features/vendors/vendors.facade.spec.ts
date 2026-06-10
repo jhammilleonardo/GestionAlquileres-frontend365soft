@@ -46,7 +46,13 @@ describe('VendorsFacade', () => {
         { provide: VendorService, useValue: service },
         { provide: ConfirmDialogService, useValue: confirm },
         { provide: ToastService, useValue: toast },
-        { provide: TranslocoService, useValue: { translate: (key: string) => key } },
+        {
+          provide: TranslocoService,
+          useValue: {
+            events$: of({ type: 'translationLoadSuccess' }),
+            translate: (key: string) => key,
+          },
+        },
       ],
     });
     facade = TestBed.inject(VendorsFacade);

@@ -191,11 +191,39 @@ export class PaymentService {
    * Actualizar estado de un pago (aprobar/rechazar)
    * PATCH /:slug/admin/payments/:id
    */
+  /**
+   * Aprobar un pago. Usa el endpoint dedicado /approve, que además del cambio
+   * de estado ejecuta el reparto al propietario (split + liquidaciones) en una
+   * transacción. El PATCH genérico no genera esas liquidaciones.
+   */
+  approvePayment(id: number, adminNotes?: string): Observable<Payment> {
+    return this.patchPaymentStatus(`${this.getBaseUrl()}/${id}/approve`, {
+      admin_notes: adminNotes,
+    });
+  }
+
+  /** Rechazar un pago con motivo (endpoint dedicado /reject). */
+  rejectPayment(id: number, rejectionReason: string, adminNotes?: string): Observable<Payment> {
+    return this.patchPaymentStatus(`${this.getBaseUrl()}/${id}/reject`, {
+      rejection_reason: rejectionReason,
+      admin_notes: adminNotes,
+    });
+  }
+
+  /**
+   * Cambio de estado genérico. Mantenido por compatibilidad; preferir
+   * approvePayment/rejectPayment para esos flujos.
+   */
   updatePaymentStatus(id: number, data: UpdatePaymentStatusDto): Observable<Payment> {
+    return this.patchPaymentStatus(`${this.getBaseUrl()}/${id}`, data);
+  }
+
+  /** PATCH compartido que normaliza la respuesta y refresca lista + stats. */
+  private patchPaymentStatus(url: string, body: unknown): Observable<Payment> {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    return this.http.patch<RawPayment>(`${this.getBaseUrl()}/${id}`, data).pipe(
+    return this.http.patch<RawPayment>(url, body).pipe(
       map((updatedPayment) => {
         const normalizedPayment = this.normalizePayment(updatedPayment);
         this.paymentsSignal.update((payments) =>

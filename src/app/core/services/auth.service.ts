@@ -348,6 +348,8 @@ export class AuthService {
       // Inquilino - save in tenant_access_token
       this.sessionTokens.setToken('tenant', response.access_token, rememberMe);
       // Also save tenant user data
+      localStorage.removeItem('tenant_user');
+      sessionStorage.removeItem('tenant_user');
       storage.setItem('tenant_user', JSON.stringify(response.user));
     } else {
       // Admin - save in admin_access_token

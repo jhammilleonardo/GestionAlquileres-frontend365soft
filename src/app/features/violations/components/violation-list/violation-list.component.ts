@@ -1,10 +1,19 @@
 import { SlicePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { LucideAngularModule, Bell, CheckCircle2, FileText } from 'lucide-angular';
+import { LucideAngularModule, Bell, CheckCircle2, Eye } from 'lucide-angular';
 
-import { environment } from '../../../../../environments/environment';
 import { Violation, ViolationStatus } from '../../../../core/models/violation.model';
+import { SecureFileService } from '../../../../core/services/secure-file.service';
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
 import {
   AppStatusBadgeComponent,
@@ -26,16 +35,33 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ViolationListComponent {
+  private readonly secureFile = inject(SecureFileService);
+
   readonly violations = input.required<readonly Violation[]>();
   readonly busyId = input<number | null>(null);
 
   readonly notified = output<Violation>();
-  readonly pdfRequested = output<Violation>();
+  readonly pdfViewRequested = output<Violation>();
   readonly resolveRequested = output<Violation>();
 
   readonly Bell = Bell;
-  readonly FileText = FileText;
+  readonly Eye = Eye;
   readonly CheckCircle2 = CheckCircle2;
+
+  // Las fotos de evidencia son privadas (requieren JWT), por lo que un <img src>
+  // directo falla con 401. Se resuelven a object URLs autenticados.
+  private readonly photoObjectUrls = signal<Record<string, string>>({});
+
+  constructor() {
+    effect(() => {
+      const violations = this.violations();
+      untracked(() => this.loadEvidenceUrls(violations));
+    });
+  }
+
+  photoSrc(path: string): string | null {
+    return this.photoObjectUrls()[path] ?? null;
+  }
 
   statusTone(status: ViolationStatus): AppStatusTone {
     switch (status) {
@@ -48,11 +74,22 @@ export class ViolationListComponent {
     }
   }
 
-  photoUrl(path: string): string {
-    return path.startsWith('http') ? path : `${environment.apiUrl.replace(/\/$/, '')}${path}`;
-  }
-
   isResolved(violation: Violation): boolean {
     return violation.status === ViolationStatus.RESOLVED;
+  }
+
+  private loadEvidenceUrls(violations: readonly Violation[]): void {
+    for (const violation of violations) {
+      for (const path of violation.evidence_photos ?? []) {
+        if (this.photoObjectUrls()[path]) {
+          continue;
+        }
+        this.secureFile.getObjectUrl(path, 'admin').subscribe({
+          next: (objectUrl) =>
+            this.photoObjectUrls.update((urls) => ({ ...urls, [path]: objectUrl })),
+          error: () => undefined,
+        });
+      }
+    }
   }
 }

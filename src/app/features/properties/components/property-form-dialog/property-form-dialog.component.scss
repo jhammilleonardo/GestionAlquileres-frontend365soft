@@ -1,16 +1,7 @@
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
+/* Animación mínima: solo el panel sube. Sin desenfoque de fondo (costoso en GPU). */
 @keyframes slideUp {
   from {
-    transform: translateY(20px);
+    transform: translateY(12px);
     opacity: 0;
   }
 
@@ -20,24 +11,15 @@
   }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.2s ease-out;
-}
-
-.animate-slideUp {
-  animation: slideUp 0.3s ease-out;
-}
-
 .modal-overlay {
   position: fixed;
   inset: 0;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgb(0 0 0 / 60%);
-  backdrop-filter: blur(4px);
-  z-index: 9999;
+  background: rgb(15 23 42 / 55%);
 }
 
 .modal-container {
@@ -50,6 +32,7 @@
   border-radius: 20px;
   background: #fff;
   box-shadow: 0 20px 60px rgb(0 0 0 / 25%);
+  animation: slideUp 0.18s ease-out;
 }
 
 .modal-header {
@@ -104,6 +87,13 @@
   }
 }
 
+.modal-stepper {
+  flex-shrink: 0;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 18px 28px 4px;
+}
+
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -144,7 +134,6 @@
 }
 
 .form-section {
-  margin-bottom: 20px;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
   background: #fff;
@@ -230,7 +219,6 @@ app-date-picker {
   align-items: center;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
-  cursor: pointer;
   padding: 14px 16px;
   transition: all 0.15s;
 
@@ -243,44 +231,24 @@ app-date-picker {
     background: #eff6ff;
   }
 
-  input[type='checkbox'] {
-    width: 18px;
-    height: 18px;
-    accent-color: #2563eb;
-    cursor: pointer;
-  }
-
-  label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: 10px;
-    color: #1e293b;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
+  app-checkbox {
+    inline-size: 100%;
   }
 }
 
-.checkbox-simple {
+.checkbox-rule__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.checkbox-cell {
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 10px 4px;
-
-  input[type='checkbox'] {
-    width: 18px;
-    height: 18px;
-    accent-color: #2563eb;
-    cursor: pointer;
-  }
-
-  label {
-    color: #1e293b;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
 }
 
 .subsection-title {
@@ -295,39 +263,24 @@ app-date-picker {
   padding-top: 16px;
 }
 
-.selected-images {
-  margin-top: 8px;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  background: #eff6ff;
-  padding: 12px 16px;
-
-  p {
-    margin: 0 0 8px;
-    color: #1d4ed8;
-    font-size: 0.875rem;
-    font-weight: 700;
-  }
-
-  ul {
-    margin: 0;
-    padding-left: 16px;
-  }
-
-  li {
-    color: #1d4ed8;
-    font-size: 0.75rem;
-  }
-}
-
 .modal-footer {
   display: flex;
   flex-shrink: 0;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   border-top: 1px solid #e2e8f0;
   background: #fff;
   padding: 16px 28px;
+}
+
+.modal-footer__left {
+  display: flex;
+}
+
+.modal-footer__right {
+  display: flex;
+  gap: 12px;
 }
 
 .text-blue-600 {
@@ -376,7 +329,12 @@ app-date-picker {
     padding: 18px;
   }
 
-  .modal-footer {
-    flex-direction: column-reverse;
+  .modal-stepper {
+    padding: 14px 18px 2px;
+  }
+
+  .modal-footer__right {
+    flex: 1;
+    justify-content: flex-end;
   }
 }

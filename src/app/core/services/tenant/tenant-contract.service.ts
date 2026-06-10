@@ -126,6 +126,12 @@ interface RawContract {
   updated_at: string;
 }
 
+/** Firma electrónica enviada al firmar un contrato. */
+export interface SignContractPayload {
+  signatureImage: string;
+  signatureMethod?: 'draw' | 'type' | 'upload';
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -227,14 +233,14 @@ export class TenantContractService {
   /**
    * Firmar un contrato digitalmente
    */
-  signContract(contractId: number): Observable<Contract> {
+  signContract(contractId: number, signature: SignContractPayload): Observable<Contract> {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
     return this.http
       .post<RawContract>(
         `${environment.apiUrl}${this.slug}/tenant/contracts/${contractId}/sign`,
-        {},
+        signature,
       )
       .pipe(
         map((response) => {

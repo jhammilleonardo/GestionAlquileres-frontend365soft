@@ -1,8 +1,9 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
-import { AlertTriangle, CheckCircle2, Clock, Edit, Eye, FileText } from 'lucide-angular';
+import { CheckCircle2, Clock, Edit, Eye, FileText } from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import {
   Contract,
@@ -82,7 +83,6 @@ type ContractStatusFilter = ContractStatus | 'ALL';
               [class.contract-card--pending]="contract.status === ContractStatus.BORRADOR"
             >
               <header class="contract-card__header">
-                <span class="contract-number">{{ contract.contract_number }}</span>
                 <app-status-badge
                   [label]="'tenantContracts.status.' + contract.status | transloco"
                   [tone]="statusTone(contract.status)"
@@ -123,13 +123,6 @@ type ContractStatusFilter = ContractStatus | 'ALL';
                   </strong>
                 </div>
 
-                @if (contract.status === ContractStatus.BORRADOR) {
-                  <div class="inline-alert inline-alert--warning">
-                    <lucide-icon [img]="AlertTriangle" [size]="16"></lucide-icon>
-                    <span>{{ 'tenantContracts.pendingSignatureAlert' | transloco }}</span>
-                  </div>
-                }
-
                 @if (contract.status === ContractStatus.ACTIVO && contract.signed_at) {
                   <div class="inline-alert inline-alert--success">
                     <lucide-icon [img]="CheckCircle2" [size]="16"></lucide-icon>
@@ -165,7 +158,7 @@ type ContractStatusFilter = ContractStatus | 'ALL';
   styles: `
     .contracts-list {
       display: grid;
-      gap: var(--app-space-5);
+      gap: var(--app-space-6);
     }
 
     .contracts-list__header {
@@ -208,20 +201,26 @@ type ContractStatusFilter = ContractStatus | 'ALL';
       display: grid;
       grid-template-rows: auto minmax(0, 1fr) auto;
       gap: var(--app-space-4);
-      border: 1px solid var(--app-color-border);
       border-radius: var(--app-radius-lg);
       background: var(--app-color-surface);
-      box-shadow: var(--app-shadow-sm);
+      box-shadow:
+        0 1px 3px rgb(23 32 42 / 6%),
+        0 10px 28px rgb(23 32 42 / 8%);
       padding: var(--app-space-4);
+      transition:
+        box-shadow 180ms ease,
+        transform 180ms ease;
+    }
+
+    .contract-card:hover {
+      box-shadow:
+        0 2px 6px rgb(23 32 42 / 8%),
+        0 16px 40px rgb(23 32 42 / 12%);
+      transform: translateY(-2px);
     }
 
     .contract-card--pending {
-      border-color: var(--tui-status-warning);
-      background: linear-gradient(
-        180deg,
-        var(--tui-status-warning-pale),
-        var(--app-color-surface) 42%
-      );
+      background: var(--app-color-surface);
     }
 
     .contract-card__header,
@@ -232,14 +231,8 @@ type ContractStatusFilter = ContractStatus | 'ALL';
       gap: var(--app-space-3);
     }
 
-    .contract-number {
-      border-radius: var(--app-radius-sm);
-      background: var(--tui-status-info-pale);
-      color: var(--tui-status-info);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.78rem;
-      font-weight: 800;
-      padding: 0.25rem 0.625rem;
+    .contract-card__header {
+      justify-content: flex-end;
     }
 
     .contract-card__body h3 {
@@ -318,11 +311,6 @@ type ContractStatusFilter = ContractStatus | 'ALL';
       font-weight: 700;
     }
 
-    .inline-alert--warning {
-      background: var(--tui-status-warning-pale);
-      color: var(--tui-status-warning);
-    }
-
     .inline-alert--success {
       background: var(--tui-status-positive-pale);
       color: var(--tui-status-positive);
@@ -352,7 +340,6 @@ export class TenantContractListComponent {
   readonly Eye = Eye;
   readonly Edit = Edit;
   readonly CheckCircle2 = CheckCircle2;
-  readonly AlertTriangle = AlertTriangle;
   readonly Clock = Clock;
   readonly ContractStatus = ContractStatus;
 
@@ -364,25 +351,33 @@ export class TenantContractListComponent {
 
   protected selectedStatus: ContractStatusFilter = 'ALL';
 
+  // translate() no es reactivo. events$ emite 'langChanged' DESPUÉS de cargar
+  // las traducciones del nuevo idioma (langChanges$ emite antes de la carga y
+  // dejaría las opciones en el idioma anterior). Por eso dependemos de events$.
+  private readonly translationEvents = toSignal(this.translocoService.events$);
+
   protected readonly statusOptions = computed<readonly AppSelectOption<ContractStatusFilter>[]>(
-    () => [
-      {
-        label: this.translocoService.translate('tenantContracts.allStates'),
-        value: 'ALL',
-      },
-      {
-        label: this.translocoService.translate('tenantContracts.status.BORRADOR'),
-        value: ContractStatus.BORRADOR,
-      },
-      {
-        label: this.translocoService.translate('tenantContracts.status.ACTIVO'),
-        value: ContractStatus.ACTIVO,
-      },
-      {
-        label: this.translocoService.translate('tenantContracts.status.FINALIZADO'),
-        value: ContractStatus.FINALIZADO,
-      },
-    ],
+    () => {
+      this.translationEvents();
+      return [
+        {
+          label: this.translocoService.translate('tenantContracts.allStates'),
+          value: 'ALL',
+        },
+        {
+          label: this.translocoService.translate('tenantContracts.status.BORRADOR'),
+          value: ContractStatus.BORRADOR,
+        },
+        {
+          label: this.translocoService.translate('tenantContracts.status.ACTIVO'),
+          value: ContractStatus.ACTIVO,
+        },
+        {
+          label: this.translocoService.translate('tenantContracts.status.FINALIZADO'),
+          value: ContractStatus.FINALIZADO,
+        },
+      ];
+    },
   );
 
   protected readonly filteredContracts = computed(() => {

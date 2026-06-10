@@ -1,0 +1,361 @@
+:host {
+  display: block;
+  inline-size: 100%;
+}
+
+.uploader {
+  display: grid;
+  gap: var(--app-space-3);
+}
+
+/* ==================== Dropzone ==================== */
+.uploader__dropzone {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-3);
+  min-block-size: 84px;
+  padding: var(--app-space-4);
+  border: 1px dashed var(--app-color-border-strong);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.uploader__dropzone:hover,
+.uploader__dropzone--over {
+  background: var(--app-color-primary-soft);
+  border-color: var(--app-color-primary);
+  color: var(--app-color-primary);
+}
+
+.uploader__input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+}
+
+.uploader__dropzone-text {
+  display: grid;
+  gap: 2px;
+}
+
+.uploader__dropzone-text strong {
+  color: var(--app-color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.uploader__dropzone-text small {
+  font-size: 0.75rem;
+}
+
+.uploader__limit {
+  margin: 0;
+  padding: var(--app-space-3);
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.uploader__rejected {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  color: var(--app-color-danger, #dc2626);
+  font-size: 0.8125rem;
+}
+
+.uploader__count {
+  margin: 0;
+  color: var(--app-color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+/* ==================== Grid de previews ==================== */
+.uploader__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--app-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.uploader__item {
+  display: grid;
+  gap: var(--app-space-1);
+}
+
+.uploader__thumb {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-color-surface-muted);
+}
+
+.uploader__thumb img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.uploader__cover-badge {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-start: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--app-color-primary);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.uploader__drag-handle {
+  position: absolute;
+  inset-block-start: 6px;
+  inset-inline-end: 6px;
+  display: inline-flex;
+  padding: 4px;
+  border: 0;
+  border-radius: var(--app-radius-sm);
+  background: rgb(15 23 42 / 55%);
+  color: #fff;
+  cursor: grab;
+}
+
+.uploader__drag-handle:active {
+  cursor: grabbing;
+}
+
+.uploader__actions {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  gap: var(--app-space-2);
+  padding: var(--app-space-2);
+  background: linear-gradient(to top, rgb(15 23 42 / 78%), transparent);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.uploader__item:hover .uploader__actions,
+.uploader__item:focus-within .uploader__actions {
+  opacity: 1;
+}
+
+.uploader__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 30px;
+  block-size: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--app-color-text);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.uploader__action:hover {
+  background: var(--app-color-primary);
+  color: #fff;
+}
+
+.uploader__action--danger:hover {
+  background: var(--app-color-danger, #dc2626);
+  color: #fff;
+}
+
+.uploader__name {
+  overflow: hidden;
+  color: var(--app-color-text-muted);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Item siendo arrastrado por CDK */
+.cdk-drag-preview {
+  border-radius: var(--app-radius-md);
+  box-shadow: var(--app-shadow-xl);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.4;
+}
+
+.uploader__grid.cdk-drop-list-dragging .uploader__item:not(.cdk-drag-placeholder) {
+  transition: transform 0.18s ease;
+}
+
+/* ==================== Modal de recorte ==================== */
+.cropper-overlay {
+  position: fixed;
+  inset: 0;
+  /* Por encima del modal del formulario (z-index 9999) para no quedar oculto. */
+  z-index: 10001;
+  display: grid;
+  place-items: center;
+  padding: var(--app-space-4);
+  background: rgb(15 23 42 / 70%);
+}
+
+.cropper-modal {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  inline-size: min(100%, 720px);
+  max-block-size: 92vh;
+  overflow: hidden;
+  border-radius: var(--app-radius-xl);
+  background: var(--app-color-surface);
+  box-shadow: var(--app-shadow-xl);
+}
+
+.cropper-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--app-space-3) var(--app-space-4);
+  border-bottom: 1px solid var(--app-color-border);
+}
+
+.cropper-modal__header h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-2);
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.cropper-modal__close {
+  display: inline-flex;
+  inline-size: 2rem;
+  block-size: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+}
+
+.cropper-modal__close:hover {
+  background: var(--app-color-surface-muted);
+  color: var(--app-color-text);
+}
+
+.cropper-modal__stage {
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.cropper-modal__stage image-cropper {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  max-block-size: 56vh;
+}
+
+.cropper-modal__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--app-space-3);
+  padding: var(--app-space-3) var(--app-space-4);
+  border-top: 1px solid var(--app-color-border);
+}
+
+.cropper-modal__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--app-space-2);
+}
+
+.cropper-chip {
+  padding: 5px 12px;
+  border: 1px solid var(--app-color-border);
+  border-radius: 999px;
+  background: var(--app-color-surface);
+  color: var(--app-color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.cropper-chip--active {
+  border-color: var(--app-color-primary);
+  background: var(--app-color-primary-soft);
+  color: var(--app-color-primary);
+}
+
+.cropper-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 38px;
+  block-size: 38px;
+  border: 1px solid var(--app-color-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-color-surface);
+  color: var(--app-color-text);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.cropper-tool:hover {
+  border-color: var(--app-color-primary);
+  background: var(--app-color-primary-soft);
+  color: var(--app-color-primary);
+}
+
+.cropper-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--app-space-3);
+  padding: var(--app-space-3) var(--app-space-4);
+  border-top: 1px solid var(--app-color-border);
+}
+
+@media (max-width: 640px) {
+  .cropper-modal__toolbar {
+    justify-content: center;
+  }
+
+  .uploader__actions {
+    opacity: 1;
+  }
+}

@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, finalize, tap } from 'rxjs';
 import {
   TenantUser,
   AdminTenantUser,
@@ -7,7 +7,6 @@ import {
   TenantUserFilters,
   CreateTenantUserDto,
   UpdateTenantUserDto,
-  UserRole,
   UserStatus,
 } from '../../models/tenant-user.model';
 import { ApiClientService } from '../../http/api-client.service';
@@ -37,9 +36,13 @@ export class TenantUserService {
     ),
   );
 
-  adminUsers = computed(() => this.usersSignal().filter((u) => u.role === UserRole.ADMIN));
+  adminUsers = computed(() => this.usersSignal().filter((u) => String(u.role) === 'ADMIN'));
 
-  regularUsers = computed(() => this.usersSignal().filter((u) => u.role === UserRole.USER));
+  regularUsers = computed(() => this.usersSignal().filter((u) => String(u.role) === 'USER'));
+
+  tenantsWithActiveContracts = computed(() =>
+    this.usersSignal().filter((user) => user.lease_status === 'active'),
+  );
 
   private getTenantSlug(): string {
     return this.slugService.getSlug() || '';
@@ -71,20 +74,31 @@ export class TenantUserService {
       });
   }
 
+  loadTenants(filters: TenantUserFilters = {}): void {
+    const slug = this.getTenantSlug();
+    if (!slug) {
+      return;
+    }
+
+    const params = this.buildTenantParams(filters);
+    this.isLoadingSignal.set(true);
+    this.apiClient
+      .get<AdminTenantUser[]>(`${slug}/users/tenants`, { params })
+      .pipe(finalize(() => this.isLoadingSignal.set(false)))
+      .subscribe({
+        next: (users) => {
+          this.usersSignal.set(users);
+          this.setStatsFromUsers(users);
+        },
+        error: () => undefined,
+      });
+  }
+
   /**
    * Load user statistics
    */
   loadStats(): void {
-    // Mock stats - replace with real API endpoint when available
-    const stats: TenantUserStats = {
-      total_users: this.usersSignal().length,
-      active_users: this.activeUsers().length,
-      inactive_users: this.usersSignal().filter((u) => u.status === UserStatus.INACTIVE).length,
-      new_this_month: 0,
-      users_with_active_contracts: 0,
-      users_with_pending_payments: 0,
-    };
-    this.statsSignal.set(stats);
+    this.setStatsFromUsers(this.usersSignal());
   }
 
   /**
@@ -105,12 +119,29 @@ export class TenantUserService {
       .pipe(tap((users) => this.usersSignal.set(users)));
   }
 
+  getFilteredTenants(filters: TenantUserFilters): Observable<AdminTenantUser[]> {
+    const slug = this.getTenantSlug();
+    const params = this.buildTenantParams(filters);
+
+    return this.apiClient.get<AdminTenantUser[]>(`${slug}/users/tenants`, { params }).pipe(
+      tap((users) => {
+        this.usersSignal.set(users);
+        this.setStatsFromUsers(users);
+      }),
+    );
+  }
+
   /**
    * Get user by ID
    */
   getUserById(id: number): Observable<AdminTenantUser> {
     const slug = this.getTenantSlug();
     return this.apiClient.get<AdminTenantUser>(`${slug}/users/${id}`);
+  }
+
+  getTenantById(id: number): Observable<AdminTenantUser> {
+    const slug = this.getTenantSlug();
+    return this.apiClient.get<AdminTenantUser>(`${slug}/users/tenants/${id}`);
   }
 
   /**
@@ -186,6 +217,54 @@ export class TenantUserService {
   getUserPayments(userId: number): Observable<Record<string, unknown>[]> {
     const slug = this.getTenantSlug();
     return this.apiClient.get<Record<string, unknown>[]>(`${slug}/users/${userId}/payments`);
+  }
+
+  private buildTenantParams(filters: TenantUserFilters): Record<string, string> {
+    const params: Record<string, string> = {};
+
+    if (filters.status && filters.status !== 'all') {
+      params['status'] = filters.status;
+    }
+
+    if (filters.search) {
+      params['search'] = filters.search;
+    }
+
+    if (filters.hasActiveContract !== undefined) {
+      params['hasActiveContract'] = String(filters.hasActiveContract);
+    }
+
+    return params;
+  }
+
+  private setStatsFromUsers(users: AdminTenantUser[]): void {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const numberValue = (value: number | string | null | undefined): number => Number(value ?? 0);
+
+    const stats: TenantUserStats = {
+      total_users: users.length,
+      active_users: users.filter((u) => u.status !== UserStatus.INACTIVE && u.is_active !== false)
+        .length,
+      inactive_users: users.filter((u) => u.status === UserStatus.INACTIVE || u.is_active === false)
+        .length,
+      new_this_month: users.filter((user) => {
+        const createdAt = user.created_at ? new Date(user.created_at) : null;
+        return (
+          createdAt instanceof Date &&
+          !Number.isNaN(createdAt.getTime()) &&
+          createdAt.getMonth() === currentMonth &&
+          createdAt.getFullYear() === currentYear
+        );
+      }).length,
+      users_with_active_contracts: users.filter((u) => u.lease_status === 'active').length,
+      users_with_pending_payments: users.filter((u) => numberValue(u.pending_payments) > 0).length,
+      total_balance_due: users.reduce((sum, user) => sum + numberValue(user.balance_due), 0),
+      total_paid: users.reduce((sum, user) => sum + numberValue(user.total_paid), 0),
+    };
+
+    this.statsSignal.set(stats);
   }
 
   /**

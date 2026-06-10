@@ -1,17 +1,27 @@
 import { Injectable, inject } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
+import { Subject } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AuthService } from './auth.service';
 import { SlugService } from './slug.service';
 import { NotificationService } from './admin/notification.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+import { AuthContext, SessionTokenService } from './session-token.service';
 
 interface RealtimePayload {
   user_id?: number;
   title?: string;
   message?: string;
   metadata?: Record<string, unknown>;
+  messageId?: number;
+  peerUserId?: number;
+  senderId?: number;
+  recipientId?: number;
+}
+
+export interface RealtimeEvent {
+  type: string;
+  payload: RealtimePayload;
 }
 
 /** Eventos en tiempo real emitidos por el gateway `/notifications`. */
@@ -27,19 +37,26 @@ const REALTIME_EVENTS = [
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSocketService {
-  private readonly auth = inject(AuthService);
+  private readonly sessionToken = inject(SessionTokenService);
   private readonly slugService = inject(SlugService);
   private readonly notificationService = inject(NotificationService);
   private readonly toast = inject(ToastService);
 
   private socket: Socket | null = null;
+  private activeContext: AuthContext | null = null;
+  private readonly eventSubject = new Subject<RealtimeEvent>();
+  readonly events$ = this.eventSubject.asObservable();
 
   /** Conecta al namespace de notificaciones en tiempo real (idempotente). */
-  connect(): void {
-    if (this.socket?.connected) {
+  connect(context: AuthContext = 'admin'): void {
+    if (this.socket?.connected && this.activeContext === context) {
       return;
     }
-    const token = this.auth.getToken();
+    if (this.socket && this.activeContext !== context) {
+      this.disconnect();
+    }
+
+    const token = this.sessionToken.getToken(context);
     const tenantSlug = this.slugService.getSlug();
     if (!token || !tenantSlug) {
       return;
@@ -53,18 +70,21 @@ export class NotificationSocketService {
       reconnectionAttempts: Infinity,
       reconnectionDelay: 2000,
     });
+    this.activeContext = context;
 
     for (const event of REALTIME_EVENTS) {
-      this.socket.on(event, (payload: RealtimePayload) => this.handleEvent(payload));
+      this.socket.on(event, (payload: RealtimePayload) => this.handleEvent(event, payload));
     }
   }
 
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
+    this.activeContext = null;
   }
 
-  private handleEvent(payload: RealtimePayload): void {
+  private handleEvent(type: string, payload: RealtimePayload): void {
+    this.eventSubject.next({ type, payload });
     // Toast no intrusivo + refresco del centro de notificaciones (badge)
     if (payload?.title) {
       this.toast.info(payload.title);

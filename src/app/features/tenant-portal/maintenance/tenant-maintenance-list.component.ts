@@ -141,7 +141,7 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
             <article [routerLink]="buildRequestDetailUrl(request.id)" class="request-card">
               <div class="request-card__top">
                 <div class="request-card__meta">
-                  <span>{{ request.ticket_number }}</span>
+                  <span class="request-card__ticket">{{ request.ticket_number }}</span>
                   @if (
                     getUnreadCount(
                       request.id,
@@ -173,26 +173,10 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
 
               <div class="request-card__footer">
                 @if (request.category) {
-                  <div
-                    class="category-pill"
-                    [style.border-color]="
-                      hoveredCat[request.id] ? getCategoryColor(request.category) : '#cbd5e1'
-                    "
-                    [style.color]="
-                      hoveredCat[request.id] ? getCategoryColor(request.category) : '#64748b'
-                    "
-                    (mouseenter)="hoveredCat[request.id] = true"
-                    (mouseleave)="hoveredCat[request.id] = false"
-                  >
-                    <lucide-icon
-                      [img]="getCategoryIcon(request.category)"
-                      [size]="14"
-                      [style.color]="
-                        hoveredCat[request.id] ? getCategoryColor(request.category) : '#64748b'
-                      "
-                    >
+                  <div class="category-pill">
+                    <lucide-icon [img]="getCategoryIcon(request.category)" [size]="14">
                     </lucide-icon>
-                    <span class="text-xs font-medium">{{
+                    <span>{{
                       'public.tenantMaintenance.category.' + request.category | transloco
                     }}</span>
                   </div>
@@ -330,10 +314,10 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
       .request-card {
         display: flex;
         flex-direction: column;
-        min-height: 15rem;
-        padding: var(--app-space-5);
+        min-height: 12.5rem;
+        padding: var(--app-space-4);
         border: 1px solid var(--app-color-border);
-        border-radius: var(--app-radius-lg);
+        border-radius: var(--app-radius-md);
         background: var(--app-color-surface);
         box-shadow: var(--app-shadow-sm);
         cursor: pointer;
@@ -346,7 +330,7 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
       .request-card:hover {
         border-color: color-mix(in srgb, var(--app-color-primary) 35%, var(--app-color-border));
         box-shadow: var(--app-shadow-md);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
       }
 
       .request-card__top,
@@ -361,9 +345,25 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
         display: inline-flex;
         align-items: center;
         gap: var(--app-space-2);
-        color: var(--app-color-text-muted);
+        min-width: 0;
+      }
+
+      .request-card__ticket {
+        display: inline-flex;
+        max-width: 12rem;
+        min-height: 1.625rem;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid color-mix(in srgb, var(--app-color-primary) 24%, transparent);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--app-color-primary) 8%, #fff);
+        color: var(--app-color-primary);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
+        font-weight: 800;
+        padding: 0.125rem 0.55rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .relative {
@@ -392,7 +392,6 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
 
       .request-card h2 {
         display: -webkit-box;
-        flex: 1;
         margin: var(--app-space-4) 0 var(--app-space-2);
         overflow: hidden;
         color: var(--app-color-text);
@@ -405,9 +404,11 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
 
       .request-card p {
         display: -webkit-box;
-        min-height: 2.7rem;
+        flex: 1;
+        min-height: 2.8rem;
         margin: 0 0 var(--app-space-4);
         overflow: hidden;
+        color: var(--app-color-text-muted);
         font-size: 0.875rem;
         line-height: 1.55;
         -webkit-box-orient: vertical;
@@ -415,6 +416,7 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
       }
 
       .request-card__footer {
+        flex-wrap: wrap;
         padding-top: var(--app-space-3);
         border-top: 1px solid var(--app-color-border);
       }
@@ -423,12 +425,26 @@ type MaintenanceFilterStatus = MaintenanceStatus | 'all';
         display: inline-flex;
         align-items: center;
         gap: var(--app-space-2);
-        padding: 0.375rem 0.625rem;
-        border: 1px solid var(--app-color-border);
-        border-radius: var(--app-radius-md);
-        color: var(--app-color-text-muted);
+        max-width: 100%;
+        min-height: 1.875rem;
+        padding: 0.25rem 0.625rem;
+        border: 1px solid color-mix(in srgb, var(--app-color-primary) 20%, var(--app-color-border));
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--app-color-primary) 6%, #fff);
+        color: var(--app-color-primary);
         font-size: 0.75rem;
-        font-weight: 700;
+        font-weight: 800;
+      }
+
+      .category-pill span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .category-pill lucide-icon {
+        flex: 0 0 auto;
       }
 
       @media (max-width: 980px) {

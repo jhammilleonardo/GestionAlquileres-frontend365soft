@@ -493,10 +493,27 @@
     "termsAccept4": "I acknowledge that this contract is legally valid and binding.",
     "termsAccept5": "I commit to fulfilling all responsibilities established in the contract.",
     "termsAccept6Prefix": "I understand that late payments will incur a penalty of",
+    "signaturePhraseLabel": "Electronic signature",
+    "signatureConsent": "By signing electronically, I consent to use an electronic signature with the same legal validity as a handwritten one. My signature, date, time and IP address will be recorded as evidence.",
     "cancel": "Cancel",
     "signing": "Signing...",
     "signContract": "Sign Contract",
     "nextPaymentNotSpecified": "Not specified"
+  },
+  "signaturePad": {
+    "modeLabel": "Signature method",
+    "draw": "Draw",
+    "type": "Type",
+    "upload": "Upload",
+    "drawHint": "Draw your signature here",
+    "drawAria": "Canvas to draw your signature",
+    "typePlaceholder": "Type your full name",
+    "typeAria": "Type your name to generate the signature",
+    "typeHint": "Your signature will appear here",
+    "uploadHint": "Click to upload an image of your signature (PNG or JPG)",
+    "uploadPreviewAlt": "Uploaded signature preview",
+    "uploadError": "Could not load the image. Use a PNG or JPG under 1.5 MB.",
+    "clear": "Clear"
   },
   "signingSuccess": {
     "title": "Contract Successfully Signed!",
@@ -573,6 +590,16 @@
     "unreadMessages": "{{count}} unread message(s)",
     "you": "You",
     "admin": "Administration",
+    "internalNote": "Internal note",
+    "senderRole": {
+      "ADMIN": "Administrator",
+      "EMPLEADO": "Employee",
+      "TECNICO": "Technician",
+      "INQUILINO": "Tenant",
+      "VENDOR": "Vendor",
+      "PROPIETARIO": "Owner",
+      "SUPERADMIN": "Administrator"
+    },
     "writeMessage": "Type your message...",
     "requestClosed": "This request is closed",
     "notFound": "Request not found",
@@ -872,7 +899,30 @@
       "paymentCreated": "Payment Registered",
       "paymentApproved": "Payment Approved",
       "paymentRejected": "Payment Rejected",
+      "violationNotified": "Violation notified",
       "default": "Notification"
+    },
+    "status": {
+      "PENDIENTE": "Pending",
+      "EN_REVISION": "In review",
+      "APROBADA": "Approved",
+      "RECHAZADA": "Rejected"
+    },
+    "messages": {
+      "applicationStatusChangedTitle": "Application update",
+      "applicationStatusChangedMessage": "Your application for {{property}} changed to: {{status}}.",
+      "applicationStatusChangedMessageGeneric": "Your application changed to: {{status}}.",
+      "contractCreatedTitle": "New contract available",
+      "contractCreatedMessage": "Contract {{contract}} has been created. Please review and sign it.",
+      "contractSignedTitle": "Contract signed",
+      "contractSignedMessage": "Contract {{contract}} was signed successfully.",
+      "paymentApprovedTitle": "Payment approved",
+      "paymentApprovedMessage": "Your payment has been approved.",
+      "paymentRejectedTitle": "Payment rejected",
+      "paymentRejectedMessage": "Your payment was rejected. Review the details and try again.",
+      "maintenanceMessageTitle": "New message in request",
+      "maintenanceMessageSender": "Someone",
+      "maintenanceMessageBody": "{{sender}} replied to your request {{ticket}}: {{preview}}"
     }
   },
   "tenantProfile": {
@@ -956,17 +1006,5 @@
     "missingSlug": "Could not identify the company to sign in.",
     "selectedProperty": "Selected property",
     "loginRequired": "Sign in or create an account to confirm the booking."
-  },
-  "myProperty": {
-    "title": "My property",
-    "subtitle": "Your unit info, amenities, rules and admin contact",
-    "loading": "Loading your property...",
-    "noProperty": "You have no assigned property",
-    "property": "Property",
-    "amenities": "Amenities",
-    "rules": "Building rules",
-    "admin": "Administrator",
-    "adminHint": "Questions about your property? Message the management.",
-    "contactAdmin": "Contact management"
   }
 }

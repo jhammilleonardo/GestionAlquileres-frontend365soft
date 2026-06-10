@@ -48,14 +48,21 @@
           @for (log of logs(); track log.id) {
             <tr>
               <td>{{ log.timestamp | date: 'short' }}</td>
-              <td>{{ log.user_id ?? '—' }}</td>
+              <td>
+                <div class="user-cell">
+                  <span class="user-name">{{ userLabel(log) }}</span>
+                  @if (roleLabel(log.user_role); as role) {
+                    <span class="user-role">{{ role }}</span>
+                  }
+                </div>
+              </td>
               <td>
                 <app-status-badge
                   [label]="'audit.action.' + log.action | transloco"
                   [tone]="actionTone(log.action)"
                 />
               </td>
-              <td>{{ log.entity_type }} #{{ log.entity_id }}</td>
+              <td>{{ entityLabel(log) }}</td>
               <td class="actions-col">
                 <button
                   type="button"
@@ -91,28 +98,45 @@
 >
   @if (selected(); as log) {
     <div class="detail">
-      <div class="detail-meta">
-        <span
-          ><strong>{{ 'audit.actionLabel' | transloco }}:</strong>
-          {{ 'audit.action.' + log.action | transloco }}</span
-        >
-        <span
-          ><strong>{{ 'audit.entity' | transloco }}:</strong> {{ log.entity_type }} #{{
-            log.entity_id
-          }}</span
-        >
-        <span
-          ><strong>{{ 'audit.user' | transloco }}:</strong> {{ log.user_id ?? '—' }}</span
-        >
-        <span
-          ><strong>{{ 'audit.date' | transloco }}:</strong>
-          {{ log.timestamp | date: 'medium' }}</span
-        >
+      <dl class="detail-meta">
+        <div class="meta-row">
+          <dt>{{ 'audit.performedBy' | transloco }}</dt>
+          <dd>
+            <span class="meta-user">{{ userLabel(log) }}</span>
+            @if (roleLabel(log.user_role); as role) {
+              <span class="user-role">{{ role }}</span>
+            }
+            @if (log.user_email && log.user_name) {
+              <span class="meta-sub">{{ log.user_email }}</span>
+            }
+          </dd>
+        </div>
+        <div class="meta-row">
+          <dt>{{ 'audit.actionLabel' | transloco }}</dt>
+          <dd>
+            <app-status-badge
+              [label]="'audit.action.' + log.action | transloco"
+              [tone]="actionTone(log.action)"
+            />
+          </dd>
+        </div>
+        <div class="meta-row">
+          <dt>{{ 'audit.entity' | transloco }}</dt>
+          <dd>{{ entityLabel(log) }}</dd>
+        </div>
+        <div class="meta-row">
+          <dt>{{ 'audit.date' | transloco }}</dt>
+          <dd>{{ log.timestamp | date: 'medium' }}</dd>
+        </div>
         @if (log.ip_address) {
-          <span><strong>IP:</strong> {{ log.ip_address }}</span>
+          <div class="meta-row">
+            <dt>{{ 'audit.ipAddress' | transloco }}</dt>
+            <dd>{{ log.ip_address }}</dd>
+          </div>
         }
-      </div>
+      </dl>
 
+      <h4 class="detail-section-title">{{ 'audit.changesTitle' | transloco }}</h4>
       @if (diffRows().length === 0) {
         <p class="no-diff">{{ 'audit.noChanges' | transloco }}</p>
       } @else {
@@ -128,7 +152,7 @@
             <tbody>
               @for (row of diffRows(); track row.key) {
                 <tr [class.changed]="row.changed">
-                  <td>{{ row.key }}</td>
+                  <td>{{ row.label }}</td>
                   <td class="val-before">{{ row.before }}</td>
                   <td class="val-after">{{ row.after }}</td>
                 </tr>

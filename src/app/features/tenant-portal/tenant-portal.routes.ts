@@ -173,14 +173,6 @@ export const TENANT_PORTAL_ROUTES: Routes = [
           import('./history/tenant-history.component').then((m) => m.TenantHistoryComponent),
       },
       {
-        path: 'mi-propiedad',
-        canActivate: [tenantWithContractGuard],
-        loadComponent: () =>
-          import('./my-property/tenant-my-property.component').then(
-            (m) => m.TenantMyPropertyComponent,
-          ),
-      },
-      {
         path: 'perfil',
         canActivate: [tenantWithContractGuard],
         loadComponent: () =>

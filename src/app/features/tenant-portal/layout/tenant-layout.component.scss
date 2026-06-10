@@ -244,15 +244,33 @@
 }
 
 .notification-icon {
-  font-size: 1.5rem;
   flex-shrink: 0;
   width: 40px;
   height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--app-color-surface-muted);
-  border-radius: 50%;
+  border-radius: 12px;
+
+  &.icon-maintenance {
+    background: rgba(33, 150, 243, 0.12);
+    color: #2196f3;
+  }
+
+  &.icon-contract {
+    background: rgba(255, 152, 0, 0.12);
+    color: #ff9800;
+  }
+
+  &.icon-payment {
+    background: rgba(76, 175, 80, 0.12);
+    color: #4caf50;
+  }
+
+  &.icon-default {
+    background: var(--app-color-surface-muted);
+    color: var(--app-color-text-muted);
+  }
 }
 
 .notification-content {

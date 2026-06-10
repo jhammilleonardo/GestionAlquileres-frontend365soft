@@ -5,6 +5,7 @@ import { CatalogUnit, Property } from '../../../core/models/property.model';
 import { SlugService } from '../../../core/services/slug.service';
 import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
 import { AppSelectOption, ToastService } from '../../../shared/ui';
+import { environment } from '../../../../environments/environment';
 
 export type MarketplaceSort = 'created_at' | 'price_asc' | 'price_desc' | 'area';
 export type RentalModeFilter = 'ALL' | 'LONG_TERM' | 'SHORT_TERM';
@@ -33,6 +34,13 @@ export class NewApplicationFacade {
   readonly initialReservationCheckout = signal<string | null>(null);
   readonly currentPage = signal(0);
   readonly pageSize = signal(12);
+
+  // Vista de detalle previa a la postulación.
+  readonly isLoadingDetailProperty = signal(false);
+  readonly selectedDetailProperty = signal<Property | null>(null);
+  readonly detailImageIndex = signal(0);
+
+  private readonly imageBaseUrl = environment.apiUrl.replace(/\/+$/, '');
 
   filters: MarketplaceFilters = {
     search: '',
@@ -128,6 +136,24 @@ export class NewApplicationFacade {
       this.shortTermUnits()[0] ??
       null
     );
+  });
+
+  readonly detailDialogOpen = computed(
+    () => this.isLoadingDetailProperty() || this.selectedDetailProperty() !== null,
+  );
+
+  readonly detailDialogTitle = computed(() => this.selectedDetailProperty()?.title ?? '');
+
+  readonly detailImages = computed<string[]>(() => {
+    const property = this.selectedDetailProperty();
+    return property ? this.extractImages(property) : [];
+  });
+
+  readonly detailCurrentImage = computed<string | null>(() => {
+    const images = this.detailImages();
+    if (images.length === 0) return null;
+    const index = Math.min(this.detailImageIndex(), images.length - 1);
+    return images[index];
   });
 
   initialize(): void {
@@ -249,6 +275,64 @@ export class NewApplicationFacade {
     this.reservationIntentionService.clearIntention();
   }
 
+  openDetails(property: Property): void {
+    this.detailImageIndex.set(0);
+    this.isLoadingDetailProperty.set(true);
+    this.selectedDetailProperty.set(null);
+
+    this.propertyService.getPropertyById(property.id).subscribe({
+      next: (detail) => {
+        this.isLoadingDetailProperty.set(false);
+        this.selectedDetailProperty.set(detail ?? property);
+      },
+      error: () => {
+        this.isLoadingDetailProperty.set(false);
+        // Fallback al resumen del listado para no dejar el diálogo vacío.
+        this.selectedDetailProperty.set(property);
+      },
+    });
+  }
+
+  closeDetails(): void {
+    this.isLoadingDetailProperty.set(false);
+    this.selectedDetailProperty.set(null);
+    this.detailImageIndex.set(0);
+  }
+
+  nextDetailImage(): void {
+    const total = this.detailImages().length;
+    if (total === 0) return;
+    this.detailImageIndex.update((index) => (index + 1) % total);
+  }
+
+  previousDetailImage(): void {
+    const total = this.detailImages().length;
+    if (total === 0) return;
+    this.detailImageIndex.update((index) => (index - 1 + total) % total);
+  }
+
+  selectDetailImage(index: number): void {
+    this.detailImageIndex.set(index);
+  }
+
+  applyLongTermFromDetail(): void {
+    const property = this.selectedDetailProperty();
+    if (!property) return;
+    this.closeDetails();
+    this.applyLongTerm(property);
+  }
+
+  reserveShortTermFromDetail(): void {
+    const property = this.selectedDetailProperty();
+    if (!property) return;
+    this.closeDetails();
+    this.reserveShortTerm(property);
+  }
+
+  cardImage(property: Property): string {
+    return this.extractImages(property)[0] ?? '';
+  }
+
   supportsLongTerm(property: Property): boolean {
     const type = this.normalizeRentalType(property.rental_type);
     return !type || type === 'LONG_TERM' || type === 'BOTH';
@@ -285,6 +369,30 @@ export class NewApplicationFacade {
       .sort((a, b) => a - b)[0];
 
     return unitPrice ?? 0;
+  }
+
+  private extractImages(property: Property): string[] {
+    const raw = property.images;
+    let paths: string[] = [];
+
+    if (Array.isArray(raw)) {
+      paths = raw;
+    } else if (raw && typeof raw === 'object') {
+      paths = Object.values(raw);
+    }
+
+    if (property.first_image && !paths.includes(property.first_image)) {
+      paths = [property.first_image, ...paths];
+    }
+
+    return paths.map((path) => this.buildImageUrl(path)).filter((url) => url !== '');
+  }
+
+  private buildImageUrl(path: string | null | undefined): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    return `${this.imageBaseUrl}${normalized}`;
   }
 
   private supportsShortTermType(type: string | null | undefined): boolean {

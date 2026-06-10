@@ -69,14 +69,7 @@ export class MaintenanceService {
     this.loadingSignal.set(true);
     this.apiClient.get<MaintenanceRequest[]>(endpoint).subscribe({
       next: (requests) => {
-        const processedRequests = requests.map((req) => ({
-          ...req,
-          created_at: new Date(req.created_at),
-          updated_at: new Date(req.updated_at),
-          due_date: req.due_date ? new Date(req.due_date) : null,
-          messages: req.messages ?? [],
-          attachments: req.attachments ?? [],
-        }));
+        const processedRequests = requests.map((req) => this.normalizeRequest(req));
         this.requestsSignal.set(processedRequests);
         this.loadingSignal.set(false);
       },
@@ -99,14 +92,9 @@ export class MaintenanceService {
    */
   getRequestById(id: number): Observable<MaintenanceRequest> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
-    return this.apiClient.get<MaintenanceRequest>(endpoint).pipe(
-      map((req) => ({
-        ...req,
-        created_at: new Date(req.created_at),
-        updated_at: new Date(req.updated_at),
-        due_date: req.due_date ? new Date(req.due_date) : null,
-      })),
-    );
+    return this.apiClient
+      .get<MaintenanceRequest>(endpoint)
+      .pipe(map((req) => this.normalizeRequest(req)));
   }
 
   // NOTE: Admin cannot create maintenance requests
@@ -119,6 +107,7 @@ export class MaintenanceService {
   updateRequest(id: number, dto: UpdateMaintenanceDto): Observable<MaintenanceRequest> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}`);
     return this.apiClient.patch<MaintenanceRequest>(endpoint, dto).pipe(
+      map((request) => this.normalizeRequest(request)),
       tap(() => {
         // Reload the list after updating
         this.loadAllRequests();
@@ -189,7 +178,13 @@ export class MaintenanceService {
     payload: { vendor_id?: number | null; assigned_to?: number | null },
   ): Observable<MaintenanceRequest> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}/assign-vendor`);
-    return this.apiClient.patch<MaintenanceRequest>(endpoint, payload);
+    return this.apiClient.patch<MaintenanceRequest>(endpoint, payload).pipe(
+      map((request) => this.normalizeRequest(request)),
+      tap(() => {
+        this.loadAllRequests();
+        this.loadStats();
+      }),
+    );
   }
 
   /**
@@ -200,7 +195,20 @@ export class MaintenanceService {
     payload: { rating: number; comment?: string },
   ): Observable<MaintenanceRequest> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${id}/rate-vendor`);
-    return this.apiClient.post<MaintenanceRequest>(endpoint, payload);
+    return this.apiClient
+      .post<MaintenanceRequest>(endpoint, payload)
+      .pipe(map((request) => this.normalizeRequest(request)));
+  }
+
+  private normalizeRequest(req: MaintenanceRequest): MaintenanceRequest {
+    return {
+      ...req,
+      created_at: new Date(req.created_at),
+      updated_at: new Date(req.updated_at),
+      due_date: req.due_date ? new Date(req.due_date) : null,
+      messages: req.messages ?? [],
+      attachments: req.attachments ?? [],
+    };
   }
 
   // ==================== Messaging System ====================

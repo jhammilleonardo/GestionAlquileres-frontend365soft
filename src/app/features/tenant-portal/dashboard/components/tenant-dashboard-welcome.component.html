@@ -14,10 +14,6 @@
     <div class="property-content">
       <h2>{{ currentContract.property_title }}</h2>
       <div class="property-meta">
-        <div class="meta-item">
-          <lucide-icon [img]="FileText" [size]="16"></lucide-icon>
-          <span>{{ currentContract.contract_number }}</span>
-        </div>
         <span class="contract-status" [class]="'status-' + currentContract.status.toLowerCase()">
           {{ currentContract.status }}
         </span>

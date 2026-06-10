@@ -69,10 +69,6 @@ import {
                 <p>{{ 'public.homePreContract.approvedDesc' | transloco }}</p>
                 <div class="contract-meta">
                   <span
-                    ><strong>{{ 'public.homePreContract.contract' | transloco }}</strong>
-                    {{ pendingContract()!.contract_number }}</span
-                  >
-                  <span
                     ><strong>{{ 'public.homePreContract.rent' | transloco }}</strong>
                     {{ pendingContract()!.monthly_rent | number }}
                     {{ pendingContract()!.currency }}</span

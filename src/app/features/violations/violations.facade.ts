@@ -1,8 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
+import { filter } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
   CreateViolationDto,
@@ -46,12 +47,24 @@ export class ViolationsFacade {
   readonly resolveNotes = signal('');
 
   readonly typeValues = Object.values(ViolationType);
-  readonly typeOptions: AppSelectOption<string>[] = this.typeValues.map((value) => ({
-    value,
-    label: this.transloco.translate(`violations.type.${value}`),
-  }));
-
   readonly statusValues = Object.values(ViolationStatus);
+
+  // El scope de traducción se carga vía HTTP de forma asíncrona. Traducir en un
+  // inicializador de campo devolvería la clave cruda porque corre antes de la
+  // carga. Este signal emite cuando el scope termina de cargar (inicial y al
+  // cambiar de idioma), forzando el recálculo de las etiquetas.
+  private readonly translationsReady = toSignal(
+    this.transloco.events$.pipe(filter((event) => event.type === 'translationLoadSuccess')),
+    { initialValue: null },
+  );
+
+  readonly typeOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return this.typeValues.map((value) => ({
+      value,
+      label: this.transloco.translate(`violations.type.${value}`),
+    }));
+  });
 
   readonly filterForm = this.fb.group({
     property_id: [null as number | null],
@@ -59,17 +72,21 @@ export class ViolationsFacade {
     type: [''],
   });
 
-  readonly statusFilterOptions: AppSelectOption<string>[] = [
-    { value: '', label: this.transloco.translate('violations.allStatuses') },
-    ...this.statusValues.map((value) => ({
-      value,
-      label: this.transloco.translate(`violations.status.${value}`),
-    })),
-  ];
-  readonly typeFilterOptions: AppSelectOption<string>[] = [
+  readonly statusFilterOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return [
+      { value: '', label: this.transloco.translate('violations.allStatuses') },
+      ...this.statusValues.map((value) => ({
+        value,
+        label: this.transloco.translate(`violations.status.${value}`),
+      })),
+    ];
+  });
+
+  readonly typeFilterOptions = computed<AppSelectOption<string>[]>(() => [
     { value: '', label: this.transloco.translate('violations.allTypes') },
-    ...this.typeOptions,
-  ];
+    ...this.typeOptions(),
+  ]);
 
   readonly form = this.fb.group({
     property_id: [null as number | null, Validators.required],
@@ -86,6 +103,10 @@ export class ViolationsFacade {
     this.loadProperties();
     this.loadTenants();
     this.load();
+
+    // Los filtros se aplican automáticamente al cambiar cualquier selector;
+    // no requiere un botón "Aplicar".
+    this.filterForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.load());
   }
 
   loadProperties(): void {
@@ -109,7 +130,7 @@ export class ViolationsFacade {
   load(): void {
     this.isLoading.set(true);
     const filters = this.filterForm.value;
-    const params: Record<string, string | number> = { limit: 200 };
+    const params: Record<string, string | number> = { limit: 100 };
     if (filters.property_id) params['property_id'] = filters.property_id;
     if (filters.status) params['status'] = filters.status;
     if (filters.type) params['type'] = filters.type;
@@ -126,13 +147,9 @@ export class ViolationsFacade {
     });
   }
 
-  applyFilters(): void {
-    this.load();
-  }
-
   clearFilters(): void {
+    // reset() emite valueChanges, lo que dispara load() automáticamente.
     this.filterForm.reset({ property_id: null, status: '', type: '' });
-    this.load();
   }
 
   statusTone(status: ViolationStatus): AppStatusTone {
@@ -144,10 +161,6 @@ export class ViolationsFacade {
       case ViolationStatus.RESOLVED:
         return 'success';
     }
-  }
-
-  photoUrl(path: string): string {
-    return path.startsWith('http') ? path : `${environment.apiUrl.replace(/\/$/, '')}${path}`;
   }
 
   openCreate(): void {
@@ -234,17 +247,14 @@ export class ViolationsFacade {
     });
   }
 
-  downloadPdf(violation: Violation): void {
-    this.busyId.set(violation.id);
-    this.violationService.downloadPdf(violation.id).subscribe({
-      next: (blob) => {
-        this.busyId.set(null);
+  viewPdf(violation: Violation): void {
+    this.fetchPdf(violation, (blob) => {
+      // Abrir en pestaña nueva para visualizar; si el navegador bloquea el
+      // popup, se descarga como respaldo.
+      const opened = this.fileDownload.openBlob(blob);
+      if (!opened) {
         this.downloadBlob(blob, `violacion_${violation.id}.pdf`);
-      },
-      error: () => {
-        this.busyId.set(null);
-        this.toast.error(this.transloco.translate('violations.pdfError'));
-      },
+      }
     });
   }
 
@@ -284,6 +294,20 @@ export class ViolationsFacade {
     this.dialogOpen.set(false);
     this.toast.success(this.transloco.translate('violations.created'));
     this.load();
+  }
+
+  private fetchPdf(violation: Violation, onBlob: (blob: Blob) => void): void {
+    this.busyId.set(violation.id);
+    this.violationService.downloadPdf(violation.id).subscribe({
+      next: (blob) => {
+        this.busyId.set(null);
+        onBlob(blob);
+      },
+      error: () => {
+        this.busyId.set(null);
+        this.toast.error(this.transloco.translate('violations.pdfError'));
+      },
+    });
   }
 
   private downloadBlob(blob: Blob, filename: string): void {

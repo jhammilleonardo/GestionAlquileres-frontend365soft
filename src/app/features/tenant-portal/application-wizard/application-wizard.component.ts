@@ -18,6 +18,7 @@ import { PropertyService } from '../../../core/services/admin/property.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { Property } from '../../../core/models/property.model';
 import { CreateApplicationDto } from '../../../core/models/application.model';
 import {
@@ -520,9 +521,11 @@ export class ApplicationWizardComponent implements OnInit {
           this.clearDraft();
           this.slugService.navigateTo(['portal', 'home']);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.isSubmitting.set(false);
-          this.toast.error(this.translocoService.translate('rentalApp.submitError'));
+          this.toast.error(
+            getApiErrorMessage(error, this.translocoService.translate('rentalApp.submitError')),
+          );
         },
       });
   }

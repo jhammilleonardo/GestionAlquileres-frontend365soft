@@ -1,4 +1,42 @@
 {
+  "propertySteps": {
+    "basic": "Información básica",
+    "images": "Imágenes",
+    "financial": "Financiero",
+    "details": "Detalles",
+    "address": "Dirección",
+    "owner": "Propietario",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "saving": "Guardando..."
+  },
+  "imageUploader": {
+    "dropTitle": "Arrastra imágenes o haz clic para subir",
+    "dropHint": "Hasta {{max}} imágenes (JPG, PNG, WebP, GIF — máx. {{size}}MB c/u)",
+    "limitReached": "Alcanzaste el máximo de {{max}} imágenes",
+    "rejectedInvalid": "{{count}} archivo(s) ignorado(s) por formato o tamaño no válido",
+    "rejectedMax": "{{count}} archivo(s) ignorado(s) por superar el límite",
+    "selectedCount": "{{count}} de {{max}} imágenes seleccionadas",
+    "cover": "Portada",
+    "makeCover": "Marcar como portada",
+    "edit": "Editar imagen",
+    "remove": "Eliminar imagen",
+    "reorder": "Reordenar imagen",
+    "cropTitle": "Editar y recortar imagen",
+    "cropFrame": "Área de recorte",
+    "aspect": "Relación de aspecto",
+    "aspectFree": "Libre",
+    "aspect43": "4:3",
+    "aspect11": "1:1",
+    "aspect169": "16:9",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "rotateLeft": "Rotar a la izquierda",
+    "rotateRight": "Rotar a la derecha",
+    "flip": "Voltear horizontalmente",
+    "reset": "Restablecer",
+    "applyCrop": "Aplicar recorte"
+  },
   "common": {
     "error": "Error",
     "myProfile": "Mi Perfil",
@@ -143,7 +181,37 @@
   },
   "tenants": {
     "title": "Inquilinos",
-    "subtitle": "Administra la información de todos los inquilinos"
+    "subtitle": "Administra inquilinos, contratos activos, saldo pendiente y datos de contacto",
+    "loading": "Cargando inquilinos...",
+    "searchLabel": "Buscar inquilino",
+    "searchPlaceholder": "Nombre, email, teléfono, propiedad o unidad",
+    "noProperty": "Sin propiedad asignada",
+    "noUnit": "Sin unidad",
+    "unit": "Unidad {{unit}}",
+    "monthlyRent": "Renta mensual",
+    "balanceDue": "Saldo pendiente",
+    "leaseEnd": "Fin de contrato",
+    "emptyTitle": "No hay inquilinos para mostrar",
+    "emptySubtitle": "Cuando existan solicitudes aprobadas o contratos, aparecerán en este listado.",
+    "metrics": {
+      "total": "Total inquilinos",
+      "activeLeases": "Contratos activos",
+      "pendingPayments": "Con pagos pendientes",
+      "balanceDue": "Saldo por cobrar"
+    },
+    "filters": {
+      "label": "Filtros de inquilinos",
+      "all": "Todos",
+      "active": "Activos",
+      "pending": "Pendientes",
+      "past": "Pasados"
+    },
+    "leaseStatus": {
+      "active": "Contrato activo",
+      "pending": "Solicitud pendiente",
+      "past": "Contrato pasado",
+      "none": "Sin contrato"
+    }
   },
   "wizard": {
     "subtitle": "Configura tu espacio de trabajo en unos pocos pasos",
@@ -240,6 +308,7 @@
     "signNow": "Firmar Ahora",
     "details": {
       "back": "Volver",
+      "heading": "Detalle del Contrato",
       "loading": "Cargando contrato...",
       "error": "Error",
       "pendingAlertTitle": "Contrato pendiente de tu firma",
@@ -274,8 +343,13 @@
       "terminationLabel": "Terminación",
       "jurisdictionLabel": "Jurisdicción",
       "viewPDF": "Ver PDF",
+      "viewPdf": "Ver PDF",
+      "downloadPdf": "Descargar PDF",
       "signError": "Error al firmar el contrato. Por favor, intenta nuevamente.",
-      "pdfError": "Error al visualizar el PDF. Por favor, intenta nuevamente."
+      "pdfError": "Error al visualizar el PDF. Por favor, intenta nuevamente.",
+      "downloadPdfError": "Error al descargar el PDF. Por favor, intenta nuevamente.",
+      "pdfPopupBlocked": "El navegador bloqueó la pestaña del PDF, por eso se descargó el archivo.",
+      "pdfFilePrefix": "contrato"
     },
     "status": {
       "BORRADOR": "Borrador (Pendiente de firma)",
@@ -317,6 +391,7 @@
       "signContract": "Ver y Firmar Contrato"
     },
     "marketplace": {
+      "eyebrow": "Marketplace",
       "title": "Nueva Solicitud de Alquiler",
       "subtitle": "Selecciona una propiedad para enviar tu solicitud",
       "searchPlaceholder": "Buscar por título, ciudad o dirección...",
@@ -358,7 +433,26 @@
       "unitOption": "{{unit}} - {{price}}/noche",
       "loadAvailabilityError": "No se pudo cargar la disponibilidad de la propiedad.",
       "restorePropertyError": "No se pudo recuperar la propiedad de la reserva.",
-      "restoreReservationError": "No se pudo recuperar la reserva pendiente."
+      "restoreReservationError": "No se pudo recuperar la reserva pendiente.",
+      "loadError": "No se pudieron cargar las propiedades.",
+      "viewDetails": "Ver detalles",
+      "loadingDetail": "Cargando detalles de la propiedad...",
+      "imageCounter": "{{current}} / {{total}}",
+      "previousImage": "Imagen anterior",
+      "nextImage": "Imagen siguiente",
+      "noImage": "Sin imagen",
+      "descriptionTitle": "Descripción",
+      "noDescription": "Esta propiedad no tiene descripción.",
+      "featuresTitle": "Características",
+      "amenitiesTitle": "Amenidades",
+      "includedTitle": "Incluye",
+      "featureBedrooms": "Dormitorios",
+      "featureBathrooms": "Baños",
+      "featureArea": "Área (m²)",
+      "featureParking": "Parqueos",
+      "featureOccupants": "Ocupantes máx.",
+      "featureFurnished": "Amoblado",
+      "featureYear": "Año construido"
     },
     "status": {
       "PENDIENTE": "Pendiente",

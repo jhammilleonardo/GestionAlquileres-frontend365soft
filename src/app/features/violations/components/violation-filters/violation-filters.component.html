@@ -18,9 +18,6 @@
     [options]="typeOptions()"
   />
   <div class="filter-actions">
-    <app-button size="s" (clicked)="filtersApplied.emit()">
-      {{ 'common.apply' | transloco }}
-    </app-button>
     <app-button size="s" appearance="secondary" (clicked)="filtersCleared.emit()">
       {{ 'common.clear' | transloco }}
     </app-button>

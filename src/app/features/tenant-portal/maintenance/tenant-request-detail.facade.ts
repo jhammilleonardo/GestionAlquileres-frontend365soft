@@ -25,6 +25,7 @@ export class TenantRequestDetailFacade implements OnDestroy {
   readonly newMessagesCount = signal(0);
   readonly pollingNewFromId = signal(0);
   readonly scrollVersion = signal(0);
+  readonly sentVersion = signal(0);
   readonly canSendMessage = computed(() => {
     const request = this.request();
 
@@ -91,8 +92,9 @@ export class TenantRequestDetailFacade implements OnDestroy {
   sendMessage(message: string): void {
     const request = this.request();
     const normalizedMessage = message.trim();
+    const files = this.selectedFiles();
 
-    if (!request || !normalizedMessage) {
+    if (!request || (!normalizedMessage && files.length === 0)) {
       return;
     }
 
@@ -110,6 +112,7 @@ export class TenantRequestDetailFacade implements OnDestroy {
             this.lastMessageId = createdMessage.id;
             this.selectedFiles.set([]);
             this.isSending.set(false);
+            this.sentVersion.update((version) => version + 1);
             this.requestScroll();
             this.markMessagesRead(this.messages(), request.id);
           },
@@ -119,8 +122,8 @@ export class TenantRequestDetailFacade implements OnDestroy {
         });
     };
 
-    if (this.selectedFiles().length > 0) {
-      this.maintenanceService.uploadFiles(request.id, this.selectedFiles()).subscribe({
+    if (files.length > 0) {
+      this.maintenanceService.uploadFiles(request.id, files).subscribe({
         next: (attachments) => send(attachments.map((attachment) => attachment.file_url)),
         error: () => {
           this.isSending.set(false);

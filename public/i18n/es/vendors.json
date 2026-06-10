@@ -28,13 +28,26 @@
   "orderHistory": "Historial de órdenes",
   "noOrders": "Sin órdenes asignadas",
   "notRated": "Sin calificar",
+  "account": {
+    "title": "Acceso al portal",
+    "create": "Crear cuenta de acceso",
+    "created": "Cuenta creada correctamente",
+    "error": "No se pudo crear la cuenta",
+    "password": "Contraseña",
+    "shareHint": "Comparte estas credenciales con el proveedor. La contraseña solo se muestra una vez.",
+    "needsEmail": "Agrega un correo al proveedor para poder crear su cuenta.",
+    "loginUrl": "Ingreso del proveedor: /{{slug}}/vendor/login",
+    "loginLabel": "Ingreso",
+    "alreadyHas": "Este proveedor ya tiene cuenta de acceso",
+    "regenerate": "Regenerar contraseña"
+  },
   "specialty": {
-    "plumbing": "Plomería",
-    "electrical": "Electricidad",
-    "hvac": "Climatización",
-    "cleaning": "Limpieza",
-    "painting": "Pintura",
-    "general": "General",
+    "plumbing": "Plomero",
+    "electrical": "Electricista",
+    "hvac": "Técnico en climatización",
+    "cleaning": "Personal de limpieza",
+    "painting": "Pintor",
+    "general": "Mantenimiento general",
     "other": "Otro"
   }
 }

@@ -69,6 +69,7 @@ import { TenantRequestDetailFacade } from './tenant-request-detail.facade';
             [firstUnreadMessageId]="facade.firstUnreadMessageId()"
             [unreadCountFromHere]="facade.unreadCountFromHere()"
             [scrollVersion]="facade.scrollVersion()"
+            [sentVersion]="facade.sentVersion()"
             [isMyMessage]="isMyMessage"
             (filesSelected)="facade.addFiles($event)"
             (removeFile)="facade.removeFile($event)"

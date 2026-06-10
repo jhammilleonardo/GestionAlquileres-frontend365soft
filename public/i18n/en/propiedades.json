@@ -3,6 +3,13 @@
   "subtitle": "Manage all the properties in your portfolio",
   "new": "New Property",
   "edit": "Edit Property",
+  "errors": {
+    "amount": "Maximum 99,999,999.99",
+    "count": "Value out of range (0–999)",
+    "year": "Year must be between 1800 and 2100",
+    "latitude": "Latitude must be between -90 and 90",
+    "longitude": "Longitude must be between -180 and 180"
+  },
   "backToList": "Back to Properties",
   "search": "Title, address...",
   "allStatuses": "All statuses",

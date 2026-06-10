@@ -28,13 +28,26 @@
   "orderHistory": "Order history",
   "noOrders": "No assigned orders",
   "notRated": "Not rated",
+  "account": {
+    "title": "Portal access",
+    "create": "Create access account",
+    "created": "Account created successfully",
+    "error": "Could not create the account",
+    "password": "Password",
+    "shareHint": "Share these credentials with the vendor. The password is shown only once.",
+    "needsEmail": "Add an email to the vendor before creating their account.",
+    "loginUrl": "Vendor login: /{{slug}}/vendor/login",
+    "loginLabel": "Login",
+    "alreadyHas": "This vendor already has an access account",
+    "regenerate": "Regenerate password"
+  },
   "specialty": {
-    "plumbing": "Plumbing",
-    "electrical": "Electrical",
-    "hvac": "HVAC",
-    "cleaning": "Cleaning",
-    "painting": "Painting",
-    "general": "General",
+    "plumbing": "Plumber",
+    "electrical": "Electrician",
+    "hvac": "HVAC technician",
+    "cleaning": "Cleaner",
+    "painting": "Painter",
+    "general": "General handyman",
     "other": "Other"
   }
 }

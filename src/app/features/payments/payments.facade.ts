@@ -387,10 +387,7 @@ export class PaymentsFacade {
   approvePayment(payment: Payment): void {
     const tenantName = this.getTenantName(payment);
     this.paymentService
-      .updatePaymentStatus(payment.id, {
-        status: PaymentStatus.APPROVED,
-        admin_notes: this.transloco.translate('pagos.actions.approvedByAdmin'),
-      })
+      .approvePayment(payment.id, this.transloco.translate('pagos.actions.approvedByAdmin'))
       .subscribe({
         next: () => {
           this.rejectionPayment.set(null);
@@ -425,26 +422,20 @@ export class PaymentsFacade {
     const reason = this.rejectForm.controls.reason.value?.trim() ?? '';
     const tenantName = this.getTenantName(payment);
 
-    this.paymentService
-      .updatePaymentStatus(payment.id, {
-        status: PaymentStatus.REJECTED,
-        admin_notes: reason,
-        rejection_reason: reason,
-      })
-      .subscribe({
-        next: () => {
-          this.rejectionPayment.set(null);
-          this.rejectForm.reset({ reason: '' });
-          this.toast.error(this.transloco.translate('pagos.actions.rejectedToast', { tenantName }));
-        },
-        error: (error: unknown) => {
-          this.toast.error(
-            this.transloco.translate('pagos.actions.rejectError', {
-              message: getApiErrorMessage(error, this.transloco.translate('common.serverError')),
-            }),
-          );
-        },
-      });
+    this.paymentService.rejectPayment(payment.id, reason, reason).subscribe({
+      next: () => {
+        this.rejectionPayment.set(null);
+        this.rejectForm.reset({ reason: '' });
+        this.toast.error(this.transloco.translate('pagos.actions.rejectedToast', { tenantName }));
+      },
+      error: (error: unknown) => {
+        this.toast.error(
+          this.transloco.translate('pagos.actions.rejectError', {
+            message: getApiErrorMessage(error, this.transloco.translate('common.serverError')),
+          }),
+        );
+      },
+    });
   }
 
   closeRejectDialog(): void {

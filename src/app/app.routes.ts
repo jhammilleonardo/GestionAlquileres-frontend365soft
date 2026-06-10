@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { adminLoginGuard } from './core/guards/auth.guard';
 import { ownerAuthGuard, ownerLoginGuard } from './core/guards/owner-auth.guard';
+import { vendorAuthGuard, vendorLoginGuard } from './core/guards/vendor-auth.guard';
 import { tenantLoginGuard } from './core/guards/tenant-auth.guard';
 import { wizardGuard } from './core/guards/setup-complete.guard';
 
@@ -89,6 +90,40 @@ export const routes: Routes = [
             (m) => m.OwnerPortalComponent,
           ),
         canActivate: [ownerAuthGuard],
+      },
+
+      // ==================== VENDOR PORTAL (PROVEEDORES) ====================
+      {
+        path: 'vendor/login',
+        loadComponent: () =>
+          import('./features/vendor-portal/auth/vendor-login.component').then(
+            (m) => m.VendorLoginComponent,
+          ),
+        canActivate: [vendorLoginGuard],
+      },
+      {
+        path: 'vendor',
+        loadComponent: () =>
+          import('./features/vendor-portal/layout/vendor-layout.component').then(
+            (m) => m.VendorLayoutComponent,
+          ),
+        canActivate: [vendorAuthGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./features/vendor-portal/vendor-portal.component').then(
+                (m) => m.VendorPortalComponent,
+              ),
+          },
+          {
+            path: 'perfil',
+            loadComponent: () =>
+              import('./features/vendor-portal/profile/vendor-profile.component').then(
+                (m) => m.VendorProfileComponent,
+              ),
+          },
+        ],
       },
 
       // ==================== SETUP WIZARD (una vez, sin layout) ====================

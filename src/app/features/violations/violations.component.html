@@ -13,9 +13,8 @@
   <app-violation-filters
     [form]="filterForm"
     [propertyOptions]="propertyOptions()"
-    [statusOptions]="statusFilterOptions"
-    [typeOptions]="typeFilterOptions"
-    (filtersApplied)="applyFilters()"
+    [statusOptions]="statusFilterOptions()"
+    [typeOptions]="typeFilterOptions()"
     (filtersCleared)="clearFilters()"
   />
 
@@ -28,7 +27,7 @@
       [violations]="violations()"
       [busyId]="busyId()"
       (notified)="notify($event)"
-      (pdfRequested)="downloadPdf($event)"
+      (pdfViewRequested)="viewPdf($event)"
       (resolveRequested)="openResolve($event)"
     />
   }
@@ -39,7 +38,7 @@
   [form]="form"
   [propertyOptions]="propertyOptions()"
   [tenantOptions]="tenantOptions()"
-  [typeOptions]="typeOptions"
+  [typeOptions]="typeOptions()"
   [saving]="saving()"
   (closed)="closeDialog()"
   (saved)="save()"

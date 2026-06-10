@@ -36,17 +36,17 @@ import {
       </div>
 
       <div class="form-grid">
-        <div class="full-width">
+        <div class="field">
           <app-text-field
             [formControl]="getControl('full_name')"
             [label]="'rentalApp.fullName' | transloco"
             placeholder="Juan Perez Garcia"
             [readonly]="true"
           />
-          <p class="field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
+          <p class="field-meta field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
         </div>
 
-        <div class="full-width">
+        <div class="field">
           <app-text-field
             [formControl]="getControl('email')"
             type="email"
@@ -54,10 +54,10 @@ import {
             placeholder="correo@ejemplo.com"
             [readonly]="true"
           />
-          <p class="field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
+          <p class="field-meta field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
         </div>
 
-        <div>
+        <div class="field">
           <app-text-field
             [formControl]="getControl('phone')"
             type="tel"
@@ -65,43 +65,25 @@ import {
             placeholder="+591 70000000"
             [readonly]="true"
           />
-          <p class="field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
+          <p class="field-meta field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
         </div>
 
-        <div>
-          <app-date-picker
-            [formControl]="getControl('birth_date')"
-            [label]="'rentalApp.birthDate' | transloco"
-            [max]="maxDate"
-          />
-          @if (hasError('birth_date', 'required')) {
-            <p class="field-error">{{ 'rentalApp.birthDateRequired' | transloco }}</p>
-          }
-        </div>
-
-        <div>
+        <div class="field">
           <app-text-field
             [formControl]="getControl('national_id')"
             [label]="'rentalApp.nationalId' | transloco"
             placeholder="12345678"
           />
-          @if (hasError('national_id', 'required')) {
-            <p class="field-error">{{ 'rentalApp.nationalIdRequired' | transloco }}</p>
-          }
-          @if (hasError('national_id', 'minlength')) {
-            <p class="field-error">{{ 'rentalApp.nationalIdMinLength' | transloco }}</p>
-          }
+          <p class="field-meta">
+            @if (hasError('national_id', 'required')) {
+              <span class="field-error">{{ 'rentalApp.nationalIdRequired' | transloco }}</span>
+            } @else if (hasError('national_id', 'minlength')) {
+              <span class="field-error">{{ 'rentalApp.nationalIdMinLength' | transloco }}</span>
+            }
+          </p>
         </div>
 
-        <div>
-          <app-select
-            [formControl]="getControl('marital_status')"
-            [label]="'rentalApp.maritalStatusLabel' | transloco"
-            [options]="maritalStatusOptions()"
-          />
-        </div>
-
-        <div>
+        <div class="field">
           <app-text-field
             [formControl]="getControl('number_of_dependents')"
             type="number"
@@ -109,21 +91,44 @@ import {
             [label]="'rentalApp.dependents' | transloco"
             placeholder="0"
           />
-          @if (hasError('number_of_dependents', 'required')) {
-            <p class="field-error">{{ 'rentalApp.dependentsRequired' | transloco }}</p>
-          }
-          @if (hasError('number_of_dependents', 'min')) {
-            <p class="field-error">{{ 'rentalApp.dependentsMin' | transloco }}</p>
-          }
+          <p class="field-meta">
+            @if (hasError('number_of_dependents', 'required')) {
+              <span class="field-error">{{ 'rentalApp.dependentsRequired' | transloco }}</span>
+            } @else if (hasError('number_of_dependents', 'min')) {
+              <span class="field-error">{{ 'rentalApp.dependentsMin' | transloco }}</span>
+            }
+          </p>
         </div>
 
-        <div class="full-width">
+        <div class="field">
           <app-text-field
             [formControl]="getControl('current_address')"
             [label]="'rentalApp.address' | transloco"
             placeholder="Calle, numero, ciudad, pais"
           />
-          <p class="field-hint">{{ 'rentalApp.addressHint' | transloco }}</p>
+          <p class="field-meta field-hint">{{ 'rentalApp.addressHint' | transloco }}</p>
+        </div>
+
+        <div class="field">
+          <app-date-picker
+            [formControl]="getControl('birth_date')"
+            [label]="'rentalApp.birthDate' | transloco"
+            [max]="maxDate"
+          />
+          <p class="field-meta">
+            @if (hasError('birth_date', 'required')) {
+              <span class="field-error">{{ 'rentalApp.birthDateRequired' | transloco }}</span>
+            }
+          </p>
+        </div>
+
+        <div class="field">
+          <app-select
+            [formControl]="getControl('marital_status')"
+            [label]="'rentalApp.maritalStatusLabel' | transloco"
+            [options]="maritalStatusOptions()"
+          />
+          <p class="field-meta"></p>
         </div>
       </div>
 
@@ -183,17 +188,20 @@ import {
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--app-space-4);
+      gap: var(--app-space-3) var(--app-space-4);
     }
 
-    .full-width {
-      grid-column: 1 / -1;
+    .field {
+      display: grid;
+      gap: var(--app-space-1);
+      align-content: start;
     }
 
-    .field-error,
-    .field-hint {
-      margin: var(--app-space-1) 0 0;
+    .field-meta {
+      margin: 0;
+      min-block-size: 1.05rem;
       font-size: 0.78rem;
+      line-height: 1.3;
     }
 
     .field-error {

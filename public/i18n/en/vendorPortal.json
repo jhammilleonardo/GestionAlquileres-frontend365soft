@@ -1,0 +1,93 @@
+{
+  "auth": {
+    "kicker": "Vendor portal",
+    "title": "Manage your assigned work orders",
+    "signIn": "Sign in",
+    "subtitle": "Log in with the credentials the property manager shared with you.",
+    "emailPlaceholder": "email@example.com",
+    "passwordPlaceholder": "Your password",
+    "rememberMe": "Keep me signed in",
+    "submit": "Sign in",
+    "missingTenant": "Could not identify the company.",
+    "loginError": "Invalid credentials or account not enabled.",
+    "feature1": "View your assigned orders",
+    "feature2": "Advance and complete the work",
+    "feature3": "Upload photos and leave progress notes"
+  },
+  "layout": {
+    "portalName": "Vendor Portal",
+    "navHome": "Home",
+    "navProfile": "My profile",
+    "logout": "Sign out",
+    "vendorLabel": "Vendor"
+  },
+  "profile": {
+    "title": "My profile",
+    "subtitle": "Your vendor and access details",
+    "name": "Name",
+    "specialty": "Specialty",
+    "email": "Email",
+    "phone": "Phone",
+    "rating": "Rating",
+    "jobs": "Completed jobs",
+    "account": "Access",
+    "accountHint": "If you need to change your password, contact the property manager."
+  },
+  "dashboard": {
+    "kicker": "Vendor",
+    "greeting": "Hi, {{name}}",
+    "welcome": "These are your assigned orders",
+    "refresh": "Refresh",
+    "logout": "Sign out",
+    "total": "Total",
+    "new": "New",
+    "inProgress": "Active",
+    "completed": "Done",
+    "tabAll": "All",
+    "tabNew": "New",
+    "tabInProgress": "Active",
+    "tabCompleted": "Completed",
+    "loading": "Loading orders...",
+    "empty": "You have no orders in this category"
+  },
+  "status": {
+    "NEW": "New",
+    "IN_PROGRESS": "Active",
+    "COMPLETED": "Completed"
+  },
+  "detail": {
+    "back": "Back",
+    "statusTitle": "Work status",
+    "propertyTitle": "Property",
+    "openMap": "Open in map",
+    "chatTitle": "Conversation",
+    "you": "You",
+    "team": "Management",
+    "senderRole": {
+      "ADMIN": "Admin",
+      "EMPLEADO": "Employee",
+      "TECNICO": "Technician",
+      "INQUILINO": "Tenant",
+      "PROPIETARIO": "Owner",
+      "SUPERADMIN": "Admin"
+    },
+    "noChat": "No messages yet. Write to coordinate the work.",
+    "description": "Description",
+    "startWork": "Start work",
+    "markCompleted": "Mark as completed",
+    "allDone": "Work finished",
+    "notesTitle": "Notes & photos",
+    "loadingNotes": "Loading notes...",
+    "noNotes": "No notes yet",
+    "removePhoto": "Remove photo",
+    "notePlaceholder": "Write a note about progress...",
+    "send": "Send",
+    "started": "Work started",
+    "completed": "Order completed",
+    "errorAdvance": "Could not update the stage",
+    "errorUpload": "Could not upload the photos",
+    "photosUploaded": "Photos uploaded",
+    "noteSent": "Note sent",
+    "errorNote": "Could not send the note"
+  }
+}

@@ -13,6 +13,7 @@ import {
   LucideAngularModule,
   MapPin,
   RefreshCw,
+  ShieldAlert,
   Tag,
   Trash2,
   Wrench,
@@ -155,6 +156,7 @@ export class TenantNotificationsComponent {
     if (eventType.includes('maintenance')) return Wrench;
     if (eventType.includes('contract')) return FileText;
     if (eventType.includes('payment')) return CreditCard;
+    if (eventType.includes('violation')) return ShieldAlert;
     return Bell;
   }
 
@@ -185,10 +187,19 @@ export class TenantNotificationsComponent {
       'payment.created': 'public.tenantNotifications.types.paymentCreated',
       'payment.approved': 'public.tenantNotifications.types.paymentApproved',
       'payment.rejected': 'public.tenantNotifications.types.paymentRejected',
+      'violation.notified': 'public.tenantNotifications.types.violationNotified',
     };
     return this.translocoService.translate(
       types[eventType] ?? 'public.tenantNotifications.types.default',
     );
+  }
+
+  getNotificationTitle(notification: TenantNotification): string {
+    return this.notificationService.getDisplayTitle(notification);
+  }
+
+  getNotificationMessage(notification: TenantNotification): string {
+    return this.notificationService.getDisplayMessage(notification);
   }
 
   formatNotificationTime(date: Date): string {
