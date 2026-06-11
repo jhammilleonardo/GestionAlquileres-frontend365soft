@@ -83,8 +83,10 @@
             EN
           </button>
         </div>
-        <a [routerLink]="getLoginPath()" class="btn-login">{{ 'public.nav.login' | transloco }}</a>
-        <a [routerLink]="getRegisterPath()" class="btn-register">{{
+        <a [routerLink]="getLoginPath()" target="_blank" rel="noopener" class="btn-login">{{
+          'public.nav.login' | transloco
+        }}</a>
+        <a [routerLink]="getRegisterPath()" target="_blank" rel="noopener" class="btn-register">{{
           'public.nav.register' | transloco
         }}</a>
       </div>

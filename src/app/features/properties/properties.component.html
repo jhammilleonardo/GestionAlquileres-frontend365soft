@@ -48,10 +48,12 @@
     [propertySubtypeOptions]="propiedades.propertySubtypeOptions()"
     [currencyOptions]="propiedades.currencyOptions"
     [images]="propiedades.selectedImages()"
+    [existingImages]="propiedades.existingImages()"
     [validationErrors]="propiedades.validationErrors()"
     (closed)="propiedades.closeModal()"
     (saved)="propiedades.saveProperty()"
     (propertyTypeChanged)="propiedades.onPropertyTypeChange($event)"
     (imagesChanged)="propiedades.onImagesChanged($event)"
+    (existingImageRemoved)="propiedades.removeExistingImage($event)"
   />
 }

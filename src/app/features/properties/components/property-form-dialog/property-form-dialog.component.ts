@@ -113,12 +113,14 @@ export class PropertyFormDialogComponent {
   readonly propertySubtypeOptions = input.required<readonly AppSelectOption<number>[]>();
   readonly currencyOptions = input.required<readonly AppSelectOption<string>[]>();
   readonly images = input<readonly File[]>([]);
+  readonly existingImages = input<readonly { url: string; path: string }[]>([]);
   readonly validationErrors = input<readonly string[]>([]);
 
   readonly closed = output<void>();
   readonly saved = output<void>();
   readonly propertyTypeChanged = output<number>();
   readonly imagesChanged = output<File[]>();
+  readonly existingImageRemoved = output<number>();
 
   protected readonly currentStep = signal(0);
 

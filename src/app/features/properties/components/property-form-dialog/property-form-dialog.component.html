@@ -114,6 +114,30 @@
               </div>
 
               <p class="hint-text">{{ 'properties.imagesHint' | transloco }}</p>
+
+              @if (mode() === 'edit' && existingImages().length > 0) {
+                <div class="existing-images">
+                  <p class="existing-images__label">
+                    {{ 'properties.currentImages' | transloco }}
+                  </p>
+                  <div class="existing-images__grid">
+                    @for (img of existingImages(); track $index; let i = $index) {
+                      <div class="existing-image">
+                        <img [src]="img.url" alt="" class="existing-image__img" />
+                        <button
+                          type="button"
+                          class="existing-image__remove"
+                          (click)="existingImageRemoved.emit(i)"
+                          [attr.aria-label]="'common.delete' | transloco"
+                        >
+                          <lucide-icon [img]="X" [size]="14"></lucide-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
               <app-image-uploader
                 [files]="images()"
                 [maxFiles]="10"
@@ -450,11 +474,14 @@
         </app-button>
 
         @if (!isLastStep()) {
-          <app-button type="button" (clicked)="goNext()">
+          <app-button appearance="outline" type="button" (clicked)="goNext()">
             {{ 'propertySteps.next' | transloco }}
             <lucide-icon [img]="ChevronRight" [size]="16"></lucide-icon>
           </app-button>
-        } @else {
+        }
+
+        <!-- En edición se puede guardar desde cualquier paso; al crear, solo al final. -->
+        @if (mode() === 'edit' || isLastStep()) {
           <app-button
             type="button"
             (clicked)="submit()"

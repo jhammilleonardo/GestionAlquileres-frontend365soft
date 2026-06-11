@@ -15,6 +15,8 @@ import {
   Bath,
   Bed,
   Car,
+  ChevronLeft,
+  ChevronRight,
   Heart,
   Home,
   LucideAngularModule,
@@ -26,6 +28,7 @@ import {
   PhoneCall,
   Share2,
   User,
+  X,
 } from 'lucide-angular';
 import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
@@ -83,6 +86,9 @@ export class PropertyDetailComponent {
   readonly Phone = Phone;
   readonly MessageSquare = MessageSquare;
   readonly PhoneCall = PhoneCall;
+  readonly ChevronLeft = ChevronLeft;
+  readonly ChevronRight = ChevronRight;
+  readonly X = X;
 
   readonly property = signal<Property | null>(null);
 
@@ -94,6 +100,7 @@ export class PropertyDetailComponent {
   );
 
   readonly currentImageIndex = signal(0);
+  readonly showLightbox = signal(false);
   readonly isLoading = signal(true);
   readonly hasError = signal(false);
   readonly isFavorite = signal(false);
@@ -217,6 +224,47 @@ export class PropertyDetailComponent {
     return this.getImagesArray().length > 1;
   }
 
+  /** Miniaturas visibles en una sola fila. */
+  private readonly MAX_THUMBS = 6;
+
+  /** Primeras N imágenes que se muestran como miniaturas. */
+  getVisibleThumbs(): { url: string; index: number }[] {
+    return this.getImagesArray()
+      .slice(0, this.MAX_THUMBS)
+      .map((url, index) => ({ url, index }));
+  }
+
+  /** Cantidad de imágenes que no caben en la fila de miniaturas. */
+  getExtraThumbsCount(): number {
+    return Math.max(0, this.getImagesCount() - this.MAX_THUMBS);
+  }
+
+  /** Última miniatura con overlay "+N": abre el visor para recorrer todas. */
+  isMoreThumb(index: number): boolean {
+    return index === this.MAX_THUMBS - 1 && this.getExtraThumbsCount() > 0;
+  }
+
+  onThumbClick(index: number): void {
+    if (this.isMoreThumb(index)) {
+      this.openLightbox(index);
+    } else {
+      this.selectImage(index);
+    }
+  }
+
+  selectImage(index: number): void {
+    this.currentImageIndex.set(index);
+  }
+
+  openLightbox(index: number): void {
+    this.currentImageIndex.set(index);
+    this.showLightbox.set(true);
+  }
+
+  closeLightbox(): void {
+    this.showLightbox.set(false);
+  }
+
   getCurrentImage(): string {
     return this.getImagesArray()[this.currentImageIndex()] ?? '';
   }
@@ -249,10 +297,6 @@ export class PropertyDetailComponent {
     const images = this.getImagesArray();
     if (!images.length) return;
     this.currentImageIndex.update((i) => (i - 1 + images.length) % images.length);
-  }
-
-  selectImage(index: number): void {
-    this.currentImageIndex.set(index);
   }
 
   openApplicationModal(): void {

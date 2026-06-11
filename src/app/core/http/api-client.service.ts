@@ -60,9 +60,16 @@ export class ApiClientService {
       .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }
 
-  delete<TResponse>(endpoint: string, options: ApiRequestOptions = {}): Observable<TResponse> {
+  delete<TResponse>(
+    endpoint: string,
+    options: ApiRequestOptions & { body?: unknown } = {},
+  ): Observable<TResponse> {
+    const { body, ...rest } = options;
     return this.http
-      .delete<TResponse>(this.buildUrl(endpoint), this.buildOptions(options))
+      .delete<TResponse>(this.buildUrl(endpoint), {
+        ...this.buildOptions(rest, body),
+        ...(body !== undefined ? { body } : {}),
+      })
       .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
   }
 

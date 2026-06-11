@@ -23,7 +23,12 @@
     <div class="image-gallery">
       <div class="main-image-container">
         @if (getImagesCount() > 0) {
-          <img [src]="getCurrentImage()" [alt]="prop.title" class="main-image" />
+          <img
+            [src]="getCurrentImage()"
+            [alt]="prop.title"
+            class="main-image"
+            (click)="openLightbox(currentImageIndex())"
+          />
         } @else {
           <div class="no-image-placeholder">
             <span class="placeholder-icon">🏠</span>
@@ -32,8 +37,22 @@
         }
 
         @if (hasMultipleImages()) {
-          <button type="button" class="nav-btn prev-btn" (click)="previousImage()">‹</button>
-          <button type="button" class="nav-btn next-btn" (click)="nextImage()">›</button>
+          <button
+            type="button"
+            class="nav-btn prev-btn"
+            (click)="previousImage()"
+            [attr.aria-label]="'public.propertyDetail.previousImage' | transloco"
+          >
+            <lucide-icon [img]="ChevronLeft" [size]="24" />
+          </button>
+          <button
+            type="button"
+            class="nav-btn next-btn"
+            (click)="nextImage()"
+            [attr.aria-label]="'public.propertyDetail.nextImage' | transloco"
+          >
+            <lucide-icon [img]="ChevronRight" [size]="24" />
+          </button>
         }
 
         @if (getImagesCount() > 0) {
@@ -43,18 +62,67 @@
 
       @if (hasMultipleImages()) {
         <div class="thumbnail-gallery">
-          @for (image of getImagesArray(); track image; let i = $index) {
-            <img
-              [src]="image"
-              [alt]="'public.propertyDetail.imageNumber' | transloco: { num: i + 1 }"
-              [class.active]="i === currentImageIndex()"
-              (click)="selectImage(i)"
+          @for (thumb of getVisibleThumbs(); track thumb.index) {
+            <button
+              type="button"
               class="thumbnail"
-            />
+              [class.active]="thumb.index === currentImageIndex() && !isMoreThumb(thumb.index)"
+              (click)="onThumbClick(thumb.index)"
+              [attr.aria-label]="
+                'public.propertyDetail.imageNumber' | transloco: { num: thumb.index + 1 }
+              "
+            >
+              <img
+                [src]="thumb.url"
+                [alt]="'public.propertyDetail.imageNumber' | transloco: { num: thumb.index + 1 }"
+              />
+              @if (isMoreThumb(thumb.index)) {
+                <span class="thumbnail-more">+{{ getExtraThumbsCount() }}</span>
+              }
+            </button>
           }
         </div>
       }
     </div>
+
+    <!-- Lightbox -->
+    @if (showLightbox()) {
+      <div class="lightbox-overlay" role="dialog" aria-modal="true" (click)="closeLightbox()">
+        <button
+          type="button"
+          class="lightbox-close"
+          (click)="closeLightbox()"
+          [attr.aria-label]="'public.propertyDetail.closeGallery' | transloco"
+        >
+          <lucide-icon [img]="X" [size]="22" />
+        </button>
+
+        <div class="lightbox-stage" (click)="$event.stopPropagation()">
+          <img [src]="getCurrentImage()" [alt]="prop.title" class="lightbox-image" />
+
+          @if (hasMultipleImages()) {
+            <button
+              type="button"
+              class="nav-btn prev-btn"
+              (click)="previousImage()"
+              [attr.aria-label]="'public.propertyDetail.previousImage' | transloco"
+            >
+              <lucide-icon [img]="ChevronLeft" [size]="24" />
+            </button>
+            <button
+              type="button"
+              class="nav-btn next-btn"
+              (click)="nextImage()"
+              [attr.aria-label]="'public.propertyDetail.nextImage' | transloco"
+            >
+              <lucide-icon [img]="ChevronRight" [size]="24" />
+            </button>
+          }
+
+          <div class="image-counter">{{ currentImageIndex() + 1 }} / {{ getImagesCount() }}</div>
+        </div>
+      </div>
+    }
 
     <!-- Property Header -->
     <div class="property-header-new">

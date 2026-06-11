@@ -162,7 +162,10 @@ export class DashboardComponent {
 
   goToPublicProperties(): void {
     const slug = this.slugService.getSlug();
-    void this.router.navigate([slug, 'publico', 'propiedades']);
+    const url = this.router.serializeUrl(
+      this.router.createUrlTree([slug, 'publico', 'propiedades']),
+    );
+    window.open(url, '_blank', 'noopener');
   }
 
   private navigate(segments: string[], queryParams?: Record<string, string>): void {

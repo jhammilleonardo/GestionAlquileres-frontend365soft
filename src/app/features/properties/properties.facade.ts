@@ -58,6 +58,8 @@ export class PropertiesFacade {
   modalMode: 'create' | 'edit' = 'create';
   selectedProperty: Property | null = null;
   readonly selectedImages = signal<File[]>([]);
+  /** Imágenes ya guardadas en el servidor (modo edición): url para mostrar, path para borrar. */
+  readonly existingImages = signal<{ url: string; path: string }[]>([]);
 
   filters: PropertyFilters = this.createDefaultFilters();
   propertyForm: FormGroup = this.createForm();
@@ -156,6 +158,7 @@ export class PropertiesFacade {
     this.modalMode = 'create';
     this.selectedProperty = null;
     this.selectedImages.set([]);
+    this.existingImages.set([]);
     this.filteredSubtypes.set([]);
     this.showModal.set(false);
     this.propertyForm = this.createForm();
@@ -166,6 +169,7 @@ export class PropertiesFacade {
     this.modalMode = 'edit';
     this.selectedProperty = property;
     this.selectedImages.set([]);
+    this.existingImages.set([]);
     this.showModal.set(false);
 
     this.propertyService.getAdminPropertyById(property.id).subscribe({
@@ -182,6 +186,7 @@ export class PropertiesFacade {
     this.showModal.set(false);
     this.selectedProperty = null;
     this.selectedImages.set([]);
+    this.existingImages.set([]);
     this.validationErrors.set([]);
   }
 
@@ -431,8 +436,44 @@ export class PropertiesFacade {
       new_owners: this.fb.array([this.createOwnerGroup()]),
     });
 
+    const paths = Array.isArray(p.images) ? p.images : [];
+    this.existingImages.set(paths.map((path) => ({ path, url: this.toImageUrl(path) })));
+
     this.onPropertyTypeChange(p.property_type_id, true);
     setTimeout(() => this.showModal.set(true), 10);
+  }
+
+  /**
+   * Quita una imagen ya guardada en el servidor y refresca la galería del modal.
+   * Recibe el índice porque el backend borra por ruta una sola ocurrencia: si
+   * hubiera rutas repetidas, debemos quitar exactamente la misma entrada en la UI.
+   */
+  removeExistingImage(index: number): void {
+    const property = this.selectedProperty;
+    const target = this.existingImages()[index];
+    if (!property || !target) return;
+
+    this.propertyService.deletePropertyImage(property.id, target.path).subscribe({
+      next: () => {
+        this.existingImages.update((images) => images.filter((_, i) => i !== index));
+        this.loadProperties();
+        this.toast.success(this.transloco.translate('propiedades.actions.imageRemoved'));
+      },
+      error: (error: unknown) => {
+        const message = getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
+        this.toast.error(
+          this.transloco.translate('propiedades.actions.imageRemoveError', { message }),
+        );
+      },
+    });
+  }
+
+  /** Construye la URL completa de una imagen a partir de su ruta almacenada. */
+  private toImageUrl(path: string): string {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    return `http://localhost:3000${normalized}`;
   }
 
   private uploadImagesOrFinish(savedPropertyId: number): void {
@@ -559,13 +600,7 @@ export class PropertiesFacade {
       imagePath = property.images[0];
     }
 
-    if (imagePath) {
-      if (imagePath.startsWith('http')) return imagePath;
-      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-      return `http://localhost:3000${normalizedPath}`;
-    }
-
-    return '';
+    return imagePath ? this.toImageUrl(imagePath) : '';
   }
 
   private openEditFromQueryParam(): void {

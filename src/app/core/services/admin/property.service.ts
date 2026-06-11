@@ -639,6 +639,19 @@ export class PropertyService {
   }
 
   /**
+   * Eliminar una imagen existente de la propiedad (admin).
+   * El backend la quita del array `images` por su ruta almacenada.
+   */
+  deletePropertyImage(propertyId: number, imageUrl: string): Observable<Property> {
+    const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${propertyId}/images`);
+    return this.apiClient.delete<Property>(endpoint, { body: { image_url: imageUrl } }).pipe(
+      catchError((error) => {
+        throw error;
+      }),
+    );
+  }
+
+  /**
    * Actualizar propiedad existente (admin)
    */
   updateProperty(id: number, propertyData: Record<string, unknown>): Observable<Property> {

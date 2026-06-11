@@ -59,29 +59,43 @@
   align-items: center;
 }
 
-.search-field {
+.search-input-wrapper {
+  position: relative;
   flex: 1;
+  display: flex;
+  align-items: center;
 }
 
-.search-btn {
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
   height: 56px;
-  padding: 0 2rem !important;
-  background: white !important;
-  color: #2563eb !important;
-  font-weight: 600;
+  padding: 0 1rem 0 3rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
   font-size: 1rem;
-  white-space: nowrap;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
-.search-btn:hover {
-  background: #f9fafb !important;
-  transform: translateY(-1px);
+.search-input::placeholder {
+  color: #94a3b8;
 }
 
-.search-btn lucide-icon {
-  width: 18px;
-  height: 18px;
-  margin-right: 0.5rem;
+.search-input:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 /* ============ FILTERS SECTION ============ */
@@ -449,11 +463,11 @@
 
   .search-bar {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .search-btn {
+  .search-bar app-button {
     width: 100%;
-    margin-top: 0;
   }
 
   .filters-grid {

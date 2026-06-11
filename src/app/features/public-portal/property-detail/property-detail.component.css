@@ -116,22 +116,23 @@
   padding: 0 2rem 1.5rem;
 }
 
+/* Imagen principal grande con navegación + contador */
 .main-image-container {
   position: relative;
   width: 100%;
-  height: 400px; /* Reduced from 560px */
+  aspect-ratio: 16 / 9;
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-md);
+  background: var(--blue-100);
 }
-
 .main-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform .4s ease;
+  cursor: zoom-in;
+  display: block;
 }
-.main-image:hover { transform: scale(1.02); }
 
 .no-image-placeholder {
   width: 100%;
@@ -146,6 +147,104 @@
 }
 .placeholder-icon { opacity: .5; font-size: 2rem; }
 .no-image-placeholder p { font-size: 1rem; font-weight: 500; margin: 0; }
+
+/* Fila de miniaturas debajo de la principal */
+.thumbnail-gallery {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: .5rem;
+  margin-top: .75rem;
+}
+.thumbnail {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  margin: 0;
+  border: 2px solid var(--blue-100);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--blue-100);
+  transition: border-color .2s, box-shadow .2s;
+}
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.thumbnail:hover { border-color: var(--blue-400); }
+.thumbnail.active {
+  border-color: var(--blue-600);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, .25);
+}
+
+/* Overlay "+N" en la última miniatura cuando hay más imágenes */
+.thumbnail-more {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, .62);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: .01em;
+  transition: background .2s;
+}
+.thumbnail:hover .thumbnail-more {
+  background: rgba(15, 23, 42, .72);
+}
+
+/* Lightbox a pantalla completa */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, .92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.lightbox-stage {
+  position: relative;
+  max-width: 1100px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.lightbox-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 1010;
+  background: rgba(255, 255, 255, .9);
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--blue-700);
+  box-shadow: var(--shadow-sm);
+  transition: all .2s;
+}
+.lightbox-close:hover {
+  background: var(--blue-600);
+  color: var(--white);
+}
 
 .nav-btn {
   position: absolute;
@@ -187,29 +286,10 @@
   letter-spacing: .02em;
 }
 
-.thumbnail-gallery {
-  display: flex;
-  gap: .5rem;
-  margin-top: .75rem;
-  overflow-x: auto;
-  padding-bottom: .25rem;
-}
-.thumbnail {
-  width: 90px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  opacity: .6;
-  transition: all .2s;
-  border: 2px solid transparent;
-  flex-shrink: 0;
-}
-.thumbnail:hover { opacity: .9; }
-.thumbnail.active {
-  opacity: 1;
-  border-color: var(--blue-600);
-  box-shadow: 0 0 0 2px rgba(37,99,235,.2);
+@media (max-width: 640px) {
+  .lightbox-overlay {
+    padding: 1rem;
+  }
 }
 
 /* =========================================
