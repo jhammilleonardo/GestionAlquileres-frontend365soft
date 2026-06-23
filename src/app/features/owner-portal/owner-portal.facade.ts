@@ -85,6 +85,40 @@ export class OwnerPortalFacade {
     return Number(record[key] ?? 0);
   }
 
+  /** Moneda del registro, con fallback a la del dashboard (o USD). */
+  currency(record?: OwnerPortalRecord): string {
+    const fromRecord = record ? this.str(record, 'currency') : '';
+    return fromRecord || this.dashboard().currency || 'USD';
+  }
+
+  /** "Mayo 2026" a partir de period_month (1-12) y period_year. */
+  periodLabel(record: OwnerPortalRecord): string {
+    const month = this.num(record, 'period_month');
+    const year = this.num(record, 'period_year');
+    if (!month || !year) return this.str(record, 'period_month') || `#${record.id}`;
+    const lang = this.transloco.getActiveLang();
+    const label = new Date(year, month - 1, 1).toLocaleDateString(lang, {
+      month: 'long',
+      year: 'numeric',
+    });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  /** Tono de badge para un estado textual conocido. */
+  statusTone(value: string): 'success' | 'warning' | 'info' | 'neutral' {
+    const normalized = value.toUpperCase();
+    if (['ACTIVO', 'OCUPADA', 'OCUPADO', 'PAID', 'TRANSFERRED', 'COMPLETED'].includes(normalized)) {
+      return 'success';
+    }
+    if (['PENDING', 'PENDIENTE', 'POR_VENCER', 'IN_PROGRESS'].includes(normalized)) {
+      return 'warning';
+    }
+    if (['DISPONIBLE', 'NEW', 'REPORTED'].includes(normalized)) {
+      return 'info';
+    }
+    return 'neutral';
+  }
+
   stageIndex(record: OwnerPortalRecord): number {
     return this.stages.indexOf(this.str(record, 'current_stage'));
   }
@@ -124,6 +158,36 @@ export class OwnerPortalFacade {
 
   hasContractPdf(record: OwnerPortalRecord): boolean {
     return Boolean(this.str(record, 'pdf_url'));
+  }
+
+  /** Fecha ISO/Date a formato local corto; vacío si no hay valor. */
+  date(record: OwnerPortalRecord, key: string): string {
+    const raw = this.str(record, key);
+    if (!raw) return '';
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return raw;
+    return parsed.toLocaleDateString(this.transloco.getActiveLang(), {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+
+  /** Abre el contrato en una pestaña nueva (vista previa) en vez de descargarlo. */
+  viewContract(record: OwnerPortalRecord): void {
+    this.downloadingContractId.set(record.id);
+    this.ownerPortal.downloadContractPdf(record).subscribe({
+      next: (blob) => {
+        this.downloadingContractId.set(null);
+        this.fileDownload.openBlob(blob);
+      },
+      error: (error: Error) => {
+        this.downloadingContractId.set(null);
+        this.toast.error(
+          error.message || this.transloco.translate('ownerPortal.documents.downloadContractError'),
+        );
+      },
+    });
   }
 
   downloadContract(record: OwnerPortalRecord): void {

@@ -7,7 +7,7 @@
 
 .main-content-wrapper {
   flex: 1;
-  margin-left: 150px;
+  margin-left: 248px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -16,7 +16,7 @@
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.sidebar-collapsed {
-    margin-left: 40px;
+    margin-left: 64px;
   }
 
   // Tablet y Mobile: sin margen, el sidebar está oculto/overlay

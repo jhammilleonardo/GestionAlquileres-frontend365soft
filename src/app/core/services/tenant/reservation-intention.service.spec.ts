@@ -102,12 +102,20 @@ describe('ReservationIntentionService', () => {
     });
   });
 
-  it('navega de vuelta al flujo de reserva del portal tenant', () => {
+  it('navega al checkout de la reserva pretendida con su propiedad y unidad', () => {
+    service.setIntention(validIntention);
     service.navigateToReservation('demo');
 
     expect(setSlug).toHaveBeenCalledWith('demo');
-    expect(navigate).toHaveBeenCalledWith(['/', 'demo', 'portal', 'new-application'], {
-      queryParams: { reservation: 'true' },
+    expect(navigate).toHaveBeenCalledWith(['/', 'demo', 'portal', 'reservar', 10, 20], {
+      replaceUrl: true,
+    });
+  });
+
+  it('cae a Mis Reservas si no hay intención al navegar', () => {
+    service.navigateToReservation('demo');
+
+    expect(navigate).toHaveBeenCalledWith(['/', 'demo', 'portal', 'reservas'], {
       replaceUrl: true,
     });
   });

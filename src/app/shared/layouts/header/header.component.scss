@@ -4,7 +4,7 @@
 .header {
   position: fixed;
   top: 0;
-  left: 150px;
+  left: 248px;
   right: 0;
   height: 64px;
   background: var(--app-color-surface);
@@ -18,7 +18,7 @@
   transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.sidebar-collapsed {
-    left: 40px;
+    left: 64px;
   }
 
   @media (max-width: 1024px) {

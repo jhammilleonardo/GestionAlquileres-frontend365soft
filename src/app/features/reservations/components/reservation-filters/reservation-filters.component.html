@@ -1,0 +1,19 @@
+<form class="filters" [formGroup]="form()">
+  <app-select
+    formControlName="property_id"
+    [label]="'reservations.property' | transloco"
+    [placeholder]="'common.all' | transloco"
+    [options]="propertyOptions()"
+  />
+  <app-select
+    formControlName="status"
+    [label]="'reservations.statusLabel' | transloco"
+    [placeholder]="'reservations.allStatuses' | transloco"
+    [options]="statusOptions()"
+  />
+  <div class="filter-actions">
+    <app-button size="s" appearance="secondary" (clicked)="filtersCleared.emit()">
+      {{ 'common.clear' | transloco }}
+    </app-button>
+  </div>
+</form>

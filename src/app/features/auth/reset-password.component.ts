@@ -408,10 +408,11 @@ export class ResetPasswordComponent {
       .resetPassword(this.token(), this.form.getRawValue().password)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: () => {
+        next: ({ role, tenantSlug }) => {
           this.form.reset();
           this.successMessage.set(this.transloco.translate('auth.resetPasswordSuccess'));
-          window.setTimeout(() => void this.router.navigate(['/login']), 1800);
+          const target = this.loginRouteFor(role, tenantSlug);
+          window.setTimeout(() => void this.router.navigate(target), 1800);
         },
         error: (error: unknown) => {
           this.errorMessage.set(
@@ -419,5 +420,19 @@ export class ResetPasswordComponent {
           );
         },
       });
+  }
+
+  /** Devuelve la ruta de login según el rol del usuario que restableció su contraseña. */
+  private loginRouteFor(role: string | null, slug: string): string[] {
+    switch (role) {
+      case 'PROPIETARIO':
+        return slug ? ['/', slug, 'owner', 'login'] : ['/login'];
+      case 'VENDOR':
+        return slug ? ['/', slug, 'vendor', 'login'] : ['/login'];
+      case 'INQUILINO':
+        return slug ? ['/', slug, 'login'] : ['/login'];
+      default:
+        return ['/login'];
+    }
   }
 }

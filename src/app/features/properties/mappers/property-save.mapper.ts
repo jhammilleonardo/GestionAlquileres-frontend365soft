@@ -6,12 +6,24 @@ import {
 
 export interface PropertySavePayloads {
   createDto: PropertySavePayload;
-  updateDto: Omit<PropertySavePayload, 'new_owners'>;
+  updateDto: Omit<PropertySavePayload, 'new_owners' | 'rental_type' | 'price_per_night'>;
 }
 
 export function buildPropertySavePayloads(formValue: PropertyFormValue): PropertySavePayloads {
   const propertyTypeId = formValue.property_type_id ? +formValue.property_type_id : 0;
   const propertySubtypeId = formValue.property_subtype_id ? +formValue.property_subtype_id : 0;
+  const securityDeposit = toNumberOrUndefined(formValue.security_deposit_amount);
+  const monthlyRent = toNumberOrUndefined(formValue.monthly_rent);
+  const pricePerNight = toNumberOrUndefined(formValue.price_per_night);
+  const squareMeters = toNumberOrUndefined(formValue.square_meters);
+  const bedrooms = toNumberOrUndefined(formValue.bedrooms);
+  const bathrooms = toNumberOrUndefined(formValue.bathrooms);
+  const parkingSpaces = toNumberOrUndefined(formValue.parking_spaces);
+  const yearBuilt = toNumberOrUndefined(formValue.year_built);
+  const latitude = toNumberOrUndefined(formValue.latitude);
+  const longitude = toNumberOrUndefined(formValue.longitude);
+  const maxOccupants = toNumberOrUndefined(formValue.max_occupants);
+  const minLeaseMonths = toNumberOrUndefined(formValue.min_lease_months);
 
   const createDto: PropertySavePayload = {
     title: formValue.title ?? '',
@@ -19,7 +31,9 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
     property_subtype_id: propertySubtypeId,
     addresses: (formValue.addresses ?? []).map((addr) => ({
       address_type: addr.address_type || 'address_1',
-      street_address: addr.street_address,
+      // La calle ya no se escribe a mano. Si el punto del mapa no la rellenó,
+      // se compone con Municipio/Departamento/País (el backend la exige no vacía).
+      street_address: resolveStreetAddress(addr),
       city: addr.city,
       country: addr.country,
       ...(addr.state ? { state: addr.state } : {}),
@@ -28,22 +42,19 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
   };
 
   if (formValue.description) createDto.description = formValue.description;
-  if (formValue.security_deposit_amount) {
-    createDto.security_deposit_amount = +formValue.security_deposit_amount;
-  }
-  if (formValue.account_number) createDto.account_number = formValue.account_number;
-  if (formValue.account_type) createDto.account_type = formValue.account_type;
-  if (formValue.account_holder_name) createDto.account_holder_name = formValue.account_holder_name;
-  if (formValue.monthly_rent) createDto.monthly_rent = +formValue.monthly_rent;
+  if (securityDeposit !== undefined) createDto.security_deposit_amount = securityDeposit;
+  if (formValue.rental_type) createDto.rental_type = formValue.rental_type;
+  if (monthlyRent !== undefined) createDto.monthly_rent = monthlyRent;
+  if (pricePerNight !== undefined) createDto.price_per_night = pricePerNight;
   if (formValue.currency) createDto.currency = formValue.currency;
-  if (formValue.square_meters) createDto.square_meters = +formValue.square_meters;
-  if (formValue.bedrooms) createDto.bedrooms = +formValue.bedrooms;
-  if (formValue.bathrooms) createDto.bathrooms = +formValue.bathrooms;
-  if (formValue.parking_spaces) createDto.parking_spaces = +formValue.parking_spaces;
-  if (formValue.year_built) createDto.year_built = +formValue.year_built;
+  if (squareMeters !== undefined) createDto.square_meters = squareMeters;
+  if (bedrooms !== undefined) createDto.bedrooms = bedrooms;
+  if (bathrooms !== undefined) createDto.bathrooms = bathrooms;
+  if (parkingSpaces !== undefined) createDto.parking_spaces = parkingSpaces;
+  if (yearBuilt !== undefined) createDto.year_built = yearBuilt;
   if (formValue.is_furnished !== undefined) createDto.is_furnished = formValue.is_furnished;
-  if (formValue.latitude) createDto.latitude = +formValue.latitude;
-  if (formValue.longitude) createDto.longitude = +formValue.longitude;
+  if (latitude !== undefined) createDto.latitude = latitude;
+  if (longitude !== undefined) createDto.longitude = longitude;
   if (formValue.amenities?.length) createDto.amenities = formValue.amenities;
   if (formValue.included_items?.length) createDto.included_items = formValue.included_items;
 
@@ -52,8 +63,8 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
   if (formValue.smoking_allowed !== undefined) {
     propertyRules.smoking_allowed = formValue.smoking_allowed;
   }
-  if (formValue.max_occupants) propertyRules.max_occupants = +formValue.max_occupants;
-  if (formValue.min_lease_months) propertyRules.min_lease_months = +formValue.min_lease_months;
+  if (maxOccupants !== undefined) propertyRules.max_occupants = maxOccupants;
+  if (minLeaseMonths !== undefined) propertyRules.min_lease_months = minLeaseMonths;
   if (Object.keys(propertyRules).length > 0) createDto.property_rules = propertyRules;
 
   const validOwners = (formValue.new_owners ?? []).filter(
@@ -61,6 +72,75 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
   );
   if (validOwners.length > 0) createDto.new_owners = validOwners;
 
-  const { new_owners: _newOwners, ...updateDto } = createDto;
+  const {
+    new_owners: _newOwners,
+    rental_type: _rentalType,
+    price_per_night: _pricePerNight,
+    ...updateDto
+  } = createDto;
+
+  // La config de corto plazo sólo aplica al CREAR (alimenta la unidad por
+  // defecto). Se añade después de derivar updateDto para no enviarla al editar
+  // la propiedad (las unidades se editan por separado).
+  const isShortTerm = formValue.rental_type === 'SHORT_TERM' || formValue.rental_type === 'BOTH';
+  if (isShortTerm) {
+    assignShortTermConfig(createDto, formValue);
+  }
+
   return { createDto, updateDto };
+}
+
+/** Vuelca la config de corto plazo del formulario al DTO de creación. */
+function assignShortTermConfig(dto: PropertySavePayload, formValue: PropertyFormValue): void {
+  const numericFields = [
+    'cleaning_fee',
+    'min_nights',
+    'max_nights',
+    'weekly_discount_pct',
+    'monthly_discount_pct',
+    'weekend_adjustment_pct',
+    'early_bird_min_days',
+    'early_bird_discount_pct',
+    'last_minute_max_days',
+    'last_minute_adjustment_pct',
+    'advance_notice_days',
+    'max_advance_days',
+    'deposit_to_confirm_pct',
+  ] as const;
+
+  for (const field of numericFields) {
+    const value = toNumberOrUndefined(formValue[field]);
+    if (value !== undefined) dto[field] = value;
+  }
+
+  if (formValue.checkin_time) dto.checkin_time = formValue.checkin_time;
+  if (formValue.checkout_time) dto.checkout_time = formValue.checkout_time;
+  if (formValue.booking_mode) dto.booking_mode = formValue.booking_mode;
+  if (formValue.cancellation_policy) dto.cancellation_policy = formValue.cancellation_policy;
+}
+
+function toNumberOrUndefined(value: number | string | null | undefined): number | undefined {
+  if (value === null || value === undefined || value === '') return undefined;
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * Devuelve una dirección de calle no vacía (el backend la exige). Usa la que
+ * rellenó el punto del mapa y, si está vacía, la compone con la cascada de
+ * localidad (Municipio, Departamento, País).
+ */
+function resolveStreetAddress(addr: {
+  street_address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+}): string {
+  const fromMap = addr.street_address?.trim();
+  if (fromMap) return fromMap;
+
+  return [addr.city, addr.state, addr.country]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(', ');
 }

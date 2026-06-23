@@ -12,6 +12,8 @@
   "fullName": "Nombre Completo",
   "emailLabel": "Correo Electrónico",
   "phone": "Teléfono",
+  "phoneRequired": "El teléfono es requerido",
+  "phoneInvalid": "Ingresa un teléfono válido (solo números, +, espacios y guiones)",
   "birthDate": "Fecha de Nacimiento",
   "birthDateRequired": "La fecha de nacimiento es requerida",
   "nationalId": "DNI / Pasaporte",

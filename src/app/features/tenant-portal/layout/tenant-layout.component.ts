@@ -17,6 +17,7 @@ import {
   Trash2,
   Plus,
   FileEdit,
+  CalendarCheck,
 } from 'lucide-angular';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { InternalMessageService } from '../../../core/services/internal-message.service';
@@ -62,6 +63,7 @@ export class TenantLayoutComponent implements OnDestroy {
   readonly Trash2 = Trash2;
   readonly Plus = Plus;
   readonly FileEdit = FileEdit;
+  readonly CalendarCheck = CalendarCheck;
 
   authService = inject(TenantAuthService);
   messageService = inject(InternalMessageService);
@@ -87,9 +89,25 @@ export class TenantLayoutComponent implements OnDestroy {
   navItems = computed<NavItem[]>(() => {
     const hasContract = !!this.authService.currentUser()?.contract;
 
+    // Gating por modo: un tenant solo-largo-plazo no ve "Mis Reservas"; uno
+    // solo-corto-plazo no ve las solicitudes de alquiler (flujo de largo plazo).
+    const shortTermUrls = [this.slugService.buildUrl('/portal/reservas')];
+    const longTermUrls = [
+      this.slugService.buildUrl('/portal/new-application'),
+      this.slugService.buildUrl('/portal/my-applications'),
+    ];
+    const supportsShortTerm = this.formatService.supportsShortTerm();
+    const supportsLongTerm = this.formatService.supportsLongTerm();
+    const gate = (items: NavItem[]): NavItem[] =>
+      items.filter((item) => {
+        if (shortTermUrls.includes(item.route) && !supportsShortTerm) return false;
+        if (longTermUrls.includes(item.route) && !supportsLongTerm) return false;
+        return true;
+      });
+
     if (!hasContract) {
       // SIDEBAR PRE-CONTRATO (simplificado)
-      return [
+      return gate([
         {
           labelKey: 'public.tenantLayout.navHome',
           route: this.slugService.buildUrl('/portal/home'),
@@ -105,11 +123,16 @@ export class TenantLayoutComponent implements OnDestroy {
           route: this.slugService.buildUrl('/portal/my-applications'),
           icon: this.FileEdit,
         },
-      ];
+        {
+          labelKey: 'public.tenantLayout.navReservations',
+          route: this.slugService.buildUrl('/portal/reservas'),
+          icon: this.CalendarCheck,
+        },
+      ]);
     }
 
     // SIDEBAR COMPLETO (con contrato)
-    return [
+    return gate([
       {
         labelKey: 'public.tenantLayout.navHome',
         route: this.slugService.buildUrl('/portal/dashboard'),
@@ -124,6 +147,11 @@ export class TenantLayoutComponent implements OnDestroy {
         labelKey: 'public.tenantLayout.navPayments',
         route: this.slugService.buildUrl('/portal/pagos'),
         icon: this.CreditCard,
+      },
+      {
+        labelKey: 'public.tenantLayout.navReservations',
+        route: this.slugService.buildUrl('/portal/reservas'),
+        icon: this.CalendarCheck,
       },
       {
         labelKey: 'public.tenantLayout.navDocuments',
@@ -145,7 +173,7 @@ export class TenantLayoutComponent implements OnDestroy {
         route: this.slugService.buildUrl('/portal/historial'),
         icon: this.History,
       },
-    ];
+    ]);
   });
 
   // Computed para URLs con slug

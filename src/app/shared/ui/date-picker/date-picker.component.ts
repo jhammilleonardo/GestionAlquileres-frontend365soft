@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { toDateOnly } from '../../../core/utils/date-only.util';
 
 @Component({
   selector: 'app-date-picker',
@@ -115,10 +116,6 @@ export class AppDatePickerComponent implements ControlValueAccessor {
       return '';
     }
 
-    if (value instanceof Date) {
-      return value.toISOString().slice(0, 10);
-    }
-
-    return value.slice(0, 10);
+    return toDateOnly(value);
   }
 }

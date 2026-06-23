@@ -21,11 +21,9 @@ export const authGuard: CanActivateFn = (route, state) => {
     return false;
   }
 
-  // Check if user is authenticated and has a valid token
-  const isAuthenticated = authService.isAuth();
-  const hasToken = authService.getToken();
-
-  if (isAuthenticated && hasToken) {
+  // La sesión se sostiene en la cookie HttpOnly (no legible por JS): el objeto
+  // user en storage es la señal de autenticación del lado cliente.
+  if (authService.isAuth()) {
     // Validate URL slug matches the authenticated user's tenant slug
     const userSlug = authService.currentUser()?.tenant_slug ?? null;
 
@@ -43,11 +41,6 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   // Set slug from URL as fallback (for unauthenticated redirects)
   slugService.setSlug(slug);
-
-  // Clear any invalid session
-  if (!hasToken && isAuthenticated) {
-    authService.logout();
-  }
 
   // Redirect to ADMIN login (sin slug) con return url
   // Usar replaceUrl para que la redirección no quede en el historial

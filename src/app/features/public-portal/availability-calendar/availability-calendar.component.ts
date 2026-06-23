@@ -8,39 +8,45 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
-import { LucideAngularModule, ChevronLeft, ChevronRight, CalendarCheck } from 'lucide-angular';
+import { LucideAngularModule, CalendarCheck } from 'lucide-angular';
+import { forkJoin } from 'rxjs';
+import { Subject, catchError, map, of, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { AvailabilityStatus, ReservationService } from '../../../core/services/reservation.service';
+import {
+  AvailabilityStatus,
+  QuoteBreakdown,
+  QuoteLineConcept,
+  ReservationService,
+} from '../../../core/services/reservation.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ReservationIntentionService } from '../../../core/services/tenant/reservation-intention.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
+import { AvailabilityCalendarGridComponent } from './availability-calendar-grid.component';
 
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
-interface CalendarCell {
-  date: Date | null;
-  iso: string;
-  status: AvailabilityStatus | 'past';
-  inRange: boolean;
-  isCheckin: boolean;
-  isCheckout: boolean;
-}
 
 @Component({
   selector: 'app-availability-calendar',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, TranslocoModule, LucideAngularModule, AppButtonComponent],
+  imports: [
+    DatePipe,
+    DecimalPipe,
+    TranslocoModule,
+    LucideAngularModule,
+    AppButtonComponent,
+    AvailabilityCalendarGridComponent,
+  ],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './availability-calendar.component.html',
   styleUrl: './availability-calendar.component.scss',
 })
 export class AvailabilityCalendarComponent implements OnInit {
-  readonly ChevronLeft = ChevronLeft;
-  readonly ChevronRight = ChevronRight;
   readonly CalendarCheck = CalendarCheck;
 
   readonly propertyId = input.required<number>();
@@ -68,15 +74,10 @@ export class AvailabilityCalendarComponent implements OnInit {
   readonly checkin = signal<Date | null>(null);
   readonly checkout = signal<Date | null>(null);
   readonly submitting = signal(false);
-
-  readonly weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-
-  readonly monthLabel = computed(() =>
-    this.viewDate().toLocaleDateString(this.transloco.getActiveLang(), {
-      month: 'long',
-      year: 'numeric',
-    }),
-  );
+  readonly quote = signal<QuoteBreakdown | null>(null);
+  readonly quoteLoading = signal(false);
+  readonly quoteError = signal<string | null>(null);
+  private readonly quoteRequests = new Subject<{ checkin: string; checkout: string }>();
 
   readonly nights = computed(() => {
     const ci = this.checkin();
@@ -85,67 +86,88 @@ export class AvailabilityCalendarComponent implements OnInit {
     return Math.max(0, Math.round((co.getTime() - ci.getTime()) / 86400000));
   });
 
-  readonly totalCost = computed(() => this.nights() * this.pricePerNight() + this.cleaningFee());
+  readonly totalCost = computed(
+    () => this.quote()?.total_due ?? this.nights() * this.pricePerNight() + this.cleaningFee(),
+  );
 
-  readonly cells = computed<CalendarCell[]>(() => {
-    const view = this.viewDate();
-    const year = view.getFullYear();
-    const month = view.getMonth();
-    const first = new Date(year, month, 1);
-    // Lunes = 0
-    const offset = (first.getDay() + 6) % 7;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const ci = this.checkin();
-    const co = this.checkout();
-    const avail = this.availability();
-
-    const cells: CalendarCell[] = [];
-    for (let i = 0; i < offset; i++) {
-      cells.push({
-        date: null,
-        iso: `pad-${i}`,
-        status: 'past',
-        inRange: false,
-        isCheckin: false,
-        isCheckout: false,
+  constructor() {
+    this.quoteRequests
+      .pipe(
+        tap(() => {
+          this.quoteLoading.set(true);
+          this.quoteError.set(null);
+          this.quote.set(null);
+        }),
+        switchMap(({ checkin, checkout }) =>
+          this.reservationService
+            .getQuote(this.propertyId(), this.unitId(), {
+              checkin_date: checkin,
+              checkout_date: checkout,
+            })
+            .pipe(
+              map((quote) => ({ quote, error: null as string | null })),
+              catchError((error: unknown) =>
+                of({
+                  quote: null,
+                  error: getApiErrorMessage(
+                    error,
+                    this.transloco.translate('public.availability.quoteError'),
+                  ),
+                }),
+              ),
+            ),
+        ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ quote, error }) => {
+        this.quoteLoading.set(false);
+        this.quote.set(quote);
+        this.quoteError.set(error);
       });
-    }
-    for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(year, month, d);
-      const iso = this.iso(date);
-      let status: AvailabilityStatus | 'past' = avail.get(iso) ?? 'available';
-      if (date < today) status = 'past';
-      const inRange = !!ci && !!co && date > ci && date < co;
-      cells.push({
-        date,
-        iso,
-        status,
-        inRange,
-        isCheckin: !!ci && this.iso(ci) === iso,
-        isCheckout: !!co && this.iso(co) === iso,
-      });
-    }
-    return cells;
-  });
+  }
 
   ngOnInit(): void {
     this.restoreInitialRange();
     this.loadMonth();
   }
 
+  /** Estado de un día concreto (pasado, o el de disponibilidad / disponible). */
+  private statusFor(date: Date): AvailabilityStatus | 'past' {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) return 'past';
+    return this.availability().get(this.iso(date)) ?? 'available';
+  }
+
   private iso(date: Date): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
+  private monthKey(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private monthStart(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  }
+
   loadMonth(): void {
-    const view = this.viewDate();
-    const month = `${view.getFullYear()}-${String(view.getMonth() + 1).padStart(2, '0')}`;
+    const first = this.monthStart(this.viewDate());
+    const months = [
+      this.monthKey(first),
+      this.monthKey(new Date(first.getFullYear(), first.getMonth() + 1, 1)),
+    ];
     this.loading.set(true);
-    this.reservationService.getAvailability(this.propertyId(), month, this.unitId()).subscribe({
-      next: (days) => {
-        this.availability.set(new Map(days.map((d) => [d.date.slice(0, 10), d.status])));
+    forkJoin(
+      months.map((month) =>
+        this.reservationService.getAvailability(this.propertyId(), month, this.unitId()),
+      ),
+    ).subscribe({
+      next: (responses) => {
+        const entries = responses
+          .flat()
+          .map((day) => [day.date.slice(0, 10), day.status] as [string, AvailabilityStatus]);
+        this.availability.set(new Map(entries));
         this.loading.set(false);
       },
       error: () => {
@@ -167,29 +189,40 @@ export class AvailabilityCalendarComponent implements OnInit {
     this.loadMonth();
   }
 
-  selectDay(cell: CalendarCell): void {
-    if (
-      !cell.date ||
-      cell.status === 'past' ||
-      cell.status === 'blocked' ||
-      cell.status === 'booked'
-    ) {
+  /** Idioma activo para que la grilla formatee los nombres de mes. */
+  localeCode(): string {
+    return this.transloco.getActiveLang();
+  }
+
+  onMonthChange(delta: number): void {
+    if (delta < 0) {
+      this.prevMonth();
+    } else {
+      this.nextMonth();
+    }
+  }
+
+  selectDay(date: Date): void {
+    const status = this.statusFor(date);
+    if (status === 'past' || status === 'blocked' || status === 'booked') {
       return;
     }
     const ci = this.checkin();
     const co = this.checkout();
     // Reiniciar si ya hay un rango completo o si el nuevo día es anterior al check-in
-    if (!ci || (ci && co) || cell.date <= ci) {
-      this.checkin.set(cell.date);
+    if (!ci || (ci && co) || date <= ci) {
+      this.checkin.set(date);
       this.checkout.set(null);
+      this.clearQuote();
       return;
     }
     // Validar que el rango no incluya días no disponibles
-    if (this.rangeHasUnavailable(ci, cell.date)) {
+    if (this.rangeHasUnavailable(ci, date)) {
       this.toast.error(this.transloco.translate('public.availability.rangeUnavailable'));
       return;
     }
-    this.checkout.set(cell.date);
+    this.checkout.set(date);
+    this.requestQuote();
   }
 
   private rangeHasUnavailable(start: Date, end: Date): boolean {
@@ -208,6 +241,10 @@ export class AvailabilityCalendarComponent implements OnInit {
     const ci = this.checkin();
     const co = this.checkout();
     if (!ci || !co) return;
+    if (!this.quote()) {
+      this.requestQuote();
+      return;
+    }
     if (this.nights() < this.minNights()) {
       this.toast.error(
         this.transloco.translate('public.availability.minNights', { n: this.minNights() }),
@@ -252,6 +289,7 @@ export class AvailabilityCalendarComponent implements OnInit {
           this.reservationIntentionService.clearIntention();
           this.checkin.set(null);
           this.checkout.set(null);
+          this.clearQuote();
           this.loadMonth();
           this.reservationCreated.emit();
         },
@@ -272,11 +310,29 @@ export class AvailabilityCalendarComponent implements OnInit {
     this.checkin.set(checkin);
     this.checkout.set(checkout);
     this.viewDate.set(new Date(checkin.getFullYear(), checkin.getMonth(), 1));
+    this.requestQuote();
   }
 
   private parseIsoDate(value: string | null): Date | null {
     if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
     const [year, month, day] = value.split('-').map(Number);
     return new Date(year, month - 1, day);
+  }
+
+  quoteLineLabel(concept: QuoteLineConcept): string {
+    return this.transloco.translate(`public.availability.priceLines.${concept}`);
+  }
+
+  private requestQuote(): void {
+    const checkin = this.checkin();
+    const checkout = this.checkout();
+    if (!checkin || !checkout) return;
+    this.quoteRequests.next({ checkin: this.iso(checkin), checkout: this.iso(checkout) });
+  }
+
+  private clearQuote(): void {
+    this.quote.set(null);
+    this.quoteError.set(null);
+    this.quoteLoading.set(false);
   }
 }

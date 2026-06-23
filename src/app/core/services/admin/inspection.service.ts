@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, from, switchMap } from 'rxjs';
 
 import { ApiClientService, QueryParams } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
@@ -11,12 +11,14 @@ import {
   InspectionComparisonItem,
   InspectionItem,
 } from '../../models/inspection.model';
+import { ImageOptimizationService } from '../image-optimization.service';
 
 @Injectable({ providedIn: 'root' })
 export class InspectionService {
   private readonly api = inject(ApiClientService);
   private readonly http = inject(HttpClient);
   private readonly slugService = inject(SlugService);
+  private readonly imageOptimization = inject(ImageOptimizationService);
 
   list(params: QueryParams = {}): Observable<Inspection[]> {
     return this.api.get<Inspection[]>(this.endpoint('admin/inspections'), { params });
@@ -38,12 +40,14 @@ export class InspectionService {
   }
 
   uploadItemPhotos(id: number, itemId: number, files: File[]): Observable<{ photos: string[] }> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
-    return this.api.post<{ photos: string[] }, FormData>(
-      this.endpoint(`admin/inspections/${id}/photos`),
-      formData,
-      { params: { item_id: itemId } },
+    return from(this.imageOptimization.filesToFormData(files, 'files')).pipe(
+      switchMap((formData) =>
+        this.api.post<{ photos: string[] }, FormData>(
+          this.endpoint(`admin/inspections/${id}/photos`),
+          formData,
+          { params: { item_id: itemId } },
+        ),
+      ),
     );
   }
 

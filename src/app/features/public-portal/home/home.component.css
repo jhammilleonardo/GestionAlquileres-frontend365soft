@@ -5,13 +5,25 @@
 /* Hero Section */
 .hero-section {
   position: relative;
-  height: 80vh;
-  min-height: 500px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  width: 100%;
+  /* Forma de banner 16:9 con tope de altura para que no quede gigante */
+  aspect-ratio: 16 / 9;
+  max-height: 70vh;
   overflow: hidden;
+  /* Gradiente de marca como respaldo (visible si no hay imagen) */
+  background: var(--brand-primary, #2563eb);
+}
+
+/* La imagen llena el banner 16:9 (cover). El recorte 16:9 del admin define
+   qué parte se ve, así coincide con lo que recortó. */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
 }
 
 .hero-overlay {
@@ -21,15 +33,20 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.3);
+  z-index: 0;
 }
 
 .hero-content {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  color: white;
+  color: var(--brand-on-primary, white);
   padding: 0 20px;
-  max-width: 800px;
 }
 
 .hero-title {
@@ -68,7 +85,7 @@
 
 .btn-primary {
   background-color: #fff;
-  color: #2563eb;
+  color: var(--brand-primary, #2563eb);
   border: none;
 }
 
@@ -137,13 +154,13 @@
 .feature-icon {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: var(--brand-primary, #2563eb);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
-  color: white;
+  color: var(--brand-on-primary, white);
 }
 
 .feature-icon :deep(svg) {
@@ -167,9 +184,9 @@
 /* CTA Section */
 .cta-section {
   padding: 80px 20px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: var(--brand-primary, #2563eb);
   text-align: center;
-  color: white;
+  color: var(--brand-on-primary, white);
 }
 
 .cta-title {
@@ -188,7 +205,7 @@
   padding: 14px 40px;
   font-size: 1.1rem;
   background-color: white;
-  color: #2563eb;
+  color: var(--brand-primary, #2563eb);
   border: none;
   border-radius: 8px;
   display: inline-flex;
@@ -259,165 +276,6 @@
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 2rem;
   margin-bottom: 3rem;
-}
-
-/* Property Card */
-.property-card {
-  background: white;
-  border-radius: 1.25rem;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.property-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.13);
-}
-
-.property-img-wrapper {
-  position: relative;
-  height: 220px;
-  overflow: hidden;
-}
-
-.property-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.property-card:hover .property-img {
-  transform: scale(1.05);
-}
-
-.badge-status {
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  background: #10b981;
-  color: white;
-  padding: 0.3rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.price-badge {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  background: rgba(0, 0, 0, 0.75);
-  color: white;
-  padding: 0.4rem 0.85rem;
-  border-radius: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-  backdrop-filter: blur(4px);
-}
-
-.property-content {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.property-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin: 0;
-  line-height: 1.4;
-  max-height: 2.8rem;
-  overflow: hidden;
-}
-
-.property-location {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: #6b7280;
-  font-size: 0.9rem;
-}
-
-.loc-icon {
-  width: 14px;
-  height: 14px;
-  color: #2563eb;
-  flex-shrink: 0;
-}
-
-.property-stats {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-
-.stat {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #374151;
-}
-
-.stat-icon {
-  width: 15px;
-  height: 15px;
-  color: #2563eb;
-}
-
-.property-tags {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.tag {
-  background: #ede9fe;
-  color: #1e40af;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.tag-secondary {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.btn-details {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.8rem;
-  background: linear-gradient(135deg, #2563eb, #1e40af);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 0.5rem;
-}
-
-.btn-details:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
-}
-
-.btn-icon {
-  width: 16px;
-  height: 16px;
 }
 
 /* Skeleton Loader */

@@ -13,15 +13,15 @@
     [filters]="propiedades.filters"
     [statusOptions]="propiedades.statusSelectOptions"
     [propertyTypeOptions]="propiedades.propertyTypeOptions()"
+    (searchChanged)="propiedades.setSearchFilter($event)"
     (statusChanged)="propiedades.setStatusFilter($event)"
     (propertyTypeChanged)="propiedades.setPropertyTypeFilter($event)"
     (cleared)="propiedades.clearFilters()"
-    (applied)="propiedades.applyFilters()"
   />
 
   <app-property-list-section
     [properties]="propiedades.properties()"
-    [loading]="propiedades.isListLoading()"
+    [loading]="propiedades.showListSkeleton()"
     [imageResolver]="resolvePropertyImage"
     (createOpened)="propiedades.openCreateModal()"
     (viewed)="propiedades.viewPropertyDetail($event)"
@@ -43,6 +43,7 @@
   <app-property-form-dialog
     [form]="propiedades.propertyForm"
     [mode]="propiedades.modalMode"
+    [tenantRentalType]="propiedades.tenantRentalType()"
     [isSubmitting]="propiedades.isSubmitting()"
     [propertyTypeOptions]="propiedades.propertyTypeOptions()"
     [propertySubtypeOptions]="propiedades.propertySubtypeOptions()"

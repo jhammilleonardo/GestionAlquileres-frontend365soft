@@ -96,7 +96,7 @@
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1.4fr) minmax(0, 1.1fr) 90px 120px 110px 120px;
+  grid-template-columns: 140px minmax(0, 1.3fr) minmax(0, 0.9fr) 90px 120px 200px 120px;
   gap: 12px;
   padding: 0 20px;
   align-items: center;
@@ -291,19 +291,19 @@
 @media (max-width: 1200px) {
   .table-header,
   .table-row {
-    grid-template-columns: 130px minmax(0, 1.3fr) minmax(0, 1fr) 90px 110px 100px 110px;
+    grid-template-columns: 130px minmax(0, 1.2fr) minmax(0, 0.85fr) 90px 110px 190px 110px;
     gap: 10px;
   }
 }
 
 @media (max-width: 1024px) {
   .contracts-table {
-    min-width: 700px;
+    min-width: 820px;
   }
 
   .table-header,
   .table-row {
-    grid-template-columns: 120px minmax(0, 1.3fr) minmax(0, 1fr) 86px 100px 95px 105px;
+    grid-template-columns: 120px minmax(0, 1.2fr) minmax(0, 0.85fr) 86px 100px 185px 105px;
     gap: 8px;
     padding: 0 14px;
   }

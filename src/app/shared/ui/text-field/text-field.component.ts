@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TuiInput } from '@taiga-ui/core';
 
+let nextTextFieldId = 0;
+
 @Component({
   selector: 'app-text-field',
   imports: [TuiInput],
@@ -16,9 +18,12 @@ import { TuiInput } from '@taiga-ui/core';
     <tui-textfield [tuiTextfieldSize]="size()">
       <input
         tuiInput
+        [id]="inputId"
         [attr.autocomplete]="autocomplete()"
         [attr.inputmode]="inputMode()"
+        [attr.max]="max()"
         [attr.maxlength]="maxLength()"
+        [attr.min]="min()"
         [attr.pattern]="pattern()"
         [disabled]="disabled()"
         [placeholder]="placeholder()"
@@ -30,7 +35,7 @@ import { TuiInput } from '@taiga-ui/core';
       />
 
       @if (label()) {
-        <label tuiLabel>{{ label() }}</label>
+        <label tuiLabel [attr.for]="inputId">{{ label() }}</label>
       }
     </tui-textfield>
   `,
@@ -43,17 +48,23 @@ import { TuiInput } from '@taiga-ui/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppTextFieldComponent implements ControlValueAccessor {
+  /** Id único para asociar el <label for> con el <input> (a11y). */
+  protected readonly inputId = `app-text-field-${nextTextFieldId++}`;
   readonly label = input<string | null>(null);
   readonly placeholder = input('');
-  readonly type = input<'email' | 'number' | 'password' | 'search' | 'tel' | 'text' | 'url'>(
-    'text',
-  );
+  readonly type = input<
+    'date' | 'email' | 'number' | 'password' | 'search' | 'tel' | 'text' | 'url'
+  >('text');
   readonly size = input<'s' | 'm' | 'l'>('m');
   readonly readonly = input(false);
   readonly autocomplete = input<string | null>(null);
   readonly inputMode = input<string | null>(null);
+  readonly min = input<string | number | null>(null);
+  readonly max = input<string | number | null>(null);
   readonly maxLength = input<number | null>(null);
   readonly pattern = input<string | null>(null);
+  /** Sanea el valor en cada cambio (bloquea caracteres inválidos al escribir/pegar). */
+  readonly inputFilter = input<((value: string) => string) | null>(null);
 
   protected readonly value = signal('');
   protected readonly disabled = signal(false);
@@ -78,7 +89,16 @@ export class AppTextFieldComponent implements ControlValueAccessor {
   }
 
   protected onInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
+    const input = event.target as HTMLInputElement;
+    const filter = this.inputFilter();
+    const value = filter ? filter(input.value) : input.value;
+
+    // Si el saneador descartó caracteres, reflejarlo de inmediato en el <input>
+    // para que el usuario no vea texto inválido "pegado" en el campo.
+    if (value !== input.value) {
+      input.value = value;
+    }
+
     this.value.set(value);
     this.onChange(value);
   }

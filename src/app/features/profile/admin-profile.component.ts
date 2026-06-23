@@ -574,8 +574,9 @@ export class AdminProfileComponent {
     this.passwordSuccess.set(false);
     this.passwordError.set(null);
 
-    const newPassword = this.passwordForm.getRawValue().new_password!;
-    this.authService.changePassword(Number(user.id), newPassword).subscribe({
+    const { current_password: currentPassword, new_password: newPassword } =
+      this.passwordForm.getRawValue();
+    this.authService.changePassword(Number(user.id), newPassword!, currentPassword!).subscribe({
       next: () => {
         this.isUpdatingPassword.set(false);
         this.passwordSuccess.set(true);

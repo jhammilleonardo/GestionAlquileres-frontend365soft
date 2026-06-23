@@ -1,4 +1,5 @@
-import { Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import {
@@ -534,6 +535,7 @@ export class TenantCreateRequestComponent {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private slugService = inject(SlugService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // URL para volver a la lista de mantenimiento
   mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
@@ -593,21 +595,23 @@ export class TenantCreateRequestComponent {
   });
 
   constructor() {
-    // Watch for request type changes
-    this.requestForm.get('request_type')?.valueChanges.subscribe((type) => {
-      const categoryControl = this.requestForm.get('category');
-      const permissionControl = this.requestForm.get('permission_to_enter');
+    this.requestForm
+      .get('request_type')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((type) => {
+        const categoryControl = this.requestForm.get('category');
+        const permissionControl = this.requestForm.get('permission_to_enter');
 
-      if (type === 'MAINTENANCE') {
-        categoryControl?.setValidators([Validators.required]);
-        permissionControl?.setValue(PermissionToEnter.YES);
-      } else {
-        categoryControl?.clearValidators();
-        categoryControl?.setValue(null);
-        permissionControl?.setValue(PermissionToEnter.NOT_APPLICABLE);
-      }
-      categoryControl?.updateValueAndValidity();
-    });
+        if (type === 'MAINTENANCE') {
+          categoryControl?.setValidators([Validators.required]);
+          permissionControl?.setValue(PermissionToEnter.YES);
+        } else {
+          categoryControl?.clearValidators();
+          categoryControl?.setValue(null);
+          permissionControl?.setValue(PermissionToEnter.NOT_APPLICABLE);
+        }
+        categoryControl?.updateValueAndValidity();
+      });
   }
 
   isMaintenanceRequest(): boolean {

@@ -1,0 +1,43 @@
+{
+  "eyebrow": "Finance",
+  "title": "Accounting",
+  "subtitle": "Double-entry general ledger — trial balance, financial statements and chart of accounts.",
+  "viewsLabel": "Select accounting report",
+  "views": {
+    "trialBalance": "Trial balance",
+    "balanceSheet": "Balance sheet",
+    "incomeStatement": "Income statement",
+    "chart": "Chart of accounts",
+    "journal": "Journal"
+  },
+  "cols": {
+    "code": "Code",
+    "account": "Account",
+    "debit": "Debit",
+    "credit": "Credit",
+    "amount": "Amount",
+    "type": "Type",
+    "entryNumber": "Entry #",
+    "date": "Date",
+    "description": "Description"
+  },
+  "types": {
+    "asset": "Asset",
+    "liability": "Liability",
+    "equity": "Equity",
+    "income": "Income",
+    "expense": "Expense"
+  },
+  "totals": {
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "equity": "Equity",
+    "income": "Income",
+    "expenses": "Expenses",
+    "netIncome": "Net income"
+  },
+  "balanced": "Balanced",
+  "unbalanced": "Unbalanced",
+  "empty": "No entries to show.",
+  "error": "Could not load accounting data."
+}

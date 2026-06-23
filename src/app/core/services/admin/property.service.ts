@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { BehaviorSubject, Observable, from, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import {
   Property,
   PropertyType,
@@ -14,6 +14,8 @@ import {
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 import { PropertyFavoritesService } from './property-favorites.service';
+import { ImageOptimizationService } from '../image-optimization.service';
+import { resolveMediaUrl } from '../../utils/media-url.util';
 
 @Injectable({
   providedIn: 'root',
@@ -25,6 +27,7 @@ export class PropertyService {
   private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
   private propertyFavorites = inject(PropertyFavoritesService);
+  private imageOptimization = inject(ImageOptimizationService);
 
   constructor() {
     this.loadFavoritesFromStorage();
@@ -60,7 +63,7 @@ export class PropertyService {
    */
   getFilteredProperties(
     filters: PropertyFilters,
-  ): Observable<{ items: Property[]; total: number }> {
+  ): Observable<{ items: Property[]; total: number; error?: boolean }> {
     const params: Record<string, string | number> = {};
 
     // Mapear filtros al formato del catálogo público
@@ -102,8 +105,10 @@ export class PropertyService {
           total,
         };
       }),
+      // `error: true` distingue un fallo real de un resultado legítimamente vacío,
+      // para que la UI muestre un estado de error en vez de "sin propiedades".
       catchError(() => {
-        return of({ items: [], total: 0 });
+        return of({ items: [], total: 0, error: true });
       }),
     );
   }
@@ -161,7 +166,13 @@ export class PropertyService {
    */
   submitPropertyContact(
     propertyId: number,
-    contactData: { name: string; email: string; phone: string; message: string },
+    contactData: {
+      name: string;
+      email: string;
+      phone: string;
+      message: string;
+      website?: string;
+    },
   ): Observable<unknown> {
     const endpoint = this.slugService.buildApiEndpoint(`catalog/properties/${propertyId}/contact`);
     return this.apiClient.post<unknown>(endpoint, contactData);
@@ -286,7 +297,7 @@ export class PropertyService {
       images: this.normalizeImages(raw['images']),
       amenities: this.asArray(raw['amenities']),
       included_items: this.asArray(raw['included_items']),
-      addresses: this.normalizeAddresses(raw['addresses']),
+      addresses: this.normalizePropertyAddresses(raw),
       owners: this.normalizeOwners(raw['owners']),
       units: this.normalizeUnits(raw['units']),
       property_type: this.normalizePropertyType(raw),
@@ -365,6 +376,16 @@ export class PropertyService {
         country: '',
       },
     ];
+  }
+
+  private normalizePropertyAddresses(raw: Record<string, unknown>): unknown[] {
+    const addresses = this.asArray(raw['addresses']);
+    if (addresses.length > 0) {
+      return this.normalizeAddresses(addresses);
+    }
+
+    const firstAddress = raw['first_address'];
+    return this.normalizeAddresses(firstAddress ? [firstAddress] : []);
   }
 
   private normalizeOwners(value: unknown): unknown[] {
@@ -509,14 +530,7 @@ export class PropertyService {
       imagePath = property.first_image;
     }
 
-    if (imagePath) {
-      if (imagePath.startsWith('http')) return imagePath;
-      const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-      // Usar host del backend
-      return `http://localhost:3000${normalizedPath}`;
-    }
-
-    return '';
+    return resolveMediaUrl(imagePath);
   }
 
   /**
@@ -549,7 +563,10 @@ export class PropertyService {
    * Obtiene el precio formateado con moneda.
    */
   getPropertyPrice(property: Property): string {
-    const price = property.monthly_rent || property.monthly_rent_amount;
+    // El precio de corto plazo vive en units (min_price_per_night); para esas
+    // propiedades monthly_rent es null, así que se cae al precio por noche.
+    const price =
+      property.monthly_rent || property.monthly_rent_amount || property.min_price_per_night;
     if (!price) return 'N/A';
     const currency = property.currency || 'BOB';
     return `${currency} ${price.toLocaleString()}`;
@@ -629,9 +646,9 @@ export class PropertyService {
   uploadPropertyImage(propertyId: number, file: File): Observable<Record<string, unknown>> {
     const endpoint = this.slugService.buildApiEndpoint(`admin/properties/${propertyId}/images`);
     const formData = new FormData();
-    formData.append('file', file);
 
-    return this.apiClient.post<Record<string, unknown>>(endpoint, formData).pipe(
+    return from(this.imageOptimization.appendOptimizedFile(formData, 'file', file)).pipe(
+      switchMap(() => this.apiClient.post<Record<string, unknown>>(endpoint, formData)),
       catchError((error) => {
         throw error;
       }),

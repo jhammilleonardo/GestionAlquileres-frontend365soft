@@ -1,21 +1,27 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { DecimalPipe, PercentPipe } from '@angular/common';
+import { DecimalPipe, LowerCasePipe, PercentPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   BadgeDollarSign,
   Building2,
+  Calendar,
   CheckCircle,
   ClipboardList,
   ExternalLink,
+  FileText,
   LucideAngularModule,
+  Receipt,
   RefreshCw,
+  ShieldAlert,
   TrendingUp,
+  Users,
   Wrench,
 } from 'lucide-angular';
 
@@ -42,6 +48,7 @@ interface KpiTrend {
   standalone: true,
   imports: [
     DecimalPipe,
+    LowerCasePipe,
     PercentPipe,
     TranslocoModule,
     LucideAngularModule,
@@ -61,6 +68,7 @@ export class DashboardComponent {
   private readonly operations = inject(AdminOperationsService);
 
   readonly accessDenied = signal(false);
+  readonly rentalModeBlocked = signal(false);
   readonly isLoading = signal(true);
   readonly kpis = signal<ReportKpis>({});
 
@@ -75,6 +83,12 @@ export class DashboardComponent {
   readonly Building2 = Building2;
   readonly ClipboardList = ClipboardList;
   readonly CheckCircle = CheckCircle;
+  readonly Calendar = Calendar;
+  readonly Users = Users;
+  readonly FileText = FileText;
+  readonly ShieldAlert = ShieldAlert;
+  readonly AlertCircle = AlertCircle;
+  readonly Receipt = Receipt;
 
   // Comparativo de ingresos vs mes anterior (null cuando no hay base previa)
   readonly incomeTrend = computed<KpiTrend | null>(() => {
@@ -89,11 +103,41 @@ export class DashboardComponent {
 
   readonly hasDelinquency = computed(() => (this.kpis().delinquentCount ?? 0) > 0);
 
+  readonly rentCollectionPct = computed<number>(() => {
+    const expected = this.kpis().monthlyExpected ?? 0;
+    const collected = this.kpis().monthlyIncome ?? 0;
+    if (expected <= 0) return 0;
+    return Math.min(Math.round((collected / expected) * 100), 100);
+  });
+
+  readonly rentCollectionTone = computed<AppStatusTone>(() => {
+    const pct = this.rentCollectionPct();
+    if (pct >= 80) return 'success';
+    if (pct >= 50) return 'warning';
+    return 'danger';
+  });
+
+  readonly MAINTENANCE_STAGE_LABELS: Record<string, string | undefined> = {
+    REPORTED: 'Reportado',
+    ASSIGNED: 'Asignado',
+    SCHEDULED: 'Programado',
+    IN_PROGRESS: 'En progreso',
+    REPORTED_TO_OWNER: 'Reportado al propietario',
+    COMPLETED: 'Completado',
+    NEW: 'Nuevo',
+  };
+
   constructor() {
-    const navState = history.state as { accessDenied?: boolean } | undefined;
+    const navState = history.state as
+      | { accessDenied?: boolean; rentalModeBlocked?: boolean }
+      | undefined;
     if (navState?.accessDenied) {
       this.accessDenied.set(true);
       setTimeout(() => this.accessDenied.set(false), 5000);
+    }
+    if (navState?.rentalModeBlocked) {
+      this.rentalModeBlocked.set(true);
+      setTimeout(() => this.rentalModeBlocked.set(false), 5000);
     }
 
     this.loadKpis();
@@ -159,6 +203,51 @@ export class DashboardComponent {
   goToAvailableProperties(): void {
     this.navigate(['propiedades'], { status: 'available' });
   }
+
+  goToDelinquent(): void {
+    this.navigate(['pagos'], { tab: 'delinquent' });
+  }
+
+  goToApplications(): void {
+    this.navigate(['solicitudes']);
+  }
+
+  goToViolations(): void {
+    this.navigate(['violaciones']);
+  }
+
+  goToInspections(): void {
+    this.navigate(['inspecciones']);
+  }
+
+  goToExpenses(): void {
+    this.navigate(['gastos']);
+  }
+
+  readonly VIOLATION_TYPE_LABELS: Record<string, string | undefined> = {
+    noise: 'Ruido',
+    pets: 'Mascotas',
+    parking: 'Estacionamiento',
+    damage: 'Daños',
+    cleanliness: 'Limpieza',
+    other: 'Otro',
+  };
+
+  readonly INSPECTION_TYPE_LABELS: Record<string, string | undefined> = {
+    move_in: 'Entrada',
+    move_out: 'Salida',
+    periodic: 'Periódica',
+  };
+
+  readonly EXPENSE_CATEGORY_LABELS: Record<string, string | undefined> = {
+    MAINTENANCE: 'Mantenimiento',
+    INSURANCE: 'Seguros',
+    TAX: 'Impuestos',
+    UTILITIES: 'Servicios',
+    MANAGEMENT_FEE: 'Honorarios',
+    CLEANING: 'Limpieza',
+    OTHER: 'Otros',
+  };
 
   goToPublicProperties(): void {
     const slug = this.slugService.getSlug();

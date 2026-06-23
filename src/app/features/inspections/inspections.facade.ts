@@ -15,6 +15,7 @@ import {
 import { InspectionService } from '../../core/services/admin/inspection.service';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { SlugService } from '../../core/services/slug.service';
+import { toDateOnly } from '../../core/utils/date-only.util';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import { AppSelectOption } from '../../shared/ui/select/select.component';
 import { AppStatusTone } from '../../shared/ui/status-badge/status-badge.component';
@@ -142,7 +143,7 @@ export class InspectionsFacade {
   openCreate(): void {
     this.form.reset({
       type: InspectionType.MOVE_IN,
-      scheduled_date: new Date().toISOString().slice(0, 10),
+      scheduled_date: toDateOnly(new Date()),
     });
     this.dialogOpen.set(true);
   }

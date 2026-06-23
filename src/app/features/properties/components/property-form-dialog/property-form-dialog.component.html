@@ -38,6 +38,49 @@
 
       <form [formGroup]="form()" novalidate>
         @switch (activeStep()) {
+          <!-- ============ Elección de modo (sólo tenants BOTH) ============ -->
+          @case ('mode') {
+            <section class="form-section">
+              <div class="section-title">
+                <lucide-icon [img]="Home" [size]="18" class="text-blue-600"></lucide-icon>
+                <h3>{{ 'properties.rentalTypeStep.title' | transloco }}</h3>
+              </div>
+              <p class="field-hint">{{ 'properties.rentalTypeStep.subtitle' | transloco }}</p>
+
+              <div class="mode-choice-grid">
+                <button
+                  type="button"
+                  class="mode-choice"
+                  [class.mode-choice--active]="!isShortTerm()"
+                  (click)="setRentalType('LONG_TERM')"
+                >
+                  <lucide-icon [img]="CreditCard" [size]="28"></lucide-icon>
+                  <span class="mode-choice__title">{{
+                    'properties.rentalTypeStep.longTerm' | transloco
+                  }}</span>
+                  <span class="mode-choice__desc">{{
+                    'properties.rentalTypeStep.longTermDesc' | transloco
+                  }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="mode-choice"
+                  [class.mode-choice--active]="isShortTerm()"
+                  (click)="setRentalType('SHORT_TERM')"
+                >
+                  <lucide-icon [img]="CalendarCheck" [size]="28"></lucide-icon>
+                  <span class="mode-choice__title">{{
+                    'properties.rentalTypeStep.shortTerm' | transloco
+                  }}</span>
+                  <span class="mode-choice__desc">{{
+                    'properties.rentalTypeStep.shortTermDesc' | transloco
+                  }}</span>
+                </button>
+              </div>
+            </section>
+          }
+
           <!-- ==================== Información básica ==================== -->
           @case ('basic') {
             <section class="form-section">
@@ -123,7 +166,7 @@
                   <div class="existing-images__grid">
                     @for (img of existingImages(); track $index; let i = $index) {
                       <div class="existing-image">
-                        <img [src]="img.url" alt="" class="existing-image__img" />
+                        <img [src]="img.url" alt="" class="existing-image__img" loading="lazy" />
                         <button
                           type="button"
                           class="existing-image__remove"
@@ -154,31 +197,58 @@
               <div class="section-title">
                 <lucide-icon [img]="DollarSign" [size]="18" class="text-green-600"></lucide-icon>
                 <h3>{{ 'properties.financialInfo' | transloco }}</h3>
-                <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
               </div>
 
               <div class="form-grid-3">
-                <div>
-                  <app-text-field
-                    [label]="'properties.monthlyRent' | transloco"
-                    type="number"
-                    placeholder="2500"
-                    formControlName="monthly_rent"
+                @if (mode() === 'create' && isShortTerm()) {
+                  <div class="field-shell">
+                    <span class="form-label">{{ 'properties.pricePerNight' | transloco }} *</span>
+                    <app-text-field
+                      [label]="null"
+                      type="number"
+                      [placeholder]="'properties.pricePerNight' | transloco"
+                      formControlName="price_per_night"
+                    />
+                    @if (hasRequiredError('price_per_night')) {
+                      <p class="field-error">{{ 'common.required' | transloco }}</p>
+                    } @else if (hasError('price_per_night')) {
+                      <p class="field-error">{{ 'properties.errors.amount' | transloco }}</p>
+                    }
+                    <p class="field-hint">{{ 'properties.pricePerNightHint' | transloco }}</p>
+                  </div>
+                } @else {
+                  <div class="field-shell">
+                    <span class="form-label">{{ 'properties.monthlyRent' | transloco }} *</span>
+                    <app-text-field
+                      [label]="null"
+                      type="number"
+                      [placeholder]="'properties.monthlyRent' | transloco"
+                      formControlName="monthly_rent"
+                    />
+                    @if (hasRequiredError('monthly_rent')) {
+                      <p class="field-error">{{ 'common.required' | transloco }}</p>
+                    } @else if (hasError('monthly_rent')) {
+                      <p class="field-error">{{ 'properties.errors.amount' | transloco }}</p>
+                    }
+                  </div>
+                }
+                <div class="field-shell">
+                  <app-select
+                    [label]="'common.currency' | transloco"
+                    [options]="currencyOptions()"
+                    formControlName="currency"
                   />
-                  @if (hasError('monthly_rent')) {
-                    <p class="field-error">{{ 'properties.errors.amount' | transloco }}</p>
-                  }
                 </div>
-                <app-select
-                  [label]="'common.currency' | transloco"
-                  [options]="currencyOptions()"
-                  formControlName="currency"
-                />
-                <div>
+                <div class="field-shell">
+                  <span class="form-label">
+                    {{ 'properties.deposit' | transloco }}
+                    <span class="form-label__optional">({{ 'common.optional' | transloco }})</span>
+                    <app-info-hint [text]="'properties.depositHelp' | transloco" />
+                  </span>
                   <app-text-field
-                    [label]="'properties.deposit' | transloco"
+                    [label]="null"
                     type="number"
-                    placeholder="3000"
+                    [placeholder]="'properties.deposit' | transloco"
                     formControlName="security_deposit_amount"
                   />
                   @if (hasError('security_deposit_amount')) {
@@ -187,27 +257,195 @@
                 </div>
               </div>
 
-              <div class="subsection-title">
-                <lucide-icon [img]="CreditCard" [size]="15"></lucide-icon>
-                {{ 'properties.bankAccount' | transloco }}
-                <span class="badge-optional">{{ 'common.optional' | transloco }}</span>
-              </div>
-              <div class="form-grid-3">
-                <app-text-field
-                  [label]="'properties.accountNumber' | transloco"
-                  [placeholder]="'properties.accountNumberPlaceholder' | transloco"
-                  formControlName="account_number"
-                />
-                <app-text-field
-                  [label]="'properties.accountType' | transloco"
-                  [placeholder]="'properties.accountTypePlaceholder' | transloco"
-                  formControlName="account_type"
-                />
-                <app-text-field
-                  [label]="'properties.accountHolder' | transloco"
-                  formControlName="account_holder_name"
-                />
-              </div>
+              @if (mode() === 'create' && isShortTerm()) {
+                <div class="section-title st-main-title">
+                  <lucide-icon
+                    [img]="CalendarCheck"
+                    [size]="18"
+                    class="text-green-600"
+                  ></lucide-icon>
+                  <h3>{{ 'properties.shortTermConfig' | transloco }}</h3>
+                </div>
+                <p class="st-intro">{{ 'properties.shortTermConfigDesc' | transloco }}</p>
+
+                <!-- Grupo: Reserva y confirmación -->
+                <div class="st-group">
+                  <div class="st-group-head">
+                    <h4>{{ 'properties.stBooking' | transloco }}</h4>
+                    <p>{{ 'properties.stBookingDesc' | transloco }}</p>
+                  </div>
+                  <div class="form-grid-3">
+                    <div class="field-shell">
+                      <app-select
+                        [label]="'properties.units.bookingMode' | transloco"
+                        [options]="bookingModeOptions"
+                        formControlName="booking_mode"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-select
+                        [label]="'properties.units.cancellationPolicy' | transloco"
+                        [options]="cancellationPolicyOptions"
+                        formControlName="cancellation_policy"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.depositToConfirmPct' | transloco"
+                        type="number"
+                        placeholder="100"
+                        formControlName="deposit_to_confirm_pct"
+                      />
+                    </div>
+                  </div>
+                  <p class="field-hint">
+                    {{ 'properties.units.depositToConfirmHint' | transloco }}
+                  </p>
+                </div>
+
+                <!-- Grupo: Estadía -->
+                <div class="st-group">
+                  <div class="st-group-head">
+                    <h4>{{ 'properties.stStay' | transloco }}</h4>
+                    <p>{{ 'properties.stStayDesc' | transloco }}</p>
+                  </div>
+                  <div class="form-grid-4">
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.minNights' | transloco"
+                        type="number"
+                        placeholder="1"
+                        formControlName="min_nights"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.maxNights' | transloco"
+                        type="number"
+                        formControlName="max_nights"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.checkinTime' | transloco"
+                        placeholder="15:00"
+                        formControlName="checkin_time"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.checkoutTime' | transloco"
+                        placeholder="11:00"
+                        formControlName="checkout_time"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Grupo: Precios y descuentos -->
+                <div class="st-group">
+                  <div class="st-group-head">
+                    <h4>{{ 'properties.stPricing' | transloco }}</h4>
+                    <p>{{ 'properties.stPricingDesc' | transloco }}</p>
+                  </div>
+                  <div class="form-grid-4">
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.cleaningFee' | transloco"
+                        type="number"
+                        placeholder="0"
+                        formControlName="cleaning_fee"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.weeklyDiscount' | transloco"
+                        type="number"
+                        placeholder="0"
+                        formControlName="weekly_discount_pct"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.monthlyDiscount' | transloco"
+                        type="number"
+                        placeholder="0"
+                        formControlName="monthly_discount_pct"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.weekendAdjustment' | transloco"
+                        type="number"
+                        placeholder="0"
+                        formControlName="weekend_adjustment_pct"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Grupo: Anticipación y ofertas -->
+                <div class="st-group">
+                  <div class="st-group-head">
+                    <h4>{{ 'properties.stAdvance' | transloco }}</h4>
+                    <p>{{ 'properties.stAdvanceDesc' | transloco }}</p>
+                  </div>
+                  <div class="form-grid-3">
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.advanceNotice' | transloco"
+                        type="number"
+                        formControlName="advance_notice_days"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.maxAdvanceDays' | transloco"
+                        type="number"
+                        formControlName="max_advance_days"
+                      />
+                    </div>
+                  </div>
+
+                  <p class="st-subhint">{{ 'properties.stEarlyBird' | transloco }}</p>
+                  <div class="form-grid-3">
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.earlyBirdDays' | transloco"
+                        type="number"
+                        formControlName="early_bird_min_days"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.earlyBirdDiscount' | transloco"
+                        type="number"
+                        placeholder="0"
+                        formControlName="early_bird_discount_pct"
+                      />
+                    </div>
+                  </div>
+
+                  <p class="st-subhint">{{ 'properties.stLastMinute' | transloco }}</p>
+                  <div class="form-grid-3">
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.lastMinuteDays' | transloco"
+                        type="number"
+                        formControlName="last_minute_max_days"
+                      />
+                    </div>
+                    <div class="field-shell">
+                      <app-text-field
+                        [label]="'properties.units.lastMinuteAdjustment' | transloco"
+                        type="number"
+                        placeholder="0"
+                        formControlName="last_minute_adjustment_pct"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
             </section>
           }
 
@@ -281,28 +519,6 @@
                     {{ 'properties.furnished' | transloco }}
                   </app-checkbox>
                 </div>
-                <div>
-                  <app-text-field
-                    [label]="'properties.latitude' | transloco"
-                    type="number"
-                    placeholder="-16.5000"
-                    formControlName="latitude"
-                  />
-                  @if (hasError('latitude')) {
-                    <p class="field-error">{{ 'properties.errors.latitude' | transloco }}</p>
-                  }
-                </div>
-                <div>
-                  <app-text-field
-                    [label]="'properties.longitude' | transloco"
-                    type="number"
-                    placeholder="-68.1500"
-                    formControlName="longitude"
-                  />
-                  @if (hasError('longitude')) {
-                    <p class="field-error">{{ 'properties.errors.longitude' | transloco }}</p>
-                  }
-                </div>
               </div>
 
               <div class="subsection-title">{{ 'properties.rules' | transloco }}</div>
@@ -341,18 +557,20 @@
                   }
                   <p class="field-hint">{{ 'properties.maxOccupantsPlaceholder' | transloco }}</p>
                 </div>
-                <div>
-                  <app-text-field
-                    [label]="'properties.minContractMonths' | transloco"
-                    type="number"
-                    placeholder="6"
-                    formControlName="min_lease_months"
-                  />
-                  @if (hasError('min_lease_months')) {
-                    <p class="field-error">{{ 'properties.errors.count' | transloco }}</p>
-                  }
-                  <p class="field-hint">{{ 'properties.minContractPlaceholder' | transloco }}</p>
-                </div>
+                @if (!isShortTerm()) {
+                  <div>
+                    <app-text-field
+                      [label]="'properties.minContractMonths' | transloco"
+                      type="number"
+                      placeholder="6"
+                      formControlName="min_lease_months"
+                    />
+                    @if (hasError('min_lease_months')) {
+                      <p class="field-error">{{ 'properties.errors.count' | transloco }}</p>
+                    }
+                    <p class="field-hint">{{ 'properties.minContractPlaceholder' | transloco }}</p>
+                  </div>
+                }
               </div>
             </section>
           }
@@ -368,48 +586,91 @@
               <div formArrayName="addresses">
                 @for (address of addresses.controls; track $index; let i = $index) {
                   <div [formGroupName]="i" class="form-grid-2">
-                    <div class="full-width">
-                      <app-text-field
-                        [label]="'properties.fullAddress' | transloco"
-                        [placeholder]="'properties.fullAddressPlaceholder' | transloco"
-                        formControlName="street_address"
+                    <div>
+                      <span class="form-label">{{ 'properties.country' | transloco }}</span>
+                      <div class="locked-field">{{ countryLabel(i) }}</div>
+                    </div>
+
+                    <div>
+                      <app-select
+                        [label]="regionLabel(i)"
+                        [placeholder]="regionPlaceholder(i)"
+                        [options]="regionOptions(i)"
+                        formControlName="state"
+                        (valueChanged)="onAddressRegionChanged(i, $event)"
                       />
-                      @if (getAddressError(i, 'street_address')) {
+                      @if (getAddressError(i, 'state')) {
                         <p class="field-error">{{ 'common.required' | transloco }}</p>
                       }
                     </div>
-                    <div>
-                      <app-text-field
-                        [label]="'properties.city' | transloco"
-                        [placeholder]="'properties.cityPlaceholder' | transloco"
+
+                    <div class="locality-field">
+                      <label class="form-label" [for]="'property-locality-' + i">
+                        {{ localityLabel(i) }}
+                      </label>
+                      <input
+                        [id]="'property-locality-' + i"
+                        class="locality-input"
+                        type="text"
                         formControlName="city"
+                        [placeholder]="localityPlaceholder(i)"
+                        autocomplete="off"
+                        role="combobox"
+                        [attr.aria-expanded]="localitySuggestionsFor(i).length > 0"
+                        [attr.aria-controls]="'property-locality-options-' + i"
+                        (input)="onLocalityInput(i, $event)"
+                        (focus)="onLocalityInput(i, $event)"
                       />
+                      @if (localitySuggestionsFor(i).length > 0) {
+                        <div
+                          class="locality-suggestions"
+                          [id]="'property-locality-options-' + i"
+                          role="listbox"
+                        >
+                          @for (suggestion of localitySuggestionsFor(i); track suggestion.value) {
+                            <button
+                              type="button"
+                              class="locality-suggestion"
+                              role="option"
+                              [attr.aria-selected]="false"
+                              (click)="selectLocalitySuggestion(i, suggestion)"
+                            >
+                              <span class="locality-suggestion__pin" aria-hidden="true"></span>
+                              <span class="locality-suggestion__text">
+                                <strong>{{ localitySuggestionTitle(suggestion) }}</strong>
+                                <small>{{ localitySuggestionSubtitle(suggestion) }}</small>
+                              </span>
+                            </button>
+                          }
+                        </div>
+                      }
                       @if (getAddressError(i, 'city')) {
                         <p class="field-error">{{ 'common.required' | transloco }}</p>
                       }
                     </div>
-                    <app-text-field
-                      [label]="'properties.state' | transloco"
-                      [placeholder]="'properties.statePlaceholder' | transloco"
-                      formControlName="state"
-                    />
-                    <app-text-field
-                      [label]="'properties.zip' | transloco"
-                      placeholder="1001"
-                      formControlName="zip_code"
-                    />
-                    <div>
+
+                    @if (addressUsesPostalCode(i)) {
                       <app-text-field
-                        [label]="'properties.country' | transloco"
-                        [placeholder]="'properties.countryPlaceholder' | transloco"
-                        formControlName="country"
+                        [label]="'properties.zip' | transloco"
+                        placeholder="1001"
+                        formControlName="zip_code"
                       />
-                      @if (getAddressError(i, 'country')) {
-                        <p class="field-error">{{ 'common.required' | transloco }}</p>
-                      }
-                    </div>
+                    }
                   </div>
                 }
+              </div>
+
+              <div class="subsection-title">{{ 'properties.locationOnMap' | transloco }}</div>
+              <div class="full-width">
+                <app-location-picker
+                  [startCollapsed]="true"
+                  [latitude]="form().get('latitude')?.value"
+                  [longitude]="form().get('longitude')?.value"
+                  [country]="selectedAddressField(0, 'country')"
+                  [region]="selectedAddressField(0, 'state')"
+                  [city]="selectedAddressField(0, 'city')"
+                  (locationChange)="onLocationPicked($event)"
+                />
               </div>
             </section>
           }

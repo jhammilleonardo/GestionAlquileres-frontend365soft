@@ -237,6 +237,9 @@
         (edit)="openEditDialog($event)"
         (delete)="deleteUnit($event)"
         (manageDates)="openBlockDates($event)"
+        (exportCalendar)="facade.exportCalendar($event)"
+        (manageSeasons)="openSeasons($event)"
+        (manageCalendarSync)="openCalendarSync($event)"
       />
     </div>
   }
@@ -254,5 +257,17 @@
     [propertyId]="propertyId()"
     [unit]="blockDatesUnit()"
     (closed)="closeBlockDates()"
+  />
+
+  <app-season-rules-dialog
+    [open]="seasonsUnitId() > 0"
+    [unitId]="seasonsUnitId()"
+    (closed)="closeSeasons()"
+  />
+
+  <app-calendar-sync-dialog
+    [open]="calendarSyncUnitId() > 0"
+    [unitId]="calendarSyncUnitId()"
+    (closed)="closeCalendarSync()"
   />
 </div>

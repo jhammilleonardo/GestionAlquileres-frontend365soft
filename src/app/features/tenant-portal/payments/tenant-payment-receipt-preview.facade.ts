@@ -2,6 +2,8 @@ import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core'
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslocoService } from '@jsverse/transloco';
 
+import { isBlobUrl } from '../../../core/utils/safe-url.util';
+
 @Injectable()
 export class TenantPaymentReceiptPreviewFacade {
   private readonly sanitizer = inject(DomSanitizer);
@@ -19,7 +21,8 @@ export class TenantPaymentReceiptPreviewFacade {
 
   readonly safeUrl = computed<SafeUrl | null>(() => {
     const url = this.objectUrl();
-    if (!url) return null;
+    // Solo se confía la object URL (`blob:`) creada por esta misma fachada.
+    if (!isBlobUrl(url)) return null;
     return this.sanitizer.bypassSecurityTrustUrl(url);
   });
 

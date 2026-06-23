@@ -1,10 +1,11 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, tap, catchError, map } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, catchError, from, map, switchMap, tap } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
+import { ImageOptimizationService } from '../image-optimization.service';
 import {
   MaintenanceRequest,
   MaintenanceMessage,
@@ -44,6 +45,7 @@ export class TenantMaintenanceService {
   private http = inject(HttpClient);
   private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
+  private imageOptimization = inject(ImageOptimizationService);
   private transloco = inject(TranslocoService);
 
   // Signal-based reactive state
@@ -64,14 +66,6 @@ export class TenantMaintenanceService {
     return this.slugService.getSlug() || '';
   }
 
-  private get headers(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    });
-  }
-
   /**
    * Load all requests for the current tenant
    */
@@ -82,10 +76,7 @@ export class TenantMaintenanceService {
     this.errorSignal.set(null);
 
     this.http
-      .get<MaintenanceRequest[]>(
-        `${environment.apiUrl}${this.slug}/tenant/maintenance/my-requests`,
-        { headers: this.headers },
-      )
+      .get<MaintenanceRequest[]>(`${environment.apiUrl}${this.slug}/tenant/maintenance/my-requests`)
       .pipe(
         map((requests) => requests.map((req) => this.processRequest(req))),
         catchError((error) => {
@@ -108,9 +99,7 @@ export class TenantMaintenanceService {
     if (!this.slug) return;
 
     this.http
-      .get<TenantMaintenanceStats>(`${environment.apiUrl}${this.slug}/tenant/maintenance/stats`, {
-        headers: this.headers,
-      })
+      .get<TenantMaintenanceStats>(`${environment.apiUrl}${this.slug}/tenant/maintenance/stats`)
       .pipe(
         catchError((error) => {
           throw error;
@@ -143,9 +132,7 @@ export class TenantMaintenanceService {
    */
   getRequestById(id: number): Observable<MaintenanceRequest> {
     return this.http
-      .get<MaintenanceRequest>(`${environment.apiUrl}${this.slug}/tenant/maintenance/${id}`, {
-        headers: this.headers,
-      })
+      .get<MaintenanceRequest>(`${environment.apiUrl}${this.slug}/tenant/maintenance/${id}`)
       .pipe(map((req) => this.processRequest(req)));
   }
 
@@ -156,9 +143,7 @@ export class TenantMaintenanceService {
     this.isLoadingSignal.set(true);
 
     return this.http
-      .post<MaintenanceRequest>(`${environment.apiUrl}${this.slug}/tenant/maintenance`, dto, {
-        headers: this.headers,
-      })
+      .post<MaintenanceRequest>(`${environment.apiUrl}${this.slug}/tenant/maintenance`, dto)
       .pipe(
         map((req) => this.processRequest(req)),
         tap(() => {
@@ -182,7 +167,7 @@ export class TenantMaintenanceService {
     return this.http
       .get<
         MaintenanceMessage[]
-      >(`${environment.apiUrl}${this.slug}/tenant/maintenance/${requestId}/messages`, { headers: this.headers })
+      >(`${environment.apiUrl}${this.slug}/tenant/maintenance/${requestId}/messages`)
       .pipe(
         map((messages) =>
           messages.map((msg) => ({
@@ -201,7 +186,6 @@ export class TenantMaintenanceService {
       .post<MaintenanceMessage>(
         `${environment.apiUrl}${this.slug}/tenant/maintenance/${requestId}/messages`,
         dto,
-        { headers: this.headers },
       )
       .pipe(
         map((msg) => ({
@@ -215,14 +199,13 @@ export class TenantMaintenanceService {
    * Upload files to a maintenance request (max 3, 10MB each)
    */
   uploadFiles(requestId: number, files: File[]): Observable<MaintenanceAttachment[]> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
-    const token = this.authService.getToken();
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return this.http.post<MaintenanceAttachment[]>(
-      `${environment.apiUrl}${this.slug}/tenant/maintenance/${requestId}/upload`,
-      formData,
-      { headers },
+    return from(this.imageOptimization.filesToFormData(files, 'files')).pipe(
+      switchMap((formData) =>
+        this.http.post<MaintenanceAttachment[]>(
+          `${environment.apiUrl}${this.slug}/tenant/maintenance/${requestId}/upload`,
+          formData,
+        ),
+      ),
     );
   }
 

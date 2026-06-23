@@ -1,0 +1,69 @@
+<form class="owner-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  @if (errorMessage()) {
+    <div class="error-banner" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <div class="field-group">
+    <app-text-field
+      formControlName="name"
+      [label]="'rentalOwners.dialog.fullName' | transloco"
+      [placeholder]="'rentalOwners.dialog.namePlaceholder' | transloco"
+      autocomplete="off"
+    ></app-text-field>
+    @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+      <p class="field-error">{{ 'rentalOwners.dialog.nameRequired' | transloco }}</p>
+    } @else if (form.controls.name.hasError('minlength') && form.controls.name.touched) {
+      <p class="field-error">{{ 'rentalOwners.dialog.nameMinLength' | transloco }}</p>
+    }
+  </div>
+
+  <div class="field-group">
+    <app-text-field
+      formControlName="primary_email"
+      type="email"
+      [label]="'common.email' | transloco"
+      [placeholder]="'rentalOwners.dialog.emailPlaceholder' | transloco"
+      autocomplete="off"
+    ></app-text-field>
+    @if (form.controls.primary_email.hasError('required') && form.controls.primary_email.touched) {
+      <p class="field-error">{{ 'rentalOwners.dialog.emailRequired' | transloco }}</p>
+    } @else if (
+      form.controls.primary_email.hasError('email') && form.controls.primary_email.touched
+    ) {
+      <p class="field-error">{{ 'rentalOwners.dialog.emailInvalid' | transloco }}</p>
+    }
+  </div>
+
+  <div class="field-group">
+    <app-text-field
+      formControlName="phone_number"
+      type="tel"
+      [label]="'rentalOwners.dialog.phone' | transloco"
+      placeholder="+591 70000000"
+      autocomplete="off"
+    ></app-text-field>
+    @if (form.controls.phone_number.hasError('required') && form.controls.phone_number.touched) {
+      <p class="field-error">{{ 'rentalOwners.dialog.phoneRequired' | transloco }}</p>
+    }
+  </div>
+
+  <app-text-field
+    formControlName="company_name"
+    [label]="'rentalOwners.dialog.companyOptional' | transloco"
+    [placeholder]="'rentalOwners.dialog.companyPlaceholder' | transloco"
+    autocomplete="off"
+  ></app-text-field>
+
+  <div class="dialog-actions">
+    <app-button appearance="outline" type="button" [disabled]="isLoading()" (clicked)="cancel()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button
+      type="submit"
+      [loading]="isLoading()"
+      [ariaLabel]="'rentalOwners.dialog.create' | transloco"
+    >
+      {{ 'rentalOwners.dialog.create' | transloco }}
+    </app-button>
+  </div>
+</form>

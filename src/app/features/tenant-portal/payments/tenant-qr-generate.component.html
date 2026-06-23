@@ -170,6 +170,7 @@
               [src]="qrSafeUrl()!"
               [attr.alt]="'public.tenantQrGenerate.qrImageAlt' | transloco"
               class="qr-image"
+              loading="lazy"
             />
           } @else {
             <div class="qr-placeholder">

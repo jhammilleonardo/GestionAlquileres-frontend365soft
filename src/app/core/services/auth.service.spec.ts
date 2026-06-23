@@ -12,25 +12,30 @@ import { AuthService, isAdminMfaRequiredResponse } from './auth.service';
 describe('AuthService', () => {
   let service: AuthService;
   let http: { post: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
+  let slugService: {
+    getSlug: ReturnType<typeof vi.fn>;
+    setSlug: ReturnType<typeof vi.fn>;
+    clearSlug: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
     http = { post: vi.fn(), get: vi.fn() };
+    slugService = {
+      getSlug: vi.fn(() => 'demo'),
+      setSlug: vi.fn(),
+      clearSlug: vi.fn(),
+    };
+  });
 
+  function createService(): AuthService {
     TestBed.configureTestingModule({
       providers: [
         AuthService,
         { provide: HttpClient, useValue: http },
         { provide: Router, useValue: { navigate: vi.fn() } },
-        {
-          provide: SlugService,
-          useValue: {
-            getSlug: () => 'demo',
-            setSlug: vi.fn(),
-            clearSlug: vi.fn(),
-          },
-        },
+        { provide: SlugService, useValue: slugService },
         {
           provide: PermissionsService,
           useValue: {
@@ -41,10 +46,11 @@ describe('AuthService', () => {
       ],
     });
 
-    service = TestBed.inject(AuthService);
-  });
+    return TestBed.inject(AuthService);
+  }
 
   it('requests password reset instructions', () => {
+    service = createService();
     http.post.mockReturnValue(of({ message: 'ok' }));
 
     service.requestPasswordReset('admin@test.com').subscribe((response) => {
@@ -57,6 +63,7 @@ describe('AuthService', () => {
   });
 
   it('resets password with token', () => {
+    service = createService();
     http.post.mockReturnValue(of({ message: 'updated' }));
 
     service.resetPassword('token-123', 'NewPassword123').subscribe((response) => {
@@ -70,6 +77,7 @@ describe('AuthService', () => {
   });
 
   it('does not store a session when admin login requires MFA', () => {
+    service = createService();
     http.post.mockReturnValue(
       of({
         mfa_required: true,
@@ -92,6 +100,7 @@ describe('AuthService', () => {
   });
 
   it('stores admin session after MFA verification', () => {
+    service = createService();
     http.post.mockReturnValue(
       of({
         access_token: 'jwt-token',
@@ -113,6 +122,59 @@ describe('AuthService', () => {
       challenge_id: 'challenge-123',
       code: '123456',
     });
-    expect(localStorage.getItem('admin_access_token')).toBe('jwt-token');
+    // Tras la migración a cookies el JWT NO se persiste en localStorage; la
+    // señal de sesión del lado cliente es el objeto user.
+    expect(localStorage.getItem('admin_access_token')).toBeNull();
+    expect(localStorage.getItem('admin_user')).toContain('admin@test.com');
+  });
+
+  it('restores an HttpOnly-cookie session after refresh without a storage token', () => {
+    sessionStorage.setItem(
+      'admin_user',
+      JSON.stringify({
+        id: '7',
+        name: 'Admin Cookie',
+        email: 'cookie@test.com',
+        role: 'ADMIN',
+        tenant_slug: 'madacascar',
+      }),
+    );
+    http.get.mockReturnValue(
+      of({
+        id: 7,
+        name: 'Admin Cookie',
+        email: 'cookie@test.com',
+        role: 'ADMIN',
+        tenant_slug: 'madacascar',
+      }),
+    );
+
+    service = createService();
+
+    expect(service.isAuth()).toBe(true);
+    expect(service.currentUser()?.tenant_slug).toBe('madacascar');
+    expect(slugService.setSlug).toHaveBeenCalledWith('madacascar');
+    expect(http.get).toHaveBeenCalledWith(`${environment.apiUrl}auth/me`);
+    expect(sessionStorage.getItem('admin_access_token')).toBeNull();
+  });
+
+  it('removes an explicitly stored legacy mock session', () => {
+    localStorage.setItem('admin_access_token', 'mock-token');
+    localStorage.setItem(
+      'admin_user',
+      JSON.stringify({
+        id: '1',
+        name: 'Mock Admin',
+        email: 'admin@365soft.com',
+        role: 'ADMIN',
+        tenant_slug: 'demo',
+      }),
+    );
+
+    service = createService();
+
+    expect(service.isAuth()).toBe(false);
+    expect(localStorage.getItem('admin_access_token')).toBeNull();
+    expect(localStorage.getItem('admin_user')).toBeNull();
   });
 });

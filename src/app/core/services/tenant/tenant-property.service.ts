@@ -1,9 +1,8 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
-import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
 
 export interface Property {
@@ -46,7 +45,6 @@ export interface PropertyImage {
 })
 export class TenantPropertyService {
   private http = inject(HttpClient);
-  private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
   private transloco = inject(TranslocoService);
 
@@ -64,14 +62,6 @@ export class TenantPropertyService {
     return this.slugService.getSlug() || '';
   }
 
-  private get headers(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    });
-  }
-
   /**
    * Cargar todas las propiedades asignadas al inquilino
    */
@@ -82,9 +72,7 @@ export class TenantPropertyService {
     this.errorSignal.set(null);
 
     this.http
-      .get<Property[]>(`${environment.apiUrl}${this.slug}/tenant/properties`, {
-        headers: this.headers,
-      })
+      .get<Property[]>(`${environment.apiUrl}${this.slug}/tenant/properties`)
       .pipe(
         tap((properties) => {
           const processedProperties = properties.map((p) => this.processProperty(p));
@@ -105,9 +93,7 @@ export class TenantPropertyService {
    */
   getProperty(id: number): Observable<Property> {
     return this.http
-      .get<Property>(`${environment.apiUrl}${this.slug}/tenant/properties/${id}`, {
-        headers: this.headers,
-      })
+      .get<Property>(`${environment.apiUrl}${this.slug}/tenant/properties/${id}`)
       .pipe(
         tap((property) => {
           const processedProperty = this.processProperty(property);

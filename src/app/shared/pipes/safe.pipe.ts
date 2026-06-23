@@ -10,8 +10,20 @@ export class SafePipe implements PipeTransform {
 
   transform(url: string, type: string): SafeResourceUrl | string {
     if (type === 'resourceUrl') {
+      if (!this.isAllowedResourceUrl(url)) {
+        return '';
+      }
       return this.sanitizer.bypassSecurityTrustResourceUrl(url);
     }
     return url;
+  }
+
+  private isAllowedResourceUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === 'https:' && parsed.hostname === 'www.openstreetmap.org';
+    } catch {
+      return false;
+    }
   }
 }

@@ -169,6 +169,33 @@
           <lucide-icon [img]="CalendarDays" [size]="15"></lucide-icon>
           {{ 'propiedades.units.dates' | transloco }}
         </app-button>
+        <app-button
+          appearance="outline"
+          size="s"
+          (clicked)="onExportCalendar()"
+          [ariaLabel]="'propiedades.units.exportCalendar' | transloco"
+        >
+          <lucide-icon [img]="Download" [size]="15"></lucide-icon>
+          {{ 'propiedades.units.calendar' | transloco }}
+        </app-button>
+        <app-button
+          appearance="outline"
+          size="s"
+          (clicked)="onManageSeasons()"
+          [ariaLabel]="'propiedades.units.manageSeasons' | transloco"
+        >
+          <lucide-icon [img]="Tag" [size]="15"></lucide-icon>
+          {{ 'propiedades.units.seasons' | transloco }}
+        </app-button>
+        <app-button
+          appearance="outline"
+          size="s"
+          (clicked)="onManageCalendarSync()"
+          [ariaLabel]="'propiedades.units.manageCalendarSync' | transloco"
+        >
+          <lucide-icon [img]="RefreshCw" [size]="15"></lucide-icon>
+          {{ 'propiedades.units.calendarSync' | transloco }}
+        </app-button>
       }
       <app-button
         appearance="destructive"

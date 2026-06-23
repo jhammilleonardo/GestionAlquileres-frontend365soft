@@ -1,11 +1,15 @@
 import {
   Component,
   DestroyRef,
+  effect,
+  ElementRef,
   inject,
   signal,
   OnInit,
   ChangeDetectionStrategy,
+  PLATFORM_ID,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -18,9 +22,11 @@ import { PropertyService } from '../../../core/services/admin/property.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { FormDraftService } from '../../../core/services/form-draft.service';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { Property } from '../../../core/models/property.model';
 import { CreateApplicationDto } from '../../../core/models/application.model';
+import { toDateOnly } from '../../../core/utils/date-only.util';
 import {
   AppButtonComponent,
   AppLoadingStateComponent,
@@ -149,11 +155,17 @@ interface ApplicationPayload {
         </div>
       } @else if (property()) {
         <section class="wizard-panel">
-          <app-stepper [steps]="stepLabels()" [currentIndex]="currentStep()" />
+          <app-stepper
+            [steps]="stepLabels()"
+            [currentIndex]="currentStep()"
+            [navigable]="true"
+            (stepSelected)="goToStep($event)"
+          />
 
           @if (currentStep() === 0) {
             <app-step-1-personal-info
               [formGroup]="personalInfoForm"
+              [lockedFields]="lockedPersonalFields()"
               (isValid)="personalInfoValid.set($event)"
             />
           } @else if (currentStep() === 1) {
@@ -266,9 +278,12 @@ export class ApplicationWizardComponent implements OnInit {
   private readonly propertyService = inject(PropertyService);
   private readonly slugService = inject(SlugService);
   private readonly intentionService = inject(ApplicationIntentionService);
+  private readonly draftService = inject(FormDraftService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translocoService = inject(TranslocoService);
   private readonly toast = inject(ToastService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly platformId = inject(PLATFORM_ID);
 
   protected readonly currentStep = signal(0);
   protected readonly property = signal<Property | null>(null);
@@ -276,6 +291,8 @@ export class ApplicationWizardComponent implements OnInit {
   protected readonly isSubmitting = signal(false);
   protected readonly personalInfoValid = signal(false);
   protected readonly employmentHistoryValid = signal(false);
+  /** Campos rellenados desde la cuenta del usuario; quedan bloqueados en el paso 1. */
+  protected readonly lockedPersonalFields = signal<ReadonlySet<string>>(new Set());
 
   protected personalInfoForm!: FormGroup;
   protected employmentHistoryForm!: FormGroup;
@@ -295,6 +312,20 @@ export class ApplicationWizardComponent implements OnInit {
     ];
   }
 
+  constructor() {
+    effect(() => {
+      this.currentStep();
+
+      if (!isPlatformBrowser(this.platformId)) {
+        return;
+      }
+
+      queueMicrotask(() => {
+        this.host.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+    });
+  }
+
   ngOnInit(): void {
     this.initializeForms();
     this.restoreDraft();
@@ -303,8 +334,8 @@ export class ApplicationWizardComponent implements OnInit {
   }
 
   protected canGoNext(): boolean {
-    if (this.currentStep() === 0) return this.personalInfoForm.valid;
-    if (this.currentStep() === 1) return this.employmentHistoryForm.valid;
+    if (this.currentStep() === 0) return this.personalInfoValid();
+    if (this.currentStep() === 1) return this.employmentHistoryValid();
     return false;
   }
 
@@ -393,14 +424,28 @@ export class ApplicationWizardComponent implements OnInit {
 
   private prefillUserData(): void {
     const currentUser = this.authService.currentUser();
+    if (!currentUser) return;
 
-    if (currentUser) {
-      this.personalInfoForm.patchValue({
-        full_name: currentUser.name || '',
-        email: currentUser.email || '',
-        phone: currentUser.phone || '',
-      });
+    // Solo rellenar campos vacíos: si el usuario ya editó (o restauramos un borrador),
+    // sus valores tienen prioridad sobre los datos de la cuenta. Únicamente se bloquean
+    // los campos que de verdad provienen de la cuenta, no cualquier campo con texto.
+    const locked = new Set<string>();
+    if (this.patchIfEmpty('full_name', currentUser.name)) locked.add('full_name');
+    if (this.patchIfEmpty('email', currentUser.email)) locked.add('email');
+    if (this.patchIfEmpty('phone', currentUser.phone)) locked.add('phone');
+    this.lockedPersonalFields.set(locked);
+  }
+
+  private patchIfEmpty(controlName: string, value: string | null | undefined): boolean {
+    if (!value) return false;
+
+    const control = this.personalInfoForm.get(controlName);
+    if (control && !control.value) {
+      control.setValue(value);
+      return true;
     }
+
+    return false;
   }
 
   private setupAutosave(): void {
@@ -415,52 +460,46 @@ export class ApplicationWizardComponent implements OnInit {
       employmentHistory:
         this.employmentHistoryForm.getRawValue() as WizardDraft['employmentHistory'],
     };
-    sessionStorage.setItem(this.draftKey, JSON.stringify(draft));
+    this.draftService.save(this.draftKey, draft, 'session');
   }
 
   private restoreDraft(): void {
-    const saved = sessionStorage.getItem(this.draftKey);
-    if (!saved) return;
+    const draft = this.draftService.load<WizardDraft>(this.draftKey, 'session');
+    if (!draft) return;
 
-    try {
-      const draft = JSON.parse(saved) as WizardDraft;
+    if (draft.personalInfo) {
+      this.personalInfoForm.patchValue({
+        ...draft.personalInfo,
+        birth_date: this.toDateInput(draft.personalInfo['birth_date']),
+      });
+    }
 
-      if (draft.personalInfo) {
-        this.personalInfoForm.patchValue({
-          ...draft.personalInfo,
-          birth_date: this.toDateInput(draft.personalInfo['birth_date']),
+    if (draft.employmentHistory) {
+      const employment = draft.employmentHistory;
+
+      this.employmentHistoryForm.patchValue({
+        current_job: {
+          ...(employment.current_job || {}),
+          start_date: this.toDateInput(employment.current_job?.['start_date']),
+        },
+        previous_job: {
+          ...(employment.previous_job || {}),
+          end_date: this.toDateInput(employment.previous_job?.['end_date']),
+        },
+      });
+
+      if (employment.rental_history?.length) {
+        const rentalArray = this.employmentHistoryForm.get('rental_history') as FormArray;
+        rentalArray.clear();
+        employment.rental_history.forEach((item) => {
+          rentalArray.push(this.createRentalHistoryGroup(item));
         });
       }
-
-      if (draft.employmentHistory) {
-        const employment = draft.employmentHistory;
-
-        this.employmentHistoryForm.patchValue({
-          current_job: {
-            ...(employment.current_job || {}),
-            start_date: this.toDateInput(employment.current_job?.['start_date']),
-          },
-          previous_job: {
-            ...(employment.previous_job || {}),
-            end_date: this.toDateInput(employment.previous_job?.['end_date']),
-          },
-        });
-
-        if (employment.rental_history?.length) {
-          const rentalArray = this.employmentHistoryForm.get('rental_history') as FormArray;
-          rentalArray.clear();
-          employment.rental_history.forEach((item) => {
-            rentalArray.push(this.createRentalHistoryGroup(item));
-          });
-        }
-      }
-    } catch {
-      sessionStorage.removeItem(this.draftKey);
     }
   }
 
   private clearDraft(): void {
-    sessionStorage.removeItem(this.draftKey);
+    this.draftService.clear(this.draftKey, 'session');
   }
 
   protected submitApplication(): void {
@@ -546,10 +585,10 @@ export class ApplicationWizardComponent implements OnInit {
   }
 
   private toDateInput(value: unknown): string {
-    if (!value) return '';
-    if (value instanceof Date) return value.toISOString().slice(0, 10);
-    if (typeof value === 'string') return value.slice(0, 10);
-    if (typeof value === 'number') return new Date(value).toISOString().slice(0, 10);
-    return '';
+    if (value instanceof Date || typeof value === 'string' || typeof value === 'number') {
+      return toDateOnly(value);
+    }
+
+    return toDateOnly(null);
   }
 }

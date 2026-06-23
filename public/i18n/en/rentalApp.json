@@ -12,6 +12,8 @@
   "fullName": "Full Name",
   "emailLabel": "Email Address",
   "phone": "Phone",
+  "phoneRequired": "Phone is required",
+  "phoneInvalid": "Enter a valid phone (only digits, +, spaces and dashes)",
   "birthDate": "Date of Birth",
   "birthDateRequired": "Date of birth is required",
   "nationalId": "ID / Passport",

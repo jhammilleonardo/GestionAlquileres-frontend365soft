@@ -1,0 +1,293 @@
+:host {
+  display: block;
+}
+
+/* ============ GLASS CARD ============ */
+.glass-card {
+  position: relative;
+  background: #ffffff;
+  border-radius: 2rem;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 520px;
+  cursor: pointer;
+}
+.glass-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Imagen ────────────────────────────────────── */
+.card-image-section {
+  position: relative;
+  height: 250px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.card-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-card:hover .card-bg-img {
+  transform: scale(1.05);
+}
+.image-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 100%);
+  pointer-events: none;
+}
+
+/* Pill tipo de alquiler */
+.rental-type-pill {
+  position: absolute;
+  top: 1.2rem;
+  left: 1.2rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}
+.rental-type-pill[data-type='LONG_TERM'] {
+  background: rgba(37, 99, 235, 0.92);
+}
+.rental-type-pill[data-type='SHORT_TERM'] {
+  background: rgba(217, 119, 6, 0.92);
+}
+.rental-type-pill[data-type='BOTH'] {
+  background: rgba(124, 58, 237, 0.92);
+}
+
+/* Botón favorito (Bookmark) */
+.btn-bookmark {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  color: white;
+  z-index: 10;
+  padding: 0;
+}
+.btn-bookmark:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+.btn-bookmark lucide-icon { width: 22px; height: 22px; }
+.btn-bookmark.is-fav {
+  color: #ef4444;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 1);
+}
+.btn-bookmark.is-fav lucide-icon { fill: #ef4444; }
+
+/* ── Content Section ─────────────────── */
+.card-content {
+  position: relative;
+  padding: 0 1.8rem 1.8rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: #ffffff;
+}
+
+/* Info Section */
+.info-section {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.main-info { cursor: pointer; flex: 1; min-width: 0; }
+.main-info .title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.2rem 0;
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.main-info .subtitle {
+  font-size: 0.95rem;
+  color: #9ca3af;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tags/Tools pill */
+.tags-column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.furnished-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 0.25rem 0.7rem;
+  border-radius: 2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.furnished-icon { width: 14px; height: 14px; }
+.tags-pill {
+  background: #f3f4f6;
+  padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+  border-radius: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+.tag-icons {
+  display: flex;
+  align-items: center;
+}
+.t-icon-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: -6px;
+  border: 1px solid #f3f4f6;
+}
+.t-icon-circle:last-child { margin-right: 0; }
+.t-icon-circle.bg-blue { background: var(--brand-primary, #3b82f6); }
+.t-icon-circle.bg-orange { background: #f97316; }
+.t-icon { width: 12px; height: 12px; }
+
+/* Bottom Stats & Action */
+.bottom-section {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.2rem;
+  padding-top: 1.2rem;
+}
+
+.stats-container {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+.stat-block {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  align-items: center;
+  text-align: center;
+}
+.stat-block:first-child { align-items: flex-start; text-align: left; }
+.stat-block:last-child { align-items: flex-end; text-align: right; }
+/* Divisor automático antes de cada stat (excepto el primero) */
+.stat-block + .stat-block {
+  border-left: 1px solid #e5e7eb;
+  padding-left: 0.75rem;
+}
+.stat-value,
+.stat-label { white-space: nowrap; }
+.stat-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.inline-icon { width: 16px; height: 16px; color: #111827; fill: none; }
+.stat-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Price + Action */
+.price-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+.price-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+}
+.price-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Action Button — usa el color de marca del tenant */
+.btn-action {
+  background: var(--brand-primary, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.85rem 1.7rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-action:hover {
+  background: var(--brand-secondary, #1e40af);
+  transform: scale(1.03);
+}
+
+@media (max-width: 768px) {
+  .glass-card { height: auto; min-height: 480px; }
+}

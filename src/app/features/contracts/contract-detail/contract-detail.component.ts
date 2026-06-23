@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   LucideAngularModule,
   ArrowLeft,
+  ArrowRight,
   Download,
   Edit,
   RefreshCw,
@@ -16,12 +17,17 @@ import {
   Repeat,
   Bell,
   LineChart,
+  FileText,
 } from 'lucide-angular';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
-import { Contract, ContractStatus } from '../../../core/models/contract.model';
+import {
+  Contract,
+  ContractStatus,
+  contractStatusLabelKey,
+} from '../../../core/models/contract.model';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
 import { ContractDetailFacade } from './contract-detail.facade';
@@ -47,6 +53,8 @@ import { ContractDetailFacade } from './contract-detail.facade';
 })
 export class ContractDetailComponent {
   readonly ArrowLeft = ArrowLeft;
+  readonly ArrowRight = ArrowRight;
+  readonly FileText = FileText;
   readonly Download = Download;
   readonly Edit = Edit;
   readonly RefreshCw = RefreshCw;
@@ -69,6 +77,8 @@ export class ContractDetailComponent {
   readonly currentContract = this.facade.currentContract;
   readonly contractNumber = this.facade.contractNumber;
   readonly history = this.facade.history;
+  readonly previousContract = this.facade.previousContract;
+  readonly renewalContract = this.facade.renewalContract;
 
   constructor() {
     const contractId = this.route.snapshot.paramMap.get('id');
@@ -103,6 +113,11 @@ export class ContractDetailComponent {
 
   isCurrentInHistory(contract: Contract): boolean {
     return contract.id === this.currentContract()?.id;
+  }
+
+  /** Clave de traducción del estado (distingue el borrador de renovación). */
+  statusLabelKey(contract: Contract): string {
+    return contractStatusLabelKey(contract);
   }
 
   viewHistoryContract(contract: Contract): void {

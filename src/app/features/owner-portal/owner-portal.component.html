@@ -1,195 +1,432 @@
-<section class="owner-page">
-  <app-page-header
-    [title]="'ownerPortal.dashboard.title' | transloco"
-    [description]="'ownerPortal.dashboard.description' | transloco"
-  >
-    <app-button actions appearance="secondary" size="s" (clicked)="facade.load()">{{
-      'common.refresh' | transloco
-    }}</app-button>
-  </app-page-header>
-
-  @if (facade.isLoading()) {
-    <app-loading-state [label]="'ownerPortal.dashboard.loading' | transloco" />
-  } @else {
-    <div class="kpi-grid">
-      <article class="kpi">
-        <span>{{ 'ownerPortal.dashboard.properties' | transloco }}</span>
-        <strong>{{ facade.dashboard().properties_count ?? facade.properties().length }}</strong>
-      </article>
-      <article class="kpi">
-        <span>{{ 'ownerPortal.dashboard.activeContracts' | transloco }}</span>
-        <strong>{{
-          facade.dashboard().active_contracts_count ?? facade.contracts().length
-        }}</strong>
-      </article>
-      <article class="kpi">
-        <span>{{ 'ownerPortal.dashboard.pendingBalance' | transloco }}</span>
-        <strong>{{ facade.dashboard().pending_balance ?? 0 | currency: 'USD' }}</strong>
-      </article>
-      <article class="kpi">
-        <span>{{ 'ownerPortal.dashboard.maintenance' | transloco }}</span>
-        <strong>{{
-          facade.dashboard().active_maintenance_count ?? facade.maintenance().length
-        }}</strong>
-      </article>
+<div class="owner-shell">
+  <!-- Barra superior del portal -->
+  <header class="owner-topbar">
+    <div class="brand">
+      <span class="brand-logo"><lucide-icon [img]="Building2" [size]="20" /></span>
+      <div class="brand-text">
+        <strong>{{ 'ownerPortal.dashboard.title' | transloco }}</strong>
+        @if (auth.currentOwner(); as owner) {
+          <span>{{ 'ownerPortal.greeting' | transloco: { name: owner.name } }}</span>
+        }
+      </div>
     </div>
 
-    <nav class="tabs" [attr.aria-label]="'ownerPortal.dashboard.sections' | transloco">
-      @for (tab of facade.tabs; track tab.id) {
+    <div class="topbar-actions">
+      <div
+        class="lang-toggle"
+        role="group"
+        [attr.aria-label]="'common.languageSelector' | transloco"
+      >
         <button
           type="button"
-          [class.active]="facade.activeTab() === tab.id"
-          (click)="facade.activeTab.set(tab.id)"
+          [class.active]="languageService.isSpanish()"
+          (click)="languageService.setLanguage('es')"
         >
-          {{ tab.labelKey | transloco }}
+          ES
         </button>
-      }
-    </nav>
+        <button
+          type="button"
+          [class.active]="languageService.isEnglish()"
+          (click)="languageService.setLanguage('en')"
+        >
+          EN
+        </button>
+      </div>
+      <app-button appearance="outline" size="s" (clicked)="logout()">
+        <lucide-icon [img]="LogOut" [size]="15" />
+        {{ 'auth.logout' | transloco }}
+      </app-button>
+    </div>
+  </header>
 
-    @if (facade.activeCount() === 0) {
-      <app-empty-state
-        [title]="'ownerPortal.empty.title' | transloco"
-        [description]="'ownerPortal.empty.description' | transloco"
-      />
+  <section class="owner-page">
+    <div class="page-head">
+      <div>
+        <h1>{{ 'ownerPortal.dashboard.heading' | transloco }}</h1>
+        <p>{{ 'ownerPortal.dashboard.description' | transloco }}</p>
+      </div>
+      <app-button appearance="secondary" size="s" (clicked)="facade.load()">{{
+        'common.refresh' | transloco
+      }}</app-button>
+    </div>
+
+    @if (facade.isLoading()) {
+      <app-loading-state [label]="'ownerPortal.dashboard.loading' | transloco" />
     } @else {
-      @switch (facade.activeTab()) {
-        <!-- Mis propiedades -->
-        @case ('properties') {
-          <div class="cards-grid">
-            @for (prop of facade.properties(); track prop.id) {
-              <article class="info-card">
-                <div class="info-card__head">
-                  <lucide-icon [img]="Home" [size]="18" />
-                  <h3>{{ facade.str(prop, 'title') }}</h3>
-                  <app-status-badge
-                    [label]="facade.str(prop, 'status')"
-                    [tone]="facade.str(prop, 'status') === 'OCUPADA' ? 'success' : 'info'"
-                  />
-                </div>
-                <dl class="info-card__body">
-                  <div>
-                    <dt>
-                      <lucide-icon [img]="User" [size]="13" />
-                      {{ 'ownerPortal.properties.tenant' | transloco }}
-                    </dt>
-                    <dd>
-                      {{
-                        facade.str(prop, 'current_tenant') ||
-                          ('ownerPortal.properties.noTenant' | transloco)
-                      }}
-                    </dd>
-                  </div>
-                  @if (facade.str(prop, 'contract_end_date')) {
-                    <div>
-                      <dt>
-                        <lucide-icon [img]="Calendar" [size]="13" />
-                        {{ 'ownerPortal.properties.endsAt' | transloco }}
-                      </dt>
-                      <dd>{{ facade.str(prop, 'contract_end_date') }}</dd>
-                    </div>
-                  }
-                </dl>
-              </article>
-            }
+      <div class="kpi-grid">
+        <article class="kpi">
+          <span class="kpi-icon kpi-icon--blue"><lucide-icon [img]="Home" [size]="18" /></span>
+          <div>
+            <span class="kpi-label">{{ 'ownerPortal.dashboard.properties' | transloco }}</span>
+            <strong>{{ facade.dashboard().property_count ?? facade.properties().length }}</strong>
           </div>
-        }
+        </article>
+        <article class="kpi">
+          <span class="kpi-icon kpi-icon--green"><lucide-icon [img]="User" [size]="18" /></span>
+          <div>
+            <span class="kpi-label">{{ 'ownerPortal.dashboard.activeTenants' | transloco }}</span>
+            <strong>{{ facade.dashboard().active_tenant_count ?? 0 }}</strong>
+          </div>
+        </article>
+        <article class="kpi">
+          <span class="kpi-icon kpi-icon--amber"><lucide-icon [img]="Wallet" [size]="18" /></span>
+          <div>
+            <span class="kpi-label">{{ 'ownerPortal.dashboard.pendingBalance' | transloco }}</span>
+            <strong>{{
+              facade.dashboard().pending_balance ?? 0 | currency: facade.currency()
+            }}</strong>
+          </div>
+        </article>
+        <article class="kpi">
+          <span class="kpi-icon kpi-icon--rose"><lucide-icon [img]="Wrench" [size]="18" /></span>
+          <div>
+            <span class="kpi-label">{{ 'ownerPortal.dashboard.maintenance' | transloco }}</span>
+            <strong>{{
+              facade.dashboard().active_maintenance_count ?? facade.maintenance().length
+            }}</strong>
+          </div>
+        </article>
+      </div>
 
-        <!-- Liquidaciones con descarga PDF -->
-        @case ('statements') {
-          <ul class="record-list">
-            @for (st of facade.statements(); track st.id) {
-              <li class="record-item">
-                <div class="record-main">
-                  <strong>{{ facade.str(st, 'period_month') || 'Liquidación #' + st.id }}</strong>
-                  <span class="record-sub">{{ facade.str(st, 'status') }}</span>
-                </div>
-                <span class="record-amount">
-                  {{ facade.num(st, 'net_amount') | currency: 'USD' }}
-                </span>
-                <app-button
-                  size="s"
-                  appearance="secondary"
-                  [disabled]="facade.downloadingId() === st.id"
-                  (clicked)="facade.downloadStatement(st)"
-                >
-                  <lucide-icon [img]="Download" [size]="15" />
-                  PDF
-                </app-button>
-              </li>
-            }
-          </ul>
+      <nav class="tabs" [attr.aria-label]="'ownerPortal.dashboard.sections' | transloco">
+        @for (tab of facade.tabs; track tab.id) {
+          <button
+            type="button"
+            [class.active]="facade.activeTab() === tab.id"
+            (click)="facade.activeTab.set(tab.id)"
+          >
+            {{ tab.labelKey | transloco }}
+          </button>
         }
+      </nav>
 
-        <!-- Mantenimiento con timeline y autorizar gasto -->
-        @case ('maintenance') {
-          <ul class="record-list">
-            @for (mr of facade.maintenance(); track mr.id) {
-              <li class="record-item record-item--column">
-                <div class="record-row">
-                  <div class="record-main">
-                    <strong>{{ facade.str(mr, 'title') }}</strong>
-                    <span class="record-sub">{{ facade.str(mr, 'property_title') }}</span>
+      @if (facade.activeCount() === 0) {
+        <app-empty-state
+          [title]="'ownerPortal.empty.title' | transloco"
+          [description]="'ownerPortal.empty.description' | transloco"
+        />
+      } @else {
+        @switch (facade.activeTab()) {
+          <!-- Mis propiedades -->
+          @case ('properties') {
+            <div class="cards-grid">
+              @for (prop of facade.properties(); track prop.id) {
+                <article class="prop-card">
+                  <div class="prop-card__head">
+                    <h3>{{ facade.str(prop, 'title') }}</h3>
+                    <app-status-badge
+                      [label]="facade.str(prop, 'status')"
+                      [tone]="facade.statusTone(facade.str(prop, 'status'))"
+                    />
                   </div>
-                  <app-status-badge [label]="facade.str(mr, 'priority')" tone="neutral" />
-                  @if (facade.canAuthorize(mr)) {
-                    <app-button
-                      size="s"
-                      [disabled]="facade.authorizingId() === mr.id"
-                      (clicked)="facade.authorize(mr)"
-                    >
-                      <lucide-icon [img]="CheckCircle2" [size]="15" />
-                      {{ 'ownerPortal.maintenance.authorizeExpense' | transloco }}
-                    </app-button>
-                  }
-                </div>
-                <ol
-                  class="stage-timeline"
-                  [attr.aria-label]="
-                    'ownerPortal.maintenance.stageLabel'
-                      | transloco: { stage: facade.str(mr, 'current_stage') }
-                  "
-                >
-                  @for (stage of facade.stages; track stage; let i = $index) {
-                    <li class="stage" [class.done]="i <= facade.stageIndex(mr)">
-                      <span class="stage-dot"></span>
-                      <span class="stage-name">{{ stage }}</span>
-                    </li>
-                  }
-                </ol>
-              </li>
-            }
-          </ul>
-        }
 
-        <!-- Documentos / contratos -->
-        @case ('contracts') {
-          <ul class="record-list">
-            @for (c of facade.contracts(); track c.id) {
-              <li class="record-item">
-                <div class="record-main">
-                  <strong>{{ facade.str(c, 'contract_number') }}</strong>
-                  <span class="record-sub">{{ facade.str(c, 'property_title') }}</span>
-                </div>
-                <app-status-badge
-                  [label]="facade.str(c, 'status')"
-                  [tone]="facade.str(c, 'status') === 'ACTIVO' ? 'success' : 'neutral'"
-                />
-                @if (facade.hasContractPdf(c)) {
+                  @if (facade.str(prop, 'street_address') || facade.str(prop, 'city')) {
+                    <p class="prop-card__addr">
+                      <lucide-icon [img]="MapPin" [size]="13" />
+                      {{ facade.str(prop, 'street_address') }}
+                      @if (facade.str(prop, 'city')) {
+                        <span>, {{ facade.str(prop, 'city') }}</span>
+                      }
+                    </p>
+                  }
+
+                  <div class="prop-card__rent">
+                    <span>{{ 'ownerPortal.properties.monthlyRent' | transloco }}</span>
+                    <strong>{{
+                      facade.num(prop, 'monthly_rent') | currency: facade.currency(prop)
+                    }}</strong>
+                  </div>
+
+                  @if (facade.str(prop, 'current_tenant_name')) {
+                    <div class="tenant-box">
+                      <div class="tenant-box__head">
+                        <lucide-icon [img]="User" [size]="14" />
+                        <strong>{{ facade.str(prop, 'current_tenant_name') }}</strong>
+                      </div>
+                      @if (facade.str(prop, 'current_tenant_email')) {
+                        <a
+                          class="tenant-box__row"
+                          [href]="'mailto:' + facade.str(prop, 'current_tenant_email')"
+                        >
+                          <lucide-icon [img]="Mail" [size]="12" />
+                          {{ facade.str(prop, 'current_tenant_email') }}
+                        </a>
+                      }
+                      @if (facade.str(prop, 'current_tenant_phone')) {
+                        <span class="tenant-box__row">
+                          <lucide-icon [img]="Phone" [size]="12" />
+                          {{ facade.str(prop, 'current_tenant_phone') }}
+                        </span>
+                      }
+                    </div>
+                  } @else {
+                    <p class="prop-card__no-tenant">
+                      <lucide-icon [img]="User" [size]="13" />
+                      {{ 'ownerPortal.properties.noTenant' | transloco }}
+                    </p>
+                  }
+
+                  <dl class="prop-card__body">
+                    @if (facade.str(prop, 'contract_number')) {
+                      <div>
+                        <dt>
+                          <lucide-icon [img]="FileText" [size]="13" />
+                          {{ 'ownerPortal.properties.contract' | transloco }}
+                        </dt>
+                        <dd>{{ facade.str(prop, 'contract_number') }}</dd>
+                      </div>
+                    }
+                    @if (facade.str(prop, 'contract_end_date')) {
+                      <div>
+                        <dt>
+                          <lucide-icon [img]="Calendar" [size]="13" />
+                          {{ 'ownerPortal.properties.endsAt' | transloco }}
+                        </dt>
+                        <dd>{{ facade.str(prop, 'contract_end_date') }}</dd>
+                      </div>
+                    }
+                    <div>
+                      <dt>{{ 'ownerPortal.properties.ownership' | transloco }}</dt>
+                      <dd>{{ facade.num(prop, 'ownership_percentage') }}%</dd>
+                    </div>
+                  </dl>
+                </article>
+              }
+            </div>
+          }
+
+          <!-- Liquidaciones con desglose y descarga PDF -->
+          @case ('statements') {
+            <ul class="record-list">
+              @for (st of facade.statements(); track st.id) {
+                <li class="statement-item">
+                  <div class="statement-top">
+                    <div class="record-main">
+                      <strong>{{ facade.periodLabel(st) }}</strong>
+                      <span class="record-sub">{{ facade.str(st, 'property_title') }}</span>
+                    </div>
+                    <app-status-badge
+                      [label]="facade.str(st, 'status')"
+                      [tone]="facade.statusTone(facade.str(st, 'status'))"
+                    />
+                  </div>
+
+                  <dl class="statement-breakdown">
+                    <div>
+                      <dt>{{ 'ownerPortal.statements.gross' | transloco }}</dt>
+                      <dd>{{ facade.num(st, 'gross_rent') | currency: facade.currency(st) }}</dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'ownerPortal.statements.maintenance' | transloco }}</dt>
+                      <dd class="neg">
+                        −{{
+                          facade.num(st, 'maintenance_deduction') | currency: facade.currency(st)
+                        }}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'ownerPortal.statements.commission' | transloco }}</dt>
+                      <dd class="neg">
+                        −{{
+                          facade.num(st, 'management_commission') | currency: facade.currency(st)
+                        }}
+                      </dd>
+                    </div>
+                    <div class="net">
+                      <dt>{{ 'ownerPortal.statements.net' | transloco }}</dt>
+                      <dd>{{ facade.num(st, 'net_amount') | currency: facade.currency(st) }}</dd>
+                    </div>
+                  </dl>
+
                   <app-button
                     size="s"
                     appearance="secondary"
-                    [disabled]="facade.downloadingContractId() === c.id"
-                    (clicked)="facade.downloadContract(c)"
+                    [disabled]="facade.downloadingId() === st.id"
+                    (clicked)="facade.downloadStatement(st)"
                   >
                     <lucide-icon [img]="Download" [size]="15" />
-                    PDF
+                    {{ 'ownerPortal.statements.downloadPdf' | transloco }}
                   </app-button>
-                }
-              </li>
-            }
-          </ul>
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Mantenimiento con timeline y autorizar gasto -->
+          @case ('maintenance') {
+            <ul class="record-list">
+              @for (mr of facade.maintenance(); track mr.id) {
+                <li class="record-item record-item--column">
+                  <div class="record-row">
+                    <div class="record-main">
+                      <strong>{{ facade.str(mr, 'title') }}</strong>
+                      <span class="record-sub">
+                        @if (facade.str(mr, 'ticket_number')) {
+                          {{ facade.str(mr, 'ticket_number') }} ·
+                        }
+                        {{ facade.str(mr, 'property_title') }}
+                      </span>
+                    </div>
+                    <app-status-badge
+                      [label]="facade.str(mr, 'status')"
+                      [tone]="facade.statusTone(facade.str(mr, 'status'))"
+                    />
+                    @if (facade.canAuthorize(mr)) {
+                      <app-button
+                        size="s"
+                        [disabled]="facade.authorizingId() === mr.id"
+                        (clicked)="facade.authorize(mr)"
+                      >
+                        <lucide-icon [img]="CheckCircle2" [size]="15" />
+                        {{ 'ownerPortal.maintenance.authorizeExpense' | transloco }}
+                      </app-button>
+                    }
+                  </div>
+
+                  @if (facade.str(mr, 'description')) {
+                    <p class="record-desc">{{ facade.str(mr, 'description') }}</p>
+                  }
+
+                  <dl class="mr-details">
+                    <div>
+                      <dt>
+                        <lucide-icon [img]="Tag" [size]="13" />
+                        {{ 'ownerPortal.maintenance.priority' | transloco }}
+                      </dt>
+                      <dd>{{ facade.str(mr, 'priority') }}</dd>
+                    </div>
+                    @if (facade.str(mr, 'category')) {
+                      <div>
+                        <dt>
+                          <lucide-icon [img]="Wrench" [size]="13" />
+                          {{ 'ownerPortal.maintenance.category' | transloco }}
+                        </dt>
+                        <dd>{{ facade.str(mr, 'category') }}</dd>
+                      </div>
+                    }
+                    <div>
+                      <dt>
+                        <lucide-icon [img]="UserCog" [size]="13" />
+                        {{ 'ownerPortal.maintenance.technician' | transloco }}
+                      </dt>
+                      <dd>
+                        {{
+                          facade.str(mr, 'technician_name') ||
+                            ('ownerPortal.maintenance.unassigned' | transloco)
+                        }}
+                      </dd>
+                    </div>
+                    @if (facade.date(mr, 'created_at')) {
+                      <div>
+                        <dt>
+                          <lucide-icon [img]="Clock" [size]="13" />
+                          {{ 'ownerPortal.maintenance.reportedAt' | transloco }}
+                        </dt>
+                        <dd>{{ facade.date(mr, 'created_at') }}</dd>
+                      </div>
+                    }
+                    @if (facade.date(mr, 'due_date')) {
+                      <div>
+                        <dt>
+                          <lucide-icon [img]="Calendar" [size]="13" />
+                          {{ 'ownerPortal.maintenance.dueDate' | transloco }}
+                        </dt>
+                        <dd>{{ facade.date(mr, 'due_date') }}</dd>
+                      </div>
+                    }
+                  </dl>
+
+                  <ol
+                    class="stage-timeline"
+                    [attr.aria-label]="
+                      'ownerPortal.maintenance.stageLabel'
+                        | transloco: { stage: facade.str(mr, 'current_stage') }
+                    "
+                  >
+                    @for (stage of facade.stages; track stage; let i = $index) {
+                      <li class="stage" [class.done]="i <= facade.stageIndex(mr)">
+                        <span class="stage-dot"></span>
+                        <span class="stage-name">{{ stage }}</span>
+                      </li>
+                    }
+                  </ol>
+                </li>
+              }
+            </ul>
+          }
+
+          <!-- Documentos / contratos -->
+          @case ('contracts') {
+            <ul class="record-list">
+              @for (c of facade.contracts(); track c.id) {
+                <li class="contract-item">
+                  <div class="contract-top">
+                    <div class="record-main">
+                      <strong>{{ facade.str(c, 'contract_number') }}</strong>
+                      <span class="record-sub">{{ facade.str(c, 'property_title') }}</span>
+                    </div>
+                    <app-status-badge
+                      [label]="facade.str(c, 'status')"
+                      [tone]="facade.statusTone(facade.str(c, 'status'))"
+                    />
+                  </div>
+
+                  <dl class="contract-meta">
+                    <div>
+                      <dt>
+                        <lucide-icon [img]="User" [size]="13" />
+                        {{ 'ownerPortal.contracts.tenant' | transloco }}
+                      </dt>
+                      <dd>{{ facade.str(c, 'tenant_name') }}</dd>
+                    </div>
+                    <div>
+                      <dt>
+                        <lucide-icon [img]="Calendar" [size]="13" />
+                        {{ 'ownerPortal.contracts.period' | transloco }}
+                      </dt>
+                      <dd>{{ facade.str(c, 'start_date') }} → {{ facade.str(c, 'end_date') }}</dd>
+                    </div>
+                    <div>
+                      <dt>
+                        <lucide-icon [img]="Wallet" [size]="13" />
+                        {{ 'ownerPortal.contracts.rent' | transloco }}
+                      </dt>
+                      <dd>{{ facade.num(c, 'monthly_rent') | currency: facade.currency(c) }}</dd>
+                    </div>
+                  </dl>
+
+                  @if (facade.hasContractPdf(c)) {
+                    <div class="contract-actions">
+                      <app-button
+                        size="s"
+                        [disabled]="facade.downloadingContractId() === c.id"
+                        (clicked)="facade.viewContract(c)"
+                      >
+                        <lucide-icon [img]="Eye" [size]="15" />
+                        {{ 'ownerPortal.contracts.view' | transloco }}
+                      </app-button>
+                      <app-button
+                        size="s"
+                        appearance="secondary"
+                        [disabled]="facade.downloadingContractId() === c.id"
+                        (clicked)="facade.downloadContract(c)"
+                      >
+                        <lucide-icon [img]="Download" [size]="15" />
+                        {{ 'ownerPortal.contracts.downloadPdf' | transloco }}
+                      </app-button>
+                    </div>
+                  } @else {
+                    <p class="contract-nopdf">
+                      <lucide-icon [img]="FileText" [size]="13" />
+                      {{ 'ownerPortal.contracts.noPdf' | transloco }}
+                    </p>
+                  }
+                </li>
+              }
+            </ul>
+          }
         }
       }
     }
-  }
-</section>
+  </section>
+</div>

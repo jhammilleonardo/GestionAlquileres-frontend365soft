@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { SlugService } from '../slug.service';
 
@@ -12,16 +12,15 @@ import { SlugService } from '../slug.service';
 })
 export class ApplicationIntentionService {
   private readonly INTENTION_KEY = 'application_intention';
+  private readonly router = inject(Router);
+  private readonly slugService = inject(SlugService);
 
   // Signals para reactitud
   readonly hasIntention = signal<boolean>(false);
   readonly intendedPropertyId = signal<number | null>(null);
   readonly intendedPropertyTitle = signal<string | null>(null);
 
-  constructor(
-    private router: Router,
-    private slugService: SlugService,
-  ) {
+  constructor() {
     // Cargar intención guardada al iniciar
     this.loadIntention();
   }

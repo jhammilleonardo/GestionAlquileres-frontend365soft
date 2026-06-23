@@ -1,52 +1,176 @@
-<div class="map-view-container">
-  <!-- Header -->
-  <header class="map-header">
-    <div class="header-content">
-      <div class="title-section">
-        <h1 class="map-title">{{ 'public.map.title' | transloco }}</h1>
-        <p class="map-subtitle">{{ 'public.map.subtitle' | transloco }}</p>
-      </div>
-      <div class="actions-section">
-        <a
-          [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades']"
-          class="btn-list-view"
-        >
-          <lucide-icon [img]="List" class="btn-icon"></lucide-icon>
-          {{ 'public.map.listView' | transloco }}
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Map Area -->
-  <main class="map-main">
-    <div id="map-container" class="map-container">
-      <div *ngIf="isLoading" class="map-loader">
+<div class="map-view-container" [class.in-modal]="inModal()">
+  <!-- Mapa (capa base) -->
+  <div id="map-container" class="map-container">
+    @if (isLoading()) {
+      <div class="map-loader">
         <div class="spinner"></div>
         <p>{{ 'public.map.loading' | transloco }}</p>
       </div>
+    }
+  </div>
+
+  <!-- Controles flotantes superiores: buscador + filtros + cerrar/lista -->
+  <div class="map-overlay-top">
+    <div class="search-wrap">
+      <div class="search-pill">
+        <lucide-icon [img]="Search" class="search-pill__icon" />
+        <input
+          type="text"
+          class="search-pill__input"
+          autocomplete="off"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+          (keyup.enter)="onSearchEnter()"
+          (blur)="onSearchBlur()"
+          [placeholder]="'public.map.searchPlaceholder' | transloco"
+        />
+        @if (search()) {
+          <button
+            type="button"
+            class="search-clear"
+            (click)="clearSearch()"
+            [attr.aria-label]="'common.close' | transloco"
+          >
+            <lucide-icon [img]="X" />
+          </button>
+        }
+      </div>
+
+      @if (suggestions().length > 0) {
+        <ul class="search-suggestions" role="listbox">
+          @for (s of suggestions(); track s.label) {
+            <li role="option">
+              <button type="button" class="suggestion-item" (mousedown)="selectSuggestion(s)">
+                <lucide-icon [img]="MapPin" class="suggestion-icon" />
+                <span class="suggestion-text">{{ s.label }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
     </div>
 
-    <!-- Properties Overlay (Optional, for quick preview) -->
-    <aside class="properties-sidebar" *ngIf="!isLoading && properties.length > 0">
-      <div class="sidebar-header">
-        <h2>{{ 'public.map.results' | transloco: { count: properties.length } }}</h2>
+    <button
+      type="button"
+      class="round-btn round-btn--primary"
+      [class.is-active]="filtersExpanded()"
+      (click)="filtersExpanded.set(!filtersExpanded())"
+      [attr.aria-expanded]="filtersExpanded()"
+      [attr.aria-label]="'public.map.filters' | transloco"
+    >
+      <lucide-icon [img]="SlidersHorizontal" />
+    </button>
+
+    @if (inModal()) {
+      <button
+        type="button"
+        class="round-btn round-btn--light"
+        (click)="closed.emit()"
+        [attr.aria-label]="'common.close' | transloco"
+      >
+        <lucide-icon [img]="X" />
+      </button>
+    } @else {
+      <a
+        class="round-btn round-btn--light"
+        [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades']"
+        [attr.aria-label]="'public.map.listView' | transloco"
+      >
+        <lucide-icon [img]="List" />
+      </a>
+    }
+  </div>
+
+  <!-- Panel de filtros (desplegable) -->
+  @if (filtersExpanded()) {
+    <div class="map-filters-panel">
+      <div class="filter-field">
+        <label class="filter-label">{{ 'public.properties.minPrice' | transloco }}</label>
+        <input
+          type="number"
+          min="0"
+          class="filter-input"
+          [value]="minPrice() ?? ''"
+          (input)="minPrice.set(numberValue($event)); onFilterChange()"
+          placeholder="0"
+        />
       </div>
-      <div class="sidebar-list">
-        <div
-          *ngFor="let prop of properties"
-          class="sidebar-item"
-          [routerLink]="['/', slugService.getSlug(), 'publico', 'propiedades', prop.id]"
-        >
-          <div class="item-img-container">
-            <img [src]="propertyService.getPropertyImageUrl(prop)" [alt]="prop.title" />
-          </div>
-          <div class="item-info">
-            <h4 class="item-title">{{ prop.title }}</h4>
-            <p class="item-price">{{ propertyService.getPropertyPrice(prop) }}</p>
-          </div>
-        </div>
+
+      <div class="filter-field">
+        <label class="filter-label">{{ 'public.properties.maxPrice' | transloco }}</label>
+        <input
+          type="number"
+          min="0"
+          class="filter-input"
+          [value]="maxPrice() ?? ''"
+          (input)="maxPrice.set(numberValue($event)); onFilterChange()"
+          placeholder="∞"
+        />
       </div>
-    </aside>
-  </main>
+
+      <div class="filter-field">
+        <label class="filter-label">{{ 'public.properties.bedroomsFilter' | transloco }}</label>
+        <app-select
+          [options]="bedroomSelectOptions()"
+          [ngModel]="bedrooms() ?? ANY_BEDROOMS"
+          [ariaLabel]="'public.properties.bedroomsFilter' | transloco"
+          (ngModelChange)="onBedroomsChange($event)"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label">{{ 'public.properties.rentalTypeLabel' | transloco }}</label>
+        <app-select
+          [options]="rentalTypeSelectOptions()"
+          [ngModel]="rentalType()"
+          [ariaLabel]="'public.properties.rentalTypeLabel' | transloco"
+          (ngModelChange)="onRentalTypeChange($event)"
+        />
+      </div>
+
+      @if (hasActiveFilters()) {
+        <button type="button" class="clear-link" (click)="clearFilters()">
+          <lucide-icon [img]="X" />
+          {{ 'common.clearFilters' | transloco }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Botones flotantes (mi ubicación + capas) -->
+  <div class="map-fab-stack">
+    <button
+      type="button"
+      class="round-btn round-btn--light"
+      [class.is-busy]="isLocatingMe()"
+      (click)="locateMe()"
+      [attr.aria-label]="'public.map.locate' | transloco"
+    >
+      <lucide-icon [img]="LocateFixed" />
+    </button>
+    <button
+      type="button"
+      class="round-btn round-btn--primary"
+      [class.is-active]="isSatellite()"
+      (click)="toggleLayer()"
+      [attr.aria-label]="'public.map.layers' | transloco"
+    >
+      <lucide-icon [img]="Layers" />
+    </button>
+  </div>
+
+  <!-- Avisos flotantes (prioridad: error de carga → geo → zona → cobertura → vacío) -->
+  @if (loadError()) {
+    <p class="map-toast map-toast--error" aria-live="polite">
+      {{ 'public.map.loadError' | transloco }}
+    </p>
+  } @else if (geoError()) {
+    <p class="map-toast" aria-live="polite">{{ 'public.map.geoError' | transloco }}</p>
+  } @else if (zoneNotFound()) {
+    <p class="map-toast" aria-live="polite">{{ 'public.map.zoneNotFound' | transloco }}</p>
+  } @else if (coverageMessage(); as msg) {
+    <p class="map-toast" aria-live="polite">{{ msg }}</p>
+  } @else if (!isLoading() && properties().length === 0) {
+    <p class="map-toast" aria-live="polite">{{ 'public.map.noResults' | transloco }}</p>
+  }
 </div>

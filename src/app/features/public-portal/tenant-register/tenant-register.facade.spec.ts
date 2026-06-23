@@ -143,8 +143,8 @@ function fillValidForm(facade: TenantRegisterFacade): void {
     name: 'Ana Test',
     email: 'ana@test.com',
     phone: '+59170000000',
-    password: 'secret1',
-    confirmPassword: 'secret1',
+    password: 'secret123',
+    confirmPassword: 'secret123',
   });
 }
 

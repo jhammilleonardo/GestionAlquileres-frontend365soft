@@ -76,4 +76,49 @@ describe('buildPropertySavePayloads', () => {
 
     expect(result.createDto.new_owners).toBeUndefined();
   });
+
+  it('no manda campos no soportados por PATCH y conserva valores numéricos en cero', () => {
+    const result = buildPropertySavePayloads({
+      title: 'Departamento',
+      property_type_id: 1,
+      property_subtype_id: 2,
+      rental_type: 'LONG_TERM',
+      monthly_rent: '0',
+      price_per_night: '100',
+      security_deposit_amount: 0,
+      bedrooms: 0,
+      bathrooms: '0',
+      latitude: 0,
+      longitude: '0',
+      addresses: [
+        {
+          street_address: 'Calle 1',
+          city: 'La Paz',
+          state: 'La Paz',
+          country: 'BO',
+        },
+      ],
+    });
+
+    expect(result.createDto).toMatchObject({
+      monthly_rent: 0,
+      price_per_night: 100,
+      security_deposit_amount: 0,
+      bedrooms: 0,
+      bathrooms: 0,
+      latitude: 0,
+      longitude: 0,
+    });
+    expect(result.updateDto).toMatchObject({
+      monthly_rent: 0,
+      security_deposit_amount: 0,
+      bedrooms: 0,
+      bathrooms: 0,
+      latitude: 0,
+      longitude: 0,
+    });
+    expect(result.updateDto).not.toHaveProperty('new_owners');
+    expect(result.updateDto).not.toHaveProperty('rental_type');
+    expect(result.updateDto).not.toHaveProperty('price_per_night');
+  });
 });

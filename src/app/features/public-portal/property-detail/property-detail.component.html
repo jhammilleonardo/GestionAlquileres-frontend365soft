@@ -27,7 +27,13 @@
             [src]="getCurrentImage()"
             [alt]="prop.title"
             class="main-image"
+            role="button"
+            tabindex="0"
+            fetchpriority="high"
+            loading="eager"
             (click)="openLightbox(currentImageIndex())"
+            (keydown.enter)="openLightbox(currentImageIndex())"
+            (keydown.space)="openLightbox(currentImageIndex()); $event.preventDefault()"
           />
         } @else {
           <div class="no-image-placeholder">
@@ -75,6 +81,7 @@
               <img
                 [src]="thumb.url"
                 [alt]="'public.propertyDetail.imageNumber' | transloco: { num: thumb.index + 1 }"
+                loading="lazy"
               />
               @if (isMoreThumb(thumb.index)) {
                 <span class="thumbnail-more">+{{ getExtraThumbsCount() }}</span>
@@ -87,7 +94,14 @@
 
     <!-- Lightbox -->
     @if (showLightbox()) {
-      <div class="lightbox-overlay" role="dialog" aria-modal="true" (click)="closeLightbox()">
+      <div
+        class="lightbox-overlay"
+        role="dialog"
+        aria-modal="true"
+        tabindex="0"
+        (click)="$event.target === $event.currentTarget && closeLightbox()"
+        (keydown.escape)="closeLightbox()"
+      >
         <button
           type="button"
           class="lightbox-close"
@@ -97,8 +111,8 @@
           <lucide-icon [img]="X" [size]="22" />
         </button>
 
-        <div class="lightbox-stage" (click)="$event.stopPropagation()">
-          <img [src]="getCurrentImage()" [alt]="prop.title" class="lightbox-image" />
+        <div class="lightbox-stage">
+          <img [src]="getCurrentImage()" [alt]="prop.title" class="lightbox-image" loading="lazy" />
 
           @if (hasMultipleImages()) {
             <button
@@ -129,6 +143,15 @@
       <div class="header-main-info">
         <div class="title-area">
           <h1 class="prop-title">{{ prop.title }}</h1>
+          @if (rating(); as r) {
+            @if (r.count > 0) {
+              <div class="prop-rating" [attr.aria-label]="r.average + ' / 5'">
+                <lucide-icon [img]="Star" class="rating-star" [size]="16" />
+                <strong>{{ r.average }}</strong>
+                <span class="rating-count">({{ r.count }})</span>
+              </div>
+            }
+          }
           <div class="prop-location">
             <lucide-icon [img]="MapPin" class="loc-icon-small" />
             {{ getPropertyAddress() }}
@@ -187,8 +210,79 @@
     <div class="content-layout">
       <!-- Left Column -->
       <div class="main-content">
+        <!-- Map Section -->
+        <div class="section-card-map">
+          <h2 class="section-title-new">{{ 'public.propertyDetail.location' | transloco }}</h2>
+          @if (getLocationForMap(); as location) {
+            <div class="public-map">
+              @defer (on viewport) {
+                <app-location-map
+                  [latitude]="location.coordinates.lat"
+                  [longitude]="location.coordinates.lng"
+                  [label]="location.address"
+                  [height]="380"
+                />
+              } @placeholder {
+                <div class="map-loading-placeholder"></div>
+              }
+              <div class="public-map-actions">
+                <p class="map-address-new">{{ location.address }}</p>
+                <a
+                  class="btn-view-map-new"
+                  [href]="getGoogleMapsUrl()"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {{ 'public.propertyDetail.viewMap' | transloco }}
+                </a>
+              </div>
+            </div>
+          } @else {
+            <div class="map-placeholder-new">
+              <div class="map-overlay-new">
+                <div class="map-info-new">
+                  <lucide-icon [img]="MapPin" class="map-icon-big" />
+                  <p class="map-address-new">{{ getPropertyAddress() }}</p>
+                  <a
+                    class="btn-view-map-new"
+                    [href]="getGoogleMapsUrl()"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    {{ 'public.propertyDetail.viewMap' | transloco }}
+                  </a>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Disponibilidad corto plazo -->
+        @if (shortTermUnit(); as unit) {
+          <div class="section-card-map">
+            <h2 class="section-title-new">{{ 'public.availability.title' | transloco }}</h2>
+            @defer (on idle; prefetch on viewport) {
+              <app-availability-calendar
+                [propertyId]="property()!.id"
+                [unitId]="unit.id"
+                [propertyTitle]="property()!.title"
+                [unitNumber]="unit.unit_number"
+                [pricePerNight]="unit.price_per_night ?? 0"
+                [cleaningFee]="unit.cleaning_fee ?? 0"
+                [minNights]="unit.min_nights ?? 1"
+                [currency]="property()?.currency ?? 'BOB'"
+              />
+            } @placeholder {
+              <div class="availability-loading-placeholder"></div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Right Column - Contact Card -->
+      <div class="sidebar-new">
         <!-- Quick Stats -->
-        <div class="quick-stats-grid">
+        <div class="quick-stats-grid side-stats-grid">
           @if (prop.square_meters || prop.total_area) {
             <div class="stat-card-new">
               <div class="stat-icon-wrap"><lucide-icon [img]="Maximize" /></div>
@@ -231,31 +325,10 @@
           }
         </div>
 
-        <!-- Description -->
-        <div class="section-card">
-          <h2 class="section-title">{{ 'public.propertyDetail.description' | transloco }}</h2>
-          <p class="description-text">{{ prop.description }}</p>
-        </div>
-
-        <!-- Amenities -->
-        @if (prop.amenities?.length) {
-          <div class="section-card">
-            <h2 class="section-title">{{ 'public.propertyDetail.amenities' | transloco }}</h2>
-            <div class="amenities-grid">
-              @for (amenity of prop.amenities; track amenity) {
-                <div class="amenity-item">
-                  <span class="amenity-icon">✓</span>
-                  {{ amenity }}
-                </div>
-              }
-            </div>
-          </div>
-        }
-
         <!-- Property Details -->
-        <div class="section-card">
+        <div class="section-card side-section-card">
           <h2 class="section-title">{{ 'public.propertyDetail.detailsTitle' | transloco }}</h2>
-          <div class="details-grid">
+          <div class="details-grid side-details-grid">
             <div class="detail-row">
               <span class="detail-label">{{ 'public.propertyDetail.propType' | transloco }}</span>
               <span class="detail-value">{{ getPropertyTypeName() }}</span>
@@ -324,42 +397,27 @@
           </div>
         </div>
 
-        <!-- Map Section -->
-        <div class="section-card-map">
-          <h2 class="section-title-new">{{ 'public.propertyDetail.location' | transloco }}</h2>
-          <div class="map-placeholder-new">
-            <div class="map-overlay-new">
-              <div class="map-info-new">
-                <lucide-icon [img]="MapPin" class="map-icon-big" />
-                <p class="map-address-new">{{ getPropertyAddress() }}</p>
-                <button type="button" class="btn-view-map-new" (click)="openMapModal()">
-                  {{ 'public.propertyDetail.viewMap' | transloco }}
-                </button>
-              </div>
-            </div>
-          </div>
+        <!-- Description -->
+        <div class="section-card side-section-card">
+          <h2 class="section-title">{{ 'public.propertyDetail.description' | transloco }}</h2>
+          <p class="description-text">{{ prop.description }}</p>
         </div>
 
-        <!-- Disponibilidad corto plazo -->
-        @if (shortTermUnit(); as unit) {
-          <div class="section-card-map">
-            <h2 class="section-title-new">{{ 'public.availability.title' | transloco }}</h2>
-            <app-availability-calendar
-              [propertyId]="property()!.id"
-              [unitId]="unit.id"
-              [propertyTitle]="property()!.title"
-              [unitNumber]="unit.unit_number"
-              [pricePerNight]="unit.price_per_night ?? 0"
-              [cleaningFee]="unit.cleaning_fee ?? 0"
-              [minNights]="unit.min_nights ?? 1"
-              [currency]="property()?.currency ?? 'USD'"
-            />
+        <!-- Amenities -->
+        @if (prop.amenities?.length) {
+          <div class="section-card side-section-card">
+            <h2 class="section-title">{{ 'public.propertyDetail.amenities' | transloco }}</h2>
+            <div class="amenities-grid side-amenities-grid">
+              @for (amenity of prop.amenities; track amenity) {
+                <div class="amenity-item">
+                  <span class="amenity-icon">✓</span>
+                  {{ amenity }}
+                </div>
+              }
+            </div>
           </div>
         }
-      </div>
 
-      <!-- Right Column - Contact Card -->
-      <div class="sidebar-new">
         <div class="contact-card-premium sticky-sidebar">
           <h3 class="contact-title-new">
             {{ 'public.propertyDetail.interestedTitle' | transloco }}
@@ -369,36 +427,36 @@
           </p>
 
           <div class="contact-info-list">
-            @if (getOwnerName()) {
+            @if (getPublicContactName()) {
               <div class="contact-item-new">
                 <div class="contact-icon-new blue-bg"><lucide-icon [img]="User" /></div>
                 <div class="contact-text-new">
                   <span class="contact-label-new">{{
-                    'public.propertyDetail.owner' | transloco
+                    'public.propertyDetail.agency' | transloco
                   }}</span>
-                  <span class="contact-value-new">{{ getOwnerName() }}</span>
+                  <span class="contact-value-new">{{ getPublicContactName() }}</span>
                 </div>
               </div>
             }
-            @if (getOwnerEmail()) {
+            @if (getPublicContactEmail()) {
               <div class="contact-item-new">
                 <div class="contact-icon-new green-bg"><lucide-icon [img]="Mail" /></div>
                 <div class="contact-text-new">
                   <span class="contact-label-new">{{
                     'public.propertyDetail.email' | transloco
                   }}</span>
-                  <span class="contact-value-new">{{ getOwnerEmail() }}</span>
+                  <span class="contact-value-new">{{ getPublicContactEmail() }}</span>
                 </div>
               </div>
             }
-            @if (getOwnerPhone()) {
+            @if (getPublicContactPhone()) {
               <div class="contact-item-new">
                 <div class="contact-icon-new orange-bg"><lucide-icon [img]="Phone" /></div>
                 <div class="contact-text-new">
                   <span class="contact-label-new">{{
                     'public.propertyDetail.phone' | transloco
                   }}</span>
-                  <span class="contact-value-new">{{ getOwnerPhone() }}</span>
+                  <span class="contact-value-new">{{ getPublicContactPhone() }}</span>
                 </div>
               </div>
             }
@@ -414,16 +472,18 @@
               <lucide-icon [img]="MessageSquare" class="btn-icon-small" />
               {{ 'public.propertyDetail.sendMessage' | transloco }}
             </button>
-            <button type="button" class="btn-call-now">
-              <lucide-icon [img]="PhoneCall" class="btn-icon-small" />
-              {{ 'public.propertyDetail.callNow' | transloco }}
-            </button>
+            @if (getPublicContactPhone()) {
+              <a [href]="'tel:' + getPublicContactPhone()" class="btn-call-now">
+                <lucide-icon [img]="PhoneCall" class="btn-icon-small" />
+                {{ 'public.propertyDetail.callNow' | transloco }}
+              </a>
+            }
           </div>
 
           <div class="schedule-section-new">
             <div class="divider-new"></div>
             <p class="schedule-text-new">{{ 'public.propertyDetail.scheduleTitle' | transloco }}</p>
-            <button type="button" class="btn-schedule-new">
+            <button type="button" class="btn-schedule-new" (click)="openContactModal()">
               {{ 'public.propertyDetail.scheduleBtn' | transloco }}
             </button>
           </div>

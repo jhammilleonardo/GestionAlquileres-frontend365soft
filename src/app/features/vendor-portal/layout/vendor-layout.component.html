@@ -47,7 +47,15 @@
               <span>{{ 'vendorPortal.layout.logout' | transloco }}</span>
             </button>
           </div>
-          <div class="dropdown-overlay" (click)="closeUserMenu()"></div>
+          <div
+            class="dropdown-overlay"
+            role="button"
+            tabindex="0"
+            aria-label="Cerrar"
+            (click)="closeUserMenu()"
+            (keydown.enter)="closeUserMenu()"
+            (keydown.space)="closeUserMenu(); $event.preventDefault()"
+          ></div>
         }
       </div>
     </div>
@@ -55,7 +63,15 @@
 
   <div class="layout-body">
     @if (!sidebarCollapsed()) {
-      <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+      <div
+        class="sidebar-overlay"
+        role="button"
+        tabindex="0"
+        aria-label="Cerrar menú"
+        (click)="toggleSidebar()"
+        (keydown.enter)="toggleSidebar()"
+        (keydown.space)="toggleSidebar(); $event.preventDefault()"
+      ></div>
     }
 
     <!-- Sidebar -->

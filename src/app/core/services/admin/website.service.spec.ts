@@ -33,8 +33,10 @@ describe('WebsiteService', () => {
     expect(patch).toHaveBeenCalledWith('acme/admin/website', { company_description: 'Hola' });
   });
 
-  it('togglePublish hace PATCH al endpoint publish', () => {
-    service.togglePublish().subscribe();
-    expect(patch).toHaveBeenCalledWith('acme/admin/website/publish', {});
+  it('setPublished hace PATCH al endpoint publish con el estado deseado', () => {
+    service.setPublished(true).subscribe();
+    expect(patch).toHaveBeenCalledWith('acme/admin/website/publish', {
+      published: true,
+    });
   });
 });

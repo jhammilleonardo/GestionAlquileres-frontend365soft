@@ -1,0 +1,62 @@
+<div class="cal-header">
+  <button
+    type="button"
+    class="cal-nav"
+    (click)="monthChange.emit(-1)"
+    [attr.aria-label]="'common.previous' | transloco"
+  >
+    <lucide-icon [img]="ChevronLeft" [size]="18" />
+  </button>
+  <strong class="cal-month">{{ monthRangeLabel() }}</strong>
+  <button
+    type="button"
+    class="cal-nav"
+    (click)="monthChange.emit(1)"
+    [attr.aria-label]="'common.next' | transloco"
+  >
+    <lucide-icon [img]="ChevronRight" [size]="18" />
+  </button>
+</div>
+
+<div class="months-grid">
+  @for (month of visibleMonths(); track month.key) {
+    <div class="month-panel">
+      <div class="month-title">{{ month.label }}</div>
+
+      <div class="cal-grid cal-weekdays">
+        @for (wd of weekdays; track wd) {
+          <span class="cal-wd">{{ wd }}</span>
+        }
+      </div>
+
+      <div class="cal-grid">
+        @for (cell of month.cells; track cell.iso) {
+          @if (cell.date) {
+            <button
+              type="button"
+              class="cal-day"
+              [attr.data-date]="cell.iso"
+              [attr.data-status]="cell.status"
+              [class.in-range]="cell.inRange"
+              [class.is-checkin]="cell.isCheckin && !anchorStart()"
+              [class.is-anchor]="cell.isCheckin && anchorStart()"
+              [class.is-checkout]="cell.isCheckout"
+              [disabled]="cell.disabled"
+              (click)="onDayClick(cell)"
+            >
+              {{ cell.date.getDate() }}
+            </button>
+          } @else {
+            <span class="cal-day cal-pad"></span>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<div class="cal-legend">
+  <span class="lg lg-available">{{ 'public.availability.available' | transloco }}</span>
+  <span class="lg lg-blocked">{{ 'public.availability.blocked' | transloco }}</span>
+  <span class="lg lg-booked">{{ 'public.availability.booked' | transloco }}</span>
+</div>

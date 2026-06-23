@@ -9,6 +9,7 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { resolveQrImageSrc } from '../../../core/utils/safe-url.util';
 import {
   AlertCircle,
   ArrowLeft,
@@ -107,15 +108,8 @@ export class TenantQrGenerateComponent {
   });
 
   readonly qrSafeUrl = computed<SafeUrl | null>(() => {
-    const qr = this.qrService.activeQr();
-    if (!qr?.qr_image) return null;
-    if (qr.qr_image.startsWith('http')) {
-      return this.sanitizer.bypassSecurityTrustUrl(qr.qr_image);
-    }
-    const src = qr.qr_image.startsWith('data:')
-      ? qr.qr_image
-      : `data:image/png;base64,${qr.qr_image}`;
-    return this.sanitizer.bypassSecurityTrustUrl(src);
+    const src = resolveQrImageSrc(this.qrService.activeQr()?.qr_image);
+    return src ? this.sanitizer.bypassSecurityTrustUrl(src) : null;
   });
 
   constructor() {
@@ -133,9 +127,7 @@ export class TenantQrGenerateComponent {
       const c = this.contractService.currentContract();
       if (c) {
         const amount =
-          typeof c.monthly_rent === 'number'
-            ? c.monthly_rent
-            : parseFloat(c.monthly_rent as unknown as string) || null;
+          typeof c.monthly_rent === 'number' ? c.monthly_rent : Number(c.monthly_rent) || null;
         const currency = this.normalizeCurrency(c.currency) ?? Currency.BOB;
         this.form.patchValue({ amount, currency });
       } else if (this.contractService.isLoading()) {

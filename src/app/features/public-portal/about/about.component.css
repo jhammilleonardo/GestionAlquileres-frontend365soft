@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: var(--brand-primary, #2563eb);
   overflow: hidden;
 }
 
@@ -27,7 +27,7 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  color: white;
+  color: var(--brand-on-primary, white);
   padding: 0 20px;
   max-width: 800px;
 }
@@ -112,13 +112,13 @@
 .value-icon {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: var(--brand-primary, #2563eb);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1.5rem;
-  color: white;
+  color: var(--brand-on-primary, white);
 }
 
 .value-icon :deep(svg) {
@@ -139,34 +139,6 @@
   line-height: 1.6;
 }
 
-/* Stats Section */
-.stats-section {
-  padding: 80px 20px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: white;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 2rem;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 3rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-size: 1.1rem;
-  opacity: 0.95;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .hero-title {
@@ -182,16 +154,11 @@
   }
   
   .mission-section,
-  .values-section,
-  .stats-section {
+  .values-section {
     padding: 50px 20px;
   }
-  
+
   .values-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .stat-number {
-    font-size: 2.2rem;
   }
 }

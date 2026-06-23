@@ -1,11 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, catchError } from 'rxjs';
+import { Observable, tap, catchError, of } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { getApiErrorMessage } from '../../http/http-error.util';
 import { SessionTokenService } from '../session-token.service';
 import { SlugService } from '../slug.service';
+import { SessionExpirationService } from '../session-expiration.service';
 
 export interface VendorUser {
   id: number;
@@ -18,7 +20,7 @@ export interface VendorUser {
 }
 
 export interface VendorLoginResponse {
-  access_token: string;
+  access_token?: string;
   user: VendorUser;
 }
 
@@ -27,6 +29,7 @@ export class VendorAuthService {
   private readonly http = inject(HttpClient);
   private readonly sessionToken = inject(SessionTokenService);
   private readonly slugService = inject(SlugService);
+  private readonly sessionExpiration = inject(SessionExpirationService);
 
   private readonly vendorUserKey = 'vendor_user';
   private readonly currentVendorSignal = signal<VendorUser | null>(this.loadVendorFromStorage());
@@ -36,6 +39,12 @@ export class VendorAuthService {
   readonly currentVendor = this.currentVendorSignal.asReadonly();
   readonly isLoading = this.isLoadingSignal.asReadonly();
   readonly error = this.errorSignal.asReadonly();
+
+  constructor() {
+    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.currentVendorSignal.set(null);
+    });
+  }
 
   login(
     slug: string,
@@ -66,6 +75,10 @@ export class VendorAuthService {
   }
 
   logout(slug = this.slugService.getSlug()): void {
+    this.http
+      .post(`${environment.apiUrl}auth/logout`, {})
+      .pipe(catchError(() => of(null)))
+      .subscribe();
     this.sessionToken.clearToken('vendor');
     localStorage.removeItem(this.vendorUserKey);
     sessionStorage.removeItem(this.vendorUserKey);
@@ -73,18 +86,15 @@ export class VendorAuthService {
     if (slug) this.slugService.setSlug(slug);
   }
 
-  hasToken(): boolean {
-    return Boolean(this.sessionToken.getToken('vendor'));
-  }
-
   hasSessionForSlug(slug: string | null | undefined): boolean {
-    if (!this.hasToken()) return false;
+    // La sesión vive en la cookie HttpOnly; el objeto user es la señal cliente.
+    if (!this.currentVendorSignal()) return false;
     if (!slug) return true;
     return this.currentVendorSignal()?.tenant_slug === slug;
   }
 
   private setSession(response: VendorLoginResponse, rememberMe: boolean): void {
-    this.sessionToken.setToken('vendor', response.access_token, rememberMe);
+    // El JWT va en la cookie HttpOnly; sólo se persiste el objeto user.
     const storage = rememberMe ? localStorage : sessionStorage;
     localStorage.removeItem(this.vendorUserKey);
     sessionStorage.removeItem(this.vendorUserKey);

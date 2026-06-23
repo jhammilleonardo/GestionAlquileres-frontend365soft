@@ -6,7 +6,12 @@ import {
   isDevMode,
   signal,
 } from '@angular/core';
-import { provideRouter, withRouterConfig } from '@angular/router';
+import {
+  PreloadAllModules,
+  provideRouter,
+  withPreloading,
+  withRouterConfig,
+} from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -16,6 +21,7 @@ import { Observable } from 'rxjs';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { credentialsCsrfInterceptor } from './core/interceptors/credentials-csrf.interceptor';
 import { SentryErrorHandler } from './core/sentry/sentry-error-handler';
 
 class TranslocoHttpLoader implements TranslocoLoader {
@@ -33,7 +39,11 @@ class TranslocoHttpLoader implements TranslocoLoader {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withRouterConfig({ paramsInheritanceStrategy: 'always' })),
+    provideRouter(
+      routes,
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+      withPreloading(PreloadAllModules),
+    ),
     provideAnimations(),
     provideTaiga({
       apis: 'stable',
@@ -47,7 +57,7 @@ export const appConfig: ApplicationConfig = {
       provide: TUI_DARK_MODE,
       useFactory: () => Object.assign(signal(false), { reset: () => undefined }),
     },
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([credentialsCsrfInterceptor, authInterceptor])),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',

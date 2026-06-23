@@ -7,7 +7,8 @@
     "excel": "Excel",
     "pdf": "PDF",
     "apply": "Apply",
-    "clear": "Clear"
+    "clear": "Clear",
+    "exportLabel": "Export report"
   },
   "filters": {
     "ariaLabel": "Report filters",
@@ -16,7 +17,14 @@
     "statusLabel": "Status",
     "statusPlaceholder": "All",
     "fromLabel": "From",
-    "toLabel": "To"
+    "toLabel": "To",
+    "period": "Period",
+    "presetCurrent": "This month",
+    "presetPrevious": "Last month",
+    "presetQuarter": "Last 3 months",
+    "presetCustom": "Custom",
+    "allProperties": "All properties",
+    "allStatuses": "All statuses"
   },
   "status": {
     "active": "Active",
@@ -41,7 +49,11 @@
     "delinquencyTitle": "Delinquency aging",
     "delinquencyEyebrow": "Collections",
     "vacancyTitle": "Vacancy & availability",
-    "vacancyEyebrow": "Operations"
+    "vacancyEyebrow": "Operations",
+    "incomeEmpty": "No payments recorded this period. Income will appear here once payments are registered.",
+    "performanceEmpty": "Register payments or select the P&L report to see performance per property.",
+    "vacancyEmpty": "No vacant units in this period.",
+    "daysUnit": "days"
   },
   "table": {
     "eyebrow": "Detail",
@@ -164,7 +176,8 @@
     "available": "Available",
     "occupied": "Occupied",
     "propertyFallback": "Property {{n}}",
-    "unitFallback": "Unit {{n}}"
+    "unitFallback": "Unit {{n}}",
+    "unit": "Unit"
   },
   "trend": {
     "previous": "Last month",

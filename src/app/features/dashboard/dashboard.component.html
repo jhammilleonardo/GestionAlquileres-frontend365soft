@@ -6,6 +6,13 @@
     </div>
   }
 
+  @if (rentalModeBlocked()) {
+    <div class="access-denied-banner" role="alert">
+      <lucide-icon [img]="AlertTriangle" [size]="18" />
+      <span>{{ 'dashboard.rentalModeBlocked' | transloco }}</span>
+    </div>
+  }
+
   <app-page-header
     eyebrow="365Soft"
     [title]="'dashboard.title' | transloco"
@@ -26,146 +33,528 @@
   @if (isLoading()) {
     <app-loading-state [label]="'dashboard.loading' | transloco" />
   } @else {
-    <div class="kpi-grid">
-      <!-- Ocupación -->
-      <article
-        class="kpi-card"
-        role="button"
-        tabindex="0"
+    <!-- ── Barra de resumen ────────────────────────────────────────────── -->
+    <div class="summary-bar">
+      <button
+        class="summary-stat"
         (click)="goToOccupancy()"
-        (keyup.enter)="goToOccupancy()"
+        type="button"
+        aria-label="{{ 'dashboard.occupancyRate' | transloco }}"
       >
-        <div class="kpi-icon-wrap occupancy">
-          <lucide-icon [img]="TrendingUp" [size]="20" />
+        <div class="summary-icon occupancy"><lucide-icon [img]="TrendingUp" [size]="16" /></div>
+        <div class="summary-body">
+          <span class="summary-value">{{ kpis().occupancyRateValue ?? 0 | percent: '1.0-0' }}</span>
+          <span class="summary-label">{{ 'dashboard.occupancyRate' | transloco }}</span>
         </div>
-        <div class="kpi-body">
-          <span class="kpi-value">{{ kpis().occupancyRateValue ?? 0 | percent: '1.0-0' }}</span>
-          <span class="kpi-label">{{ 'dashboard.occupancyRate' | transloco }}</span>
-          <app-status-badge
-            [label]="
-              (kpis().occupiedUnits ?? 0) +
-              ' / ' +
-              (kpis().totalUnits ?? 0) +
-              ' ' +
-              ('dashboard.units' | transloco)
-            "
-            [tone]="getOccupancyTone()"
-          />
-        </div>
-      </article>
+        <app-status-badge
+          [label]="(kpis().occupiedUnits ?? 0) + '/' + (kpis().totalUnits ?? 0)"
+          [tone]="getOccupancyTone()"
+        />
+      </button>
 
-      <!-- Ingresos del mes -->
-      <article
-        class="kpi-card"
-        role="button"
-        tabindex="0"
+      <div class="summary-divider" aria-hidden="true"></div>
+
+      <button
+        class="summary-stat"
         (click)="goToIncome()"
-        (keyup.enter)="goToIncome()"
+        type="button"
+        aria-label="{{ 'dashboard.monthlyIncome' | transloco }}"
       >
-        <div class="kpi-icon-wrap income">
-          <lucide-icon [img]="BadgeDollarSign" [size]="20" />
+        <div class="summary-icon income"><lucide-icon [img]="BadgeDollarSign" [size]="16" /></div>
+        <div class="summary-body">
+          <span class="summary-value">{{ kpis().monthlyIncome ?? 0 | number: '1.0-0' }}</span>
+          <span class="summary-label">{{ 'dashboard.monthlyIncome' | transloco }}</span>
         </div>
-        <div class="kpi-body">
-          <span class="kpi-value">{{ kpis().monthlyIncome ?? 0 | number: '1.0-0' }}</span>
-          <span class="kpi-label">{{ 'dashboard.monthlyIncome' | transloco }}</span>
-          @if (incomeTrend(); as trend) {
-            <span class="kpi-trend" [class.up]="trend.up" [class.down]="!trend.up">
-              <lucide-icon [img]="trend.up ? ArrowUpRight : ArrowDownRight" [size]="14" />
-              {{ trend.pct | number: '1.0-1' }}% {{ 'dashboard.vsPrevMonth' | transloco }}
-            </span>
-          }
-        </div>
-      </article>
+        @if (incomeTrend(); as trend) {
+          <span class="summary-trend" [class.up]="trend.up" [class.down]="!trend.up">
+            <lucide-icon [img]="trend.up ? ArrowUpRight : ArrowDownRight" [size]="13" />
+            {{ trend.pct | number: '1.0-1' }}%
+          </span>
+        }
+      </button>
 
-      <!-- Pagos pendientes de aprobación -->
-      <article
-        class="kpi-card"
-        role="button"
-        tabindex="0"
-        (click)="goToPendingPayments()"
-        (keyup.enter)="goToPendingPayments()"
+      <div class="summary-divider" aria-hidden="true"></div>
+
+      <button
+        class="summary-stat"
+        (click)="goToExpenses()"
+        type="button"
+        aria-label="{{ 'dashboard.monthlyExpenses' | transloco }}"
       >
-        <div class="kpi-icon-wrap pending">
-          <lucide-icon [img]="ClipboardList" [size]="20" />
+        <div class="summary-icon expenses"><lucide-icon [img]="Receipt" [size]="16" /></div>
+        <div class="summary-body">
+          <span class="summary-value">{{ kpis().monthlyExpenses ?? 0 | number: '1.0-0' }}</span>
+          <span class="summary-label">{{ 'dashboard.monthlyExpenses' | transloco }}</span>
         </div>
-        <div class="kpi-body">
-          <span class="kpi-value">{{ kpis().pendingPaymentsCount ?? 0 }}</span>
-          <span class="kpi-label">{{ 'dashboard.pendingPayments' | transloco }}</span>
-          @if (hasDelinquency()) {
-            <app-status-badge
-              [label]="(kpis().delinquentCount ?? 0) + ' ' + ('dashboard.delinquent' | transloco)"
-              tone="danger"
-            />
-          } @else if ((kpis().pendingPaymentsCount ?? 0) > 0) {
-            <app-status-badge
-              [label]="'dashboard.pendingReview' | transloco"
-              [tone]="getPendingPaymentsTone()"
-            />
-          }
-        </div>
-      </article>
+      </button>
 
-      <!-- Mantenimiento activo -->
-      <article
-        class="kpi-card"
-        role="button"
-        tabindex="0"
-        (click)="goToMaintenance()"
-        (keyup.enter)="goToMaintenance()"
-      >
-        <div class="kpi-icon-wrap maintenance">
-          <lucide-icon [img]="Wrench" [size]="20" />
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-value">{{ kpis().activeMaintenanceCount ?? 0 }}</span>
-          <span class="kpi-label">{{ 'dashboard.activeMaintenance' | transloco }}</span>
-          <app-status-badge
-            [label]="
-              (kpis().activeMaintenanceCount ?? 0) === 0
-                ? ('dashboard.upToDate' | transloco)
-                : ('dashboard.withRequests' | transloco)
-            "
-            [tone]="getMaintenanceTone()"
-          />
-        </div>
-      </article>
+      <div class="summary-divider" aria-hidden="true"></div>
 
-      <!-- Contratos por vencer -->
-      <article
-        class="kpi-card"
-        role="button"
-        tabindex="0"
-        (click)="goToExpiringContracts()"
-        (keyup.enter)="goToExpiringContracts()"
-      >
-        <div class="kpi-icon-wrap expiring">
-          <lucide-icon [img]="AlertTriangle" [size]="20" />
-        </div>
-        <div class="kpi-body">
-          <span class="kpi-value">{{ kpis().expiringContracts ?? 0 }}</span>
-          <span class="kpi-label">{{ 'dashboard.expiringContracts' | transloco }}</span>
-          @if ((kpis().expiringContracts ?? 0) > 0) {
-            <app-status-badge [label]="'dashboard.next30Days' | transloco" tone="warning" />
-          }
-        </div>
-      </article>
-
-      <!-- Propiedades disponibles -->
-      <article
-        class="kpi-card"
-        role="button"
-        tabindex="0"
+      <button
+        class="summary-stat"
         (click)="goToAvailableProperties()"
-        (keyup.enter)="goToAvailableProperties()"
+        type="button"
+        aria-label="{{ 'dashboard.availableProperties' | transloco }}"
       >
-        <div class="kpi-icon-wrap available">
-          <lucide-icon [img]="Building2" [size]="20" />
+        <div class="summary-icon available"><lucide-icon [img]="Building2" [size]="16" /></div>
+        <div class="summary-body">
+          <span class="summary-value">{{ kpis().availableUnits ?? 0 }}</span>
+          <span class="summary-label">{{ 'dashboard.availableProperties' | transloco }}</span>
         </div>
-        <div class="kpi-body">
-          <span class="kpi-value">{{ kpis().availableUnits ?? 0 }}</span>
-          <span class="kpi-label">{{ 'dashboard.availableProperties' | transloco }}</span>
+      </button>
+
+      <!-- Cobro de renta — barra inline -->
+      <div class="summary-divider" aria-hidden="true"></div>
+      <div class="summary-rc">
+        <div class="summary-body">
+          <span class="summary-rc-label">{{ 'dashboard.rentCollection' | transloco }}</span>
+          <span
+            class="summary-rc-pct"
+            [class.text-success]="rentCollectionTone() === 'success'"
+            [class.text-warning]="rentCollectionTone() === 'warning'"
+            [class.text-danger]="rentCollectionTone() === 'danger'"
+          >
+            {{ rentCollectionPct() }}%
+          </span>
         </div>
-      </article>
+        <div
+          class="summary-rc-track"
+          role="progressbar"
+          [attr.aria-valuenow]="rentCollectionPct()"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div
+            class="summary-rc-bar"
+            [class.bar-success]="rentCollectionTone() === 'success'"
+            [class.bar-warning]="rentCollectionTone() === 'warning'"
+            [class.bar-danger]="rentCollectionTone() === 'danger'"
+            [style.width.%]="rentCollectionPct()"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Fila A: Saldos pendientes + Solicitudes ─────────────────────── -->
+    <div class="sections-grid grid-2">
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Users" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.outstandingBalances' | transloco }}</h2>
+            @if ((kpis().delinquentCount ?? 0) > 0) {
+              <span class="section-count danger">{{ kpis().delinquentCount }}</span>
+            }
+          </div>
+          <button class="section-link" (click)="goToDelinquent()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().delinquentList ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noOutstandingBalances' | transloco }}</span>
+          </div>
+        } @else {
+          <div class="table-wrap">
+            <table
+              class="dash-table"
+              aria-label="{{ 'dashboard.outstandingBalances' | transloco }}"
+            >
+              <thead>
+                <tr>
+                  <th>{{ 'dashboard.tenant' | transloco }}</th>
+                  <th>{{ 'dashboard.property' | transloco }}</th>
+                  <th class="text-right">{{ 'dashboard.amountOwed' | transloco }}</th>
+                  <th class="text-right">{{ 'dashboard.daysOverdue' | transloco }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of kpis().delinquentList ?? []; track item.tenantId) {
+                  <tr
+                    class="table-row-link"
+                    role="button"
+                    tabindex="0"
+                    (click)="goToDelinquent()"
+                    (keyup.enter)="goToDelinquent()"
+                  >
+                    <td class="td-primary">{{ item.tenantName }}</td>
+                    <td class="td-secondary">{{ item.propertyName }}</td>
+                    <td class="text-right td-amount danger">
+                      {{ item.amountOwed | number: '1.0-2' }}
+                    </td>
+                    <td class="text-right">
+                      <span
+                        class="days-badge"
+                        [class.days-urgent]="item.daysOverdue > 30"
+                        [class.days-warning]="item.daysOverdue > 7 && item.daysOverdue <= 30"
+                        [class.days-ok]="item.daysOverdue <= 7"
+                        >{{ item.daysOverdue }}d</span
+                      >
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="FileText" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.pendingApplications' | transloco }}</h2>
+            @if ((kpis().pendingApplicationsList ?? []).length > 0) {
+              <span class="section-count warning">{{
+                (kpis().pendingApplicationsList ?? []).length
+              }}</span>
+            }
+          </div>
+          <button class="section-link" (click)="goToApplications()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().pendingApplicationsList ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noPendingApplications' | transloco }}</span>
+          </div>
+        } @else {
+          <ul class="item-list">
+            @for (app of kpis().pendingApplicationsList ?? []; track app.id) {
+              <li
+                class="list-item"
+                role="button"
+                tabindex="0"
+                (click)="goToApplications()"
+                (keyup.enter)="goToApplications()"
+              >
+                <div class="list-item-main">
+                  <span class="list-item-title">{{ app.applicantName }}</span>
+                  <span class="list-item-sub">{{ app.propertyName }}</span>
+                </div>
+                <div class="list-item-aside">
+                  <span
+                    class="status-chip"
+                    [class.chip-pending]="app.status === 'PENDIENTE'"
+                    [class.chip-review]="app.status === 'EN_REVISION'"
+                  >
+                    {{
+                      app.status === 'PENDIENTE'
+                        ? ('dashboard.statusPending' | transloco)
+                        : ('dashboard.statusInReview' | transloco)
+                    }}
+                  </span>
+                  <span class="list-item-date">{{ app.createdAt }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <!-- ── Fila B: Contratos + Mantenimiento ──────────────────────────── -->
+    <div class="sections-grid grid-2">
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Calendar" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.expiringContractsSection' | transloco }}</h2>
+            @if ((kpis().expiringContracts ?? 0) > 0) {
+              <span class="section-count warning">{{ kpis().expiringContracts }}</span>
+            }
+          </div>
+          <button class="section-link" (click)="goToExpiringContracts()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().expiringContractsList ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noExpiringContracts' | transloco }}</span>
+          </div>
+        } @else {
+          <ul class="item-list">
+            @for (contract of kpis().expiringContractsList ?? []; track contract.id) {
+              <li
+                class="list-item"
+                role="button"
+                tabindex="0"
+                (click)="goToExpiringContracts()"
+                (keyup.enter)="goToExpiringContracts()"
+              >
+                <div class="list-item-main">
+                  <span class="list-item-title">{{ contract.tenantName }}</span>
+                  <span class="list-item-sub">{{ contract.propertyName }}</span>
+                </div>
+                <div class="list-item-aside">
+                  <span
+                    class="days-badge"
+                    [class.days-urgent]="contract.daysLeft <= 7"
+                    [class.days-warning]="contract.daysLeft > 7 && contract.daysLeft <= 14"
+                    [class.days-ok]="contract.daysLeft > 14"
+                  >
+                    {{ contract.daysLeft }} {{ 'dashboard.days' | transloco }}
+                  </span>
+                  <span class="list-item-date">{{ contract.endDate }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Wrench" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.recentMaintenanceSection' | transloco }}</h2>
+            @if ((kpis().activeMaintenanceCount ?? 0) > 0) {
+              <span
+                class="section-count"
+                [class.danger]="(kpis().activeMaintenanceCount ?? 0) > 5"
+                [class.warning]="(kpis().activeMaintenanceCount ?? 0) <= 5"
+              >
+                {{ kpis().activeMaintenanceCount }}
+              </span>
+            }
+          </div>
+          <button class="section-link" (click)="goToMaintenance()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().recentMaintenance ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noMaintenanceRequests' | transloco }}</span>
+          </div>
+        } @else {
+          <ul class="item-list">
+            @for (item of kpis().recentMaintenance ?? []; track item.id) {
+              <li
+                class="list-item"
+                role="button"
+                tabindex="0"
+                (click)="goToMaintenance()"
+                (keyup.enter)="goToMaintenance()"
+              >
+                <div class="list-item-main">
+                  <span class="list-item-title">{{ item.title }}</span>
+                  <span class="list-item-sub">{{ item.propertyName }}</span>
+                </div>
+                <div class="list-item-aside">
+                  <span class="stage-badge">{{
+                    MAINTENANCE_STAGE_LABELS[item.stage] ?? item.stage
+                  }}</span>
+                  <span class="list-item-date"
+                    >{{ item.daysOpen }}d {{ 'dashboard.daysOpen' | transloco }}</span
+                  >
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <!-- ── Fila C: Violaciones + Inspecciones ─────────────────────────── -->
+    <div class="sections-grid grid-2">
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="ShieldAlert" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.openViolationsSection' | transloco }}</h2>
+            @if ((kpis().openViolationsCount ?? 0) > 0) {
+              <span class="section-count danger">{{ kpis().openViolationsCount }}</span>
+            }
+          </div>
+          <button class="section-link" (click)="goToViolations()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().openViolationsList ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noOpenViolations' | transloco }}</span>
+          </div>
+        } @else {
+          <ul class="item-list">
+            @for (v of kpis().openViolationsList ?? []; track v.id) {
+              <li
+                class="list-item"
+                role="button"
+                tabindex="0"
+                (click)="goToViolations()"
+                (keyup.enter)="goToViolations()"
+              >
+                <div class="list-item-main">
+                  <span class="list-item-title">{{ VIOLATION_TYPE_LABELS[v.type] ?? v.type }}</span>
+                  <span class="list-item-sub"
+                    >{{ v.propertyName }}{{ v.tenantName ? ' · ' + v.tenantName : '' }}</span
+                  >
+                </div>
+                <div class="list-item-aside">
+                  <span
+                    class="status-chip"
+                    [class.chip-open]="v.status === 'open'"
+                    [class.chip-notified]="v.status === 'notified'"
+                  >
+                    {{
+                      v.status === 'open'
+                        ? ('dashboard.violationOpen' | transloco)
+                        : ('dashboard.violationNotified' | transloco)
+                    }}
+                  </span>
+                  <span class="list-item-date">{{ v.createdAt }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="AlertCircle" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.upcomingInspectionsSection' | transloco }}</h2>
+            @if ((kpis().upcomingInspectionsCount ?? 0) > 0) {
+              <span class="section-count warning">{{ kpis().upcomingInspectionsCount }}</span>
+            }
+          </div>
+          <button class="section-link" (click)="goToInspections()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().upcomingInspectionsList ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noUpcomingInspections' | transloco }}</span>
+          </div>
+        } @else {
+          <ul class="item-list">
+            @for (ins of kpis().upcomingInspectionsList ?? []; track ins.id) {
+              <li
+                class="list-item"
+                role="button"
+                tabindex="0"
+                (click)="goToInspections()"
+                (keyup.enter)="goToInspections()"
+              >
+                <div class="list-item-main">
+                  <span class="list-item-title">{{
+                    INSPECTION_TYPE_LABELS[ins.type] ?? ins.type
+                  }}</span>
+                  <span class="list-item-sub">{{ ins.propertyName }}</span>
+                </div>
+                <div class="list-item-aside">
+                  <span
+                    class="days-badge"
+                    [class.days-urgent]="ins.daysUntil === 0"
+                    [class.days-warning]="ins.daysUntil > 0 && ins.daysUntil <= 3"
+                    [class.days-ok]="ins.daysUntil > 3"
+                  >
+                    @if (ins.daysUntil === 0) {
+                      Hoy
+                    } @else {
+                      +{{ ins.daysUntil }}d
+                    }
+                  </span>
+                  <span class="list-item-date">{{ ins.scheduledDate }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    </div>
+
+    <!-- ── Fila D: Gastos + Pagos pendientes ──────────────────────────── -->
+    <div class="sections-grid grid-2">
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Receipt" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.recentExpensesSection' | transloco }}</h2>
+          </div>
+          <button class="section-link" (click)="goToExpenses()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        @if ((kpis().recentExpensesList ?? []).length === 0) {
+          <div class="empty-state">
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.noRecentExpenses' | transloco }}</span>
+          </div>
+        } @else {
+          <ul class="item-list">
+            @for (exp of kpis().recentExpensesList ?? []; track exp.id) {
+              <li
+                class="list-item"
+                role="button"
+                tabindex="0"
+                (click)="goToExpenses()"
+                (keyup.enter)="goToExpenses()"
+              >
+                <div class="list-item-main">
+                  <span class="list-item-title">{{
+                    EXPENSE_CATEGORY_LABELS[exp.category] ?? exp.category
+                  }}</span>
+                  <span class="list-item-sub"
+                    >{{ exp.propertyName }}{{ exp.vendorName ? ' · ' + exp.vendorName : '' }}</span
+                  >
+                </div>
+                <div class="list-item-aside">
+                  <span class="td-amount">{{ exp.amount | number: '1.0-2' }}</span>
+                  <span class="list-item-date">{{ exp.date }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <section class="dash-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="ClipboardList" [size]="16" />
+            <h2 class="section-title">{{ 'dashboard.pendingPayments' | transloco }}</h2>
+            @if ((kpis().pendingPaymentsCount ?? 0) > 0) {
+              <span
+                class="section-count"
+                [class.danger]="hasDelinquency()"
+                [class.warning]="!hasDelinquency()"
+              >
+                {{ kpis().pendingPaymentsCount }}
+              </span>
+            }
+            @if (hasDelinquency()) {
+              <span class="section-count danger"
+                >{{ kpis().delinquentCount }} {{ 'dashboard.delinquent' | transloco }}</span
+              >
+            }
+          </div>
+          <button class="section-link" (click)="goToPendingPayments()" type="button">
+            {{ 'dashboard.viewAll' | transloco }}
+          </button>
+        </div>
+        <div class="empty-state">
+          @if ((kpis().pendingPaymentsCount ?? 0) === 0) {
+            <lucide-icon [img]="CheckCircle" [size]="28" />
+            <span>{{ 'dashboard.upToDate' | transloco }}</span>
+          } @else {
+            <p class="pending-payments-hint">
+              {{ kpis().pendingPaymentsCount }}
+              {{ 'dashboard.pendingPayments' | transloco | lowercase }} —
+              <button class="section-link" (click)="goToPendingPayments()" type="button">
+                {{ 'dashboard.viewAll' | transloco }}
+              </button>
+            </p>
+          }
+        </div>
+      </section>
     </div>
   }
 </div>

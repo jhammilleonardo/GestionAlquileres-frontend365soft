@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
 
 @Component({
@@ -6,17 +6,40 @@ import { TranslocoModule } from '@jsverse/transloco';
   imports: [TranslocoModule],
   template: `
     <ol class="app-stepper" [attr.aria-label]="'common.progress' | transloco">
-      @for (step of steps(); track step; let index = $index) {
+      @for (step of steps(); track $index; let index = $index) {
         <li
           class="app-stepper__item"
           [class.app-stepper__item--active]="index === currentIndex()"
           [class.app-stepper__item--done]="index < currentIndex()"
+          [class.app-stepper__item--interactive]="canSelectStep(index)"
+          [attr.aria-current]="index === currentIndex() ? 'step' : null"
         >
-          <span class="app-stepper__marker">{{ index + 1 }}</span>
-          <span class="app-stepper__label">{{ step }}</span>
+          @if (canSelectStep(index)) {
+            <button
+              class="app-stepper__content"
+              type="button"
+              [attr.aria-label]="step"
+              (click)="selectStep(index)"
+            >
+              <span class="app-stepper__marker">{{ index + 1 }}</span>
+              <span class="app-stepper__label">{{ step }}</span>
+            </button>
+          } @else {
+            <span class="app-stepper__content">
+              <span class="app-stepper__marker">{{ index + 1 }}</span>
+              <span class="app-stepper__label">{{ step }}</span>
+            </span>
+          }
         </li>
       }
     </ol>
+
+    <p class="app-stepper__status" aria-live="polite">
+      {{ steps()[currentIndex()] }}
+    </p>
+    <p class="app-stepper__mobile-current">
+      {{ steps()[currentIndex()] }}
+    </p>
   `,
   styles: `
     .app-stepper {
@@ -31,10 +54,25 @@ import { TranslocoModule } from '@jsverse/transloco';
     .app-stepper__item {
       display: grid;
       justify-items: center;
-      gap: 0.45rem;
       min-inline-size: 0;
       color: var(--app-color-text-muted);
       text-align: center;
+    }
+
+    .app-stepper__content {
+      display: grid;
+      justify-items: center;
+      gap: 0.45rem;
+      min-inline-size: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: center;
+    }
+
+    button.app-stepper__content {
+      cursor: pointer;
     }
 
     .app-stepper__marker {
@@ -76,9 +114,43 @@ import { TranslocoModule } from '@jsverse/transloco';
       background: rgb(22 163 74 / 12%);
     }
 
+    .app-stepper__item--interactive .app-stepper__content:hover .app-stepper__marker,
+    .app-stepper__item--interactive .app-stepper__content:focus-visible .app-stepper__marker {
+      box-shadow: 0 0 0 3px rgb(22 163 74 / 18%);
+    }
+
+    .app-stepper__content:focus-visible {
+      border-radius: var(--app-radius-md);
+      outline: 2px solid var(--app-color-primary);
+      outline-offset: 3px;
+    }
+
+    .app-stepper__status {
+      position: absolute;
+      overflow: hidden;
+      width: 1px;
+      height: 1px;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .app-stepper__mobile-current {
+      display: none;
+      margin: -0.75rem 0 1.25rem;
+      color: var(--app-color-primary);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
     @media (max-width: 480px) {
       .app-stepper__label {
         display: none;
+      }
+
+      .app-stepper__mobile-current {
+        display: block;
       }
     }
   `,
@@ -90,4 +162,16 @@ import { TranslocoModule } from '@jsverse/transloco';
 export class AppStepperComponent {
   readonly steps = input<readonly string[]>([]);
   readonly currentIndex = input(0);
+  readonly navigable = input(false);
+  readonly stepSelected = output<number>();
+
+  protected canSelectStep(index: number): boolean {
+    return this.navigable() && index < this.currentIndex();
+  }
+
+  protected selectStep(index: number): void {
+    if (this.canSelectStep(index)) {
+      this.stepSelected.emit(index);
+    }
+  }
 }

@@ -1,11 +1,22 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Building2, LockKeyhole, Mail } from 'lucide-angular';
+import {
+  Building2,
+  Mail,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Shield,
+  Home,
+  Wallet,
+  FileText,
+} from 'lucide-angular';
 import { LucideAngularModule } from 'lucide-angular';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
+import { LanguageService } from '../../../core/services/language.service';
 import { OwnerAuthService } from '../../../core/services/owner/owner-auth.service';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppCheckboxComponent } from '../../../shared/ui/checkbox/checkbox.component';
@@ -33,19 +44,31 @@ export class OwnerLoginComponent {
   private readonly router = inject(Router);
   private readonly ownerAuth = inject(OwnerAuthService);
   private readonly transloco = inject(TranslocoService);
+  readonly languageService = inject(LanguageService);
 
   readonly Building2 = Building2;
-  readonly LockKeyhole = LockKeyhole;
   readonly Mail = Mail;
+  readonly Eye = Eye;
+  readonly EyeOff = EyeOff;
+  readonly AlertCircle = AlertCircle;
+  readonly Shield = Shield;
+  readonly Home = Home;
+  readonly Wallet = Wallet;
+  readonly FileText = FileText;
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
     rememberMe: [true],
   });
 
   readonly isLoading = this.ownerAuth.isLoading;
   readonly errorMessage = signal<string | null>(null);
+  readonly showPassword = signal(false);
+
+  togglePassword(): void {
+    this.showPassword.update((v) => !v);
+  }
 
   submit(): void {
     if (this.form.invalid) {

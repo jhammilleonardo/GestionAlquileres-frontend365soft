@@ -45,7 +45,9 @@ describe('ReservationService', () => {
       checkout_date: '2026-05-15',
     };
     service.createReservation(dto).subscribe();
-    expect(post).toHaveBeenCalledWith('acme/tenant/reservations', dto);
+    expect(post).toHaveBeenCalledWith('acme/tenant/reservations', dto, {
+      headers: { 'Idempotency-Key': expect.any(String) },
+    });
   });
 
   it('blockDates hace POST con fechas y bandera block', () => {

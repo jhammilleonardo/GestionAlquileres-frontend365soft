@@ -62,12 +62,18 @@ export class ReservationIntentionService {
     });
   }
 
+  /**
+   * Tras autenticarse, lleva al checkout de la reserva pretendida (las fechas se
+   * precargan desde la intención). Si no hay intención válida, cae a "Mis
+   * Reservas" en vez de a un checkout sin contexto.
+   */
   navigateToReservation(slug: string): void {
     this.slugService.setSlug(slug);
-    void this.router.navigate(['/', slug, 'portal', 'new-application'], {
-      queryParams: { reservation: 'true' },
-      replaceUrl: true,
-    });
+    const intention = this.intention();
+    const target = intention
+      ? ['/', slug, 'portal', 'reservar', intention.propertyId, intention.unitId]
+      : ['/', slug, 'portal', 'reservas'];
+    void this.router.navigate(target, { replaceUrl: true });
   }
 
   private loadIntention(): void {

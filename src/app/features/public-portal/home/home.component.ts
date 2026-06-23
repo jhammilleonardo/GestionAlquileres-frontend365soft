@@ -1,41 +1,31 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  ArrowRight,
-  Bath,
-  BedDouble,
-  Car,
-  CheckCircle,
-  Heart,
-  Home,
-  LucideAngularModule,
-  MapPin,
-  Maximize,
-  Search,
-  Star,
-} from 'lucide-angular';
-import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { ArrowRight, CheckCircle, Home, LucideAngularModule, Search, Star } from 'lucide-angular';
+import { provideTranslocoScope, TranslocoModule } from '@jsverse/transloco';
 
 import { PropertyService } from '../../../core/services/admin/property.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { PublicBrandingService } from '../../../core/services/public-branding.service';
 import {
   Property,
   PropertyFilters,
   PropertyStatus,
   SortOption,
 } from '../../../core/models/property.model';
-
-interface PublicPriceDisplay {
-  amount: number;
-  periodKey: string;
-}
+import { PublicPropertyCardComponent } from '../components/property-card/property-card.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterModule, DecimalPipe, LucideAngularModule, TranslocoModule],
+  imports: [RouterModule, LucideAngularModule, TranslocoModule, PublicPropertyCardComponent],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css'],
@@ -47,24 +37,44 @@ export class HomeComponent {
   readonly CheckCircle = CheckCircle;
   readonly Star = Star;
   readonly ArrowRight = ArrowRight;
-  readonly MapPin = MapPin;
-  readonly Maximize = Maximize;
-  readonly Heart = Heart;
-  readonly BedDouble = BedDouble;
-  readonly Bath = Bath;
-  readonly Car = Car;
 
   readonly featuredProperties = signal<Property[]>([]);
   readonly isLoadingProperties = signal(true);
+  readonly favorites = signal<Set<number>>(new Set());
 
   private readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
   private readonly slugService = inject(SlugService);
-  private readonly transloco = inject(TranslocoService);
+  private readonly brandingService = inject(PublicBrandingService);
   private readonly destroyRef = inject(DestroyRef);
+
+  // Título/subtítulo/imagen del hero personalizados por el tenant (con fallback a i18n)
+  readonly heroTitle = computed(() => this.brandingService.branding()?.hero_title || null);
+  readonly heroSubtitle = computed(() => this.brandingService.branding()?.hero_subtitle || null);
+  readonly heroImage = computed(() => this.brandingService.heroImageUrl());
+
+  // Íconos fijos por posición — el tenant edita texto, el ícono se asigna por orden
+  private readonly featureIcons = [CheckCircle, Star, Home];
+
+  // "Features" de inicio personalizadas por el tenant (con fallback a las i18n por defecto)
+  readonly features = computed(() =>
+    (this.brandingService.branding()?.home_features ?? []).map((f, i) => ({
+      icon: this.featureIcons[i % this.featureIcons.length],
+      title: f.title,
+      description: f.description,
+    })),
+  );
+  readonly hasCustomFeatures = computed(() => this.features().length > 0);
+
+  // Sección CTA final personalizada por el tenant (con fallback a i18n)
+  readonly ctaTitle = computed(() => this.brandingService.branding()?.cta_title || null);
+  readonly ctaSubtitle = computed(() => this.brandingService.branding()?.cta_subtitle || null);
 
   constructor() {
     this.loadFeaturedProperties();
+    this.propertyService.favorites$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((favs) => this.favorites.set(favs));
   }
 
   private loadFeaturedProperties(): void {
@@ -87,55 +97,12 @@ export class HomeComponent {
       });
   }
 
-  getPropertyImageUrl(property: Property): string {
-    let imagePath: string | null = null;
-    if (property.first_image) {
-      imagePath = property.first_image;
-    } else if (Array.isArray(property.images) && property.images.length) {
-      imagePath = property.images[0];
-    }
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:3000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
+  isFavorite(propertyId: number): boolean {
+    return this.favorites().has(propertyId);
   }
 
-  setPlaceholderImage(event: Event): void {
-    if (event.target instanceof HTMLImageElement) {
-      event.target.src = 'assets/placeholder.jpg';
-    }
-  }
-
-  getPropertyAddress(property: Property): string {
-    if (property.addresses?.length) {
-      const addr = property.addresses[0];
-      return `${addr.street_address}, ${addr.city}`;
-    }
-    return this.transloco.translate('public.properties.locationNotAvailable');
-  }
-
-  getPriceDisplay(property: Property): PublicPriceDisplay | null {
-    if (this.hasShortTermPrice(property)) {
-      return {
-        amount: property.min_price_per_night ?? 0,
-        periodKey: 'public.properties.priceNight',
-      };
-    }
-
-    const monthlyRent = property.monthly_rent ?? property.monthly_rent_amount;
-    if (!monthlyRent) return null;
-
-    return {
-      amount: monthlyRent,
-      periodKey: 'public.properties.priceMonth',
-    };
-  }
-
-  private hasShortTermPrice(property: Property): boolean {
-    const rentalType = (property.rental_type ?? '').toUpperCase();
-    return (
-      (rentalType === 'SHORT_TERM' || rentalType === 'BOTH') &&
-      Number(property.min_price_per_night ?? 0) > 0
-    );
+  toggleFavorite(propertyId: number): void {
+    this.propertyService.toggleFavorite(propertyId);
   }
 
   viewProperty(propertyId: number): void {

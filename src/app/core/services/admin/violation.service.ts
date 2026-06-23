@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, from, switchMap } from 'rxjs';
 
 import { ApiClientService, QueryParams } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
@@ -11,12 +11,14 @@ import {
   Violation,
   ViolationStatus,
 } from '../../models/violation.model';
+import { ImageOptimizationService } from '../image-optimization.service';
 
 @Injectable({ providedIn: 'root' })
 export class ViolationService {
   private readonly api = inject(ApiClientService);
   private readonly http = inject(HttpClient);
   private readonly slugService = inject(SlugService);
+  private readonly imageOptimization = inject(ImageOptimizationService);
 
   list(params: QueryParams = {}): Observable<PaginatedViolations> {
     return this.api.get<PaginatedViolations>(this.endpoint('admin/violations'), { params });
@@ -41,11 +43,13 @@ export class ViolationService {
   }
 
   uploadEvidence(id: number, files: File[]): Observable<{ evidence_photos: string[] }> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
-    return this.api.post<{ evidence_photos: string[] }, FormData>(
-      this.endpoint(`admin/violations/${id}/upload`),
-      formData,
+    return from(this.imageOptimization.filesToFormData(files, 'files')).pipe(
+      switchMap((formData) =>
+        this.api.post<{ evidence_photos: string[] }, FormData>(
+          this.endpoint(`admin/violations/${id}/upload`),
+          formData,
+        ),
+      ),
     );
   }
 

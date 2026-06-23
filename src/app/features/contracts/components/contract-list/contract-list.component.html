@@ -10,9 +10,11 @@
   </header>
 
   @if (emptyLoading()) {
-    <div class="loading-container">
-      <app-loading-state [label]="'contracts.loading' | transloco" />
-    </div>
+    <app-skeleton-table
+      [rowCount]="6"
+      [columnCount]="7"
+      [label]="'contracts.loading' | transloco"
+    />
   } @else if (contracts().length === 0) {
     <div class="empty-state">
       <div class="empty-icon">
@@ -84,7 +86,7 @@
 
             <div class="cell col-status">
               <app-status-badge
-                [label]="'contracts.status.' + contract.status | transloco"
+                [label]="statusLabelKey(contract) | transloco"
                 [tone]="statusTone()(contract.status)"
               />
             </div>

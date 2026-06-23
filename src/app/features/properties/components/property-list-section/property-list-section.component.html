@@ -1,7 +1,5 @@
 @if (loading()) {
-  <div class="property-list__state">
-    <app-loading-state [label]="'properties.loading' | transloco" />
-  </div>
+  <app-skeleton-card-grid [cardCount]="6" [label]="'properties.loading' | transloco" />
 } @else if (properties().length === 0) {
   <div class="property-list__state property-list__state--empty">
     <div class="property-list__empty-icon">

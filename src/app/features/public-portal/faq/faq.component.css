@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: var(--brand-primary, #2563eb);
   overflow: hidden;
 }
 
@@ -94,8 +94,8 @@
 .btn-action {
   padding: 10px 24px;
   background: white;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  color: var(--brand-primary, #2563eb);
+  border: 2px solid var(--brand-primary, #2563eb);
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
@@ -104,7 +104,7 @@
 }
 
 .btn-action:hover {
-  background: #2563eb;
+  background: var(--brand-primary, #2563eb);
   color: white;
 }
 
@@ -156,7 +156,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #2563eb;
+  color: var(--brand-primary, #2563eb);
   flex-shrink: 0;
 }
 
@@ -206,7 +206,7 @@
 .btn-contact {
   display: inline-block;
   padding: 12px 32px;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  background: var(--brand-primary, #2563eb);
   color: white;
   text-decoration: none;
   border-radius: 8px;

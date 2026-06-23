@@ -59,7 +59,7 @@ export class VendorLoginComponent {
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   togglePassword(): void {
@@ -80,7 +80,7 @@ export class VendorLoginComponent {
 
     const value = this.form.getRawValue();
     this.errorMessage.set(null);
-    this.vendorAuth.login(slug, value.email, value.password, true).subscribe({
+    this.vendorAuth.login(slug, value.email, value.password, false).subscribe({
       next: () => void this.router.navigate(['/', slug, 'vendor']),
       error: (error: unknown) =>
         this.errorMessage.set(

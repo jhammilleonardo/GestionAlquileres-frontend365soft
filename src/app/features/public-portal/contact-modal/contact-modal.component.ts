@@ -25,6 +25,8 @@ export class ContactModalComponent {
     phone: '',
     message: '',
     preferredContact: 'email',
+    // Honeypot anti-spam: oculto en el formulario; un humano nunca lo rellena.
+    website: '',
   };
 
   isSubmitting = false;
@@ -49,6 +51,7 @@ export class ContactModalComponent {
         email: this.contactForm.email,
         phone: this.contactForm.phone,
         message: this.contactForm.message,
+        website: this.contactForm.website,
       })
       .subscribe({
         next: () => {

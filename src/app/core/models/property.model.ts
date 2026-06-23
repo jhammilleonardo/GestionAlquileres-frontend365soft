@@ -89,6 +89,21 @@ export interface Property {
   available_long_term_units?: number | null;
 }
 
+/**
+ * Clave de traducción (global) para el tipo de alquiler de una propiedad.
+ * Corto plazo (por noche), largo plazo (mensual) o ambos.
+ */
+export function rentalTypeLabelKey(rentalType?: string | null): string {
+  switch ((rentalType ?? 'LONG_TERM').toUpperCase()) {
+    case 'SHORT_TERM':
+      return 'rentalType.SHORT_TERM';
+    case 'BOTH':
+      return 'rentalType.BOTH';
+    default:
+      return 'rentalType.LONG_TERM';
+  }
+}
+
 export interface PropertyType {
   id: number;
   name: string;

@@ -17,3 +17,14 @@
 .modal-container.small {
   max-width: 600px;
 }
+
+/* Honeypot anti-spam: fuera de pantalla (no display:none, para que los bots
+   lo detecten y lo rellenen, delatándose). Invisible para usuarios. */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

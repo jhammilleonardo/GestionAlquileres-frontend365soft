@@ -46,6 +46,7 @@ import { TranslocoModule } from '@jsverse/transloco';
                 <img
                   [src]="previewUrl()!"
                   [attr.alt]="'public.tenantCreatePayment.receiptImageAlt' | transloco"
+                  loading="lazy"
                 />
               </button>
             } @else {
@@ -131,6 +132,7 @@ import { TranslocoModule } from '@jsverse/transloco';
               [src]="previewUrl()!"
               [style.transform]="'scale(' + zoom() + ')'"
               [attr.alt]="'public.tenantCreatePayment.receiptImageAlt' | transloco"
+              loading="lazy"
             />
           </div>
         </div>

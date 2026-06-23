@@ -1,6 +1,8 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, OnDestroy, signal } from '@angular/core';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { TranslocoService } from '@jsverse/transloco';
+
+import { resolveQrImageSrc } from '../../../core/utils/safe-url.util';
 
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { Currency, PaymentType, QrPayment } from '../../../core/models/payment.model';
@@ -15,7 +17,7 @@ export interface TenantPaymentQrPayload {
 }
 
 @Injectable()
-export class TenantPaymentQrFlowFacade {
+export class TenantPaymentQrFlowFacade implements OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly fileDownload = inject(FileDownloadService);
   private readonly translocoService = inject(TranslocoService);
@@ -25,14 +27,8 @@ export class TenantPaymentQrFlowFacade {
   readonly cancelling = signal(false);
   readonly error = signal<string | null>(null);
   readonly safeUrl = computed<SafeUrl | null>(() => {
-    const qr = this.qrService.activeQr();
-    if (!qr?.qr_image) return null;
-    if (qr.qr_image.startsWith('http')) return this.sanitizer.bypassSecurityTrustUrl(qr.qr_image);
-
-    const src = qr.qr_image.startsWith('data:')
-      ? qr.qr_image
-      : `data:image/png;base64,${qr.qr_image}`;
-    return this.sanitizer.bypassSecurityTrustUrl(src);
+    const src = resolveQrImageSrc(this.qrService.activeQr()?.qr_image);
+    return src ? this.sanitizer.bypassSecurityTrustUrl(src) : null;
   });
 
   private pollTimer?: ReturnType<typeof setInterval>;
@@ -70,9 +66,8 @@ export class TenantPaymentQrFlowFacade {
     const qr = this.qrService.activeQr();
     if (!qr?.qr_image) return;
 
-    const raw = qr.qr_image;
-    const href =
-      raw.startsWith('http') || raw.startsWith('data:') ? raw : `data:image/png;base64,${raw}`;
+    const href = resolveQrImageSrc(qr.qr_image);
+    if (!href) return;
     this.fileDownload.downloadUrl(href, `QR-pago-${qr.id}.png`);
   }
 
@@ -94,6 +89,15 @@ export class TenantPaymentQrFlowFacade {
       this.pollTimer = undefined;
     }
     this.polling.set(false);
+  }
+
+  /**
+   * El facade se provee a nivel de componente, así que Angular invoca este hook
+   * al destruirlo. Detiene el polling para no seguir consultando `verificar` en
+   * segundo plano si el usuario navega fuera con un QR aún pendiente.
+   */
+  ngOnDestroy(): void {
+    this.stopPolling();
   }
 
   private startPolling(): void {

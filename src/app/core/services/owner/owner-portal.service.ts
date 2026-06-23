@@ -7,10 +7,14 @@ import { SlugService } from '../slug.service';
 import { environment } from '../../../../environments/environment';
 
 export interface OwnerDashboard {
+  property_count?: number;
   properties_count?: number;
   active_contracts_count?: number;
+  active_tenant_count?: number;
   pending_balance?: number;
+  currency?: string;
   active_maintenance_count?: number;
+  pending_statements?: number;
 }
 
 export type OwnerPortalRecord = Record<string, unknown> & { id: number };
@@ -61,9 +65,10 @@ export class OwnerPortalService {
       throw new Error('El contrato no tiene PDF disponible');
     }
 
-    const url = pdfUrl.startsWith('http')
-      ? pdfUrl
-      : `${environment.apiUrl}${pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`}`;
+    // apiUrl termina en '/'; evitar '//' uniendo sin la barra inicial del pdf_url.
+    const base = environment.apiUrl.replace(/\/$/, '');
+    const path = pdfUrl.startsWith('/') ? pdfUrl : `/${pdfUrl}`;
+    const url = pdfUrl.startsWith('http') ? pdfUrl : `${base}${path}`;
     return this.http.get(url, { responseType: 'blob' });
   }
 

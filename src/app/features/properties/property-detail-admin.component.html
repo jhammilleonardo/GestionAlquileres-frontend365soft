@@ -70,6 +70,7 @@
                       [src]="getCurrentImage()"
                       [alt]="property()?.title"
                       class="pd-gallery-img"
+                      loading="eager"
                     />
                   }
 
@@ -120,7 +121,7 @@
                         class="pd-thumbnail"
                         [class.pd-thumbnail--active]="i === currentImageIndex()"
                       >
-                        <img [src]="getThumbnailUrl(img)" [alt]="'' + (i + 1)" />
+                        <img [src]="getThumbnailUrl(img)" [alt]="'' + (i + 1)" loading="lazy" />
                       </button>
                     }
                   </div>
@@ -384,7 +385,13 @@
                   @for (addr of property()?.addresses; track addr.id ?? $index) {
                     <div class="pd-address-item">
                       <div class="pd-address-street">{{ addr.street_address }}</div>
-                      <div class="pd-address-city">{{ addr.city }}, {{ addr.country }}</div>
+                      <div class="pd-address-city">
+                        {{ addr.city }}
+                        @if (addr.state) {
+                          , {{ addr.state }}
+                        }
+                        , {{ addr.country }}
+                      </div>
                       @if (addr.zip_code) {
                         <div class="pd-address-zip">CP: {{ addr.zip_code }}</div>
                       }
@@ -394,34 +401,19 @@
               </div>
             }
 
-            <!-- Account Info -->
-            @if (property()?.account_number) {
-              <div class="pd-card pd-section">
+            @if (propertyMapLocation(); as location) {
+              <div class="pd-card pd-section pd-location-map-card">
                 <h3 class="pd-section-title">
-                  <lucide-icon [img]="CreditCard" [size]="22" class="pd-section-icon"></lucide-icon>
-                  {{ 'properties.bankInfo' | transloco }}
+                  <lucide-icon [img]="MapPin" [size]="22" class="pd-section-icon"></lucide-icon>
+                  {{ 'properties.locationOnMap' | transloco }}
                 </h3>
 
-                <div class="pd-type-list">
-                  <div class="pd-type-row">
-                    <span class="pd-type-label">{{ 'properties.accountNumber' | transloco }}:</span>
-                    <span class="pd-type-value pd-mono">{{ property()?.account_number }}</span>
-                  </div>
-                  @if (property()?.account_type) {
-                    <div class="pd-type-row">
-                      <span class="pd-type-label">{{ 'properties.accountType' | transloco }}:</span>
-                      <span class="pd-type-value">{{ property()?.account_type }}</span>
-                    </div>
-                  }
-                  @if (property()?.account_holder_name) {
-                    <div class="pd-type-row">
-                      <span class="pd-type-label"
-                        >{{ 'properties.accountHolder' | transloco }}:</span
-                      >
-                      <span class="pd-type-value">{{ property()?.account_holder_name }}</span>
-                    </div>
-                  }
-                </div>
+                <app-location-map
+                  [latitude]="location.lat"
+                  [longitude]="location.lng"
+                  [label]="getPropertyAddress()"
+                />
+                <p class="pd-coordinates">{{ location.lat }}, {{ location.lng }}</p>
               </div>
             }
           </div>

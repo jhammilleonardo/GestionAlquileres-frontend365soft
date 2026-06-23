@@ -23,7 +23,9 @@ export function getApiErrorMessage(
       return fromBody;
     }
     if (error.status === 0) {
-      return 'No se pudo conectar con el servidor. Verifica tu conexión a internet.';
+      // status 0 = la respuesta no llegó: servidor inaccesible, petición
+      // bloqueada por el navegador (CORS/extensión) o red caída.
+      return 'No se pudo contactar con el servidor. Verifica que el servicio esté disponible e inténtalo de nuevo.';
     }
     return error.message || fallback;
   }

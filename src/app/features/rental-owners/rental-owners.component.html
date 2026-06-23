@@ -1,0 +1,156 @@
+<div class="page-wrapper">
+  <app-page-header
+    [eyebrow]="'sidebar.menu.rentalOwners' | transloco"
+    [title]="'rentalOwners.title' | transloco"
+    [description]="'rentalOwners.subtitle' | transloco"
+  >
+    <div actions class="header-actions">
+      <app-button
+        appearance="outline"
+        size="s"
+        [disabled]="isLoading()"
+        [ariaLabel]="'rentalOwners.reloadAria' | transloco"
+        (clicked)="loadOwners()"
+      >
+        <lucide-icon [img]="RefreshCwIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        <span>{{ 'common.refresh' | transloco }}</span>
+      </app-button>
+
+      <app-button
+        size="s"
+        [ariaLabel]="'rentalOwners.createAria' | transloco"
+        (clicked)="openCreateDialog()"
+      >
+        <lucide-icon [img]="UserPlusIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        <span>{{ 'rentalOwners.new' | transloco }}</span>
+      </app-button>
+    </div>
+  </app-page-header>
+
+  <div class="content-layout" [class.panel-open]="isPanelOpen()">
+    <div class="table-section">
+      @if (isLoading()) {
+        <div class="state-shell">
+          <app-loading-state [label]="'rentalOwners.loading' | transloco"></app-loading-state>
+        </div>
+      } @else if (errorMessage()) {
+        <app-empty-state [title]="'common.error' | transloco" [description]="errorMessage()">
+          <lucide-icon icon [img]="UsersIcon" [size]="28" aria-hidden="true"></lucide-icon>
+          <app-button actions appearance="outline" (clicked)="loadOwners()">
+            {{ 'common.refresh' | transloco }}
+          </app-button>
+        </app-empty-state>
+      } @else if (owners().length === 0) {
+        <app-empty-state
+          [title]="'rentalOwners.empty' | transloco"
+          [description]="'rentalOwners.emptyDescription' | transloco"
+        >
+          <lucide-icon icon [img]="UsersIcon" [size]="28" aria-hidden="true"></lucide-icon>
+          <app-button actions (clicked)="openCreateDialog()">
+            {{ 'rentalOwners.createFirst' | transloco }}
+          </app-button>
+        </app-empty-state>
+      } @else {
+        <div
+          class="table-container"
+          role="region"
+          [attr.aria-label]="'rentalOwners.title' | transloco"
+        >
+          <table class="owners-table">
+            <thead>
+              <tr>
+                <th class="col-avatar" scope="col"></th>
+                <th scope="col">{{ 'common.name' | transloco }}</th>
+                <th scope="col" class="hide-mobile">{{ 'common.email' | transloco }}</th>
+                <th scope="col" class="hide-tablet">
+                  {{ 'rentalOwners.propertiesCount' | transloco }}
+                </th>
+                <th scope="col" class="hide-tablet">
+                  {{ 'rentalOwners.pendingBalance' | transloco }}
+                </th>
+                <th scope="col">{{ 'common.status' | transloco }}</th>
+                <th scope="col" class="col-actions">{{ 'common.actions' | transloco }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of owners(); track row.id) {
+                <tr
+                  class="clickable-row"
+                  [class.row-selected]="selectedOwner()?.id === row.id"
+                  [attr.aria-selected]="selectedOwner()?.id === row.id"
+                  (click)="selectOwner(row)"
+                >
+                  <td class="col-avatar">
+                    <div class="avatar" aria-hidden="true">{{ getInitials(row.name) }}</div>
+                  </td>
+                  <td>
+                    <div class="cell-name">{{ row.name }}</div>
+                    @if (row.company_name) {
+                      <div class="cell-sub">{{ row.company_name }}</div>
+                    }
+                    <div class="cell-sub mobile-only">{{ row.primary_email }}</div>
+                  </td>
+                  <td class="hide-mobile">{{ row.primary_email }}</td>
+                  <td class="hide-tablet">{{ row.properties_count }}</td>
+                  <td class="hide-tablet">{{ row.pending_balance | currency: 'USD' }}</td>
+                  <td>
+                    <span
+                      class="status-chip"
+                      [class.active]="row.is_active"
+                      [class.inactive]="!row.is_active"
+                    >
+                      {{ (row.is_active ? 'common.active' : 'common.inactive') | transloco }}
+                    </span>
+                  </td>
+                  <td class="col-actions">
+                    <button
+                      type="button"
+                      class="icon-button"
+                      [class.selected]="selectedOwner()?.id === row.id"
+                      [attr.aria-label]="'rentalOwners.manageAria' | transloco: { name: row.name }"
+                      [attr.aria-pressed]="selectedOwner()?.id === row.id"
+                      (click)="selectOwner(row); $event.stopPropagation()"
+                    >
+                      <lucide-icon
+                        [img]="KeyRoundIcon"
+                        [size]="18"
+                        aria-hidden="true"
+                      ></lucide-icon>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    @if (isPanelOpen() && selectedOwner()) {
+      <div
+        class="panel-section"
+        role="region"
+        [attr.aria-label]="'rentalOwners.panel.title' | transloco: { name: selectedOwner()!.name }"
+      >
+        <div class="panel-backdrop" (click)="closePanel()" aria-hidden="true"></div>
+        <app-owner-detail-panel
+          [owner]="selectedOwner()!"
+          (panelClosed)="closePanel()"
+          (accountChanged)="onAccountChanged()"
+        ></app-owner-detail-panel>
+      </div>
+    }
+  </div>
+
+  <app-dialog
+    [open]="isCreateDialogOpen()"
+    [title]="'rentalOwners.dialog.title' | transloco"
+    [showFooter]="false"
+    (closed)="closeCreateDialog()"
+  >
+    <app-create-owner-dialog
+      (dialogClosed)="closeCreateDialog()"
+      (ownerCreated)="onOwnerCreated($event)"
+    ></app-create-owner-dialog>
+  </app-dialog>
+</div>

@@ -9,7 +9,7 @@
       <h1>{{ 'contracts.detail.titlePrefix' | transloco }} {{ contractNumber() }}</h1>
       @if (currentContract()) {
         <span class="status-badge" [class]="getStatusClass(currentContract()!.status)">
-          {{ 'contracts.status.' + currentContract()!.status | transloco }}
+          {{ statusLabelKey(currentContract()!) | transloco }}
         </span>
       }
     </div>
@@ -207,6 +207,41 @@
 
       <!-- Columna Secundaria -->
       <div class="side-column">
+        <!-- Relaciones de renovación: contrato anterior / contrato nuevo -->
+        @if (previousContract(); as previous) {
+          <button
+            type="button"
+            class="renewal-link renewal-link--previous"
+            (click)="viewHistoryContract(previous)"
+          >
+            <lucide-icon [img]="ArrowLeft" [size]="18"></lucide-icon>
+            <span class="renewal-link__body">
+              <span class="renewal-link__label">{{
+                'contracts.detail.renewedFrom' | transloco
+              }}</span>
+              <strong>{{ previous.contract_number }}</strong>
+            </span>
+            <lucide-icon class="renewal-link__chevron" [img]="FileText" [size]="16"></lucide-icon>
+          </button>
+        }
+
+        @if (renewalContract(); as renewal) {
+          <button
+            type="button"
+            class="renewal-link renewal-link--next"
+            (click)="viewHistoryContract(renewal)"
+          >
+            <lucide-icon [img]="Repeat" [size]="18"></lucide-icon>
+            <span class="renewal-link__body">
+              <span class="renewal-link__label">{{
+                'contracts.detail.renewedInto' | transloco
+              }}</span>
+              <strong>{{ renewal.contract_number }}</strong>
+            </span>
+            <lucide-icon class="renewal-link__chevron" [img]="ArrowRight" [size]="16"></lucide-icon>
+          </button>
+        }
+
         <!-- Acciones -->
         <section class="actions-card">
           <div class="card-header">
@@ -411,7 +446,7 @@
                     <div class="timeline-head">
                       <strong>{{ item.contract_number }}</strong>
                       <span class="timeline-badge" [attr.data-tone]="getStatusTone(item.status)">
-                        {{ 'contracts.status.' + item.status | transloco }}
+                        {{ statusLabelKey(item) | transloco }}
                       </span>
                       @if (isCurrentInHistory(item)) {
                         <span class="timeline-current">{{

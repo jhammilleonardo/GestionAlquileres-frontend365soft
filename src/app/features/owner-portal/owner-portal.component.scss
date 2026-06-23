@@ -1,36 +1,183 @@
-.owner-page {
-  display: grid;
-  gap: var(--app-space-5, 1.25rem);
-  padding: var(--app-space-6, 1.5rem);
+.owner-shell {
+  min-height: 100vh;
+  background: var(--app-color-surface-muted, #f5f7fa);
   color: var(--app-color-text);
 }
 
+/* ── Topbar ── */
+.owner-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--app-color-surface);
+  border-bottom: 1px solid var(--app-color-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.brand-logo {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--app-color-primary);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  strong {
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+
+  span {
+    font-size: 0.78rem;
+    color: var(--app-color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.lang-toggle {
+  display: flex;
+  gap: 2px;
+  background: var(--app-color-surface-muted, #f1f5f9);
+  border-radius: 8px;
+  padding: 3px;
+
+  button {
+    border: 0;
+    background: transparent;
+    padding: 4px 9px;
+    border-radius: 6px;
+    color: var(--app-color-text-muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  button.active {
+    background: var(--app-color-surface);
+    color: var(--app-color-primary);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+  }
+}
+
+/* ── Página ── */
+.owner-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--app-space-5, 1.25rem);
+  padding: var(--app-space-6, 1.5rem);
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0;
+    font-size: 1.35rem;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--app-color-text-muted);
+    font-size: 0.9rem;
+  }
+}
+
+/* ── KPIs ── */
 .kpi-grid {
   display: grid;
   gap: var(--app-space-4, 1rem);
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
 .kpi {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
   background: var(--app-color-surface);
   border: 1px solid var(--app-color-border);
   border-radius: var(--app-radius-lg, 14px);
-  display: grid;
-  gap: var(--app-space-2, 0.5rem);
   padding: var(--app-space-4, 1rem);
 
-  span {
+  div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .kpi-label {
     color: var(--app-color-text-muted);
-    font-size: 0.8125rem;
+    font-size: 0.78rem;
     font-weight: 650;
   }
 
   strong {
-    font-size: 1.4rem;
+    font-size: 1.45rem;
     font-weight: 800;
+    font-variant-numeric: tabular-nums;
   }
 }
 
+.kpi-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  flex-shrink: 0;
+
+  &--blue {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+  &--green {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  &--amber {
+    background: #fef3c7;
+    color: #d97706;
+  }
+  &--rose {
+    background: #ffe4e6;
+    color: #e11d48;
+  }
+}
+
+/* ── Tabs ── */
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -39,12 +186,13 @@
   button {
     background: var(--app-color-surface);
     border: 1px solid var(--app-color-border);
-    border-radius: var(--app-radius-md, 10px);
+    border-radius: 999px;
     color: var(--app-color-text-muted);
     cursor: pointer;
     font: inherit;
     font-weight: 650;
-    padding: 0.6rem 0.9rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.15s ease;
   }
 
   button.active {
@@ -54,39 +202,110 @@
   }
 }
 
-/* ── Cards de propiedades ── */
+/* ── Tarjetas de propiedad ── */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
 }
 
-.info-card {
+.prop-card {
   background: var(--app-color-surface);
   border: 1px solid var(--app-color-border);
   border-radius: var(--app-radius-lg, 14px);
-  padding: 1rem;
+  padding: 1.1rem;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.7rem;
 }
 
-.info-card__head {
+.prop-card__head {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
 
   h3 {
     margin: 0;
     font-size: 1rem;
     flex: 1;
+    min-width: 0;
   }
 }
 
-.info-card__body {
+.prop-card__addr {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--app-color-text-muted);
+  font-size: 0.8rem;
+}
+
+.prop-card__rent {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  background: var(--app-color-surface-muted, #f5f7fa);
+
+  span {
+    font-size: 0.78rem;
+    color: var(--app-color-text-muted);
+  }
+
+  strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tenant-box {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--app-color-border);
+  border-radius: 10px;
+}
+
+.tenant-box__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--app-color-text);
+
+  strong {
+    font-size: 0.9rem;
+  }
+}
+
+.tenant-box__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--app-color-text-muted);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--app-color-primary);
+  }
+}
+
+.prop-card__no-tenant {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: var(--app-color-text-muted);
+}
+
+.prop-card__body {
   margin: 0;
   display: grid;
-  gap: 0.5rem;
+  gap: 0.45rem;
 
   div {
     display: flex;
@@ -106,17 +325,18 @@
   dd {
     margin: 0;
     font-weight: 600;
-    font-size: 0.86rem;
+    font-size: 0.85rem;
+    text-align: right;
   }
 }
 
-/* ── Listas (liquidaciones, mantenimiento, contratos) ── */
+/* ── Listas ── */
 .record-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.6rem;
+  gap: 0.7rem;
 }
 
 .record-item {
@@ -126,7 +346,7 @@
   background: var(--app-color-surface);
   border: 1px solid var(--app-color-border);
   border-radius: 12px;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
 
   &--column {
     flex-direction: column;
@@ -154,9 +374,165 @@
   font-size: 0.82rem;
 }
 
-.record-amount {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+.record-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--app-color-text-muted);
+}
+
+/* ── Detalles de mantenimiento ── */
+.mr-details {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.5rem 1.25rem;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: var(--app-color-surface-muted, #f5f7fa);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    color: var(--app-color-text-muted);
+    font-size: 0.74rem;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+}
+
+/* ── Acciones de contrato ── */
+.contract-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.contract-nopdf {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--app-color-text-muted);
+}
+
+/* ── Liquidaciones ── */
+.statement-item {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: 14px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.statement-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.statement-breakdown {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  dt {
+    margin: 0;
+    color: var(--app-color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  dd.neg {
+    color: #b91c1c;
+  }
+
+  .net {
+    border-top: 1px dashed var(--app-color-border);
+    padding-top: 0.45rem;
+    margin-top: 0.1rem;
+
+    dt {
+      color: var(--app-color-text);
+      font-weight: 700;
+    }
+
+    dd {
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+  }
+}
+
+/* ── Contratos ── */
+.contract-item {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-radius: 14px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.contract-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.contract-meta {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    color: var(--app-color-text-muted);
+    font-size: 0.82rem;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-align: right;
+  }
 }
 
 /* ── Timeline de etapas ── */
@@ -213,11 +589,14 @@
 }
 
 @media (max-width: 640px) {
+  .owner-topbar {
+    padding: 0.6rem 1rem;
+  }
   .owner-page {
     padding: var(--app-space-4, 1rem);
   }
-  .record-item {
-    flex-wrap: wrap;
+  .brand-text span {
+    display: none;
   }
   .stage-name {
     display: none;

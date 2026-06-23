@@ -11,6 +11,7 @@ import {
 } from '../../core/services/admin/admin-operations.service';
 import { QueryParams } from '../../core/http/api-client.service';
 import { FileDownloadService } from '../../core/services/file-download.service';
+import { toDateOnly } from '../../core/utils/date-only.util';
 import { AppTableColumn } from '../../shared/ui/table/table.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { ReportBarDatum } from './components/report-bar-chart.component';
@@ -78,6 +79,8 @@ const REPORT_TYPES: readonly ReportTypeMeta[] = [
   { type: 'budget-vs-actual', backendType: 'budget-vs-actual' },
 ];
 
+export const VALID_REPORT_TYPES: readonly ReportType[] = REPORT_TYPES.map((r) => r.type);
+
 @Injectable()
 export class ReportsFacade {
   private readonly fb = inject(FormBuilder);
@@ -112,7 +115,20 @@ export class ReportsFacade {
   readonly exporting = signal(false);
   readonly activeReport = signal<ReportType>('summary');
   readonly kpis = signal<ReportKpis>({});
-  readonly rows = signal<ApiRecord[]>([]);
+  private readonly _backendRows = signal<ApiRecord[]>([]);
+
+  // Para reportes virtuales se recalcula cada vez que cambian las traducciones
+  // (scope cargado de forma async) o los KPIs. Para reportes backend devuelve
+  // los datos crudos del API.
+  readonly rows = computed<ApiRecord[]>(() => {
+    if (!this.activeReportOption().backendType) {
+      this.reportTranslations();
+      return buildVirtualReportRows(this.activeReport(), this.kpis(), (key, params) =>
+        this.t(key, params),
+      );
+    }
+    return this._backendRows();
+  });
 
   readonly activeReportOption = computed(() => {
     const reports = this.reports();
@@ -269,13 +285,20 @@ export class ReportsFacade {
     this.reportTranslations();
     const rows = this.activeReport() === 'vacancies' ? this.rows() : [];
     if (rows.length > 0) {
-      return rows.slice(0, 6).map((row, index) => ({
-        label:
-          this.readString(row, 'unit_number') ||
-          this.readString(row, 'property_name', this.t('bars.unitFallback', { n: index + 1 })),
-        value: this.readNumber(row, 'days_vacant'),
-        color: 'var(--app-color-warning)',
-      }));
+      return rows.slice(0, 6).map((row, index) => {
+        const propName = this.readString(row, 'property_name', '');
+        const unitNum = this.readString(row, 'unit_number');
+        const label =
+          propName ||
+          (unitNum
+            ? `${this.t('bars.unit')} ${unitNum}`
+            : this.t('bars.unitFallback', { n: index + 1 }));
+        return {
+          label,
+          value: this.readNumber(row, 'days_vacant'),
+          color: 'var(--app-color-warning)',
+        };
+      });
     }
 
     return [
@@ -305,20 +328,16 @@ export class ReportsFacade {
     ];
   });
 
-  loadDashboard(): void {
+  loadDashboard(initialReport: ReportType = 'summary'): void {
+    if (initialReport !== this.activeReport()) {
+      this.activeReport.set(initialReport);
+    }
     this.isLoading.set(true);
     const params = this.buildParams();
 
     this.operations.getReportsKpis(params).subscribe({
       next: (kpis) => {
         this.kpis.set(kpis);
-        if (!this.activeReportOption().backendType) {
-          this.rows.set(
-            buildVirtualReportRows(this.activeReport(), this.kpis(), (key, params) =>
-              this.t(key, params),
-            ),
-          );
-        }
       },
       error: (error: Error) => this.toast.error(error.message),
     });
@@ -329,9 +348,7 @@ export class ReportsFacade {
     this.activeReport.set(type);
     const backendType = this.activeReportOption().backendType;
     if (!backendType) {
-      this.rows.set(
-        buildVirtualReportRows(type, this.kpis(), (key, params) => this.t(key, params)),
-      );
+      // Las filas virtuales son un computed reactivo — no hace falta setear nada
       this.isLoading.set(false);
       return;
     }
@@ -342,7 +359,7 @@ export class ReportsFacade {
       .getReportRows(backendType, this.buildParams())
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: (rows) => this.rows.set(rows),
+        next: (rows) => this._backendRows.set(rows),
         error: (error: Error) => this.toast.error(error.message),
       });
   }
@@ -418,7 +435,7 @@ export class ReportsFacade {
 
   private buildFilename(report: string, format: ReportExportFormat): string {
     const ext = format === 'excel' ? 'xlsx' : format;
-    return `${report}-${new Date().toISOString().slice(0, 10)}.${ext}`;
+    return `${report}-${toDateOnly(new Date())}.${ext}`;
   }
 
   private escapeCsv(value: unknown): string {

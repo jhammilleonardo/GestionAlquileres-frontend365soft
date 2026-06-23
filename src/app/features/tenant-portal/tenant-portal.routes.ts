@@ -153,6 +153,20 @@ export const TENANT_PORTAL_ROUTES: Routes = [
         ],
       },
       {
+        path: 'reservas',
+        loadComponent: () =>
+          import('./reservations/tenant-reservations.component').then(
+            (m) => m.TenantReservationsComponent,
+          ),
+      },
+      {
+        path: 'reservar/:propertyId/:unitId',
+        loadComponent: () =>
+          import('./checkout/reservation-checkout.component').then(
+            (m) => m.ReservationCheckoutComponent,
+          ),
+      },
+      {
         path: 'mensajes',
         canActivate: [tenantWithContractGuard],
         loadComponent: () =>

@@ -6,7 +6,8 @@
       <h1 class="hero-title">{{ 'public.properties.heroTitle' | transloco }}</h1>
       <p class="hero-subtitle">{{ 'public.properties.heroSubtitle' | transloco }}</p>
 
-      <div class="search-bar-container">
+      <!-- Buscador + filtros unificados (auto-aplican al cambiar) -->
+      <div class="search-panel">
         <div class="search-bar">
           <div class="search-input-wrapper">
             <lucide-icon [img]="Search" class="search-icon" />
@@ -14,7 +15,7 @@
               type="text"
               class="search-input"
               [value]="search()"
-              (input)="search.set(inputValue($event))"
+              (input)="search.set(inputValue($event)); onFilterChange()"
               (keyup.enter)="applyFilters()"
               [placeholder]="'public.properties.searchPlaceholder' | transloco"
             />
@@ -24,91 +25,117 @@
             {{ 'public.properties.searchBtn' | transloco }}
           </app-button>
         </div>
+
+        <div class="hero-filters">
+          <div class="filter-field filter-field--sm">
+            <label class="filter-label">{{ 'public.properties.minPrice' | transloco }}</label>
+            <input
+              type="number"
+              min="0"
+              class="filter-input"
+              [value]="minPrice() ?? ''"
+              (input)="minPrice.set(numberValue($event)); onFilterChange()"
+              placeholder="0"
+            />
+          </div>
+
+          <div class="filter-field filter-field--sm">
+            <label class="filter-label">{{ 'public.properties.maxPrice' | transloco }}</label>
+            <input
+              type="number"
+              min="0"
+              class="filter-input"
+              [value]="maxPrice() ?? ''"
+              (input)="maxPrice.set(numberValue($event)); onFilterChange()"
+              placeholder="∞"
+            />
+          </div>
+
+          <div class="filter-field filter-field--sm">
+            <label class="filter-label">{{ 'public.properties.bedroomsFilter' | transloco }}</label>
+            <app-select
+              [options]="bedroomSelectOptions()"
+              [ngModel]="bedrooms() ?? ANY_BEDROOMS"
+              [ariaLabel]="'public.properties.bedroomsFilter' | transloco"
+              (ngModelChange)="onBedroomsChange($event)"
+            />
+          </div>
+
+          <div class="filter-field filter-field--sm">
+            <label class="filter-label">{{
+              'public.properties.rentalTypeLabel' | transloco
+            }}</label>
+            <app-select
+              [options]="rentalTypeSelectOptions()"
+              [ngModel]="rentalType()"
+              [ariaLabel]="'public.properties.rentalTypeLabel' | transloco"
+              (ngModelChange)="onRentalTypeChange($event)"
+            />
+          </div>
+
+          @if (hasActiveFilters()) {
+            <button type="button" class="clear-link" (click)="clearFilters()">
+              <lucide-icon [img]="X" />
+              {{ 'common.clearFilters' | transloco }}
+            </button>
+          }
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Filters Section -->
-  <div class="filters-container">
-    <div class="filters-header">
-      <div class="results-info">
-        <h2>
-          {{
-            'public.properties.availableCount' | transloco: { count: filteredProperties().length }
-          }}
-        </h2>
+  <!-- Encabezado de resultados: contador + orden -->
+  <div class="results-header">
+    <h2 class="results-count">
+      {{ 'public.properties.availableCount' | transloco: { count: filteredProperties().length } }}
+    </h2>
+    <div class="results-actions">
+      <button type="button" class="map-link" (click)="openMap()">
+        <lucide-icon [img]="Map" />
+        {{ 'public.map.title' | transloco }}
+      </button>
+      <div class="sort-container">
+        <label class="filter-label">{{ 'public.properties.sortBy' | transloco }}</label>
+        <app-select
+          [options]="sortSelectOptions()"
+          [ngModel]="sortBy()"
+          [ariaLabel]="'public.properties.sortBy' | transloco"
+          (ngModelChange)="onSortChange($event)"
+        />
       </div>
-      <app-button appearance="secondary" (clicked)="toggleFilters()">
-        <lucide-icon [img]="showFilters() ? X : Settings" />
-        {{
-          showFilters()
-            ? ('public.properties.hideFilters' | transloco)
-            : ('public.properties.showFilters' | transloco)
-        }}
-      </app-button>
-    </div>
-
-    @if (showFilters()) {
-      <div class="filters-panel">
-        <div class="filters-grid">
-          <div class="filter-field">
-            <label class="filter-label">{{ 'public.properties.city' | transloco }}</label>
-            <div class="input-with-icon">
-              <lucide-icon [img]="MapPin" class="input-icon" />
-              <input
-                type="text"
-                class="filter-input"
-                [value]="city()"
-                (input)="city.set(inputValue($event))"
-                (change)="applyFilters()"
-                [placeholder]="'public.properties.cityPlaceholder' | transloco"
-              />
-            </div>
-          </div>
-
-          <div class="filter-field">
-            <label class="filter-label">{{ 'public.properties.country' | transloco }}</label>
-            <div class="input-with-icon">
-              <lucide-icon [img]="MapPin" class="input-icon" />
-              <input
-                type="text"
-                class="filter-input"
-                [value]="country()"
-                (input)="country.set(inputValue($event))"
-                (change)="applyFilters()"
-                [placeholder]="'public.properties.countryPlaceholder' | transloco"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="filters-actions">
-          <app-button appearance="flat" (clicked)="clearFilters()">
-            <lucide-icon [img]="X" />
-            {{ 'common.clearFilters' | transloco }}
-          </app-button>
-          <app-button (clicked)="applyFilters()">
-            <lucide-icon [img]="Search" />
-            {{ 'common.applyFilters' | transloco }}
-          </app-button>
-        </div>
-      </div>
-    }
-
-    <div class="sort-container">
-      <label class="filter-label">{{ 'public.properties.sortBy' | transloco }}</label>
-      <select class="sort-select" [value]="sortBy()" (change)="setSortFromEvent($event)">
-        @for (option of sortOptions; track option.value) {
-          <option [value]="option.value">{{ option.label | transloco }}</option>
-        }
-      </select>
     </div>
   </div>
 
   <!-- Properties Grid -->
   <div class="properties-section">
     @if (isLoading()) {
-      <app-loading-state [label]="'public.properties.loading' | transloco" />
+      <div class="properties-grid">
+        @for (item of skeletonItems; track item) {
+          <div class="skeleton-card" aria-hidden="true">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line skeleton-line--title"></div>
+              <div class="skeleton-line skeleton-line--price"></div>
+              <div class="skeleton-chips">
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+                <div class="skeleton-chip"></div>
+              </div>
+              <div class="skeleton-line skeleton-line--address"></div>
+              <div class="skeleton-btn"></div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (loadError()) {
+      <div class="no-results">
+        <lucide-icon [img]="Home" class="no-results-icon" />
+        <h3>{{ 'public.properties.loadErrorTitle' | transloco }}</h3>
+        <p>{{ 'public.properties.loadErrorSubtitle' | transloco }}</p>
+        <app-button (clicked)="applyFilters()">
+          {{ 'common.retry' | transloco }}
+        </app-button>
+      </div>
     } @else if (filteredProperties().length === 0) {
       <div class="no-results">
         <lucide-icon [img]="Home" class="no-results-icon" />
@@ -122,104 +149,36 @@
     } @else {
       <div class="properties-grid">
         @for (property of filteredProperties(); track property.id) {
-          <div class="glass-card">
-            <!-- Image Section -->
-            <div class="card-image-section" (click)="viewProperty(property.id)">
-              <img
-                [src]="getPropertyImageUrl(property)"
-                [alt]="property.title"
-                class="card-bg-img"
-                (error)="handleImageError($event)"
-              />
-              <div class="image-fade"></div>
-
-              <button
-                type="button"
-                class="btn-bookmark"
-                [class.is-fav]="isFavorite(property.id)"
-                (click)="toggleFavorite(property.id, $event)"
-                [title]="'public.properties.saveFavorite' | transloco"
-              >
-                <lucide-icon [img]="Heart" />
-              </button>
-            </div>
-
-            <!-- Content Section -->
-            <div class="card-content">
-              <div class="info-section">
-                <div class="main-info" (click)="viewProperty(property.id)">
-                  <h3 class="title">{{ property.title }}</h3>
-                  @if (getPropertyAddress(property)) {
-                    <p class="subtitle">{{ getPropertyAddress(property) }}</p>
-                  }
-                </div>
-
-                @if (property.property_type) {
-                  <div class="tags-pill">
-                    <div class="tag-icons">
-                      <div class="t-icon-circle bg-blue">
-                        <lucide-icon [img]="Home" class="t-icon" />
-                      </div>
-                      @if (property.property_subtype) {
-                        <div class="t-icon-circle bg-orange">
-                          <lucide-icon [img]="MapPin" class="t-icon" />
-                        </div>
-                      }
-                    </div>
-                    <span>{{ property.property_type.name }}</span>
-                  </div>
-                }
-              </div>
-
-              <div class="bottom-section">
-                <div class="stats-container">
-                  @if (property.square_meters) {
-                    <div class="stat-block">
-                      <span class="stat-value">
-                        <lucide-icon [img]="Maximize" class="inline-icon" />
-                        {{ property.square_meters }}
-                      </span>
-                      <span class="stat-label">{{ 'public.properties.area' | transloco }}</span>
-                    </div>
-                  }
-
-                  @if (property.square_meters && property.bedrooms) {
-                    <div class="stat-divider"></div>
-                  }
-
-                  @if (property.bedrooms) {
-                    <div class="stat-block">
-                      <span class="stat-value">
-                        <lucide-icon [img]="Home" class="inline-icon" />
-                        {{ property.bedrooms }}
-                      </span>
-                      <span class="stat-label">{{ 'public.properties.bedrooms' | transloco }}</span>
-                    </div>
-                  }
-
-                  @if ((property.square_meters || property.bedrooms) && getPriceDisplay(property)) {
-                    <div class="stat-divider"></div>
-                  }
-
-                  @if (getPriceDisplay(property); as price) {
-                    <div class="stat-block">
-                      <span class="stat-value">
-                        {{ property.currency || 'BOB' }}
-                        {{ price.amount | number: '1.0-0' }}
-                      </span>
-                      <span class="stat-label">{{ price.labelKey | transloco }}</span>
-                    </div>
-                  }
-                </div>
-
-                <button type="button" class="btn-action" (click)="viewProperty(property.id)">
-                  {{ 'public.properties.viewDetails' | transloco }}
-                </button>
-              </div>
-            </div>
-          </div>
+          <app-public-property-card
+            [property]="property"
+            [favorite]="isFavorite(property.id)"
+            (view)="viewProperty($event)"
+            (favoriteToggle)="toggleFavorite($event)"
+          />
         }
       </div>
     }
   </div>
+
+  <!-- Modal del mapa de propiedades (carga Leaflet bajo demanda) -->
+  @if (mapOpen()) {
+    <div class="map-modal-overlay" (click)="closeMap()">
+      <div
+        class="map-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'public.map.title' | transloco"
+        (click)="$event.stopPropagation()"
+      >
+        @defer (on immediate) {
+          <app-property-map [inModal]="true" (closed)="closeMap()" />
+        } @loading {
+          <div class="map-modal-loading">
+            <div class="map-modal-spinner"></div>
+            <p>{{ 'public.map.loading' | transloco }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
 </div>

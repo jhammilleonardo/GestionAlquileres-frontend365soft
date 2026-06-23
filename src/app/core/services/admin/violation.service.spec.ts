@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { ViolationService } from './violation.service';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { ImageOptimizationService } from '../image-optimization.service';
 import { ViolationStatus, ViolationType } from '../../models/violation.model';
 
 describe('ViolationService', () => {
@@ -26,6 +27,12 @@ describe('ViolationService', () => {
         { provide: ApiClientService, useValue: { get, post, patch } },
         { provide: HttpClient, useValue: { get: httpGet } },
         { provide: SlugService, useValue: { buildApiEndpoint: (p: string) => `acme/${p}` } },
+        {
+          provide: ImageOptimizationService,
+          useValue: {
+            filesToFormData: vi.fn().mockResolvedValue(new FormData()),
+          },
+        },
       ],
     });
     service = TestBed.inject(ViolationService);
@@ -56,10 +63,13 @@ describe('ViolationService', () => {
     expect(post).toHaveBeenCalledWith('acme/admin/violations/5/notify', {});
   });
 
-  it('uploadEvidence envía FormData con los archivos', () => {
+  it('uploadEvidence envía FormData con los archivos', async () => {
     post.mockReturnValue(of({ evidence_photos: ['/a.png'] }));
     const file = new File(['x'], 'a.png', { type: 'image/png' });
     service.uploadEvidence(5, [file]).subscribe();
+    await vi.waitFor(() => {
+      expect(post).toHaveBeenCalled();
+    });
     const call = post.mock.calls[0] as [string, unknown];
     expect(call[0]).toBe('acme/admin/violations/5/upload');
     expect(call[1]).toBeInstanceOf(FormData);

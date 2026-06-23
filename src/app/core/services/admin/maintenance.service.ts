@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { Observable, map, tap } from 'rxjs';
+import { Observable, from, map, switchMap, tap } from 'rxjs';
 import {
   MaintenanceRequest,
   MaintenanceStatus,
@@ -14,6 +14,7 @@ import {
 } from '../../models/maintenance-request.model';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { ImageOptimizationService } from '../image-optimization.service';
 
 @Injectable({
   providedIn: 'root',
@@ -21,6 +22,7 @@ import { SlugService } from '../slug.service';
 export class MaintenanceService {
   private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
+  private imageOptimization = inject(ImageOptimizationService);
 
   /**
    * Get the current tenant slug dynamically from SlugService
@@ -240,10 +242,10 @@ export class MaintenanceService {
    * Upload files to a maintenance request (max 3, 10MB each)
    */
   uploadFiles(requestId: number, files: File[]): Observable<MaintenanceAttachment[]> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
     const endpoint = this.slugService.buildApiEndpoint(`admin/maintenance/${requestId}/upload`);
-    return this.apiClient.post<MaintenanceAttachment[]>(endpoint, formData);
+    return from(this.imageOptimization.filesToFormData(files, 'files')).pipe(
+      switchMap((formData) => this.apiClient.post<MaintenanceAttachment[]>(endpoint, formData)),
+    );
   }
 
   // ==================== Filtering ====================

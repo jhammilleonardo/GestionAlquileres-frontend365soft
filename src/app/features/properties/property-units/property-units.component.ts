@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, input, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, input, inject, signal } from '@angular/core';
 import {
   LucideAngularModule,
   Plus,
@@ -19,6 +19,8 @@ import { Unit, UnitStatus } from '../../../core/models/unit.model';
 import { UnitFormDialogComponent } from './unit-form-dialog/unit-form-dialog.component';
 import { UnitDetailPanelComponent } from './unit-detail-panel/unit-detail-panel.component';
 import { BlockDatesDialogComponent } from './block-dates-dialog/block-dates-dialog.component';
+import { SeasonRulesDialogComponent } from '../../reservations/seasons/season-rules-dialog.component';
+import { CalendarSyncDialogComponent } from '../../reservations/calendar-sync/calendar-sync-dialog.component';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppEmptyStateComponent } from '../../../shared/ui/empty-state/empty-state.component';
 import { AppLoadingStateComponent } from '../../../shared/ui/loading-state/loading-state.component';
@@ -35,6 +37,8 @@ import { PropertyUnitsFacade } from './property-units.facade';
     UnitDetailPanelComponent,
     UnitFormDialogComponent,
     BlockDatesDialogComponent,
+    SeasonRulesDialogComponent,
+    CalendarSyncDialogComponent,
     AppButtonComponent,
     AppEmptyStateComponent,
     AppLoadingStateComponent,
@@ -74,8 +78,30 @@ export class PropertyUnitsComponent implements OnInit {
   readonly blockDatesOpen = this.facade.blockDatesOpen;
   readonly blockDatesUnit = this.facade.blockDatesUnit;
 
+  /** Unidad cuyo diálogo de temporadas está abierto (0 = cerrado). */
+  readonly seasonsUnitId = signal(0);
+
+  /** Unidad cuyo diálogo de calendarios externos está abierto (0 = cerrado). */
+  readonly calendarSyncUnitId = signal(0);
+
   ngOnInit(): void {
     this.loadUnits();
+  }
+
+  openSeasons(unit: Unit): void {
+    this.seasonsUnitId.set(unit.id);
+  }
+
+  closeSeasons(): void {
+    this.seasonsUnitId.set(0);
+  }
+
+  openCalendarSync(unit: Unit): void {
+    this.calendarSyncUnitId.set(unit.id);
+  }
+
+  closeCalendarSync(): void {
+    this.calendarSyncUnitId.set(0);
   }
 
   loadUnits(): void {

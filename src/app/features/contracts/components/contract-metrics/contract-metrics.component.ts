@@ -2,12 +2,12 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
 import {
   AlertTriangle,
-  CheckCircle2,
-  DollarSign,
+  FileCheck2,
+  FilePen,
   FileText,
   LucideAngularModule,
-  Pencil,
   TrendingUp,
+  Wallet,
 } from 'lucide-angular';
 
 import { ContractDashboard } from '../../../../core/models/contract.model';
@@ -25,9 +25,9 @@ export class ContractMetricsComponent {
   readonly dashboard = input.required<ContractDashboard>();
 
   readonly FileText = FileText;
-  readonly CheckCircle2 = CheckCircle2;
-  readonly Pencil = Pencil;
-  readonly DollarSign = DollarSign;
+  readonly FileCheck2 = FileCheck2;
+  readonly FilePen = FilePen;
+  readonly Wallet = Wallet;
   readonly TrendingUp = TrendingUp;
   readonly AlertTriangle = AlertTriangle;
 }

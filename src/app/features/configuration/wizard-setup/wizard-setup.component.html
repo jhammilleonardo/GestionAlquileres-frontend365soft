@@ -18,31 +18,24 @@
 
       <app-stepper [steps]="stepLabels()" [currentIndex]="currentStep()"></app-stepper>
 
-      @switch (currentStep()) {
-        @case (0) {
+      @switch (currentKey()) {
+        @case ('timezone') {
           <form [formGroup]="countryStep" class="step-body" novalidate>
             <div class="step-icon">
               <lucide-icon [img]="GlobeIcon" [size]="36" aria-hidden="true"></lucide-icon>
             </div>
-            <h1 class="step-title">{{ 'wizard.step1Title' | transloco }}</h1>
-            <p class="step-desc">{{ 'wizard.step1Desc' | transloco }}</p>
-
-            <app-select
-              formControlName="country"
-              [label]="'wizard.step1Label' | transloco"
-              [options]="countries()"
-              (valueChanged)="onCountrySelected($event)"
-            ></app-select>
+            <h1 class="step-title">{{ 'wizard.tzStepTitle' | transloco }}</h1>
+            <p class="step-desc">{{ 'wizard.tzStepDesc' | transloco }}</p>
 
             <app-select
               formControlName="timezone"
               [label]="'wizard.timezone' | transloco"
-              [options]="timezones"
+              [options]="timezonesForCountry()"
             ></app-select>
 
             <div class="step-actions">
               <span></span>
-              <app-button [disabled]="countryStep.invalid" (clicked)="goNext()">
+              <app-button (clicked)="goNext()">
                 {{ 'wizard.next' | transloco }}
                 <lucide-icon [img]="ArrowRightIcon" [size]="18" aria-hidden="true"></lucide-icon>
               </app-button>
@@ -50,7 +43,7 @@
           </form>
         }
 
-        @case (1) {
+        @case ('payments') {
           <form [formGroup]="paymentsStep" class="step-body" novalidate>
             <div class="step-icon">
               <lucide-icon [img]="CreditCardIcon" [size]="36" aria-hidden="true"></lucide-icon>
@@ -77,10 +70,14 @@
             }
 
             <div class="step-actions">
-              <app-button appearance="outline" (clicked)="goBack()">
-                <lucide-icon [img]="ArrowLeftIcon" [size]="18" aria-hidden="true"></lucide-icon>
-                {{ 'wizard.back' | transloco }}
-              </app-button>
+              @if (currentStep() > 0) {
+                <app-button appearance="outline" (clicked)="goBack()">
+                  <lucide-icon [img]="ArrowLeftIcon" [size]="18" aria-hidden="true"></lucide-icon>
+                  {{ 'wizard.back' | transloco }}
+                </app-button>
+              } @else {
+                <span></span>
+              }
               <app-button [disabled]="selectedPayments().length === 0" (clicked)="goNext()">
                 {{ 'wizard.next' | transloco }}
                 <lucide-icon [img]="ArrowRightIcon" [size]="18" aria-hidden="true"></lucide-icon>
@@ -89,7 +86,7 @@
           </form>
         }
 
-        @case (2) {
+        @case ('rental') {
           <form [formGroup]="rentalStep" class="step-body" novalidate>
             <div class="step-icon">
               <lucide-icon [img]="HomeIcon" [size]="36" aria-hidden="true"></lucide-icon>
@@ -108,7 +105,7 @@
                 <app-text-field
                   formControlName="grace_days"
                   type="number"
-                  [label]="'contracts.create.graceDays' | transloco"
+                  [label]="'wizard.graceDaysLabel' | transloco"
                   inputMode="numeric"
                 ></app-text-field>
                 <p>{{ 'wizard.graceDaysHint' | transloco }}</p>
@@ -135,7 +132,7 @@
           </form>
         }
 
-        @case (3) {
+        @case ('summary') {
           <div class="step-body summary-step">
             <div class="step-icon success">
               <lucide-icon [img]="RocketIcon" [size]="40" aria-hidden="true"></lucide-icon>

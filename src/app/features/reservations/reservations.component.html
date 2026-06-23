@@ -1,0 +1,37 @@
+<div class="reservations-page">
+  <app-page-header
+    eyebrow="365Soft"
+    [title]="'reservations.title' | transloco"
+    [description]="'reservations.subtitle' | transloco"
+  />
+
+  <app-reservation-analytics />
+
+  <app-reservation-filters
+    [form]="filterForm"
+    [propertyOptions]="propertyOptions()"
+    [statusOptions]="statusFilterOptions()"
+    (filtersCleared)="clearFilters()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'reservations.loading' | transloco" />
+  } @else if (reservations().length === 0) {
+    <app-empty-state [title]="'reservations.empty' | transloco" />
+  } @else {
+    <app-reservation-list
+      [reservations]="reservations()"
+      [busyId]="busyId()"
+      [actionsFor]="availableActions"
+      [toneFor]="statusTone"
+      (actionRequested)="onActionRequested($event)"
+    />
+
+    <app-pagination
+      [page]="page()"
+      [pageSize]="pageSize"
+      [total]="total()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</div>

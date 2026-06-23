@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterModule } from '@angular/router';
 import {
   FormsModule,
@@ -22,8 +23,8 @@ import { catchError, tap } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { LanguageService } from '../../core/services/language.service';
 import { AuthService } from '../../core/services/auth.service';
-import { SessionTokenService } from '../../core/services/session-token.service';
 import { getApiErrorMessage } from '../../core/http/http-error.util';
+import { SanitizedHtmlPipe } from '../../shared/pipes/sanitized-html.pipe';
 import {
   AppButtonComponent,
   AppCheckboxComponent,
@@ -49,6 +50,7 @@ import {
     AppSelectComponent,
     AppStepperComponent,
     AppTextFieldComponent,
+    SanitizedHtmlPipe,
   ],
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
@@ -67,7 +69,6 @@ export class RegisterComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private transloco = inject(TranslocoService);
-  private sessionTokens = inject(SessionTokenService);
 
   showPassword = signal(false);
   showConfirmPassword = signal(false);
@@ -122,7 +123,7 @@ export class RegisterComponent {
 
   passwordForm = this.fb.group(
     {
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       confirm_password: ['', Validators.required],
       acceptTerms: [false, Validators.requiredTrue],
     },
@@ -171,17 +172,6 @@ export class RegisterComponent {
     this.privacyOpen.set(true);
   }
 
-  goToTenantPortal(): void {
-    // Clear tenant session before navigating to login
-    this.sessionTokens.clearToken('tenant');
-    localStorage.removeItem('tenant_user');
-    sessionStorage.removeItem('tenant_user');
-    localStorage.removeItem('tenant_slug');
-    sessionStorage.removeItem('tenant_slug');
-    const slug = this.authService.getCurrentSlug();
-    void this.router.navigate(slug ? ['/', slug, 'login'] : ['/login']);
-  }
-
   onSubmit(): void {
     if (this.companyForm.invalid || this.adminForm.invalid || this.passwordForm.invalid) {
       return;
@@ -211,12 +201,31 @@ export class RegisterComponent {
         }),
         catchError((_e: unknown) => {
           this.isLoading.set(false);
-          this.errorMessage.set(
-            getApiErrorMessage(_e, this.transloco.translate('auth.createAccountError')),
-          );
+          this.errorMessage.set(this.resolveRegisterError(_e));
           throw _e;
         }),
       )
       .subscribe();
+  }
+
+  /**
+   * Traduce los errores del registro a un mensaje para el usuario final. El
+   * backend envía un `code` estable para los errores de negocio (p. ej. nombre
+   * de empresa repetido); así evitamos mostrar detalles técnicos como el slug.
+   */
+  private resolveRegisterError(error: unknown): string {
+    const code =
+      error instanceof HttpErrorResponse &&
+      error.error &&
+      typeof error.error === 'object' &&
+      'code' in error.error
+        ? (error.error as { code?: unknown }).code
+        : null;
+
+    if (code === 'COMPANY_NAME_TAKEN') {
+      return this.transloco.translate('auth.companyNameTakenError');
+    }
+
+    return getApiErrorMessage(error, this.transloco.translate('auth.createAccountError'));
   }
 }

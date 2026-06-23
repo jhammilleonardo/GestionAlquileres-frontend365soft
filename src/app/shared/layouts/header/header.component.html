@@ -21,7 +21,15 @@
 
       @if (isNotificationsDropdownOpen) {
         <!-- Overlay -->
-        <div class="dropdown-overlay" (click)="closeNotificationsDropdown()"></div>
+        <div
+          class="dropdown-overlay"
+          role="button"
+          tabindex="0"
+          aria-label="Cerrar"
+          (click)="closeNotificationsDropdown()"
+          (keydown.enter)="closeNotificationsDropdown()"
+          (keydown.space)="closeNotificationsDropdown(); $event.preventDefault()"
+        ></div>
 
         <!-- Dropdown -->
         <div class="notif-panel">
@@ -59,8 +67,12 @@
               @for (notification of notifications(); track notification.id) {
                 <div
                   class="notif-item"
+                  role="button"
+                  tabindex="0"
                   [class.notif-item--unread]="!notification.is_read"
                   (click)="handleNotificationClick(notification)"
+                  (keydown.enter)="handleNotificationClick(notification)"
+                  (keydown.space)="handleNotificationClick(notification); $event.preventDefault()"
                 >
                   <div
                     class="notif-item__icon"
@@ -135,7 +147,15 @@
       </button>
 
       @if (isUserMenuOpen) {
-        <div class="dropdown-overlay" (click)="closeUserMenu()"></div>
+        <div
+          class="dropdown-overlay"
+          role="button"
+          tabindex="0"
+          aria-label="Cerrar"
+          (click)="closeUserMenu()"
+          (keydown.enter)="closeUserMenu()"
+          (keydown.space)="closeUserMenu(); $event.preventDefault()"
+        ></div>
 
         <div class="user-menu-panel" role="menu">
           <div class="user-menu-header">

@@ -1,6 +1,4 @@
 .solicitudes-container {
-  max-width: 1400px;
-  margin: 0 auto;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -8,8 +6,9 @@
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  /* Flex con grow: la última fila se estira para llenar el ancho (sin huecos). */
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
 }
 
@@ -23,10 +22,14 @@
 }
 
 .stat-card {
+  flex: 1 1 200px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 24px 28px;
+  gap: 16px;
+  padding: 26px 24px;
+  min-height: 116px;
+  border: none;
+  color: #ffffff;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -34,7 +37,7 @@
 
 .stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
 }
 
 .stat-icon {
@@ -42,46 +45,45 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .stat-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .stat-value {
   margin: 0;
-  font-size: 2rem;
-  font-weight: 760;
-  line-height: 1.15;
+  font-size: 2.1rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #ffffff;
 }
 
 .stat-label {
   margin: 0;
-  color: var(--app-color-text-muted);
-  font-size: 0.8125rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13.5px;
+  font-weight: 500;
 }
 
-.total-card .stat-icon,
-.total-card .stat-value {
-  color: var(--app-color-primary);
+.total-card {
+  background: #3b82f6;
 }
 
-.pending-card .stat-icon,
-.pending-card .stat-value {
-  color: var(--app-color-warning);
+.pending-card {
+  background: #f59e0b;
 }
 
-.approved-card .stat-icon,
-.approved-card .stat-value {
-  color: var(--app-color-success);
+.approved-card {
+  background: #22c55e;
 }
 
-.rejected-card .stat-icon,
-.rejected-card .stat-value {
-  color: var(--app-color-danger);
+.rejected-card {
+  background: #ef4444;
 }
 
 .filters-card {

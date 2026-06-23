@@ -146,7 +146,7 @@
           @for (url of previewUrls(); track $index) {
             <div class="preview-item" role="listitem">
               @if (url) {
-                <img [src]="url" [alt]="'tecnico.previewAlt' | transloco" />
+                <img [src]="url" [alt]="'tecnico.previewAlt' | transloco" loading="lazy" />
               } @else {
                 <div class="file-placeholder">
                   <lucide-icon [img]="PaperclipIcon" size="20" aria-hidden="true" />

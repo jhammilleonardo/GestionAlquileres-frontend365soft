@@ -26,7 +26,7 @@
     "hidePassword": "Hide password",
     "showPassword": "Show password",
     "passwordRequired": "Password is required",
-    "passwordMinLength": "Minimum 6 characters",
+    "passwordMinLength": "Minimum 8 characters",
     "phoneOptional": "Phone (optional)",
     "create": "Create Employee",
     "createError": "Error creating employee"

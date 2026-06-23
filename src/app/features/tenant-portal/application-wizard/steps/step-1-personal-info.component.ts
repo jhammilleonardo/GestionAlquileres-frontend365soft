@@ -1,4 +1,13 @@
-import { Component, input, output, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  OnInit,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { CreditCard, Heart, MapPin, User } from 'lucide-angular';
@@ -9,6 +18,8 @@ import {
   AppSelectOption,
   AppTextFieldComponent,
 } from '../../../../shared/ui';
+import { toDateOnly } from '../../../../core/utils/date-only.util';
+import { sanitizePhoneInput } from '../../../../core/utils/input-sanitizers';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,7 +52,7 @@ import {
             [formControl]="getControl('full_name')"
             [label]="'rentalApp.fullName' | transloco"
             placeholder="Juan Perez Garcia"
-            [readonly]="true"
+            [readonly]="isAccountValueLocked('full_name')"
           />
           <p class="field-meta field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
         </div>
@@ -52,7 +63,7 @@ import {
             type="email"
             [label]="'rentalApp.emailLabel' | transloco"
             placeholder="correo@ejemplo.com"
-            [readonly]="true"
+            [readonly]="isAccountValueLocked('email')"
           />
           <p class="field-meta field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
         </div>
@@ -61,11 +72,21 @@ import {
           <app-text-field
             [formControl]="getControl('phone')"
             type="tel"
+            inputMode="tel"
+            [inputFilter]="sanitizePhone"
             [label]="'rentalApp.phone' | transloco"
             placeholder="+591 70000000"
-            [readonly]="true"
+            [readonly]="isAccountValueLocked('phone')"
           />
-          <p class="field-meta field-hint">{{ 'rentalApp.accountHint' | transloco }}</p>
+          <p class="field-meta">
+            @if (isAccountValueLocked('phone')) {
+              <span class="field-hint">{{ 'rentalApp.accountHint' | transloco }}</span>
+            } @else if (hasError('phone', 'required')) {
+              <span class="field-error">{{ 'rentalApp.phoneRequired' | transloco }}</span>
+            } @else if (hasError('phone', 'pattern')) {
+              <span class="field-error">{{ 'rentalApp.phoneInvalid' | transloco }}</span>
+            }
+          </p>
         </div>
 
         <div class="field">
@@ -227,9 +248,14 @@ export class Step1PersonalInfoComponent implements OnInit {
   protected readonly MapPin = MapPin;
 
   readonly formGroup = input.required<FormGroup>();
+  /** Campos que provienen de la cuenta del usuario y deben quedar bloqueados. */
+  readonly lockedFields = input<ReadonlySet<string>>(new Set());
   readonly isValid = output<boolean>();
 
+  private readonly destroyRef = inject(DestroyRef);
+
   protected readonly maxDate = this.toDateInput(this.adultMaxDate());
+  protected readonly sanitizePhone = sanitizePhoneInput;
 
   constructor(private readonly translocoService: TranslocoService) {}
 
@@ -239,7 +265,9 @@ export class Step1PersonalInfoComponent implements OnInit {
 
   ngOnInit(): void {
     this.isValid.emit(this.form.valid);
-    this.form.valueChanges.subscribe(() => this.isValid.emit(this.form.valid));
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.isValid.emit(this.form.valid));
   }
 
   protected getControl(path: string): FormControl {
@@ -249,6 +277,10 @@ export class Step1PersonalInfoComponent implements OnInit {
   protected hasError(path: string, error: string): boolean {
     const control = this.form.get(path);
     return Boolean(control?.hasError(error) && control.touched);
+  }
+
+  protected isAccountValueLocked(path: string): boolean {
+    return this.lockedFields().has(path);
   }
 
   protected maritalStatusOptions(): readonly AppSelectOption<string>[] {
@@ -264,6 +296,6 @@ export class Step1PersonalInfoComponent implements OnInit {
   }
 
   private toDateInput(date: Date): string {
-    return date.toISOString().slice(0, 10);
+    return toDateOnly(date);
   }
 }

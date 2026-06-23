@@ -120,6 +120,57 @@
           formControlName="cleaning_fee"
         />
       </div>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field
+          [label]="'propiedades.units.weekendAdjustment' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="weekend_adjustment_pct"
+        />
+        <app-text-field
+          [label]="'propiedades.units.advanceNotice' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="advance_notice_days"
+        />
+      </div>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field
+          [label]="'propiedades.units.earlyBirdDays' | transloco"
+          type="number"
+          placeholder="60"
+          formControlName="early_bird_min_days"
+        />
+        <app-text-field
+          [label]="'propiedades.units.earlyBirdDiscount' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="early_bird_discount_pct"
+        />
+      </div>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field
+          [label]="'propiedades.units.lastMinuteDays' | transloco"
+          type="number"
+          placeholder="3"
+          formControlName="last_minute_max_days"
+        />
+        <app-text-field
+          [label]="'propiedades.units.lastMinuteAdjustment' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="last_minute_adjustment_pct"
+        />
+      </div>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field
+          [label]="'propiedades.units.maxAdvanceDays' | transloco"
+          type="number"
+          placeholder="365"
+          formControlName="max_advance_days"
+        />
+        <span></span>
+      </div>
       <p class="ufd-help">{{ 'propiedades.units.shortTermConfig' | transloco }}</p>
       <div class="ufd-row ufd-row--2">
         <app-text-field
@@ -146,6 +197,41 @@
           placeholder="11:00"
           formControlName="checkout_time"
         />
+      </div>
+      <div class="ufd-row ufd-row--2">
+        <app-text-field
+          [label]="'propiedades.units.weeklyDiscount' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="weekly_discount_pct"
+        />
+        <app-text-field
+          [label]="'propiedades.units.monthlyDiscount' | transloco"
+          type="number"
+          placeholder="0"
+          formControlName="monthly_discount_pct"
+        />
+      </div>
+      <div class="ufd-row ufd-row--2">
+        <app-select
+          [label]="'propiedades.units.bookingMode' | transloco"
+          [options]="bookingModeOptions"
+          formControlName="booking_mode"
+        />
+        <app-select
+          [label]="'propiedades.units.cancellationPolicy' | transloco"
+          [options]="cancellationPolicyOptions"
+          formControlName="cancellation_policy"
+        />
+      </div>
+      <div class="ufd-row">
+        <app-text-field
+          [label]="'propiedades.units.depositToConfirmPct' | transloco"
+          type="number"
+          placeholder="100"
+          formControlName="deposit_to_confirm_pct"
+        />
+        <p class="ufd-hint">{{ 'propiedades.units.depositToConfirmHint' | transloco }}</p>
       </div>
       @if (
         isFieldInvalid('price_per_month') ||

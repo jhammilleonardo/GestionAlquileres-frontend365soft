@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
-import { filter } from 'rxjs';
+import { debounceTime, filter } from 'rxjs';
 
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
@@ -106,7 +106,9 @@ export class ViolationsFacade {
 
     // Los filtros se aplican automáticamente al cambiar cualquier selector;
     // no requiere un botón "Aplicar".
-    this.filterForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => this.load());
+    this.filterForm.valueChanges
+      .pipe(debounceTime(250), takeUntilDestroyed())
+      .subscribe(() => this.load());
   }
 
   loadProperties(): void {

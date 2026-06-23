@@ -19,7 +19,7 @@ describe('OwnerAuthService', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
-    http = { post: vi.fn() };
+    http = { post: vi.fn().mockReturnValue(of(null)) };
     sessionToken = {
       setToken: vi.fn(),
       clearToken: vi.fn(),
@@ -54,7 +54,8 @@ describe('OwnerAuthService', () => {
 
     service.login('demo', 'owner@test.com', 'secret', true).subscribe();
 
-    expect(sessionToken.setToken).toHaveBeenCalledWith('owner', 'owner-token', true);
+    // Tras la migración a cookies el JWT NO se persiste; sólo el objeto user.
+    expect(sessionToken.setToken).not.toHaveBeenCalled();
     expect(service.currentOwner()?.rental_owner_id).toBe(10);
     expect(localStorage.getItem('owner_user')).toContain('owner@test.com');
   });

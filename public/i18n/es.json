@@ -1,5 +1,6 @@
 {
   "propertySteps": {
+    "mode": "Modo",
     "basic": "Información básica",
     "images": "Imágenes",
     "financial": "Financiero",
@@ -37,17 +38,24 @@
     "reset": "Restablecer",
     "applyCrop": "Aplicar recorte"
   },
+  "rentalType": {
+    "LONG_TERM": "Largo plazo",
+    "SHORT_TERM": "Corto plazo",
+    "BOTH": "Corto y largo plazo"
+  },
   "common": {
     "error": "Error",
     "myProfile": "Mi Perfil",
     "save": "Guardar",
     "cancel": "Cancelar",
     "delete": "Eliminar",
+    "remove": "Quitar",
     "edit": "Editar",
     "create": "Crear",
     "back": "Volver",
     "close": "Cerrar",
     "refresh": "Refrescar",
+    "retry": "Reintentar",
     "loading": "Cargando...",
     "actions": "Acciones",
     "yes": "Sí",
@@ -157,15 +165,26 @@
     "language": "Idioma",
     "mainMenu": "Menú principal",
     "pendingPayments": "Pagos pendientes",
+    "groups": {
+      "operations": "Operación",
+      "finance": "Finanzas",
+      "management": "Gestión",
+      "system": "Sistema"
+    },
     "menu": {
       "dashboard": "Dashboard",
       "properties": "Propiedades",
       "tenants": "Inquilinos",
+      "rentalOwners": "Propietarios",
       "contracts": "Contratos",
       "applications": "Solicitudes",
       "payments": "Pagos",
+      "reservations": "Reservas",
+      "reviews": "Reseñas",
+      "housekeeping": "Limpieza",
       "maintenance": "Mantenimiento",
       "reports": "Reportes",
+      "accounting": "Contabilidad",
       "vendors": "Proveedores",
       "expenses": "Gastos",
       "violations": "Violaciones",
@@ -218,6 +237,9 @@
     "step1Label": "País",
     "step1Title": "País y zona horaria",
     "step1Desc": "Confirma el país de operación — define moneda, zona horaria y métodos de pago disponibles.",
+    "tzStepLabel": "Zona horaria",
+    "tzStepTitle": "Zona horaria",
+    "tzStepDesc": "Selecciona la zona horaria de tu operación.",
     "timezone": "Zona horaria",
     "step2Label": "Pagos",
     "step2Title": "Métodos de pago",
@@ -250,6 +272,22 @@
       "GT": "Guatemala",
       "HN": "Honduras"
     },
+    "timezones": {
+      "bolivia": "Bolivia (BOT, UTC-4)",
+      "usEastern": "Este - Nueva York (ET)",
+      "usCentral": "Central - Chicago (CT)",
+      "usMountain": "Montaña - Denver (MT)",
+      "usArizona": "Arizona - Phoenix (MST, sin horario de verano)",
+      "usPacific": "Pacífico - Los Ángeles (PT)",
+      "usAlaska": "Alaska - Anchorage (AKT)",
+      "usAleutian": "Aleutianas - Adak (HT, con horario de verano)",
+      "usHawaii": "Hawái - Honolulu (HT, sin horario de verano)",
+      "usAtlantic": "Atlántico - Puerto Rico / Islas Vírgenes (AT)",
+      "usSamoa": "Samoa - Pago Pago (ST)",
+      "usChamorro": "Chamorro - Guam / Islas Marianas (ChT)",
+      "guatemala": "Guatemala (CST, UTC-6)",
+      "honduras": "Honduras (CST, UTC-6)"
+    },
     "paymentMethods": {
       "qr_accl": "QR Pago (ACCL)",
       "transferencia": "Transferencia bancaria",
@@ -258,7 +296,8 @@
       "ach": "ACH",
       "payu": "PayU",
       "tarjeta": "Tarjeta de crédito"
-    }
+    },
+    "graceDaysLabel": "Días de Gracia"
   },
   "tenantDocuments": {
     "title": "Documentos y Contratos",
@@ -490,12 +529,12 @@
     "currentPassword": "Contraseña Actual",
     "newPassword": "Nueva Contraseña",
     "confirmNewPassword": "Confirmar Nueva Contraseña",
-    "passwordHint": "Mínimo 6 caracteres",
+    "passwordHint": "Mínimo 8 caracteres",
     "passwordMismatch": "Las contraseñas no coinciden",
     "passwordChanged": "Contraseña actualizada correctamente",
     "passwordError": "Error al cambiar la contraseña",
     "required": "Requerido",
-    "minChars6": "Mínimo 6 caracteres",
+    "minChars6": "Mínimo 8 caracteres",
     "roles": {
       "ADMIN": "Administrador",
       "EMPLEADO": "Empleado",
@@ -557,7 +596,7 @@
     "resetPasswordMissingToken": "El enlace de recuperación no es válido o está incompleto.",
     "newPassword": "Nueva contraseña",
     "newPasswordPlaceholder": "Mínimo 8 caracteres",
-    "confirmPassword": "Confirmar contraseña",
+    "confirmPassword": "Confirmar Contraseña",
     "passwordMin8": "La contraseña debe tener al menos 8 caracteres",
     "updatePassword": "Actualizar contraseña",
     "updatingPassword": "Actualizando contraseña...",
@@ -583,6 +622,13 @@
     "companyNameHint": "El identificador único se generará automáticamente",
     "country": "País de operación",
     "countryHint": "Define la moneda, zona horaria y métodos de pago por defecto",
+    "rentalType": "¿Qué vas a administrar?",
+    "rentalTypeHint": "Define los módulos que verás. Podrás cambiarlo luego en Configuración.",
+    "rentalTypes": {
+      "BOTH": "Ambos (corto y largo plazo)",
+      "SHORT_TERM": "Solo corto plazo (estadías)",
+      "LONG_TERM": "Solo largo plazo (alquiler mensual)"
+    },
     "countryBO": "Bolivia (BOB)",
     "countryUS": "Estados Unidos (USD)",
     "countryGT": "Guatemala (GTQ)",
@@ -597,9 +643,8 @@
     "minChars2": "Mínimo 2 caracteres",
     "passwordStep": "Contraseña",
     "passwordStepTitle": "Crea tu contraseña",
-    "passwordHint": "Mínimo 6 caracteres",
-    "minChars6": "Mínimo 6 caracteres",
-    "confirmPassword": "Confirmar Contraseña",
+    "passwordHint": "Mínimo 8 caracteres",
+    "minChars6": "Mínimo 8 caracteres",
     "passwordMismatch": "Las contraseñas no coinciden",
     "acceptTerms": "Acepto los",
     "termsLink": "Términos y Condiciones",
@@ -617,7 +662,8 @@
     "hidePassword": "Ocultar contraseña",
     "termsHtml": "<p class=\"last-updated\">Última actualización: Febrero 8, 2026</p><h3>1. Aceptación de los Términos</h3><p>Al acceder y utilizar 365Soft, usted acepta estar sujeto a estos Términos y Condiciones de uso. Si no está de acuerdo con estos términos, no debe utilizar el Servicio.</p><h3>2. Descripción del Servicio</h3><p>365Soft es una plataforma de gestión de propiedades que permite a los administradores gestionar propiedades, inquilinos, contratos, pagos y mantenimiento de manera eficiente.</p><h3>3. Registro de Cuenta</h3><p>Para utilizar el Servicio, debe crear una cuenta proporcionando información precisa y completa. Usted es responsable de mantener la confidencialidad de su cuenta y contraseña.</p><h3>4. Uso Aceptable</h3><p>Usted se compromete a:</p><ul><li>Utilizar el Servicio únicamente para fines legales</li><li>No compartir su cuenta con terceros no autorizados</li><li>Mantener la información de su cuenta actualizada</li><li>No intentar acceder a áreas no autorizadas del sistema</li><li>No utilizar el Servicio para actividades fraudulentas o ilegales</li></ul><h3>5. Propiedad Intelectual</h3><p>Todo el contenido, características y funcionalidad del Servicio son propiedad exclusiva de 365Soft y están protegidos por las leyes de propiedad intelectual.</p><h3>6. Privacidad y Seguridad de Datos</h3><p>Nos comprometemos a proteger su información personal de acuerdo con nuestra Política de Privacidad. Implementamos medidas de seguridad técnicas y organizativas para proteger sus datos.</p><h3>7. Limitación de Responsabilidad</h3><p>365Soft no será responsable por daños indirectos, incidentales, especiales o consecuentes que resulten del uso o la imposibilidad de usar el Servicio.</p><h3>8. Modificaciones del Servicio</h3><p>Nos reservamos el derecho de modificar o discontinuar el Servicio en cualquier momento, con o sin previo aviso.</p><h3>9. Terminación</h3><p>Podemos suspender o terminar su acceso al Servicio si viola estos términos o por cualquier otra razón a nuestra discreción.</p><h3>10. Ley Aplicable</h3><p>Estos términos se rigen por las leyes aplicables en su jurisdicción.</p><h3>11. Contacto</h3><p>Para preguntas sobre estos términos, contacte a: soporte@365soft.com</p>",
     "privacyHtml": "<p class=\"last-updated\">Última actualización: Febrero 8, 2026</p><h3>1. Introducción</h3><p>En 365Soft, nos tomamos muy en serio la privacidad de nuestros usuarios. Esta Política de Privacidad describe cómo recopilamos, usamos, compartimos y protegemos su información personal.</p><h3>2. Información que Recopilamos</h3><p>Recopilamos la siguiente información:</p><ul><li><strong>Información de cuenta:</strong> nombre, correo electrónico, teléfono, nombre de empresa</li><li><strong>Información de propiedades:</strong> direcciones, datos de propiedades y contratos</li><li><strong>Información de inquilinos:</strong> datos de contacto y documentación necesaria</li><li><strong>Información de pago:</strong> historial de transacciones y métodos de pago</li><li><strong>Datos de uso:</strong> cómo interactúa con nuestro Servicio</li><li><strong>Información técnica:</strong> dirección IP, tipo de navegador, sistema operativo</li></ul><h3>3. Cómo Usamos su Información</h3><p>Utilizamos su información para:</p><ul><li>Proporcionar y mantener el Servicio</li><li>Procesar transacciones y enviar notificaciones relacionadas</li><li>Mejorar y personalizar su experiencia</li><li>Comunicarnos con usted sobre actualizaciones y novedades</li><li>Detectar y prevenir fraudes o abuso del Servicio</li><li>Cumplir con obligaciones legales</li></ul><h3>4. Compartir Información</h3><p>No vendemos su información personal. Podemos compartir su información con:</p><ul><li><strong>Proveedores de servicios:</strong> que nos ayudan a operar el Servicio</li><li><strong>Autoridades legales:</strong> cuando sea requerido por ley</li><li><strong>Socios comerciales:</strong> con su consentimiento explícito</li></ul><h3>5. Seguridad de Datos</h3><p>Implementamos medidas de seguridad técnicas y organizativas para proteger su información.</p><h3>6. Retención de Datos</h3><p>Conservamos su información personal mientras su cuenta esté activa o según sea necesario para cumplir con obligaciones legales.</p><h3>7. Sus Derechos</h3><p>Usted puede solicitar acceso, corrección, eliminación, oposición al procesamiento, portabilidad de datos o retiro de consentimiento.</p><h3>8. Cookies y Tecnologías Similares</h3><p>Utilizamos cookies y tecnologías similares para mejorar su experiencia y analizar el uso del Servicio.</p><h3>9. Privacidad de Menores</h3><p>Nuestro Servicio no está dirigido a menores de 18 años. No recopilamos intencionalmente información de menores.</p><h3>10. Contacto</h3><p>Para preguntas o inquietudes sobre esta política: privacidad@365soft.com</p>",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "companyNameTakenError": "Ya existe una empresa con ese nombre. Elige otro nombre."
   },
   "notifications": {
     "title": "Notificaciones",
@@ -672,8 +718,12 @@
   },
   "ownerPortal": {
     "auth": {
-      "kicker": "Portal propietario",
+      "kicker": "Portal del propietario",
       "title": "Acceso a tus propiedades",
+      "tagline": "Consulta en un solo lugar cómo se gestionan tus inmuebles, tus liquidaciones y tus documentos.",
+      "feature1": "Tus propiedades y sus inquilinos",
+      "feature2": "Liquidaciones y saldos al día",
+      "feature3": "Contratos y documentos firmados",
       "signIn": "Iniciar sesión",
       "subtitle": "Consulta liquidaciones, contratos y autorizaciones de mantenimiento.",
       "emailPlaceholder": "propietario@empresa.com",
@@ -683,12 +733,15 @@
       "missingTenant": "No se encontró el tenant para iniciar sesión.",
       "loginError": "No se pudo iniciar sesión"
     },
+    "greeting": "Hola, {{name}}",
     "dashboard": {
       "title": "Portal del propietario",
-      "description": "Resumen de propiedades, liquidaciones, mantenimiento y documentos.",
+      "heading": "Resumen de tus propiedades",
+      "description": "Mira cómo se están gestionando tus inmuebles: propiedades, liquidaciones, mantenimiento y documentos.",
       "loading": "Cargando portal...",
       "properties": "Propiedades",
       "activeContracts": "Contratos activos",
+      "activeTenants": "Inquilinos activos",
       "pendingBalance": "Saldo pendiente",
       "maintenance": "Mantenimientos",
       "sections": "Secciones del propietario"
@@ -706,12 +759,36 @@
     "properties": {
       "tenant": "Inquilino",
       "noTenant": "Sin inquilino",
-      "endsAt": "Vence"
+      "endsAt": "Vence",
+      "monthlyRent": "Renta mensual",
+      "ownership": "Participación",
+      "contract": "Contrato"
+    },
+    "statements": {
+      "gross": "Renta bruta",
+      "maintenance": "Mantenimiento",
+      "commission": "Comisión de gestión",
+      "net": "Neto a recibir",
+      "downloadPdf": "Descargar PDF"
+    },
+    "contracts": {
+      "tenant": "Inquilino",
+      "period": "Vigencia",
+      "rent": "Renta mensual",
+      "downloadPdf": "Descargar",
+      "view": "Ver",
+      "noPdf": "Sin documento PDF disponible"
     },
     "maintenance": {
       "authorizeExpense": "Autorizar gasto",
       "authorized": "Gasto autorizado",
-      "stageLabel": "Etapa: {{stage}}"
+      "stageLabel": "Etapa: {{stage}}",
+      "priority": "Prioridad",
+      "category": "Categoría",
+      "technician": "Técnico asignado",
+      "unassigned": "Sin asignar",
+      "reportedAt": "Reportado",
+      "dueDate": "Fecha límite"
     },
     "documents": {
       "downloadPdfError": "No se pudo descargar el PDF",

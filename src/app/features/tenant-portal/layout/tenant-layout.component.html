@@ -74,8 +74,12 @@
                 @for (notification of notifications(); track notification.id) {
                   <li
                     class="notification-item"
+                    role="button"
+                    tabindex="0"
                     [class.unread]="!notification.is_read"
                     (click)="handleNotificationClick(notification)"
+                    (keydown.enter)="handleNotificationClick(notification)"
+                    (keydown.space)="handleNotificationClick(notification); $event.preventDefault()"
                   >
                     <div
                       class="notification-icon"
@@ -116,7 +120,15 @@
 
           <!-- Overlay para cerrar dropdown -->
           @if (isNotificationsDropdownOpen) {
-            <div class="dropdown-overlay" (click)="closeNotificationsDropdown()"></div>
+            <div
+              class="dropdown-overlay"
+              role="button"
+              tabindex="0"
+              aria-label="Cerrar"
+              (click)="closeNotificationsDropdown()"
+              (keydown.enter)="closeNotificationsDropdown()"
+              (keydown.space)="closeNotificationsDropdown(); $event.preventDefault()"
+            ></div>
           }
         }
       </div>
@@ -160,7 +172,15 @@
               <span>{{ 'public.tenantLayout.logout' | transloco }}</span>
             </button>
           </div>
-          <div class="dropdown-overlay" (click)="closeUserMenu()"></div>
+          <div
+            class="dropdown-overlay"
+            role="button"
+            tabindex="0"
+            aria-label="Cerrar"
+            (click)="closeUserMenu()"
+            (keydown.enter)="closeUserMenu()"
+            (keydown.space)="closeUserMenu(); $event.preventDefault()"
+          ></div>
         }
       </div>
     </div>
@@ -169,7 +189,15 @@
   <div class="layout-body">
     <!-- Mobile Overlay -->
     @if (!sidebarCollapsed) {
-      <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+      <div
+        class="sidebar-overlay"
+        role="button"
+        tabindex="0"
+        aria-label="Cerrar menú"
+        (click)="toggleSidebar()"
+        (keydown.enter)="toggleSidebar()"
+        (keydown.space)="toggleSidebar(); $event.preventDefault()"
+      ></div>
     }
 
     <!-- Sidebar -->

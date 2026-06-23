@@ -90,6 +90,7 @@ const MAX_UPLOAD_BYTES = 1_500_000;
                 class="upload-preview"
                 [src]="img"
                 [alt]="'public.signaturePad.uploadPreviewAlt' | transloco"
+                loading="lazy"
               />
             } @else {
               <label class="upload-drop">
@@ -324,7 +325,14 @@ export class SignaturePadComponent {
   }
 
   protected onModeChange(mode: SignatureMethod | null): void {
-    this.mode.set(mode ?? 'draw');
+    const next = mode ?? 'draw';
+    if (next === this.mode()) return;
+
+    // El <canvas> se destruye y recrea en blanco al cambiar de @case, así que
+    // el flag `drawn` debe reiniciarse para no quedar marcado sobre un lienzo
+    // vacío (ocultaría el hint y daría una firma de dibujo inconsistente).
+    this.drawn.set(false);
+    this.mode.set(next);
     this.emit();
   }
 

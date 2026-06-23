@@ -1,0 +1,43 @@
+.owner-form {
+  display: grid;
+  gap: var(--app-space-4);
+  min-width: min(440px, calc(100vw - 3rem));
+}
+
+.field-group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field-error {
+  margin: 0;
+  color: var(--app-color-danger);
+  font-size: 0.8125rem;
+}
+
+.error-banner {
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--app-color-danger) 30%, transparent);
+  border-radius: var(--app-radius-md);
+  background: color-mix(in srgb, var(--app-color-danger) 10%, transparent);
+  color: var(--app-color-danger);
+  font-size: 0.875rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--app-space-2);
+  padding-top: var(--app-space-2);
+}
+
+@media (max-width: 520px) {
+  .owner-form {
+    min-width: 0;
+  }
+
+  .dialog-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

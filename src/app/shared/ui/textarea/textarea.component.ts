@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TuiTextarea } from '@taiga-ui/kit';
 
+let nextTextareaId = 0;
+
 @Component({
   selector: 'app-textarea',
   imports: [TuiTextarea],
@@ -16,6 +18,7 @@ import { TuiTextarea } from '@taiga-ui/kit';
     <tui-textfield [tuiTextfieldSize]="size()">
       <textarea
         tuiTextarea
+        [id]="inputId"
         [disabled]="disabled()"
         [attr.maxlength]="maxLength()"
         [max]="maxRows()"
@@ -28,7 +31,7 @@ import { TuiTextarea } from '@taiga-ui/kit';
       ></textarea>
 
       @if (label()) {
-        <label tuiLabel>{{ label() }}</label>
+        <label tuiLabel [attr.for]="inputId">{{ label() }}</label>
       }
     </tui-textfield>
   `,
@@ -41,6 +44,8 @@ import { TuiTextarea } from '@taiga-ui/kit';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppTextareaComponent implements ControlValueAccessor {
+  /** Id único para asociar el <label for> con el <textarea> (a11y). */
+  protected readonly inputId = `app-textarea-${nextTextareaId++}`;
   readonly label = input<string | null>(null);
   readonly placeholder = input('');
   readonly size = input<'s' | 'm' | 'l'>('m');

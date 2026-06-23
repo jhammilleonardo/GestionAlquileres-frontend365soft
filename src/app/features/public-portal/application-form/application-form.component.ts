@@ -1,10 +1,21 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
 import { ApplicationService } from '../../../core/services/admin/application.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { FormDraftService } from '../../../core/services/form-draft.service';
 import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
 import {
   CreateApplicationDto,
@@ -52,7 +63,7 @@ interface ApplicationPayload {
   styleUrls: ['./application-form.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApplicationFormComponent {
+export class ApplicationFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly applicationService = inject(ApplicationService);
@@ -60,9 +71,13 @@ export class ApplicationFormComponent {
   private readonly slugService = inject(SlugService);
   private readonly translocoService = inject(TranslocoService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+  private readonly draftService = inject(FormDraftService);
   private readonly destroyRef = inject(DestroyRef);
 
-  private readonly FORM_DATA_KEY = 'pending_application_form';
+  private readonly DRAFT_KEY_PREFIX = 'application_draft_';
+
+  /** Referencia al `<form>` template-driven para autoguardar en cada cambio. */
+  private readonly formRef = viewChild(NgForm);
 
   readonly propertyId = signal(0);
   readonly submitting = signal(false);
@@ -88,25 +103,34 @@ export class ApplicationFormComponent {
   employmentTypes = Object.values(EmploymentType);
 
   constructor() {
-    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      if (params.get('restoreForm') === 'true') this.restoreFormData();
-    });
+    // Autoguardado: persistir el borrador en cada cambio del formulario (con debounce).
+    // El `effect` se re-ejecuta cuando el `<form>` aparece/desaparece del DOM y limpia
+    // la suscripción anterior automáticamente.
+    effect((onCleanup) => {
+      const form = this.formRef();
+      if (!form) return;
 
-    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const id = params.get('propertyId');
-      if (id) {
-        this.propertyId.set(Number(id));
-        this.formData.property_id = Number(id);
-      }
-    });
+      const subscription = form.valueChanges
+        ?.pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef))
+        .subscribe(() => this.saveDraft());
 
-    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-      const id = params.get('propertyId');
-      if (id && !this.propertyId()) {
-        this.propertyId.set(Number(id));
-        this.formData.property_id = Number(id);
-      }
+      onCleanup(() => subscription?.unsubscribe());
     });
+  }
+
+  ngOnInit(): void {
+    const params = this.route.snapshot;
+    const id = params.paramMap.get('propertyId') ?? params.queryParamMap.get('propertyId');
+
+    if (id) {
+      this.propertyId.set(Number(id));
+      this.formData.property_id = Number(id);
+    }
+
+    // Tras volver del login (`restoreForm=true`) reenviamos automáticamente; en un
+    // refresco normal solo restauramos el borrador para que el usuario siga editando.
+    const shouldAutoSubmit = params.queryParamMap.get('restoreForm') === 'true';
+    this.restoreDraft(shouldAutoSubmit);
 
     if (!this.propertyId()) {
       void this.router.navigate(['../../properties'], { relativeTo: this.route });
@@ -153,10 +177,12 @@ export class ApplicationFormComponent {
       end_date: '',
       reason_for_leaving: '',
     });
+    this.saveDraft();
   }
 
   removeRentalHistory(index: number): void {
     this.formData.rental_history.splice(index, 1);
+    this.saveDraft();
   }
 
   // References Methods
@@ -167,10 +193,12 @@ export class ApplicationFormComponent {
       phone: '',
       email: '',
     });
+    this.saveDraft();
   }
 
   removePersonalReference(index: number): void {
     this.formData.references.personal.splice(index, 1);
+    this.saveDraft();
   }
 
   addProfessionalReference(): void {
@@ -181,10 +209,12 @@ export class ApplicationFormComponent {
       phone: '',
       email: '',
     });
+    this.saveDraft();
   }
 
   removeProfessionalReference(index: number): void {
     this.formData.references.professional.splice(index, 1);
+    this.saveDraft();
   }
 
   // Getter for previous job to handle optional chaining in template
@@ -212,7 +242,7 @@ export class ApplicationFormComponent {
 
     // Check if user is authenticated
     if (!this.authService.isAuthenticated()) {
-      this.saveFormData();
+      this.saveDraft();
       this.redirectToLogin();
       return;
     }
@@ -267,7 +297,7 @@ export class ApplicationFormComponent {
         next: (response) => {
           this.submitSuccess.set(true);
           this.submitting.set(false);
-          this.clearSavedFormData();
+          this.clearDraft();
           setTimeout(() => {
             void this.router.navigate(['../../registro'], {
               relativeTo: this.route,
@@ -295,43 +325,37 @@ export class ApplicationFormComponent {
       confirmLabel: this.translocoService.translate('common.confirm'),
     });
     if (!confirmed) return;
-    this.clearSavedFormData();
+    this.clearDraft();
     void this.router.navigate(['../../properties'], { relativeTo: this.route });
   }
 
-  private saveFormData(): void {
-    try {
-      const dataToSave = {
-        formData: this.formData,
-        propertyId: this.propertyId(),
-        timestamp: new Date().toISOString(),
-      };
-      localStorage.setItem(this.FORM_DATA_KEY, JSON.stringify(dataToSave));
-    } catch {
-      // localStorage not available — continue silently
+  private draftKey(): string {
+    return `${this.DRAFT_KEY_PREFIX}${this.propertyId()}`;
+  }
+
+  private saveDraft(): void {
+    if (!this.propertyId()) return;
+    this.draftService.save(this.draftKey(), this.formData);
+  }
+
+  private restoreDraft(autoSubmit: boolean): void {
+    const draft = this.draftService.load<CreateApplicationDto>(this.draftKey());
+    if (!draft) return;
+
+    this.formData = draft;
+    if (draft.property_id) {
+      this.propertyId.set(draft.property_id);
+    }
+
+    if (autoSubmit) {
+      // El borrador ya se reenvía; lo limpiamos antes para evitar un envío duplicado.
+      this.clearDraft();
+      setTimeout(() => this.onSubmit(), 0);
     }
   }
 
-  private restoreFormData(): void {
-    try {
-      const savedData = localStorage.getItem(this.FORM_DATA_KEY);
-      if (savedData) {
-        const parsed = JSON.parse(savedData) as {
-          formData: CreateApplicationDto;
-          propertyId: number;
-        };
-        this.formData = parsed.formData;
-        this.propertyId.set(parsed.propertyId);
-        this.clearSavedFormData();
-        setTimeout(() => this.onSubmit(), 500);
-      }
-    } catch {
-      this.clearSavedFormData();
-    }
-  }
-
-  private clearSavedFormData(): void {
-    localStorage.removeItem(this.FORM_DATA_KEY);
+  private clearDraft(): void {
+    this.draftService.clear(this.draftKey());
   }
 
   private redirectToLogin(): void {

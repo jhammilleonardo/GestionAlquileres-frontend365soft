@@ -7,7 +7,14 @@
     } @else if (error()) {
       <p class="proof-error" aria-live="polite">{{ error() }}</p>
     } @else if (objectUrl() && isPdf()) {
-      <object class="proof-pdf" [data]="objectUrl()" type="application/pdf"></object>
+      <object
+        class="proof-pdf"
+        [data]="objectUrl()"
+        type="application/pdf"
+        aria-label="Comprobante de pago (PDF)"
+      >
+        Comprobante de pago (PDF)
+      </object>
     } @else {
       <div class="proof-toolbar">
         <div class="zoom-controls">
@@ -41,6 +48,7 @@
           class="proof-image"
           [src]="objectUrl()"
           [alt]="'payments.receipt' | transloco"
+          loading="lazy"
           [style.width.%]="zoom() * 100"
         />
       </div>

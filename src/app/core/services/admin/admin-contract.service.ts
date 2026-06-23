@@ -1,7 +1,8 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap, catchError, of, map } from 'rxjs';
+import { Observable, tap, catchError, of, map, switchMap } from 'rxjs';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { SecureFileService } from '../secure-file.service';
 import { TranslocoService } from '@jsverse/transloco';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 import {
@@ -30,6 +31,7 @@ export interface PdfUrlResponse {
 export class AdminContractService {
   private apiClient = inject(ApiClientService);
   private slugService = inject(SlugService);
+  private secureFile = inject(SecureFileService);
   private transloco = inject(TranslocoService);
   private toast = inject(ToastService);
 
@@ -325,22 +327,36 @@ export class AdminContractService {
   }
 
   /**
-   * Visualizar PDF de un contrato (abre en nueva pestaña)
+   * Visualizar PDF de un contrato (abre en nueva pestaña).
+   *
+   * El PDF se sirve desde una ruta protegida con JWT, así que no se puede abrir
+   * la URL directamente (la pestaña nueva no envía el header Authorization → 401).
+   * En su lugar lo descargamos con el cliente autenticado y abrimos el blob.
+   * Abrimos la pestaña de forma SÍNCRONA dentro del gesto del usuario para evitar
+   * que el navegador la bloquee como popup; luego la dirigimos al PDF ya generado.
    */
   viewPDF(id: number): void {
     if (!this.slug) {
       return;
     }
 
-    this.generatePdfUrl(id).subscribe({
-      next: (response) => {
-        // Abrir el PDF en una nueva pestaña para visualización
-        window.open(response.fullUrl, '_blank');
-      },
-      error: (_e) => {
-        this.toast.error(this.transloco.translate('common.errors.generatePdf'));
-      },
-    });
+    const pdfWindow = window.open('', '_blank');
+
+    this.generatePdfUrl(id)
+      .pipe(switchMap((response) => this.secureFile.getObjectUrl(response.url, 'admin')))
+      .subscribe({
+        next: (objectUrl) => {
+          if (pdfWindow) {
+            pdfWindow.location.href = objectUrl;
+          } else {
+            window.open(objectUrl, '_blank', 'noopener,noreferrer');
+          }
+        },
+        error: () => {
+          pdfWindow?.close();
+          this.toast.error(this.transloco.translate('common.errors.generatePdf'));
+        },
+      });
   }
 
   /**

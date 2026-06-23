@@ -7,6 +7,7 @@ import { forkJoin } from 'rxjs';
 
 import { PropertyService } from '../../core/services/admin/property.service';
 import { SlugService } from '../../core/services/slug.service';
+import { FormatService } from '../../core/services/format.service';
 import {
   Property,
   PropertyFilters,
@@ -16,6 +17,7 @@ import {
   SortOption,
 } from '../../core/models/property.model';
 import { getApiErrorMessage } from '../../core/http/http-error.util';
+import { resolveMediaUrl } from '../../core/utils/media-url.util';
 import { AppSelectOption } from '../../shared/ui/select/select.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { buildPropertySavePayloads } from './mappers/property-save.mapper';
@@ -36,6 +38,7 @@ const YEAR = [Validators.min(1800), Validators.max(2100)];
 export class PropertiesFacade {
   private readonly propertyService = inject(PropertyService);
   private readonly slugService = inject(SlugService);
+  private readonly formatService = inject(FormatService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
@@ -52,6 +55,16 @@ export class PropertiesFacade {
   private readonly propertyImageMap = signal<Map<number, string>>(new Map());
 
   readonly isListLoading = signal(false);
+
+  /**
+   * El skeleton solo se muestra en la carga inicial (aún no hay datos). Al
+   * cambiar filtros se mantiene la lista visible para evitar el parpadeo de
+   * skeleton↔lista en cada selección.
+   */
+  readonly showListSkeleton = computed(
+    () => this.isListLoading() && this.properties().length === 0,
+  );
+
   readonly isSubmitting = signal(false);
   readonly showModal = signal(false);
 
@@ -99,7 +112,7 @@ export class PropertiesFacade {
       },
       error: () => {
         this.isListLoading.set(false);
-        this.toast.error(this.transloco.translate('propiedades.actions.loadError'));
+        this.toast.error(this.transloco.translate('properties.actions.loadError'));
       },
     });
   }
@@ -108,7 +121,7 @@ export class PropertiesFacade {
     this.propertyService.getPropertyTypes().subscribe({
       next: (types) => this.propertyTypes.set(types),
       error: () => {
-        this.toast.error(this.transloco.translate('propiedades.actions.loadTypesError'));
+        this.toast.error(this.transloco.translate('properties.actions.loadTypesError'));
       },
     });
   }
@@ -117,7 +130,7 @@ export class PropertiesFacade {
     this.propertyService.getPropertySubtypes().subscribe({
       next: (subtypes) => this.propertySubtypes.set(subtypes),
       error: () =>
-        this.toast.error(this.transloco.translate('propiedades.actions.loadSubtypesError')),
+        this.toast.error(this.transloco.translate('properties.actions.loadSubtypesError')),
     });
   }
 
@@ -137,6 +150,11 @@ export class PropertiesFacade {
 
   applyFilters(): void {
     this.loadProperties();
+  }
+
+  setSearchFilter(search: string): void {
+    this.filters.search = search;
+    this.applyFilters();
   }
 
   setStatusFilter(status: PropertyStatus | null): void {
@@ -162,7 +180,24 @@ export class PropertiesFacade {
     this.filteredSubtypes.set([]);
     this.showModal.set(false);
     this.propertyForm = this.createForm();
+    // El modo de la propiedad se pre-fija según el modo del tenant: si sólo
+    // opera un modo, no hay nada que elegir; en BOTH el wizard mostrará el paso
+    // de selección (default long term como opción de menor sorpresa).
+    this.propertyForm.patchValue({
+      rental_type: this.defaultRentalTypeForTenant(),
+      addresses: [{ country: this.formatService.country() }],
+    });
     setTimeout(() => this.showModal.set(true), 10);
+  }
+
+  /** Modo del tenant (`SHORT_TERM`/`LONG_TERM`/`BOTH`); null mientras carga config. */
+  readonly tenantRentalType = computed(() => this.formatService.rentalType());
+
+  /** Modo inicial del formulario de creación según lo que admite el tenant. */
+  private defaultRentalTypeForTenant(): 'SHORT_TERM' | 'LONG_TERM' {
+    if (!this.formatService.supportsLongTerm()) return 'SHORT_TERM';
+    if (!this.formatService.supportsShortTerm()) return 'LONG_TERM';
+    return 'LONG_TERM';
   }
 
   openEditModal(property: Property): void {
@@ -216,11 +251,11 @@ export class PropertiesFacade {
     if (!formValue.title || !propertyTypeId || !propertySubtypeId) {
       const missing: string[] = [];
       if (!formValue.title)
-        missing.push(this.transloco.translate('propiedades.validation.fields.title'));
+        missing.push(this.transloco.translate('properties.validation.fields.title'));
       if (!propertyTypeId)
-        missing.push(this.transloco.translate('propiedades.validation.fields.propertyType'));
+        missing.push(this.transloco.translate('properties.validation.fields.propertyType'));
       if (!propertySubtypeId)
-        missing.push(this.transloco.translate('propiedades.validation.fields.subtype'));
+        missing.push(this.transloco.translate('properties.validation.fields.subtype'));
       this.validationErrors.set(missing);
       this.isSubmitting.set(false);
       this.scrollToValidationErrors();
@@ -229,7 +264,7 @@ export class PropertiesFacade {
 
     if (!formValue.addresses || formValue.addresses.length === 0) {
       this.validationErrors.set([
-        this.transloco.translate('propiedades.validation.addressRequired'),
+        this.transloco.translate('properties.validation.addressRequired'),
       ]);
       this.isSubmitting.set(false);
       this.scrollToValidationErrors();
@@ -255,8 +290,8 @@ export class PropertiesFacade {
         );
         const key =
           this.modalMode === 'create'
-            ? 'propiedades.actions.createError'
-            : 'propiedades.actions.updateError';
+            ? 'properties.actions.createError'
+            : 'properties.actions.updateError';
         this.toast.error(this.transloco.translate(key, { message: errorMessage }));
       },
     });
@@ -279,11 +314,11 @@ export class PropertiesFacade {
     this.propertyService.deleteProperty(property.id).subscribe({
       next: () => {
         this.loadProperties();
-        this.toast.success(this.transloco.translate('propiedades.actions.deleted'));
+        this.toast.success(this.transloco.translate('properties.actions.deleted'));
       },
       error: (error: unknown) => {
         const message = getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
-        this.toast.error(this.transloco.translate('propiedades.actions.deleteError', { message }));
+        this.toast.error(this.transloco.translate('properties.actions.deleteError', { message }));
       },
     });
   }
@@ -299,12 +334,12 @@ export class PropertiesFacade {
     this.propertyService.updatePropertyStatus(property.id, newStatus, newActive).subscribe({
       next: () => {
         this.loadProperties();
-        const key = newActive ? 'propiedades.actions.activated' : 'propiedades.actions.deactivated';
+        const key = newActive ? 'properties.actions.activated' : 'properties.actions.deactivated';
         this.toast.success(this.transloco.translate(key));
       },
       error: (error: unknown) => {
         const message = getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
-        this.toast.error(this.transloco.translate('propiedades.actions.statusError', { message }));
+        this.toast.error(this.transloco.translate('properties.actions.statusError', { message }));
       },
     });
   }
@@ -340,12 +375,29 @@ export class PropertiesFacade {
       property_type_id: ['', Validators.required],
       property_subtype_id: ['', Validators.required],
       active: [true],
+      rental_type: ['LONG_TERM', Validators.required],
       monthly_rent: [null, MONEY],
+      price_per_night: [null, MONEY],
       currency: ['BOB'],
       security_deposit_amount: [null, MONEY],
-      account_number: [''],
-      account_type: [''],
-      account_holder_name: [''],
+      // Config de corto plazo (alimenta la unidad por defecto al crear)
+      cleaning_fee: [null, MONEY],
+      min_nights: [null, COUNT],
+      max_nights: [null, COUNT],
+      checkin_time: ['15:00'],
+      checkout_time: ['11:00'],
+      weekly_discount_pct: [null, [Validators.min(0), Validators.max(100)]],
+      monthly_discount_pct: [null, [Validators.min(0), Validators.max(100)]],
+      weekend_adjustment_pct: [null, [Validators.min(-100), Validators.max(500)]],
+      early_bird_min_days: [null, COUNT],
+      early_bird_discount_pct: [null, [Validators.min(0), Validators.max(100)]],
+      last_minute_max_days: [null, COUNT],
+      last_minute_adjustment_pct: [null, [Validators.min(-100), Validators.max(500)]],
+      advance_notice_days: [null, COUNT],
+      max_advance_days: [null, COUNT],
+      booking_mode: ['instant'],
+      cancellation_policy: ['moderate'],
+      deposit_to_confirm_pct: [null, [Validators.min(0), Validators.max(100)]],
       square_meters: [null, MONEY],
       bedrooms: [null, COUNT],
       bathrooms: [null, COUNT],
@@ -368,11 +420,13 @@ export class PropertiesFacade {
   private createAddressGroup(): FormGroup {
     return this.fb.group({
       address_type: ['address_1'],
-      street_address: ['', Validators.required],
+      // La dirección de calle ya no se captura a mano: se deriva del punto del
+      // mapa o de Municipio/Departamento/País al guardar (ver property-save.mapper).
+      street_address: [''],
       city: ['', Validators.required],
-      state: [''],
+      state: ['', Validators.required],
       zip_code: [''],
-      country: ['', Validators.required],
+      country: [this.formatService.country(), Validators.required],
     });
   }
 
@@ -399,12 +453,11 @@ export class PropertiesFacade {
       property_type_id: [p.property_type_id, Validators.required],
       property_subtype_id: [p.property_subtype_id, Validators.required],
       active: [p.active],
+      rental_type: [p.rental_type ?? 'LONG_TERM', Validators.required],
       monthly_rent: [p.monthly_rent ?? null, MONEY],
+      price_per_night: [null, MONEY],
       currency: [p.currency || 'BOB'],
       security_deposit_amount: [p.security_deposit_amount ?? null, MONEY],
-      account_number: [p.account_number || ''],
-      account_type: [p.account_type || ''],
-      account_holder_name: [p.account_holder_name || ''],
       square_meters: [p.square_meters ?? null, MONEY],
       bedrooms: [p.bedrooms ?? null, COUNT],
       bathrooms: [p.bathrooms ?? null, COUNT],
@@ -424,9 +477,9 @@ export class PropertiesFacade {
           ? p.addresses.map((addr) =>
               this.fb.group({
                 address_type: [addr.address_type || 'address_1'],
-                street_address: [addr.street_address, Validators.required],
+                street_address: [addr.street_address],
                 city: [addr.city, Validators.required],
-                state: [addr.state || ''],
+                state: [addr.state || '', Validators.required],
                 zip_code: [addr.zip_code || ''],
                 country: [addr.country, Validators.required],
               }),
@@ -457,12 +510,12 @@ export class PropertiesFacade {
       next: () => {
         this.existingImages.update((images) => images.filter((_, i) => i !== index));
         this.loadProperties();
-        this.toast.success(this.transloco.translate('propiedades.actions.imageRemoved'));
+        this.toast.success(this.transloco.translate('properties.actions.imageRemoved'));
       },
       error: (error: unknown) => {
         const message = getApiErrorMessage(error, this.transloco.translate('common.unknownError'));
         this.toast.error(
-          this.transloco.translate('propiedades.actions.imageRemoveError', { message }),
+          this.transloco.translate('properties.actions.imageRemoveError', { message }),
         );
       },
     });
@@ -470,10 +523,7 @@ export class PropertiesFacade {
 
   /** Construye la URL completa de una imagen a partir de su ruta almacenada. */
   private toImageUrl(path: string): string {
-    if (!path) return '';
-    if (path.startsWith('http')) return path;
-    const normalized = path.startsWith('/') ? path : `/${path}`;
-    return `http://localhost:3000${normalized}`;
+    return resolveMediaUrl(path);
   }
 
   private uploadImagesOrFinish(savedPropertyId: number): void {
@@ -493,8 +543,8 @@ export class PropertiesFacade {
         this.isSubmitting.set(false);
         const key =
           this.modalMode === 'create'
-            ? 'propiedades.actions.createdImagesFailed'
-            : 'propiedades.actions.updatedImagesFailed';
+            ? 'properties.actions.createdImagesFailed'
+            : 'properties.actions.updatedImagesFailed';
         this.toast.warning(this.transloco.translate(key));
         this.loadProperties();
         this.closeModal();
@@ -506,7 +556,7 @@ export class PropertiesFacade {
     this.loadProperties();
     this.closeModal();
     this.isSubmitting.set(false);
-    const key = mode === 'create' ? 'propiedades.actions.created' : 'propiedades.actions.updated';
+    const key = mode === 'create' ? 'properties.actions.created' : 'properties.actions.updated';
     this.toast.success(this.transloco.translate(key));
   }
 
@@ -541,13 +591,14 @@ export class PropertiesFacade {
     const addrMatch = key.match(/^addresses\[(\d+)\]\.(.+)$/);
     if (addrMatch) {
       const addrFieldLabels: Record<string, string> = {
-        street_address: this.transloco.translate('propiedades.validation.fields.streetAddress'),
-        city: this.transloco.translate('propiedades.validation.fields.city'),
-        country: this.transloco.translate('propiedades.validation.fields.country'),
+        street_address: this.transloco.translate('properties.validation.fields.streetAddress'),
+        city: this.transloco.translate('properties.validation.fields.city'),
+        state: this.transloco.translate('properties.validation.fields.state'),
+        country: this.transloco.translate('properties.validation.fields.country'),
       };
       const idx = +addrMatch[1] + 1;
       const fieldName = addrFieldLabels[addrMatch[2]] || addrMatch[2];
-      return this.transloco.translate('propiedades.validation.addressField', {
+      return this.transloco.translate('properties.validation.addressField', {
         index: idx,
         field: fieldName,
       });
@@ -559,13 +610,13 @@ export class PropertiesFacade {
   private getFieldLabelKey(key: string): string | null {
     switch (key) {
       case 'title':
-        return 'propiedades.validation.fields.title';
+        return 'properties.validation.fields.title';
       case 'property_type_id':
-        return 'propiedades.validation.fields.propertyType';
+        return 'properties.validation.fields.propertyType';
       case 'property_subtype_id':
-        return 'propiedades.validation.fields.subtype';
+        return 'properties.validation.fields.subtype';
       case 'monthly_rent':
-        return 'propiedades.validation.fields.monthlyRent';
+        return 'properties.validation.fields.monthlyRent';
       default:
         return null;
     }

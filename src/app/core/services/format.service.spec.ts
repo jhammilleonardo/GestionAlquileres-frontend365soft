@@ -170,6 +170,60 @@ describe('FormatService', () => {
     });
   });
 
+  // ── rentalType / supportsShortTerm (gating por modo) ──────────────────────
+
+  describe('supportsShortTerm', () => {
+    const makeMode = (rental_type: string): TenantConfig =>
+      ({ country: 'BO', currency: 'BOB', rental_type }) as TenantConfig;
+
+    it('asume true mientras el config no cargó (null)', () => {
+      expect(service.rentalType()).toBeNull();
+      expect(service.supportsShortTerm()).toBe(true);
+    });
+
+    it('es false sólo cuando el modo es LONG_TERM', () => {
+      service.setConfig(makeMode('LONG_TERM'));
+      expect(service.supportsShortTerm()).toBe(false);
+    });
+
+    it('es true para SHORT_TERM y BOTH', () => {
+      service.setConfig(makeMode('SHORT_TERM'));
+      expect(service.supportsShortTerm()).toBe(true);
+      service.setConfig(makeMode('BOTH'));
+      expect(service.supportsShortTerm()).toBe(true);
+    });
+  });
+
+  describe('supportsLongTerm', () => {
+    const makeMode = (rental_type: string): TenantConfig =>
+      ({ country: 'BO', currency: 'BOB', rental_type }) as TenantConfig;
+
+    it('asume true mientras el config no cargó (null)', () => {
+      expect(service.supportsLongTerm()).toBe(true);
+    });
+
+    it('es false sólo cuando el modo es SHORT_TERM', () => {
+      service.setConfig(makeMode('SHORT_TERM'));
+      expect(service.supportsLongTerm()).toBe(false);
+    });
+
+    it('es true para LONG_TERM y BOTH', () => {
+      service.setConfig(makeMode('LONG_TERM'));
+      expect(service.supportsLongTerm()).toBe(true);
+      service.setConfig(makeMode('BOTH'));
+      expect(service.supportsLongTerm()).toBe(true);
+    });
+
+    it('es complementario de supportsShortTerm en los modos exclusivos', () => {
+      service.setConfig(makeMode('SHORT_TERM'));
+      expect(service.supportsShortTerm()).toBe(true);
+      expect(service.supportsLongTerm()).toBe(false);
+      service.setConfig(makeMode('LONG_TERM'));
+      expect(service.supportsShortTerm()).toBe(false);
+      expect(service.supportsLongTerm()).toBe(true);
+    });
+  });
+
   // ── setConfig / locale dinámico ───────────────────────────────────────────
 
   describe('setConfig', () => {

@@ -12,8 +12,12 @@
     <div class="stats-grid">
       <div
         class="stat-card total clickable"
+        role="button"
+        tabindex="0"
         [class.active]="selectedStatus() === 'all'"
         (click)="filterByStatus('all')"
+        (keydown.enter)="filterByStatus('all')"
+        (keydown.space)="filterByStatus('all'); $event.preventDefault()"
       >
         <div class="stat-icon">
           <lucide-icon [img]="Wrench" [size]="24"></lucide-icon>
@@ -26,8 +30,12 @@
 
       <div
         class="stat-card pending clickable"
+        role="button"
+        tabindex="0"
         [class.active]="selectedStatus() === MaintenanceStatus.NEW"
         (click)="filterByStatus(MaintenanceStatus.NEW)"
+        (keydown.enter)="filterByStatus(MaintenanceStatus.NEW)"
+        (keydown.space)="filterByStatus(MaintenanceStatus.NEW); $event.preventDefault()"
       >
         <div class="stat-icon">
           <lucide-icon [img]="Clock" [size]="24"></lucide-icon>
@@ -40,8 +48,12 @@
 
       <div
         class="stat-card in-progress clickable"
+        role="button"
+        tabindex="0"
         [class.active]="selectedStatus() === MaintenanceStatus.IN_PROGRESS"
         (click)="filterByStatus(MaintenanceStatus.IN_PROGRESS)"
+        (keydown.enter)="filterByStatus(MaintenanceStatus.IN_PROGRESS)"
+        (keydown.space)="filterByStatus(MaintenanceStatus.IN_PROGRESS); $event.preventDefault()"
       >
         <div class="stat-icon">
           <lucide-icon [img]="TrendingUp" [size]="24"></lucide-icon>
@@ -54,8 +66,12 @@
 
       <div
         class="stat-card completed clickable"
+        role="button"
+        tabindex="0"
         [class.active]="selectedStatus() === MaintenanceStatus.COMPLETED"
         (click)="filterByStatus(MaintenanceStatus.COMPLETED)"
+        (keydown.enter)="filterByStatus(MaintenanceStatus.COMPLETED)"
+        (keydown.space)="filterByStatus(MaintenanceStatus.COMPLETED); $event.preventDefault()"
       >
         <div class="stat-icon">
           <lucide-icon [img]="CheckCircle2" [size]="24"></lucide-icon>
@@ -121,8 +137,17 @@
           @for (request of filteredRequests(); track request.id) {
             <div
               class="request-card"
+              role="button"
+              tabindex="0"
               [class.loading-detail]="openingRequestId() === request.id"
               (click)="openingRequestId() === request.id ? null : viewRequestDetails(request)"
+              (keydown.enter)="
+                openingRequestId() === request.id ? null : viewRequestDetails(request)
+              "
+              (keydown.space)="
+                openingRequestId() === request.id ? null : viewRequestDetails(request);
+                $event.preventDefault()
+              "
             >
               <div class="request-content">
                 <div class="request-header">

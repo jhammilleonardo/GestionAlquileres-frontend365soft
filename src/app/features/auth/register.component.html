@@ -301,10 +301,6 @@
       <div class="register-footer">
         <div class="help-links">
           <a routerLink="/login" class="help-link">{{ 'auth.alreadyHaveAccount' | transloco }}</a>
-          <span class="separator">•</span>
-          <a (click)="goToTenantPortal()" class="help-link tenant-portal-link">{{
-            'auth.tenantPortal' | transloco
-          }}</a>
         </div>
       </div>
 
@@ -314,7 +310,7 @@
         [closeLabel]="'auth.close' | transloco"
         (closed)="termsOpen.set(false)"
       >
-        <div class="legal-content" [innerHTML]="'auth.termsHtml' | transloco"></div>
+        <div class="legal-content" [innerHTML]="'auth.termsHtml' | transloco | sanitizedHtml"></div>
         <app-button dialog-actions (clicked)="termsOpen.set(false)">
           {{ 'auth.close' | transloco }}
         </app-button>
@@ -326,7 +322,10 @@
         [closeLabel]="'auth.close' | transloco"
         (closed)="privacyOpen.set(false)"
       >
-        <div class="legal-content" [innerHTML]="'auth.privacyHtml' | transloco"></div>
+        <div
+          class="legal-content"
+          [innerHTML]="'auth.privacyHtml' | transloco | sanitizedHtml"
+        ></div>
         <app-button dialog-actions (clicked)="privacyOpen.set(false)">
           {{ 'auth.close' | transloco }}
         </app-button>

@@ -12,11 +12,15 @@ import {
   RotateCcw,
 } from 'lucide-angular';
 
-import { Contract, ContractStatus } from '../../../../core/models/contract.model';
+import {
+  Contract,
+  ContractStatus,
+  contractStatusLabelKey,
+} from '../../../../core/models/contract.model';
 import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
-import { AppLoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
+import { AppSkeletonTableComponent } from '../../../../shared/ui/skeleton/skeleton-table.component';
 import {
   AppStatusBadgeComponent,
   AppStatusTone,
@@ -32,7 +36,7 @@ import {
     TenantDatePipe,
     TenantCurrencyPipe,
     AppButtonComponent,
-    AppLoadingStateComponent,
+    AppSkeletonTableComponent,
     AppStatusBadgeComponent,
   ],
   templateUrl: './contract-list.component.html',
@@ -50,6 +54,11 @@ export class ContractListComponent {
   readonly createRequested = output<void>();
   readonly pdfRequested = output<number>();
   readonly renewRequested = output<number>();
+
+  /** Clave de traducción del estado (distingue el borrador de renovación). */
+  statusLabelKey(contract: Contract): string {
+    return contractStatusLabelKey(contract);
+  }
 
   readonly ContractStatus = ContractStatus;
   readonly FileText = FileText;

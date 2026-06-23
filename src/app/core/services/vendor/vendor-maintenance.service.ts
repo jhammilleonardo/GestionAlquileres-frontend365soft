@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, from, map, switchMap } from 'rxjs';
 
 import {
   CreateMessageDto,
@@ -9,6 +9,7 @@ import {
 } from '../../models/maintenance-request.model';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { ImageOptimizationService } from '../image-optimization.service';
 
 /**
  * Servicio del portal del proveedor externo. Opera exclusivamente sobre los
@@ -19,6 +20,7 @@ import { SlugService } from '../slug.service';
 export class VendorMaintenanceService {
   private readonly apiClient = inject(ApiClientService);
   private readonly slugService = inject(SlugService);
+  private readonly imageOptimization = inject(ImageOptimizationService);
 
   private readonly requestsSignal = signal<MaintenanceRequest[]>([]);
   private readonly loadingSignal = signal(false);
@@ -76,10 +78,10 @@ export class VendorMaintenanceService {
 
   /** Sube archivos como adjuntos de mensaje del chat; devuelve sus URLs. */
   uploadFiles(id: number, files: File[]): Observable<{ file_url: string }[]> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
     const endpoint = this.slugService.buildApiEndpoint(`vendor/maintenance/${id}/upload`);
-    return this.apiClient.post<{ file_url: string }[]>(endpoint, formData);
+    return from(this.imageOptimization.filesToFormData(files, 'files')).pipe(
+      switchMap((formData) => this.apiClient.post<{ file_url: string }[]>(endpoint, formData)),
+    );
   }
 
   countByStatus = computed(() => {

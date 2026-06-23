@@ -1,17 +1,30 @@
 <section class="filters-section">
   <div class="filter-header">
-    <lucide-icon [img]="Filter" [size]="18"></lucide-icon>
-    <span>{{ 'common.filters' | transloco }}</span>
+    <div class="filter-title">
+      <lucide-icon [img]="Filter" [size]="18" aria-hidden="true"></lucide-icon>
+      <span>{{ 'common.filters' | transloco }}</span>
+    </div>
+
+    @if (hasActiveFilters()) {
+      <button type="button" class="clear-link" (click)="onClear()">
+        <lucide-icon [img]="X" [size]="14" aria-hidden="true"></lucide-icon>
+        {{ 'common.clearFilters' | transloco }}
+      </button>
+    }
   </div>
 
   <div class="filter-grid">
-    <app-text-field
-      [(ngModel)]="filters().search"
-      [label]="'common.search' | transloco"
-      [placeholder]="'properties.search' | transloco"
-      type="search"
-      autocomplete="off"
-    />
+    <div class="filter-field">
+      <span class="filter-field__label">{{ 'common.search' | transloco }}</span>
+      <app-text-field
+        [label]="null"
+        [ngModel]="searchValue()"
+        (ngModelChange)="onSearchInput($event)"
+        [placeholder]="'properties.search' | transloco"
+        type="search"
+        autocomplete="off"
+      />
+    </div>
 
     <app-select
       [ngModel]="filters().status ?? null"
@@ -28,14 +41,5 @@
       [options]="propertyTypeOptions()"
       (ngModelChange)="propertyTypeChanged.emit($event)"
     />
-  </div>
-
-  <div class="filter-actions">
-    <app-button appearance="flat" (clicked)="cleared.emit()">
-      {{ 'common.clearFilters' | transloco }}
-    </app-button>
-    <app-button (clicked)="applied.emit()">
-      {{ 'common.applyFilters' | transloco }}
-    </app-button>
   </div>
 </section>

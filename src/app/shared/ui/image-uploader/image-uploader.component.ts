@@ -35,6 +35,7 @@ import {
 } from 'ngx-image-cropper';
 
 import { AppButtonComponent } from '../button/button.component';
+import { ImageOptimizationService } from '../../../core/services/image-optimization.service';
 
 /** Vista de una imagen: el archivo de origen y su URL de previsualización cacheada. */
 interface UploaderImage {
@@ -83,10 +84,18 @@ const ASPECT_CHOICES: readonly AspectChoice[] = [
 })
 export class AppImageUploaderComponent {
   private readonly destroyRef = inject(DestroyRef);
+  private readonly imageOptimization = inject(ImageOptimizationService);
 
   readonly files = input<readonly File[]>([]);
   readonly maxFiles = input(10);
   readonly maxSizeMb = input(5);
+  /** Proporción inicial del recortador. `null` = libre. Ej.: 16/9 para una portada. */
+  readonly defaultAspect = input<number | null>(4 / 3);
+  /**
+   * Bloquea el recorte a `defaultAspect`: oculta el resto de proporciones y las
+   * herramientas que no se usan, mostrando solo el formato real del portal.
+   */
+  readonly lockAspect = input(false);
 
   readonly filesChange = output<File[]>();
 
@@ -105,7 +114,17 @@ export class AppImageUploaderComponent {
   protected readonly XIcon = X;
 
   protected readonly aspectChoices = ASPECT_CHOICES;
-  protected readonly acceptAttr = ACCEPTED_TYPES.join(',');
+  // Etiqueta del formato bloqueado (p. ej. "16:9") para mostrarlo como indicador.
+  protected readonly lockedAspectLabelKey = computed(() => {
+    const ratio = this.defaultAspect();
+    return (
+      ASPECT_CHOICES.find((choice) => choice.ratio === ratio)?.labelKey ??
+      'imageUploader.aspectFree'
+    );
+  });
+  // El selector nativo permite elegir cualquier imagen; la conversión a WebP y
+  // la validación de tamaño se hacen al ingresar (ver addFiles).
+  protected readonly acceptAttr = 'image/*';
 
   /** Caché archivo → object URL para no regenerar previsualizaciones en cada cambio. */
   private readonly previewCache = new Map<File, string>();
@@ -142,7 +161,7 @@ export class AppImageUploaderComponent {
 
   protected onInputChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.addFiles(Array.from(input.files ?? []));
+    void this.addFiles(Array.from(input.files ?? []));
     input.value = '';
   }
 
@@ -159,10 +178,10 @@ export class AppImageUploaderComponent {
   protected onDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragOver.set(false);
-    this.addFiles(Array.from(event.dataTransfer?.files ?? []));
+    void this.addFiles(Array.from(event.dataTransfer?.files ?? []));
   }
 
-  private addFiles(incoming: File[]): void {
+  private async addFiles(incoming: File[]): Promise<void> {
     if (incoming.length === 0) return;
 
     const maxBytes = this.maxSizeMb() * 1024 * 1024;
@@ -170,8 +189,20 @@ export class AppImageUploaderComponent {
     let invalidCount = 0;
 
     for (const file of incoming) {
-      if (ACCEPTED_TYPES.includes(file.type) && file.size <= maxBytes) {
-        valid.push(file);
+      // Solo descartamos de entrada lo que ni siquiera es una imagen. El límite
+      // de tamaño se aplica al WebP resultante, no al original: convertir primero
+      // permite aceptar fotos pesadas (de cámara/celular) que se reducen mucho.
+      if (!file.type.startsWith('image/')) {
+        invalidCount++;
+        continue;
+      }
+
+      const optimized = await this.imageOptimization.optimizeFile(file);
+      const converted = optimized !== file; // optimizeFile devuelve el original si no pudo convertir
+      const typeOk = converted || ACCEPTED_TYPES.includes(optimized.type);
+
+      if (typeOk && optimized.size <= maxBytes) {
+        valid.push(optimized);
       } else {
         invalidCount++;
       }
@@ -209,8 +240,9 @@ export class AppImageUploaderComponent {
   protected openCrop(file: File): void {
     this.croppedBlob = null;
     this.transform.set(DEFAULT_TRANSFORM);
-    this.aspectRatio.set(4 / 3);
-    this.maintainAspect.set(true);
+    const aspect = this.defaultAspect();
+    this.aspectRatio.set(aspect ?? 4 / 3);
+    this.maintainAspect.set(aspect !== null);
     this.cropTarget.set(file);
   }
 
@@ -264,8 +296,8 @@ export class AppImageUploaderComponent {
       return;
     }
 
-    const edited = new File([this.croppedBlob], target.name, {
-      type: this.croppedBlob.type || target.type,
+    const edited = new File([this.croppedBlob], this.toWebpName(target.name), {
+      type: this.croppedBlob.type || 'image/webp',
     });
 
     this.emit(this.files().map((f) => (f === target ? edited : f)));
@@ -273,9 +305,8 @@ export class AppImageUploaderComponent {
   }
 
   protected cropFormat(file: File): OutputFormat {
-    if (file.type === 'image/png') return 'png';
-    if (file.type === 'image/webp') return 'webp';
-    return 'jpeg';
+    void file;
+    return 'webp';
   }
 
   // ==================== Helpers ====================
@@ -300,5 +331,10 @@ export class AppImageUploaderComponent {
 
   private emit(files: File[]): void {
     this.filesChange.emit(files);
+  }
+
+  private toWebpName(name: string): string {
+    const base = name.replace(/\.[^.]+$/, '');
+    return `${base || 'image'}.webp`;
   }
 }

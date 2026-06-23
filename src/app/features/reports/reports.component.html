@@ -4,75 +4,151 @@
     [description]="'reports.description' | transloco"
   >
     <div actions class="header-actions">
-      <app-button appearance="secondary" size="s" (clicked)="facade.loadDashboard()">
+      <app-button
+        appearance="outline"
+        size="s"
+        [ariaLabel]="'reports.actions.reload' | transloco"
+        (clicked)="facade.loadDashboard()"
+      >
+        <lucide-icon [img]="RefreshCw" [size]="14" aria-hidden="true" />
         {{ 'reports.actions.reload' | transloco }}
       </app-button>
+
       @if (facade.rows().length > 0) {
-        <app-button
-          appearance="secondary"
-          size="s"
-          (clicked)="facade.exportCsv(facade.activeColumns())"
+        <div
+          class="export-group"
+          role="group"
+          [attr.aria-label]="'reports.actions.exportLabel' | transloco"
         >
-          {{ 'reports.actions.csv' | transloco }}
-        </app-button>
-        <app-button
-          appearance="secondary"
-          size="s"
-          [disabled]="facade.exporting() || !facade.canDownloadBackendExport()"
-          (clicked)="facade.downloadReport('excel')"
-        >
-          {{ 'reports.actions.excel' | transloco }}
-        </app-button>
-        <app-button
-          appearance="secondary"
-          size="s"
-          [disabled]="facade.exporting() || !facade.canDownloadBackendExport()"
-          (clicked)="facade.downloadReport('pdf')"
-        >
-          {{ 'reports.actions.pdf' | transloco }}
-        </app-button>
+          <button
+            type="button"
+            class="export-btn export-btn--csv"
+            [attr.aria-label]="'reports.actions.csv' | transloco"
+            (click)="facade.exportCsv(facade.activeColumns())"
+          >
+            <lucide-icon [img]="Download" [size]="14" aria-hidden="true" />
+            CSV
+          </button>
+          @if (facade.canDownloadBackendExport()) {
+            <button
+              type="button"
+              class="export-btn export-btn--excel"
+              [disabled]="facade.exporting()"
+              [attr.aria-label]="'reports.actions.excel' | transloco"
+              (click)="facade.downloadReport('excel')"
+            >
+              <lucide-icon [img]="FileSpreadsheet" [size]="14" aria-hidden="true" />
+              Excel
+            </button>
+            <button
+              type="button"
+              class="export-btn export-btn--pdf"
+              [disabled]="facade.exporting()"
+              [attr.aria-label]="'reports.actions.pdf' | transloco"
+              (click)="facade.downloadReport('pdf')"
+            >
+              <lucide-icon [img]="FileText" [size]="14" aria-hidden="true" />
+              PDF
+            </button>
+          }
+        </div>
       }
     </div>
   </app-page-header>
 
-  <app-toolbar [ariaLabel]="'reports.filters.ariaLabel' | transloco">
-    <form class="filters" [formGroup]="facade.filterForm" (ngSubmit)="facade.applyFilters()">
-      <app-text-field
-        formControlName="property_id"
-        [label]="'reports.filters.propertyLabel' | transloco"
-        [placeholder]="'reports.filters.propertyPlaceholder' | transloco"
-        type="number"
-      />
-      <app-select
-        formControlName="status"
-        [label]="'reports.filters.statusLabel' | transloco"
-        [placeholder]="'reports.filters.statusPlaceholder' | transloco"
-        [options]="statusOptions()"
-      />
-      <app-date-picker formControlName="from" [label]="'reports.filters.fromLabel' | transloco" />
-      <app-date-picker formControlName="to" [label]="'reports.filters.toLabel' | transloco" />
-      <div class="filters-actions">
-        <app-button type="submit" size="s">{{ 'reports.actions.apply' | transloco }}</app-button>
-        <app-button type="button" appearance="outline" size="s" (clicked)="facade.clearFilters()">
-          {{ 'reports.actions.clear' | transloco }}
+  <!-- ── Filtros simplificados ─────────────────────────────────────────── -->
+  <div class="filter-bar" [formGroup]="facade.filterForm">
+    <!-- Presets de período -->
+    <div class="filter-group">
+      <span class="filter-label">{{ 'reports.filters.period' | transloco }}</span>
+      <div
+        class="preset-chips"
+        role="group"
+        [attr.aria-label]="'reports.filters.period' | transloco"
+      >
+        <button
+          type="button"
+          class="preset-chip"
+          [class.active]="datePreset() === 'current'"
+          (click)="setDatePreset('current')"
+        >
+          {{ 'reports.filters.presetCurrent' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="preset-chip"
+          [class.active]="datePreset() === 'previous'"
+          (click)="setDatePreset('previous')"
+        >
+          {{ 'reports.filters.presetPrevious' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="preset-chip"
+          [class.active]="datePreset() === 'quarter'"
+          (click)="setDatePreset('quarter')"
+        >
+          {{ 'reports.filters.presetQuarter' | transloco }}
+        </button>
+        <button
+          type="button"
+          class="preset-chip"
+          [class.active]="datePreset() === 'custom'"
+          (click)="setDatePreset('custom')"
+        >
+          {{ 'reports.filters.presetCustom' | transloco }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Rango personalizado (solo cuando custom) -->
+    @if (datePreset() === 'custom') {
+      <div class="filter-dates">
+        <app-date-picker formControlName="from" [label]="'reports.filters.fromLabel' | transloco" />
+        <app-date-picker formControlName="to" [label]="'reports.filters.toLabel' | transloco" />
+        <app-button size="s" (clicked)="facade.applyFilters()">
+          {{ 'reports.actions.apply' | transloco }}
         </app-button>
       </div>
-    </form>
-  </app-toolbar>
+    }
+
+    <!-- Filtros secundarios -->
+    <div class="filter-secondary">
+      <div class="filter-inline-group">
+        <app-select
+          formControlName="status"
+          [label]="'reports.filters.statusLabel' | transloco"
+          [placeholder]="'reports.filters.allStatuses' | transloco"
+          [options]="statusOptions()"
+        />
+        <app-select
+          formControlName="property_id"
+          [label]="'reports.filters.propertyLabel' | transloco"
+          [placeholder]="'reports.filters.allProperties' | transloco"
+          [options]="propertyOptions()"
+        />
+      </div>
+      <app-button appearance="outline" size="s" (clicked)="clearAll()">
+        {{ 'reports.actions.clear' | transloco }}
+      </app-button>
+    </div>
+  </div>
 
   @if (facade.isLoading()) {
     <app-loading-state [label]="'reports.ui.loading' | transloco" />
   } @else {
+    <!-- ── KPI cards ─────────────────────────────────────────────────────── -->
     <section class="kpi-grid" [attr.aria-label]="'reports.ui.kpiAriaLabel' | transloco">
       @for (card of facade.kpiCards(); track card.label) {
         <article class="kpi" [attr.data-tone]="card.tone">
-          <span>{{ card.label }}</span>
-          <strong>{{ card.value }}</strong>
-          <small>{{ card.helper }}</small>
+          <span class="kpi-label">{{ card.label }}</span>
+          <strong class="kpi-value">{{ card.value }}</strong>
+          <small class="kpi-helper">{{ card.helper }}</small>
         </article>
       }
     </section>
 
+    <!-- ── Selector de reporte ───────────────────────────────────────────── -->
     <section class="report-switcher">
       <app-segmented-control
         [ariaLabel]="'reports.ui.switcherAriaLabel' | transloco"
@@ -81,13 +157,15 @@
         [ngModelOptions]="{ standalone: true }"
         (valueChanged)="selectReport($event)"
       />
-      <p>{{ facade.activeReportOption().description }}</p>
+      <p class="report-desc">{{ facade.activeReportOption().description }}</p>
     </section>
 
+    <!-- ── Gráficas ──────────────────────────────────────────────────────── -->
     <section class="charts-grid" [attr.aria-label]="'reports.ui.chartsAriaLabel' | transloco">
       <app-report-line-chart
         [title]="'reports.charts.incomeTitle' | transloco"
         [eyebrow]="'reports.charts.incomeEyebrow' | transloco"
+        [emptyMessage]="'reports.charts.incomeEmpty' | transloco"
         currency="USD"
         [data]="facade.incomeTrend()"
       />
@@ -99,6 +177,7 @@
       <app-report-bar-chart
         [title]="'reports.charts.performanceTitle' | transloco"
         [eyebrow]="'reports.charts.performanceEyebrow' | transloco"
+        [emptyMessage]="'reports.charts.performanceEmpty' | transloco"
         currency="USD"
         [data]="facade.financialBars()"
       />
@@ -112,20 +191,20 @@
         <app-report-bar-chart
           [title]="'reports.charts.vacancyTitle' | transloco"
           [eyebrow]="'reports.charts.vacancyEyebrow' | transloco"
+          [emptyMessage]="'reports.charts.vacancyEmpty' | transloco"
+          [valueUnit]="'reports.charts.daysUnit' | transloco"
           [data]="facade.vacancyBars()"
         />
       }
     </section>
 
+    <!-- ── Tabla de detalle ──────────────────────────────────────────────── -->
     <section class="table-section">
-      <header>
+      <header class="table-header">
         <div>
-          <span>{{ 'reports.table.eyebrow' | transloco }}</span>
-          <strong>{{ facade.activeReportOption().label }}</strong>
+          <span class="table-eyebrow">{{ 'reports.table.eyebrow' | transloco }}</span>
+          <strong class="table-title">{{ facade.activeReportOption().label }}</strong>
         </div>
-        @if (!facade.canDownloadBackendExport()) {
-          <p>{{ 'reports.table.exportHint' | transloco }}</p>
-        }
       </header>
 
       @if (facade.rows().length === 0) {

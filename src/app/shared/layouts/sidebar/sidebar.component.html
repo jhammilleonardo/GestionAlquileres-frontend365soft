@@ -1,26 +1,106 @@
-<aside class="sidebar" [class.collapsed]="!expanded()" [class.mobile-open]="isMobileOpen()">
-  <div class="sidebar-header">
-    <div class="logo-section">
-      <div class="logo-icon">
-        <lucide-icon [img]="getIconComponent('Building2')" [size]="18"></lucide-icon>
-      </div>
-      @if (expanded()) {
-        <div class="logo-text">
-          <h1>{{ 'sidebar.appName' | transloco }}</h1>
-          <p>{{ 'sidebar.appSubtitle' | transloco }}</p>
-        </div>
-      }
+<aside
+  class="sidebar"
+  [class.is-collapsed]="!expanded()"
+  [class.mobile-open]="isMobileOpen()"
+  [attr.aria-label]="'sidebar.mainMenu' | transloco"
+>
+  <header class="sidebar-brand">
+    <div class="logo-icon">
+      <lucide-icon
+        [img]="getIconComponent('Building2')"
+        [size]="18"
+        aria-hidden="true"
+      ></lucide-icon>
     </div>
-  </div>
+    @if (expanded()) {
+      <div class="logo-text">
+        <h1>{{ 'sidebar.appName' | transloco }}</h1>
+        <p>{{ 'sidebar.appSubtitle' | transloco }}</p>
+      </div>
+    }
+  </header>
 
-  <nav class="sidebar-nav" [attr.aria-label]="'sidebar.mainMenu' | transloco">
-    <ul class="nav-list" role="list">
-      @for (option of menuOptions(); track option.route) {
-        <li class="nav-item" role="listitem">
+  <nav class="sidebar-nav">
+    @for (section of sections(); track section.label ?? 'ungrouped'; let sectionIndex = $index) {
+      @if (section.label; as sectionLabel) {
+        <div class="nav-group" [class.is-active]="isSectionActive(section)">
+          <button
+            type="button"
+            class="nav-group-trigger"
+            [class.active]="isSectionActive(section)"
+            [attr.aria-expanded]="isSectionOpen(sectionLabel)"
+            [attr.aria-controls]="sectionPanelId(sectionIndex)"
+            [attr.aria-label]="sectionLabel | transloco"
+            [attr.title]="!expanded() ? (sectionLabel | transloco) : null"
+            (click)="toggleSection(sectionLabel)"
+          >
+            <lucide-icon
+              class="nav-icon"
+              [img]="getGroupIcon(sectionLabel)"
+              [size]="18"
+              aria-hidden="true"
+            ></lucide-icon>
+            @if (expanded()) {
+              <span class="nav-label">{{ sectionLabel | transloco }}</span>
+              <lucide-icon
+                class="group-chevron"
+                [class.is-open]="isSectionOpen(sectionLabel)"
+                [img]="ChevronDown"
+                [size]="16"
+                aria-hidden="true"
+              ></lucide-icon>
+            }
+            @if (section.badgeCount) {
+              <span class="nav-badge" [attr.aria-label]="'sidebar.pendingPayments' | transloco">
+                {{ formatBadgeCount(section.badgeCount) }}
+              </span>
+            }
+          </button>
+
+          @if (expanded() && isSectionOpen(sectionLabel)) {
+            <div
+              class="nav-group-panel"
+              [id]="sectionPanelId(sectionIndex)"
+              role="group"
+              [attr.aria-label]="sectionLabel | transloco"
+            >
+              @for (option of section.items; track option.route) {
+                <a
+                  class="nav-link nav-link-child"
+                  [routerLink]="option.route"
+                  routerLinkActive="active"
+                  ariaCurrentWhenActive="page"
+                  (click)="closeMobileMenu()"
+                  [attr.aria-label]="option.label | transloco"
+                >
+                  <lucide-icon
+                    class="nav-icon"
+                    [img]="getIconComponent(option.icon)"
+                    [size]="17"
+                    aria-hidden="true"
+                  ></lucide-icon>
+                  <span class="nav-label">{{ option.label | transloco }}</span>
+                  @if (option.badgeCount) {
+                    <span
+                      class="nav-badge"
+                      [attr.aria-label]="'sidebar.pendingPayments' | transloco"
+                    >
+                      {{ formatBadgeCount(option.badgeCount) }}
+                    </span>
+                  }
+                </a>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        @for (option of section.items; track option.route) {
           <a
             class="nav-link"
             [routerLink]="option.route"
             routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMobileMenu()"
             [attr.aria-label]="option.label | transloco"
             [attr.title]="!expanded() ? (option.label | transloco) : null"
           >
@@ -33,41 +113,59 @@
             @if (expanded()) {
               <span class="nav-label">{{ option.label | transloco }}</span>
             }
-            @if (option.badgeCount) {
-              <span class="nav-badge" [attr.aria-label]="'sidebar.pendingPayments' | transloco">
-                {{ formatBadgeCount(option.badgeCount) }}
-              </span>
-            }
           </a>
-        </li>
+        }
       }
-    </ul>
+    }
   </nav>
 
-  <!-- Language toggle -->
-  <div class="lang-toggle" [class.collapsed]="!expanded()">
-    @if (expanded()) {
-      <span class="lang-label" aria-hidden="true">{{ 'sidebar.language' | transloco }}</span>
+  <footer class="sidebar-footer">
+    @if (profileItem(); as profile) {
+      <a
+        class="nav-link"
+        [routerLink]="profile.route"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        (click)="closeMobileMenu()"
+        [attr.aria-label]="profile.label | transloco"
+        [attr.title]="!expanded() ? (profile.label | transloco) : null"
+      >
+        <lucide-icon
+          class="nav-icon"
+          [img]="getIconComponent('User')"
+          [size]="18"
+          aria-hidden="true"
+        ></lucide-icon>
+        @if (expanded()) {
+          <span class="nav-label">{{ profile.label | transloco }}</span>
+        }
+      </a>
     }
-    <div class="lang-buttons" role="group" [attr.aria-label]="'sidebar.language' | transloco">
-      <button
-        class="lang-btn"
-        [class.active]="languageService.isSpanish()"
-        (click)="languageService.setLanguage('es')"
-        [attr.aria-label]="'common.spanish' | transloco"
-        [attr.title]="'common.spanish' | transloco"
-      >
-        ES
-      </button>
-      <button
-        class="lang-btn"
-        [class.active]="languageService.isEnglish()"
-        (click)="languageService.setLanguage('en')"
-        [attr.aria-label]="'common.english' | transloco"
-        [attr.title]="'common.english' | transloco"
-      >
-        EN
-      </button>
+
+    <div class="lang-toggle" [class.collapsed]="!expanded()">
+      @if (expanded()) {
+        <span class="lang-label" aria-hidden="true">{{ 'sidebar.language' | transloco }}</span>
+      }
+      <div class="lang-buttons" role="group" [attr.aria-label]="'sidebar.language' | transloco">
+        <button
+          class="lang-btn"
+          [class.active]="languageService.isSpanish()"
+          (click)="languageService.setLanguage('es')"
+          [attr.aria-label]="'common.spanish' | transloco"
+          [attr.title]="'common.spanish' | transloco"
+        >
+          ES
+        </button>
+        <button
+          class="lang-btn"
+          [class.active]="languageService.isEnglish()"
+          (click)="languageService.setLanguage('en')"
+          [attr.aria-label]="'common.english' | transloco"
+          [attr.title]="'common.english' | transloco"
+        >
+          EN
+        </button>
+      </div>
     </div>
-  </div>
+  </footer>
 </aside>

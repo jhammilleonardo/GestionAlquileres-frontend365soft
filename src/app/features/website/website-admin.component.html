@@ -5,6 +5,10 @@
     [description]="'website.subtitle' | transloco"
   >
     <div actions class="header-actions">
+      <app-button appearance="secondary" (clicked)="togglePreview()">
+        <lucide-icon [img]="showPreview() ? EyeOff : Eye" [size]="16" />
+        {{ (showPreview() ? 'website.hidePreview' : 'website.showPreview') | transloco }}
+      </app-button>
       <app-button appearance="secondary" (clicked)="openPreview()">
         <lucide-icon [img]="ExternalLink" [size]="16" />
         {{ 'website.preview' | transloco }}
@@ -16,93 +20,316 @@
     <app-loading-state [label]="'website.loading' | transloco" />
   } @else {
     <!-- Estado de publicación -->
-    <div class="publish-card">
-      <div class="publish-info">
-        <lucide-icon [img]="Globe" [size]="22" />
-        <div>
-          <strong>{{ 'website.publishState' | transloco }}</strong>
-          <app-status-badge
-            [label]="(isPublished() ? 'website.published' : 'website.draft') | transloco"
-            [tone]="isPublished() ? 'success' : 'neutral'"
-          />
+    <div class="publish-card" [class.is-published]="isPublished()">
+      <div class="publish-top">
+        <div class="publish-info">
+          <span class="publish-icon" [class.is-published]="isPublished()">
+            <lucide-icon [img]="isPublished() ? Globe : EyeOff" [size]="22" />
+          </span>
+          <div class="publish-text">
+            <div class="publish-state-row">
+              <strong>{{ 'website.publishState' | transloco }}</strong>
+              <app-status-badge
+                [label]="(isPublished() ? 'website.published' : 'website.draft') | transloco"
+                [tone]="isPublished() ? 'success' : 'warning'"
+              />
+            </div>
+            <p class="publish-hint">
+              {{ (isPublished() ? 'website.publishedHint' : 'website.draftHint') | transloco }}
+            </p>
+          </div>
+        </div>
+
+        <div class="publish-actions">
+          @if (isPublished()) {
+            <app-button appearance="secondary" [disabled]="publishing()" (clicked)="unpublish()">
+              <lucide-icon [img]="EyeOff" [size]="16" />
+              {{ 'website.unpublish' | transloco }}
+            </app-button>
+          } @else {
+            <app-button [loading]="publishing()" (clicked)="publish()">
+              <lucide-icon [img]="Globe" [size]="16" />
+              {{ 'website.publish' | transloco }}
+            </app-button>
+          }
         </div>
       </div>
-      <app-button
-        [appearance]="isPublished() ? 'secondary' : 'primary'"
-        [disabled]="publishing()"
-        (clicked)="togglePublish()"
-      >
-        <lucide-icon [img]="isPublished() ? EyeOff : Eye" [size]="16" />
-        {{ (isPublished() ? 'website.unpublish' : 'website.publish') | transloco }}
-      </app-button>
+
+      @if (isPublished()) {
+        <div class="publish-link">
+          <span class="publish-link-label">{{ 'website.liveUrl' | transloco }}</span>
+          <a class="publish-link-url" [href]="absolutePublicUrl()" target="_blank" rel="noopener">
+            {{ absolutePublicUrl() }}
+          </a>
+          <app-button appearance="flat" size="s" (clicked)="copyPublicLink()">
+            <lucide-icon [img]="linkCopied() ? CheckCircle : Copy" [size]="15" />
+            {{ (linkCopied() ? 'website.linkCopied' : 'website.copyLink') | transloco }}
+          </app-button>
+        </div>
+      }
     </div>
 
-    <form [formGroup]="form" class="website-form" (ngSubmit)="save()">
-      <!-- Quiénes somos -->
-      <section class="form-section">
-        <h2>{{ 'website.aboutTitle' | transloco }}</h2>
-        <app-textarea
-          formControlName="company_description"
-          [label]="'website.aboutDescription' | transloco"
-        />
-      </section>
+    <!-- Pestañas por sección del portal -->
+    <nav class="ws-tabs" role="tablist">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          role="tab"
+          class="ws-tab"
+          [class.active]="activeTab() === tab.id"
+          [style.--tab-accent]="previewPrimary()"
+          [attr.aria-selected]="activeTab() === tab.id"
+          (click)="setTab(tab.id)"
+        >
+          {{ tab.labelKey | transloco }}
+        </button>
+      }
+    </nav>
 
-      <!-- Marca -->
-      <section class="form-section">
-        <h2>{{ 'website.brandTitle' | transloco }}</h2>
-        <app-text-field formControlName="logo_url" [label]="'website.logoUrl' | transloco" />
-        <div class="form-row">
-          <label class="color-field">
-            {{ 'website.primaryColor' | transloco }}
-            <input type="color" formControlName="primary_color" />
-          </label>
-          <label class="color-field">
-            {{ 'website.secondaryColor' | transloco }}
-            <input type="color" formControlName="secondary_color" />
-          </label>
+    <!-- Editor: formulario (izquierda) + previsualización fija (derecha) -->
+    <div class="ws-editor" [class.has-preview]="showPreview()">
+      <!-- Formulario contextual a la sección activa -->
+      <form [formGroup]="form" class="website-form" (ngSubmit)="save()">
+        @switch (activeTab()) {
+          @case ('inicio') {
+            <section class="form-section">
+              <h2>{{ 'website.heroTitle2' | transloco }}</h2>
+              <app-text-field
+                formControlName="hero_title"
+                [label]="'website.heroHeadline' | transloco"
+              />
+              <app-text-field
+                formControlName="hero_subtitle"
+                [label]="'website.heroSubheadline' | transloco"
+              />
+              <div class="upload-block">
+                <span class="field-label">{{ 'website.heroLabel' | transloco }}</span>
+                <span class="upload-hint">{{ 'website.heroHint' | transloco }}</span>
+                @if (heroPreview() && heroFiles().length === 0) {
+                  <span class="current-label">{{ 'website.currentImage' | transloco }}</span>
+                  <img [src]="heroPreview()" alt="" class="brand-preview brand-preview--hero" />
+                }
+                <app-image-uploader
+                  [maxFiles]="1"
+                  [files]="heroFiles()"
+                  [defaultAspect]="16 / 9"
+                  [lockAspect]="true"
+                  (filesChange)="onHeroSelected($event)"
+                />
+                @if (uploadingHero()) {
+                  <span class="upload-hint">{{ 'website.uploading' | transloco }}</span>
+                } @else if (heroFileInfo(); as info) {
+                  <span class="upload-confirm">
+                    <lucide-icon [img]="CheckCircle" [size]="14" />
+                    {{ 'website.convertedTo' | transloco: { ext: info.ext, size: info.size } }}
+                  </span>
+                }
+              </div>
+            </section>
+
+            <section class="form-section" formArrayName="home_features">
+              <h2>{{ 'website.featuresTitle' | transloco }}</h2>
+              <p class="section-hint">{{ 'website.featuresHint' | transloco }}</p>
+
+              @for (feature of homeFeatures.controls; track feature; let i = $index) {
+                <div class="card-row" [formGroupName]="i">
+                  <div class="card-row-fields">
+                    <app-text-field
+                      formControlName="title"
+                      [label]="'website.cardTitle' | transloco"
+                    />
+                    <app-textarea
+                      formControlName="description"
+                      [label]="'website.cardDescription' | transloco"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    class="card-remove"
+                    (click)="removeFeature(i)"
+                    [attr.aria-label]="'website.cardRemove' | transloco"
+                  >
+                    <lucide-icon [img]="Trash2" [size]="18" />
+                  </button>
+                </div>
+              }
+
+              <app-button type="button" appearance="secondary" (clicked)="addFeature()">
+                <lucide-icon [img]="Plus" [size]="16" />
+                {{ 'website.featuresAdd' | transloco }}
+              </app-button>
+            </section>
+
+            <section class="form-section">
+              <h2>{{ 'website.ctaTitle' | transloco }}</h2>
+              <p class="section-hint">{{ 'website.ctaHint' | transloco }}</p>
+              <app-text-field
+                formControlName="cta_title"
+                [label]="'website.cardTitle' | transloco"
+              />
+              <app-text-field
+                formControlName="cta_subtitle"
+                [label]="'website.cardDescription' | transloco"
+              />
+            </section>
+          }
+
+          @case ('propiedades') {
+            <section class="form-section">
+              <h2>{{ 'public.nav.properties' | transloco }}</h2>
+              <p class="section-hint">{{ 'website.propertiesHint' | transloco }}</p>
+            </section>
+          }
+
+          @case ('nosotros') {
+            <section class="form-section">
+              <h2>{{ 'website.aboutTitle' | transloco }}</h2>
+              <app-textarea
+                formControlName="about_content"
+                [label]="'website.aboutContent' | transloco"
+              />
+            </section>
+
+            <section class="form-section" formArrayName="about_values">
+              <h2>{{ 'website.valuesTitle' | transloco }}</h2>
+              <p class="section-hint">{{ 'website.valuesHint' | transloco }}</p>
+
+              @for (value of aboutValues.controls; track value; let i = $index) {
+                <div class="card-row" [formGroupName]="i">
+                  <div class="card-row-fields">
+                    <app-text-field
+                      formControlName="title"
+                      [label]="'website.cardTitle' | transloco"
+                    />
+                    <app-textarea
+                      formControlName="description"
+                      [label]="'website.cardDescription' | transloco"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    class="card-remove"
+                    (click)="removeValue(i)"
+                    [attr.aria-label]="'website.cardRemove' | transloco"
+                  >
+                    <lucide-icon [img]="Trash2" [size]="18" />
+                  </button>
+                </div>
+              }
+
+              <app-button type="button" appearance="secondary" (clicked)="addValue()">
+                <lucide-icon [img]="Plus" [size]="16" />
+                {{ 'website.valuesAdd' | transloco }}
+              </app-button>
+            </section>
+          }
+
+          @case ('contacto') {
+            <section class="form-section">
+              <h2>{{ 'website.contactTitle' | transloco }}</h2>
+              <div class="form-row">
+                <app-text-field
+                  formControlName="contact_email"
+                  [label]="'website.contactEmail' | transloco"
+                  type="email"
+                />
+                <app-text-field
+                  formControlName="contact_phone"
+                  [label]="'website.contactPhone' | transloco"
+                  type="tel"
+                />
+              </div>
+            </section>
+          }
+
+          @case ('general') {
+            <section class="form-section">
+              <h2>{{ 'website.brandTitle' | transloco }}</h2>
+              <div class="upload-block">
+                <span class="field-label">{{ 'website.logoLabel' | transloco }}</span>
+                @if (logoPreview() && logoFiles().length === 0) {
+                  <span class="current-label">{{ 'website.currentImage' | transloco }}</span>
+                  <img [src]="logoPreview()" alt="" class="brand-preview brand-preview--logo" />
+                }
+                <app-image-uploader
+                  [maxFiles]="1"
+                  [files]="logoFiles()"
+                  [defaultAspect]="null"
+                  (filesChange)="onLogoSelected($event)"
+                />
+                @if (uploadingLogo()) {
+                  <span class="upload-hint">{{ 'website.uploading' | transloco }}</span>
+                } @else if (logoFileInfo(); as info) {
+                  <span class="upload-confirm">
+                    <lucide-icon [img]="CheckCircle" [size]="14" />
+                    {{ 'website.convertedTo' | transloco: { ext: info.ext, size: info.size } }}
+                  </span>
+                }
+              </div>
+              <div class="form-row">
+                <label class="color-field">
+                  {{ 'website.brandColor' | transloco }}
+                  <input type="color" formControlName="primary_color" />
+                </label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <h2>{{ 'website.aboutTitle' | transloco }}</h2>
+              <app-textarea
+                formControlName="company_description"
+                [label]="'website.aboutDescription' | transloco"
+              />
+            </section>
+
+            <section class="form-section">
+              <h2>{{ 'website.socialTitle' | transloco }}</h2>
+              <app-text-field formControlName="facebook" label="Facebook" />
+              <app-text-field formControlName="instagram" label="Instagram" />
+              <app-text-field formControlName="whatsapp" label="WhatsApp" />
+            </section>
+
+            <section class="form-section">
+              <h2>{{ 'website.seoTitle' | transloco }}</h2>
+              <app-text-field
+                formControlName="meta_title"
+                [label]="'website.metaTitle' | transloco"
+              />
+              <app-textarea
+                formControlName="meta_description"
+                [label]="'website.metaDescription' | transloco"
+              />
+            </section>
+          }
+        }
+
+        <div class="form-footer">
+          <app-button type="submit" [disabled]="saving()" (clicked)="save()">
+            {{ 'common.save' | transloco }}
+          </app-button>
         </div>
-      </section>
+      </form>
 
-      <!-- Contacto -->
-      <section class="form-section">
-        <h2>{{ 'website.contactTitle' | transloco }}</h2>
-        <div class="form-row">
-          <app-text-field
-            formControlName="contact_email"
-            [label]="'website.contactEmail' | transloco"
-            type="email"
-          />
-          <app-text-field
-            formControlName="contact_phone"
-            [label]="'website.contactPhone' | transloco"
-            type="tel"
-          />
-        </div>
-      </section>
-
-      <!-- Redes sociales -->
-      <section class="form-section">
-        <h2>{{ 'website.socialTitle' | transloco }}</h2>
-        <app-text-field formControlName="facebook" label="Facebook" />
-        <app-text-field formControlName="instagram" label="Instagram" />
-        <app-text-field formControlName="whatsapp" label="WhatsApp" />
-      </section>
-
-      <!-- SEO -->
-      <section class="form-section">
-        <h2>{{ 'website.seoTitle' | transloco }}</h2>
-        <app-text-field formControlName="meta_title" [label]="'website.metaTitle' | transloco" />
-        <app-textarea
-          formControlName="meta_description"
-          [label]="'website.metaDescription' | transloco"
-        />
-      </section>
-
-      <div class="form-footer">
-        <app-button type="submit" [disabled]="saving()" (clicked)="save()">
-          {{ 'common.save' | transloco }}
-        </app-button>
-      </div>
-    </form>
+      <!-- Previsualización: portal público real embebido (fija a la derecha) -->
+      @if (showPreview()) {
+        <section class="preview-wrap" aria-label="{{ 'website.previewLive' | transloco }}">
+          <div class="preview-bar">
+            <span class="preview-dots"><i></i><i></i><i></i></span>
+            <span class="preview-title">
+              {{ 'website.previewLive' | transloco }} ·
+              {{ (activeTab() === 'general' ? 'website.tabGeneral' : tabLabelKey()) | transloco }}
+            </span>
+            <span class="preview-note">{{ 'website.previewSavedNote' | transloco }}</span>
+          </div>
+          <iframe
+            #previewFrame
+            class="preview-iframe"
+            [src]="previewUrl()"
+            [title]="'website.previewLive' | transloco"
+            (load)="onPreviewLoad()"
+          ></iframe>
+        </section>
+      }
+    </div>
   }
 </div>

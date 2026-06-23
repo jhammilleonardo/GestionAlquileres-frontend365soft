@@ -1,0 +1,91 @@
+.reservations-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ─── Filtros ────────────────────────────────────────────────────────────────
+.filters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  align-items: end;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr auto;
+  }
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-start;
+
+  @media (min-width: 640px) {
+    justify-content: flex-end;
+  }
+}
+
+// ─── Lista de reservas ────────────────────────────────────────────────────────
+.reservation-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rsv-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  background: var(--color-surface, #fff);
+}
+
+.rsv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.rsv-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.rsv-unit {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+.rsv-total {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rsv-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #6b7280);
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.rsv-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}

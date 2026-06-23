@@ -53,7 +53,7 @@
       @for (image of items(); track image.file; let first = $first) {
         <li class="uploader__item" cdkDrag>
           <div class="uploader__thumb">
-            <img [src]="image.previewUrl" [alt]="image.file.name" />
+            <img [src]="image.previewUrl" [alt]="image.file.name" loading="lazy" />
 
             @if (first) {
               <span class="uploader__cover-badge">
@@ -152,15 +152,21 @@
           role="group"
           [attr.aria-label]="'imageUploader.aspect' | transloco"
         >
-          @for (choice of aspectChoices; track choice.labelKey) {
-            <button
-              type="button"
-              class="cropper-chip"
-              [class.cropper-chip--active]="isAspectActive(choice)"
-              (click)="setAspect(choice)"
-            >
-              {{ choice.labelKey | transloco }}
-            </button>
+          @if (lockAspect()) {
+            <span class="cropper-chip cropper-chip--active cropper-chip--locked">
+              {{ lockedAspectLabelKey() | transloco }}
+            </span>
+          } @else {
+            @for (choice of aspectChoices; track choice.labelKey) {
+              <button
+                type="button"
+                class="cropper-chip"
+                [class.cropper-chip--active]="isAspectActive(choice)"
+                (click)="setAspect(choice)"
+              >
+                {{ choice.labelKey | transloco }}
+              </button>
+            }
           }
         </div>
 
@@ -197,14 +203,16 @@
           >
             <lucide-icon [img]="RotateCwIcon" [size]="18"></lucide-icon>
           </button>
-          <button
-            type="button"
-            class="cropper-tool"
-            (click)="flip()"
-            [attr.aria-label]="'imageUploader.flip' | transloco"
-          >
-            <lucide-icon [img]="FlipIcon" [size]="18"></lucide-icon>
-          </button>
+          @if (!lockAspect()) {
+            <button
+              type="button"
+              class="cropper-tool"
+              (click)="flip()"
+              [attr.aria-label]="'imageUploader.flip' | transloco"
+            >
+              <lucide-icon [img]="FlipIcon" [size]="18"></lucide-icon>
+            </button>
+          }
           <button
             type="button"
             class="cropper-tool"

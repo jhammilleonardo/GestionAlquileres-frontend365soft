@@ -1,4 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, tap, catchError, of, map } from 'rxjs';
@@ -8,6 +9,7 @@ import { SlugService } from './slug.service';
 import { PermissionsService } from './permissions.service';
 import { getApiErrorMessage } from '../http/http-error.util';
 import { SessionTokenService } from './session-token.service';
+import { SessionExpirationService } from './session-expiration.service';
 
 export interface AdminUser {
   id: number;
@@ -18,7 +20,7 @@ export interface AdminUser {
 }
 
 export interface LoginResponse {
-  access_token: string;
+  access_token?: string;
   user: AdminUser;
 }
 
@@ -47,7 +49,7 @@ export interface RegisterAdminResponse {
     locale: string;
   };
   user: AdminUser;
-  access_token: string;
+  access_token?: string;
 }
 
 @Injectable({
@@ -59,6 +61,7 @@ export class AuthService {
   private slugService = inject(SlugService);
   private permissionsService = inject(PermissionsService);
   private sessionTokens = inject(SessionTokenService);
+  private sessionExpiration = inject(SessionExpirationService);
 
   private readonly USER_KEY = 'admin_user';
 
@@ -74,26 +77,26 @@ export class AuthService {
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
   constructor() {
+    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.currentUserSignal.set(null);
+      this.permissionsService.clear();
+      this.slugService.clearSlug();
+    });
+
     // Clean up old mock data
     this.cleanupOldData();
 
-    // Load user from storage if token exists
-    const token = this.getToken();
-    if (token) {
-      const user = this.loadUserFromStorage();
-      if (user) {
-        this.currentUserSignal.set(user);
-        // CRITICAL: Restore slug in SlugService from user data
-        // This prevents logout on page refresh
-        if (user.tenant_slug) {
-          this.slugService.setSlug(user.tenant_slug);
-        }
+    // La cookie HttpOnly no es legible desde JavaScript. El usuario persistido
+    // permite restaurar el estado síncrono durante un refresh/HMR y luego
+    // `auth/me` confirma en segundo plano que la cookie sigue siendo válida.
+    const user = this.loadUserFromStorage();
+    if (user) {
+      this.currentUserSignal.set(user);
+      if (user.tenant_slug) {
+        this.slugService.setSlug(user.tenant_slug);
       }
-      // Validate token silently - if invalid (401), clear storage
-      // This prevents 401 errors and login loops when JWT_SECRET changes
       this.validateTokenSilently();
     } else {
-      // No token, clear everything
       this.currentUserSignal.set(null);
     }
   }
@@ -104,10 +107,10 @@ export class AuthService {
   private cleanupOldData(): void {
     const user = this.loadUserFromStorage();
     const token = this.getToken();
-    const isLegacyMockToken = !token || token === 'mock-token' || token.startsWith('mock-');
+    const isLegacyMockToken = token === 'mock-token' || token?.startsWith('mock-') === true;
 
     // Versiones anteriores guardaban un admin mock con id/email iguales al seed real.
-    // No se debe borrar una sesión válida solo por esos campos; el token decide.
+    // La ausencia de token en storage es normal con cookies HttpOnly.
     if (user && user.id === '1' && user.email === 'admin@365soft.com' && isLegacyMockToken) {
       this.clearStoredAdminSession();
     }
@@ -220,6 +223,13 @@ export class AuthService {
    * Logout and clear session
    */
   logout(): void {
+    // Revoca el refresh token y limpia las cookies HttpOnly en el backend.
+    // Best-effort: la limpieza local procede aunque la llamada falle.
+    this.http
+      .post(`${environment.apiUrl}auth/logout`, {})
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+
     this.clearStoredAdminSession();
     this.currentUserSignal.set(null);
 
@@ -265,7 +275,7 @@ export class AuthService {
    * Validate current token with backend
    */
   private validateToken(): void {
-    if (!this.getToken()) return;
+    if (!this.currentUserSignal()) return;
 
     this.http
       .get<AdminUser>(`${environment.apiUrl}auth/me`)
@@ -294,8 +304,12 @@ export class AuthService {
    * Validate token silently on app init
    * Clears invalid tokens without redirecting to prevent 401 loops
    */
+  /**
+   * Validate token silently on app init
+   * Clears invalid tokens without redirecting to prevent 401 loops
+   */
   private validateTokenSilently(): void {
-    if (!this.getToken()) return;
+    if (!this.currentUserSignal()) return;
 
     this.http
       .get<AdminUser>(`${environment.apiUrl}auth/me`)
@@ -343,17 +357,16 @@ export class AuthService {
       tenant_slug: response.user.tenant_slug,
     };
 
-    // Save token in the correct place based on role
+    // Save user data in the correct client context. The access token is emitted
+    // by the backend as an HttpOnly cookie and must not be mirrored to storage.
     if (response.user.role === 'INQUILINO') {
-      // Inquilino - save in tenant_access_token
-      this.sessionTokens.setToken('tenant', response.access_token, rememberMe);
-      // Also save tenant user data
       localStorage.removeItem('tenant_user');
       sessionStorage.removeItem('tenant_user');
       storage.setItem('tenant_user', JSON.stringify(response.user));
     } else {
-      // Admin - save in admin_access_token
-      this.sessionTokens.setToken('admin', response.access_token, rememberMe);
+      // Admin: la sesión va en la cookie HttpOnly emitida por el backend; el
+      // JWT ya no se guarda en localStorage (mitiga robo por XSS). Sólo se
+      // persiste el objeto user como señal de sesión del lado cliente.
       this.saveUserToStorage(user, storage);
       this.currentUserSignal.set(user);
     }
@@ -375,10 +388,15 @@ export class AuthService {
   /**
    * Save user to storage
    */
-  private saveUserToStorage(user: User, storage: Storage = localStorage): void {
+  private saveUserToStorage(user: User, storage?: Storage): void {
+    const targetStorage = storage ?? this.getCurrentUserStorage();
     localStorage.removeItem(this.USER_KEY);
     sessionStorage.removeItem(this.USER_KEY);
-    storage.setItem(this.USER_KEY, JSON.stringify(user));
+    targetStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  private getCurrentUserStorage(): Storage {
+    return localStorage.getItem(this.USER_KEY) ? localStorage : sessionStorage;
   }
 
   private clearStoredAdminSession(): void {
@@ -415,10 +433,11 @@ export class AuthService {
   /**
    * Change user password
    */
-  changePassword(id: number, newPassword: string): Observable<void> {
+  changePassword(id: number, newPassword: string, currentPassword?: string): Observable<void> {
     const slug = this.slugService.getSlug();
     return this.http.post<void>(`${environment.apiUrl}${slug}/users/${id}/reset-password`, {
       password: newPassword,
+      current_password: currentPassword,
     });
   }
 
@@ -428,11 +447,17 @@ export class AuthService {
     });
   }
 
-  resetPassword(token: string, password: string): Observable<{ message: string }> {
-    return this.http.post<{ message: string }>(`${environment.apiUrl}auth/reset-password`, {
-      token,
-      password,
-    });
+  resetPassword(
+    token: string,
+    password: string,
+  ): Observable<{ message: string; role: string | null; tenantSlug: string }> {
+    return this.http.post<{ message: string; role: string | null; tenantSlug: string }>(
+      `${environment.apiUrl}auth/reset-password`,
+      {
+        token,
+        password,
+      },
+    );
   }
 
   /**
@@ -449,6 +474,7 @@ export class AuthService {
     company_name: string;
     slug?: string;
     country: string;
+    rental_type?: 'SHORT_TERM' | 'LONG_TERM' | 'BOTH';
     name: string;
     email: string;
     password: string;
@@ -465,7 +491,6 @@ export class AuthService {
         tap((response) => {
           // Set session after successful registration
           const loginResponse: LoginResponse = {
-            access_token: response.access_token,
             user: response.user,
           };
           this.setSession(loginResponse, true); // Remember by default

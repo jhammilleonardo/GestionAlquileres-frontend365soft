@@ -2,7 +2,7 @@
   <article class="metric-card total">
     <div class="metric-content">
       <div class="metric-icon-wrap">
-        <lucide-icon [img]="FileText" [size]="20" />
+        <lucide-icon [img]="FileText" [size]="36" />
       </div>
       <div class="metric-body">
         <span class="metric-value">{{ dashboard().total_contracts }}</span>
@@ -14,7 +14,7 @@
   <article class="metric-card active">
     <div class="metric-content">
       <div class="metric-icon-wrap">
-        <lucide-icon [img]="CheckCircle2" [size]="20" />
+        <lucide-icon [img]="FileCheck2" [size]="36" />
       </div>
       <div class="metric-body">
         <span class="metric-value">{{ dashboard().active_contracts }}</span>
@@ -26,7 +26,7 @@
   <article class="metric-card draft">
     <div class="metric-content">
       <div class="metric-icon-wrap">
-        <lucide-icon [img]="Pencil" [size]="20" />
+        <lucide-icon [img]="FilePen" [size]="36" />
       </div>
       <div class="metric-body">
         <span class="metric-value">{{ dashboard().draft_contracts }}</span>
@@ -38,7 +38,7 @@
   <article class="metric-card revenue">
     <div class="metric-content">
       <div class="metric-icon-wrap">
-        <lucide-icon [img]="DollarSign" [size]="20" />
+        <lucide-icon [img]="Wallet" [size]="36" />
       </div>
       <div class="metric-body">
         <span class="metric-value">{{ dashboard().monthly_revenue | tenantCurrency }}</span>
@@ -50,7 +50,7 @@
   <article class="metric-card avg">
     <div class="metric-content">
       <div class="metric-icon-wrap">
-        <lucide-icon [img]="TrendingUp" [size]="20" />
+        <lucide-icon [img]="TrendingUp" [size]="36" />
       </div>
       <div class="metric-body">
         <span class="metric-value">{{ dashboard().avg_rent | tenantCurrency }}</span>
@@ -63,7 +63,7 @@
     <article class="metric-card warning">
       <div class="metric-content">
         <div class="metric-icon-wrap">
-          <lucide-icon [img]="AlertTriangle" [size]="20" />
+          <lucide-icon [img]="AlertTriangle" [size]="36" />
         </div>
         <div class="metric-body">
           <span class="metric-value">{{ dashboard().contracts_expiring_soon }}</span>

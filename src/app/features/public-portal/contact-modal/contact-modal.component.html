@@ -1,5 +1,13 @@
-<div class="modal-overlay" (click)="closeModal()">
-  <div class="modal-container small" (click)="$event.stopPropagation()">
+<div
+  class="modal-overlay"
+  role="button"
+  tabindex="0"
+  aria-label="Cerrar"
+  (click)="$event.target === $event.currentTarget && closeModal()"
+  (keydown.enter)="closeModal()"
+  (keydown.space)="closeModal(); $event.preventDefault()"
+>
+  <div class="modal-container small" role="dialog" aria-modal="true">
     <button class="close-btn" (click)="closeModal()">✕</button>
 
     @if (!submitted) {
@@ -8,6 +16,16 @@
         <p class="modal-subtitle">{{ property.title }}</p>
 
         <form (ngSubmit)="submitForm()" class="contact-form">
+          <!-- Honeypot anti-spam: oculto a usuarios y lectores de pantalla. -->
+          <input
+            type="text"
+            class="hp-field"
+            [(ngModel)]="contactForm.website"
+            name="website"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+          />
           <div class="form-group">
             <label>{{ 'public.contactModal.name' | transloco }}</label>
             <input

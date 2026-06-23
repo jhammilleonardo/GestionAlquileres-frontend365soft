@@ -53,7 +53,7 @@ import { QrPayment, QrPaymentStatus } from '../../../../core/models/payment.mode
 
           <div class="qr-image-wrapper">
             @if (safeUrl()) {
-              <img [src]="safeUrl()!" alt="Código QR de pago" class="qr-image" />
+              <img [src]="safeUrl()!" alt="Código QR de pago" class="qr-image" loading="lazy" />
             } @else {
               <div class="qr-placeholder">
                 <lucide-icon [img]="QrCode" [size]="72"></lucide-icon>

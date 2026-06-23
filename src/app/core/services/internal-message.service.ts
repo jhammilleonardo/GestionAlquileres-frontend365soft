@@ -1,11 +1,12 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, from, switchMap, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { ApiClientService, ApiRequestOptions } from '../http/api-client.service';
 import { SlugService } from './slug.service';
 import { SessionTokenService, AuthContext } from './session-token.service';
+import { ImageOptimizationService } from './image-optimization.service';
 import {
   InternalMessage,
   MessageAttachment,
@@ -19,6 +20,7 @@ export class InternalMessageService {
   private readonly slugService = inject(SlugService);
   private readonly http = inject(HttpClient);
   private readonly sessionToken = inject(SessionTokenService);
+  private readonly imageOptimization = inject(ImageOptimizationService);
 
   private readonly unreadSignal = signal(0);
   readonly unread = this.unreadSignal.asReadonly();
@@ -79,14 +81,14 @@ export class InternalMessageService {
    * Usa HttpClient directo porque ApiClientService no maneja multipart.
    */
   uploadFiles(files: File[], context: AuthContext): Observable<MessageAttachment[]> {
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
     const token = this.sessionToken.getToken(context);
     const headers = token
       ? new HttpHeaders({ Authorization: `Bearer ${token}` })
       : new HttpHeaders();
     const url = `${environment.apiUrl.replace(/\/$/, '')}/${this.slugService.getSlug()}/messages/upload`;
-    return this.http.post<MessageAttachment[]>(url, formData, { headers });
+    return from(this.imageOptimization.filesToFormData(files, 'files')).pipe(
+      switchMap((formData) => this.http.post<MessageAttachment[]>(url, formData, { headers })),
+    );
   }
 
   broadcast(body: string, context: AuthContext = 'admin'): Observable<{ count: number }> {

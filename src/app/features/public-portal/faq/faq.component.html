@@ -27,15 +27,23 @@
       </div>
 
       <div class="faq-list">
-        @for (faq of faqs; track faq.question; let i = $index) {
-          <div class="faq-item" [class.active]="faq.isOpen">
-            <div class="faq-question" (click)="toggleFaq(i)">
+        @for (faq of defaultFaqs; track faq.question; let i = $index) {
+          <div class="faq-item" [class.active]="isOpen(i)">
+            <div
+              class="faq-question"
+              role="button"
+              tabindex="0"
+              [attr.aria-expanded]="isOpen(i)"
+              (click)="toggleFaq(i)"
+              (keydown.enter)="toggleFaq(i)"
+              (keydown.space)="toggleFaq(i); $event.preventDefault()"
+            >
               <h3>{{ faq.question | transloco }}</h3>
               <div class="faq-toggle">
-                <lucide-icon [img]="faq.isOpen ? ChevronUp : ChevronDown"></lucide-icon>
+                <lucide-icon [img]="isOpen(i) ? ChevronUp : ChevronDown"></lucide-icon>
               </div>
             </div>
-            <div class="faq-answer" [class.active]="faq.isOpen">
+            <div class="faq-answer" [class.active]="isOpen(i)">
               <p>{{ faq.answer | transloco }}</p>
             </div>
           </div>

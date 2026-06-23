@@ -134,6 +134,7 @@ import { TenantDatePipe } from '../../../../shared/pipes/tenant-date.pipe';
                               <img
                                 [src]="getFileUrl(attachment.file_url)"
                                 [alt]="attachment.file_name"
+                                loading="lazy"
                               />
                               <span>{{ attachment.file_name }}</span>
                             </button>

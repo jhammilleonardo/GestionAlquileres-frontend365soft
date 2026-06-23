@@ -33,6 +33,7 @@
             "styles": [
               "node_modules/@fontsource-variable/plus-jakarta-sans/index.css",
               "node_modules/@taiga-ui/styles/taiga-ui-theme.less",
+              "node_modules/leaflet/dist/leaflet.css",
               "src/styles.scss"
             ],
             "allowedCommonJsDependencies": [

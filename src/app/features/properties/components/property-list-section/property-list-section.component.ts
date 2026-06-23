@@ -4,7 +4,7 @@ import { Building2, LucideAngularModule, Plus } from 'lucide-angular';
 
 import { Property } from '../../../../core/models/property.model';
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
-import { AppLoadingStateComponent } from '../../../../shared/ui/loading-state/loading-state.component';
+import { AppSkeletonCardGridComponent } from '../../../../shared/ui/skeleton/skeleton-card-grid.component';
 import { PropertyCardComponent } from '../property-card/property-card.component';
 
 @Component({
@@ -14,7 +14,7 @@ import { PropertyCardComponent } from '../property-card/property-card.component'
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
-    AppLoadingStateComponent,
+    AppSkeletonCardGridComponent,
     PropertyCardComponent,
   ],
   templateUrl: './property-list-section.component.html',

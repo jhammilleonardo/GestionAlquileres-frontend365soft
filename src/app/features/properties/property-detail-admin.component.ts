@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   XCircle,
   Home,
-  CreditCard,
   PawPrint,
   Users,
   Package,
@@ -30,12 +29,15 @@ import {
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { PropertyService } from '../../core/services/admin/property.service';
+import { GeocodingService } from '../../core/services/geocoding.service';
 import { SlugService } from '../../core/services/slug.service';
+import { resolveMediaUrl } from '../../core/utils/media-url.util';
 import { Property } from '../../core/models/property.model';
 import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
 import { PropertyUnitsComponent } from './property-units/property-units.component';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
 import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
+import { AppLocationMapComponent } from '../../shared/ui/location-map/location-map.component';
 import { AppTabsComponent, AppTabOption } from '../../shared/ui/tabs/tabs.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 
@@ -54,6 +56,7 @@ type PropertyDetailTab = 'information' | 'units';
     PropertyUnitsComponent,
     AppButtonComponent,
     AppLoadingStateComponent,
+    AppLocationMapComponent,
     AppTabsComponent,
   ],
   templateUrl: './property-detail-admin.component.html',
@@ -75,7 +78,6 @@ export class PropertyDetailAdminComponent {
   readonly CheckCircle2 = CheckCircle2;
   readonly XCircle = XCircle;
   readonly Home = Home;
-  readonly CreditCard = CreditCard;
   readonly PawPrint = PawPrint;
   readonly Users = Users;
   readonly Package = Package;
@@ -87,6 +89,7 @@ export class PropertyDetailAdminComponent {
   readonly Building2 = Building2;
 
   property = signal<Property | null>(null);
+  mapLocation = signal<{ lat: number; lng: number } | null>(null);
   currentImageIndex = signal(0);
   isLoading = signal(true);
   slug = signal('');
@@ -95,6 +98,7 @@ export class PropertyDetailAdminComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly propertyService = inject(PropertyService);
+  private readonly geocoding = inject(GeocodingService);
   private readonly slugService = inject(SlugService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
@@ -121,6 +125,7 @@ export class PropertyDetailAdminComponent {
       next: (property) => {
         if (property) {
           this.property.set(property);
+          void this.resolveMapLocation(property);
         } else {
           this.toast.error(this.transloco.translate('properties.actions.notFound'));
           this.goBack();
@@ -145,18 +150,11 @@ export class PropertyDetailAdminComponent {
   getCurrentImage(): string {
     const images = this.getImagesArray();
     const index = this.currentImageIndex();
-    const imagePath = images[index] || '';
-
-    if (imagePath && !imagePath.startsWith('http')) {
-      return `http://localhost:3000/${imagePath}`;
-    }
-    return imagePath;
+    return resolveMediaUrl(images[index] || '');
   }
 
   getThumbnailUrl(imagePath: string): string {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
-    return `http://localhost:3000/${imagePath}`;
+    return resolveMediaUrl(imagePath);
   }
 
   nextImage(): void {
@@ -199,6 +197,10 @@ export class PropertyDetailAdminComponent {
     return this.transloco.translate('common.notAvailable');
   }
 
+  propertyMapLocation(): { lat: number; lng: number } | null {
+    return this.mapLocation();
+  }
+
   getStatusClass(): string {
     const status = this.property()?.status;
     if (!status) return 'status-default';
@@ -211,5 +213,48 @@ export class PropertyDetailAdminComponent {
       INACTIVO: 'status-inactivo',
     };
     return classes[status] || 'status-default';
+  }
+
+  private toNumberOrNull(value: number | string | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const numeric = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  private async resolveMapLocation(property: Property): Promise<void> {
+    const lat = this.toNumberOrNull(property.latitude);
+    const lng = this.toNumberOrNull(property.longitude);
+
+    if (lat !== null && lng !== null) {
+      this.mapLocation.set({ lat, lng });
+      return;
+    }
+
+    const address = this.addressParts(property).join(', ');
+    if (!address) {
+      this.mapLocation.set(null);
+      return;
+    }
+
+    const [result] = await this.geocoding.search({
+      query: address,
+      limit: 1,
+      country: property.addresses?.[0]?.country,
+    });
+    const fallbackLat = this.toNumberOrNull(result?.lat);
+    const fallbackLng = this.toNumberOrNull(result?.lon);
+
+    this.mapLocation.set(
+      fallbackLat !== null && fallbackLng !== null ? { lat: fallbackLat, lng: fallbackLng } : null,
+    );
+  }
+
+  private addressParts(property: Property): string[] {
+    const address = property.addresses?.[0];
+    if (!address) return [];
+
+    return [address.street_address, address.city, address.state, address.country].filter(
+      (part): part is string => !!part && part.trim().length > 0,
+    );
   }
 }

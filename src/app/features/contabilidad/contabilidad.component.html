@@ -1,0 +1,167 @@
+<section class="contabilidad">
+  <app-page-header
+    [eyebrow]="'accounting.eyebrow' | transloco"
+    [title]="'accounting.title' | transloco"
+    [description]="'accounting.subtitle' | transloco"
+  />
+
+  <app-segmented-control
+    [options]="viewOptions()"
+    [ngModel]="view()"
+    (valueChanged)="onViewChange($event)"
+    [ariaLabel]="'accounting.viewsLabel' | transloco"
+  />
+
+  @switch (view()) {
+    @case ('trial-balance') {
+      @if (trialBalance(); as tb) {
+        <div class="acc-summary">
+          <app-status-badge
+            [label]="(tb.balanced ? 'accounting.balanced' : 'accounting.unbalanced') | transloco"
+            [tone]="tb.balanced ? 'success' : 'danger'"
+          />
+          <span
+            >{{ 'accounting.cols.debit' | transloco }}:
+            <strong>{{ tb.total_debit | tenantCurrency }}</strong></span
+          >
+          <span
+            >{{ 'accounting.cols.credit' | transloco }}:
+            <strong>{{ tb.total_credit | tenantCurrency }}</strong></span
+          >
+        </div>
+        <app-table
+          [columns]="trialBalanceColumns"
+          [items]="tb.rows"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+          [ariaLabel]="'accounting.views.trialBalance' | transloco"
+        />
+      } @else if (trialBalance() === null) {
+        <app-empty-state [title]="'accounting.error' | transloco" />
+      } @else {
+        <app-loading-state [label]="'common.loading' | transloco" />
+      }
+    }
+
+    @case ('balance-sheet') {
+      @if (balanceSheet(); as bs) {
+        <div class="acc-summary">
+          <app-status-badge
+            [label]="(bs.balanced ? 'accounting.balanced' : 'accounting.unbalanced') | transloco"
+            [tone]="bs.balanced ? 'success' : 'danger'"
+          />
+          <span
+            >{{ 'accounting.totals.assets' | transloco }}:
+            <strong>{{ bs.total_assets | tenantCurrency }}</strong></span
+          >
+          <span
+            >{{ 'accounting.totals.liabilities' | transloco }}:
+            <strong>{{ bs.total_liabilities | tenantCurrency }}</strong></span
+          >
+          <span
+            >{{ 'accounting.totals.equity' | transloco }}:
+            <strong>{{ bs.total_equity | tenantCurrency }}</strong></span
+          >
+        </div>
+
+        <h3>{{ 'accounting.totals.assets' | transloco }}</h3>
+        <app-table
+          [columns]="statementColumns"
+          [items]="bs.assets"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+        />
+
+        <h3>{{ 'accounting.totals.liabilities' | transloco }}</h3>
+        <app-table
+          [columns]="statementColumns"
+          [items]="bs.liabilities"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+        />
+
+        <h3>{{ 'accounting.totals.equity' | transloco }}</h3>
+        <app-table
+          [columns]="statementColumns"
+          [items]="bs.equity"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+        />
+      } @else if (balanceSheet() === null) {
+        <app-empty-state [title]="'accounting.error' | transloco" />
+      } @else {
+        <app-loading-state [label]="'common.loading' | transloco" />
+      }
+    }
+
+    @case ('income-statement') {
+      @if (incomeStatement(); as is) {
+        <div class="acc-summary">
+          <span
+            >{{ 'accounting.totals.income' | transloco }}:
+            <strong>{{ is.total_income | tenantCurrency }}</strong></span
+          >
+          <span
+            >{{ 'accounting.totals.expenses' | transloco }}:
+            <strong>{{ is.total_expenses | tenantCurrency }}</strong></span
+          >
+          <span class="acc-net"
+            >{{ 'accounting.totals.netIncome' | transloco }}:
+            <strong>{{ is.net_income | tenantCurrency }}</strong></span
+          >
+        </div>
+
+        <h3>{{ 'accounting.totals.income' | transloco }}</h3>
+        <app-table
+          [columns]="statementColumns"
+          [items]="is.income"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+        />
+
+        <h3>{{ 'accounting.totals.expenses' | transloco }}</h3>
+        <app-table
+          [columns]="statementColumns"
+          [items]="is.expenses"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+        />
+      } @else if (incomeStatement() === null) {
+        <app-empty-state [title]="'accounting.error' | transloco" />
+      } @else {
+        <app-loading-state [label]="'common.loading' | transloco" />
+      }
+    }
+
+    @case ('chart') {
+      @if (chart(); as accounts) {
+        <app-table
+          [columns]="chartColumns"
+          [items]="accounts"
+          trackBy="code"
+          [emptyText]="'accounting.empty' | transloco"
+          [ariaLabel]="'accounting.views.chart' | transloco"
+        />
+      } @else if (chart() === null) {
+        <app-empty-state [title]="'accounting.error' | transloco" />
+      } @else {
+        <app-loading-state [label]="'common.loading' | transloco" />
+      }
+    }
+
+    @case ('journal') {
+      @if (journal()) {
+        <app-table
+          [columns]="journalColumns"
+          [items]="journalEntries()"
+          [emptyText]="'accounting.empty' | transloco"
+          [ariaLabel]="'accounting.views.journal' | transloco"
+        />
+      } @else if (journal() === null) {
+        <app-empty-state [title]="'accounting.error' | transloco" />
+      } @else {
+        <app-loading-state [label]="'common.loading' | transloco" />
+      }
+    }
+  }
+</section>

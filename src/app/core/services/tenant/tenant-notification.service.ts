@@ -1,9 +1,8 @@
 import { Injectable, signal, computed, inject, DestroyRef } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of, interval, startWith, Subscription } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
-import { TenantAuthService } from './tenant-auth.service';
 import { SlugService } from '../slug.service';
 
 export interface TenantNotificationMetadata {
@@ -59,7 +58,6 @@ const APPLICATION_STATUS_LABEL_KEYS: Record<string, string> = {
 })
 export class TenantNotificationService {
   private http = inject(HttpClient);
-  private authService = inject(TenantAuthService);
   private slugService = inject(SlugService);
   private transloco = inject(TranslocoService);
 
@@ -85,14 +83,6 @@ export class TenantNotificationService {
 
   private get slug(): string {
     return this.slugService.getSlug() || '';
-  }
-
-  private get headers(): HttpHeaders {
-    const token = this.authService.getToken();
-    return new HttpHeaders({
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    });
   }
 
   /**
@@ -125,7 +115,6 @@ export class TenantNotificationService {
 
     this.http
       .get<TenantNotification[]>(`${environment.apiUrl}${this.slug}/notifications`, {
-        headers: this.headers,
         params,
       })
       .pipe(
@@ -153,9 +142,7 @@ export class TenantNotificationService {
     if (!this.slug) return;
 
     this.http
-      .get<TenantNotificationStats>(`${environment.apiUrl}${this.slug}/notifications/stats`, {
-        headers: this.headers,
-      })
+      .get<TenantNotificationStats>(`${environment.apiUrl}${this.slug}/notifications/stats`)
       .pipe(
         tap((stats) => {
           this.statsSignal.set(stats);
@@ -172,9 +159,7 @@ export class TenantNotificationService {
    */
   getNotification(id: number): Observable<TenantNotification> {
     return this.http
-      .get<TenantNotification>(`${environment.apiUrl}${this.slug}/notifications/${id}`, {
-        headers: this.headers,
-      })
+      .get<TenantNotification>(`${environment.apiUrl}${this.slug}/notifications/${id}`)
       .pipe(
         tap((notification) => {
           const processedNotification = {
@@ -197,11 +182,7 @@ export class TenantNotificationService {
    */
   markAsRead(id: number): Observable<void> {
     return this.http
-      .patch<void>(
-        `${environment.apiUrl}${this.slug}/notifications/${id}/read`,
-        {},
-        { headers: this.headers },
-      )
+      .patch<void>(`${environment.apiUrl}${this.slug}/notifications/${id}/read`, {})
       .pipe(
         tap(() => {
           // Actualizar en la lista
@@ -223,11 +204,7 @@ export class TenantNotificationService {
    */
   markAllAsRead(): Observable<void> {
     return this.http
-      .patch<void>(
-        `${environment.apiUrl}${this.slug}/notifications/read-all`,
-        {},
-        { headers: this.headers },
-      )
+      .patch<void>(`${environment.apiUrl}${this.slug}/notifications/read-all`, {})
       .pipe(
         tap(() => {
           // Actualizar todas en la lista
@@ -249,25 +226,21 @@ export class TenantNotificationService {
    * Eliminar una notificación
    */
   deleteNotification(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${environment.apiUrl}${this.slug}/notifications/${id}`, {
-        headers: this.headers,
-      })
-      .pipe(
-        tap(() => {
-          // Remover de la lista
-          this.notificationsSignal.update((notifications) =>
-            notifications.filter((n) => n.id !== id),
-          );
+    return this.http.delete<void>(`${environment.apiUrl}${this.slug}/notifications/${id}`).pipe(
+      tap(() => {
+        // Remover de la lista
+        this.notificationsSignal.update((notifications) =>
+          notifications.filter((n) => n.id !== id),
+        );
 
-          // Actualizar estadísticas
-          this.loadStats();
-        }),
-        catchError((_e) => {
-          this.errorSignal.set(this.transloco.translate('common.errors.deleteNotification'));
-          return of(undefined);
-        }),
-      );
+        // Actualizar estadísticas
+        this.loadStats();
+      }),
+      catchError((_e) => {
+        this.errorSignal.set(this.transloco.translate('common.errors.deleteNotification'));
+        return of(undefined);
+      }),
+    );
   }
 
   /**

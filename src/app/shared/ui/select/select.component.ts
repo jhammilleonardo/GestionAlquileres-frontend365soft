@@ -77,6 +77,11 @@ let selectInstanceId = 0;
           role="listbox"
           [id]="listId"
           [attr.aria-label]="label() ?? ariaLabel()"
+          [style.inline-size.px]="panelWidth()"
+          [style.inset-inline-start.px]="panelLeft()"
+          [style.inset-block-start.px]="panelTop()"
+          [style.inset-block-end.px]="panelBottom()"
+          [style.max-block-size.px]="panelMaxHeight()"
         >
           @for (option of options(); track option.value; let i = $index) {
             <li
@@ -169,12 +174,9 @@ let selectInstanceId = 0;
     }
 
     .app-select__panel {
-      position: absolute;
-      z-index: 30;
-      inset-inline: 0;
-      inset-block-start: calc(100% + 4px);
+      position: fixed;
+      z-index: 10020;
       margin: 0;
-      max-block-size: 16rem;
       overflow-y: auto;
       list-style: none;
       border: 1px solid var(--app-color-border);
@@ -230,6 +232,11 @@ export class AppSelectComponent<
   protected readonly disabled = signal(false);
   protected readonly open = signal(false);
   protected readonly activeIndex = signal(-1);
+  protected readonly panelLeft = signal(0);
+  protected readonly panelTop = signal<number | null>(null);
+  protected readonly panelBottom = signal<number | null>(null);
+  protected readonly panelWidth = signal(0);
+  protected readonly panelMaxHeight = signal(256);
 
   protected readonly labelId = `app-select-label-${this.uid}`;
   protected readonly listId = `app-select-list-${this.uid}`;
@@ -338,9 +345,15 @@ export class AppSelectComponent<
     }
   }
 
+  @HostListener('window:resize')
+  protected onWindowResize(): void {
+    this.close();
+  }
+
   private openPanel(): void {
     const selectedIndex = this.options().findIndex((option) => option.value === this.value());
     this.activeIndex.set(selectedIndex >= 0 ? selectedIndex : this.firstEnabledIndex());
+    this.positionPanel();
     this.open.set(true);
   }
 
@@ -374,5 +387,32 @@ export class AppSelectComponent<
       if (!options[i].disabled) return i;
     }
     return -1;
+  }
+
+  private positionPanel(): void {
+    if (typeof window === 'undefined') return;
+
+    const trigger = this.host.nativeElement.querySelector('.app-select__trigger');
+    if (!(trigger instanceof HTMLElement)) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const gap = 4;
+    const defaultMaxHeight = 256;
+    const below = window.innerHeight - rect.bottom - gap;
+    const above = rect.top - gap;
+    const openAbove = below < 180 && above > below;
+    const maxHeight = Math.max(140, Math.min(defaultMaxHeight, openAbove ? above : below));
+
+    this.panelLeft.set(rect.left);
+    this.panelWidth.set(rect.width);
+    this.panelMaxHeight.set(maxHeight);
+
+    if (openAbove) {
+      this.panelTop.set(null);
+      this.panelBottom.set(window.innerHeight - rect.top + gap);
+    } else {
+      this.panelTop.set(rect.bottom + gap);
+      this.panelBottom.set(null);
+    }
   }
 }

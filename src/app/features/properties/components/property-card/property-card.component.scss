@@ -128,6 +128,35 @@
   color: #cbd5e1;
 }
 
+.rental-type-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+
+  // Largo plazo (mensual) — azul
+  &[data-type='LONG_TERM'] {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  // Corto plazo (por noche) — ámbar
+  &[data-type='SHORT_TERM'] {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  // Ambos — violeta
+  &[data-type='BOTH'] {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+}
+
 .card-price {
   margin-bottom: 16px;
   color: #1e293b;

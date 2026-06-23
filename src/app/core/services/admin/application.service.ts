@@ -10,7 +10,7 @@ import {
   ApplicationFilters,
   ApplicationStatus,
 } from '../../models/application.model';
-import { ApiClientService } from '../../http/api-client.service';
+import { ApiClientService, ApiRequestOptions } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 import { SessionTokenService } from '../session-token.service';
 
@@ -111,14 +111,10 @@ export class ApplicationService {
     return this.apiClient.get<Application>(endpoint, this.tenantRequestOptions());
   }
 
-  private tenantRequestOptions(): { headers: Record<string, string> } {
+  private tenantRequestOptions(): ApiRequestOptions {
     const token = this.sessionToken.getToken('tenant');
 
-    return {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : 'Bearer ',
-      },
-    };
+    return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
   }
 
   // ==================== HELPER METHODS ====================

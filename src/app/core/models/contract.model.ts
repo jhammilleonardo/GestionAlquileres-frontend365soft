@@ -29,11 +29,29 @@ export const ContractStatusLabels: Record<ContractStatus, string> = {
   [ContractStatus.ACTIVO]: 'Activo',
   [ContractStatus.POR_VENCER]: 'Por vencer',
   [ContractStatus.VENCIDO]: 'Vencido',
-  [ContractStatus.RENOVADO]: 'Renovado',
+  [ContractStatus.RENOVADO]: 'Finalizado por renovación',
   [ContractStatus.FINALIZADO]: 'Finalizado',
   [ContractStatus.CANCELADO]: 'Cancelado',
   [ContractStatus.SUSPENDIDO]: 'Suspendido',
 };
+
+/**
+ * Devuelve la clave de traducción del estado a mostrar para un contrato.
+ *
+ * Un borrador generado por una renovación (tiene `previous_contract_id`) se
+ * distingue de un borrador creado desde cero, para que el admin entienda que
+ * es la renovación pendiente de firma.
+ */
+export function contractStatusLabelKey(contract: {
+  status: ContractStatus;
+  previous_contract_id?: number | null;
+}): string {
+  if (contract.status === ContractStatus.BORRADOR && contract.previous_contract_id) {
+    return 'contracts.status.RENOVACION_BORRADOR';
+  }
+
+  return `contracts.status.${contract.status}`;
+}
 
 /**
  * Clases CSS para badges de estado

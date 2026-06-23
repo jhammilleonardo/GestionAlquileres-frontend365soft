@@ -1,0 +1,106 @@
+{
+  "title": "Reservations",
+  "subtitle": "Manage the short-term reservations of your units",
+  "calendarSync": {
+    "title": "External calendars (iCal)",
+    "empty": "This unit has no external calendars.",
+    "add": "Add calendar",
+    "addButton": "Add",
+    "name": "Name",
+    "url": "Calendar URL (.ics)",
+    "syncNow": "Sync now",
+    "lastSync": "Last sync",
+    "added": "Calendar added",
+    "addError": "Could not add the calendar",
+    "synced": "Synced: {{ count }} night(s) blocked",
+    "syncError": "Could not sync",
+    "deleted": "Calendar deleted",
+    "deleteError": "Could not delete",
+    "deleteTitle": "Delete calendar",
+    "deleteMessage": "Delete the calendar \"{{ name }}\"? Its blocks will be released."
+  },
+  "housekeeping": {
+    "title": "Housekeeping",
+    "subtitle": "Cleaning tasks between stays",
+    "filter": "Status",
+    "allStatuses": "All",
+    "unit": "Unit",
+    "emptyTitle": "No cleaning tasks",
+    "emptyDescription": "Completing a reservation schedules the unit's cleaning.",
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In progress",
+      "done": "Done"
+    },
+    "advance": {
+      "in_progress": "Start",
+      "done": "Mark done"
+    }
+  },
+  "reviews": {
+    "title": "Reviews",
+    "subtitle": "What guests think of your stays",
+    "property": "Property",
+    "count": "review(s)",
+    "unit": "Unit",
+    "emptyTitle": "No reviews yet",
+    "emptyDescription": "When guests review their completed stays, they'll show up here."
+  },
+  "seasons": {
+    "title": "Seasons & rates",
+    "empty": "This unit has no seasons configured.",
+    "add": "Add season",
+    "addButton": "Add",
+    "name": "Name",
+    "start": "From",
+    "end": "To",
+    "price": "Price/night (optional)",
+    "minNights": "Min. nights (optional)",
+    "min": "min.",
+    "created": "Season created",
+    "createError": "Could not create the season",
+    "deleted": "Season deleted",
+    "deleteError": "Could not delete the season",
+    "deleteTitle": "Delete season",
+    "deleteMessage": "Delete the season \"{{ name }}\"?"
+  },
+  "analytics": {
+    "title": "Occupancy metrics",
+    "from": "From",
+    "to": "To",
+    "occupancy": "Occupancy",
+    "nights": "nights",
+    "revenue": "Revenue",
+    "adr": "Avg. daily rate",
+    "adrSub": "per booked night",
+    "units": "Short-term units"
+  },
+  "loading": "Loading reservations…",
+  "empty": "No reservations to show",
+  "property": "Property",
+  "statusLabel": "Status",
+  "allStatuses": "All statuses",
+  "nights": "nights",
+  "confirmAction": "Do you confirm the \"{{action}}\" action on this reservation?",
+  "actionSuccess": "Reservation updated successfully",
+  "actionError": "Could not update the reservation",
+  "status": {
+    "pending_payment": "Pending payment",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "in_progress": "In progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled",
+    "expired": "Expired",
+    "no_show": "No show",
+    "declined": "Declined"
+  },
+  "action": {
+    "confirm": "Confirm",
+    "decline": "Decline",
+    "cancel": "Cancel",
+    "check_in": "Check in",
+    "no_show": "Mark no-show",
+    "complete": "Complete"
+  }
+}

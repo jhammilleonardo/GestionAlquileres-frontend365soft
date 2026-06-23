@@ -1,7 +1,15 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Settings, Bell, Palette, Globe, CheckCircle2 } from 'lucide-angular';
-import { TranslocoModule } from '@jsverse/transloco';
+import {
+  LucideAngularModule,
+  Settings,
+  Bell,
+  Palette,
+  Globe,
+  Home,
+  CheckCircle2,
+} from 'lucide-angular';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import {
   AppCheckboxComponent,
@@ -9,6 +17,10 @@ import {
   AppSelectComponent,
   AppSelectOption,
 } from '../../shared/ui';
+import { SlugService } from '../../core/services/slug.service';
+import { TenantConfigService } from '../../core/services/admin/tenant-config.service';
+
+type RentalMode = 'LONG_TERM' | 'SHORT_TERM' | 'BOTH';
 
 interface AdminSettings {
   notifications_enabled: boolean;
@@ -88,6 +100,29 @@ const DEFAULT_SETTINGS: AdminSettings = {
 
         <section class="section-card">
           <div class="section-title">
+            <lucide-icon [img]="Home" [size]="20"></lucide-icon>
+            <h2>{{ 'config.rentalSection' | transloco }}</h2>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-info">
+              <span class="setting-label">{{ 'config.rentalMode' | transloco }}</span>
+              <span class="setting-desc">{{ 'config.rentalModeDesc' | transloco }}</span>
+            </div>
+            <app-select
+              class="interval-select"
+              [ngModel]="rentalMode()"
+              [options]="rentalModeOptions()"
+              [disabled]="rentalSaving()"
+              (ngModelChange)="onRentalModeChange($event)"
+            />
+          </div>
+
+          <p class="rental-hint">{{ 'config.rentalModeHint' | transloco }}</p>
+        </section>
+
+        <section class="section-card">
+          <div class="section-title">
             <lucide-icon [img]="Palette" [size]="20"></lucide-icon>
             <h2>{{ 'config.appearanceSection' | transloco }}</h2>
           </div>
@@ -131,8 +166,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
   styles: [
     `
       .config-container {
-        max-width: 800px;
-        margin: 0 auto;
+        width: 100%;
       }
 
       .save-alert {
@@ -149,11 +183,13 @@ const DEFAULT_SETTINGS: AdminSettings = {
 
       .sections-grid {
         display: flex;
-        flex-direction: column;
+        flex-wrap: wrap;
         gap: 20px;
+        align-items: start;
       }
 
       .section-card {
+        flex: 1 1 340px;
         padding: 24px;
         border: 1px solid var(--app-color-border);
         border-radius: var(--app-radius-lg);
@@ -226,6 +262,13 @@ const DEFAULT_SETTINGS: AdminSettings = {
         margin: 0;
       }
 
+      .rental-hint {
+        margin: 12px 0 0;
+        font-size: 13px;
+        color: var(--app-color-text-muted);
+        line-height: 1.5;
+      }
+
       @media (max-width: 600px) {
         .setting-row {
           flex-direction: column;
@@ -244,7 +287,12 @@ export class ConfigurationComponent {
   readonly Bell = Bell;
   readonly Palette = Palette;
   readonly Globe = Globe;
+  readonly Home = Home;
   readonly CheckCircle2 = CheckCircle2;
+
+  private readonly slugService = inject(SlugService);
+  private readonly tenantConfigService = inject(TenantConfigService);
+  private readonly transloco = inject(TranslocoService);
 
   settings: AdminSettings = { ...DEFAULT_SETTINGS };
   pollingOptions: readonly AppSelectOption<number>[] = [
@@ -255,8 +303,24 @@ export class ConfigurationComponent {
   savedSuccess = signal(false);
   timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  // Modo de alquiler del tenant (regional, vía PATCH /admin/config)
+  readonly rentalMode = signal<RentalMode>('BOTH');
+  readonly rentalSaving = signal(false);
+  private readonly rentalModeKeys: Record<RentalMode, string> = {
+    LONG_TERM: 'config.rentalLong',
+    SHORT_TERM: 'config.rentalShort',
+    BOTH: 'config.rentalBoth',
+  };
+  readonly rentalModeOptions = computed<AppSelectOption<RentalMode>[]>(() =>
+    (Object.keys(this.rentalModeKeys) as RentalMode[]).map((value) => ({
+      value,
+      label: this.transloco.translate(this.rentalModeKeys[value]),
+    })),
+  );
+
   constructor() {
     this.loadSettings();
+    this.loadRentalMode();
   }
 
   private loadSettings(): void {
@@ -276,10 +340,49 @@ export class ConfigurationComponent {
   saveSettings(): void {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings));
-      this.savedSuccess.set(true);
-      setTimeout(() => this.savedSuccess.set(false), 2000);
+      this.flashSaved();
     } catch {
       this.savedSuccess.set(false);
     }
+  }
+
+  private loadRentalMode(): void {
+    const slug = this.slugService.getSlug();
+    if (!slug) {
+      return;
+    }
+    this.tenantConfigService.getConfig(slug).subscribe({
+      next: (config) => this.rentalMode.set(config.rental_type),
+      error: () => {
+        /* Si falla, se queda el valor por defecto; el usuario puede reintentar */
+      },
+    });
+  }
+
+  onRentalModeChange(mode: RentalMode): void {
+    const slug = this.slugService.getSlug();
+    if (!slug || mode === this.rentalMode()) {
+      return;
+    }
+    const previous = this.rentalMode();
+    this.rentalMode.set(mode);
+    this.rentalSaving.set(true);
+    this.tenantConfigService.updateConfig(slug, { rental_type: mode }).subscribe({
+      next: (config) => {
+        this.rentalSaving.set(false);
+        this.rentalMode.set(config.rental_type);
+        this.flashSaved();
+      },
+      error: () => {
+        // Revertir en pantalla si el guardado falla
+        this.rentalSaving.set(false);
+        this.rentalMode.set(previous);
+      },
+    });
+  }
+
+  private flashSaved(): void {
+    this.savedSuccess.set(true);
+    setTimeout(() => this.savedSuccess.set(false), 2000);
   }
 }

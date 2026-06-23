@@ -22,6 +22,7 @@ import {
   LucideAngularModule,
   Mail,
   MapPin,
+  Star,
   Maximize,
   MessageSquare,
   Phone,
@@ -33,15 +34,19 @@ import {
 import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 
 import { PropertyService } from '../../../core/services/admin/property.service';
+import { ReservationService, PropertyRating } from '../../../core/services/reservation.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { ApplicationIntentionService } from '../../../core/services/tenant/application-intention.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { resolveMediaUrl } from '../../../core/utils/media-url.util';
+import { PublicBrandingService } from '../../../core/services/public-branding.service';
 import { Property } from '../../../core/models/property.model';
 import { ApplicationModalComponent } from '../application-modal/application-modal.component';
 import { ContactModalComponent } from '../contact-modal/contact-modal.component';
 import { MapModalComponent } from '../map-modal/map-modal.component';
 import { AvailabilityCalendarComponent } from '../availability-calendar/availability-calendar.component';
+import { AppLocationMapComponent } from '../../../shared/ui/location-map/location-map.component';
 
 interface PropertyLocation {
   coordinates: { lat: number; lng: number };
@@ -65,6 +70,7 @@ interface PublicPriceDisplay {
     ContactModalComponent,
     MapModalComponent,
     AvailabilityCalendarComponent,
+    AppLocationMapComponent,
     TranslocoModule,
   ],
   providers: [provideTranslocoScope({ scope: 'portal-publico', alias: 'public' })],
@@ -74,6 +80,7 @@ interface PublicPriceDisplay {
 })
 export class PropertyDetailComponent {
   readonly MapPin = MapPin;
+  readonly Star = Star;
   readonly Home = Home;
   readonly Heart = Heart;
   readonly Share2 = Share2;
@@ -91,6 +98,7 @@ export class PropertyDetailComponent {
   readonly X = X;
 
   readonly property = signal<Property | null>(null);
+  readonly rating = signal<PropertyRating | null>(null);
 
   /** Primera unidad de alquiler corto plazo con precio configurado (para el calendario). */
   readonly shortTermUnit = computed(() =>
@@ -109,9 +117,11 @@ export class PropertyDetailComponent {
   readonly showMapModal = signal(false);
 
   private readonly slugService = inject(SlugService);
+  private readonly brandingService = inject(PublicBrandingService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly propertyService = inject(PropertyService);
+  private readonly reservationService = inject(ReservationService);
   private readonly intentionService = inject(ApplicationIntentionService);
   private readonly authService = inject(TenantAuthService);
   private readonly toast = inject(ToastService);
@@ -196,6 +206,15 @@ export class PropertyDetailComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((isFav) => this.isFavorite.set(isFav));
 
+          // Rating agregado (best-effort: no bloquea la carga del detalle).
+          this.reservationService
+            .getPropertyRating(propertyId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (rating) => this.rating.set(rating),
+              error: () => this.rating.set(null),
+            });
+
           return this.propertyService.getPropertyById(propertyId);
         }),
         takeUntilDestroyed(this.destroyRef),
@@ -274,10 +293,7 @@ export class PropertyDetailComponent {
   }
 
   private buildImageUrl(imagePath: string): string {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) return imagePath;
-    const normalized = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `http://localhost:3000${normalized}`;
+    return resolveMediaUrl(imagePath);
   }
 
   toggleFavorite(): void {
@@ -354,32 +370,47 @@ export class PropertyDetailComponent {
     const prop = this.property();
     if (prop?.addresses?.length) {
       const addr = prop.addresses[0];
-      return `${addr.street_address}, ${addr.city}${addr.state ? ', ' + addr.state : ''}`;
+      return [addr.city, addr.state, addr.country].filter(Boolean).join(', ');
     }
     return '';
   }
 
   getLocationForMap(): PropertyLocation | null {
     const prop = this.property();
-    if (prop?.latitude && prop?.longitude) {
+    const lat = this.toNumberOrNull(prop?.latitude);
+    const lng = this.toNumberOrNull(prop?.longitude);
+
+    if (lat !== null && lng !== null) {
       return {
-        coordinates: { lat: prop.latitude, lng: prop.longitude },
+        coordinates: { lat, lng },
         address: this.getPropertyAddress(),
       };
     }
     return null;
   }
 
-  getOwnerName(): string {
-    return this.property()?.owners?.[0]?.name ?? this.transloco.translate('common.notAvailable');
+  getGoogleMapsUrl(): string {
+    const location = this.getLocationForMap();
+    if (location) {
+      const { lat, lng } = location.coordinates;
+      return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    }
+
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      this.getPropertyAddress(),
+    )}`;
   }
 
-  getOwnerEmail(): string {
-    return this.property()?.owners?.[0]?.primary_email ?? '';
+  getPublicContactName(): string {
+    return this.brandingService.branding()?.company_name ?? '';
   }
 
-  getOwnerPhone(): string {
-    return this.property()?.owners?.[0]?.phone_number ?? '';
+  getPublicContactEmail(): string {
+    return this.brandingService.branding()?.contact_email ?? '';
+  }
+
+  getPublicContactPhone(): string {
+    return this.brandingService.branding()?.contact_phone ?? '';
   }
 
   getPropertyTypeName(): string {
@@ -388,5 +419,11 @@ export class PropertyDetailComponent {
 
   getPropertySubtypeName(): string {
     return this.property()?.property_subtype?.name ?? '';
+  }
+
+  private toNumberOrNull(value: number | string | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const numeric = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
   }
 }

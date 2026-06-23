@@ -45,7 +45,8 @@
     "FIRMADO": "Signed",
     "POR_VENCER": "Expiring",
     "VENCIDO": "Expired",
-    "RENOVADO": "Renewed",
+    "RENOVADO": "Ended by renewal",
+    "RENOVACION_BORRADOR": "Renewal (draft)",
     "CANCELADO": "Cancelled",
     "SUSPENDIDO": "Suspended"
   },
@@ -132,7 +133,9 @@
     "finalizedSuccess": "Contract finalized successfully",
     "finalizeError": "Error finalizing contract",
     "historyTitle": "Renewal history",
-    "historyCurrent": "Current"
+    "historyCurrent": "Current",
+    "renewedFrom": "Renewal of",
+    "renewedInto": "Renewed into"
   },
   "create": {
     "back": "Back to Contracts",

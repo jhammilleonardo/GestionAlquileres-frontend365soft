@@ -9,32 +9,65 @@
 .filter-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 16px;
+}
+
+.filter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #475569;
   font-size: 0.9rem;
   font-weight: 700;
+}
+
+.clear-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-color-primary, #2563eb);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clear-link:hover {
+  background: #eff6ff;
+}
+
+.clear-link:focus-visible {
+  outline: 2px solid var(--app-color-primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .filter-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 8px;
+  align-items: end;
 }
 
-.filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+/* Misma estructura etiqueta+control que app-select, para que el buscador quede
+   alineado con los selects de Estado y Tipo (mismo gap y tipografía de label). */
+.filter-field {
+  display: grid;
+  gap: var(--app-space-2);
+}
+
+.filter-field__label {
+  color: var(--app-color-text);
+  font-size: 0.8125rem;
+  font-weight: 650;
 }
 
 @media (max-width: 768px) {
   .filter-grid {
     grid-template-columns: 1fr;
-  }
-
-  .filter-actions {
-    flex-direction: column-reverse;
   }
 }

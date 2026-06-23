@@ -23,7 +23,6 @@ import { AuthService, isAdminMfaRequiredResponse } from '../../core/services/aut
 import { TenantAuthService } from '../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../core/services/slug.service';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
-import { AppCheckboxComponent } from '../../shared/ui/checkbox/checkbox.component';
 import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
 
 import { getApiErrorMessage } from '../../core/http/http-error.util';
@@ -36,7 +35,6 @@ import { getApiErrorMessage } from '../../core/http/http-error.util';
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
-    AppCheckboxComponent,
     AppTextFieldComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,7 +78,6 @@ export class LoginComponent {
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
-    rememberMe: [false],
   });
 
   mfaForm = this.fb.group({
@@ -91,32 +88,17 @@ export class LoginComponent {
     // Get slug from URL
     this.slug = this.route.snapshot.paramMap.get('slug');
 
-    // If already authenticated, redirect to appropriate dashboard
-    // Check for admin token first (only when no slug in URL)
-    const adminToken = this.authService.getToken();
-    const isAdminAuth = this.authService.isAuth();
-
-    if (isAdminAuth && adminToken && !this.slug) {
-      // Admin user authenticated on /login (no slug)
-      // Get slug from stored user data
-      const userJson = localStorage.getItem('admin_user');
-      if (userJson) {
-        try {
-          const user = JSON.parse(userJson) as { tenant_slug?: string };
-          const userSlug = user.tenant_slug;
-          if (userSlug) {
-            // Usar replaceUrl para que el login no quede en el historial
-            void this.router
-              .navigate(['/', userSlug, 'dashboard'], { replaceUrl: true })
-              .then(() => {
-                // Limpiar el estado para asegurar que no haya query params en el historial
-                this.location.replaceState(`/${userSlug}/dashboard`);
-              });
-            return;
-          }
-        } catch {
-          // Ignorar JSON inválido en storage
-        }
+    // Si ya hay sesión admin (cookie HttpOnly), redirige al dashboard. La señal
+    // de sesión es el objeto user del servicio, no el token (que ya no se
+    // guarda en localStorage tras la migración a cookies).
+    if (this.authService.isAuth() && !this.slug) {
+      const userSlug = this.authService.currentUser()?.tenant_slug;
+      if (userSlug) {
+        // Usar replaceUrl para que el login no quede en el historial
+        void this.router.navigate(['/', userSlug, 'dashboard'], { replaceUrl: true }).then(() => {
+          this.location.replaceState(`/${userSlug}/dashboard`);
+        });
+        return;
       }
       // Fallback: try to get slug from SlugService (loaded from localStorage)
       const storedSlug = this.slugService.getSlug();
@@ -140,7 +122,7 @@ export class LoginComponent {
       return;
     }
 
-    const { email, password, rememberMe } = this.loginForm.value;
+    const { email, password } = this.loginForm.value;
 
     // If we have a slug, use TenantAuthService for tenant login
     if (this.slug) {
@@ -162,7 +144,7 @@ export class LoginComponent {
       this.isLoading.set(true);
       this.errorMessage.set(null);
 
-      this.authService.loginAdmin(email!, password!, rememberMe!).subscribe({
+      this.authService.loginAdmin(email!, password!, false).subscribe({
         next: (response) => {
           this.isLoading.set(false);
           if (isAdminMfaRequiredResponse(response)) {
@@ -207,13 +189,12 @@ export class LoginComponent {
       return;
     }
 
-    const rememberMe = this.loginForm.getRawValue().rememberMe ?? false;
     const code = this.mfaForm.getRawValue().code ?? '';
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    this.authService.verifyAdminMfa(this.mfaChallengeId()!, code, rememberMe).subscribe({
+    this.authService.verifyAdminMfa(this.mfaChallengeId()!, code, false).subscribe({
       next: (response) => {
         this.isLoading.set(false);
         const userSlug = response.user.tenant_slug;

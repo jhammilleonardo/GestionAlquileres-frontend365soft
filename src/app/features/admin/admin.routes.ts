@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/guards/auth.guard';
 import { moduleGuard } from '../../core/guards/module.guard';
+import { rentalModeGuard } from '../../core/guards/rental-mode.guard';
 import { setupCompleteGuard } from '../../core/guards/setup-complete.guard';
 
 export const ADMIN_ROUTES: Routes = [
@@ -41,11 +42,18 @@ export const ADMIN_ROUTES: Routes = [
         data: { module: 'users' },
       },
       {
+        path: 'propietarios',
+        loadComponent: () =>
+          import('../rental-owners/rental-owners.component').then((m) => m.RentalOwnersComponent),
+        canActivate: [moduleGuard],
+        data: { module: 'properties' },
+      },
+      {
         path: 'contratos',
         loadComponent: () =>
           import('../contracts/contracts.component').then((m) => m.ContractsComponent),
-        canActivate: [moduleGuard],
-        data: { module: 'contracts' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'contracts', rentalMode: 'long_term' },
       },
       {
         path: 'contratos/nuevo',
@@ -53,8 +61,8 @@ export const ADMIN_ROUTES: Routes = [
           import('../contracts/contract-create/contract-create.component').then(
             (m) => m.ContractCreateComponent,
           ),
-        canActivate: [moduleGuard],
-        data: { module: 'contracts' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'contracts', rentalMode: 'long_term' },
       },
       {
         path: 'contratos/:id',
@@ -62,8 +70,8 @@ export const ADMIN_ROUTES: Routes = [
           import('../contracts/contract-detail/contract-detail.component').then(
             (m) => m.ContractDetailComponent,
           ),
-        canActivate: [moduleGuard],
-        data: { module: 'contracts' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'contracts', rentalMode: 'long_term' },
       },
       {
         path: 'contratos/:id/editar',
@@ -71,15 +79,15 @@ export const ADMIN_ROUTES: Routes = [
           import('../contracts/contract-edit/contract-edit.component').then(
             (m) => m.ContractEditComponent,
           ),
-        canActivate: [moduleGuard],
-        data: { module: 'contracts' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'contracts', rentalMode: 'long_term' },
       },
       {
         path: 'solicitudes',
         loadComponent: () =>
           import('../applications/applications.component').then((m) => m.ApplicationsComponent),
-        canActivate: [moduleGuard],
-        data: { module: 'applications' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'applications', rentalMode: 'long_term' },
       },
       {
         path: 'solicitudes/:id',
@@ -87,8 +95,8 @@ export const ADMIN_ROUTES: Routes = [
           import('../applications/components/application-detail/application-detail.component').then(
             (m) => m.ApplicationDetailComponent,
           ),
-        canActivate: [moduleGuard],
-        data: { module: 'applications' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'applications', rentalMode: 'long_term' },
       },
       {
         path: 'solicitudes/:id/aprobar',
@@ -96,8 +104,8 @@ export const ADMIN_ROUTES: Routes = [
           import('../applications/components/approve-dialog/approve-dialog.component').then(
             (m) => m.ApproveDialogComponent,
           ),
-        canActivate: [moduleGuard],
-        data: { module: 'applications' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'applications', rentalMode: 'long_term' },
       },
       {
         path: 'solicitudes/:id/rechazar',
@@ -105,8 +113,8 @@ export const ADMIN_ROUTES: Routes = [
           import('../applications/components/reject-dialog/reject-dialog.component').then(
             (m) => m.RejectDialogComponent,
           ),
-        canActivate: [moduleGuard],
-        data: { module: 'applications' },
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'applications', rentalMode: 'long_term' },
       },
       {
         path: 'pagos',
@@ -129,6 +137,13 @@ export const ADMIN_ROUTES: Routes = [
         data: { module: 'reports' },
       },
       {
+        path: 'contabilidad',
+        loadComponent: () =>
+          import('../contabilidad/contabilidad.component').then((m) => m.ContabilidadComponent),
+        canActivate: [moduleGuard],
+        data: { module: 'accounting' },
+      },
+      {
         path: 'proveedores',
         loadComponent: () => import('../vendors/vendors.component').then((m) => m.VendorsComponent),
         canActivate: [moduleGuard],
@@ -140,6 +155,31 @@ export const ADMIN_ROUTES: Routes = [
           import('../expenses/expenses.component').then((m) => m.ExpensesComponent),
         canActivate: [moduleGuard],
         data: { module: 'expenses' },
+      },
+      {
+        path: 'reservas',
+        loadComponent: () =>
+          import('../reservations/reservations.component').then((m) => m.ReservationsComponent),
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'reservations', rentalMode: 'short_term' },
+      },
+      {
+        path: 'resenas',
+        loadComponent: () =>
+          import('../reservations/reviews/admin-reviews.component').then(
+            (m) => m.AdminReviewsComponent,
+          ),
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'reservations', rentalMode: 'short_term' },
+      },
+      {
+        path: 'limpieza',
+        loadComponent: () =>
+          import('../reservations/housekeeping/housekeeping.component').then(
+            (m) => m.HousekeepingComponent,
+          ),
+        canActivate: [moduleGuard, rentalModeGuard],
+        data: { module: 'reservations', rentalMode: 'short_term' },
       },
       {
         path: 'violaciones',

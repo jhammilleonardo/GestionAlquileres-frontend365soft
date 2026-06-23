@@ -49,10 +49,15 @@ export class NotificationSocketService {
 
   /** Conecta al namespace de notificaciones en tiempo real (idempotente). */
   connect(context: AuthContext = 'admin'): void {
-    if (this.socket?.connected && this.activeContext === context) {
+    // Si ya existe un socket para este contexto —conectando o conectado— no se
+    // abre otro. Comparar sólo `connected` dejaba pasar la fase de conexión y
+    // creaba sockets huérfanos (bucle conectar/desconectar) cuando varios
+    // consumidores llaman a connect() casi a la vez.
+    if (this.socket && this.activeContext === context) {
       return;
     }
-    if (this.socket && this.activeContext !== context) {
+    // El contexto de sesión cambió (p. ej. admin → tenant): cierra el anterior.
+    if (this.socket) {
       this.disconnect();
     }
 

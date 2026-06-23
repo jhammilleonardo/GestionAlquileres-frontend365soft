@@ -45,7 +45,8 @@
     "FIRMADO": "Firmado",
     "POR_VENCER": "Por vencer",
     "VENCIDO": "Vencido",
-    "RENOVADO": "Renovado",
+    "RENOVADO": "Finalizado por renovación",
+    "RENOVACION_BORRADOR": "Renovación (borrador)",
     "CANCELADO": "Cancelado",
     "SUSPENDIDO": "Suspendido"
   },
@@ -132,7 +133,9 @@
     "finalizedSuccess": "Contrato finalizado exitosamente",
     "finalizeError": "Error al finalizar el contrato",
     "historyTitle": "Historial de renovaciones",
-    "historyCurrent": "Actual"
+    "historyCurrent": "Actual",
+    "renewedFrom": "Renovación de",
+    "renewedInto": "Renovado en"
   },
   "create": {
     "back": "Volver a Contratos",

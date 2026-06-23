@@ -74,7 +74,11 @@ import { AuthContext } from '../../../core/services/session-token.service';
                       @if (att.file_type === 'image') {
                         <button type="button" class="att-media" (click)="open(att)">
                           @if (mediaUrl(att.file_url)) {
-                            <img [src]="mediaUrl(att.file_url)" [alt]="att.file_name" />
+                            <img
+                              [src]="mediaUrl(att.file_url)"
+                              [alt]="att.file_name"
+                              loading="lazy"
+                            />
                           } @else {
                             <span class="att-media-loading"></span>
                           }

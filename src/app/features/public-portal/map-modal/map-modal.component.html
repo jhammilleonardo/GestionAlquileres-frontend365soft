@@ -1,5 +1,13 @@
-<div class="modal-overlay" (click)="closeModal()">
-  <div class="modal-container large" (click)="$event.stopPropagation()">
+<div
+  class="modal-overlay"
+  role="button"
+  tabindex="0"
+  aria-label="Cerrar"
+  (click)="$event.target === $event.currentTarget && closeModal()"
+  (keydown.enter)="closeModal()"
+  (keydown.space)="closeModal(); $event.preventDefault()"
+>
+  <div class="modal-container large" role="dialog" aria-modal="true">
     <button class="close-btn" (click)="closeModal()">✕</button>
 
     <div class="modal-content no-padding">

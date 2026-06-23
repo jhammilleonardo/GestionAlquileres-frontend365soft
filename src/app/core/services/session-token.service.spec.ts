@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { environment } from '../../../environments/environment';
 import { SessionTokenService } from './session-token.service';
 
 describe('SessionTokenService', () => {
@@ -58,10 +59,25 @@ describe('SessionTokenService', () => {
     expect(service.resolveContext('/demo/admin/contracts')).toBe('admin');
   });
 
-  it('usa token admin para endpoints sin contexto de portal', () => {
+  it('usa token admin para endpoints del API sin contexto de portal', () => {
     service.setToken('admin', 'admin-token');
 
-    expect(service.getTokenForRequest('/tenants')).toBe('admin-token');
+    expect(service.getTokenForRequest(`${environment.apiUrl}tenants`)).toBe('admin-token');
+  });
+
+  it('no adjunta tokens a rutas relativas o dominios externos', () => {
+    service.setToken('admin', 'admin-token');
+    service.setToken('tenant', 'tenant-token');
+
+    expect(service.getTokenForRequest('/tenants')).toBeNull();
+    expect(service.getTokenForRequest('https://example.com/demo/admin/properties')).toBeNull();
+  });
+
+  it('no adjunta el token admin al catálogo público ni a autenticación', () => {
+    service.setToken('admin', 'admin-token');
+
+    expect(service.getTokenForRequest(`${environment.apiUrl}demo/catalog/website`)).toBeNull();
+    expect(service.getTokenForRequest(`${environment.apiUrl}auth/login-admin`)).toBeNull();
   });
 
   it('elige el token correcto para requests por contexto', () => {
@@ -69,8 +85,14 @@ describe('SessionTokenService', () => {
     service.setToken('tenant', 'tenant-token');
     service.setToken('owner', 'owner-token');
 
-    expect(service.getTokenForRequest('/demo/tenant/payments')).toBe('tenant-token');
-    expect(service.getTokenForRequest('/demo/owner/dashboard')).toBe('owner-token');
-    expect(service.getTokenForRequest('/demo/admin/properties')).toBe('admin-token');
+    expect(service.getTokenForRequest(`${environment.apiUrl}demo/tenant/payments`)).toBe(
+      'tenant-token',
+    );
+    expect(service.getTokenForRequest(`${environment.apiUrl}demo/owner/dashboard`)).toBe(
+      'owner-token',
+    );
+    expect(service.getTokenForRequest(`${environment.apiUrl}demo/admin/properties`)).toBe(
+      'admin-token',
+    );
   });
 });

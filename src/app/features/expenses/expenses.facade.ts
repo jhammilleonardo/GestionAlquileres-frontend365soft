@@ -10,6 +10,7 @@ import {
   MonthlyBalancePoint,
 } from '../../core/models/expense.model';
 import { FileDownloadService } from '../../core/services/file-download.service';
+import { toDateOnly } from '../../core/utils/date-only.util';
 import { ExpenseService } from '../../core/services/admin/expense.service';
 import { PropertyService } from '../../core/services/admin/property.service';
 import { VendorService } from '../../core/services/admin/vendor.service';
@@ -157,7 +158,7 @@ export class ExpensesFacade {
     this.editingId.set(null);
     this.form.reset({
       category: ExpenseCategory.MAINTENANCE,
-      date: new Date().toISOString().slice(0, 10),
+      date: toDateOnly(new Date()),
     });
     this.dialogOpen.set(true);
   }
@@ -245,7 +246,7 @@ export class ExpensesFacade {
     const bom = String.fromCharCode(0xfeff);
     const csv = bom + [header.join(','), ...lines].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    this.fileDownload.downloadBlob(blob, `gastos-${new Date().toISOString().slice(0, 10)}.csv`);
+    this.fileDownload.downloadBlob(blob, `gastos-${toDateOnly(new Date())}.csv`);
   }
 
   categoryLabel(category: string): string {

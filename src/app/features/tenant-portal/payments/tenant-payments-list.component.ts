@@ -136,8 +136,8 @@ export class TenantPaymentsListComponent {
   }
 
   private buildPaymentSchedule(contract: Contract): void {
-    const start = new Date(contract.start_date as unknown as string);
-    const end = new Date(contract.end_date as unknown as string);
+    const start = new Date(contract.start_date);
+    const end = new Date(contract.end_date);
     const payDay = contract.payment_day || 1;
     const now = new Date();
     const existing = this.paymentService.payments();
@@ -196,7 +196,7 @@ export class TenantPaymentsListComponent {
         amount:
           typeof contract.monthly_rent === 'number'
             ? contract.monthly_rent
-            : parseFloat(contract.monthly_rent as unknown as string) || 0,
+            : Number(contract.monthly_rent) || 0,
         currency: contract.currency || 'USD',
         status,
         statusLabel,

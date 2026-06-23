@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { InspectionService } from './inspection.service';
 import { ApiClientService } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
+import { ImageOptimizationService } from '../image-optimization.service';
 import { InspectionType, ItemCondition, InspectionArea } from '../../models/inspection.model';
 
 describe('InspectionService', () => {
@@ -26,6 +27,12 @@ describe('InspectionService', () => {
         { provide: ApiClientService, useValue: { get, post, patch } },
         { provide: HttpClient, useValue: { get: httpGet } },
         { provide: SlugService, useValue: { buildApiEndpoint: (p: string) => `acme/${p}` } },
+        {
+          provide: ImageOptimizationService,
+          useValue: {
+            filesToFormData: vi.fn().mockResolvedValue(new FormData()),
+          },
+        },
       ],
     });
     service = TestBed.inject(InspectionService);
@@ -55,10 +62,13 @@ describe('InspectionService', () => {
     expect(patch).toHaveBeenCalledWith('acme/admin/inspections/4/items', { items, complete: true });
   });
 
-  it('uploadItemPhotos envía FormData con item_id en params', () => {
+  it('uploadItemPhotos envía FormData con item_id en params', async () => {
     post.mockReturnValue(of({ photos: ['/x.png'] }));
     const file = new File(['x'], 'x.png', { type: 'image/png' });
     service.uploadItemPhotos(4, 9, [file]).subscribe();
+    await vi.waitFor(() => {
+      expect(post).toHaveBeenCalled();
+    });
     const call = post.mock.calls[0] as [string, unknown, { params?: unknown }];
     expect(call[0]).toBe('acme/admin/inspections/4/photos');
     expect(call[1]).toBeInstanceOf(FormData);

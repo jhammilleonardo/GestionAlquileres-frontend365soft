@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AdminContractService } from '../../../core/services/admin/admin-contract.service';
@@ -21,6 +21,20 @@ export class ContractDetailFacade {
   readonly currentContract = signal<Contract | null>(null);
   readonly contractNumber = signal('');
   readonly history = signal<Contract[]>([]);
+
+  /** Contrato del que proviene esta renovación (el firmado anterior), si existe. */
+  readonly previousContract = computed<Contract | null>(() => {
+    const previousId = this.currentContract()?.previous_contract_id;
+    if (!previousId) return null;
+    return this.history().find((contract) => contract.id === previousId) ?? null;
+  });
+
+  /** Contrato de renovación generado a partir de este (el nuevo), si existe. */
+  readonly renewalContract = computed<Contract | null>(() => {
+    const currentId = this.currentContract()?.id;
+    if (!currentId) return null;
+    return this.history().find((contract) => contract.previous_contract_id === currentId) ?? null;
+  });
 
   loadContract(id: number): void {
     this.isLoading.set(true);

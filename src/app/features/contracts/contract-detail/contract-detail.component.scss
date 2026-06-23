@@ -475,3 +475,51 @@ app-button.action-button {
   font-size: 0.82rem;
   color: var(--app-color-text-muted);
 }
+
+.renewal-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  inline-size: 100%;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--app-color-border);
+  border-radius: 10px;
+  background: var(--app-color-surface);
+  color: var(--app-color-text);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--tui-status-info);
+    background: var(--tui-status-info-pale);
+  }
+
+  > lucide-icon {
+    flex-shrink: 0;
+    color: var(--tui-status-info);
+  }
+}
+
+.renewal-link__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+  flex: 1;
+}
+
+.renewal-link__label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--app-color-text-muted);
+}
+
+.renewal-link__chevron {
+  color: var(--app-color-text-muted);
+}

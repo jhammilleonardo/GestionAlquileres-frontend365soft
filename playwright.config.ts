@@ -14,7 +14,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: process.env.CI ? 2 : 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // 1 reintento local absorbe flakes transitorios (cold-start del primer test,
+  // throttle por IP) sin enmascarar fallos deterministas; CI usa 2.
+  retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:4200',

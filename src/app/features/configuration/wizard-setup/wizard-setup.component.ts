@@ -40,6 +40,11 @@ interface PaymentOption {
   countries: string[];
 }
 
+interface TimezoneDefinition {
+  value: string;
+  labelKey: string;
+}
+
 interface ApiErrorLike {
   error?: {
     message?: string;
@@ -55,6 +60,32 @@ const ALL_PAYMENT_OPTIONS: PaymentOption[] = [
   { value: 'payu', countries: ['GT', 'HN'] },
   { value: 'tarjeta', countries: ['GT', 'HN'] },
 ];
+
+/**
+ * Zonas horarias por país. El país se elige en el registro, por eso el wizard
+ * no vuelve a preguntarlo: solo pide la zona horaria cuando hay más de una opción
+ * (EE.UU.). Para países con una sola zona se fija automáticamente.
+ */
+export const COUNTRY_TIMEZONES: Record<string, TimezoneDefinition[]> = {
+  BO: [{ value: 'America/La_Paz', labelKey: 'bolivia' }],
+  US: [
+    { value: 'America/New_York', labelKey: 'usEastern' },
+    { value: 'America/Chicago', labelKey: 'usCentral' },
+    { value: 'America/Denver', labelKey: 'usMountain' },
+    { value: 'America/Phoenix', labelKey: 'usArizona' },
+    { value: 'America/Los_Angeles', labelKey: 'usPacific' },
+    { value: 'America/Anchorage', labelKey: 'usAlaska' },
+    { value: 'America/Adak', labelKey: 'usAleutian' },
+    { value: 'Pacific/Honolulu', labelKey: 'usHawaii' },
+    { value: 'America/Puerto_Rico', labelKey: 'usAtlantic' },
+    { value: 'Pacific/Pago_Pago', labelKey: 'usSamoa' },
+    { value: 'Pacific/Guam', labelKey: 'usChamorro' },
+  ],
+  GT: [{ value: 'America/Guatemala', labelKey: 'guatemala' }],
+  HN: [{ value: 'America/Tegucigalpa', labelKey: 'honduras' }],
+};
+
+type WizardStepKey = 'timezone' | 'payments' | 'rental' | 'summary';
 
 @Component({
   selector: 'app-wizard-setup',
@@ -96,6 +127,9 @@ export class WizardSetupComponent implements OnInit {
   availablePaymentOptions = signal<PaymentOption[]>([]);
   currentStep = signal(0);
 
+  /** País elegido en el registro. El wizard no lo vuelve a pedir, solo lo usa. */
+  readonly country = signal('BO');
+
   readonly countries = computed<AppSelectOption<string>[]>(() => [
     { value: 'BO', label: this.transloco.translate('wizard.countries.BO') },
     { value: 'US', label: this.transloco.translate('wizard.countries.US') },
@@ -103,33 +137,47 @@ export class WizardSetupComponent implements OnInit {
     { value: 'HN', label: this.transloco.translate('wizard.countries.HN') },
   ]);
 
-  readonly timezones: AppSelectOption<string>[] = [
-    { value: 'America/La_Paz', label: 'America/La Paz (BOT, UTC-4)' },
-    { value: 'America/New_York', label: 'America/Nueva York (ET)' },
-    { value: 'America/Chicago', label: 'America/Chicago (CT)' },
-    { value: 'America/Los_Angeles', label: 'America/Los Angeles (PT)' },
-    { value: 'America/Guatemala', label: 'America/Guatemala (CST, UTC-6)' },
-    { value: 'America/Tegucigalpa', label: 'America/Tegucigalpa (CST, UTC-6)' },
-  ];
+  /** Zonas horarias del país activo. Vacío ⇒ se usa el fallback de La Paz. */
+  readonly timezonesForCountry = computed<AppSelectOption<string>[]>(() =>
+    (COUNTRY_TIMEZONES[this.country()] ?? COUNTRY_TIMEZONES['BO']).map((timezone) => ({
+      value: timezone.value,
+      label: this.transloco.translate(`wizard.timezones.${timezone.labelKey}`),
+    })),
+  );
 
-  readonly stepLabels = computed(() => [
-    this.transloco.translate('wizard.step1Label'),
-    this.transloco.translate('wizard.step2Label'),
-    this.transloco.translate('wizard.step3Label'),
-    this.transloco.translate('wizard.step4Label'),
-  ]);
+  /** Solo se pregunta la zona horaria cuando el país tiene más de una. */
+  readonly needsTimezoneChoice = computed(() => this.timezonesForCountry().length > 1);
 
-  readonly rentalTypeOptions = computed<AppSelectOption<RentalType>[]>(() => [
-    { value: 'LONG_TERM', label: this.transloco.translate('wizard.longTerm') },
-    { value: 'SHORT_TERM', label: this.transloco.translate('wizard.shortTerm') },
-    { value: 'BOTH', label: this.transloco.translate('wizard.both') },
-  ]);
+  /** Pasos del wizard. El paso de zona horaria solo existe en países multi-zona. */
+  readonly steps = computed<{ key: WizardStepKey; label: string }[]>(() => {
+    const steps: { key: WizardStepKey; label: string }[] = [];
+    if (this.needsTimezoneChoice()) {
+      steps.push({ key: 'timezone', label: this.transloco.translate('wizard.tzStepLabel') });
+    }
+    steps.push({ key: 'payments', label: this.transloco.translate('wizard.step2Label') });
+    steps.push({ key: 'rental', label: this.transloco.translate('wizard.step3Label') });
+    steps.push({ key: 'summary', label: this.transloco.translate('wizard.step4Label') });
+    return steps;
+  });
+
+  readonly stepLabels = computed(() => this.steps().map((step) => step.label));
+
+  readonly currentKey = computed<WizardStepKey>(
+    () => this.steps()[this.currentStep()]?.key ?? 'payments',
+  );
 
   private readonly rentalTypeKeys: Record<RentalType, string> = {
     LONG_TERM: 'wizard.longTerm',
     SHORT_TERM: 'wizard.shortTerm',
     BOTH: 'wizard.both',
   };
+
+  readonly rentalTypeOptions = computed<AppSelectOption<RentalType>[]>(() =>
+    (Object.keys(this.rentalTypeKeys) as RentalType[]).map((value) => ({
+      value,
+      label: this.transloco.translate(this.rentalTypeKeys[value]),
+    })),
+  );
 
   countryStep = this.fb.group({
     country: ['BO', Validators.required],
@@ -156,10 +204,12 @@ export class WizardSetupComponent implements OnInit {
   }
 
   private applyConfig(config: TenantConfig): void {
-    this.countryStep.patchValue({
-      country: config.country,
-      timezone: config.timezone,
-    });
+    this.country.set(config.country);
+    // El país tiene una sola zona ⇒ se fija sola; multi-zona ⇒ respeta la guardada.
+    const timezone = this.needsTimezoneChoice()
+      ? config.timezone
+      : (this.timezonesForCountry()[0]?.value ?? config.timezone);
+    this.countryStep.patchValue({ country: config.country, timezone });
     this.rentalStep.patchValue({
       rental_type: config.rental_type,
       grace_days: config.grace_days_late_fee,
@@ -167,30 +217,6 @@ export class WizardSetupComponent implements OnInit {
     });
     this.selectedPayments.set(config.payment_methods ?? []);
     this.updatePaymentOptions(config.country);
-  }
-
-  onCountrySelected(country: string | number | null): void {
-    if (typeof country !== 'string') return;
-    this.onCountryChange(country);
-  }
-
-  onCountryChange(country: string): void {
-    this.updatePaymentOptions(country);
-    const defaults: Record<string, string[]> = {
-      BO: ['qr_accl', 'transferencia'],
-      US: ['stripe', 'ach'],
-      GT: ['payu', 'tarjeta'],
-      HN: ['payu', 'transferencia'],
-    };
-    this.selectedPayments.set(defaults[country] ?? []);
-
-    const tzDefaults: Record<string, string> = {
-      BO: 'America/La_Paz',
-      US: 'America/New_York',
-      GT: 'America/Guatemala',
-      HN: 'America/Tegucigalpa',
-    };
-    this.countryStep.patchValue({ timezone: tzDefaults[country] ?? 'America/La_Paz' });
   }
 
   private updatePaymentOptions(country: string): void {
@@ -229,11 +255,11 @@ export class WizardSetupComponent implements OnInit {
   }
 
   goNext(): void {
-    if (this.currentStep() === 0 && this.countryStep.invalid) return;
-    if (this.currentStep() === 1 && this.selectedPayments().length === 0) return;
-    if (this.currentStep() === 2 && this.rentalStep.invalid) return;
+    const key = this.currentKey();
+    if (key === 'payments' && this.selectedPayments().length === 0) return;
+    if (key === 'rental' && this.rentalStep.invalid) return;
 
-    this.currentStep.update((step) => Math.min(3, step + 1));
+    this.currentStep.update((step) => Math.min(this.steps().length - 1, step + 1));
   }
 
   goBack(): void {

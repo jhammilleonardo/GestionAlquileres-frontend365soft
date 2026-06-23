@@ -1,0 +1,147 @@
+<div class="reservations-page">
+  <app-page-header
+    [title]="'tenantReservations.title' | transloco"
+    [description]="'tenantReservations.subtitle' | transloco"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state [label]="'tenantReservations.loading' | transloco" />
+  } @else if (reservations().length === 0) {
+    <app-empty-state
+      [title]="'tenantReservations.emptyTitle' | transloco"
+      [description]="'tenantReservations.emptyDescription' | transloco"
+    >
+      <lucide-icon icon [img]="CalendarCheck" [size]="40"></lucide-icon>
+    </app-empty-state>
+  } @else {
+    @if (upcoming().length > 0) {
+      <section class="reservations-section">
+        <h2 class="section-title">{{ 'tenantReservations.upcoming' | transloco }}</h2>
+        <div class="reservations-grid">
+          @for (reservation of upcoming(); track reservation.id) {
+            <ng-container
+              [ngTemplateOutlet]="card"
+              [ngTemplateOutletContext]="{ $implicit: reservation }"
+            />
+          }
+        </div>
+      </section>
+    }
+
+    @if (past().length > 0) {
+      <section class="reservations-section">
+        <h2 class="section-title">{{ 'tenantReservations.history' | transloco }}</h2>
+        <div class="reservations-grid">
+          @for (reservation of past(); track reservation.id) {
+            <ng-container
+              [ngTemplateOutlet]="card"
+              [ngTemplateOutletContext]="{ $implicit: reservation }"
+            />
+          }
+        </div>
+      </section>
+    }
+  }
+</div>
+
+<ng-template #card let-reservation>
+  <article class="reservation-card">
+    <header class="card-header">
+      <div class="card-heading">
+        <h3 class="property-name">
+          {{ reservation.property_name || ('tenantReservations.unknownProperty' | transloco) }}
+        </h3>
+        @if (reservation.unit_number) {
+          <span class="unit-badge">
+            <lucide-icon [img]="MapPin" [size]="14"></lucide-icon>
+            {{ 'tenantReservations.unit' | transloco }} {{ reservation.unit_number }}
+          </span>
+        }
+      </div>
+      <app-status-badge
+        [label]="'tenantReservations.status.' + reservation.status | transloco"
+        [tone]="statusTone(reservation.status)"
+      />
+    </header>
+
+    <dl class="card-dates">
+      <div class="date-block">
+        <dt>{{ 'tenantReservations.checkin' | transloco }}</dt>
+        <dd>{{ reservation.checkin_date | tenantDate }}</dd>
+      </div>
+      <div class="date-arrow" aria-hidden="true">→</div>
+      <div class="date-block">
+        <dt>{{ 'tenantReservations.checkoutLabel' | transloco }}</dt>
+        <dd>{{ reservation.checkout_date | tenantDate }}</dd>
+      </div>
+    </dl>
+
+    <footer class="card-footer">
+      <div class="card-meta">
+        <span class="nights">
+          <lucide-icon [img]="Moon" [size]="14"></lucide-icon>
+          {{ 'tenantReservations.nights' | transloco: { count: reservation.nights } }}
+        </span>
+        <span class="total">{{
+          reservation.total_amount | tenantCurrency: reservation.currency
+        }}</span>
+        @if (showOutstanding(reservation)) {
+          <span class="outstanding">
+            {{ 'tenantReservations.payment.outstanding' | transloco }}:
+            {{ outstanding(reservation) | tenantCurrency: reservation.currency }}
+          </span>
+        }
+      </div>
+
+      <div class="card-actions">
+        @if (canExtend(reservation)) {
+          <app-button appearance="outline" size="s" (clicked)="onExtend(reservation)">
+            {{ 'tenantReservations.extend.action' | transloco }}
+          </app-button>
+        }
+        @if (canPay(reservation)) {
+          <app-button size="s" (clicked)="onPay(reservation)">
+            {{ 'tenantReservations.payment.pay' | transloco }}
+          </app-button>
+        }
+        @if (canReview(reservation)) {
+          <app-button appearance="outline" size="s" (clicked)="onReview(reservation)">
+            {{ 'tenantReservations.review.leave' | transloco }}
+          </app-button>
+        }
+        @if (canCancel(reservation)) {
+          <app-button
+            appearance="destructive"
+            size="s"
+            [loading]="busyId() === reservation.id"
+            [disabled]="busyId() !== null"
+            (clicked)="onCancel(reservation)"
+          >
+            {{ 'tenantReservations.cancel' | transloco }}
+          </app-button>
+        }
+      </div>
+    </footer>
+  </article>
+</ng-template>
+
+<app-reservation-payment-dialog
+  [reservation]="paymentTarget()"
+  [open]="paymentTarget() !== null"
+  (closed)="closePayment()"
+  (paid)="onPaid()"
+/>
+
+<app-reservation-review-dialog
+  [reservation]="reviewTarget()"
+  [open]="reviewTarget() !== null"
+  (closed)="closeReview()"
+  (reviewed)="onReviewed()"
+/>
+
+<app-reservation-extend-dialog
+  [reservation]="extendTarget()"
+  [open]="extendTarget() !== null"
+  (closed)="closeExtend()"
+  (extended)="onExtended()"
+/>

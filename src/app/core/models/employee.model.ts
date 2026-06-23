@@ -13,7 +13,8 @@ export type AvailableModule =
   | 'violations'
   | 'expenses'
   | 'vendors'
-  | 'messages';
+  | 'messages'
+  | 'accounting';
 
 export interface ModulePermission {
   module: AvailableModule;
@@ -62,6 +63,7 @@ export const PERMISSION_MODULES: { key: AvailableModule; label: string }[] = [
   { key: 'inspections', label: 'Inspecciones' },
   { key: 'violations', label: 'Violaciones' },
   { key: 'expenses', label: 'Gastos' },
+  { key: 'accounting', label: 'Contabilidad' },
   { key: 'vendors', label: 'Proveedores' },
   { key: 'config', label: 'Configuración' },
   { key: 'employees', label: 'Empleados' },

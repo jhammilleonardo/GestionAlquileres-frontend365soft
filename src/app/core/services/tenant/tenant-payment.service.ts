@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpEvent, HttpResponse } from '@angular/common/http';
-import { Observable, tap, catchError, of } from 'rxjs';
+import { Observable, catchError, from, of, switchMap, tap } from 'rxjs';
 import { TranslocoService } from '@jsverse/transloco';
 import { environment } from '../../../../environments/environment';
 import {
@@ -11,6 +11,7 @@ import {
   PaymentStatus,
 } from '../../models/payment.model';
 import { SlugService } from '../slug.service';
+import { ImageOptimizationService } from '../image-optimization.service';
 
 import { getApiErrorMessage } from '../../http/http-error.util';
 @Injectable({
@@ -20,6 +21,7 @@ export class TenantPaymentService {
   private http = inject(HttpClient);
   private slugService = inject(SlugService);
   private transloco = inject(TranslocoService);
+  private imageOptimization = inject(ImageOptimizationService);
 
   // Reactive state
   private paymentsSignal = signal<Payment[]>([]);
@@ -145,7 +147,6 @@ export class TenantPaymentService {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    const formData = new FormData();
     const formattedPayment = {
       ...payment,
       payment_date:
@@ -154,36 +155,43 @@ export class TenantPaymentService {
           : payment.payment_date,
     };
 
-    Object.entries(formattedPayment).forEach(([key, value]) => {
+    return from(this.buildPaymentFormData(formattedPayment, receipt)).pipe(
+      switchMap((formData) =>
+        this.http.post<Payment>(this.getBaseUrl(), formData, {
+          observe: 'events',
+          reportProgress: true,
+        }),
+      ),
+      tap((event) => {
+        if (event instanceof HttpResponse && event.body) {
+          this.paymentsSignal.update((payments) => [event.body as Payment, ...payments]);
+          this.isLoadingSignal.set(false);
+          this.loadStats();
+        }
+      }),
+      catchError((error) => {
+        this.errorSignal.set(
+          getApiErrorMessage(error, this.transloco.translate('common.errors.registerPayment')),
+        );
+        this.isLoadingSignal.set(false);
+        throw error;
+      }),
+    );
+  }
+
+  private async buildPaymentFormData(payment: CreatePaymentDto, receipt?: File): Promise<FormData> {
+    const formData = new FormData();
+
+    Object.entries(payment).forEach(([key, value]) => {
       if (value === undefined || value === null || value === '') return;
       formData.append(key, String(value));
     });
 
     if (receipt) {
-      formData.append('receipt', receipt);
+      await this.imageOptimization.appendOptimizedFile(formData, 'receipt', receipt);
     }
 
-    return this.http
-      .post<Payment>(this.getBaseUrl(), formData, {
-        observe: 'events',
-        reportProgress: true,
-      })
-      .pipe(
-        tap((event) => {
-          if (event instanceof HttpResponse && event.body) {
-            this.paymentsSignal.update((payments) => [event.body as Payment, ...payments]);
-            this.isLoadingSignal.set(false);
-            this.loadStats();
-          }
-        }),
-        catchError((error) => {
-          this.errorSignal.set(
-            getApiErrorMessage(error, this.transloco.translate('common.errors.registerPayment')),
-          );
-          this.isLoadingSignal.set(false);
-          throw error;
-        }),
-      );
+    return formData;
   }
 
   /**

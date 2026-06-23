@@ -7,7 +7,8 @@
     "excel": "Excel",
     "pdf": "PDF",
     "apply": "Aplicar",
-    "clear": "Limpiar"
+    "clear": "Limpiar",
+    "exportLabel": "Exportar reporte"
   },
   "filters": {
     "ariaLabel": "Filtros de reportes",
@@ -16,7 +17,14 @@
     "statusLabel": "Estado",
     "statusPlaceholder": "Todos",
     "fromLabel": "Desde",
-    "toLabel": "Hasta"
+    "toLabel": "Hasta",
+    "period": "Período",
+    "presetCurrent": "Este mes",
+    "presetPrevious": "Mes anterior",
+    "presetQuarter": "Últimos 3 meses",
+    "presetCustom": "Personalizado",
+    "allProperties": "Todas las propiedades",
+    "allStatuses": "Todos los estados"
   },
   "status": {
     "active": "Activo",
@@ -41,7 +49,11 @@
     "delinquencyTitle": "Aging de morosidad",
     "delinquencyEyebrow": "Cobranza",
     "vacancyTitle": "Vacancia y disponibilidad",
-    "vacancyEyebrow": "Operación"
+    "vacancyEyebrow": "Operación",
+    "incomeEmpty": "Sin cobros registrados este período. Los ingresos aparecerán aquí al registrar pagos.",
+    "performanceEmpty": "Registra pagos o selecciona el reporte P&L para ver el rendimiento por propiedad.",
+    "vacancyEmpty": "No hay unidades vacantes en este período.",
+    "daysUnit": "días"
   },
   "table": {
     "eyebrow": "Detalle",
@@ -164,7 +176,8 @@
     "available": "Disponibles",
     "occupied": "Ocupadas",
     "propertyFallback": "Propiedad {{n}}",
-    "unitFallback": "Unidad {{n}}"
+    "unitFallback": "Unidad {{n}}",
+    "unit": "Unidad"
   },
   "trend": {
     "previous": "Mes anterior",

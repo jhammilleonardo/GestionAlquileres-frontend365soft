@@ -1,5 +1,6 @@
 {
   "propertySteps": {
+    "mode": "Mode",
     "basic": "Basic info",
     "images": "Images",
     "financial": "Financial",
@@ -37,17 +38,24 @@
     "reset": "Reset",
     "applyCrop": "Apply crop"
   },
+  "rentalType": {
+    "LONG_TERM": "Long-term",
+    "SHORT_TERM": "Short-term",
+    "BOTH": "Short & long-term"
+  },
   "common": {
     "error": "Error",
     "myProfile": "My Profile",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",
+    "remove": "Remove",
     "edit": "Edit",
     "create": "Create",
     "back": "Back",
     "close": "Close",
     "refresh": "Refresh",
+    "retry": "Retry",
     "loading": "Loading...",
     "actions": "Actions",
     "yes": "Yes",
@@ -157,15 +165,26 @@
     "language": "Language",
     "mainMenu": "Main menu",
     "pendingPayments": "Pending payments",
+    "groups": {
+      "operations": "Operations",
+      "finance": "Finance",
+      "management": "Management",
+      "system": "System"
+    },
     "menu": {
       "dashboard": "Dashboard",
       "properties": "Properties",
       "tenants": "Tenants",
+      "rentalOwners": "Owners",
       "contracts": "Contracts",
       "applications": "Applications",
       "payments": "Payments",
+      "reservations": "Reservations",
+      "reviews": "Reviews",
+      "housekeeping": "Housekeeping",
       "maintenance": "Maintenance",
       "reports": "Reports",
+      "accounting": "Accounting",
       "vendors": "Vendors",
       "expenses": "Expenses",
       "violations": "Violations",
@@ -218,6 +237,9 @@
     "step1Label": "Country",
     "step1Title": "Country & Timezone",
     "step1Desc": "Confirm your operating country — sets currency, timezone and available payment methods.",
+    "tzStepLabel": "Time zone",
+    "tzStepTitle": "Time zone",
+    "tzStepDesc": "Select the time zone for your operation.",
     "timezone": "Timezone",
     "step2Label": "Payments",
     "step2Title": "Payment Methods",
@@ -250,6 +272,22 @@
       "GT": "Guatemala",
       "HN": "Honduras"
     },
+    "timezones": {
+      "bolivia": "Bolivia (BOT, UTC-4)",
+      "usEastern": "Eastern - New York (ET)",
+      "usCentral": "Central - Chicago (CT)",
+      "usMountain": "Mountain - Denver (MT)",
+      "usArizona": "Arizona - Phoenix (MST, no daylight saving time)",
+      "usPacific": "Pacific - Los Angeles (PT)",
+      "usAlaska": "Alaska - Anchorage (AKT)",
+      "usAleutian": "Aleutian - Adak (HT, observes daylight saving time)",
+      "usHawaii": "Hawaii - Honolulu (HT, no daylight saving time)",
+      "usAtlantic": "Atlantic - Puerto Rico / U.S. Virgin Islands (AT)",
+      "usSamoa": "Samoa - Pago Pago (ST)",
+      "usChamorro": "Chamorro - Guam / Northern Mariana Islands (ChT)",
+      "guatemala": "Guatemala (CST, UTC-6)",
+      "honduras": "Honduras (CST, UTC-6)"
+    },
     "paymentMethods": {
       "qr_accl": "QR Payment (ACCL)",
       "transferencia": "Bank transfer",
@@ -258,7 +296,8 @@
       "ach": "ACH",
       "payu": "PayU",
       "tarjeta": "Credit card"
-    }
+    },
+    "graceDaysLabel": "Grace Days"
   },
   "tenantDocuments": {
     "title": "Documents & Contracts",
@@ -490,12 +529,12 @@
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmNewPassword": "Confirm New Password",
-    "passwordHint": "Minimum 6 characters",
+    "passwordHint": "Minimum 8 characters",
     "passwordMismatch": "Passwords do not match",
     "passwordChanged": "Password updated successfully",
     "passwordError": "Error changing password",
     "required": "Required",
-    "minChars6": "Minimum 6 characters",
+    "minChars6": "Minimum 8 characters",
     "roles": {
       "ADMIN": "Administrator",
       "EMPLEADO": "Employee",
@@ -557,7 +596,7 @@
     "resetPasswordMissingToken": "The recovery link is invalid or incomplete.",
     "newPassword": "New password",
     "newPasswordPlaceholder": "Minimum 8 characters",
-    "confirmPassword": "Confirm password",
+    "confirmPassword": "Confirm Password",
     "passwordMin8": "Password must be at least 8 characters",
     "updatePassword": "Update password",
     "updatingPassword": "Updating password...",
@@ -583,6 +622,13 @@
     "companyNameHint": "The unique identifier will be generated automatically",
     "country": "Operating country",
     "countryHint": "Defines currency, timezone and default payment methods",
+    "rentalType": "What will you manage?",
+    "rentalTypeHint": "Defines which modules you'll see. You can change it later in Settings.",
+    "rentalTypes": {
+      "BOTH": "Both (short and long term)",
+      "SHORT_TERM": "Short term only (stays)",
+      "LONG_TERM": "Long term only (monthly rent)"
+    },
     "countryBO": "Bolivia (BOB)",
     "countryUS": "United States (USD)",
     "countryGT": "Guatemala (GTQ)",
@@ -597,9 +643,8 @@
     "minChars2": "Minimum 2 characters",
     "passwordStep": "Password",
     "passwordStepTitle": "Create your password",
-    "passwordHint": "Minimum 6 characters",
-    "minChars6": "Minimum 6 characters",
-    "confirmPassword": "Confirm Password",
+    "passwordHint": "Minimum 8 characters",
+    "minChars6": "Minimum 8 characters",
     "passwordMismatch": "Passwords do not match",
     "acceptTerms": "I accept the",
     "termsLink": "Terms and Conditions",
@@ -617,7 +662,8 @@
     "hidePassword": "Hide password",
     "termsHtml": "<p class=\"last-updated\">Last updated: February 8, 2026</p><h3>1. Acceptance of Terms</h3><p>By accessing and using 365Soft, you agree to be bound by these Terms and Conditions of use. If you do not agree with these terms, you must not use the Service.</p><h3>2. Service Description</h3><p>365Soft is a property management platform that allows administrators to manage properties, tenants, contracts, payments and maintenance efficiently.</p><h3>3. Account Registration</h3><p>To use the Service, you must create an account by providing accurate and complete information. You are responsible for maintaining the confidentiality of your account and password.</p><h3>4. Acceptable Use</h3><p>You agree to:</p><ul><li>Use the Service only for lawful purposes</li><li>Not share your account with unauthorized third parties</li><li>Keep your account information up to date</li><li>Not attempt to access unauthorized areas of the system</li><li>Not use the Service for fraudulent or illegal activities</li></ul><h3>5. Intellectual Property</h3><p>All content, features and functionality of the Service are the exclusive property of 365Soft and are protected by intellectual property laws.</p><h3>6. Privacy and Data Security</h3><p>We are committed to protecting your personal information according to our Privacy Policy. We implement technical and organizational security measures to protect your data.</p><h3>7. Limitation of Liability</h3><p>365Soft will not be liable for indirect, incidental, special or consequential damages resulting from the use or inability to use the Service.</p><h3>8. Service Changes</h3><p>We reserve the right to modify or discontinue the Service at any time, with or without prior notice.</p><h3>9. Termination</h3><p>We may suspend or terminate your access to the Service if you violate these terms or for any other reason at our discretion.</p><h3>10. Governing Law</h3><p>These terms are governed by the applicable laws in your jurisdiction.</p><h3>11. Contact</h3><p>For questions about these terms, contact: support@365soft.com</p>",
     "privacyHtml": "<p class=\"last-updated\">Last updated: February 8, 2026</p><h3>1. Introduction</h3><p>At 365Soft, we take user privacy very seriously. This Privacy Policy describes how we collect, use, share and protect your personal information.</p><h3>2. Information We Collect</h3><p>We collect the following information:</p><ul><li><strong>Account information:</strong> name, email address, phone, company name</li><li><strong>Property information:</strong> addresses, property data and contracts</li><li><strong>Tenant information:</strong> contact details and required documentation</li><li><strong>Payment information:</strong> transaction history and payment methods</li><li><strong>Usage data:</strong> how you interact with our Service</li><li><strong>Technical information:</strong> IP address, browser type, operating system</li></ul><h3>3. How We Use Your Information</h3><p>We use your information to:</p><ul><li>Provide and maintain the Service</li><li>Process transactions and send related notifications</li><li>Improve and personalize your experience</li><li>Communicate with you about updates and news</li><li>Detect and prevent fraud or abuse of the Service</li><li>Comply with legal obligations</li></ul><h3>4. Sharing Information</h3><p>We do not sell your personal information. We may share your information with:</p><ul><li><strong>Service providers:</strong> who help us operate the Service</li><li><strong>Legal authorities:</strong> when required by law</li><li><strong>Business partners:</strong> with your explicit consent</li></ul><h3>5. Data Security</h3><p>We implement technical and organizational security measures to protect your information.</p><h3>6. Data Retention</h3><p>We retain your personal information while your account is active or as needed to comply with legal obligations.</p><h3>7. Your Rights</h3><p>You may request access, correction, deletion, objection to processing, data portability or withdrawal of consent.</p><h3>8. Cookies and Similar Technologies</h3><p>We use cookies and similar technologies to improve your experience and analyze Service usage.</p><h3>9. Children's Privacy</h3><p>Our Service is not directed to minors under 18. We do not intentionally collect information from minors.</p><h3>10. Contact</h3><p>For questions or concerns about this policy: privacy@365soft.com</p>",
-    "close": "Close"
+    "close": "Close",
+    "companyNameTakenError": "A company with that name already exists. Please choose another name."
   },
   "notifications": {
     "title": "Notifications",
@@ -674,6 +720,10 @@
     "auth": {
       "kicker": "Owner portal",
       "title": "Access your properties",
+      "tagline": "See in one place how your properties are managed, your statements and your documents.",
+      "feature1": "Your properties and their tenants",
+      "feature2": "Up-to-date statements and balances",
+      "feature3": "Signed contracts and documents",
       "signIn": "Sign in",
       "subtitle": "Review statements, contracts, and maintenance authorizations.",
       "emailPlaceholder": "owner@company.com",
@@ -683,12 +733,15 @@
       "missingTenant": "Tenant was not found for sign in.",
       "loginError": "Could not sign in"
     },
+    "greeting": "Hi, {{name}}",
     "dashboard": {
       "title": "Owner portal",
-      "description": "Summary of properties, statements, maintenance, and documents.",
+      "heading": "Your properties overview",
+      "description": "See how your properties are being managed: properties, statements, maintenance, and documents.",
       "loading": "Loading portal...",
       "properties": "Properties",
       "activeContracts": "Active contracts",
+      "activeTenants": "Active tenants",
       "pendingBalance": "Pending balance",
       "maintenance": "Maintenance",
       "sections": "Owner sections"
@@ -706,12 +759,36 @@
     "properties": {
       "tenant": "Tenant",
       "noTenant": "No tenant",
-      "endsAt": "Ends"
+      "endsAt": "Ends",
+      "monthlyRent": "Monthly rent",
+      "ownership": "Ownership",
+      "contract": "Contract"
+    },
+    "statements": {
+      "gross": "Gross rent",
+      "maintenance": "Maintenance",
+      "commission": "Management fee",
+      "net": "Net payout",
+      "downloadPdf": "Download PDF"
+    },
+    "contracts": {
+      "tenant": "Tenant",
+      "period": "Term",
+      "rent": "Monthly rent",
+      "downloadPdf": "Download",
+      "view": "View",
+      "noPdf": "No PDF document available"
     },
     "maintenance": {
       "authorizeExpense": "Authorize expense",
       "authorized": "Expense authorized",
-      "stageLabel": "Stage: {{stage}}"
+      "stageLabel": "Stage: {{stage}}",
+      "priority": "Priority",
+      "category": "Category",
+      "technician": "Assigned technician",
+      "unassigned": "Unassigned",
+      "reportedAt": "Reported",
+      "dueDate": "Due date"
     },
     "documents": {
       "downloadPdfError": "Could not download the PDF",

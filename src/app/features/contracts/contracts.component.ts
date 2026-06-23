@@ -4,7 +4,6 @@ import { TranslocoModule } from '@jsverse/transloco';
 import { provideTranslocoScope } from '@jsverse/transloco';
 import { ContractStatus } from '../../core/models/contract.model';
 import { AppButtonComponent } from '../../shared/ui/button/button.component';
-import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { AppSelectOption } from '../../shared/ui/select/select.component';
 import { AppStatusTone } from '../../shared/ui/status-badge/status-badge.component';
@@ -20,7 +19,6 @@ import { ContractsFacade } from './contracts.facade';
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
-    AppLoadingStateComponent,
     AppPageHeaderComponent,
     ContractFiltersComponent,
     ContractListComponent,

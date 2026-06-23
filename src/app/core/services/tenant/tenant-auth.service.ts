@@ -1,10 +1,12 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, switchMap, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { SlugService } from '../slug.service';
 import { SessionTokenService } from '../session-token.service';
+import { SessionExpirationService } from '../session-expiration.service';
 
 import { getApiErrorMessage } from '../../http/http-error.util';
 export interface TenantUser {
@@ -25,7 +27,7 @@ export interface TenantUser {
 }
 
 export interface LoginResponse {
-  access_token: string;
+  access_token?: string;
   user: TenantUser;
 }
 
@@ -50,8 +52,8 @@ export class TenantAuthService {
   private readonly router = inject(Router);
   private readonly slugService = inject(SlugService);
   private readonly sessionToken = inject(SessionTokenService);
+  private readonly sessionExpiration = inject(SessionExpirationService);
 
-  private readonly TOKEN_KEY = 'tenant_access_token';
   private readonly USER_KEY = 'tenant_user';
 
   // Reactive state with signals
@@ -66,19 +68,19 @@ export class TenantAuthService {
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
   constructor() {
-    // Load user from storage if token exists
-    const token = this.getToken();
-    if (token) {
-      const user = this.loadUserFromStorage();
-      if (user) {
-        this.currentUserSignal.set(user);
-        // NOTE: Do NOT call slugService.setSlug() here.
-        // The slug is set by tenantAuthGuard from the URL route param.
-        // Setting it here can override the admin slug when both sessions
-        // are stored in localStorage simultaneously.
-      }
-      // Validate token silently - if invalid (401), clear storage
-      // This prevents 401 errors and login loops when JWT_SECRET changes
+    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.currentUserSignal.set(null);
+      this.slugService.clearSlug();
+    });
+
+    // La sesión vive en la cookie HttpOnly; el objeto user en storage es la
+    // señal de sesión del lado cliente (el JWT ya no se guarda en localStorage).
+    const user = this.loadUserFromStorage();
+    if (user) {
+      this.currentUserSignal.set(user);
+      // NOTE: Do NOT call slugService.setSlug() here — lo hace tenantAuthGuard
+      // desde el route param para no pisar el slug del admin.
+      // Valida la sesión en silencio; si la cookie es inválida (401), limpia.
       this.validateTokenSilently();
     }
   }
@@ -97,11 +99,10 @@ export class TenantAuthService {
       .post<LoginResponse>(`${environment.apiUrl}auth/${slug}/login`, { email, password })
       .pipe(
         tap((response) => {
-          // Store token and initial user data immediately
-          this.sessionToken.setToken('tenant', response.access_token);
+          // El JWT va en la cookie HttpOnly; sólo se persiste el objeto user.
           const normalizedUser = this.normalizeUserData(response.user);
           this.currentUserSignal.set(normalizedUser);
-          this.saveUserToStorage(normalizedUser);
+          this.saveUserToStorage(normalizedUser, sessionStorage);
         }),
         // Chain with refreshUserData so the observable emits ONCE with full user data
         // This prevents double navigation (caller navigates only after user data is complete)
@@ -119,13 +120,34 @@ export class TenantAuthService {
   }
 
   /**
+   * Limpia el almacenamiento de la sesión del inquilino (token legacy, objeto
+   * user y slug) sin navegar ni llamar al backend. Centraliza el conocimiento
+   * de las claves de storage para que otros componentes no las toquen directo.
+   */
+  clearSession(): void {
+    this.sessionToken.clearToken('tenant');
+    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
+    localStorage.removeItem('tenant_slug');
+    sessionStorage.removeItem('tenant_slug');
+    this.currentUserSignal.set(null);
+  }
+
+  /**
    * Logout and clear session
    */
   logout(): void {
     const slug = this.slugService.getSlug();
 
+    // Revoca el refresh y limpia las cookies en el backend (best-effort).
+    this.http
+      .post(`${environment.apiUrl}auth/logout`, {})
+      .pipe(catchError(() => of(null)))
+      .subscribe();
+
     this.sessionToken.clearToken('tenant');
     localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
     this.currentUserSignal.set(null);
 
     // Clear slug from SlugService
@@ -160,13 +182,8 @@ export class TenantAuthService {
    * Validate current token with backend
    */
   private validateToken(): void {
-    const token = this.getToken();
-    if (!token) return;
-
     this.http
-      .get<TenantUser>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get<TenantUser>(`${environment.apiUrl}auth/me`)
       .pipe(
         catchError(() => {
           this.logout();
@@ -186,28 +203,18 @@ export class TenantAuthService {
    * Call this when you need to update user info (e.g., after contract creation)
    */
   refreshUserData(): Observable<TenantUser | null> {
-    const token = this.getToken();
-    if (!token) {
-      return of(null);
-    }
-
-    // auth/me es un endpoint compartido sin /tenant/ en la URL: el interceptor
-    // no puede inferir el contexto y caería al token de admin. Forzamos el de
-    // inquilino explícitamente (el interceptor respeta un Authorization ya puesto).
-    return this.http
-      .get<RawTenantUser>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .pipe(
-        map((user) => {
-          if (!user) return null;
-          const normalizedUser = this.normalizeUserData(user);
-          this.currentUserSignal.set(normalizedUser);
-          this.saveUserToStorage(normalizedUser);
-          return normalizedUser;
-        }),
-        catchError(() => of(null)),
-      );
+    // auth/me se autentica con la cookie HttpOnly; no dependemos de tokens en
+    // local/sessionStorage para que el login tenant funcione sin exponer JWT.
+    return this.http.get<RawTenantUser>(`${environment.apiUrl}auth/me`).pipe(
+      map((user) => {
+        if (!user) return null;
+        const normalizedUser = this.normalizeUserData(user);
+        this.currentUserSignal.set(normalizedUser);
+        this.saveUserToStorage(normalizedUser, this.getCurrentUserStorage());
+        return normalizedUser;
+      }),
+      catchError(() => of(null)),
+    );
   }
 
   /**
@@ -215,13 +222,12 @@ export class TenantAuthService {
    * Clears invalid tokens without redirecting to prevent 401 loops
    */
   private validateTokenSilently(): void {
-    const token = this.getToken();
-    if (!token) return;
+    // La sesión viaja por cookie HttpOnly (withCredentials lo agrega el
+    // interceptor); se valida sólo si hay objeto user en storage.
+    if (!this.currentUserSignal()) return;
 
     this.http
-      .get<RawTenantUser>(`${environment.apiUrl}auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      .get<RawTenantUser>(`${environment.apiUrl}auth/me`)
       .pipe(
         catchError((error: { status?: number }) => {
           // Only clear storage if token is invalid (401)
@@ -240,7 +246,7 @@ export class TenantAuthService {
           // Token is valid — normalize and update user data
           const normalizedUser = this.normalizeUserData(user);
           this.currentUserSignal.set(normalizedUser);
-          this.saveUserToStorage(normalizedUser);
+          this.saveUserToStorage(normalizedUser, this.getCurrentUserStorage());
         }
       });
   }
@@ -267,9 +273,8 @@ export class TenantAuthService {
    * Set session after successful login
    */
   private setSession(response: LoginResponse): void {
-    this.sessionToken.setToken('tenant', response.access_token);
     const normalizedUser = this.normalizeUserData(response.user);
-    this.saveUserToStorage(normalizedUser);
+    this.saveUserToStorage(normalizedUser, sessionStorage);
     this.currentUserSignal.set(normalizedUser);
   }
 
@@ -277,7 +282,7 @@ export class TenantAuthService {
    * Load user from localStorage
    */
   private loadUserFromStorage(): TenantUser | null {
-    const userJson = localStorage.getItem(this.USER_KEY);
+    const userJson = localStorage.getItem(this.USER_KEY) ?? sessionStorage.getItem(this.USER_KEY);
     if (!userJson) return null;
     try {
       const user = JSON.parse(userJson) as RawTenantUser;
@@ -291,8 +296,10 @@ export class TenantAuthService {
   /**
    * Save user to localStorage
    */
-  private saveUserToStorage(user: TenantUser): void {
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  private saveUserToStorage(user: TenantUser, storage: Storage = sessionStorage): void {
+    localStorage.removeItem(this.USER_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
+    storage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
   /**
@@ -300,7 +307,9 @@ export class TenantAuthService {
    * Updates the signal so guards see the user as authenticated immediately.
    */
   setSessionFromToken(token: string, userData: RawTenantUser, slug?: string): void {
-    this.sessionToken.setToken('tenant', token);
+    // El JWT lo emite el backend como cookie HttpOnly durante el registro; aquí
+    // sólo se actualiza el objeto user para que los guards vean la sesión.
+    void token;
     if (slug) {
       this.slugService.setSlug(slug);
     }
@@ -309,7 +318,11 @@ export class TenantAuthService {
       tenant_slug: userData.tenant_slug || userData.tenantSlug || slug || '',
     });
     this.currentUserSignal.set(normalized);
-    this.saveUserToStorage(normalized);
+    this.saveUserToStorage(normalized, sessionStorage);
+  }
+
+  private getCurrentUserStorage(): Storage {
+    return localStorage.getItem(this.USER_KEY) ? localStorage : sessionStorage;
   }
 
   /**

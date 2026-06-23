@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { TenantConfig } from './admin/tenant-config.service';
 
 const LOCALE_MAP: Record<string, string> = {
@@ -12,13 +12,31 @@ const LOCALE_MAP: Record<string, string> = {
 export class FormatService {
   private configSignal = signal<TenantConfig | null>(null);
 
+  /** Modo de alquiler del tenant (`LONG_TERM`/`SHORT_TERM`/`BOTH`), o null si aún no cargó. */
+  readonly rentalType = computed(() => this.configSignal()?.rental_type ?? null);
+
+  /** País configurado para el tenant. Se usa para mantener consistencia legal/moneda. */
+  readonly country = computed(() => this.configSignal()?.country ?? 'BO');
+
+  /**
+   * ¿El tenant admite corto plazo? Devuelve false sólo si el modo es
+   * explícitamente `LONG_TERM`; mientras el config no cargó (null) asume que sí,
+   * para no ocultar módulos durante la carga.
+   */
+  readonly supportsShortTerm = computed(() => this.rentalType() !== 'LONG_TERM');
+
+  /**
+   * ¿El tenant admite largo plazo? Simétrico a `supportsShortTerm`: false sólo si
+   * el modo es explícitamente `SHORT_TERM`; mientras carga (null) asume que sí.
+   */
+  readonly supportsLongTerm = computed(() => this.rentalType() !== 'SHORT_TERM');
+
   setConfig(config: TenantConfig): void {
     this.configSignal.set(config);
   }
 
   private get locale(): string {
-    const country = this.configSignal()?.country ?? 'BO';
-    return LOCALE_MAP[country] ?? 'es-BO';
+    return LOCALE_MAP[this.country()] ?? 'es-BO';
   }
 
   private get activeCurrency(): string {

@@ -129,7 +129,7 @@ describe('PropertiesFacade', () => {
 
     expect(propertyService.createProperty).toHaveBeenCalled();
     expect(propertyService.getAdminProperties).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.created');
+    expect(toast.success).toHaveBeenCalledWith('properties.actions.created');
     expect(facade.isSubmitting()).toBe(false);
   });
 
@@ -141,7 +141,7 @@ describe('PropertiesFacade', () => {
     facade.saveProperty();
 
     expect(propertyService.updateProperty).toHaveBeenCalledWith(1, expect.any(Object));
-    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.updated');
+    expect(toast.success).toHaveBeenCalledWith('properties.actions.updated');
   });
 
   it('muestra errores cuando el formulario es invalido', () => {
@@ -164,7 +164,7 @@ describe('PropertiesFacade', () => {
 
     expect(propertyService.deleteProperty).toHaveBeenCalledWith(1);
     expect(propertyService.getAdminProperties).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.deleted');
+    expect(toast.success).toHaveBeenCalledWith('properties.actions.deleted');
   });
 
   it('activa o desactiva una propiedad', () => {
@@ -177,7 +177,7 @@ describe('PropertiesFacade', () => {
       PropertyStatus.INACTIVO,
       false,
     );
-    expect(toast.success).toHaveBeenCalledWith('propiedades.actions.deactivated');
+    expect(toast.success).toHaveBeenCalledWith('properties.actions.deactivated');
   });
 
   it('notifica errores al cargar propiedades', () => {
@@ -186,7 +186,7 @@ describe('PropertiesFacade', () => {
     const facade = setup();
 
     expect(facade.isListLoading()).toBe(false);
-    expect(toast.error).toHaveBeenCalledWith('propiedades.actions.loadError');
+    expect(toast.error).toHaveBeenCalledWith('properties.actions.loadError');
   });
 });
 
@@ -224,6 +224,7 @@ function patchValidPropertyForm(facade: PropertiesFacade): void {
       address_type: 'address_1',
       street_address: 'Av. Siempre Viva',
       city: 'La Paz',
+      state: 'La Paz',
       country: 'BO',
     },
   ]);

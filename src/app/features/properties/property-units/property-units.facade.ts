@@ -4,12 +4,14 @@ import { TranslocoService } from '@jsverse/transloco';
 import { getApiErrorMessage } from '../../../core/http/http-error.util';
 import { Unit, UnitStatus } from '../../../core/models/unit.model';
 import { UnitService } from '../../../core/services/admin/unit.service';
+import { ReservationAdminService } from '../../../core/services/admin/reservation-admin.service';
 import { ConfirmDialogService } from '../../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
 @Injectable()
 export class PropertyUnitsFacade {
   private readonly unitService = inject(UnitService);
+  private readonly reservationService = inject(ReservationAdminService);
   private readonly confirmDialog = inject(ConfirmDialogService);
   private readonly toast = inject(ToastService);
   private readonly transloco = inject(TranslocoService);
@@ -153,5 +155,23 @@ export class PropertyUnitsFacade {
     }
 
     this.selectedUnit.set(units.find((unit) => unit.id === selected.id) ?? null);
+  }
+
+  /** Descarga el calendario de ocupación (.ics) de la unidad como archivo. */
+  exportCalendar(unit: Unit): void {
+    this.reservationService.getUnitCalendar(unit.id).subscribe({
+      next: (ics) => this.triggerDownload(ics, `unit-${unit.id}.ics`),
+      error: () => this.toast.error(this.transloco.translate('propiedades.units.calendarError')),
+    });
+  }
+
+  private triggerDownload(content: string, filename: string): void {
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 }

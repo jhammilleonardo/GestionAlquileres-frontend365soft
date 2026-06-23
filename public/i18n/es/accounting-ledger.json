@@ -1,0 +1,43 @@
+{
+  "eyebrow": "Finanzas",
+  "title": "Contabilidad",
+  "subtitle": "Libro mayor de doble partida — balanza, estados financieros y plan de cuentas.",
+  "viewsLabel": "Seleccionar reporte contable",
+  "views": {
+    "trialBalance": "Balanza de comprobación",
+    "balanceSheet": "Balance general",
+    "incomeStatement": "Estado de resultados",
+    "chart": "Plan de cuentas",
+    "journal": "Libro diario"
+  },
+  "cols": {
+    "code": "Código",
+    "account": "Cuenta",
+    "debit": "Debe",
+    "credit": "Haber",
+    "amount": "Monto",
+    "type": "Tipo",
+    "entryNumber": "N° de asiento",
+    "date": "Fecha",
+    "description": "Descripción"
+  },
+  "types": {
+    "asset": "Activo",
+    "liability": "Pasivo",
+    "equity": "Patrimonio",
+    "income": "Ingreso",
+    "expense": "Gasto"
+  },
+  "totals": {
+    "assets": "Activos",
+    "liabilities": "Pasivos",
+    "equity": "Patrimonio",
+    "income": "Ingresos",
+    "expenses": "Gastos",
+    "netIncome": "Resultado neto"
+  },
+  "balanced": "Cuadrado",
+  "unbalanced": "Descuadrado",
+  "empty": "No hay movimientos para mostrar.",
+  "error": "No se pudo cargar la información contable."
+}

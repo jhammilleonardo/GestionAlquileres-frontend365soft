@@ -23,8 +23,25 @@
         "files": [
           "/assets/**",
           "/icons/**",
+          "/i18n/**",
           "/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "uploaded-images",
+      "urls": [
+        "/uploads/**",
+        "http://localhost:3000/uploads/**",
+        "http://localhost:3000/**/uploads/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 200,
+        "maxAge": "7d",
+        "timeout": "5s"
       }
     }
   ]

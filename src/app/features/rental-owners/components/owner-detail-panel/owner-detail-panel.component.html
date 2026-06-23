@@ -1,0 +1,153 @@
+<div
+  class="panel-container"
+  role="complementary"
+  [attr.aria-label]="'rentalOwners.panel.title' | transloco: { name: owner().name }"
+>
+  <!-- Header -->
+  <div class="panel-header">
+    <div class="owner-info">
+      <div class="avatar" aria-hidden="true">
+        <lucide-icon [img]="Building2Icon" [size]="18"></lucide-icon>
+      </div>
+      <div class="owner-meta">
+        <h3 class="owner-name">{{ owner().name }}</h3>
+        @if (owner().company_name) {
+          <span class="owner-company">{{ owner().company_name }}</span>
+        }
+      </div>
+    </div>
+    <button
+      type="button"
+      (click)="close()"
+      [attr.aria-label]="'common.close' | transloco"
+      class="close-btn"
+    >
+      <lucide-icon [img]="XIcon" [size]="18" aria-hidden="true"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="panel-body">
+    <!-- Datos de contacto -->
+    <dl class="contact-list">
+      <div>
+        <dt><lucide-icon [img]="MailIcon" [size]="14" aria-hidden="true"></lucide-icon></dt>
+        <dd>{{ owner().primary_email }}</dd>
+      </div>
+      <div>
+        <dt><lucide-icon [img]="PhoneIcon" [size]="14" aria-hidden="true"></lucide-icon></dt>
+        <dd>{{ owner().phone_number }}</dd>
+      </div>
+    </dl>
+
+    <!-- Acceso al portal -->
+    <section class="panel-section">
+      <div class="section-title">
+        <lucide-icon [img]="KeyRoundIcon" [size]="16" aria-hidden="true"></lucide-icon>
+        <span>{{ 'rentalOwners.panel.portalAccess' | transloco }}</span>
+      </div>
+
+      @if (invite(); as inv) {
+        <div class="credentials" role="status">
+          <p class="credentials-hint">{{ 'rentalOwners.panel.inviteHint' | transloco }}</p>
+          <div class="invite-link">
+            <lucide-icon [img]="LinkIcon" [size]="14" aria-hidden="true"></lucide-icon>
+            <code>{{ inv.inviteUrl }}</code>
+          </div>
+          <app-button appearance="outline" size="s" (clicked)="copyInviteLink()">
+            <lucide-icon [img]="copied() ? CheckIcon : CopyIcon" [size]="15"></lucide-icon>
+            {{
+              (copied() ? 'rentalOwners.panel.copied' : 'rentalOwners.panel.copyLink') | transloco
+            }}
+          </app-button>
+        </div>
+      } @else if (hasAccount()) {
+        <div class="account-active" role="status">
+          <span class="account-dot" aria-hidden="true"></span>
+          <div>
+            <strong>{{ 'rentalOwners.panel.accountActive' | transloco }}</strong>
+            <span class="account-email">{{ owner().primary_email }}</span>
+          </div>
+        </div>
+        <p class="section-help">{{ 'rentalOwners.panel.reinviteHelp' | transloco }}</p>
+        <app-button
+          appearance="outline"
+          size="s"
+          [loading]="inviting()"
+          (clicked)="sendInvite()"
+          [ariaLabel]="'rentalOwners.panel.reinvite' | transloco"
+        >
+          <lucide-icon [img]="SendIcon" [size]="15"></lucide-icon>
+          {{ 'rentalOwners.panel.reinvite' | transloco }}
+        </app-button>
+      } @else {
+        <p class="section-help">{{ 'rentalOwners.panel.inviteHelp' | transloco }}</p>
+        <app-button
+          size="s"
+          [loading]="inviting()"
+          (clicked)="sendInvite()"
+          [ariaLabel]="'rentalOwners.panel.invite' | transloco"
+        >
+          <lucide-icon [img]="SendIcon" [size]="15"></lucide-icon>
+          {{ 'rentalOwners.panel.invite' | transloco }}
+        </app-button>
+      }
+    </section>
+
+    <!-- Propiedades asignadas -->
+    <section class="panel-section">
+      <div class="section-title">
+        <lucide-icon [img]="Building2Icon" [size]="16" aria-hidden="true"></lucide-icon>
+        <span>{{ 'rentalOwners.panel.properties' | transloco }}</span>
+      </div>
+
+      <div class="assign-row">
+        <app-select
+          class="assign-select"
+          [options]="availableOptions()"
+          [placeholder]="'rentalOwners.panel.selectProperty' | transloco"
+          [ariaLabel]="'rentalOwners.panel.selectProperty' | transloco"
+          [disabled]="!hasAvailable()"
+          (valueChanged)="selectedPropertyId.set($event)"
+        ></app-select>
+        <app-button
+          size="s"
+          [disabled]="selectedPropertyId() === null"
+          [loading]="assigning()"
+          (clicked)="assignProperty()"
+          [ariaLabel]="'rentalOwners.panel.assign' | transloco"
+        >
+          <lucide-icon [img]="PlusIcon" [size]="15"></lucide-icon>
+          {{ 'rentalOwners.panel.assign' | transloco }}
+        </app-button>
+      </div>
+
+      @if (loadingProperties()) {
+        <p class="section-help">{{ 'common.loading' | transloco }}</p>
+      } @else if (assignedProperties().length === 0) {
+        <p class="section-help">{{ 'rentalOwners.panel.noProperties' | transloco }}</p>
+      } @else {
+        <ul class="property-list">
+          @for (prop of assignedProperties(); track prop.id) {
+            <li class="property-item">
+              <div class="property-main">
+                <strong>{{ prop.title }}</strong>
+                @if (prop.status) {
+                  <app-status-badge [label]="prop.status" tone="info" />
+                }
+              </div>
+              <button
+                type="button"
+                class="icon-button"
+                [disabled]="removingId() === prop.id"
+                (click)="removeProperty(prop)"
+                [attr.aria-label]="'rentalOwners.panel.remove' | transloco: { title: prop.title }"
+              >
+                <lucide-icon [img]="Trash2Icon" [size]="16" aria-hidden="true"></lucide-icon>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  </div>
+</div>

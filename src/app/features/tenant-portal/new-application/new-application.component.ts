@@ -126,6 +126,7 @@ import { NewApplicationFacade } from './new-application.facade';
                   <img
                     [src]="cardImage(property)"
                     [alt]="property.title"
+                    loading="lazy"
                     (error)="handleImageError($event)"
                   />
                 } @else {
@@ -339,7 +340,12 @@ import { NewApplicationFacade } from './new-application.facade';
           <div class="detail">
             <div class="detail-gallery">
               @if (detailCurrentImage(); as image) {
-                <img [src]="image" [alt]="property.title" (error)="handleImageError($event)" />
+                <img
+                  [src]="image"
+                  [alt]="property.title"
+                  loading="lazy"
+                  (error)="handleImageError($event)"
+                />
               } @else {
                 <div class="image-placeholder">
                   <lucide-icon [img]="Home" [size]="56"></lucide-icon>
@@ -385,7 +391,12 @@ import { NewApplicationFacade } from './new-application.facade';
                         | transloco: { current: i + 1, total: detailImages().length }
                     "
                   >
-                    <img [src]="image" [alt]="property.title" (error)="handleImageError($event)" />
+                    <img
+                      [src]="image"
+                      [alt]="property.title"
+                      loading="lazy"
+                      (error)="handleImageError($event)"
+                    />
                   </button>
                 }
               </div>

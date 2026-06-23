@@ -7,66 +7,64 @@ export const TENANT_PASSWORD = process.env.E2E_TENANT_PASSWORD ?? 'Inquilino365!
 export const OWNER_EMAIL = process.env.E2E_OWNER_EMAIL ?? 'jorge.villanueva@gmail.com';
 export const OWNER_PASSWORD = process.env.E2E_OWNER_PASSWORD ?? 'Propietario365!';
 // El portal de proveedores requiere un usuario con rol VENDOR sembrado en el
-// tenant. Como no siempre existe en el entorno local, las credenciales se
-// inyectan por env y los flujos autenticados se omiten si no están presentes.
-export const VENDOR_EMAIL = process.env.E2E_VENDOR_EMAIL ?? '';
-export const VENDOR_PASSWORD = process.env.E2E_VENDOR_PASSWORD ?? '';
+// tenant. El DevSeed siembra un proveedor demo con cuenta (rol VENDOR), así que
+// hay defaults; se pueden sobreescribir por env para otros entornos.
+export const VENDOR_EMAIL =
+  process.env.E2E_VENDOR_EMAIL ?? 'proveedor.demo@gmail.com';
+export const VENDOR_PASSWORD =
+  process.env.E2E_VENDOR_PASSWORD ?? 'Proveedor365!';
 
 export function hasVendorCredentials(): boolean {
   return VENDOR_EMAIL.length > 0 && VENDOR_PASSWORD.length > 0;
 }
 
 interface AdminLoginResponse {
-  access_token: string;
   user: {
     tenant_slug?: string;
     [key: string]: unknown;
   };
 }
 
-let cachedAdminSession: AdminLoginResponse | null = null;
-let cachedTenantSession: TenantLoginResponse | null = null;
-let cachedOwnerSession: OwnerLoginResponse | null = null;
-
 /** Inyecta una sesión admin válida y espera el dashboard. Devuelve el slug del tenant. */
 export async function loginAsAdmin(page: Page): Promise<string> {
   const session = await getAdminSession(page);
   const slug = session.user.tenant_slug ?? 'demo';
 
+  // page.request comparte el almacén de cookies con el BrowserContext. El JWT
+  // queda exclusivamente en la cookie HttpOnly emitida por el login.
   await page.goto('/');
   await page.evaluate(
-    ({ token, user, tenantSlug }) => {
-      localStorage.setItem('admin_access_token', token);
+    ({ user, tenantSlug }) => {
       localStorage.setItem('admin_user', JSON.stringify(user));
       localStorage.setItem('tenant_slug', tenantSlug);
       sessionStorage.setItem('tenant_slug', tenantSlug);
     },
-    { token: session.access_token, user: session.user, tenantSlug: slug },
+    { user: session.user, tenantSlug: slug },
   );
   await page.goto(`/${slug}/dashboard`);
-  await expect(page).toHaveURL(new RegExp(`/${slug}/dashboard`), { timeout: 15000 });
+  await expect(page).toHaveURL(new RegExp(`/${slug}/dashboard`), {
+    timeout: 15000,
+  });
 
   return slug;
 }
 
 export async function getAdminSession(page: Page): Promise<AdminLoginResponse> {
-  if (cachedAdminSession) return cachedAdminSession;
-
   const apiUrl = process.env.E2E_API_URL ?? 'http://localhost:3000/';
-  const response = await page.request.post(new URL('auth/login-admin', apiUrl).toString(), {
-    data: { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
-  });
+  const response = await postWithRetry(
+    page,
+    new URL('auth/login-admin', apiUrl).toString(),
+    { email: ADMIN_EMAIL, password: ADMIN_PASSWORD },
+  );
 
   if (!response.ok()) {
     throw new Error(`No se pudo crear sesion E2E admin: ${response.status()} ${await response.text()}`);
   }
 
-  cachedAdminSession = (await response.json()) as AdminLoginResponse;
-  return cachedAdminSession;
+  return (await response.json()) as AdminLoginResponse;
 }
 
 interface TenantLoginResponse {
-  access_token: string;
   user: {
     tenant_slug?: string;
     tenantSlug?: string;
@@ -75,7 +73,6 @@ interface TenantLoginResponse {
 }
 
 interface OwnerLoginResponse {
-  access_token: string;
   user: {
     tenant_slug?: string;
     [key: string]: unknown;
@@ -87,13 +84,12 @@ export async function loginAsTenant(page: Page, slug = 'demo'): Promise<string> 
   const tenantSlug = session.user.tenant_slug ?? session.user.tenantSlug ?? slug;
 
   await page.addInitScript(
-    ({ token, user, slugValue }) => {
-      localStorage.setItem('tenant_access_token', token);
+    ({ user, slugValue }) => {
       localStorage.setItem('tenant_user', JSON.stringify(user));
       localStorage.setItem('tenant_slug', slugValue);
       sessionStorage.setItem('tenant_slug', slugValue);
     },
-    { token: session.access_token, user: session.user, slugValue: tenantSlug },
+    { user: session.user, slugValue: tenantSlug },
   );
 
   return tenantSlug;
@@ -104,13 +100,12 @@ export async function loginAsOwner(page: Page, slug = 'demo'): Promise<string> {
   const tenantSlug = session.user.tenant_slug ?? slug;
 
   await page.addInitScript(
-    ({ token, user, slugValue }) => {
-      localStorage.setItem('owner_access_token', token);
+    ({ user, slugValue }) => {
       localStorage.setItem('owner_user', JSON.stringify(user));
       localStorage.setItem('tenant_slug', slugValue);
       sessionStorage.setItem('tenant_slug', slugValue);
     },
-    { token: session.access_token, user: session.user, slugValue: tenantSlug },
+    { user: session.user, slugValue: tenantSlug },
   );
 
   return tenantSlug;
@@ -120,63 +115,54 @@ export async function getTenantSession(
   page: Page,
   slug = 'demo',
 ): Promise<TenantLoginResponse> {
-  if (cachedTenantSession) return cachedTenantSession;
-
   const apiUrl = process.env.E2E_API_URL ?? 'http://localhost:3000/';
-  const response = await page.request.post(new URL(`auth/${slug}/login`, apiUrl).toString(), {
-    data: { email: TENANT_EMAIL, password: TENANT_PASSWORD },
-  });
+  const response = await postWithRetry(
+    page,
+    new URL(`auth/${slug}/login`, apiUrl).toString(),
+    { email: TENANT_EMAIL, password: TENANT_PASSWORD },
+  );
 
   if (!response.ok()) {
     throw new Error(`No se pudo crear sesion E2E tenant: ${response.status()} ${await response.text()}`);
   }
 
-  cachedTenantSession = (await response.json()) as TenantLoginResponse;
-  return cachedTenantSession;
+  return (await response.json()) as TenantLoginResponse;
 }
 
 export async function getOwnerSession(
   page: Page,
   slug = 'demo',
 ): Promise<OwnerLoginResponse> {
-  if (cachedOwnerSession) return cachedOwnerSession;
-
   const apiUrl = process.env.E2E_API_URL ?? 'http://localhost:3000/';
-  const response = await page.request.post(
+  const response = await postWithRetry(
+    page,
     new URL(`auth/${slug}/owner/login`, apiUrl).toString(),
-    {
-      data: { email: OWNER_EMAIL, password: OWNER_PASSWORD },
-    },
+    { email: OWNER_EMAIL, password: OWNER_PASSWORD },
   );
 
   if (!response.ok()) {
     throw new Error(`No se pudo crear sesion E2E owner: ${response.status()} ${await response.text()}`);
   }
 
-  cachedOwnerSession = (await response.json()) as OwnerLoginResponse;
-  return cachedOwnerSession;
+  return (await response.json()) as OwnerLoginResponse;
 }
 
 interface VendorLoginResponse {
-  access_token: string;
   user: {
     tenant_slug?: string;
     [key: string]: unknown;
   };
 }
 
-let cachedVendorSession: VendorLoginResponse | null = null;
-
 export async function getVendorSession(
   page: Page,
   slug = 'demo',
 ): Promise<VendorLoginResponse> {
-  if (cachedVendorSession) return cachedVendorSession;
-
   const apiUrl = process.env.E2E_API_URL ?? 'http://localhost:3000/';
-  const response = await page.request.post(
+  const response = await postWithRetry(
+    page,
     new URL(`auth/${slug}/vendor/login`, apiUrl).toString(),
-    { data: { email: VENDOR_EMAIL, password: VENDOR_PASSWORD } },
+    { email: VENDOR_EMAIL, password: VENDOR_PASSWORD },
   );
 
   if (!response.ok()) {
@@ -185,8 +171,7 @@ export async function getVendorSession(
     );
   }
 
-  cachedVendorSession = (await response.json()) as VendorLoginResponse;
-  return cachedVendorSession;
+  return (await response.json()) as VendorLoginResponse;
 }
 
 export async function loginAsVendor(page: Page, slug = 'demo'): Promise<string> {
@@ -194,13 +179,12 @@ export async function loginAsVendor(page: Page, slug = 'demo'): Promise<string> 
   const tenantSlug = session.user.tenant_slug ?? slug;
 
   await page.addInitScript(
-    ({ token, user, slugValue }) => {
-      localStorage.setItem('vendor_access_token', token);
+    ({ user, slugValue }) => {
       localStorage.setItem('vendor_user', JSON.stringify(user));
       localStorage.setItem('tenant_slug', slugValue);
       sessionStorage.setItem('tenant_slug', slugValue);
     },
-    { token: session.access_token, user: session.user, slugValue: tenantSlug },
+    { user: session.user, slugValue: tenantSlug },
   );
 
   return tenantSlug;
@@ -270,6 +254,34 @@ export async function getWithRetry(
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const response = await page.request.get(url, { headers: options.headers });
+    if (response.ok()) return response;
+
+    lastResponse = response;
+    const transient = response.status() === 429 || response.status() >= 500;
+    if (!transient || attempt === attempts - 1) return response;
+
+    await page.waitForTimeout(Math.min(15000, 4000 * (attempt + 1)));
+  }
+
+  return lastResponse!;
+}
+
+/**
+ * POST resiliente a throttling: reintenta ante 429/5xx (igual que getWithRetry).
+ * Se usa en los logins de sesión para que una saturación temporal del
+ * rate-limit por IP no produzca un falso negativo al crear la sesión E2E.
+ */
+export async function postWithRetry(
+  page: Page,
+  url: string,
+  data: unknown,
+  options: { attempts?: number } = {},
+): Promise<import('@playwright/test').APIResponse> {
+  const attempts = options.attempts ?? 4;
+  let lastResponse: import('@playwright/test').APIResponse | null = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const response = await page.request.post(url, { data });
     if (response.ok()) return response;
 
     lastResponse = response;

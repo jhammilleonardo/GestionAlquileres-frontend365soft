@@ -74,7 +74,7 @@
 
 .btn-external {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #2563eb, #1e40af);
+  background: var(--brand-primary, #2563eb);
   color: white;
   border: none;
   border-radius: 0.75rem;

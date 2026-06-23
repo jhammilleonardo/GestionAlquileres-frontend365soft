@@ -2,12 +2,24 @@
   <div class="navbar-container">
     <div class="navbar-brand">
       <a [routerLink]="getPublicPath('inicio')" class="logo">
-        <lucide-icon [img]="Home" class="logo-icon"></lucide-icon>
-        <span class="logo-text">{{ 'public.brand.name' | transloco }}</span>
+        @if (logoUrl()) {
+          <img [src]="logoUrl()" [alt]="companyName() ?? ''" class="logo-img" />
+        } @else {
+          <lucide-icon [img]="Home" class="logo-icon"></lucide-icon>
+        }
+        <span class="logo-text">{{ companyName() || ('public.brand.name' | transloco) }}</span>
       </a>
     </div>
 
-    <button class="mobile-menu-btn" (click)="toggleMenu()">
+    <button
+      class="mobile-menu-btn"
+      [class.open]="isMenuOpen()"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="isMenuOpen()"
+      [attr.aria-label]="
+        (isMenuOpen() ? 'public.nav.closeMenu' : 'public.nav.openMenu') | transloco
+      "
+    >
       <span></span>
       <span></span>
       <span></span>
@@ -20,6 +32,7 @@
             [routerLink]="getPublicPath('inicio')"
             class="nav-link"
             [class.active]="isActive('inicio')"
+            (click)="closeMenu()"
           >
             {{ 'public.nav.home' | transloco }}
           </a>
@@ -29,6 +42,7 @@
             [routerLink]="getPublicPath('propiedades')"
             class="nav-link"
             [class.active]="isActive('propiedades')"
+            (click)="closeMenu()"
           >
             {{ 'public.nav.properties' | transloco }}
           </a>
@@ -38,6 +52,7 @@
             [routerLink]="getPublicPath('nosotros')"
             class="nav-link"
             [class.active]="isActive('nosotros')"
+            (click)="closeMenu()"
           >
             {{ 'public.nav.about' | transloco }}
           </a>
@@ -47,12 +62,18 @@
             [routerLink]="getPublicPath('contacto')"
             class="nav-link"
             [class.active]="isActive('contacto')"
+            (click)="closeMenu()"
           >
             {{ 'public.nav.contact' | transloco }}
           </a>
         </li>
         <li>
-          <a [routerLink]="getPublicPath('faq')" class="nav-link" [class.active]="isActive('faq')">
+          <a
+            [routerLink]="getPublicPath('faq')"
+            class="nav-link"
+            [class.active]="isActive('faq')"
+            (click)="closeMenu()"
+          >
             {{ 'public.nav.faq' | transloco }}
           </a>
         </li>

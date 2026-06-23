@@ -1,0 +1,106 @@
+{
+  "title": "Reservas",
+  "subtitle": "Gestiona las reservas de corto plazo de tus unidades",
+  "calendarSync": {
+    "title": "Calendarios externos (iCal)",
+    "empty": "Esta unidad no tiene calendarios externos.",
+    "add": "Agregar calendario",
+    "addButton": "Agregar",
+    "name": "Nombre",
+    "url": "URL del calendario (.ics)",
+    "syncNow": "Sincronizar ahora",
+    "lastSync": "Última sincronización",
+    "added": "Calendario agregado",
+    "addError": "No se pudo agregar el calendario",
+    "synced": "Sincronizado: {{ count }} noche(s) bloqueada(s)",
+    "syncError": "No se pudo sincronizar",
+    "deleted": "Calendario eliminado",
+    "deleteError": "No se pudo eliminar",
+    "deleteTitle": "Eliminar calendario",
+    "deleteMessage": "¿Eliminar el calendario \"{{ name }}\"? Se liberarán sus bloqueos."
+  },
+  "housekeeping": {
+    "title": "Limpieza",
+    "subtitle": "Tareas de limpieza entre estadías",
+    "filter": "Estado",
+    "allStatuses": "Todos",
+    "unit": "Unidad",
+    "emptyTitle": "Sin tareas de limpieza",
+    "emptyDescription": "Al completar una reserva se programa la limpieza de la unidad.",
+    "status": {
+      "pending": "Pendiente",
+      "in_progress": "En progreso",
+      "done": "Lista"
+    },
+    "advance": {
+      "in_progress": "Iniciar",
+      "done": "Marcar lista"
+    }
+  },
+  "reviews": {
+    "title": "Reseñas",
+    "subtitle": "Lo que opinan los huéspedes de tus estadías",
+    "property": "Propiedad",
+    "count": "reseña(s)",
+    "unit": "Unidad",
+    "emptyTitle": "Sin reseñas todavía",
+    "emptyDescription": "Cuando los huéspedes reseñen sus estadías completadas, aparecerán aquí."
+  },
+  "seasons": {
+    "title": "Temporadas y tarifas",
+    "empty": "Esta unidad no tiene temporadas configuradas.",
+    "add": "Agregar temporada",
+    "addButton": "Agregar",
+    "name": "Nombre",
+    "start": "Desde",
+    "end": "Hasta",
+    "price": "Precio/noche (opcional)",
+    "minNights": "Noches mín. (opcional)",
+    "min": "mín.",
+    "created": "Temporada creada",
+    "createError": "No se pudo crear la temporada",
+    "deleted": "Temporada eliminada",
+    "deleteError": "No se pudo eliminar la temporada",
+    "deleteTitle": "Eliminar temporada",
+    "deleteMessage": "¿Eliminar la temporada \"{{ name }}\"?"
+  },
+  "analytics": {
+    "title": "Métricas de ocupación",
+    "from": "Desde",
+    "to": "Hasta",
+    "occupancy": "Ocupación",
+    "nights": "noches",
+    "revenue": "Ingresos",
+    "adr": "Tarifa media",
+    "adrSub": "por noche reservada",
+    "units": "Unidades corto plazo"
+  },
+  "loading": "Cargando reservas…",
+  "empty": "No hay reservas para mostrar",
+  "property": "Propiedad",
+  "statusLabel": "Estado",
+  "allStatuses": "Todos los estados",
+  "nights": "noches",
+  "confirmAction": "¿Confirmas la acción \"{{action}}\" sobre esta reserva?",
+  "actionSuccess": "Reserva actualizada correctamente",
+  "actionError": "No se pudo actualizar la reserva",
+  "status": {
+    "pending_payment": "Pendiente de pago",
+    "pending": "Pendiente",
+    "confirmed": "Confirmada",
+    "in_progress": "En curso",
+    "completed": "Completada",
+    "cancelled": "Cancelada",
+    "expired": "Expirada",
+    "no_show": "No se presentó",
+    "declined": "Rechazada"
+  },
+  "action": {
+    "confirm": "Confirmar",
+    "decline": "Rechazar",
+    "cancel": "Cancelar",
+    "check_in": "Registrar ingreso",
+    "no_show": "Marcar no-show",
+    "complete": "Completar"
+  }
+}

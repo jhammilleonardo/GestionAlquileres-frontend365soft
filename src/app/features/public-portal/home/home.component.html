@@ -1,10 +1,13 @@
 <div class="home-container">
   <!-- Hero Section -->
-  <section class="hero-section">
+  <section class="hero-section" [class.has-image]="heroImage()">
+    @if (heroImage()) {
+      <img [src]="heroImage()" alt="" class="hero-bg" fetchpriority="high" decoding="async" />
+    }
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <h1 class="hero-title">{{ 'public.home.heroTitle' | transloco }}</h1>
-      <p class="hero-subtitle">{{ 'public.home.heroSubtitle' | transloco }}</p>
+      <h1 class="hero-title">{{ heroTitle() || ('public.home.heroTitle' | transloco) }}</h1>
+      <p class="hero-subtitle">{{ heroSubtitle() || ('public.home.heroSubtitle' | transloco) }}</p>
       <div class="hero-actions">
         <button type="button" class="btn-primary" (click)="navigateToProperties()">
           <lucide-icon [img]="Search" />
@@ -25,29 +28,41 @@
       <p class="section-subtitle">{{ 'public.home.featuresSubtitle' | transloco }}</p>
 
       <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <lucide-icon [img]="CheckCircle" />
+        @if (hasCustomFeatures()) {
+          @for (feature of features(); track $index) {
+            <div class="feature-card">
+              <div class="feature-icon">
+                <lucide-icon [img]="feature.icon" />
+              </div>
+              <h3 class="feature-title">{{ feature.title }}</h3>
+              <p class="feature-description">{{ feature.description }}</p>
+            </div>
+          }
+        } @else {
+          <div class="feature-card">
+            <div class="feature-icon">
+              <lucide-icon [img]="CheckCircle" />
+            </div>
+            <h3 class="feature-title">{{ 'public.home.f1Title' | transloco }}</h3>
+            <p class="feature-description">{{ 'public.home.f1Desc' | transloco }}</p>
           </div>
-          <h3 class="feature-title">{{ 'public.home.f1Title' | transloco }}</h3>
-          <p class="feature-description">{{ 'public.home.f1Desc' | transloco }}</p>
-        </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <lucide-icon [img]="Star" />
+          <div class="feature-card">
+            <div class="feature-icon">
+              <lucide-icon [img]="Star" />
+            </div>
+            <h3 class="feature-title">{{ 'public.home.f2Title' | transloco }}</h3>
+            <p class="feature-description">{{ 'public.home.f2Desc' | transloco }}</p>
           </div>
-          <h3 class="feature-title">{{ 'public.home.f2Title' | transloco }}</h3>
-          <p class="feature-description">{{ 'public.home.f2Desc' | transloco }}</p>
-        </div>
 
-        <div class="feature-card">
-          <div class="feature-icon">
-            <lucide-icon [img]="Home" />
+          <div class="feature-card">
+            <div class="feature-icon">
+              <lucide-icon [img]="Home" />
+            </div>
+            <h3 class="feature-title">{{ 'public.home.f3Title' | transloco }}</h3>
+            <p class="feature-description">{{ 'public.home.f3Desc' | transloco }}</p>
           </div>
-          <h3 class="feature-title">{{ 'public.home.f3Title' | transloco }}</h3>
-          <p class="feature-description">{{ 'public.home.f3Desc' | transloco }}</p>
-        </div>
+        }
       </div>
     </div>
   </section>
@@ -76,77 +91,12 @@
       } @else if (featuredProperties().length > 0) {
         <div class="properties-grid">
           @for (property of featuredProperties(); track property.id) {
-            <div class="property-card" (click)="viewProperty(property.id)">
-              <div class="property-img-wrapper">
-                <img
-                  [src]="getPropertyImageUrl(property) || 'assets/placeholder.jpg'"
-                  [alt]="property.title"
-                  class="property-img"
-                  (error)="setPlaceholderImage($event)"
-                />
-                <span class="badge-status">{{ 'public.home.available' | transloco }}</span>
-                @if (getPriceDisplay(property); as price) {
-                  <div class="price-badge">
-                    {{ property.currency || 'USD' }}
-                    {{ price.amount | number: '1.0-0' }} {{ price.periodKey | transloco }}
-                  </div>
-                }
-              </div>
-
-              <div class="property-content">
-                <h3 class="property-name">{{ property.title }}</h3>
-
-                <div class="property-location">
-                  <lucide-icon [img]="MapPin" class="loc-icon" />
-                  <span>{{ getPropertyAddress(property) }}</span>
-                </div>
-
-                <div class="property-stats">
-                  @if (property.square_meters) {
-                    <div class="stat">
-                      <lucide-icon [img]="Maximize" class="stat-icon" />
-                      <span>{{ property.square_meters }}m²</span>
-                    </div>
-                  }
-                  @if (property.bedrooms) {
-                    <div class="stat">
-                      <lucide-icon [img]="BedDouble" class="stat-icon" />
-                      <span
-                        >{{ property.bedrooms }}
-                        {{ 'public.properties.bedrooms' | transloco }}</span
-                      >
-                    </div>
-                  }
-                  @if (property.bathrooms) {
-                    <div class="stat">
-                      <lucide-icon [img]="Bath" class="stat-icon" />
-                      <span
-                        >{{ property.bathrooms }}
-                        {{ 'public.properties.bathrooms' | transloco }}</span
-                      >
-                    </div>
-                  }
-                </div>
-
-                <div class="property-tags">
-                  @if (property.property_type) {
-                    <span class="tag">{{ property.property_type.name }}</span>
-                  }
-                  @if (property.property_subtype) {
-                    <span class="tag tag-secondary">{{ property.property_subtype.name }}</span>
-                  }
-                </div>
-
-                <button
-                  type="button"
-                  class="btn-details"
-                  (click)="viewProperty(property.id); $event.stopPropagation()"
-                >
-                  {{ 'public.home.viewDetails' | transloco }}
-                  <lucide-icon [img]="ArrowRight" class="btn-icon" />
-                </button>
-              </div>
-            </div>
+            <app-public-property-card
+              [property]="property"
+              [favorite]="isFavorite(property.id)"
+              (view)="viewProperty($event)"
+              (favoriteToggle)="toggleFavorite($event)"
+            />
           }
         </div>
 
@@ -168,8 +118,8 @@
   <!-- CTA Section -->
   <section class="cta-section">
     <div class="container">
-      <h2 class="cta-title">{{ 'public.home.ctaTitle' | transloco }}</h2>
-      <p class="cta-subtitle">{{ 'public.home.ctaSubtitle' | transloco }}</p>
+      <h2 class="cta-title">{{ ctaTitle() || ('public.home.ctaTitle' | transloco) }}</h2>
+      <p class="cta-subtitle">{{ ctaSubtitle() || ('public.home.ctaSubtitle' | transloco) }}</p>
       <button type="button" class="btn-cta" (click)="navigateToProperties()">
         {{ 'public.home.ctaBtn' | transloco }}
         <lucide-icon [img]="ArrowRight" />

@@ -31,6 +31,7 @@ const ADMIN_MODULES = [
   'audit',
   'website',
   'applications',
+  'accounting',
 ];
 
 @Injectable({ providedIn: 'root' })

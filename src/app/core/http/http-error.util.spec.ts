@@ -27,7 +27,7 @@ describe('getApiErrorMessage', () => {
 
   it('devuelve mensaje de sin conexión cuando status es 0', () => {
     const error = new HttpErrorResponse({ status: 0 });
-    expect(getApiErrorMessage(error)).toContain('No se pudo conectar');
+    expect(getApiErrorMessage(error)).toContain('No se pudo contactar con el servidor');
   });
 
   it('usa el fallback cuando el error no aporta información', () => {

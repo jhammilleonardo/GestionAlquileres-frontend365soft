@@ -87,6 +87,17 @@ describe('ApplicationService', () => {
     req.flush([]);
   });
 
+  it('no envia Authorization vacio cuando la sesion usa cookie HttpOnly', () => {
+    sessionToken.setToken('admin', 'admin-token');
+
+    service.getMyApplications().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}demo/applications/my-applications`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush([]);
+  });
+
   it('mantiene endpoints admin sin token tenant explicito', () => {
     sessionToken.setToken('tenant', 'tenant-token');
 

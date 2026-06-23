@@ -16,6 +16,8 @@ import {
   Tag,
   Moon,
   CalendarDays,
+  Download,
+  RefreshCw,
 } from 'lucide-angular';
 import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { Unit, UnitStatus, RentalType } from '../../../../core/models/unit.model';
@@ -43,6 +45,8 @@ export class UnitDetailPanelComponent {
   readonly Tag = Tag;
   readonly Moon = Moon;
   readonly CalendarDays = CalendarDays;
+  readonly Download = Download;
+  readonly RefreshCw = RefreshCw;
 
   readonly UnitStatus = UnitStatus;
 
@@ -54,6 +58,9 @@ export class UnitDetailPanelComponent {
   edit = output<Unit>();
   delete = output<Unit>();
   manageDates = output<Unit>();
+  exportCalendar = output<Unit>();
+  manageSeasons = output<Unit>();
+  manageCalendarSync = output<Unit>();
 
   /** El bloqueo de fechas solo aplica a unidades con alquiler de corto plazo. */
   readonly isShortTerm = computed(() => {
@@ -86,6 +93,18 @@ export class UnitDetailPanelComponent {
 
   onManageDates(): void {
     this.manageDates.emit(this.unit());
+  }
+
+  onExportCalendar(): void {
+    this.exportCalendar.emit(this.unit());
+  }
+
+  onManageSeasons(): void {
+    this.manageSeasons.emit(this.unit());
+  }
+
+  onManageCalendarSync(): void {
+    this.manageCalendarSync.emit(this.unit());
   }
 
   onClose(): void {

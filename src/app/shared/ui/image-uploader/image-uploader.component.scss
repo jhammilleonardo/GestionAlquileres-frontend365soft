@@ -319,6 +319,11 @@
   color: var(--app-color-primary);
 }
 
+/* Indicador de formato fijo (no interactivo) */
+.cropper-chip--locked {
+  cursor: default;
+}
+
 .cropper-tool {
   display: inline-flex;
   align-items: center;

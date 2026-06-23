@@ -31,7 +31,7 @@
   text-decoration: none;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #2563eb;
+  color: var(--brand-primary, #2563eb);
   transition: transform 0.3s ease;
 }
 
@@ -39,9 +39,22 @@
   transform: scale(1.05);
 }
 
+/* El nombre de la empresa usa el color de marca */
+.logo-text {
+  color: var(--brand-primary, #2563eb);
+}
+
 .logo-icon {
   width: 28px;
   height: 28px;
+  color: var(--brand-primary, #2563eb);
+}
+
+.logo-img {
+  height: 36px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
 }
 
 .mobile-menu-btn {
@@ -57,9 +70,21 @@
 .mobile-menu-btn span {
   width: 25px;
   height: 3px;
-  background: #2563eb;
+  background: var(--brand-primary, #2563eb);
   border-radius: 3px;
   transition: all 0.3s ease;
+  transform-origin: center;
+}
+
+/* Hamburguesa → X cuando el menú está abierto */
+.mobile-menu-btn.open span:nth-child(1) {
+  transform: translateY(7.5px) rotate(45deg);
+}
+.mobile-menu-btn.open span:nth-child(2) {
+  opacity: 0;
+}
+.mobile-menu-btn.open span:nth-child(3) {
+  transform: translateY(-7.5px) rotate(-45deg);
 }
 
 .navbar-menu {
@@ -93,13 +118,13 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: linear-gradient(to right, #2563eb, #1e40af);
+  background: var(--brand-primary, #2563eb);
   transition: width 0.3s ease;
 }
 
 .nav-link:hover,
 .nav-link.active {
-  color: #2563eb;
+  color: var(--brand-primary, #2563eb);
 }
 
 .nav-link:hover::after,
@@ -124,9 +149,9 @@
 }
 
 .btn-login {
-  color: #2563eb;
+  color: var(--brand-primary, #2563eb);
   background: transparent;
-  border: 2px solid #2563eb;
+  border: 2px solid var(--brand-primary, #2563eb);
 }
 
 .btn-login:hover {
@@ -136,7 +161,7 @@
 
 .btn-register {
   color: white;
-  background: linear-gradient(135deg, #2563eb, #1e40af);
+  background: var(--brand-primary, #2563eb);
   border: none;
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
 }
@@ -152,23 +177,29 @@
   }
 
   .navbar-menu {
-    position: fixed;
-    top: 80px;
+    /* Anclado justo debajo del navbar (sin hueco), sea cual sea su altura. */
+    position: absolute;
+    top: 100%;
     left: 0;
     right: 0;
     background: white;
     flex-direction: column;
-    padding: 2rem;
-    gap: 2rem;
-    transform: translateX(-100%);
+    align-items: stretch;
+    padding: 1.5rem 2rem 2rem;
+    gap: 1.5rem;
     opacity: 0;
-    transition: all 0.3s ease;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
   }
 
   .navbar-menu.active {
-    transform: translateX(0);
     opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
   }
 
   .navbar-links {

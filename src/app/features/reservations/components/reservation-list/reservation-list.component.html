@@ -1,0 +1,46 @@
+<div class="reservation-list">
+  @for (reservation of reservations(); track reservation.id) {
+    <article class="rsv-card">
+      <div class="rsv-head">
+        <div class="rsv-title">
+          <strong>#{{ reservation.id }} · {{ reservation.property_name }}</strong>
+          @if (reservation.unit_number) {
+            <span class="rsv-unit">{{ reservation.unit_number }}</span>
+          }
+          <app-status-badge
+            [label]="'reservations.status.' + reservation.status | transloco"
+            [tone]="toneFor()(reservation.status)"
+          />
+        </div>
+        <span class="rsv-total">{{ reservation.total_amount }} {{ reservation.currency }}</span>
+      </div>
+
+      <div class="rsv-meta">
+        <span>
+          {{ reservation.checkin_date | slice: 0 : 10 }}
+          →
+          {{ reservation.checkout_date | slice: 0 : 10 }}
+          ({{ reservation.nights }} {{ 'reservations.nights' | transloco }})
+        </span>
+        @if (reservation.tenant_name) {
+          <span>{{ reservation.tenant_name }}</span>
+        }
+      </div>
+
+      @if (actionsFor()(reservation).length > 0) {
+        <div class="rsv-actions">
+          @for (action of actionsFor()(reservation); track action) {
+            <app-button
+              size="s"
+              appearance="secondary"
+              [disabled]="busyId() === reservation.id"
+              (clicked)="emitAction(reservation, action)"
+            >
+              {{ 'reservations.action.' + action | transloco }}
+            </app-button>
+          }
+        </div>
+      }
+    </article>
+  }
+</div>

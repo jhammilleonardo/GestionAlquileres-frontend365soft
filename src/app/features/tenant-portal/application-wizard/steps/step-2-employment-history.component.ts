@@ -1,4 +1,13 @@
-import { Component, inject, input, output, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  output,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormArray,
@@ -18,6 +27,8 @@ import {
   AppSelectOption,
   AppTextFieldComponent,
 } from '../../../../shared/ui';
+import { toDateOnly } from '../../../../core/utils/date-only.util';
+import { sanitizePhoneInput } from '../../../../core/utils/input-sanitizers';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -120,6 +131,8 @@ import {
             <app-text-field
               [formControl]="getControl('current_job.supervisor_phone')"
               type="tel"
+              inputMode="tel"
+              [inputFilter]="sanitizePhone"
               [label]="'rentalApp.supervisorPhone' | transloco"
               placeholder="+591 70000000"
             />
@@ -211,6 +224,8 @@ import {
                   <app-text-field
                     [formControl]="getHistoryControl(history, 'landlord_phone')"
                     type="tel"
+                    inputMode="tel"
+                    [inputFilter]="sanitizePhone"
                     [label]="'rentalApp.landlordPhone' | transloco"
                     placeholder="+591 70000000"
                   />
@@ -369,14 +384,16 @@ export class Step2EmploymentHistoryComponent implements OnInit {
   protected readonly Briefcase = Briefcase;
   protected readonly Plus = Plus;
   protected readonly Trash2 = Trash2;
+  protected readonly sanitizePhone = sanitizePhoneInput;
 
   readonly formGroup = input.required<FormGroup>();
   readonly isValid = output<boolean>();
 
   private readonly fb = inject(FormBuilder);
   private readonly translocoService = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly today = new Date().toISOString().slice(0, 10);
+  protected readonly today = toDateOnly(new Date());
   protected readonly currencyOptions: readonly AppSelectOption<string>[] = [
     { label: 'USD - Dolar', value: 'USD' },
     { label: 'BOB - Boliviano', value: 'BOB' },
@@ -400,7 +417,9 @@ export class Step2EmploymentHistoryComponent implements OnInit {
     }
 
     this.isValid.emit(this.form.valid);
-    this.form.valueChanges.subscribe(() => this.isValid.emit(this.form.valid));
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.isValid.emit(this.form.valid));
   }
 
   protected getControl(path: string): FormControl {

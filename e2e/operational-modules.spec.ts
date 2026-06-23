@@ -40,12 +40,10 @@ test.describe('Modulos operativos admin', () => {
       'kpis',
     ];
 
-    const authHeaders = { Authorization: `Bearer ${session.access_token}` };
     for (const report of reports) {
       const pdf = await getWithRetry(
         page,
         new URL(`${slug}/admin/reports/${report}?format=pdf`, API_URL).toString(),
-        { headers: authHeaders },
       );
       expect(pdf.ok(), `${report} PDF export failed`).toBe(true);
       expect(pdf.headers()['content-type']).toContain('application/pdf');
@@ -54,7 +52,6 @@ test.describe('Modulos operativos admin', () => {
       const excel = await getWithRetry(
         page,
         new URL(`${slug}/admin/reports/${report}?format=excel`, API_URL).toString(),
-        { headers: authHeaders },
       );
       expect(excel.ok(), `${report} Excel export failed`).toBe(true);
       expect(excel.headers()['content-type']).toContain('spreadsheetml.sheet');
@@ -124,7 +121,7 @@ test.describe('Owner portal', () => {
     await expect(page).toHaveURL(/\/demo\/owner\/login/, { timeout: 10000 });
     await expect(page.getByRole('heading', { name: /iniciar sesión/i })).toBeVisible();
     await expect(page.getByLabel(/correo/i)).toBeVisible();
-    await expect(page.getByLabel(/contraseña/i)).toBeVisible();
+    await expect(page.getByRole('textbox', { name: /contraseña/i })).toBeVisible();
   });
 
   test('propietario autenticado navega dashboard, mantenimiento, statements y contratos', async ({

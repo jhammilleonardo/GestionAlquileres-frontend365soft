@@ -1,55 +1,160 @@
-<section class="owner-login">
-  <div class="brand">
-    <span class="brand-icon">
-      <lucide-icon [img]="Building2" [size]="28" />
-    </span>
-    <div>
-      <p>{{ 'ownerPortal.auth.kicker' | transloco }}</p>
-      <h1>{{ 'ownerPortal.auth.title' | transloco }}</h1>
+<div class="login-page">
+  <!-- Lado izquierdo - Branding -->
+  <div class="login-brand">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <lucide-icon [img]="Building2" [size]="56"></lucide-icon>
+      </div>
+      <h1>365Soft</h1>
+      <h2>{{ 'ownerPortal.auth.kicker' | transloco }}</h2>
+      <p class="brand-tagline">{{ 'ownerPortal.auth.tagline' | transloco }}</p>
+
+      <div class="features">
+        <div class="feature-item">
+          <lucide-icon [img]="Home" [size]="20"></lucide-icon>
+          <span>{{ 'ownerPortal.auth.feature1' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="Wallet" [size]="20"></lucide-icon>
+          <span>{{ 'ownerPortal.auth.feature2' | transloco }}</span>
+        </div>
+        <div class="feature-item">
+          <lucide-icon [img]="FileText" [size]="20"></lucide-icon>
+          <span>{{ 'ownerPortal.auth.feature3' | transloco }}</span>
+        </div>
+      </div>
     </div>
   </div>
 
-  <form class="login-card" [formGroup]="form" (ngSubmit)="submit()">
-    <header>
-      <h2>{{ 'ownerPortal.auth.signIn' | transloco }}</h2>
-      <p>{{ 'ownerPortal.auth.subtitle' | transloco }}</p>
-    </header>
+  <!-- Lado derecho - Formulario -->
+  <div class="login-form-container">
+    <div class="login-form-wrapper">
+      <!-- Marca compacta (solo móvil/tablet, cuando el panel lateral se oculta) -->
+      <div class="mobile-brand">
+        <span class="mobile-brand__logo">
+          <lucide-icon [img]="Building2" [size]="30"></lucide-icon>
+        </span>
+        <div class="mobile-brand__text">
+          <strong>365Soft</strong>
+          <span>{{ 'ownerPortal.auth.kicker' | transloco }}</span>
+        </div>
+      </div>
 
-    <app-text-field
-      formControlName="email"
-      [label]="'auth.email' | transloco"
-      autocomplete="email"
-      type="email"
-      [placeholder]="'ownerPortal.auth.emailPlaceholder' | transloco"
-    />
+      <div class="lang-toggle-row">
+        <div
+          class="lang-toggle"
+          role="group"
+          [attr.aria-label]="'common.languageSelector' | transloco"
+        >
+          <button
+            type="button"
+            class="lang-btn"
+            [class.active]="languageService.isSpanish()"
+            (click)="languageService.setLanguage('es')"
+            [attr.aria-label]="'common.spanish' | transloco"
+          >
+            ES
+          </button>
+          <button
+            type="button"
+            class="lang-btn"
+            [class.active]="languageService.isEnglish()"
+            (click)="languageService.setLanguage('en')"
+            [attr.aria-label]="'common.english' | transloco"
+          >
+            EN
+          </button>
+        </div>
+      </div>
 
-    <app-text-field
-      formControlName="password"
-      [label]="'auth.password' | transloco"
-      autocomplete="current-password"
-      type="password"
-      [placeholder]="'ownerPortal.auth.passwordPlaceholder' | transloco"
-    />
+      <div class="form-header">
+        <h3>{{ 'ownerPortal.auth.signIn' | transloco }}</h3>
+        <p>{{ 'ownerPortal.auth.subtitle' | transloco }}</p>
+      </div>
 
-    <app-checkbox
-      formControlName="rememberMe"
-      [label]="'ownerPortal.auth.rememberMe' | transloco"
-    />
-
-    @if (errorMessage()) {
-      <p class="error">{{ errorMessage() }}</p>
-    }
-
-    <app-button type="submit" [loading]="isLoading()" [disabled]="form.invalid || isLoading()">
-      @if (!isLoading()) {
-        <lucide-icon [img]="LockKeyhole" [size]="18" />
+      @if (errorMessage()) {
+        <div class="error-alert">
+          <lucide-icon [img]="AlertCircle" [size]="18"></lucide-icon>
+          <div class="error-content">
+            <strong>{{ 'ownerPortal.auth.loginError' | transloco }}</strong>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </div>
       }
-      {{ 'ownerPortal.auth.submit' | transloco }}
-    </app-button>
 
-    <a routerLink="/forgot-password" class="forgot">
-      <lucide-icon [img]="Mail" [size]="16" />
-      {{ 'auth.forgotPasswordLink' | transloco }}
-    </a>
-  </form>
-</section>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+        <div class="field-block">
+          <app-text-field
+            formControlName="email"
+            type="email"
+            autocomplete="email"
+            [label]="'auth.email' | transloco"
+            [placeholder]="'ownerPortal.auth.emailPlaceholder' | transloco"
+          />
+          @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+            <p class="field-error">{{ 'auth.emailRequired' | transloco }}</p>
+          } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
+            <p class="field-error">{{ 'auth.emailInvalid' | transloco }}</p>
+          }
+        </div>
+
+        <div class="field-block">
+          <div class="password-wrapper">
+            <app-text-field
+              formControlName="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              autocomplete="current-password"
+              [label]="'auth.password' | transloco"
+              [placeholder]="'ownerPortal.auth.passwordPlaceholder' | transloco"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePassword()"
+              tabindex="-1"
+              [attr.aria-label]="
+                showPassword()
+                  ? ('auth.hidePassword' | transloco)
+                  : ('auth.showPassword' | transloco)
+              "
+            >
+              <lucide-icon [img]="showPassword() ? EyeOff : Eye" [size]="18" />
+            </button>
+          </div>
+          @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+            <p class="field-error">{{ 'auth.passwordRequired' | transloco }}</p>
+          }
+        </div>
+
+        <div class="form-options">
+          <app-checkbox
+            formControlName="rememberMe"
+            [label]="'ownerPortal.auth.rememberMe' | transloco"
+          />
+          <a routerLink="/forgot-password" class="forgot-link">{{
+            'auth.forgotPassword' | transloco
+          }}</a>
+        </div>
+
+        <app-button
+          type="submit"
+          class="submit-btn"
+          [fullWidth]="true"
+          [loading]="isLoading()"
+          [disabled]="form.invalid || isLoading()"
+        >
+          {{
+            isLoading() ? ('auth.loggingIn' | transloco) : ('ownerPortal.auth.submit' | transloco)
+          }}
+        </app-button>
+      </form>
+
+      <div class="form-footer">
+        <div class="security-badge">
+          <lucide-icon [img]="Shield" [size]="16"></lucide-icon>
+          <span>{{ 'auth.sslBadge' | transloco }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

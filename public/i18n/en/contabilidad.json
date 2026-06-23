@@ -1,6 +1,8 @@
 {
   "title": "Accounting",
   "subtitle": "Expenses and balance of your properties",
+  "expensesTitle": "Expenses",
+  "expensesSubtitle": "Track and manage outflows for your properties",
   "new": "Add expense",
   "exportExcel": "Export Excel",
   "loading": "Loading expenses...",

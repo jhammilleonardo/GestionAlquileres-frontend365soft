@@ -1,0 +1,146 @@
+@let prop = property();
+
+<div class="glass-card">
+  <!-- Image Section -->
+  <div
+    class="card-image-section"
+    role="button"
+    tabindex="0"
+    [attr.aria-label]="prop.title"
+    (click)="onView()"
+    (keydown.enter)="onView()"
+    (keydown.space)="onView(); $event.preventDefault()"
+  >
+    <img
+      [src]="getPropertyImageUrl(prop)"
+      [alt]="prop.title"
+      class="card-bg-img"
+      loading="lazy"
+      (error)="handleImageError($event)"
+    />
+    <div class="image-fade"></div>
+
+    <button
+      type="button"
+      class="btn-bookmark"
+      [class.is-fav]="favorite()"
+      (click)="onToggleFavorite($event)"
+      [title]="'public.properties.saveFavorite' | transloco"
+    >
+      <lucide-icon [img]="Heart" />
+    </button>
+
+    <span
+      class="rental-type-pill"
+      [attr.data-type]="(prop.rental_type || 'LONG_TERM').toUpperCase()"
+    >
+      {{ rentalTypeLabel(prop) | transloco }}
+    </span>
+  </div>
+
+  <!-- Content Section -->
+  <div class="card-content">
+    <div class="info-section">
+      <div
+        class="main-info"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="prop.title"
+        (click)="onView()"
+        (keydown.enter)="onView()"
+        (keydown.space)="onView(); $event.preventDefault()"
+      >
+        <h3 class="title">{{ prop.title }}</h3>
+        @if (getPropertyAddress(prop)) {
+          <p class="subtitle">{{ getPropertyAddress(prop) }}</p>
+        }
+      </div>
+
+      @if (prop.property_type || prop.is_furnished) {
+        <div class="tags-column">
+          @if (prop.property_type) {
+            <div class="tags-pill">
+              <div class="tag-icons">
+                <div class="t-icon-circle bg-blue">
+                  <lucide-icon [img]="Home" class="t-icon" />
+                </div>
+                @if (prop.property_subtype) {
+                  <div class="t-icon-circle bg-orange">
+                    <lucide-icon [img]="MapPin" class="t-icon" />
+                  </div>
+                }
+              </div>
+              <span>{{ prop.property_type.name }}</span>
+            </div>
+          }
+          @if (prop.is_furnished) {
+            <div class="furnished-chip">
+              <lucide-icon [img]="Sofa" class="furnished-icon" />
+              <span>{{ 'public.properties.furnished' | transloco }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="bottom-section">
+      <div class="stats-container">
+        @if (prop.square_meters) {
+          <div class="stat-block">
+            <span class="stat-value">
+              <lucide-icon [img]="Maximize" class="inline-icon" />
+              {{ prop.square_meters }}
+            </span>
+            <span class="stat-label">{{ 'public.properties.area' | transloco }}</span>
+          </div>
+        }
+
+        @if (prop.bedrooms) {
+          <div class="stat-block">
+            <span class="stat-value">
+              <lucide-icon [img]="Home" class="inline-icon" />
+              {{ prop.bedrooms }}
+            </span>
+            <span class="stat-label">{{ 'public.properties.bedrooms' | transloco }}</span>
+          </div>
+        }
+
+        @if (prop.bathrooms) {
+          <div class="stat-block">
+            <span class="stat-value">
+              <lucide-icon [img]="Bath" class="inline-icon" />
+              {{ prop.bathrooms }}
+            </span>
+            <span class="stat-label">{{ 'public.properties.bathrooms' | transloco }}</span>
+          </div>
+        }
+
+        @if (prop.parking_spaces) {
+          <div class="stat-block">
+            <span class="stat-value">
+              <lucide-icon [img]="Car" class="inline-icon" />
+              {{ prop.parking_spaces }}
+            </span>
+            <span class="stat-label">{{ 'public.properties.parking' | transloco }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="price-action">
+        @if (getPriceDisplay(prop); as price) {
+          <div class="price-block">
+            <span class="price-value">
+              {{ prop.currency || 'BOB' }}
+              {{ price.amount | number: '1.0-0' }}
+            </span>
+            <span class="price-label">{{ price.labelKey | transloco }}</span>
+          </div>
+        }
+
+        <button type="button" class="btn-action" (click)="onView(); $event.stopPropagation()">
+          {{ 'public.properties.viewDetails' | transloco }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

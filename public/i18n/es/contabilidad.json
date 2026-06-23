@@ -1,6 +1,8 @@
 {
   "title": "Contabilidad",
   "subtitle": "Gastos y balance de tus propiedades",
+  "expensesTitle": "Gastos",
+  "expensesSubtitle": "Registro de egresos y gastos de tus propiedades",
   "new": "Registrar gasto",
   "exportExcel": "Exportar Excel",
   "loading": "Cargando gastos...",
