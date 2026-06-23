@@ -5,6 +5,7 @@ import { filter, switchMap, catchError, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '../../../environments/environment';
 import { SlugService } from './slug.service';
+import { SessionTokenService } from './session-token.service';
 import type { UserRole } from '../models/user.model';
 
 export interface MyPermissions {
@@ -38,6 +39,7 @@ const ADMIN_MODULES = [
 export class PermissionsService {
   private http = inject(HttpClient);
   private slugService = inject(SlugService);
+  private sessionTokens = inject(SessionTokenService);
   private router = inject(Router);
 
   private permissionsSignal = signal<MyPermissions | null>(null);
@@ -92,7 +94,11 @@ export class PermissionsService {
 
   private fetchPermissions() {
     const slug = this.slugService.getSlug();
-    if (!slug) return of(null);
+    // Los permisos solo aplican al área admin. Sin token de admin (portal
+    // público, inquilino, owner/vendor o sin sesión) NO se llama al endpoint
+    // admin: evita el 401 que el interceptor interpretaría como sesión vencida
+    // y terminaría cerrando la sesión del usuario.
+    if (!slug || !this.sessionTokens.getToken('admin')) return of(null);
 
     return this.http
       .get<MyPermissions>(`${environment.apiUrl}${slug}/admin/employees/my-permissions`)

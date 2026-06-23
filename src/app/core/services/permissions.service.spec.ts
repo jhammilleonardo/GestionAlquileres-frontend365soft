@@ -6,24 +6,33 @@ import { Subject } from 'rxjs';
 
 import { PermissionsService, type MyPermissions } from './permissions.service';
 import { SlugService } from './slug.service';
+import { SessionTokenService } from './session-token.service';
 import { environment } from '../../../environments/environment';
 
 describe('PermissionsService', () => {
   let service: PermissionsService;
   let httpMock: HttpTestingController;
+  // Token de admin simulado; null = sin sesión admin (portal público, inquilino…).
+  let adminToken: string | null;
 
-  function setup(): void {
+  function configure(): void {
     TestBed.configureTestingModule({
       providers: [
         PermissionsService,
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: SlugService, useValue: { getSlug: () => 'acme' } },
+        { provide: SessionTokenService, useValue: { getToken: () => adminToken } },
         { provide: Router, useValue: { events: new Subject() } },
       ],
     });
     service = TestBed.inject(PermissionsService);
     httpMock = TestBed.inject(HttpTestingController);
+  }
+
+  function setup(): void {
+    adminToken = 'admin-token';
+    configure();
     // El constructor dispara un fetch inicial; lo respondemos vacío por defecto.
     flushInitial();
   }
@@ -33,11 +42,25 @@ describe('PermissionsService', () => {
     req.flush(perms);
   }
 
+  beforeEach(() => {
+    adminToken = null;
+  });
+
   afterEach(() => {
     localStorage.clear();
     sessionStorage.clear();
     httpMock.match(() => true).forEach((r) => r.flush(null));
     httpMock.verify();
+  });
+
+  it('no llama al endpoint admin si no hay token de admin (portal público)', () => {
+    adminToken = null;
+    configure();
+
+    // Sin token admin no debe haber ninguna petición a my-permissions.
+    httpMock.expectNone(`${environment.apiUrl}acme/admin/employees/my-permissions`);
+    expect(service.permissions()).toBeNull();
+    expect(service.canView('properties')).toBe(false);
   });
 
   it('canView devuelve false si no hay permisos cargados', () => {
@@ -93,17 +116,8 @@ describe('PermissionsService', () => {
 
   it('usa permisos completos para ADMIN si el endpoint falla', () => {
     localStorage.setItem('admin_user', JSON.stringify({ role: 'ADMIN' }));
-    TestBed.configureTestingModule({
-      providers: [
-        PermissionsService,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: SlugService, useValue: { getSlug: () => 'acme' } },
-        { provide: Router, useValue: { events: new Subject() } },
-      ],
-    });
-    service = TestBed.inject(PermissionsService);
-    httpMock = TestBed.inject(HttpTestingController);
+    adminToken = 'admin-token';
+    configure();
 
     httpMock
       .expectOne(`${environment.apiUrl}acme/admin/employees/my-permissions`)
