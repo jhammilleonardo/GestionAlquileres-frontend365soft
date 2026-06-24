@@ -2,6 +2,9 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   padding-top: 80px;
+  /* Seguro contra desbordes horizontales en móvil (bandas/secciones a todo el
+     ancho): el contenido nunca debe generar scroll lateral. */
+  overflow-x: hidden;
 }
 
 /* ============ HERO SECTION ============ */
@@ -441,6 +444,11 @@
   .properties-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Menos padding lateral en móvil para dar ancho a las cards */
+  .hero-section { padding: 3.5rem 1rem; }
+  .properties-section { padding: 1rem 1rem 2rem; }
+  .results-header { padding: 0 1rem; }
 }
 
 /* ============ MAP MODAL ============ */
