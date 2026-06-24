@@ -413,21 +413,31 @@ export class AuthService {
     data: { name?: string; email?: string; phone?: string },
   ): Observable<User> {
     const slug = this.slugService.getSlug();
-    return this.http.patch<AdminUser>(`${environment.apiUrl}${slug}/users/${id}`, data).pipe(
-      map((updatedUser) => {
-        const user: User = {
-          id: updatedUser.id.toString(),
-          name: updatedUser.name,
-          email: updatedUser.email,
-          role: updatedUser.role,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(updatedUser.name)}&background=0D8ABC&color=fff`,
-          tenant_slug: updatedUser.tenant_slug,
-        };
-        this.currentUserSignal.set(user);
-        this.saveUserToStorage(user);
-        return user;
-      }),
-    );
+    return this.http
+      .patch<Partial<AdminUser>>(`${environment.apiUrl}${slug}/users/${id}`, data)
+      .pipe(
+        map((updatedUser) => {
+          // Fusionar la respuesta sobre el usuario conocido: el guardado ya tuvo
+          // éxito (sin error HTTP), así que aunque la API devuelva un cuerpo
+          // parcial no debemos perder datos ni romper con `id` undefined.
+          const current = this.currentUserSignal();
+          const name = updatedUser.name ?? current?.name ?? '';
+          const user: User = {
+            id: (updatedUser.id ?? current?.id ?? id).toString(),
+            name,
+            email: updatedUser.email ?? current?.email ?? '',
+            // El rol nunca lo decide esta respuesta: se conserva el de la sesión
+            // (la fuente real de autorización es el backend). Si faltara, se asume
+            // el de menor privilegio en lugar de uno administrativo.
+            role: current?.role ?? updatedUser.role ?? 'INQUILINO',
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff`,
+            tenant_slug: updatedUser.tenant_slug ?? current?.tenant_slug,
+          };
+          this.currentUserSignal.set(user);
+          this.saveUserToStorage(user);
+          return user;
+        }),
+      );
   }
 
   /**

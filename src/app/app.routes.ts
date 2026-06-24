@@ -4,6 +4,7 @@ import { ownerAuthGuard, ownerLoginGuard } from './core/guards/owner-auth.guard'
 import { vendorAuthGuard, vendorLoginGuard } from './core/guards/vendor-auth.guard';
 import { tenantLoginGuard } from './core/guards/tenant-auth.guard';
 import { wizardGuard } from './core/guards/setup-complete.guard';
+import { slugResolverGuard } from './core/guards/slug-resolver.guard';
 
 export const routes: Routes = [
   // ==================== LANDING PAGE (PÚBLICO) ====================
@@ -50,6 +51,7 @@ export const routes: Routes = [
       },
       {
         path: 'register',
+        canActivate: [slugResolverGuard],
         loadComponent: () =>
           import('./features/public-portal/tenant-register/tenant-register.component').then(
             (m) => m.TenantRegisterComponent,
@@ -59,6 +61,7 @@ export const routes: Routes = [
       // ==================== PORTAL PÚBLICO ====================
       {
         path: 'publico',
+        canActivate: [slugResolverGuard],
         loadChildren: () =>
           import('./features/public-portal/public-portal.routes').then(
             (m) => m.PUBLIC_PORTAL_ROUTES,

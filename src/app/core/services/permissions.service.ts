@@ -5,7 +5,6 @@ import { filter, switchMap, catchError, of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { environment } from '../../../environments/environment';
 import { SlugService } from './slug.service';
-import { SessionTokenService } from './session-token.service';
 import type { UserRole } from '../models/user.model';
 
 export interface MyPermissions {
@@ -39,7 +38,6 @@ const ADMIN_MODULES = [
 export class PermissionsService {
   private http = inject(HttpClient);
   private slugService = inject(SlugService);
-  private sessionTokens = inject(SessionTokenService);
   private router = inject(Router);
 
   private permissionsSignal = signal<MyPermissions | null>(null);
@@ -94,15 +92,23 @@ export class PermissionsService {
 
   private fetchPermissions() {
     const slug = this.slugService.getSlug();
-    // Los permisos solo aplican al área admin. Sin token de admin (portal
+    // Los permisos solo aplican al área admin. Sin sesión de admin (portal
     // público, inquilino, owner/vendor o sin sesión) NO se llama al endpoint
     // admin: evita el 401 que el interceptor interpretaría como sesión vencida
     // y terminaría cerrando la sesión del usuario.
-    if (!slug || !this.sessionTokens.getToken('admin')) return of(null);
+    //
+    // La sesión admin se detecta por el usuario persistido (`admin_user`), NO por
+    // un token en storage: el JWT del admin viaja en una cookie HttpOnly y no es
+    // legible desde JS, así que `getToken('admin')` siempre sería null.
+    if (!slug || !this.hasAdminSession()) return of(null);
 
     return this.http
       .get<MyPermissions>(`${environment.apiUrl}${slug}/admin/employees/my-permissions`)
       .pipe(catchError(() => of(this.getFallbackPermissions())));
+  }
+
+  private hasAdminSession(): boolean {
+    return this.getStoredAdminUser() !== null;
   }
 
   private getFallbackPermissions(): MyPermissions | null {
