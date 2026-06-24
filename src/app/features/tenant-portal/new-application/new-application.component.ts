@@ -981,6 +981,12 @@ import { NewApplicationFacade } from './new-application.facade';
       gap: var(--app-space-2);
       position: sticky;
       inset-block-end: 0;
+      /* Fondo opaco al quedar fijo abajo: si no, el contenido se ve por detrás
+         del botón (era el bug del "Reservar estadía" encimado). El padding y el
+         borde lo separan limpiamente del contenido que pasa por debajo. */
+      background: var(--app-color-surface, #ffffff);
+      padding-block: var(--app-space-3);
+      border-block-start: 1px solid var(--app-color-border);
     }
 
     @media (min-width: 640px) {
