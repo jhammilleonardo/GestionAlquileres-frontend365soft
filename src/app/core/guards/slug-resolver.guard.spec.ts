@@ -53,4 +53,11 @@ describe('slugResolverGuard', () => {
     expect(run(null)).toBe(true);
     expect(setSlug).not.toHaveBeenCalled();
   });
+
+  it('ignora un slug con formato inválido (defensa contra inyección de ruta)', () => {
+    for (const malformed of ['..', 'a', 'with/slash', 'UPPER', 'has space', 'sql;drop']) {
+      expect(run(malformed)).toBe(true);
+    }
+    expect(setSlug).not.toHaveBeenCalled();
+  });
 });

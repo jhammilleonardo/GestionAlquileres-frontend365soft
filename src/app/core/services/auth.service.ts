@@ -417,15 +417,17 @@ export class AuthService {
       .patch<Partial<AdminUser>>(`${environment.apiUrl}${slug}/users/${id}`, data)
       .pipe(
         map((updatedUser) => {
-          // Fusionar la respuesta sobre el usuario conocido: el guardado ya tuvo
-          // éxito (sin error HTTP), así que aunque la API devuelva un cuerpo
-          // parcial no debemos perder datos ni romper con `id` undefined.
+          // El guardado ya tuvo éxito (sin error HTTP). Precedencia para cada
+          // campo: respuesta del servidor → lo que el usuario envió → valor
+          // actual. Usar lo enviado como respaldo garantiza que la UI refleje el
+          // cambio aunque la API devuelva un cuerpo parcial, sin revertir a un
+          // valor viejo ni romper con `id` undefined.
           const current = this.currentUserSignal();
-          const name = updatedUser.name ?? current?.name ?? '';
+          const name = updatedUser.name ?? data.name ?? current?.name ?? '';
           const user: User = {
             id: (updatedUser.id ?? current?.id ?? id).toString(),
             name,
-            email: updatedUser.email ?? current?.email ?? '',
+            email: updatedUser.email ?? data.email ?? current?.email ?? '',
             // El rol nunca lo decide esta respuesta: se conserva el de la sesión
             // (la fuente real de autorización es el backend). Si faltara, se asume
             // el de menor privilegio en lugar de uno administrativo.
