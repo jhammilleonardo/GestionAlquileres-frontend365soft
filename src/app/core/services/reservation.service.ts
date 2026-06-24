@@ -118,6 +118,11 @@ export interface MyReservation {
   has_review: boolean;
   /** Adelanto requerido para confirmar (null = pago completo). */
   deposit_required: string | null;
+  /**
+   * Momento en que vence el hold de la reserva (ISO). Para `pending_payment` es
+   * el plazo (10 min) para pagar el QR antes de que se liberen las fechas.
+   */
+  expires_at: string | null;
 }
 
 export interface ExtendedReservation extends MyReservation {

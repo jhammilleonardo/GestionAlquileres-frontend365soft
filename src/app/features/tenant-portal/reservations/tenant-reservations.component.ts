@@ -8,6 +8,7 @@ import { TenantReservationsFacade } from './tenant-reservations.facade';
 import { ReservationPaymentDialogComponent } from './reservation-payment-dialog.component';
 import { ReservationReviewDialogComponent } from './reservation-review-dialog.component';
 import { ReservationExtendDialogComponent } from './reservation-extend-dialog.component';
+import { ReservationCountdownComponent } from './reservation-countdown.component';
 import { TenantDatePipe } from '../../../shared/pipes/tenant-date.pipe';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
@@ -34,6 +35,7 @@ import { AppStatusBadgeComponent } from '../../../shared/ui/status-badge/status-
     ReservationPaymentDialogComponent,
     ReservationReviewDialogComponent,
     ReservationExtendDialogComponent,
+    ReservationCountdownComponent,
   ],
   providers: [
     TenantReservationsFacade,

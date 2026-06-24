@@ -91,6 +91,12 @@
             {{ outstanding(reservation) | tenantCurrency: reservation.currency }}
           </span>
         }
+        @if (showCountdown(reservation)) {
+          <app-reservation-countdown
+            [expiresAt]="reservation.expires_at"
+            (holdExpired)="onHoldExpired(reservation)"
+          />
+        }
       </div>
 
       <div class="card-actions">

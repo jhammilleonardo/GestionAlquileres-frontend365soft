@@ -28,6 +28,7 @@ function makeReservation(overrides?: Partial<MyReservation>): MyReservation {
     paid_amount: '120.00',
     has_review: false,
     deposit_required: null,
+    expires_at: null,
     ...overrides,
   };
 }

@@ -1,6 +1,10 @@
 {
   "title": "My Reservations",
   "subtitle": "Your short-term stays and their status",
+  "countdown": {
+    "label": "Time left to pay:",
+    "expired": "Time's up — the reservation expired and the dates were released"
+  },
   "loading": "Loading your reservations...",
   "loadError": "Could not load your reservations",
   "emptyTitle": "You don't have reservations yet",

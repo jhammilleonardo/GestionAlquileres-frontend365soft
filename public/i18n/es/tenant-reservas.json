@@ -1,6 +1,10 @@
 {
   "title": "Mis Reservas",
   "subtitle": "Tus estadías de corto plazo y su estado",
+  "countdown": {
+    "label": "Tiempo para pagar:",
+    "expired": "Tiempo agotado — la reserva expiró y las fechas se liberaron"
+  },
   "loading": "Cargando tus reservas...",
   "loadError": "No se pudieron cargar tus reservas",
   "emptyTitle": "Aún no tienes reservas",

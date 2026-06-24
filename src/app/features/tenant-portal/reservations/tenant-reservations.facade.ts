@@ -37,6 +37,12 @@ export class TenantReservationsFacade {
   readonly isLoading = signal(true);
   readonly busyId = signal<number | null>(null);
 
+  /**
+   * Holds cuya cuenta regresiva ya venció en el cliente. Se ocultan de "Pagar"
+   * de inmediato sin esperar al job del backend (que igual libera las fechas).
+   */
+  readonly expiredHoldIds = signal<ReadonlySet<number>>(new Set());
+
   /** Reserva cuyo diálogo de pago está abierto (null = cerrado). */
   readonly paymentTarget = signal<MyReservation | null>(null);
 
@@ -129,9 +135,28 @@ export class TenantReservationsFacade {
     return PAYABLE_STATUSES.includes(reservation.status) && this.outstanding(reservation) > 0;
   }
 
-  /** Se puede pagar si está activa y aún queda saldo pendiente. */
+  /** Se puede pagar si está activa, queda saldo y el hold no venció. */
   canPay(reservation: MyReservation): boolean {
-    return PAYABLE_STATUSES.includes(reservation.status) && this.outstanding(reservation) > 0;
+    return (
+      PAYABLE_STATUSES.includes(reservation.status) &&
+      this.outstanding(reservation) > 0 &&
+      !this.expiredHoldIds().has(reservation.id)
+    );
+  }
+
+  /** Hold de corto plazo pendiente de pago: muestra la cuenta regresiva. */
+  showCountdown(reservation: MyReservation): boolean {
+    return reservation.status === 'pending_payment' && !!reservation.expires_at;
+  }
+
+  /** El contador llegó a cero: oculta el pago y libera la fecha en la vista. */
+  onHoldExpired(reservation: MyReservation): void {
+    this.expiredHoldIds.update((ids) => {
+      if (ids.has(reservation.id)) return ids;
+      const next = new Set(ids);
+      next.add(reservation.id);
+      return next;
+    });
   }
 
   openPayment(reservation: MyReservation): void {
