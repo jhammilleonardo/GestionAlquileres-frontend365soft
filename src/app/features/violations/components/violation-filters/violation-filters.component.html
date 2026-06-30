@@ -17,6 +17,12 @@
     [placeholder]="'violations.allTypes' | transloco"
     [options]="typeOptions()"
   />
+  <app-select
+    formControlName="severity"
+    [label]="'violations.severityLabel' | transloco"
+    [placeholder]="'violations.allSeverities' | transloco"
+    [options]="severityOptions()"
+  />
   <div class="filter-actions">
     <app-button size="s" appearance="secondary" (clicked)="filtersCleared.emit()">
       {{ 'common.clear' | transloco }}

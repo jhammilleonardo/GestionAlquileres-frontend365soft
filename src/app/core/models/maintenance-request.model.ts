@@ -27,6 +27,8 @@ export enum MaintenanceCategory {
 export enum MaintenanceRequestType {
   MAINTENANCE = 'MAINTENANCE',
   GENERAL = 'GENERAL',
+  /** Limpieza de turnover entre estadías (auto-generada al completar reserva). */
+  CLEANING = 'CLEANING',
 }
 
 export enum PermissionToEnter {
@@ -106,7 +108,8 @@ export interface MaintenanceRequest {
   vendor_rating_comment?: string | null;
   tenant_id: number;
   property_id: number;
-  contract_id: number;
+  contract_id: number | null;
+  reservation_id?: number | null;
 
   // Related data
   property?: PropertyReference;
@@ -152,7 +155,8 @@ export interface CreateMaintenanceDto {
   entry_notes?: string;
   files?: string[]; // Array of file URLs (max 3)
   contract_id?: number; // Optional - backend auto-detects active contract
-  // NOTE: property_id and tenant_id are NOT sent - obtained from contract
+  reservation_id?: number; // Optional - backend resolves property from active reservation
+  // NOTE: property_id and tenant_id are NOT sent - obtained from contract/reservation
 }
 
 export interface UpdateMaintenanceDto {
@@ -197,6 +201,7 @@ export const MaintenanceCategoryLabels: Record<MaintenanceCategory, string> = {
 export const MaintenanceRequestTypeLabels: Record<MaintenanceRequestType, string> = {
   [MaintenanceRequestType.MAINTENANCE]: 'Mantenimiento',
   [MaintenanceRequestType.GENERAL]: 'Consulta General',
+  [MaintenanceRequestType.CLEANING]: 'Limpieza',
 };
 
 export const PermissionToEnterLabels: Record<PermissionToEnter, string> = {

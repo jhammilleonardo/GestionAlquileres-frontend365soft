@@ -15,16 +15,19 @@ describe('InspectionService', () => {
   let patch: ReturnType<typeof vi.fn>;
   let httpGet: ReturnType<typeof vi.fn>;
 
+  let del: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
     get = vi.fn().mockReturnValue(of([]));
     post = vi.fn().mockReturnValue(of({ id: 1 }));
     patch = vi.fn().mockReturnValue(of({ id: 1 }));
+    del = vi.fn().mockReturnValue(of(void 0));
     httpGet = vi.fn().mockReturnValue(of(new Blob()));
 
     TestBed.configureTestingModule({
       providers: [
         InspectionService,
-        { provide: ApiClientService, useValue: { get, post, patch } },
+        { provide: ApiClientService, useValue: { get, post, patch, delete: del } },
         { provide: HttpClient, useValue: { get: httpGet } },
         { provide: SlugService, useValue: { buildApiEndpoint: (p: string) => `acme/${p}` } },
         {
@@ -62,6 +65,26 @@ describe('InspectionService', () => {
     expect(patch).toHaveBeenCalledWith('acme/admin/inspections/4/items', { items, complete: true });
   });
 
+  it('updateItems descarta campos no permitidos por el DTO (photos)', () => {
+    const items = [
+      {
+        id: 7,
+        area: InspectionArea.KITCHEN,
+        item_name: 'Piso',
+        condition: ItemCondition.GOOD,
+        notes: null,
+        photos: ['/a.png', '/b.png'],
+      },
+    ];
+    service.updateItems(4, items, false).subscribe();
+    expect(patch).toHaveBeenCalledWith('acme/admin/inspections/4/items', {
+      items: [
+        { id: 7, area: InspectionArea.KITCHEN, item_name: 'Piso', condition: ItemCondition.GOOD },
+      ],
+      complete: false,
+    });
+  });
+
   it('uploadItemPhotos envía FormData con item_id en params', async () => {
     post.mockReturnValue(of({ photos: ['/x.png'] }));
     const file = new File(['x'], 'x.png', { type: 'image/png' });
@@ -86,5 +109,21 @@ describe('InspectionService', () => {
     service.downloadPdf(4).subscribe();
     expect(httpGet).toHaveBeenCalled();
     expect((httpGet.mock.calls[0][1] as { responseType?: string }).responseType).toBe('blob');
+  });
+
+  it('listTemplates pide las plantillas', () => {
+    service.listTemplates().subscribe();
+    expect(get).toHaveBeenCalledWith('acme/admin/inspection-templates');
+  });
+
+  it('createTemplate hace POST con el dto', () => {
+    const dto = { name: 'Mudanza', items: [{ area: InspectionArea.KITCHEN, item_name: 'Piso' }] };
+    service.createTemplate(dto).subscribe();
+    expect(post).toHaveBeenCalledWith('acme/admin/inspection-templates', dto);
+  });
+
+  it('deleteTemplate hace DELETE', () => {
+    service.deleteTemplate(3).subscribe();
+    expect(del).toHaveBeenCalledWith('acme/admin/inspection-templates/3');
   });
 });

@@ -252,28 +252,28 @@ export class AvailabilityCalendarComponent implements OnInit {
       return;
     }
 
-    if (!this.tenantAuthService.isAuthenticated()) {
-      const slug = this.slugService.getSlug();
-      if (!slug) {
-        this.toast.error(this.transloco.translate('public.availability.missingSlug'));
-        return;
-      }
-
-      this.reservationIntentionService.setIntention({
-        propertyId: this.propertyId(),
-        propertyTitle:
-          this.propertyTitle().trim() ||
-          this.transloco.translate('public.availability.selectedProperty'),
-        unitId: this.unitId(),
-        unitNumber: this.unitNumber().trim() || undefined,
-        checkinDate: this.iso(ci),
-        checkoutDate: this.iso(co),
-      });
-      this.toast.info(this.transloco.translate('public.availability.loginRequired'));
-      this.reservationIntentionService.navigateToLogin(slug);
+    if (this.tenantAuthService.isAuthenticated()) {
+      this.submitReservation(ci, co);
       return;
     }
 
+    // El signal de sesión vive en sessionStorage (aislado por pestaña), pero la
+    // sesión real es la cookie HttpOnly (compartida entre pestañas). Al abrir la
+    // propiedad en una pestaña nueva el signal está vacío aunque la cookie siga
+    // válida: rehidrata desde la cookie antes de exigir un login innecesario.
+    this.submitting.set(true);
+    this.tenantAuthService.refreshUserData().subscribe((user) => {
+      if (user) {
+        this.submitReservation(ci, co);
+      } else {
+        this.submitting.set(false);
+        this.promptLoginForReservation(ci, co);
+      }
+    });
+  }
+
+  /** Crea la reserva para el huésped ya autenticado. */
+  private submitReservation(ci: Date, co: Date): void {
     this.submitting.set(true);
     this.reservationService
       .createReservation({
@@ -302,6 +302,31 @@ export class AvailabilityCalendarComponent implements OnInit {
       });
   }
 
+  /**
+   * Guarda la intención de reserva y manda al login. Solo se usa cuando no hay
+   * sesión válida (ni signal ni cookie), para retomar la reserva tras autenticarse.
+   */
+  private promptLoginForReservation(ci: Date, co: Date): void {
+    const slug = this.slugService.getSlug();
+    if (!slug) {
+      this.toast.error(this.transloco.translate('public.availability.missingSlug'));
+      return;
+    }
+
+    this.reservationIntentionService.setIntention({
+      propertyId: this.propertyId(),
+      propertyTitle:
+        this.propertyTitle().trim() ||
+        this.transloco.translate('public.availability.selectedProperty'),
+      unitId: this.unitId(),
+      unitNumber: this.unitNumber().trim() || undefined,
+      checkinDate: this.iso(ci),
+      checkoutDate: this.iso(co),
+    });
+    this.toast.info(this.transloco.translate('public.availability.loginRequired'));
+    this.reservationIntentionService.navigateToLogin(slug);
+  }
+
   private restoreInitialRange(): void {
     const checkin = this.parseIsoDate(this.initialCheckin());
     const checkout = this.parseIsoDate(this.initialCheckout());
@@ -321,6 +346,18 @@ export class AvailabilityCalendarComponent implements OnInit {
 
   quoteLineLabel(concept: QuoteLineConcept): string {
     return this.transloco.translate(`public.availability.priceLines.${concept}`);
+  }
+
+  depositPercentOfTotal(quote: QuoteBreakdown): number {
+    if (quote.total_due <= 0 || quote.deposit_to_confirm <= 0) {
+      return 0;
+    }
+
+    return Math.round((quote.deposit_to_confirm / quote.total_due) * 100);
+  }
+
+  balanceAfterDeposit(quote: QuoteBreakdown): number {
+    return Math.max(0, quote.total_due - quote.deposit_to_confirm);
   }
 
   private requestQuote(): void {

@@ -4,9 +4,19 @@
     [title]="'audit.title' | transloco"
     [description]="'audit.subtitle' | transloco"
   >
-    <span actions class="readonly-chip">
-      <lucide-icon [img]="ShieldCheck" [size]="14" /> {{ 'audit.readonly' | transloco }}
-    </span>
+    <div actions class="header-actions">
+      <span class="readonly-chip">
+        <lucide-icon [img]="ShieldCheck" [size]="14" /> {{ 'audit.readonly' | transloco }}
+      </span>
+      <app-button
+        size="s"
+        appearance="secondary"
+        [disabled]="isExporting() || logs().length === 0"
+        (clicked)="exportCsv()"
+      >
+        <lucide-icon [img]="Download" [size]="14" /> {{ 'audit.export' | transloco }}
+      </app-button>
+    </div>
   </app-page-header>
 
   <form class="filters" [formGroup]="filterForm">
@@ -14,7 +24,7 @@
       formControlName="action"
       [label]="'audit.actionLabel' | transloco"
       [placeholder]="'audit.allActions' | transloco"
-      [options]="actionOptions"
+      [options]="actionOptions()"
     />
     <app-text-field formControlName="entity_type" [label]="'audit.entity' | transloco" />
     <app-text-field formControlName="user_id" [label]="'audit.user' | transloco" />
@@ -132,6 +142,12 @@
           <div class="meta-row">
             <dt>{{ 'audit.ipAddress' | transloco }}</dt>
             <dd>{{ log.ip_address }}</dd>
+          </div>
+        }
+        @if (log.user_agent) {
+          <div class="meta-row">
+            <dt>{{ 'audit.device' | transloco }}</dt>
+            <dd class="meta-device">{{ log.user_agent }}</dd>
           </div>
         }
       </dl>

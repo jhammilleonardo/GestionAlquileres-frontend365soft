@@ -1,6 +1,7 @@
 import {
   HttpErrorResponse,
   HttpEvent,
+  HttpEventType,
   HttpHandlerFn,
   HttpRequest,
   HttpResponse,
@@ -14,6 +15,7 @@ import { SessionTokenService } from '../services/session-token.service';
 import { authInterceptor } from './auth.interceptor';
 
 describe('authInterceptor', () => {
+  const originalApiUrl = environment.apiUrl;
   let expiration: {
     hasClientSession: ReturnType<typeof vi.fn>;
     expire: ReturnType<typeof vi.fn>;
@@ -36,6 +38,10 @@ describe('authInterceptor', () => {
     document.cookie = 'csrf_token=csrf-current; path=/';
   });
 
+  afterEach(() => {
+    environment.apiUrl = originalApiUrl;
+  });
+
   function execute(req: HttpRequest<unknown>, next: HttpHandlerFn) {
     return TestBed.runInInjectionContext(() => authInterceptor(req, next));
   }
@@ -54,7 +60,7 @@ describe('authInterceptor', () => {
     }) as HttpHandlerFn;
 
     await firstValueFrom(
-      execute(new HttpRequest('GET', `${environment.apiUrl}demo/properties`), next),
+      execute(new HttpRequest('GET', `${environment.apiUrl}demo/admin/properties`), next),
     );
 
     expect(protectedAttempts).toBe(2);
@@ -62,6 +68,37 @@ describe('authInterceptor', () => {
       .calls[1][0] as HttpRequest<unknown>;
     expect(refreshRequest.withCredentials).toBe(true);
     expect(refreshRequest.headers.get('X-CSRF-Token')).toBe('csrf-current');
+    expect(refreshRequest.headers.get('X-Auth-Context')).toBe('admin');
+    expect(expiration.expire).not.toHaveBeenCalled();
+  });
+
+  it('espera la respuesta final del refresh antes de reintentar', async () => {
+    const refreshResult = new Subject<HttpEvent<unknown>>();
+    let protectedAttempts = 0;
+    const next = vi.fn((request: HttpRequest<unknown>) => {
+      if (request.url === `${environment.apiUrl}auth/refresh`) {
+        return refreshResult.asObservable();
+      }
+
+      protectedAttempts += 1;
+      return protectedAttempts === 1
+        ? throwError(() => new HttpErrorResponse({ status: 401 }))
+        : of(new HttpResponse({ body: { ok: true } }));
+    }) as HttpHandlerFn;
+
+    const request = firstValueFrom(
+      execute(new HttpRequest('GET', `${environment.apiUrl}demo/admin/vendors`), next),
+    );
+
+    refreshResult.next({ type: HttpEventType.Sent });
+    await Promise.resolve();
+    expect(protectedAttempts).toBe(1);
+
+    refreshResult.next(new HttpResponse({ body: { success: true } }));
+    refreshResult.complete();
+    await request;
+
+    expect(protectedAttempts).toBe(2);
     expect(expiration.expire).not.toHaveBeenCalled();
   });
 
@@ -98,6 +135,36 @@ describe('authInterceptor', () => {
     expect(attempts.get(`${environment.apiUrl}demo/payments`)).toBe(2);
   });
 
+  it('no comparte renovaciones entre contextos distintos', async () => {
+    const refreshResult = new Subject<HttpEvent<unknown>>();
+    let refreshCalls = 0;
+    const attempts = new Map<string, number>();
+    const next = vi.fn((request: HttpRequest<unknown>) => {
+      if (request.url === `${environment.apiUrl}auth/refresh`) {
+        refreshCalls += 1;
+        return refreshResult.asObservable();
+      }
+
+      const count = (attempts.get(request.url) ?? 0) + 1;
+      attempts.set(request.url, count);
+      return count === 1
+        ? throwError(() => new HttpErrorResponse({ status: 401 }))
+        : of(new HttpResponse({ body: { ok: true } }));
+    }) as HttpHandlerFn;
+
+    const first = firstValueFrom(
+      execute(new HttpRequest('GET', `${environment.apiUrl}demo/admin/payments`), next),
+    );
+    const second = firstValueFrom(
+      execute(new HttpRequest('GET', `${environment.apiUrl}demo/tenant/payments`), next),
+    );
+
+    expect(refreshCalls).toBe(2);
+    refreshResult.next(new HttpResponse({ body: { success: true } }));
+    refreshResult.complete();
+    await Promise.all([first, second]);
+  });
+
   it('limpia la sesión cuando el refresh falla', async () => {
     const next = vi.fn((request: HttpRequest<unknown>) =>
       throwError(
@@ -110,10 +177,12 @@ describe('authInterceptor', () => {
     ) as HttpHandlerFn;
 
     await expect(
-      firstValueFrom(execute(new HttpRequest('GET', `${environment.apiUrl}demo/properties`), next)),
+      firstValueFrom(
+        execute(new HttpRequest('GET', `${environment.apiUrl}demo/admin/properties`), next),
+      ),
     ).rejects.toBeInstanceOf(HttpErrorResponse);
 
-    expect(expiration.expire).toHaveBeenCalledTimes(1);
+    expect(expiration.expire).toHaveBeenCalledWith('admin');
   });
 
   it('no intenta renovar credenciales inválidas del login', async () => {
@@ -131,7 +200,39 @@ describe('authInterceptor', () => {
     expect(expiration.expire).not.toHaveBeenCalled();
   });
 
+  it('no intenta renovar credenciales inválidas del login cuando la API vive bajo /api', async () => {
+    environment.apiUrl = 'https://app.example.com/api/';
+    const next = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status: 401 })),
+    ) as HttpHandlerFn;
+
+    await expect(
+      firstValueFrom(
+        execute(new HttpRequest('POST', `${environment.apiUrl}auth/login-admin`, {}), next),
+      ),
+    ).rejects.toBeInstanceOf(HttpErrorResponse);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(expiration.expire).not.toHaveBeenCalled();
+  });
+
   it('no renueva ni expira la sesión por un 401 del catálogo público', async () => {
+    const next = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status: 401 })),
+    ) as HttpHandlerFn;
+
+    await expect(
+      firstValueFrom(
+        execute(new HttpRequest('GET', `${environment.apiUrl}demo/catalog/website`), next),
+      ),
+    ).rejects.toBeInstanceOf(HttpErrorResponse);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(expiration.expire).not.toHaveBeenCalled();
+  });
+
+  it('no renueva ni expira la sesión por un 401 del catálogo público bajo /api', async () => {
+    environment.apiUrl = 'https://app.example.com/api/';
     const next = vi.fn(() =>
       throwError(() => new HttpErrorResponse({ status: 401 })),
     ) as HttpHandlerFn;

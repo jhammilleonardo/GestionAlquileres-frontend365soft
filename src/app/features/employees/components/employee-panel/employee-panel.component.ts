@@ -48,6 +48,7 @@ export class EmployeePanelComponent {
   panelClosed = output<void>();
   permissionsSaved = output<Employee>();
   employeeStatusChanged = output<Employee>();
+  editRequested = output<Employee>();
 
   private employeesService = inject(EmployeesService);
   private slugService = inject(SlugService);

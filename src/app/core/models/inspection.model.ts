@@ -33,6 +33,8 @@ export interface InspectionItem {
   condition: ItemCondition;
   notes?: string | null;
   photos?: string[];
+  /** Clave temporal solo-cliente para ítems nuevos aún sin id (track de @for). */
+  _tempId?: number;
 }
 
 export interface Inspection {
@@ -58,8 +60,36 @@ export interface CreateInspectionDto {
   type: InspectionType;
   scheduled_date: string;
   inspector_user_id?: number;
+  template_id?: number;
   notes?: string;
   items?: Array<Pick<InspectionItem, 'area' | 'item_name' | 'condition' | 'notes'>>;
+}
+
+export interface InspectionTemplateItem {
+  area: InspectionArea;
+  item_name: string;
+}
+
+export interface InspectionTemplate {
+  id: number;
+  name: string;
+  type?: InspectionType | null;
+  items: InspectionTemplateItem[];
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateInspectionTemplateDto {
+  name: string;
+  type?: InspectionType | null;
+  items: InspectionTemplateItem[];
+}
+
+export interface UpdateInspectionTemplateDto {
+  name?: string;
+  type?: InspectionType | null;
+  items?: InspectionTemplateItem[];
 }
 
 export interface InspectionComparisonItem {

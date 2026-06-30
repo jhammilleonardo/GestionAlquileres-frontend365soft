@@ -28,6 +28,7 @@ export class InspectionFormDialogComponent {
   readonly propertyOptions = input.required<readonly AppSelectOption<number>[]>();
   readonly typeOptions = input.required<readonly AppSelectOption<string>[]>();
   readonly inspectorOptions = input.required<readonly AppSelectOption<number>[]>();
+  readonly templateOptions = input.required<readonly AppSelectOption<number>[]>();
   readonly saving = input.required<boolean>();
 
   readonly closed = output<void>();

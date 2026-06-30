@@ -2,6 +2,8 @@
   "title": "Auditoría",
   "subtitle": "Registro de acciones del sistema",
   "readonly": "Solo lectura",
+  "export": "Exportar CSV",
+  "exportError": "No se pudo exportar el registro",
   "actionLabel": "Acción",
   "allActions": "Todas las acciones",
   "entity": "Entidad",
@@ -10,6 +12,7 @@
   "system": "Sistema",
   "performedBy": "Realizado por",
   "ipAddress": "Dirección IP",
+  "device": "Dispositivo",
   "from": "Desde",
   "to": "Hasta",
   "date": "Fecha",
@@ -33,7 +36,11 @@
     "status_changed": "Estado cambiado",
     "signed": "Firmado",
     "renewed": "Renovado",
-    "permissions_updated": "Permisos actualizados"
+    "permissions_updated": "Permisos actualizados",
+    "logged_in": "Inicio de sesión",
+    "login_failed": "Inicio fallido",
+    "logged_out": "Cierre de sesión",
+    "password_changed": "Contraseña cambiada"
   },
   "role": {
     "SUPERADMIN": "Superadmin",
@@ -45,7 +52,18 @@
   "entityType": {
     "contract": "Contrato",
     "employee": "Empleado",
-    "payment": "Pago"
+    "payment": "Pago",
+    "property": "Propiedad",
+    "rental_owner": "Propietario",
+    "vendor": "Proveedor",
+    "expense": "Gasto",
+    "violation": "Violación",
+    "inspection": "Inspección",
+    "maintenance": "Mantenimiento",
+    "reservation": "Reserva",
+    "application": "Solicitud",
+    "config": "Configuración",
+    "auth": "Autenticación"
   },
   "fields": {
     "status": "Estado",

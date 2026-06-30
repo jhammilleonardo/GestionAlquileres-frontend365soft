@@ -1,4 +1,13 @@
-import { Component, inject, signal, ChangeDetectionStrategy, output } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+  ChangeDetectionStrategy,
+  output,
+} from '@angular/core';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { catchError, EMPTY } from 'rxjs';
 import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
@@ -25,8 +34,14 @@ export class CreateEmployeeDialogComponent {
   private slugService = inject(SlugService);
   private transloco = inject(TranslocoService);
 
+  /** Si se pasa un empleado, el diálogo opera en modo edición (solo nombre/teléfono). */
+  readonly editingEmployee = input<Employee | null>(null);
+
   employeeCreated = output<Employee>();
+  employeeUpdated = output<Employee>();
   dialogClosed = output<void>();
+
+  readonly isEdit = computed(() => this.editingEmployee() !== null);
 
   form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -39,6 +54,25 @@ export class CreateEmployeeDialogComponent {
   errorMessage = signal<string | null>(null);
   showPassword = signal(false);
 
+  constructor() {
+    effect(() => {
+      const employee = this.editingEmployee();
+      if (employee) {
+        // En edición no se cambian email ni contraseña: se desactivan sus validadores.
+        this.form.controls.email.clearValidators();
+        this.form.controls.password.clearValidators();
+        this.form.controls.email.updateValueAndValidity({ emitEvent: false });
+        this.form.controls.password.updateValueAndValidity({ emitEvent: false });
+        this.form.reset({
+          name: employee.name,
+          email: employee.email,
+          password: '',
+          phone: employee.phone ?? '',
+        });
+      }
+    });
+  }
+
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -50,21 +84,42 @@ export class CreateEmployeeDialogComponent {
 
     const { name, email, password, phone } = this.form.getRawValue();
     const slug = this.slugService.getSlug()!;
+    const editing = this.editingEmployee();
 
-    this.employeesService
-      .create(slug, { name, email, password, phone: phone || undefined })
+    const request$ = editing
+      ? this.employeesService.update(slug, editing.id, {
+          name,
+          phone: phone || undefined,
+        })
+      : this.employeesService.create(slug, {
+          name,
+          email,
+          password,
+          phone: phone || undefined,
+        });
+
+    request$
       .pipe(
         catchError((err: { error?: { message?: string } }) => {
           this.isLoading.set(false);
           this.errorMessage.set(
-            getApiErrorMessage(err, this.transloco.translate('employees.dialog.createError')),
+            getApiErrorMessage(
+              err,
+              this.transloco.translate(
+                editing ? 'employees.dialog.updateError' : 'employees.dialog.createError',
+              ),
+            ),
           );
           return EMPTY;
         }),
       )
       .subscribe((employee: Employee) => {
         this.isLoading.set(false);
-        this.employeeCreated.emit(employee);
+        if (editing) {
+          this.employeeUpdated.emit(employee);
+        } else {
+          this.employeeCreated.emit(employee);
+        }
       });
   }
 

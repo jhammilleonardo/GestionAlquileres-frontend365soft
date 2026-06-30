@@ -1,6 +1,6 @@
 <app-dialog
   [open]="true"
-  [title]="'payments.rejectPaymentTitle' | transloco: { id: payment().id }"
+  [title]="'payments.rejectPaymentTitle' | transloco"
   (closed)="closed.emit()"
 >
   <form class="payment-reject" [formGroup]="form()" (ngSubmit)="submitted.emit()">

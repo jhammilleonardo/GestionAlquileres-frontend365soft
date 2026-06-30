@@ -112,6 +112,13 @@ describe('NewApplicationFacade', () => {
 
     expect(slugService.navigateTo).toHaveBeenCalledWith(['portal', 'application-wizard', '1']);
   });
+
+  it('no navega al wizard de solicitud larga para propiedades solo de corto plazo', () => {
+    facade.applyLongTerm(shortProperty());
+
+    expect(slugService.navigateTo).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('tenantApplications.marketplace.longTermUnavailable');
+  });
 });
 
 function longProperty(overrides: Partial<Property> = {}): Property {

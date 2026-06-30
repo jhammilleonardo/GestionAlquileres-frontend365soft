@@ -8,7 +8,8 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe } from '@angular/common';
-import { LucideAngularModule, UserPlus, RefreshCw, Users, KeyRound } from 'lucide-angular';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule, UserPlus, RefreshCw, Users, KeyRound, Search } from 'lucide-angular';
 import { catchError, EMPTY } from 'rxjs';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 
@@ -22,6 +23,8 @@ import { AppDialogComponent } from '../../shared/ui/dialog/dialog.component';
 import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
 import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { AppTextFieldComponent } from '../../shared/ui/text-field/text-field.component';
+import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 
@@ -32,6 +35,7 @@ import { getApiErrorMessage } from '../../core/http/http-error.util';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CurrencyPipe,
+    FormsModule,
     LucideAngularModule,
     TranslocoModule,
     CreateOwnerDialogComponent,
@@ -41,6 +45,7 @@ import { getApiErrorMessage } from '../../core/http/http-error.util';
     AppEmptyStateComponent,
     AppLoadingStateComponent,
     AppPageHeaderComponent,
+    AppTextFieldComponent,
   ],
   templateUrl: './rental-owners.component.html',
   styleUrl: './rental-owners.component.scss',
@@ -51,19 +56,35 @@ export class RentalOwnersComponent {
   private transloco = inject(TranslocoService);
   private destroyRef = inject(DestroyRef);
   private toast = inject(ToastService);
+  private confirmDialog = inject(ConfirmDialogService);
 
   readonly UserPlusIcon = UserPlus;
   readonly RefreshCwIcon = RefreshCw;
   readonly UsersIcon = Users;
   readonly KeyRoundIcon = KeyRound;
+  readonly SearchIcon = Search;
 
   owners = signal<RentalOwnerSummary[]>([]);
   selectedOwner = signal<RentalOwnerSummary | null>(null);
   isLoading = signal(true);
   errorMessage = signal<string | null>(null);
   isCreateDialogOpen = signal(false);
+  searchTerm = signal('');
+
+  /** Propietario en edición (null = el diálogo está en modo creación). */
+  editingOwner = signal<RentalOwnerSummary | null>(null);
 
   isPanelOpen = computed(() => this.selectedOwner() !== null);
+
+  readonly filteredOwners = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.owners();
+    return this.owners().filter((owner) =>
+      [owner.name, owner.primary_email, owner.phone_number, owner.company_name]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(term)),
+    );
+  });
 
   constructor() {
     this.loadOwners();
@@ -106,11 +127,22 @@ export class RentalOwnersComponent {
   }
 
   openCreateDialog(): void {
+    this.editingOwner.set(null);
+    this.isCreateDialogOpen.set(true);
+  }
+
+  openEditDialog(owner: RentalOwnerSummary): void {
+    this.editingOwner.set(owner);
     this.isCreateDialogOpen.set(true);
   }
 
   closeCreateDialog(): void {
     this.isCreateDialogOpen.set(false);
+    this.editingOwner.set(null);
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
   }
 
   onOwnerCreated(owner: RentalOwner): void {
@@ -126,6 +158,47 @@ export class RentalOwnersComponent {
       pending_balance: 0,
       has_account: false,
     });
+  }
+
+  onOwnerUpdated(owner: RentalOwner): void {
+    this.closeCreateDialog();
+    this.toast.success(
+      this.transloco.translate('rentalOwners.updatedSuccess', { name: owner.name }),
+    );
+    // Reflejar cambios en el panel abierto sin perder los datos derivados.
+    this.selectedOwner.update((prev) => (prev ? { ...prev, ...owner } : prev));
+    this.loadOwners();
+  }
+
+  async deactivateOwner(owner: RentalOwnerSummary): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.transloco.translate('rentalOwners.deactivateTitle'),
+      message: this.transloco.translate('rentalOwners.deactivateMessage', { name: owner.name }),
+      confirmLabel: this.transloco.translate('rentalOwners.deactivate'),
+      cancelLabel: this.transloco.translate('common.cancel'),
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    const slug = this.slugService.getSlug()!;
+    this.rentalOwnersService
+      .deactivate(slug, owner.id)
+      .pipe(
+        catchError((err: { error?: { message?: string } }) => {
+          this.toast.error(
+            getApiErrorMessage(err, this.transloco.translate('rentalOwners.deactivateError')),
+          );
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.toast.success(
+          this.transloco.translate('rentalOwners.deactivatedSuccess', { name: owner.name }),
+        );
+        this.closePanel();
+        this.loadOwners();
+      });
   }
 
   onAccountChanged(): void {

@@ -1,8 +1,4 @@
-<app-dialog
-  [open]="true"
-  [title]="'payments.detailTitle' | transloco: { id: payment().id }"
-  (closed)="closed.emit()"
->
+<app-dialog [open]="true" [title]="'payments.detailTitle' | transloco" (closed)="closed.emit()">
   <div class="payment-detail">
     <div class="payment-detail__item">
       <label>{{ 'payments.tenant' | transloco }}:</label>
@@ -28,7 +24,13 @@
 
     <div class="payment-detail__item">
       <label>{{ 'common.type' | transloco }}:</label>
-      <p>{{ getTypeLabel(payment().payment_type) }}</p>
+      <p>
+        @if (isReservationPayment(payment())) {
+          {{ 'payments.reservationDepositType' | transloco }}
+        } @else {
+          {{ getTypeLabel(payment().payment_type) }}
+        }
+      </p>
     </div>
 
     <div class="payment-detail__item">
@@ -65,17 +67,58 @@
       </p>
     </div>
 
-    @if (payment().notes) {
-      <div class="payment-detail__item payment-detail__item--full">
-        <label>{{ 'payments.tenantNotes' | transloco }}</label>
-        <p>{{ payment().notes }}</p>
+    @if (isReservationPayment(payment())) {
+      <div class="payment-detail__reservation payment-detail__item--full">
+        <div class="payment-detail__reservation-title">
+          <lucide-icon [img]="CalendarCheck2" [size]="18"></lucide-icon>
+          <strong>
+            {{ 'payments.reservationPayment' | transloco }}
+          </strong>
+        </div>
+        <div class="payment-detail__reservation-grid">
+          <div>
+            <label>{{ 'payments.stayDates' | transloco }}</label>
+            <p>
+              {{ payment().reservation?.checkin_date | tenantDate }} -
+              {{ payment().reservation?.checkout_date | tenantDate }}
+            </p>
+          </div>
+          <div>
+            <label>{{ 'payments.reservationTotal' | transloco }}</label>
+            <p>{{ getReservationTotal(payment()) | tenantCurrency }}</p>
+          </div>
+          <div>
+            <label>{{ 'payments.reservationPaid' | transloco }}</label>
+            <p>{{ getReservationPaid(payment()) | tenantCurrency }}</p>
+          </div>
+          <div>
+            <label>{{ 'payments.depositToConfirm' | transloco }}</label>
+            <p>
+              {{ getReservationDepositRequired(payment()) | tenantCurrency }}
+              @if (getReservationDepositPercent(payment()); as depositPercent) {
+                <span>({{ depositPercent }}%)</span>
+              }
+            </p>
+          </div>
+          <div>
+            <label>{{ 'payments.reservationBalanceLabel' | transloco }}</label>
+            <p>{{ getReservationBalance(payment()) | tenantCurrency }}</p>
+          </div>
+        </div>
       </div>
     }
 
-    @if (payment().admin_notes) {
+    @if (getDisplayNotes(payment()); as tenantNotes) {
+      <div class="payment-detail__item payment-detail__item--full">
+        <label>{{ 'payments.tenantNotes' | transloco }}</label>
+        <p>{{ tenantNotes }}</p>
+      </div>
+    }
+
+    @if (getDisplayAdminNotes(payment()); as adminNotes) {
       <div class="payment-detail__item payment-detail__item--full">
         <label>{{ 'payments.adminNotes' | transloco }}</label>
-        <p>{{ payment().admin_notes }}</p>
+        <p>{{ adminNotes }}</p>
       </div>
     }
 

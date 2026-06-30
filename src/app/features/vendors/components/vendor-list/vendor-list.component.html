@@ -1,65 +1,130 @@
-<div class="vendors-grid">
-  @for (vendor of vendors(); track vendor.id) {
-    <article
-      class="vendor-card"
-      role="button"
-      tabindex="0"
-      (click)="detailRequested.emit(vendor)"
-      (keyup.enter)="detailRequested.emit(vendor)"
-    >
-      <div class="vendor-card__head">
-        <div>
-          <h3 class="vendor-name">{{ vendor.name }}</h3>
-          <app-status-badge
-            [label]="'vendors.specialty.' + vendor.specialty | transloco"
-            tone="info"
-          />
-        </div>
-        <div class="vendor-card__actions">
-          <button
-            type="button"
-            class="icon-btn"
-            [attr.aria-label]="'common.edit' | transloco"
-            (click)="editRequested.emit({ vendor, event: $event })"
-          >
-            <lucide-icon [img]="Pencil" [size]="16" />
-          </button>
-          <button
-            type="button"
-            class="icon-btn danger"
-            [attr.aria-label]="'vendors.deactivate' | transloco"
-            (click)="deactivateRequested.emit({ vendor, event: $event })"
-          >
-            <lucide-icon [img]="Trash2" [size]="16" />
-          </button>
-        </div>
-      </div>
-
-      <div class="vendor-rating" [attr.aria-label]="'vendors.rating' | transloco">
-        @for (s of stars; track s) {
-          <lucide-icon
-            [img]="Star"
-            [size]="16"
-            class="star"
-            [class.filled]="s <= filledStars(vendor.average_rating)"
-          />
-        }
-        <span class="rating-value">
-          {{ vendor.average_rating ? (vendor.average_rating | number: '1.1-1') : '-' }}
-        </span>
-      </div>
-
-      <div class="vendor-meta">
-        @if (vendor.phone) {
-          <span class="meta-item"
-            ><lucide-icon [img]="Phone" [size]="14" /> {{ vendor.phone }}</span
-          >
-        }
-        <span class="meta-item">
-          <lucide-icon [img]="Wrench" [size]="14" />
-          {{ vendor.total_orders ?? 0 }} {{ 'vendors.jobsDone' | transloco }}
-        </span>
-      </div>
-    </article>
-  }
+<div class="vendor-table-shell">
+  <table class="vendor-table">
+    <thead>
+      <tr>
+        <th>{{ 'vendors.table.vendor' | transloco }}</th>
+        <th>{{ 'vendors.table.contact' | transloco }}</th>
+        <th>{{ 'vendors.table.work' | transloco }}</th>
+        <th>{{ 'vendors.table.financials' | transloco }}</th>
+        <th>{{ 'vendors.table.compliance' | transloco }}</th>
+        <th>{{ 'vendors.table.portal' | transloco }}</th>
+        <th class="actions-col">{{ 'vendors.table.actions' | transloco }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (vendor of vendors(); track vendor.id) {
+        <tr
+          class="vendor-row"
+          tabindex="0"
+          (click)="detailRequested.emit(vendor)"
+          (keyup.enter)="detailRequested.emit(vendor)"
+        >
+          <td>
+            <div class="vendor-main">
+              <strong>{{ vendor.name }}</strong>
+              <app-status-badge
+                [label]="
+                  vendor.specialty === 'other' && vendor.specialty_other
+                    ? vendor.specialty_other
+                    : ('vendors.specialty.' + vendor.specialty | transloco)
+                "
+                tone="info"
+              />
+              <div class="vendor-rating" [attr.aria-label]="'vendors.rating' | transloco">
+                @for (s of stars; track s) {
+                  <lucide-icon
+                    [img]="Star"
+                    [size]="14"
+                    class="star"
+                    [class.filled]="s <= filledStars(vendor.average_rating)"
+                  />
+                }
+                <span class="rating-value">
+                  {{ vendor.average_rating ? (vendor.average_rating | number: '1.1-1') : '-' }}
+                </span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="vendor-contact">
+              @if (vendor.phone) {
+                <span><lucide-icon [img]="Phone" [size]="14" /> {{ vendor.phone }}</span>
+              } @else {
+                <span class="muted">{{ 'vendors.missingPhone' | transloco }}</span>
+              }
+              @if (vendor.email) {
+                <span><lucide-icon [img]="Mail" [size]="14" /> {{ vendor.email }}</span>
+              } @else {
+                <span class="muted">{{ 'vendors.missingEmail' | transloco }}</span>
+              }
+            </div>
+          </td>
+          <td>
+            <div class="vendor-work">
+              <strong>{{ vendor.open_orders ?? 0 }}</strong>
+              <span>{{ 'vendors.openOrdersShort' | transloco }}</span>
+              <small>
+                {{ vendor.completed_orders ?? 0 }} {{ 'vendors.completedOrdersShort' | transloco }}
+              </small>
+            </div>
+          </td>
+          <td>
+            <div class="vendor-financials">
+              <strong [class.amount-due]="(vendor.pending_balance ?? 0) > 0">
+                {{ vendor.pending_balance | tenantCurrency }}
+              </strong>
+              <span>{{ 'vendors.pendingPayable' | transloco }}</span>
+              <small
+                >{{ vendor.paid_total | tenantCurrency }}
+                {{ 'vendors.paidTotal' | transloco }}</small
+              >
+            </div>
+          </td>
+          <td>
+            <div
+              class="compliance"
+              [class.good]="complianceTone(vendor.compliance_score) === 'good'"
+              [class.warn]="complianceTone(vendor.compliance_score) === 'warn'"
+              [class.bad]="complianceTone(vendor.compliance_score) === 'bad'"
+            >
+              @if ((vendor.compliance_score ?? 0) >= 80) {
+                <lucide-icon [img]="CheckCircle2" [size]="16" />
+              } @else {
+                <lucide-icon [img]="AlertTriangle" [size]="16" />
+              }
+              <span>{{ vendor.compliance_score ?? 0 }}%</span>
+            </div>
+          </td>
+          <td>
+            <span class="portal-state" [class.active]="vendor.has_account">
+              <lucide-icon [img]="KeyRound" [size]="15" />
+              {{
+                vendor.has_account
+                  ? ('vendors.portalActive' | transloco)
+                  : ('vendors.portalPending' | transloco)
+              }}
+            </span>
+          </td>
+          <td class="vendor-actions" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="icon-btn"
+              [attr.aria-label]="'common.edit' | transloco"
+              (click)="editRequested.emit({ vendor, event: $event })"
+            >
+              <lucide-icon [img]="Pencil" [size]="16" />
+            </button>
+            <button
+              type="button"
+              class="icon-btn danger"
+              [attr.aria-label]="'vendors.deactivate' | transloco"
+              (click)="deactivateRequested.emit({ vendor, event: $event })"
+            >
+              <lucide-icon [img]="Trash2" [size]="16" />
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
 </div>

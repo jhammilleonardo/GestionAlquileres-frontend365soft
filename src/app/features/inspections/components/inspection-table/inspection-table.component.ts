@@ -26,6 +26,7 @@ import {
 })
 export class InspectionTableComponent {
   readonly inspections = input.required<readonly Inspection[]>();
+  readonly isOverdue = input<(inspection: Inspection) => boolean>(() => false);
   readonly detailRequested = output<number>();
 
   readonly ClipboardCheck = ClipboardCheck;

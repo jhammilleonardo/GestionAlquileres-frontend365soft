@@ -269,6 +269,17 @@ app-date-picker {
   font-weight: 650;
 }
 
+.icon-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  lucide-icon {
+    color: #64748b;
+    flex-shrink: 0;
+  }
+}
+
 .form-label__optional {
   margin-inline-start: 0.25rem;
   color: var(--tui-text-tertiary, #94a3b8);

@@ -97,14 +97,41 @@ export class TenantReservationsFacade {
   };
 
   canCancel(reservation: MyReservation): boolean {
-    return CANCELABLE_STATUSES.includes(reservation.status);
+    return CANCELABLE_STATUSES.includes(reservation.status) && !this.isHoldExpired(reservation);
   }
 
   canExtend(reservation: MyReservation): boolean {
     return (
       CANCELABLE_STATUSES.includes(reservation.status) &&
+      !this.isHoldExpired(reservation) &&
       new Date(reservation.checkin_date) > new Date()
     );
+  }
+
+  /**
+   * Un hold de corto plazo (`pending_payment`) cuyo plazo de pago ya venció. El
+   * backend lo marcará `expired` con su job, pero hasta entonces lo reflejamos
+   * en cliente para no ofrecer acciones que serían rechazadas. Se considera
+   * vencido si la cuenta regresiva disparó el evento en vivo o si `expires_at`
+   * ya pasó al momento de renderizar (evita el parpadeo al recargar).
+   */
+  private isHoldExpired(reservation: MyReservation): boolean {
+    if (this.expiredHoldIds().has(reservation.id)) {
+      return true;
+    }
+    if (reservation.status === 'pending_payment' && reservation.expires_at) {
+      return new Date(reservation.expires_at).getTime() <= Date.now();
+    }
+    return false;
+  }
+
+  /**
+   * Estado a mostrar en el badge. Un hold vencido sigue siendo `pending_payment`
+   * en el backend por unos instantes; en la UI ya lo presentamos como `expired`
+   * para que coincida con las reservas expiradas del historial.
+   */
+  displayStatus(reservation: MyReservation): ReservationStatus {
+    return this.isHoldExpired(reservation) ? 'expired' : reservation.status;
   }
 
   openExtend(reservation: MyReservation): void {
@@ -132,7 +159,11 @@ export class TenantReservationsFacade {
    * mostrar "saldo pendiente".
    */
   showOutstanding(reservation: MyReservation): boolean {
-    return PAYABLE_STATUSES.includes(reservation.status) && this.outstanding(reservation) > 0;
+    return (
+      PAYABLE_STATUSES.includes(reservation.status) &&
+      !this.isHoldExpired(reservation) &&
+      this.outstanding(reservation) > 0
+    );
   }
 
   /** Se puede pagar si está activa, queda saldo y el hold no venció. */
@@ -140,13 +171,17 @@ export class TenantReservationsFacade {
     return (
       PAYABLE_STATUSES.includes(reservation.status) &&
       this.outstanding(reservation) > 0 &&
-      !this.expiredHoldIds().has(reservation.id)
+      !this.isHoldExpired(reservation)
     );
   }
 
   /** Hold de corto plazo pendiente de pago: muestra la cuenta regresiva. */
   showCountdown(reservation: MyReservation): boolean {
-    return reservation.status === 'pending_payment' && !!reservation.expires_at;
+    return (
+      reservation.status === 'pending_payment' &&
+      !!reservation.expires_at &&
+      !this.isHoldExpired(reservation)
+    );
   }
 
   /** El contador llegó a cero: oculta el pago y libera la fecha en la vista. */
@@ -238,6 +273,11 @@ export class TenantReservationsFacade {
   }
 
   private isUpcoming(reservation: MyReservation): boolean {
+    // Un hold vencido pasa al historial como "Expirada", aunque el backend aún
+    // no lo haya marcado, para no quedar en "Próximas" sin acciones útiles.
+    if (this.isHoldExpired(reservation)) {
+      return false;
+    }
     const activeStatus =
       reservation.status === 'pending_payment' ||
       reservation.status === 'pending' ||

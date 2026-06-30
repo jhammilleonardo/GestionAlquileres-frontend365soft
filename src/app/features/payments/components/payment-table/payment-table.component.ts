@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { CheckCircle2, Eye, LucideAngularModule, XCircle } from 'lucide-angular';
+import { CalendarCheck2, CheckCircle2, Eye, LucideAngularModule, XCircle } from 'lucide-angular';
 
 import {
   Currency,
@@ -47,6 +47,7 @@ export class PaymentTableComponent {
   readonly rejected = output<Payment>();
 
   readonly CheckCircle2 = CheckCircle2;
+  readonly CalendarCheck2 = CalendarCheck2;
   readonly XCircle = XCircle;
   readonly Eye = Eye;
   readonly PaymentStatus = PaymentStatus;
@@ -75,11 +76,11 @@ export class PaymentTableComponent {
     if (tenant?.name) return tenant.name;
 
     const fullName = `${tenant?.first_name ?? ''} ${tenant?.last_name ?? ''}`.trim();
-    return fullName || `Inquilino #${payment.tenant_id}`;
+    return fullName || 'Inquilino';
   }
 
   getPropertyName(payment: Payment): string {
-    return payment.property?.title || `ID ${payment.property_id}`;
+    return payment.property?.title || 'Propiedad';
   }
 
   getStatusLabel(status: PaymentStatus): string {
@@ -107,6 +108,36 @@ export class PaymentTableComponent {
 
   getTypeLabel(type: PaymentType): string {
     return PaymentTypeLabels[type];
+  }
+
+  isReservationPayment(payment: Payment): boolean {
+    return Boolean(payment.reservation_id || payment.reservation?.id);
+  }
+
+  getReservationDepositPercent(payment: Payment): number | null {
+    const reservation = payment.reservation;
+    const total = Number(reservation?.total_amount ?? 0);
+    const required = Number(reservation?.deposit_required ?? payment.amount ?? 0);
+    if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(required)) return null;
+    return Math.round((required / total) * 100);
+  }
+
+  getReservationTotal(payment: Payment): number {
+    const total = Number(payment.reservation?.total_amount ?? 0);
+    return Number.isFinite(total) ? total : 0;
+  }
+
+  getReservationPaid(payment: Payment): number {
+    const reservation = payment.reservation;
+    const fallbackPaid = payment.status === PaymentStatus.APPROVED ? payment.amount : 0;
+    const paid = Number(reservation?.paid_amount ?? fallbackPaid);
+    return Number.isFinite(paid) ? paid : 0;
+  }
+
+  getReservationBalance(payment: Payment): number {
+    const total = this.getReservationTotal(payment);
+    const paid = this.getReservationPaid(payment);
+    return Math.max(0, total - paid);
   }
 
   getMethodLabel(method: PaymentMethod): string {

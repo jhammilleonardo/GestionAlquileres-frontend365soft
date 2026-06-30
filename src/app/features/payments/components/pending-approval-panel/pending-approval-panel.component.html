@@ -35,7 +35,13 @@
       @for (payment of payments(); track payment.id) {
         <article class="pending-approval__item">
           <div class="pending-approval__item-header">
-            <span>#{{ payment.id }}</span>
+            <span>
+              @if (isReservationPayment(payment)) {
+                {{ 'payments.reservationDepositType' | transloco }}
+              } @else {
+                {{ getMethodLabel(payment.payment_method) }}
+              }
+            </span>
             <app-status-badge
               [label]="getStatusLabel(payment.status)"
               [tone]="getStatusTone(payment.status)"
@@ -60,6 +66,31 @@
               <strong>{{ 'payments.method' | transloco }}:</strong>
               {{ getMethodLabel(payment.payment_method) }}
             </p>
+            @if (isReservationPayment(payment)) {
+              <div class="pending-approval__reservation">
+                <div class="pending-approval__reservation-title">
+                  <lucide-icon [img]="CalendarCheck2" [size]="16"></lucide-icon>
+                  <strong>
+                    {{ 'payments.reservationPayment' | transloco }}
+                  </strong>
+                </div>
+                <p>
+                  {{ payment.reservation?.checkin_date | tenantDate }} -
+                  {{ payment.reservation?.checkout_date | tenantDate }}
+                </p>
+                @if (getReservationDepositPercent(payment); as depositPercent) {
+                  <p>
+                    <strong>{{ 'payments.depositToConfirm' | transloco }}:</strong>
+                    {{ formatCurrency(getReservationDepositRequired(payment), payment.currency) }}
+                    ({{ depositPercent }}%)
+                  </p>
+                }
+                <p>
+                  <strong>{{ 'payments.reservationBalanceLabel' | transloco }}:</strong>
+                  {{ formatCurrency(getReservationBalance(payment), payment.currency) }}
+                </p>
+              </div>
+            }
             <p>
               <strong>{{ 'payments.registeredAt' | transloco }}:</strong>
               {{ getRegisteredDate(payment) | tenantDate }}

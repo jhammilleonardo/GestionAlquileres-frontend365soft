@@ -11,6 +11,30 @@
     [placeholder]="'accounting.allCategories' | transloco"
     [options]="categoryOptions()"
   />
+  <app-select
+    formControlName="expense_scope"
+    [label]="'accounting.scopeLabel' | transloco"
+    [placeholder]="'accounting.allScopes' | transloco"
+    [options]="scopeOptions()"
+  />
+  <app-select
+    formControlName="responsibility"
+    [label]="'accounting.responsibilityLabel' | transloco"
+    [placeholder]="'accounting.allResponsibilities' | transloco"
+    [options]="responsibilityOptions()"
+  />
+  <app-select
+    formControlName="payment_status"
+    [label]="'accounting.paymentStatusLabel' | transloco"
+    [placeholder]="'accounting.allPaymentStatuses' | transloco"
+    [options]="paymentStatusOptions()"
+  />
+  <app-select
+    formControlName="is_reimbursable"
+    [label]="'accounting.reimbursableLabel' | transloco"
+    [placeholder]="'accounting.allReimbursable' | transloco"
+    [options]="reimbursableOptions()"
+  />
   <app-date-picker formControlName="from" [label]="'accounting.from' | transloco" />
   <app-date-picker formControlName="to" [label]="'accounting.to' | transloco" />
   <div class="filter-actions">

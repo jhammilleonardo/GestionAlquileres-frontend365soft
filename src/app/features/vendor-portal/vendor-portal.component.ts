@@ -7,13 +7,16 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
+  Star,
 } from 'lucide-angular';
 import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 
 import { MaintenanceRequest, MaintenanceStatus } from '../../core/models/maintenance-request.model';
 import { VendorAuthService } from '../../core/services/vendor/vendor-auth.service';
 import { VendorMaintenanceService } from '../../core/services/vendor/vendor-maintenance.service';
+import { VendorProfileService } from '../../core/services/vendor/vendor-profile.service';
 import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
+import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
 import { VendorOrderDetailComponent } from './components/vendor-order-detail.component';
 
 type FilterTab =
@@ -29,6 +32,7 @@ type FilterTab =
     LucideAngularModule,
     TranslocoModule,
     AppLoadingStateComponent,
+    TenantCurrencyPipe,
     VendorOrderDetailComponent,
   ],
   providers: [provideTranslocoScope({ scope: 'vendorPortal', alias: 'vendorPortal' })],
@@ -43,13 +47,17 @@ export class VendorPortalComponent {
   readonly AlertCircle = AlertCircle;
   readonly Clock = Clock;
   readonly CheckCircle2 = CheckCircle2;
+  readonly Star = Star;
+  readonly stars = [1, 2, 3, 4, 5];
 
   private readonly vendorAuth = inject(VendorAuthService);
   private readonly maintenance = inject(VendorMaintenanceService);
+  private readonly profileService = inject(VendorProfileService);
 
   readonly MaintenanceStatus = MaintenanceStatus;
 
   readonly vendor = this.vendorAuth.currentVendor;
+  readonly profile = this.profileService.profile;
   readonly isLoading = this.maintenance.isLoading;
   readonly counts = this.maintenance.countByStatus;
 
@@ -65,6 +73,7 @@ export class VendorPortalComponent {
 
   constructor() {
     this.maintenance.loadAssigned();
+    this.profileService.load();
   }
 
   setTab(tab: FilterTab): void {
@@ -73,6 +82,11 @@ export class VendorPortalComponent {
 
   refresh(): void {
     this.maintenance.loadAssigned();
+    this.profileService.load();
+  }
+
+  filledStars(rating: number | null | undefined): number {
+    return Math.round(rating ?? 0);
   }
 
   openOrder(request: MaintenanceRequest): void {

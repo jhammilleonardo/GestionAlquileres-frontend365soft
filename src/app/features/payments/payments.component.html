@@ -25,6 +25,18 @@
     <app-payment-stats [stats]="stats" />
   }
 
+  <app-long-term-ledger-panel
+    [ledgers]="longTermLedgers()"
+    [debtTotal]="longTermDebtTotal()"
+    [overdueMonths]="longTermOverdueMonths()"
+  />
+
+  <app-short-term-ledger-panel
+    [reservations]="shortTermLedgers()"
+    [balanceTotal]="shortTermBalanceTotal()"
+    [pendingReviewTotal]="shortTermPendingReviewTotal()"
+  />
+
   @if (showFilters()) {
     <app-payment-filters
       [form]="filterForm"

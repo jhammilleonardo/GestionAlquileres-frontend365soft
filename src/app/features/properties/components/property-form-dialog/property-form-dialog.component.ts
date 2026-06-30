@@ -20,17 +20,25 @@ import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import {
   Building2,
   CalendarCheck,
+  CalendarDays,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   CreditCard,
   DollarSign,
+  Bath,
+  BedDouble,
+  Car,
+  Clock3,
   Home,
   Image as LucideImage,
   LucideAngularModule,
   MapPin,
   Maximize2,
   PawPrint,
+  Ruler,
+  ShieldCheck,
+  Sofa,
   Users,
   X,
   XCircle,
@@ -267,17 +275,25 @@ export class PropertyFormDialogComponent {
   private readonly geocoding = inject(GeocodingService);
 
   readonly Building2 = Building2;
+  readonly Bath = Bath;
+  readonly BedDouble = BedDouble;
   readonly CalendarCheck = CalendarCheck;
+  readonly CalendarDays = CalendarDays;
   readonly CheckCircle2 = CheckCircle2;
   readonly ChevronLeft = ChevronLeft;
   readonly ChevronRight = ChevronRight;
   readonly CreditCard = CreditCard;
+  readonly Car = Car;
+  readonly Clock3 = Clock3;
   readonly DollarSign = DollarSign;
   readonly Home = Home;
   readonly LucideImage = LucideImage;
   readonly MapPin = MapPin;
   readonly Maximize2 = Maximize2;
   readonly PawPrint = PawPrint;
+  readonly Ruler = Ruler;
+  readonly ShieldCheck = ShieldCheck;
+  readonly Sofa = Sofa;
   readonly Users = Users;
   readonly X = X;
   readonly XCircle = XCircle;
@@ -405,15 +421,19 @@ export class PropertyFormDialogComponent {
    */
   private applyPriceRequiredValidators(): void {
     const shortTerm = this.isShortTerm();
-    const required = this.form().get(shortTerm ? 'price_per_night' : 'monthly_rent');
-    const optional = this.form().get(shortTerm ? 'monthly_rent' : 'price_per_night');
+    const requireNightly = this.mode() === 'create' && shortTerm;
+    const requireMonthly = !shortTerm;
+    const monthlyRent = this.form().get('monthly_rent');
+    const pricePerNight = this.form().get('price_per_night');
 
-    required?.removeValidators(Validators.required);
-    required?.addValidators(Validators.required);
-    required?.updateValueAndValidity({ emitEvent: false });
+    monthlyRent?.removeValidators(Validators.required);
+    pricePerNight?.removeValidators(Validators.required);
 
-    optional?.removeValidators(Validators.required);
-    optional?.updateValueAndValidity({ emitEvent: false });
+    if (requireMonthly) monthlyRent?.addValidators(Validators.required);
+    if (requireNightly) pricePerNight?.addValidators(Validators.required);
+
+    monthlyRent?.updateValueAndValidity({ emitEvent: false });
+    pricePerNight?.updateValueAndValidity({ emitEvent: false });
   }
 
   /** True cuando el campo está vacío pero es requerido (mensaje distinto a rango). */

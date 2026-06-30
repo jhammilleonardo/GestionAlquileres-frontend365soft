@@ -3,6 +3,7 @@ import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 import { AlertCircle, LucideAngularModule } from 'lucide-angular';
 
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
+import { LongTermLedgerPanelComponent } from './components/long-term-ledger-panel/long-term-ledger-panel.component';
 import { PaymentBulkActionsComponent } from './components/payment-bulk-actions/payment-bulk-actions.component';
 import { PaymentCreateDialogComponent } from './components/payment-create-dialog/payment-create-dialog.component';
 import { PaymentDetailDialogComponent } from './components/payment-detail-dialog/payment-detail-dialog.component';
@@ -13,6 +14,7 @@ import { PaymentRejectDialogComponent } from './components/payment-reject-dialog
 import { PaymentStatsComponent } from './components/payment-stats/payment-stats.component';
 import { PaymentToolbarComponent } from './components/payment-toolbar/payment-toolbar.component';
 import { PendingApprovalPanelComponent } from './components/pending-approval-panel/pending-approval-panel.component';
+import { ShortTermLedgerPanelComponent } from './components/short-term-ledger-panel/short-term-ledger-panel.component';
 import { PaymentAdminCreateFacade } from './payment-admin-create.facade';
 import { PaymentProofViewerFacade } from './payment-proof-viewer.facade';
 import { PaymentsFacade } from './payments.facade';
@@ -24,6 +26,7 @@ import { PaymentsFacade } from './payments.facade';
     LucideAngularModule,
     TranslocoModule,
     AppPageHeaderComponent,
+    LongTermLedgerPanelComponent,
     PaymentBulkActionsComponent,
     PaymentCreateDialogComponent,
     PaymentDetailDialogComponent,
@@ -34,6 +37,7 @@ import { PaymentsFacade } from './payments.facade';
     PaymentStatsComponent,
     PaymentToolbarComponent,
     PendingApprovalPanelComponent,
+    ShortTermLedgerPanelComponent,
   ],
   providers: [
     provideTranslocoScope({ scope: 'pagos', alias: 'payments' }),

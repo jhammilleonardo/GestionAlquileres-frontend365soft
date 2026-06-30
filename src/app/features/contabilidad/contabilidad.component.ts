@@ -1,28 +1,26 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
-import { catchError, of } from 'rxjs';
+import { TranslocoModule, provideTranslocoScope } from '@jsverse/transloco';
 
-import { AccountingService } from '../../core/services/admin/accounting.service';
-import {
-  ChartAccount,
-  JournalEntryView,
-  StatementLine,
-  TrialBalanceRow,
-} from '../../core/models/accounting.model';
 import { AppPageHeaderComponent } from '../../shared/ui/page-header/page-header.component';
 import { AppSegmentedControlComponent } from '../../shared/ui/segmented-control/segmented-control.component';
-import type { AppSegmentedControlOption } from '../../shared/ui/segmented-control/segmented-control.component';
-import { AppTableColumn, AppTableComponent } from '../../shared/ui/table/table.component';
-import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
-import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.component';
-import { AppStatusBadgeComponent } from '../../shared/ui/status-badge/status-badge.component';
-import { TenantCurrencyPipe } from '../../shared/pipes/tenant-currency.pipe';
-import { FormatService } from '../../core/services/format.service';
+import { JournalEntryDialogComponent } from './components/journal-entry-dialog/journal-entry-dialog.component';
+import { ContabilidadFacade } from './contabilidad.facade';
+import { AccDashboardViewComponent } from './views/acc-dashboard-view.component';
+import { AccBanksViewComponent } from './views/acc-banks-view.component';
+import { AccIntegrityViewComponent } from './views/acc-integrity-view.component';
+import { AccTrialBalanceViewComponent } from './views/acc-trial-balance-view.component';
+import { AccBalanceSheetViewComponent } from './views/acc-balance-sheet-view.component';
+import { AccIncomeStatementViewComponent } from './views/acc-income-statement-view.component';
+import { AccChartViewComponent } from './views/acc-chart-view.component';
+import { AccJournalViewComponent } from './views/acc-journal-view.component';
 
-type AccountingView = 'trial-balance' | 'balance-sheet' | 'income-statement' | 'chart' | 'journal';
-
+/**
+ * Pantalla de contabilidad: solo el "chrome" (cabecera, filtros, selector de vista)
+ * y el ruteo a la vista activa. El estado y la lógica viven en `ContabilidadFacade`
+ * (provisto aquí e inyectado por cada sub-componente de vista). Estilos sin encapsular
+ * (`ViewEncapsulation.None`) para que el scss `.acc-*` aplique a las vistas hijas.
+ */
 @Component({
   selector: 'app-contabilidad',
   standalone: true,
@@ -31,103 +29,25 @@ type AccountingView = 'trial-balance' | 'balance-sheet' | 'income-statement' | '
     TranslocoModule,
     AppPageHeaderComponent,
     AppSegmentedControlComponent,
-    AppTableComponent,
-    AppLoadingStateComponent,
-    AppEmptyStateComponent,
-    AppStatusBadgeComponent,
-    TenantCurrencyPipe,
+    JournalEntryDialogComponent,
+    AccDashboardViewComponent,
+    AccBanksViewComponent,
+    AccIntegrityViewComponent,
+    AccTrialBalanceViewComponent,
+    AccBalanceSheetViewComponent,
+    AccIncomeStatementViewComponent,
+    AccChartViewComponent,
+    AccJournalViewComponent,
   ],
-  providers: [provideTranslocoScope({ scope: 'accounting-ledger', alias: 'accounting' })],
+  providers: [
+    provideTranslocoScope({ scope: 'accounting-ledger', alias: 'accounting' }),
+    ContabilidadFacade,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
   templateUrl: './contabilidad.component.html',
   styleUrl: './contabilidad.component.scss',
 })
 export class ContabilidadComponent {
-  private readonly accounting = inject(AccountingService);
-  private readonly transloco = inject(TranslocoService);
-  private readonly format = inject(FormatService);
-
-  readonly view = signal<AccountingView>('trial-balance');
-
-  readonly viewOptions = (): AppSegmentedControlOption<AccountingView>[] => [
-    { value: 'trial-balance', label: this.t('accounting.views.trialBalance') },
-    { value: 'balance-sheet', label: this.t('accounting.views.balanceSheet') },
-    {
-      value: 'income-statement',
-      label: this.t('accounting.views.incomeStatement'),
-    },
-    { value: 'chart', label: this.t('accounting.views.chart') },
-    { value: 'journal', label: this.t('accounting.views.journal') },
-  ];
-
-  // Solo lectura: cada reporte se carga una vez; null = error, undefined = cargando.
-  readonly trialBalance = toSignal(
-    this.accounting.getTrialBalance().pipe(catchError(() => of(null))),
-  );
-  readonly balanceSheet = toSignal(
-    this.accounting.getBalanceSheet().pipe(catchError(() => of(null))),
-  );
-  readonly incomeStatement = toSignal(
-    this.accounting.getIncomeStatement().pipe(catchError(() => of(null))),
-  );
-  readonly chart = toSignal(this.accounting.getChartOfAccounts().pipe(catchError(() => of(null))));
-  readonly journal = toSignal(this.accounting.getJournalEntries().pipe(catchError(() => of(null))));
-
-  readonly journalEntries = computed<JournalEntryView[]>(() => this.journal()?.data ?? []);
-
-  readonly trialBalanceColumns: AppTableColumn<TrialBalanceRow>[] = [
-    { key: 'code', label: this.t('accounting.cols.code') },
-    { key: 'name', label: this.t('accounting.cols.account') },
-    {
-      key: 'debit',
-      label: this.t('accounting.cols.debit'),
-      align: 'right',
-      formatter: (row) => this.money(row.debit),
-    },
-    {
-      key: 'credit',
-      label: this.t('accounting.cols.credit'),
-      align: 'right',
-      formatter: (row) => this.money(row.credit),
-    },
-  ];
-
-  readonly statementColumns: AppTableColumn<StatementLine>[] = [
-    { key: 'code', label: this.t('accounting.cols.code') },
-    { key: 'name', label: this.t('accounting.cols.account') },
-    {
-      key: 'amount',
-      label: this.t('accounting.cols.amount'),
-      align: 'right',
-      formatter: (row) => this.money(row.amount),
-    },
-  ];
-
-  readonly chartColumns: AppTableColumn<ChartAccount>[] = [
-    { key: 'code', label: this.t('accounting.cols.code') },
-    { key: 'name', label: this.t('accounting.cols.account') },
-    {
-      key: 'type',
-      label: this.t('accounting.cols.type'),
-      formatter: (row) => this.t('accounting.types.' + row.type),
-    },
-  ];
-
-  readonly journalColumns: AppTableColumn<JournalEntryView>[] = [
-    { key: 'entry_number', label: this.t('accounting.cols.entryNumber') },
-    { key: 'entry_date', label: this.t('accounting.cols.date') },
-    { key: 'description', label: this.t('accounting.cols.description') },
-  ];
-
-  onViewChange(value: AccountingView | null): void {
-    this.view.set(value ?? 'trial-balance');
-  }
-
-  private t(key: string): string {
-    return this.transloco.translate(key);
-  }
-
-  private money(amount: number): string {
-    return this.format.formatCurrency(amount);
-  }
+  protected readonly f = inject(ContabilidadFacade);
 }

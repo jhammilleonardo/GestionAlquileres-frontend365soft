@@ -6,10 +6,15 @@ import { debounceTime, filter } from 'rxjs';
 
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
+  CLOSED_VIOLATION_STATUSES,
   CreateViolationDto,
   Violation,
+  ViolationFineStatus,
+  ViolationSeverity,
+  ViolationStats,
   ViolationStatus,
   ViolationType,
+  isViolationOverdue,
 } from '../../core/models/violation.model';
 import { FileDownloadService } from '../../core/services/file-download.service';
 import { PropertyService } from '../../core/services/admin/property.service';
@@ -19,6 +24,14 @@ import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dia
 import { AppSelectOption } from '../../shared/ui/select/select.component';
 import { AppStatusTone } from '../../shared/ui/status-badge/status-badge.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+
+const EMPTY_STATS: ViolationStats = {
+  total: 0,
+  open: 0,
+  overdue: 0,
+  escalated: 0,
+  fines_outstanding: 0,
+};
 
 @Injectable()
 export class ViolationsFacade {
@@ -33,6 +46,7 @@ export class ViolationsFacade {
 
   readonly violations = signal<Violation[]>([]);
   readonly isLoading = signal(true);
+  readonly stats = signal<ViolationStats>(EMPTY_STATS);
 
   readonly propertyOptions = signal<AppSelectOption<number>[]>([]);
   readonly tenantOptions = signal<AppSelectOption<number>[]>([]);
@@ -46,8 +60,17 @@ export class ViolationsFacade {
   readonly resolvingId = signal<number | null>(null);
   readonly resolveNotes = signal('');
 
+  // Panel de detalle (drawer) con línea de tiempo y acciones.
+  readonly detailOpen = signal(false);
+  readonly detail = signal<Violation | null>(null);
+  readonly detailLoading = signal(false);
+  readonly detailBusy = signal(false);
+  readonly noteText = signal('');
+  readonly fineAmount = signal<number | null>(null);
+
   readonly typeValues = Object.values(ViolationType);
   readonly statusValues = Object.values(ViolationStatus);
+  readonly severityValues = Object.values(ViolationSeverity);
 
   // El scope de traducción se carga vía HTTP de forma asíncrona. Traducir en un
   // inicializador de campo devolvería la clave cruda porque corre antes de la
@@ -66,43 +89,59 @@ export class ViolationsFacade {
     }));
   });
 
+  readonly severityOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return this.severityValues.map((value) => ({
+      value,
+      label: this.transloco.translate(`violations.severity.${value}`),
+    }));
+  });
+
+  readonly statusOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return this.statusValues.map((value) => ({
+      value,
+      label: this.transloco.translate(`violations.status.${value}`),
+    }));
+  });
+
   readonly filterForm = this.fb.group({
     property_id: [null as number | null],
     status: [''],
     type: [''],
+    severity: [''],
   });
 
-  readonly statusFilterOptions = computed<AppSelectOption<string>[]>(() => {
-    this.translationsReady();
-    return [
-      { value: '', label: this.transloco.translate('violations.allStatuses') },
-      ...this.statusValues.map((value) => ({
-        value,
-        label: this.transloco.translate(`violations.status.${value}`),
-      })),
-    ];
-  });
+  readonly statusFilterOptions = computed<AppSelectOption<string>[]>(() => [
+    { value: '', label: this.transloco.translate('violations.allStatuses') },
+    ...this.statusOptions(),
+  ]);
 
   readonly typeFilterOptions = computed<AppSelectOption<string>[]>(() => [
     { value: '', label: this.transloco.translate('violations.allTypes') },
     ...this.typeOptions(),
   ]);
 
+  readonly severityFilterOptions = computed<AppSelectOption<string>[]>(() => [
+    { value: '', label: this.transloco.translate('violations.allSeverities') },
+    ...this.severityOptions(),
+  ]);
+
   readonly form = this.fb.group({
     property_id: [null as number | null, Validators.required],
     tenant_id: [null as number | null, Validators.required],
     type: [ViolationType.NOISE as string, Validators.required],
+    severity: [ViolationSeverity.MEDIUM as string, Validators.required],
     description: ['', Validators.required],
+    due_date: [null as string | null],
+    fine_amount: [null as number | null, [Validators.min(0.01)]],
   });
-
-  readonly openCount = computed(
-    () => this.violations().filter((violation) => violation.status === ViolationStatus.OPEN).length,
-  );
 
   constructor() {
     this.loadProperties();
     this.loadTenants();
     this.load();
+    this.loadStats();
 
     // Los filtros se aplican automáticamente al cambiar cualquier selector;
     // no requiere un botón "Aplicar".
@@ -136,6 +175,7 @@ export class ViolationsFacade {
     if (filters.property_id) params['property_id'] = filters.property_id;
     if (filters.status) params['status'] = filters.status;
     if (filters.type) params['type'] = filters.type;
+    if (filters.severity) params['severity'] = filters.severity;
 
     this.violationService.list(params).subscribe({
       next: (res) => {
@@ -149,9 +189,16 @@ export class ViolationsFacade {
     });
   }
 
+  loadStats(): void {
+    this.violationService.stats().subscribe({
+      next: (stats) => this.stats.set(stats),
+      error: () => this.stats.set(EMPTY_STATS),
+    });
+  }
+
   clearFilters(): void {
     // reset() emite valueChanges, lo que dispara load() automáticamente.
-    this.filterForm.reset({ property_id: null, status: '', type: '' });
+    this.filterForm.reset({ property_id: null, status: '', type: '', severity: '' });
   }
 
   statusTone(status: ViolationStatus): AppStatusTone {
@@ -159,14 +206,46 @@ export class ViolationsFacade {
       case ViolationStatus.OPEN:
         return 'warning';
       case ViolationStatus.NOTIFIED:
+      case ViolationStatus.IN_PROGRESS:
         return 'info';
+      case ViolationStatus.ESCALATED:
+        return 'danger';
       case ViolationStatus.RESOLVED:
         return 'success';
+      case ViolationStatus.DISMISSED:
+        return 'neutral';
     }
   }
 
+  severityTone(severity: ViolationSeverity): AppStatusTone {
+    switch (severity) {
+      case ViolationSeverity.LOW:
+        return 'neutral';
+      case ViolationSeverity.MEDIUM:
+        return 'warning';
+      case ViolationSeverity.HIGH:
+        return 'danger';
+    }
+  }
+
+  fineStatusTone(status: ViolationFineStatus): AppStatusTone {
+    switch (status) {
+      case ViolationFineStatus.CHARGED:
+        return 'warning';
+      case ViolationFineStatus.PAID:
+        return 'success';
+      case ViolationFineStatus.WAIVED:
+      case ViolationFineStatus.NONE:
+        return 'neutral';
+    }
+  }
+
+  isOverdue(violation: Violation): boolean {
+    return isViolationOverdue(violation);
+  }
+
   openCreate(): void {
-    this.form.reset({ type: ViolationType.NOISE });
+    this.form.reset({ type: ViolationType.NOISE, severity: ViolationSeverity.MEDIUM });
     this.selectedFiles.set([]);
     this.dialogOpen.set(true);
   }
@@ -195,6 +274,86 @@ export class ViolationsFacade {
     });
   }
 
+  // ─── Detalle / línea de tiempo ──────────────────────────────────────────────
+
+  openDetail(violation: Violation): void {
+    this.detail.set(violation);
+    this.detailOpen.set(true);
+    this.noteText.set('');
+    this.fineAmount.set(violation.fine_amount ?? null);
+    this.refreshDetail(violation.id);
+  }
+
+  closeDetail(): void {
+    this.detailOpen.set(false);
+    this.detail.set(null);
+  }
+
+  changeStatus(status: ViolationStatus): void {
+    const violation = this.detail();
+    if (!violation) return;
+    this.detailBusy.set(true);
+    this.violationService.updateStatus(violation.id, status).subscribe({
+      next: () => this.afterDetailMutation(violation.id, 'violations.statusUpdated'),
+      error: (err: unknown) => this.detailError(err),
+    });
+  }
+
+  addNote(): void {
+    const violation = this.detail();
+    const note = this.noteText().trim();
+    if (!violation || !note) return;
+    this.detailBusy.set(true);
+    this.violationService.addNote(violation.id, note).subscribe({
+      next: () => {
+        this.noteText.set('');
+        this.afterDetailMutation(violation.id, 'violations.noteAdded');
+      },
+      error: (err: unknown) => this.detailError(err),
+    });
+  }
+
+  chargeFine(): void {
+    const violation = this.detail();
+    const amount = this.fineAmount();
+    if (!violation || !amount || amount <= 0) {
+      this.toast.error(this.transloco.translate('violations.fineAmountInvalid'));
+      return;
+    }
+    this.detailBusy.set(true);
+    this.violationService.chargeFine(violation.id, { amount }).subscribe({
+      next: () => this.afterDetailMutation(violation.id, 'violations.fineCharged'),
+      error: (err: unknown) => this.detailError(err),
+    });
+  }
+
+  async waiveFine(): Promise<void> {
+    const violation = this.detail();
+    if (!violation) return;
+    const confirmed = await this.confirmDialog.confirm({
+      title: this.transloco.translate('violations.waiveTitle'),
+      message: this.transloco.translate('violations.waiveMessage'),
+      confirmLabel: this.transloco.translate('violations.waive'),
+      cancelLabel: this.transloco.translate('common.cancel'),
+    });
+    if (!confirmed) return;
+    this.detailBusy.set(true);
+    this.violationService.waiveFine(violation.id).subscribe({
+      next: () => this.afterDetailMutation(violation.id, 'violations.fineWaived'),
+      error: (err: unknown) => this.detailError(err),
+    });
+  }
+
+  payFine(): void {
+    const violation = this.detail();
+    if (!violation) return;
+    this.detailBusy.set(true);
+    this.violationService.payFine(violation.id).subscribe({
+      next: () => this.afterDetailMutation(violation.id, 'violations.finePaid'),
+      error: (err: unknown) => this.detailError(err),
+    });
+  }
+
   openResolve(violation: Violation): void {
     this.resolvingId.set(violation.id);
     this.resolveNotes.set('');
@@ -218,7 +377,7 @@ export class ViolationsFacade {
         next: () => {
           this.resolveDialogOpen.set(false);
           this.toast.success(this.transloco.translate('violations.resolved'));
-          this.load();
+          this.refreshAll();
         },
         error: () => this.toast.error(this.transloco.translate('violations.saveError')),
       });
@@ -240,7 +399,10 @@ export class ViolationsFacade {
       next: () => {
         this.busyId.set(null);
         this.toast.success(this.transloco.translate('violations.notified'));
-        this.load();
+        if (this.detail()?.id === violation.id) {
+          this.refreshDetail(violation.id);
+        }
+        this.refreshAll();
       },
       error: () => {
         this.busyId.set(null);
@@ -261,11 +423,43 @@ export class ViolationsFacade {
   }
 
   isOpen(violation: Violation): boolean {
-    return violation.status === ViolationStatus.OPEN;
+    return !CLOSED_VIOLATION_STATUSES.includes(violation.status);
   }
 
   isResolved(violation: Violation): boolean {
-    return violation.status === ViolationStatus.RESOLVED;
+    return CLOSED_VIOLATION_STATUSES.includes(violation.status);
+  }
+
+  private afterDetailMutation(id: number, successKey: string): void {
+    this.toast.success(this.transloco.translate(successKey));
+    this.refreshDetail(id);
+    this.refreshAll();
+  }
+
+  private detailError(err: unknown): void {
+    this.detailBusy.set(false);
+    this.toast.error(getApiErrorMessage(err, this.transloco.translate('violations.saveError')));
+  }
+
+  private refreshDetail(id: number): void {
+    this.detailLoading.set(true);
+    this.violationService.getById(id).subscribe({
+      next: (violation) => {
+        this.detail.set(violation);
+        this.fineAmount.set(violation.fine_amount ?? null);
+        this.detailLoading.set(false);
+        this.detailBusy.set(false);
+      },
+      error: () => {
+        this.detailLoading.set(false);
+        this.detailBusy.set(false);
+      },
+    });
+  }
+
+  private refreshAll(): void {
+    this.load();
+    this.loadStats();
   }
 
   private buildDto(): CreateViolationDto {
@@ -274,7 +468,10 @@ export class ViolationsFacade {
       property_id: raw.property_id!,
       tenant_id: raw.tenant_id!,
       type: raw.type as ViolationType,
+      severity: raw.severity as ViolationSeverity,
       description: raw.description!,
+      due_date: raw.due_date ?? undefined,
+      fine_amount: raw.fine_amount ?? undefined,
     };
   }
 
@@ -295,7 +492,7 @@ export class ViolationsFacade {
     this.saving.set(false);
     this.dialogOpen.set(false);
     this.toast.success(this.transloco.translate('violations.created'));
-    this.load();
+    this.refreshAll();
   }
 
   private fetchPdf(violation: Violation, onBlob: (blob: Blob) => void): void {

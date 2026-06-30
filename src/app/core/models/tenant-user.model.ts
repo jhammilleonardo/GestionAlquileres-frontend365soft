@@ -94,6 +94,44 @@ export interface AdminTenantUser extends TenantUser {
   }>;
 }
 
+// Rent ledger del inquilino
+export interface TenantLedgerLine {
+  id: number;
+  date: string;
+  due_date: string | null;
+  payment_type: string;
+  payment_method: string;
+  status: string;
+  amount: number;
+  reference_number: string | null;
+  contract_number: string | null;
+  running_balance: number;
+}
+
+export interface TenantLedger {
+  tenant_id: number;
+  currency: string;
+  summary: {
+    total_charged: number;
+    total_paid: number;
+    balance_due: number;
+    pending_count: number;
+  };
+  lines: TenantLedgerLine[];
+}
+
+export interface TenantMaintenanceItem {
+  id: number;
+  ticket_number: string;
+  title: string;
+  category: string | null;
+  status: string;
+  priority: string;
+  property_title: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
 // Labels para UI
 export const UserRoleLabels: Record<UserRole, string> = {
   [UserRole.ADMIN]: 'Administrador',

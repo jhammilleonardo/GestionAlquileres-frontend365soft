@@ -8,6 +8,7 @@ import {
   UpdateVendorDto,
   Vendor,
   VendorHistoryItem,
+  VendorInvite,
 } from '../../models/vendor.model';
 
 @Injectable({ providedIn: 'root' })
@@ -43,11 +44,9 @@ export class VendorService {
     return this.api.delete<{ message: string }>(this.endpoint(`admin/vendors/${id}`));
   }
 
-  createAccount(id: number): Observable<{ email: string; temporaryPassword: string }> {
-    return this.api.post<{ email: string; temporaryPassword: string }, object>(
-      this.endpoint(`admin/vendors/${id}/account`),
-      {},
-    );
+  /** Invita al proveedor a su portal: genera un enlace de un solo uso (48 h). */
+  invite(id: number): Observable<VendorInvite> {
+    return this.api.post<VendorInvite, object>(this.endpoint(`admin/vendors/${id}/invite`), {});
   }
 
   /** Los montos y el rating llegan como string desde Postgres numeric. */
@@ -56,6 +55,12 @@ export class VendorService {
       ...vendor,
       average_rating: this.toNumber(vendor.average_rating),
       total_orders: this.toNumber(vendor.total_orders),
+      open_orders: this.toNumber(vendor.open_orders),
+      completed_orders: this.toNumber(vendor.completed_orders),
+      expenses_count: this.toNumber(vendor.expenses_count),
+      pending_balance: this.toNumber(vendor.pending_balance),
+      paid_total: this.toNumber(vendor.paid_total),
+      compliance_score: this.toNumber(vendor.compliance_score),
       rate_per_hour: this.toNumber(vendor.rate_per_hour),
       rate_flat: this.toNumber(vendor.rate_flat),
     };

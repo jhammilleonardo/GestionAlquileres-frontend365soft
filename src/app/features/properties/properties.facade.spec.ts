@@ -144,6 +144,86 @@ describe('PropertiesFacade', () => {
     expect(toast.success).toHaveBeenCalledWith('properties.actions.updated');
   });
 
+  it('permite editar una propiedad de corto plazo sin exigir renta mensual', () => {
+    const facade = setup();
+    const property = {
+      ...makeProperty(1),
+      rental_type: 'SHORT_TERM',
+      monthly_rent: undefined,
+      security_deposit_amount: 500,
+      square_meters: 456,
+      bedrooms: 4,
+      bathrooms: 4,
+      parking_spaces: 4,
+      year_built: 2020,
+      is_furnished: true,
+      addresses: [
+        {
+          address_type: 'address_1',
+          street_address: 'Calle 1',
+          city: 'La Paz',
+          state: 'La Paz',
+          country: 'BO',
+        },
+      ],
+      property_rules: {
+        pets_allowed: true,
+        smoking_allowed: true,
+        max_occupants: 6,
+      },
+    };
+    propertyService.getAdminPropertyById.mockReturnValue(of(property));
+
+    facade.openEditModal(property);
+    facade.saveProperty();
+
+    expect(propertyService.updateProperty).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        security_deposit_amount: 500,
+        square_meters: 456,
+        bedrooms: 4,
+        bathrooms: 4,
+        parking_spaces: 4,
+        year_built: 2020,
+        is_furnished: true,
+        property_rules: expect.objectContaining({
+          pets_allowed: true,
+          smoking_allowed: true,
+          max_occupants: 6,
+        }) as unknown as Record<string, unknown>,
+      }),
+    );
+    expect(facade.validationErrors()).toEqual([]);
+  });
+
+  it('conserva el tipo de alquiler del listado si el detalle no lo trae', () => {
+    const facade = setup();
+    const listProperty = { ...makeProperty(1), rental_type: 'SHORT_TERM', monthly_rent: undefined };
+    propertyService.getAdminPropertyById.mockReturnValue(
+      of({
+        ...makeProperty(1),
+        monthly_rent: undefined,
+        addresses: [
+          {
+            address_type: 'address_1',
+            street_address: 'Calle 1',
+            city: 'La Paz',
+            state: 'La Paz',
+            country: 'BO',
+          },
+        ],
+      }),
+    );
+
+    facade.openEditModal(listProperty);
+    facade.saveProperty();
+
+    expect(propertyService.updateProperty).toHaveBeenCalled();
+    expect(facade.propertyForm.get('rental_type')?.value).toBe('SHORT_TERM');
+    expect(facade.validationErrors()).toEqual([]);
+  });
+
   it('muestra errores cuando el formulario es invalido', () => {
     const facade = setup();
     facade.openCreateModal();

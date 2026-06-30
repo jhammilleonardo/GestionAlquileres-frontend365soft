@@ -8,6 +8,7 @@ export * from './empty-state/empty-state.component';
 export * from './file-upload/file-upload.component';
 export * from './image-uploader/image-uploader.component';
 export * from './info-hint/info-hint.component';
+export * from './ledger-table/ledger-table.component';
 export * from './loading-state/loading-state.component';
 export * from './location-map/location-map.component';
 export * from './location-picker/location-picker.component';

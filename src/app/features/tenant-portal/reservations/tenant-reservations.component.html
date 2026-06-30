@@ -59,8 +59,8 @@
         }
       </div>
       <app-status-badge
-        [label]="'tenantReservations.status.' + reservation.status | transloco"
-        [tone]="statusTone(reservation.status)"
+        [label]="'tenantReservations.status.' + displayStatus(reservation) | transloco"
+        [tone]="statusTone(displayStatus(reservation))"
       />
     </header>
 

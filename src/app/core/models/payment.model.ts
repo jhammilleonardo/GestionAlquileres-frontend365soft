@@ -120,6 +120,7 @@ export interface GenerateQrPaymentDto {
   payment_type?: PaymentType;
   notes?: string;
   contract_id?: number;
+  reservation_id?: number;
 }
 
 export interface VerifyQrDto {
@@ -148,7 +149,8 @@ export const QrPaymentStatusColors: Record<QrPaymentStatus, string> = {
 export interface Payment {
   id: number;
   tenant_id: number;
-  contract_id: number;
+  contract_id: number | null;
+  reservation_id?: number | null;
   property_id: number;
   unit_id?: number;
 
@@ -208,6 +210,7 @@ export interface Payment {
   property?: PropertyReference;
   unit?: UnitReference;
   tenant?: TenantReference;
+  reservation?: ReservationReference | null;
 }
 
 export interface ContractReference {
@@ -237,6 +240,18 @@ export interface UnitReference {
   id: number;
   unit_number: string;
   name?: string;
+}
+
+export interface ReservationReference {
+  id: number;
+  status: string;
+  checkin_date: string;
+  checkout_date: string;
+  nights: number;
+  total_amount: number | string;
+  deposit_required?: number | string | null;
+  paid_amount: number | string;
+  unit_number?: string | null;
 }
 
 export interface PaymentStats {

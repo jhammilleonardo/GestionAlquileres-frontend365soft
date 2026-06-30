@@ -134,22 +134,6 @@ export interface AdminReview {
   guest_name: string | null;
 }
 
-export type HousekeepingStatus = 'pending' | 'in_progress' | 'done';
-
-export interface HousekeepingTask {
-  id: number;
-  property_id: number;
-  unit_id: number;
-  reservation_id: number | null;
-  scheduled_date: string;
-  status: HousekeepingStatus;
-  assigned_to: number | null;
-  notes: string | null;
-  property_name: string | null;
-  unit_number: string | null;
-  assignee_name: string | null;
-}
-
 export interface CalendarSyncSource {
   id: number;
   unit_id: number;

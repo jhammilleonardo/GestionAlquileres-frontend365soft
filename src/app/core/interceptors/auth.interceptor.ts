@@ -6,18 +6,35 @@ import {
   HttpHeaders,
   HttpInterceptorFn,
   HttpRequest,
+  HttpResponse,
 } from '@angular/common/http';
-import { Observable, catchError, finalize, map, shareReplay, switchMap, throwError } from 'rxjs';
+import {
+  Observable,
+  catchError,
+  filter,
+  finalize,
+  map,
+  shareReplay,
+  switchMap,
+  take,
+  throwError,
+} from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SessionTokenService } from '../services/session-token.service';
 import { SessionExpirationService } from '../services/session-expiration.service';
 import { readCookie } from './credentials-csrf.interceptor';
-import { isPublicApiPath, requestPath } from '../utils/auth-route.util';
+import {
+  authContextForRequest,
+  isPublicApiPath,
+  requestPath,
+  type AuthRouteContext,
+} from '../utils/auth-route.util';
 
 const CSRF_COOKIE = 'csrf_token';
 const CSRF_HEADER = 'X-CSRF-Token';
+const AUTH_CONTEXT_HEADER = 'X-Auth-Context';
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-let refreshInFlight$: Observable<void> | null = null;
+const refreshInFlight: Partial<Record<AuthRouteContext | 'default', Observable<void>>> = {};
 
 /**
  * Authentication Interceptor
@@ -33,17 +50,18 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn,
 ) => {
   const sessionExpiration = inject(SessionExpirationService);
+  const context = authContextForRequest(req.url);
 
   // If the service already set an Authorization header explicitly, don't overwrite it
   if (req.headers.has('Authorization')) {
-    return next(req);
+    return handleWithRefresh(withAuthContext(req, context), next, sessionExpiration);
   }
 
   const sessionToken = inject(SessionTokenService);
   const token = sessionToken.getTokenForRequest(req.url);
 
   if (token) {
-    const authReq = req.clone({
+    const authReq = withAuthContext(req, context).clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,
       },
@@ -51,7 +69,7 @@ export const authInterceptor: HttpInterceptorFn = (
     return handleWithRefresh(authReq, next, sessionExpiration);
   }
 
-  return handleWithRefresh(req, next, sessionExpiration);
+  return handleWithRefresh(withAuthContext(req, context), next, sessionExpiration);
 };
 
 function handleWithRefresh(
@@ -65,10 +83,10 @@ function handleWithRefresh(
         return throwError(() => error);
       }
 
-      return refreshSession(next).pipe(
+      return refreshSession(next, authContextForRequest(req.url)).pipe(
         switchMap(() => next(withCurrentCsrf(req))),
         catchError((refreshError: unknown) => {
-          sessionExpiration.expire();
+          sessionExpiration.expire(authContextForRequest(req.url));
           return throwError(() => refreshError);
         }),
       );
@@ -76,11 +94,13 @@ function handleWithRefresh(
   );
 }
 
-function refreshSession(next: HttpHandlerFn): Observable<void> {
-  if (!refreshInFlight$) {
+function refreshSession(next: HttpHandlerFn, context: AuthRouteContext | null): Observable<void> {
+  const refreshKey = context ?? 'default';
+  if (!refreshInFlight[refreshKey]) {
     const csrf = readCookie(CSRF_COOKIE);
     let headers = new HttpHeaders();
     if (csrf) headers = headers.set(CSRF_HEADER, csrf);
+    if (context) headers = headers.set(AUTH_CONTEXT_HEADER, context);
 
     const refreshRequest = new HttpRequest(
       'POST',
@@ -89,16 +109,26 @@ function refreshSession(next: HttpHandlerFn): Observable<void> {
       { headers, withCredentials: true },
     );
 
-    refreshInFlight$ = next(refreshRequest).pipe(
+    refreshInFlight[refreshKey] = next(refreshRequest).pipe(
+      filter((event): event is HttpResponse<unknown> => event instanceof HttpResponse),
+      take(1),
       map(() => undefined),
       finalize(() => {
-        refreshInFlight$ = null;
+        delete refreshInFlight[refreshKey];
       }),
       shareReplay({ bufferSize: 1, refCount: false }),
     );
   }
 
-  return refreshInFlight$;
+  return refreshInFlight[refreshKey];
+}
+
+function withAuthContext(
+  req: HttpRequest<unknown>,
+  context: AuthRouteContext | null,
+): HttpRequest<unknown> {
+  if (!context || req.headers.has(AUTH_CONTEXT_HEADER)) return req;
+  return req.clone({ setHeaders: { [AUTH_CONTEXT_HEADER]: context } });
 }
 
 function shouldRefresh(
@@ -107,7 +137,8 @@ function shouldRefresh(
   sessionExpiration: SessionExpirationService,
 ): boolean {
   if (!(error instanceof HttpErrorResponse) || error.status !== 401) return false;
-  if (!req.url.startsWith(environment.apiUrl) || !sessionExpiration.hasClientSession()) {
+  const context = authContextForRequest(req.url);
+  if (!req.url.startsWith(environment.apiUrl) || !sessionExpiration.hasClientSession(context)) {
     return false;
   }
 

@@ -5,6 +5,10 @@
     [description]="'inspections.subtitle' | transloco"
   >
     <div actions class="header-actions">
+      <app-button appearance="secondary" (clicked)="openTemplates()">
+        <lucide-icon [img]="ClipboardList" [size]="16" />
+        {{ 'inspections.templates' | transloco }}
+      </app-button>
       <app-button appearance="secondary" (clicked)="openCompare()">
         <lucide-icon [img]="GitCompareArrows" [size]="16" />
         {{ 'inspections.compare' | transloco }}
@@ -16,11 +20,34 @@
     </div>
   </app-page-header>
 
+  <div class="inspection-stats">
+    <article class="stat-card">
+      <span class="stat-value">{{ metrics().total }}</span>
+      <span class="stat-label">{{ 'inspections.metrics.total' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-info">
+      <span class="stat-value">{{ metrics().scheduled }}</span>
+      <span class="stat-label">{{ 'inspections.metrics.scheduled' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-warning">
+      <span class="stat-value">{{ metrics().inProgress }}</span>
+      <span class="stat-label">{{ 'inspections.metrics.inProgress' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-success">
+      <span class="stat-value">{{ metrics().completed }}</span>
+      <span class="stat-label">{{ 'inspections.metrics.completed' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-danger">
+      <span class="stat-value">{{ metrics().overdue }}</span>
+      <span class="stat-label">{{ 'inspections.metrics.overdue' | transloco }}</span>
+    </article>
+  </div>
+
   <app-inspection-filters
     [form]="filterForm"
     [propertyOptions]="propertyOptions()"
-    [statusOptions]="statusFilterOptions"
-    [typeOptions]="typeOptions"
+    [statusOptions]="statusFilterOptions()"
+    [typeOptions]="typeOptions()"
     (filtersApplied)="applyFilters()"
     (filtersCleared)="clearFilters()"
   />
@@ -30,7 +57,11 @@
   } @else if (inspections().length === 0) {
     <app-empty-state [title]="'inspections.empty' | transloco" />
   } @else {
-    <app-inspection-table [inspections]="inspections()" (detailRequested)="openDetail($event)" />
+    <app-inspection-table
+      [inspections]="inspections()"
+      [isOverdue]="isOverdue"
+      (detailRequested)="openDetail($event)"
+    />
   }
 </div>
 
@@ -38,8 +69,9 @@
   [open]="dialogOpen()"
   [form]="form"
   [propertyOptions]="propertyOptions()"
-  [typeOptions]="typeOptions"
+  [typeOptions]="typeOptions()"
   [inspectorOptions]="inspectorOptions()"
+  [templateOptions]="templateOptions()"
   [saving]="saving()"
   (closed)="closeDialog()"
   (saved)="save()"
@@ -54,4 +86,14 @@
   [comparison]="comparison()"
   (closed)="closeCompare()"
   (compared)="runCompare()"
+/>
+
+<app-inspection-templates-dialog
+  [open]="templatesOpen()"
+  [templates]="templates()"
+  [areaOptions]="areaOptions()"
+  [saving]="savingTemplate()"
+  (closed)="closeTemplates()"
+  (created)="createTemplate($event)"
+  (deleted)="deleteTemplate($event)"
 />

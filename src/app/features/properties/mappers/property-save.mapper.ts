@@ -10,6 +10,9 @@ export interface PropertySavePayloads {
 }
 
 export function buildPropertySavePayloads(formValue: PropertyFormValue): PropertySavePayloads {
+  const rentalType = formValue.rental_type ?? 'LONG_TERM';
+  const supportsShortTerm = rentalType === 'SHORT_TERM' || rentalType === 'BOTH';
+  const supportsLongTerm = rentalType === 'LONG_TERM' || rentalType === 'BOTH';
   const propertyTypeId = formValue.property_type_id ? +formValue.property_type_id : 0;
   const propertySubtypeId = formValue.property_subtype_id ? +formValue.property_subtype_id : 0;
   const securityDeposit = toNumberOrUndefined(formValue.security_deposit_amount);
@@ -43,9 +46,9 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
 
   if (formValue.description) createDto.description = formValue.description;
   if (securityDeposit !== undefined) createDto.security_deposit_amount = securityDeposit;
-  if (formValue.rental_type) createDto.rental_type = formValue.rental_type;
-  if (monthlyRent !== undefined) createDto.monthly_rent = monthlyRent;
-  if (pricePerNight !== undefined) createDto.price_per_night = pricePerNight;
+  if (formValue.rental_type) createDto.rental_type = rentalType;
+  if (supportsLongTerm && monthlyRent !== undefined) createDto.monthly_rent = monthlyRent;
+  if (supportsShortTerm && pricePerNight !== undefined) createDto.price_per_night = pricePerNight;
   if (formValue.currency) createDto.currency = formValue.currency;
   if (squareMeters !== undefined) createDto.square_meters = squareMeters;
   if (bedrooms !== undefined) createDto.bedrooms = bedrooms;
@@ -64,13 +67,19 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
     propertyRules.smoking_allowed = formValue.smoking_allowed;
   }
   if (maxOccupants !== undefined) propertyRules.max_occupants = maxOccupants;
-  if (minLeaseMonths !== undefined) propertyRules.min_lease_months = minLeaseMonths;
+  if (supportsLongTerm && minLeaseMonths !== undefined) {
+    propertyRules.min_lease_months = minLeaseMonths;
+  }
   if (Object.keys(propertyRules).length > 0) createDto.property_rules = propertyRules;
 
   const validOwners = (formValue.new_owners ?? []).filter(
     (owner) => owner.name && owner.primary_email && owner.phone_number,
   );
   if (validOwners.length > 0) createDto.new_owners = validOwners;
+
+  if (supportsShortTerm) {
+    assignShortTermConfig(createDto, formValue);
+  }
 
   const {
     new_owners: _newOwners,
@@ -79,39 +88,13 @@ export function buildPropertySavePayloads(formValue: PropertyFormValue): Propert
     ...updateDto
   } = createDto;
 
-  // La config de corto plazo sólo aplica al CREAR (alimenta la unidad por
-  // defecto). Se añade después de derivar updateDto para no enviarla al editar
-  // la propiedad (las unidades se editan por separado).
-  const isShortTerm = formValue.rental_type === 'SHORT_TERM' || formValue.rental_type === 'BOTH';
-  if (isShortTerm) {
-    assignShortTermConfig(createDto, formValue);
-  }
-
   return { createDto, updateDto };
 }
 
 /** Vuelca la config de corto plazo del formulario al DTO de creación. */
 function assignShortTermConfig(dto: PropertySavePayload, formValue: PropertyFormValue): void {
-  const numericFields = [
-    'cleaning_fee',
-    'min_nights',
-    'max_nights',
-    'weekly_discount_pct',
-    'monthly_discount_pct',
-    'weekend_adjustment_pct',
-    'early_bird_min_days',
-    'early_bird_discount_pct',
-    'last_minute_max_days',
-    'last_minute_adjustment_pct',
-    'advance_notice_days',
-    'max_advance_days',
-    'deposit_to_confirm_pct',
-  ] as const;
-
-  for (const field of numericFields) {
-    const value = toNumberOrUndefined(formValue[field]);
-    if (value !== undefined) dto[field] = value;
-  }
+  const depositToConfirmPct = toNumberOrUndefined(formValue.deposit_to_confirm_pct);
+  if (depositToConfirmPct !== undefined) dto.deposit_to_confirm_pct = depositToConfirmPct;
 
   if (formValue.checkin_time) dto.checkin_time = formValue.checkin_time;
   if (formValue.checkout_time) dto.checkout_time = formValue.checkout_time;

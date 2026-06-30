@@ -26,12 +26,65 @@
     [netResult]="netResult()"
   />
 
-  <app-expense-chart [bars]="chartBars()" />
+  @if (hasChartData()) {
+    <app-expense-chart [bars]="chartBars()" />
+  }
+
+  <section class="expense-command-panel" aria-label="Resumen de gastos">
+    <div class="expense-command-grid">
+      <div class="expense-kpi total">
+        <span>{{ 'accounting.registeredExpenses' | transloco }}</span>
+        <strong>{{ listedExpenseTotal() | number: '1.2-2' }} BOB</strong>
+      </div>
+      <div class="expense-kpi owner">
+        <span>{{ 'accounting.ownerDeductions' | transloco }}</span>
+        <strong>{{ ownerDeductionTotal() | number: '1.2-2' }} BOB</strong>
+      </div>
+      <div class="expense-kpi recovery">
+        <span>{{ 'accounting.reimbursableTotal' | transloco }}</span>
+        <strong>{{ reimbursableTotal() | number: '1.2-2' }} BOB</strong>
+      </div>
+      <div class="expense-kpi pending">
+        <span>{{ 'accounting.pendingExpenseTotal' | transloco }}</span>
+        <strong>{{ pendingTotal() | number: '1.2-2' }} BOB</strong>
+      </div>
+      <div class="expense-kpi scope">
+        <span>{{ 'accounting.shortTermTotal' | transloco }}</span>
+        <strong>{{ shortTermTotal() | number: '1.2-2' }} BOB</strong>
+      </div>
+      <div class="expense-kpi scope">
+        <span>{{ 'accounting.longTermTotal' | transloco }}</span>
+        <strong>{{ longTermTotal() | number: '1.2-2' }} BOB</strong>
+      </div>
+    </div>
+
+    <div class="expense-guide">
+      <div>
+        <span class="guide-token owner"></span>
+        <strong>{{ 'accounting.ownerImpactTitle' | transloco }}</strong>
+        <small>{{ 'accounting.ownerImpactCopy' | transloco }}</small>
+      </div>
+      <div>
+        <span class="guide-token recovery"></span>
+        <strong>{{ 'accounting.recoveryTitle' | transloco }}</strong>
+        <small>{{ 'accounting.recoveryCopy' | transloco }}</small>
+      </div>
+      <div>
+        <span class="guide-token pending"></span>
+        <strong>{{ 'accounting.pendingTitle' | transloco }}</strong>
+        <small>{{ 'accounting.pendingCopy' | transloco }}</small>
+      </div>
+    </div>
+  </section>
 
   <app-expense-filters
     [form]="filterForm"
     [propertyOptions]="propertyOptions()"
     [categoryOptions]="categoryFilterOptions"
+    [scopeOptions]="scopeFilterOptions"
+    [responsibilityOptions]="responsibilityFilterOptions"
+    [paymentStatusOptions]="paymentStatusFilterOptions"
+    [reimbursableOptions]="reimbursableFilterOptions"
     (filtersApplied)="applyFilters()"
     (filtersCleared)="clearFilters()"
   />
@@ -44,6 +97,7 @@
     <app-expense-table
       [expenses]="expenses()"
       (editRequested)="openEdit($event)"
+      (paymentRequested)="openPaymentDialog($event)"
       (deleteRequested)="deleteExpense($event)"
     />
   }
@@ -55,8 +109,57 @@
   [form]="form"
   [propertyOptions]="propertyOptions()"
   [categoryOptions]="categoryOptions"
+  [scopeOptions]="scopeOptions"
+  [responsibilityOptions]="responsibilityOptions"
+  [paymentStatusOptions]="paymentStatusOptions"
   [vendorOptions]="vendorOptions()"
   [saving]="saving()"
+  [selectedReceipt]="selectedReceipt()"
+  [receiptError]="receiptError()"
   (closed)="closeDialog()"
   (saved)="save()"
+  (receiptSelected)="selectReceipt($event)"
 />
+
+<app-dialog
+  [open]="paymentDialogOpen()"
+  [title]="'accounting.registerPayment' | transloco"
+  (closed)="closePaymentDialog()"
+>
+  <form [formGroup]="paymentForm" class="expense-form" (ngSubmit)="registerPayment()">
+    @if (paymentExpense(); as expense) {
+      <div class="payment-balance-strip">
+        <span>{{ 'accounting.balanceAmount' | transloco }}</span>
+        <strong>{{ expenseBalance(expense) | number: '1.2-2' }} {{ expense.currency }}</strong>
+      </div>
+    }
+    <div class="form-row">
+      <app-text-field
+        formControlName="amount"
+        [label]="'accounting.amount' | transloco"
+        type="number"
+      />
+      <app-date-picker formControlName="payment_date" [label]="'accounting.paidDate' | transloco" />
+    </div>
+    <div class="form-row">
+      <app-text-field
+        formControlName="payment_method"
+        [label]="'accounting.paymentMethod' | transloco"
+      />
+      <app-text-field
+        formControlName="reference_number"
+        [label]="'accounting.referenceNumber' | transloco"
+      />
+    </div>
+    <app-textarea formControlName="notes" [label]="'accounting.internalNotes' | transloco" />
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closePaymentDialog()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="registeringPayment()" (clicked)="registerPayment()">
+      {{ 'accounting.registerPayment' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

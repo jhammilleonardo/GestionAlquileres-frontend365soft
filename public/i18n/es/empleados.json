@@ -13,8 +13,16 @@
   "managePermissions": "Gestionar permisos",
   "viewPermissionsAria": "Ver permisos de {{name}}",
   "createdSuccess": "Empleado {{name}} creado",
+  "updatedSuccess": "Empleado {{name}} actualizado",
+  "filters": {
+    "label": "Filtrar empleados por estado",
+    "all": "Todos"
+  },
   "dialog": {
     "title": "Nuevo Empleado",
+    "editTitle": "Editar empleado",
+    "save": "Guardar cambios",
+    "updateError": "Error al actualizar el empleado",
     "fullName": "Nombre completo",
     "namePlaceholder": "Ej. Ana García",
     "nameRequired": "El nombre es requerido",
@@ -46,6 +54,7 @@
     "editAria": "Editar en {{module}}",
     "deleteAria": "Eliminar en {{module}}",
     "savePermissions": "Guardar permisos",
+    "editData": "Editar datos",
     "saving": "Guardando...",
     "deactivate": "Desactivar",
     "activate": "Activar",

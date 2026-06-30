@@ -3,13 +3,22 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   inject,
   OnInit,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { TranslocoModule } from '@jsverse/transloco';
-import { AdminTenantUser, TenantLeaseStatus } from '../../core/models/tenant-user.model';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
+import { catchError, EMPTY } from 'rxjs';
+import {
+  AdminTenantUser,
+  TenantLeaseStatus,
+  TenantLedger,
+  TenantMaintenanceItem,
+  UpdateTenantUserDto,
+} from '../../core/models/tenant-user.model';
 import { TenantUserService } from '../../core/services/tenant/tenant-user.service';
 import {
   AppButtonComponent,
@@ -18,7 +27,10 @@ import {
   AppStatusBadgeComponent,
   AppTextFieldComponent,
 } from '../../shared/ui';
+import { ToastService } from '../../shared/ui/toast/toast.service';
 import type { AppStatusTone } from '../../shared/ui/status-badge/status-badge.component';
+import { TenantDetailPanelComponent } from './components/tenant-detail-panel/tenant-detail-panel.component';
+import { TenantFormDialogComponent } from './components/tenant-form-dialog/tenant-form-dialog.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,18 +46,34 @@ import type { AppStatusTone } from '../../shared/ui/status-badge/status-badge.co
     AppPageHeaderComponent,
     AppStatusBadgeComponent,
     AppTextFieldComponent,
+    TenantDetailPanelComponent,
+    TenantFormDialogComponent,
   ],
   templateUrl: './tenants.component.html',
   styleUrl: './tenants.component.scss',
 })
 export class TenantsComponent implements OnInit {
   private readonly tenantUserService = inject(TenantUserService);
+  private readonly toast = inject(ToastService);
+  private readonly transloco = inject(TranslocoService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly tenants = this.tenantUserService.users;
   readonly stats = this.tenantUserService.stats;
   readonly isLoading = this.tenantUserService.isLoading;
   readonly search = signal('');
   readonly statusFilter = signal<TenantLeaseStatus | 'all'>('all');
+
+  // Detalle (panel lateral)
+  readonly selectedTenant = signal<AdminTenantUser | null>(null);
+  readonly ledger = signal<TenantLedger | null>(null);
+  readonly ledgerLoading = signal(false);
+  readonly maintenance = signal<TenantMaintenanceItem[]>([]);
+  readonly maintenanceLoading = signal(false);
+
+  // Edición (diálogo)
+  readonly editOpen = signal(false);
+  readonly saving = signal(false);
 
   readonly filteredTenants = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -116,5 +144,85 @@ export class TenantsComponent implements OnInit {
 
   leaseLabelKey(status: TenantLeaseStatus | undefined): string {
     return `tenants.leaseStatus.${status ?? 'none'}`;
+  }
+
+  openDetail(tenant: AdminTenantUser): void {
+    this.selectedTenant.set(tenant);
+    this.loadLedger(tenant.id);
+    this.loadMaintenance(tenant.id);
+  }
+
+  closeDetail(): void {
+    this.selectedTenant.set(null);
+    this.ledger.set(null);
+    this.maintenance.set([]);
+  }
+
+  openEdit(): void {
+    this.editOpen.set(true);
+  }
+
+  closeEdit(): void {
+    this.editOpen.set(false);
+  }
+
+  saveEdit(dto: UpdateTenantUserDto): void {
+    const tenant = this.selectedTenant();
+    if (!tenant) return;
+
+    this.saving.set(true);
+    this.tenantUserService
+      .updateUser(tenant.id, dto)
+      .pipe(
+        catchError(() => {
+          this.saving.set(false);
+          this.toast.error(this.transloco.translate('tenants.detail.saveError'));
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => {
+        this.saving.set(false);
+        this.editOpen.set(false);
+        this.selectedTenant.update((prev) => (prev ? { ...prev, ...dto } : prev));
+        this.toast.success(this.transloco.translate('tenants.detail.saveSuccess'));
+        this.reload();
+      });
+  }
+
+  private loadLedger(tenantId: number): void {
+    this.ledgerLoading.set(true);
+    this.ledger.set(null);
+    this.tenantUserService
+      .getTenantLedger(tenantId)
+      .pipe(
+        catchError(() => {
+          this.ledgerLoading.set(false);
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((ledger) => {
+        this.ledger.set(ledger);
+        this.ledgerLoading.set(false);
+      });
+  }
+
+  private loadMaintenance(tenantId: number): void {
+    this.maintenanceLoading.set(true);
+    this.maintenance.set([]);
+    this.tenantUserService
+      .getTenantMaintenance(tenantId)
+      .pipe(
+        catchError(() => {
+          this.maintenanceLoading.set(false);
+          return EMPTY;
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((items) => {
+        this.maintenance.set(items);
+        this.maintenanceLoading.set(false);
+      });
   }
 }

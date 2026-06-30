@@ -46,19 +46,32 @@
             >{{ currentQuote.total_due | number: '1.0-2' }} {{ currentQuote.currency }}</strong
           >
         </div>
-        @if (currentQuote.deposit_to_confirm < currentQuote.total_due) {
-          <div class="sum-row sum-deposit">
-            <span>{{ 'public.availability.depositToConfirm' | transloco }}</span>
-            <strong>
-              {{ currentQuote.deposit_to_confirm | number: '1.0-2' }} {{ currentQuote.currency }}
-            </strong>
-          </div>
-          <div class="sum-row muted-row">
-            <span>{{ 'public.availability.balanceAtCheckin' | transloco }}</span>
-            <strong>
-              {{ currentQuote.total_due - currentQuote.deposit_to_confirm | number: '1.0-2' }}
-              {{ currentQuote.currency }}
-            </strong>
+        @if (currentQuote.deposit_to_confirm > 0) {
+          <div class="booking-payment-card">
+            <div class="sum-row sum-deposit">
+              <span>
+                {{
+                  'public.availability.payNowToReserve'
+                    | transloco: { percent: depositPercentOfTotal(currentQuote) }
+                }}
+              </span>
+              <strong>
+                {{ currentQuote.deposit_to_confirm | number: '1.0-2' }} {{ currentQuote.currency }}
+              </strong>
+            </div>
+            <div class="sum-row muted-row">
+              <span>{{ 'public.availability.balanceAtCheckin' | transloco }}</span>
+              <strong>
+                {{ balanceAfterDeposit(currentQuote) | number: '1.0-2' }}
+                {{ currentQuote.currency }}
+              </strong>
+            </div>
+            <p>
+              {{
+                'public.availability.depositExplanation'
+                  | transloco: { percent: depositPercentOfTotal(currentQuote) }
+              }}
+            </p>
           </div>
         }
       }

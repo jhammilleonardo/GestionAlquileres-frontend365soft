@@ -1,6 +1,17 @@
 {
   "title": "Dashboard",
   "welcome": "Bienvenido al sistema de gestión de alquileres",
+  "actions": {
+    "title": "Requiere tu atención",
+    "allClear": "Todo al día. No hay pendientes por ahora.",
+    "delinquent": "Inquilinos morosos",
+    "violations": "Violaciones abiertas",
+    "pendingPayments": "Pagos pendientes",
+    "maintenance": "Mantenimientos abiertos",
+    "expiringContracts": "Contratos por vencer",
+    "applications": "Solicitudes pendientes",
+    "inspections": "Inspecciones próximas"
+  },
   "viewPublicPortal": "Ver Portal Público de Propiedades",
   "accessDenied": "No tienes permiso para acceder a esa sección. Contacta al administrador.",
   "rentalModeBlocked": "Esa sección no está disponible para el modo de alquiler de tu empresa.",

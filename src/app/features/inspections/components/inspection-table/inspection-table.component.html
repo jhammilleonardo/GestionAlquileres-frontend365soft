@@ -20,7 +20,12 @@
             }
           </td>
           <td>{{ 'inspections.type.' + inspection.type | transloco }}</td>
-          <td>{{ inspection.scheduled_date | slice: 0 : 10 }}</td>
+          <td>
+            {{ inspection.scheduled_date | slice: 0 : 10 }}
+            @if (isOverdue()(inspection)) {
+              <span class="overdue-tag">{{ 'inspections.overdue' | transloco }}</span>
+            }
+          </td>
           <td>{{ inspection.inspector_name || '-' }}</td>
           <td>
             <app-status-badge

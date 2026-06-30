@@ -17,6 +17,7 @@ import {
   ExternalLink,
   FileText,
   LucideAngularModule,
+  type LucideIconData,
   Receipt,
   RefreshCw,
   ShieldAlert,
@@ -42,6 +43,24 @@ interface KpiTrend {
   readonly pct: number;
   readonly up: boolean;
 }
+
+/** Elemento del centro de acciones: algo que requiere atención del admin. */
+interface ActionItem {
+  readonly key: string;
+  readonly count: number;
+  readonly icon: LucideIconData;
+  readonly tone: AppStatusTone;
+  readonly action: () => void;
+}
+
+/** Prioridad de orden del centro de acciones (más urgente primero). */
+const ACTION_TONE_ORDER: Record<AppStatusTone, number> = {
+  danger: 0,
+  warning: 1,
+  info: 2,
+  success: 3,
+  neutral: 4,
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -102,6 +121,97 @@ export class DashboardComponent {
   });
 
   readonly hasDelinquency = computed(() => (this.kpis().delinquentCount ?? 0) > 0);
+
+  /**
+   * Centro de acciones (estilo Airbnb): lista priorizada de pendientes derivada
+   * de los KPIs ya cargados. Solo muestra lo que tiene conteo > 0 y ordena por
+   * urgencia (morosidad/violaciones primero). Cada ítem navega a su módulo.
+   */
+  readonly actionItems = computed<ActionItem[]>(() => {
+    const k = this.kpis();
+    const items: ActionItem[] = [];
+
+    const delinquent = k.delinquentCount ?? 0;
+    if (delinquent > 0) {
+      items.push({
+        key: 'delinquent',
+        count: delinquent,
+        icon: AlertCircle,
+        tone: 'danger',
+        action: () => this.goToDelinquent(),
+      });
+    }
+
+    const violations = k.openViolationsCount ?? 0;
+    if (violations > 0) {
+      items.push({
+        key: 'violations',
+        count: violations,
+        icon: ShieldAlert,
+        tone: 'danger',
+        action: () => this.goToViolations(),
+      });
+    }
+
+    const pendingPayments = k.pendingPaymentsCount ?? 0;
+    if (pendingPayments > 0) {
+      items.push({
+        key: 'pendingPayments',
+        count: pendingPayments,
+        icon: Receipt,
+        tone: 'warning',
+        action: () => this.goToPendingPayments(),
+      });
+    }
+
+    const maintenance = k.activeMaintenanceCount ?? 0;
+    if (maintenance > 0) {
+      items.push({
+        key: 'maintenance',
+        count: maintenance,
+        icon: Wrench,
+        tone: 'warning',
+        action: () => this.goToMaintenance(),
+      });
+    }
+
+    const expiring = k.expiringContracts ?? 0;
+    if (expiring > 0) {
+      items.push({
+        key: 'expiringContracts',
+        count: expiring,
+        icon: FileText,
+        tone: 'warning',
+        action: () => this.goToExpiringContracts(),
+      });
+    }
+
+    const applications = k.pendingApplicationsList?.length ?? 0;
+    if (applications > 0) {
+      items.push({
+        key: 'applications',
+        count: applications,
+        icon: ClipboardList,
+        tone: 'info',
+        action: () => this.goToApplications(),
+      });
+    }
+
+    const inspections = k.upcomingInspectionsCount ?? 0;
+    if (inspections > 0) {
+      items.push({
+        key: 'inspections',
+        count: inspections,
+        icon: Calendar,
+        tone: 'info',
+        action: () => this.goToInspections(),
+      });
+    }
+
+    return items.sort((a, b) => ACTION_TONE_ORDER[a.tone] - ACTION_TONE_ORDER[b.tone]);
+  });
+
+  readonly hasActionItems = computed(() => this.actionItems().length > 0);
 
   readonly rentCollectionPct = computed<number>(() => {
     const expected = this.kpis().monthlyExpected ?? 0;

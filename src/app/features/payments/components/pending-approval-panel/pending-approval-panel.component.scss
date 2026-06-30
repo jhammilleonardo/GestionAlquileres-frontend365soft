@@ -77,6 +77,26 @@
   color: #334155;
 }
 
+.pending-approval__reservation {
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  background: #f0f9ff;
+
+  p {
+    margin-bottom: 6px;
+  }
+}
+
+.pending-approval__reservation-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: #075985;
+}
+
 .pending-approval__item-actions {
   margin-top: 12px;
 }

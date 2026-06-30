@@ -437,6 +437,8 @@ export class PropertyService {
         cleaning_fee: this.toNumberOrNull(unit['cleaning_fee']),
         min_nights: this.toNumberOrNull(unit['min_nights']),
         max_nights: this.toNumberOrNull(unit['max_nights']),
+        deposit_amount: this.toNumberOrNull(unit['deposit_amount']),
+        deposit_to_confirm_pct: this.toNumberOrNull(unit['deposit_to_confirm_pct']),
       };
     });
   }

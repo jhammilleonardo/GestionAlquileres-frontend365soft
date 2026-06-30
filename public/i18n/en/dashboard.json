@@ -1,6 +1,17 @@
 {
   "title": "Dashboard",
   "welcome": "Welcome to the rental management system",
+  "actions": {
+    "title": "Needs your attention",
+    "allClear": "All caught up. Nothing pending right now.",
+    "delinquent": "Delinquent tenants",
+    "violations": "Open violations",
+    "pendingPayments": "Pending payments",
+    "maintenance": "Open maintenance",
+    "expiringContracts": "Expiring contracts",
+    "applications": "Pending applications",
+    "inspections": "Upcoming inspections"
+  },
   "viewPublicPortal": "View Public Property Portal",
   "accessDenied": "You don't have permission to access that section. Contact your administrator.",
   "rentalModeBlocked": "That section isn't available for your company's rental mode.",

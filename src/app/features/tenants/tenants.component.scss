@@ -87,6 +87,23 @@
   box-shadow: var(--app-shadow-sm);
 }
 
+.tenant-row--clickable {
+  cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.tenant-row--clickable:hover {
+  border-color: var(--app-color-primary, #2563eb);
+  box-shadow: var(--app-shadow-md, 0 4px 12px rgba(0, 0, 0, 0.1));
+}
+
+.tenant-row--clickable:focus-visible {
+  outline: 2px solid var(--app-color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
 .tenant-row__main {
   display: flex;
   align-items: center;

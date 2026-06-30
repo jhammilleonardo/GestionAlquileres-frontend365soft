@@ -5,7 +5,9 @@ import {
   tenantLoginGuard,
   tenantPreContractGuard,
   tenantWithContractGuard,
+  tenantWithPortalAccessGuard,
 } from '../../core/guards/tenant-auth.guard';
+import { rentalModeGuard } from '../../core/guards/rental-mode.guard';
 
 export const TENANT_PORTAL_ROUTES: Routes = [
   {
@@ -39,7 +41,8 @@ export const TENANT_PORTAL_ROUTES: Routes = [
       },
       {
         path: 'application-wizard/:propertyId',
-        canActivate: [tenantPreContractGuard],
+        canActivate: [tenantPreContractGuard, rentalModeGuard],
+        data: { rentalMode: 'long_term' },
         loadComponent: () =>
           import('./application-wizard/application-wizard.component').then(
             (m) => m.ApplicationWizardComponent,
@@ -47,7 +50,8 @@ export const TENANT_PORTAL_ROUTES: Routes = [
       },
       {
         path: 'my-applications',
-        canActivate: [tenantPreContractGuard],
+        canActivate: [tenantPreContractGuard, rentalModeGuard],
+        data: { rentalMode: 'long_term' },
         loadComponent: () =>
           import('./my-applications/my-applications.component').then(
             (m) => m.MyApplicationsComponent,
@@ -56,6 +60,12 @@ export const TENANT_PORTAL_ROUTES: Routes = [
 
       // ==================== RUTAS CON CONTRATO ====================
       {
+        path: 'estadia',
+        canActivate: [tenantWithPortalAccessGuard],
+        loadComponent: () =>
+          import('./stay-home/tenant-stay-home.component').then((m) => m.TenantStayHomeComponent),
+      },
+      {
         path: 'dashboard',
         canActivate: [tenantWithContractGuard],
         loadComponent: () =>
@@ -63,7 +73,7 @@ export const TENANT_PORTAL_ROUTES: Routes = [
       },
       {
         path: 'mantenimiento',
-        canActivate: [tenantWithContractGuard],
+        canActivate: [tenantWithPortalAccessGuard],
         children: [
           {
             path: '',
@@ -168,13 +178,13 @@ export const TENANT_PORTAL_ROUTES: Routes = [
       },
       {
         path: 'mensajes',
-        canActivate: [tenantWithContractGuard],
+        canActivate: [tenantWithPortalAccessGuard],
         loadComponent: () =>
           import('./messages/tenant-messages.component').then((m) => m.TenantMessagesComponent),
       },
       {
         path: 'notificaciones',
-        canActivate: [tenantWithContractGuard],
+        canActivate: [tenantWithPortalAccessGuard],
         loadComponent: () =>
           import('./notifications/tenant-notifications.component').then(
             (m) => m.TenantNotificationsComponent,
@@ -188,7 +198,7 @@ export const TENANT_PORTAL_ROUTES: Routes = [
       },
       {
         path: 'perfil',
-        canActivate: [tenantWithContractGuard],
+        canActivate: [tenantWithPortalAccessGuard],
         loadComponent: () =>
           import('./profile/tenant-profile.component').then((m) => m.TenantProfileComponent),
       },

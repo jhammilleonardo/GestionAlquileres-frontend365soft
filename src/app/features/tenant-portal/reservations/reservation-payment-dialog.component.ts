@@ -1,9 +1,13 @@
-import { ChangeDetectionStrategy, Component, effect, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 
+import { CurrencySymbols, Currency } from '../../../core/models/payment.model';
+import { FormatService } from '../../../core/services/format.service';
 import { MyReservation } from '../../../core/services/reservation.service';
 import { ReservationPaymentDialogFacade } from './reservation-payment-dialog.facade';
+import { TenantPaymentQrFlowFacade } from '../payments/tenant-payment-qr-flow.facade';
+import { TenantPaymentQrPanelComponent } from '../payments/components/tenant-payment-qr-panel.component';
 import { TenantCurrencyPipe } from '../../../shared/pipes/tenant-currency.pipe';
 import { AppButtonComponent } from '../../../shared/ui/button/button.component';
 import { AppDatePickerComponent } from '../../../shared/ui/date-picker/date-picker.component';
@@ -20,6 +24,7 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
     ReactiveFormsModule,
     TranslocoModule,
     TenantCurrencyPipe,
+    TenantPaymentQrPanelComponent,
     AppButtonComponent,
     AppDatePickerComponent,
     AppDialogComponent,
@@ -27,25 +32,34 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
     AppTextFieldComponent,
     AppTextareaComponent,
   ],
-  providers: [ReservationPaymentDialogFacade],
+  providers: [ReservationPaymentDialogFacade, TenantPaymentQrFlowFacade],
   template: `
     <app-dialog
       [open]="open()"
       [title]="'tenantReservations.payment.title' | transloco"
-      (closed)="closed.emit()"
+      (closed)="onClose()"
     >
       @if (reservation(); as r) {
-        <form [formGroup]="form" class="payment-form">
-          <p class="outstanding">
-            {{ 'tenantReservations.payment.outstanding' | transloco }}:
-            <strong>{{ outstanding(r) | tenantCurrency: r.currency }}</strong>
-          </p>
-          @if (confirmDepositDue(r) > 0) {
-            <p class="confirm-hint">
-              {{ 'tenantReservations.payment.depositToConfirm' | transloco }}:
-              <strong>{{ confirmDepositDue(r) | tenantCurrency: r.currency }}</strong>
-            </p>
-          }
+        <form [formGroup]="form" class="payment-form" (ngSubmit)="onGenerateQr()">
+          <section class="payment-summary" aria-live="polite">
+            <div class="payment-summary__row">
+              <span>{{ 'tenantReservations.payment.totalReservation' | transloco }}</span>
+              <strong>{{ totalAmount(r) | tenantCurrency: r.currency }}</strong>
+            </div>
+            <div class="payment-summary__row payment-summary__row--now">
+              <span>
+                {{
+                  'tenantReservations.payment.payNow'
+                    | transloco: { percent: currentPaymentPercentOfTotal(r) }
+                }}
+              </span>
+              <strong>{{ currentPaymentAmount(r) | tenantCurrency: r.currency }}</strong>
+            </div>
+            <div class="payment-summary__row">
+              <span>{{ 'tenantReservations.payment.payLater' | transloco }}</span>
+              <strong>{{ balanceAfterCurrentPayment(r) | tenantCurrency: r.currency }}</strong>
+            </div>
+          </section>
 
           <app-select
             [label]="'tenantReservations.payment.method' | transloco"
@@ -54,36 +68,69 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
             formControlName="payment_method"
           />
 
-          <app-text-field
-            [label]="'tenantReservations.payment.amount' | transloco"
-            type="number"
-            formControlName="amount"
-          />
+          @if (isQrMethod()) {
+            @if (qrPaid()) {
+              <p class="qr-paid">
+                {{ 'tenantReservations.payment.qrPaid' | transloco }}
+              </p>
+            } @else {
+              <app-tenant-payment-qr-panel
+                [activeQr]="activeQr()"
+                [safeUrl]="qrSafeUrl()"
+                [currencySymbol]="currencySymbol(r.currency)"
+                [formattedExpiration]="formattedExpiration()"
+                [polling]="qrPolling()"
+                [cancelling]="qrCancelling()"
+                [loading]="qrService.isLoading()"
+                [amountInvalid]="!!form.controls.amount.invalid"
+                (reset)="clearQr()"
+                (verify)="manualVerifyQr()"
+                (download)="downloadQr()"
+                (cancel)="cancelQr()"
+                (back)="onClose()"
+              />
+              @if (qrError()) {
+                <p class="qr-error">{{ qrError() }}</p>
+              }
+            }
+          } @else {
+            <app-text-field
+              [label]="'tenantReservations.payment.amount' | transloco"
+              type="number"
+              formControlName="amount"
+            />
 
-          <app-date-picker
-            [label]="'tenantReservations.payment.date' | transloco"
-            formControlName="payment_date"
-          />
+            <app-date-picker
+              [label]="'tenantReservations.payment.date' | transloco"
+              formControlName="payment_date"
+            />
 
-          <app-text-field
-            [label]="'tenantReservations.payment.reference' | transloco"
-            formControlName="reference_number"
-          />
+            <app-text-field
+              [label]="'tenantReservations.payment.reference' | transloco"
+              formControlName="reference_number"
+            />
 
-          <app-textarea
-            [label]="'tenantReservations.payment.notes' | transloco"
-            formControlName="notes"
-          />
+            <app-textarea
+              [label]="'tenantReservations.payment.notes' | transloco"
+              formControlName="notes"
+            />
+          }
         </form>
       }
 
       <div class="dialog-actions" dialog-actions>
-        <app-button appearance="outline" (clicked)="closed.emit()">
-          {{ 'common.cancel' | transloco }}
-        </app-button>
-        <app-button [loading]="isSubmitting()" [disabled]="!reservation()" (clicked)="onSubmit()">
-          {{ 'tenantReservations.payment.submit' | transloco }}
-        </app-button>
+        @if (qrPaid()) {
+          <app-button (clicked)="onPaid()">
+            {{ 'common.done' | transloco }}
+          </app-button>
+        } @else if (!isQrMethod()) {
+          <app-button appearance="outline" (clicked)="closed.emit()">
+            {{ 'common.cancel' | transloco }}
+          </app-button>
+          <app-button [loading]="isSubmitting()" [disabled]="!reservation()" (clicked)="onSubmit()">
+            {{ 'tenantReservations.payment.submit' | transloco }}
+          </app-button>
+        }
       </div>
     </app-dialog>
   `,
@@ -94,15 +141,46 @@ import { AppTextareaComponent } from '../../../shared/ui/textarea/textarea.compo
         flex-direction: column;
         gap: 1rem;
       }
-      .outstanding {
-        margin: 0 0 0.25rem;
-        font-size: 0.9rem;
-        color: var(--color-text-muted, #6b7280);
+      .payment-summary {
+        display: grid;
+        gap: 0.65rem;
+        padding: 0.85rem;
+        border: 1px solid #dbeafe;
+        border-radius: 0.75rem;
+        background: #eff6ff;
       }
-      .confirm-hint {
-        margin: 0 0 0.25rem;
+      .payment-summary__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        color: #475569;
         font-size: 0.9rem;
+      }
+      .payment-summary__row strong {
+        color: #1f2937;
+        white-space: nowrap;
+      }
+      .payment-summary__row--now {
         color: var(--color-primary, #2563eb);
+        font-weight: 700;
+      }
+      .payment-summary__row--now strong {
+        color: var(--color-primary, #2563eb);
+      }
+      .qr-paid {
+        margin: 0;
+        padding: 0.85rem 1rem;
+        border-radius: 0.5rem;
+        background: #ecfdf5;
+        color: #047857;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+      .qr-error {
+        margin: 0.5rem 0 0;
+        color: var(--color-danger, #dc2626);
+        font-size: 0.85rem;
       }
       .dialog-actions {
         display: flex;
@@ -119,6 +197,8 @@ export class ReservationPaymentDialogComponent extends ReservationPaymentDialogF
   readonly closed = output<void>();
   readonly paid = output<void>();
 
+  private readonly format = inject(FormatService);
+
   constructor() {
     super();
     // Al abrir el diálogo, precarga el formulario con el saldo y la fecha de hoy.
@@ -130,11 +210,43 @@ export class ReservationPaymentDialogComponent extends ReservationPaymentDialogF
     });
   }
 
+  currencySymbol(currency: string): string {
+    return CurrencySymbols[currency as Currency] ?? currency;
+  }
+
+  formattedExpiration(): string {
+    const expiresAt = this.activeQr()?.expires_at;
+    return expiresAt ? this.format.formatDateTime(expiresAt) : '';
+  }
+
+  onGenerateQr(): void {
+    const reservation = this.reservation();
+    if (reservation) {
+      this.generateQr(reservation);
+    }
+  }
+
   onSubmit(): void {
     const reservation = this.reservation();
     if (!reservation) {
       return;
     }
     this.submit(reservation, () => this.paid.emit());
+  }
+
+  onPaid(): void {
+    this.clearQr();
+    this.paid.emit();
+  }
+
+  onClose(): void {
+    // Si el QR ya se pagó, cerrar debe recargar la lista (la reserva quedó
+    // confirmada en backend), no solo cerrar el diálogo.
+    if (this.qrPaid()) {
+      this.onPaid();
+      return;
+    }
+    this.clearQr();
+    this.closed.emit();
   }
 }

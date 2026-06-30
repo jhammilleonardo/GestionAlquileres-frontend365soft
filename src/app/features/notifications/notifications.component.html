@@ -59,6 +59,22 @@
         <span class="count">{{ readCount }}</span>
       </button>
     </div>
+
+    <div
+      class="filter-tabs type-filters"
+      role="group"
+      [attr.aria-label]="'notifications.byType' | transloco"
+    >
+      @for (type of typeFilters; track type) {
+        <button
+          class="filter-tab"
+          [class.active]="typeFilter() === type"
+          (click)="setTypeFilter(type)"
+        >
+          {{ typeFilterLabel(type) }}
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Error Message -->
@@ -85,7 +101,7 @@
   }
 
   <!-- Empty State -->
-  @if (!isLoading() && notifications().length === 0) {
+  @if (!isLoading() && filteredNotifications().length === 0) {
     <app-empty-state
       [title]="'notifications.empty' | transloco"
       [description]="
@@ -102,9 +118,9 @@
   }
 
   <!-- Notifications List -->
-  @if (!isLoading() && notifications().length > 0) {
+  @if (!isLoading() && filteredNotifications().length > 0) {
     <div class="notifications-list">
-      @for (notification of notifications(); track notification.id) {
+      @for (notification of filteredNotifications(); track notification.id) {
         <div
           #notifCard
           class="notification-card"

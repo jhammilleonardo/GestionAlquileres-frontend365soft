@@ -1,0 +1,147 @@
+<section class="long-term-ledger">
+  <header class="long-term-ledger__header">
+    <div>
+      <p class="eyebrow">{{ 'payments.longTerm.eyebrow' | transloco }}</p>
+      <h2>{{ 'payments.longTerm.title' | transloco }}</h2>
+      <p>{{ 'payments.longTerm.subtitle' | transloco }}</p>
+    </div>
+    <div class="long-term-ledger__summary">
+      <div>
+        <lucide-icon [img]="CalendarDays" [size]="18" />
+        <span>{{ 'payments.longTerm.contracts' | transloco }}</span>
+        <strong>{{ ledgers().length }}</strong>
+      </div>
+      <div [class.is-alert]="debtTotal() > 0">
+        <lucide-icon [img]="CircleDollarSign" [size]="18" />
+        <span>{{ 'payments.longTerm.totalDebt' | transloco }}</span>
+        <strong>{{ formatCurrency(debtTotal()) }}</strong>
+      </div>
+      <div [class.is-alert]="overdueMonths() > 0">
+        <lucide-icon [img]="AlertTriangle" [size]="18" />
+        <span>{{ 'payments.longTerm.overdueMonths' | transloco }}</span>
+        <strong>{{ overdueMonths() }}</strong>
+      </div>
+    </div>
+  </header>
+
+  @if (ledgers().length === 0) {
+    <div class="long-term-ledger__empty">
+      <lucide-icon [img]="Clock3" [size]="22" />
+      <span>{{ 'payments.longTerm.empty' | transloco }}</span>
+    </div>
+  } @else {
+    <div class="long-term-ledger__contracts">
+      @for (ledger of ledgers(); track ledger.contract.id) {
+        <article class="contract-ledger" [class.has-debt]="ledger.totalDebt > 0">
+          <header class="contract-ledger__header">
+            <div>
+              <h3>{{ ledger.tenantName }}</h3>
+              <p>{{ ledger.propertyName }}</p>
+            </div>
+            <span class="contract-ledger__progress">
+              {{
+                'payments.longTerm.paidProgress'
+                  | transloco: { paid: ledger.paidMonths, total: ledger.durationMonths }
+              }}
+            </span>
+          </header>
+
+          <div class="contract-ledger__meta">
+            <span>
+              {{ 'payments.longTerm.contractPeriod' | transloco }}
+              {{ formatDate(ledger.contract.start_date) }} -
+              {{ formatDate(ledger.contract.end_date) }}
+            </span>
+            <span>
+              {{ 'payments.longTerm.paymentDay' | transloco: { day: ledger.paymentDay } }}
+            </span>
+            @if (ledger.lateFeePercentage > 0 || ledger.graceDays > 0) {
+              <span>
+                {{
+                  'payments.longTerm.lateTerms'
+                    | transloco: { fee: ledger.lateFeePercentage, days: ledger.graceDays }
+                }}
+              </span>
+            }
+          </div>
+
+          <div class="contract-ledger__money">
+            <div>
+              <span>{{ 'payments.longTerm.monthlyRent' | transloco }}</span>
+              <strong>{{ formatCurrency(ledger.monthlyRent, ledger.currency) }}</strong>
+            </div>
+            <div>
+              <span>{{ 'payments.longTerm.paidRent' | transloco }}</span>
+              <strong>{{ formatCurrency(ledger.totalPaidRent, ledger.currency) }}</strong>
+            </div>
+            <div [class.is-warning]="ledger.baseDebt > 0">
+              <span>{{ 'payments.longTerm.baseDebt' | transloco }}</span>
+              <strong>{{ formatCurrency(ledger.baseDebt, ledger.currency) }}</strong>
+            </div>
+            <div [class.is-warning]="ledger.lateFeeDebt > 0">
+              <span>{{ 'payments.longTerm.lateFeeDebt' | transloco }}</span>
+              <strong>{{ formatCurrency(ledger.lateFeeDebt, ledger.currency) }}</strong>
+            </div>
+          </div>
+
+          @if (ledger.totalPendingReview > 0) {
+            <p class="contract-ledger__review">
+              {{
+                'payments.longTerm.pendingReview'
+                  | transloco
+                    : { amount: formatCurrency(ledger.totalPendingReview, ledger.currency) }
+              }}
+            </p>
+          }
+
+          <div class="month-grid" role="list">
+            @for (month of ledger.months; track trackMonth($index, month)) {
+              <div class="month-card" role="listitem" [attr.data-status]="month.status">
+                <div class="month-card__top">
+                  <strong>{{ month.label }}</strong>
+                  <span>{{
+                    'payments.longTerm.due' | transloco: { date: formatDate(month.dueDate) }
+                  }}</span>
+                </div>
+                <span class="month-card__status">
+                  {{ 'payments.longTerm.status.' + month.status | transloco }}
+                </span>
+                <dl>
+                  <div>
+                    <dt>{{ 'payments.longTerm.rent' | transloco }}</dt>
+                    <dd>{{ formatCurrency(month.rentAmount, ledger.currency) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'payments.longTerm.paid' | transloco }}</dt>
+                    <dd>{{ formatCurrency(month.paidRent, ledger.currency) }}</dd>
+                  </div>
+                  <div [class.is-due]="month.outstandingRent > 0">
+                    <dt>{{ 'payments.longTerm.pending' | transloco }}</dt>
+                    <dd>{{ formatCurrency(month.outstandingRent, ledger.currency) }}</dd>
+                  </div>
+                  @if (month.lateFee > 0) {
+                    <div class="is-due">
+                      <dt>{{ 'payments.longTerm.lateFee' | transloco }}</dt>
+                      <dd>{{ formatCurrency(month.lateFee, ledger.currency) }}</dd>
+                    </div>
+                  }
+                  @if (month.pendingReview > 0) {
+                    <div>
+                      <dt>{{ 'payments.longTerm.inReview' | transloco }}</dt>
+                      <dd>{{ formatCurrency(month.pendingReview, ledger.currency) }}</dd>
+                    </div>
+                  }
+                </dl>
+                @if (month.daysOverdue > 0) {
+                  <p class="month-card__late">
+                    {{ 'payments.longTerm.daysLate' | transloco: { days: month.daysOverdue } }}
+                  </p>
+                }
+              </div>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

@@ -411,8 +411,25 @@ export class ApplicationWizardComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (property) => {
-          this.property.set(property || null);
           this.isLoadingProperty.set(false);
+
+          if (!property) {
+            this.toast.error(
+              this.translocoService.translate('tenantApplications.marketplace.propertyUnavailable'),
+            );
+            this.slugService.navigateTo(['portal', 'new-application']);
+            return;
+          }
+
+          if (!this.supportsLongTermProperty(property)) {
+            this.toast.error(
+              this.translocoService.translate('tenantApplications.marketplace.longTermUnavailable'),
+            );
+            this.slugService.navigateTo(['portal', 'new-application']);
+            return;
+          }
+
+          this.property.set(property);
           this.prefillUserData();
         },
         error: () => {
@@ -420,6 +437,11 @@ export class ApplicationWizardComponent implements OnInit {
           this.slugService.navigateTo(['portal', 'new-application']);
         },
       });
+  }
+
+  private supportsLongTermProperty(property: Property): boolean {
+    const type = (property.rental_type ?? '').toUpperCase();
+    return !type || type === 'LONG_TERM' || type === 'LONG' || type === 'BOTH';
   }
 
   private prefillUserData(): void {

@@ -82,7 +82,10 @@ import { TranslocoModule } from '@jsverse/transloco';
     </div>
 
     @if (modalOpen() && previewUrl()) {
+      <!-- Backdrop: cerrar con clic es comodidad de mouse; el modal tiene su botón de cerrar. -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div class="receipt-modal-backdrop" (click)="closeModal.emit()">
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
         <div
           class="receipt-modal"
           role="dialog"

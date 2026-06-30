@@ -17,6 +17,9 @@ interface RealtimePayload {
   peerUserId?: number;
   senderId?: number;
   recipientId?: number;
+  senderName?: string;
+  preview?: string;
+  hasAttachments?: boolean;
 }
 
 export interface RealtimeEvent {

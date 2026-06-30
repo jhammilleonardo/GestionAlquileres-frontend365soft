@@ -143,6 +143,46 @@ describe('TenantReservationsFacade', () => {
     expect(facade.canPay(makeReservation({ status: 'completed', paid_amount: '0' }))).toBe(false);
   });
 
+  it('un hold vencido oculta todas las acciones y se trata como expirado', () => {
+    const reservation = makeReservation({ id: 5, status: 'pending_payment', paid_amount: '0' });
+    build([reservation]);
+
+    // Antes de vencer, las acciones activas están disponibles.
+    expect(facade.canPay(reservation)).toBe(true);
+    expect(facade.canExtend(reservation)).toBe(true);
+    expect(facade.canCancel(reservation)).toBe(true);
+    expect(facade.displayStatus(reservation)).toBe('pending_payment');
+
+    // Al vencer la cuenta regresiva, ninguna acción debe ofrecerse y se muestra
+    // como "expirada" para coincidir con el historial.
+    facade.onHoldExpired(reservation);
+    expect(facade.canPay(reservation)).toBe(false);
+    expect(facade.canExtend(reservation)).toBe(false);
+    expect(facade.canCancel(reservation)).toBe(false);
+    expect(facade.showOutstanding(reservation)).toBe(false);
+    expect(facade.showCountdown(reservation)).toBe(false);
+    expect(facade.displayStatus(reservation)).toBe('expired');
+  });
+
+  it('un hold con expires_at ya vencido se trata como expirado al cargar (sin esperar el contador)', () => {
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const reservation = makeReservation({
+      id: 6,
+      status: 'pending_payment',
+      paid_amount: '0',
+      expires_at: past,
+      checkout_date: '2999-06-15',
+    });
+    build([reservation]);
+
+    // Sin disparar onHoldExpired: el expires_at pasado basta para tratarlo como
+    // expirado, moverlo al historial y ocultar sus acciones.
+    expect(facade.displayStatus(reservation)).toBe('expired');
+    expect(facade.canCancel(reservation)).toBe(false);
+    expect(facade.upcoming().map((r) => r.id)).not.toContain(6);
+    expect(facade.past().map((r) => r.id)).toContain(6);
+  });
+
   it('canReview sólo si está completada y sin reseña', () => {
     build([makeReservation()]);
     expect(facade.canReview(makeReservation({ status: 'completed', has_review: false }))).toBe(

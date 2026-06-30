@@ -10,11 +10,35 @@
     </app-button>
   </app-page-header>
 
+  <div class="violation-stats">
+    <article class="stat-card">
+      <span class="stat-value">{{ stats().total }}</span>
+      <span class="stat-label">{{ 'violations.stats.total' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-warning">
+      <span class="stat-value">{{ stats().open }}</span>
+      <span class="stat-label">{{ 'violations.stats.open' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-danger">
+      <span class="stat-value">{{ stats().overdue }}</span>
+      <span class="stat-label">{{ 'violations.stats.overdue' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-danger">
+      <span class="stat-value">{{ stats().escalated }}</span>
+      <span class="stat-label">{{ 'violations.stats.escalated' | transloco }}</span>
+    </article>
+    <article class="stat-card tone-info">
+      <span class="stat-value">{{ stats().fines_outstanding | tenantCurrency }}</span>
+      <span class="stat-label">{{ 'violations.stats.finesOutstanding' | transloco }}</span>
+    </article>
+  </div>
+
   <app-violation-filters
     [form]="filterForm"
     [propertyOptions]="propertyOptions()"
     [statusOptions]="statusFilterOptions()"
     [typeOptions]="typeFilterOptions()"
+    [severityOptions]="severityFilterOptions()"
     (filtersCleared)="clearFilters()"
   />
 
@@ -29,6 +53,7 @@
       (notified)="notify($event)"
       (pdfViewRequested)="viewPdf($event)"
       (resolveRequested)="openResolve($event)"
+      (detailRequested)="openDetail($event)"
     />
   }
 </div>
@@ -39,6 +64,7 @@
   [propertyOptions]="propertyOptions()"
   [tenantOptions]="tenantOptions()"
   [typeOptions]="typeOptions()"
+  [severityOptions]="severityOptions()"
   [saving]="saving()"
   (closed)="closeDialog()"
   (saved)="save()"
@@ -51,4 +77,21 @@
   (closed)="closeResolve()"
   (confirmed)="confirmResolve()"
   (notesChanged)="resolveNotes.set($event)"
+/>
+
+<app-violation-detail-dialog
+  [open]="detailOpen()"
+  [violation]="detail()"
+  [loading]="detailLoading()"
+  [busy]="detailBusy()"
+  [noteText]="noteText()"
+  [fineAmount]="fineAmount()"
+  (closed)="closeDetail()"
+  (statusChange)="changeStatus($event)"
+  (noteTextChange)="noteText.set($event)"
+  (noteAdded)="addNote()"
+  (fineAmountChange)="fineAmount.set($event)"
+  (fineCharged)="chargeFine()"
+  (fineWaived)="waiveFine()"
+  (finePaid)="payFine()"
 />

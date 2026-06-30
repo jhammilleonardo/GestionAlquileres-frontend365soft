@@ -1,4 +1,12 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  OnDestroy,
+  ChangeDetectionStrategy,
+  DestroyRef,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -22,7 +30,7 @@ import {
   MessageSquare,
 } from 'lucide-angular';
 
-import { TranslocoModule } from '@jsverse/transloco';
+import { TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../../../core/services/auth.service';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import {
@@ -31,7 +39,11 @@ import {
 } from '../../../core/services/admin/notification.service';
 import { SlugService } from '../../../core/services/slug.service';
 import { InternalMessageService } from '../../../core/services/internal-message.service';
-import { NotificationSocketService } from '../../../core/services/notification-socket.service';
+import {
+  NotificationSocketService,
+  RealtimeEvent,
+} from '../../../core/services/notification-socket.service';
+import { ToastService } from '../../ui/toast/toast.service';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +62,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private messageService = inject(InternalMessageService);
   readonly unreadMessages = this.messageService.unread;
   private notificationSocket = inject(NotificationSocketService);
+  private toast = inject(ToastService);
+  private transloco = inject(TranslocoService);
+  private destroyRef = inject(DestroyRef);
 
   currentUser = this.authService.currentUser;
   sidebarExpanded = this.sidebarService.expanded;
@@ -91,6 +106,35 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     // Notificaciones en tiempo real vía WebSocket (polling queda como respaldo)
     this.notificationSocket.connect();
+    this.notificationSocket.events$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => this.handleRealtimeEvent(event));
+  }
+
+  /**
+   * Mensajes en tiempo real: actualiza el contador del header al instante y
+   * avisa con un toast cuando es un mensaje recibido (no el eco del envío propio).
+   */
+  private handleRealtimeEvent(event: RealtimeEvent): void {
+    if (event.type !== 'message.new') return;
+
+    this.messageService.refreshUnread().subscribe({ error: () => undefined });
+
+    const senderId = Number(event.payload.senderId ?? 0);
+    const currentId = Number(this.currentUser()?.id ?? 0);
+    if (!senderId || senderId === currentId) return;
+
+    const name = event.payload.senderName?.trim();
+    const preview = event.payload.preview?.trim();
+    const title = name
+      ? this.transloco.translate('notifications.newMessageFrom', { name })
+      : this.transloco.translate('notifications.newMessage');
+    const body = preview
+      ? `${title}: ${preview}`
+      : event.payload.hasAttachments
+        ? `${title} — ${this.transloco.translate('notifications.newMessageAttachment')}`
+        : title;
+    this.toast.info(body);
   }
 
   goToMessages(): void {

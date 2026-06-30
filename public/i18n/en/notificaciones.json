@@ -6,6 +6,15 @@
   "all": "All",
   "unread": "Unread",
   "read": "Read",
+  "byType": "Filter by type",
+  "typeFilter": {
+    "all": "All types",
+    "maintenance": "Maintenance",
+    "property": "Properties",
+    "contract": "Contracts",
+    "payment": "Payments",
+    "user": "Users"
+  },
   "loading": "Loading notifications...",
   "empty": "No notifications",
   "emptyUnread": "Great! You have no pending notifications to read.",

@@ -20,8 +20,13 @@ import {
   PaymentTypeLabels,
 } from '../../core/models/payment.model';
 import { AdminTenantUser } from '../../core/models/tenant-user.model';
-import { Contract } from '../../core/services/admin/contract.service';
-import { PaymentService } from '../../core/services/admin/payment.service';
+import { Contract, ContractService } from '../../core/services/admin/contract.service';
+import {
+  AdminLongTermLedger,
+  AdminPaymentLedger,
+  AdminShortTermLedger,
+  PaymentService,
+} from '../../core/services/admin/payment.service';
 import { FileDownloadService } from '../../core/services/file-download.service';
 import { FormatService } from '../../core/services/format.service';
 import { ConfirmDialogService } from '../../shared/ui/confirm-dialog/confirm-dialog.service';
@@ -31,6 +36,48 @@ import { ToastService } from '../../shared/ui/toast/toast.service';
 import { PaymentAdminCreateFacade } from './payment-admin-create.facade';
 import { PaymentProofViewerFacade } from './payment-proof-viewer.facade';
 
+export type LongTermMonthStatus =
+  | 'paid'
+  | 'partial'
+  | 'review'
+  | 'overdue'
+  | 'current'
+  | 'upcoming';
+
+export interface LongTermPaymentMonth {
+  label: string;
+  dueDate: Date;
+  rentAmount: number;
+  paidRent: number;
+  pendingReview: number;
+  lateFee: number;
+  outstandingRent: number;
+  totalDue: number;
+  daysOverdue: number;
+  status: LongTermMonthStatus;
+}
+
+export interface LongTermContractLedger {
+  contract: Contract;
+  tenantName: string;
+  propertyName: string;
+  durationMonths: number;
+  elapsedMonths: number;
+  paidMonths: number;
+  overdueMonths: number;
+  monthlyRent: number;
+  currency: string;
+  paymentDay: number;
+  graceDays: number;
+  lateFeePercentage: number;
+  totalPaidRent: number;
+  totalPendingReview: number;
+  baseDebt: number;
+  lateFeeDebt: number;
+  totalDebt: number;
+  months: LongTermPaymentMonth[];
+}
+
 export class PaymentsFacade {
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(ToastService);
@@ -38,6 +85,7 @@ export class PaymentsFacade {
   private readonly fileDownload = inject(FileDownloadService);
   private readonly adminCreate = inject(PaymentAdminCreateFacade);
   private readonly proofViewer = inject(PaymentProofViewerFacade);
+  private readonly contractService = inject(ContractService);
   readonly paymentService = inject(PaymentService);
   private readonly formatService = inject(FormatService);
   private readonly transloco = inject(TranslocoService);
@@ -68,6 +116,9 @@ export class PaymentsFacade {
   );
 
   readonly pendingFilters = signal<{ propertyId?: number; dateFrom?: Date; dateTo?: Date }>({});
+  readonly longTermContracts = signal<Contract[]>([]);
+  readonly longTermPayments = signal<Payment[]>([]);
+  readonly adminLedger = signal<AdminPaymentLedger | null>(null);
 
   readonly pendingPropertyOptions = computed(() => {
     const options = new Map<number, string>();
@@ -92,6 +143,32 @@ export class PaymentsFacade {
       return true;
     });
   });
+
+  readonly longTermLedgers = computed(() => {
+    const ledger = this.adminLedger();
+    if (ledger) return ledger.long_term.map((item) => this.mapBackendLongTermLedger(item));
+    return this.buildLongTermLedgers(this.longTermContracts(), this.longTermPayments());
+  });
+
+  readonly longTermDebtTotal = computed(() =>
+    this.longTermLedgers().reduce((sum, ledger) => sum + ledger.totalDebt, 0),
+  );
+
+  readonly longTermOverdueMonths = computed(() =>
+    this.longTermLedgers().reduce((sum, ledger) => sum + ledger.overdueMonths, 0),
+  );
+
+  readonly shortTermLedgers = computed<AdminShortTermLedger[]>(
+    () => this.adminLedger()?.short_term ?? [],
+  );
+
+  readonly shortTermBalanceTotal = computed(
+    () => this.adminLedger()?.summary.short_term_balance_due ?? 0,
+  );
+
+  readonly shortTermPendingReviewTotal = computed(
+    () => this.adminLedger()?.summary.short_term_pending_review ?? 0,
+  );
 
   readonly tenantSearchControl = this.adminCreate.tenantSearchControl;
   readonly filteredTenants$ = this.adminCreate.filteredTenants$;
@@ -194,7 +271,33 @@ export class PaymentsFacade {
   loadData(): void {
     this.paymentService.loadPayments();
     this.paymentService.loadStats();
+    this.loadAdminLedger();
+    this.loadLongTermContracts();
+    this.loadLongTermPayments();
     this.adminCreate.loadTenants();
+  }
+
+  loadAdminLedger(): void {
+    this.paymentService.getAdminLedger().subscribe({
+      next: (ledger) => this.adminLedger.set(ledger),
+      error: () => this.adminLedger.set(null),
+    });
+  }
+
+  loadLongTermContracts(): void {
+    this.contractService.getContracts().subscribe({
+      next: (contracts) => {
+        this.longTermContracts.set(contracts.filter((contract) => this.isActiveLongTerm(contract)));
+      },
+      error: () => this.longTermContracts.set([]),
+    });
+  }
+
+  loadLongTermPayments(): void {
+    this.paymentService.getPayments().subscribe({
+      next: (payments) => this.longTermPayments.set(payments),
+      error: () => this.longTermPayments.set([]),
+    });
   }
 
   applyFilters(): void {
@@ -305,6 +408,8 @@ export class PaymentsFacade {
     this.paymentService.bulkAction(payload).subscribe({
       next: (result) => {
         this.selectedIds.set([]);
+        this.loadAdminLedger();
+        this.loadLongTermPayments();
         this.toast.success(this.transloco.translate('pagos.bulk.completed', result));
       },
       error: (error: unknown) => {
@@ -391,6 +496,8 @@ export class PaymentsFacade {
       .subscribe({
         next: () => {
           this.rejectionPayment.set(null);
+          this.loadAdminLedger();
+          this.loadLongTermPayments();
           this.toast.success(
             this.transloco.translate('pagos.actions.approvedToast', { tenantName }),
           );
@@ -426,6 +533,8 @@ export class PaymentsFacade {
       next: () => {
         this.rejectionPayment.set(null);
         this.rejectForm.reset({ reason: '' });
+        this.loadAdminLedger();
+        this.loadLongTermPayments();
         this.toast.error(this.transloco.translate('pagos.actions.rejectedToast', { tenantName }));
       },
       error: (error: unknown) => {
@@ -453,7 +562,11 @@ export class PaymentsFacade {
     if (!confirmed) return;
 
     this.paymentService.deletePayment(payment.id).subscribe({
-      next: () => this.toast.success(this.transloco.translate('pagos.actions.deleted')),
+      next: () => {
+        this.loadAdminLedger();
+        this.loadLongTermPayments();
+        this.toast.success(this.transloco.translate('pagos.actions.deleted'));
+      },
       error: () => this.toast.error(this.transloco.translate('pagos.actions.deleteError')),
     });
   }
@@ -505,11 +618,11 @@ export class PaymentsFacade {
       const full = `${t.first_name || ''} ${t.last_name || ''}`.trim();
       if (full) return full;
     }
-    return `Inquilino #${payment.tenant_id}`;
+    return 'Inquilino';
   }
 
   getPropertyName(payment: Payment): string {
-    return payment.property?.title || `ID ${payment.property_id}`;
+    return payment.property?.title || 'Propiedad';
   }
 
   getUnitName(payment: Payment): string {
@@ -540,10 +653,318 @@ export class PaymentsFacade {
     return PaymentMethodLabels[method];
   }
 
+  getLongTermMonthStatusLabel(status: LongTermMonthStatus): string {
+    return this.transloco.translate(`pagos.longTerm.status.${status}`);
+  }
+
+  private buildLongTermLedgers(
+    contracts: readonly Contract[],
+    payments: readonly Payment[],
+  ): LongTermContractLedger[] {
+    return contracts
+      .map((contract) => this.buildLongTermLedger(contract, payments))
+      .filter((ledger): ledger is LongTermContractLedger => ledger !== null)
+      .sort((a, b) => b.totalDebt - a.totalDebt || a.propertyName.localeCompare(b.propertyName));
+  }
+
+  private mapBackendLongTermLedger(item: AdminLongTermLedger): LongTermContractLedger {
+    return {
+      contract: {
+        id: item.contract_id,
+        contract_number: item.contract_number,
+        tenant_id: item.tenant_id,
+        property_id: item.property_id,
+        start_date: item.start_date,
+        end_date: item.end_date,
+        duration_months: item.duration_months,
+        monthly_rent: item.monthly_rent,
+        currency: item.currency,
+        payment_day: item.payment_day,
+        late_fee_percentage: item.late_fee_percentage,
+        grace_days: item.grace_days,
+        property_title: item.property_name,
+        tenant_name: item.tenant_name,
+        status: 'ACTIVO',
+      },
+      tenantName: item.tenant_name,
+      propertyName: item.property_name,
+      durationMonths: item.duration_months,
+      elapsedMonths: item.elapsed_months,
+      paidMonths: item.paid_months,
+      overdueMonths: item.overdue_months,
+      monthlyRent: item.monthly_rent,
+      currency: item.currency,
+      paymentDay: item.payment_day,
+      graceDays: item.grace_days,
+      lateFeePercentage: item.late_fee_percentage,
+      totalPaidRent: item.total_paid_rent,
+      totalPendingReview: item.total_pending_review,
+      baseDebt: item.base_debt,
+      lateFeeDebt: item.late_fee_debt,
+      totalDebt: item.total_debt,
+      months: item.months.map((month) => ({
+        label: month.label,
+        dueDate: this.parseDate(month.due_date) ?? new Date(month.due_date),
+        rentAmount: month.rent_amount,
+        paidRent: month.paid_rent,
+        pendingReview: month.pending_review,
+        lateFee: month.late_fee,
+        outstandingRent: month.outstanding_rent,
+        totalDue: month.total_due,
+        daysOverdue: month.days_overdue,
+        status: month.status,
+      })),
+    };
+  }
+
+  private buildLongTermLedger(
+    contract: Contract,
+    payments: readonly Payment[],
+  ): LongTermContractLedger | null {
+    const start = this.parseDate(contract.start_date);
+    const end = this.parseDate(contract.end_date);
+    if (!start || !end || end < start) return null;
+
+    const monthlyRent = this.toNumber(contract.monthly_rent);
+    const paymentDay = this.resolvePaymentDay(contract, start);
+    const contractPayments = payments.filter((payment) => payment.contract_id === contract.id);
+    const rentByMonth = new Map<string, { paid: number; pending: number }>();
+    const lateFeesByMonth = new Map<string, { open: number; hasRecord: boolean }>();
+    const rentPaymentMonth = new Map<number, string>();
+
+    contractPayments
+      .filter((payment) => payment.payment_type === PaymentType.RENT)
+      .forEach((payment) => {
+        const date = this.parseDate(payment.due_date) ?? this.parseDate(payment.payment_date);
+        if (!date) return;
+
+        const key = this.monthKey(date);
+        rentPaymentMonth.set(payment.id, key);
+        const current = rentByMonth.get(key) ?? { paid: 0, pending: 0 };
+        if (payment.status === PaymentStatus.APPROVED) {
+          current.paid += this.toNumber(payment.amount);
+        } else if (
+          payment.status === PaymentStatus.PENDING ||
+          payment.status === PaymentStatus.PROCESSING
+        ) {
+          current.pending += this.toNumber(payment.amount);
+        }
+        rentByMonth.set(key, current);
+      });
+
+    contractPayments
+      .filter((payment) => payment.payment_type === PaymentType.LATE_FEE)
+      .forEach((payment) => {
+        const parentKey = payment.parent_payment_id
+          ? rentPaymentMonth.get(payment.parent_payment_id)
+          : null;
+        const date = this.parseDate(payment.due_date) ?? this.parseDate(payment.payment_date);
+        const key = parentKey ?? (date ? this.monthKey(date) : null);
+        if (!key) return;
+        const current = lateFeesByMonth.get(key) ?? { open: 0, hasRecord: false };
+        current.hasRecord = true;
+        if (this.isOpenCharge(payment.status)) {
+          current.open += this.toNumber(payment.amount);
+        }
+        lateFeesByMonth.set(key, current);
+      });
+
+    const months = this.buildContractMonths({
+      contract,
+      end,
+      lateFeesByMonth,
+      monthlyRent,
+      paymentDay,
+      rentByMonth,
+      start,
+    });
+
+    const today = this.startOfDay(new Date());
+    const dueMonths = months.filter((month) => month.dueDate <= today);
+    const totalPaidRent = months.reduce((sum, month) => sum + month.paidRent, 0);
+    const totalPendingReview = months.reduce((sum, month) => sum + month.pendingReview, 0);
+    const baseDebt = dueMonths.reduce((sum, month) => sum + month.outstandingRent, 0);
+    const lateFeeDebt = months.reduce((sum, month) => sum + month.lateFee, 0);
+
+    return {
+      contract,
+      tenantName: this.getContractTenantName(contract),
+      propertyName: this.getContractPropertyName(contract),
+      durationMonths: this.toNumber(contract.duration_months) || months.length,
+      elapsedMonths: dueMonths.length,
+      paidMonths: months.filter((month) => month.status === 'paid').length,
+      overdueMonths: months.filter((month) => month.daysOverdue > 0 && month.outstandingRent > 0)
+        .length,
+      monthlyRent,
+      currency: contract.currency || Currency.BOB,
+      paymentDay,
+      graceDays: this.toNumber(contract.grace_days),
+      lateFeePercentage: this.toNumber(contract.late_fee_percentage),
+      totalPaidRent,
+      totalPendingReview,
+      baseDebt,
+      lateFeeDebt,
+      totalDebt: baseDebt + lateFeeDebt,
+      months,
+    };
+  }
+
+  private buildContractMonths(params: {
+    contract: Contract;
+    start: Date;
+    end: Date;
+    monthlyRent: number;
+    paymentDay: number;
+    rentByMonth: Map<string, { paid: number; pending: number }>;
+    lateFeesByMonth: Map<string, { open: number; hasRecord: boolean }>;
+  }): LongTermPaymentMonth[] {
+    const today = this.startOfDay(new Date());
+    const graceDays = this.toNumber(params.contract.grace_days);
+    const lateFeePercentage = this.toNumber(params.contract.late_fee_percentage);
+    const months: LongTermPaymentMonth[] = [];
+    let cursor = new Date(params.start.getFullYear(), params.start.getMonth(), 1);
+    const endMonth = new Date(params.end.getFullYear(), params.end.getMonth(), 1);
+
+    while (cursor <= endMonth) {
+      const year = cursor.getFullYear();
+      const month = cursor.getMonth();
+      const key = this.monthKey(cursor);
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const dueDate = this.startOfDay(new Date(year, month, Math.min(params.paymentDay, lastDay)));
+      const rent = params.rentByMonth.get(key) ?? { paid: 0, pending: 0 };
+      const lateFeeRecord = params.lateFeesByMonth.get(key);
+      const paidRent = Math.min(rent.paid, params.monthlyRent);
+      const outstandingRent = Math.max(0, params.monthlyRent - paidRent);
+      const daysOverdue =
+        dueDate < today && outstandingRent > 0
+          ? Math.ceil((today.getTime() - dueDate.getTime()) / 86_400_000)
+          : 0;
+      const lateFeeStartDate = this.addDays(dueDate, graceDays);
+      const projectedLateFee =
+        !lateFeeRecord?.hasRecord &&
+        lateFeePercentage > 0 &&
+        outstandingRent > 0 &&
+        lateFeeStartDate < today
+          ? this.roundMoney((params.monthlyRent * lateFeePercentage) / 100)
+          : 0;
+      const lateFee = this.roundMoney(lateFeeRecord?.open ?? projectedLateFee);
+      const status = this.resolveLongTermMonthStatus({
+        dueDate,
+        daysOverdue,
+        outstandingRent,
+        paidRent,
+        pendingReview: rent.pending,
+        rentAmount: params.monthlyRent,
+        today,
+      });
+
+      months.push({
+        label: this.formatMonthLabel(cursor),
+        dueDate,
+        rentAmount: params.monthlyRent,
+        paidRent,
+        pendingReview: rent.pending,
+        lateFee,
+        outstandingRent,
+        totalDue: outstandingRent + lateFee,
+        daysOverdue,
+        status,
+      });
+
+      cursor = new Date(year, month + 1, 1);
+    }
+
+    return months;
+  }
+
+  private resolveLongTermMonthStatus(params: {
+    dueDate: Date;
+    today: Date;
+    rentAmount: number;
+    paidRent: number;
+    pendingReview: number;
+    outstandingRent: number;
+    daysOverdue: number;
+  }): LongTermMonthStatus {
+    if (params.outstandingRent <= 0) return 'paid';
+    if (params.paidRent > 0) return 'partial';
+    if (params.pendingReview > 0) return 'review';
+    if (params.daysOverdue > 0) return 'overdue';
+    if (
+      params.dueDate.getFullYear() === params.today.getFullYear() &&
+      params.dueDate.getMonth() === params.today.getMonth()
+    ) {
+      return 'current';
+    }
+    return 'upcoming';
+  }
+
+  private isActiveLongTerm(contract: Contract): boolean {
+    const status = String(contract.status ?? '').toUpperCase();
+    return ['ACTIVO', 'FIRMADO', 'POR_VENCER'].includes(status);
+  }
+
+  private isOpenCharge(status: PaymentStatus): boolean {
+    return [PaymentStatus.PENDING, PaymentStatus.PROCESSING, PaymentStatus.DISPUTED].includes(
+      status,
+    );
+  }
+
+  private getContractTenantName(contract: Contract): string {
+    if (contract.tenant_name) return contract.tenant_name;
+    if (contract.tenant) {
+      const fullName =
+        `${contract.tenant.first_name ?? ''} ${contract.tenant.last_name ?? ''}`.trim();
+      if (fullName) return fullName;
+    }
+    return 'Inquilino';
+  }
+
+  private getContractPropertyName(contract: Contract): string {
+    return contract.property?.title || contract.property_title || 'Propiedad';
+  }
+
+  private resolvePaymentDay(contract: Contract, start: Date): number {
+    const day = this.toNumber(contract.payment_day);
+    if (day >= 1 && day <= 31) return Math.round(day);
+    return start.getDate();
+  }
+
+  private formatMonthLabel(date: Date): string {
+    const raw = date.toLocaleDateString('es-BO', { month: 'short', year: 'numeric' });
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  }
+
+  private monthKey(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private toNumber(value: number | string | null | undefined): number {
+    const parsed = typeof value === 'number' ? value : Number(value ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
   private parseDate(dateValue?: string | Date): Date | null {
     if (!dateValue) return null;
+    if (typeof dateValue === 'string') {
+      const dateOnly = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateValue);
+      if (dateOnly) {
+        const [, year, month, day] = dateOnly;
+        return new Date(Number(year), Number(month) - 1, Number(day));
+      }
+    }
     const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
     return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private addDays(date: Date, days: number): Date {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return this.startOfDay(next);
+  }
+
+  private roundMoney(amount: number): number {
+    return Math.round((amount + Number.EPSILON) * 100) / 100;
   }
 
   private startOfDay(date: Date): Date {

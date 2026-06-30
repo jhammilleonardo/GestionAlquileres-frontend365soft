@@ -3,9 +3,11 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
+import { AppDatePickerComponent } from '../../../../shared/ui/date-picker/date-picker.component';
 import { AppDialogComponent } from '../../../../shared/ui/dialog/dialog.component';
 import { AppFileUploadComponent } from '../../../../shared/ui/file-upload/file-upload.component';
 import { AppSelectComponent, AppSelectOption } from '../../../../shared/ui/select/select.component';
+import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-field.component';
 import { AppTextareaComponent } from '../../../../shared/ui/textarea/textarea.component';
 
 @Component({
@@ -15,9 +17,11 @@ import { AppTextareaComponent } from '../../../../shared/ui/textarea/textarea.co
     ReactiveFormsModule,
     TranslocoModule,
     AppButtonComponent,
+    AppDatePickerComponent,
     AppDialogComponent,
     AppFileUploadComponent,
     AppSelectComponent,
+    AppTextFieldComponent,
     AppTextareaComponent,
   ],
   templateUrl: './violation-form-dialog.component.html',
@@ -30,6 +34,7 @@ export class ViolationFormDialogComponent {
   readonly propertyOptions = input.required<readonly AppSelectOption<number>[]>();
   readonly tenantOptions = input.required<readonly AppSelectOption<number>[]>();
   readonly typeOptions = input.required<readonly AppSelectOption<string>[]>();
+  readonly severityOptions = input.required<readonly AppSelectOption<string>[]>();
   readonly saving = input.required<boolean>();
 
   readonly closed = output<void>();

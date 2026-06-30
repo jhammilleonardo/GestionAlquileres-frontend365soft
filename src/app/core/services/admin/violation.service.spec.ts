@@ -49,12 +49,43 @@ describe('ViolationService', () => {
     expect(post).toHaveBeenCalledWith('acme/admin/violations', dto);
   });
 
-  it('updateStatus hace PATCH con estado y notas', () => {
-    service.updateStatus(5, ViolationStatus.RESOLVED, 'Solucionado').subscribe();
+  it('updateStatus hace PATCH con estado, notas y fecha límite', () => {
+    service.updateStatus(5, ViolationStatus.RESOLVED, 'Solucionado', '2026-07-01').subscribe();
     expect(patch).toHaveBeenCalledWith('acme/admin/violations/5/status', {
       status: ViolationStatus.RESOLVED,
       resolved_notes: 'Solucionado',
+      due_date: '2026-07-01',
     });
+  });
+
+  it('stats pide las métricas', () => {
+    service.stats().subscribe();
+    expect(get).toHaveBeenCalledWith('acme/admin/violations/stats');
+  });
+
+  it('getById pide el detalle de la violación', () => {
+    service.getById(5).subscribe();
+    expect(get).toHaveBeenCalledWith('acme/admin/violations/5');
+  });
+
+  it('addNote hace POST con la nota', () => {
+    post.mockReturnValue(of([]));
+    service.addNote(5, 'Llamé al inquilino').subscribe();
+    expect(post).toHaveBeenCalledWith('acme/admin/violations/5/notes', {
+      note: 'Llamé al inquilino',
+    });
+  });
+
+  it('chargeFine hace POST con el monto', () => {
+    service.chargeFine(5, { amount: 150 }).subscribe();
+    expect(post).toHaveBeenCalledWith('acme/admin/violations/5/fine', { amount: 150 });
+  });
+
+  it('waiveFine y payFine hacen POST a sus endpoints', () => {
+    service.waiveFine(5).subscribe();
+    expect(post).toHaveBeenCalledWith('acme/admin/violations/5/fine/waive', {});
+    service.payFine(5).subscribe();
+    expect(post).toHaveBeenCalledWith('acme/admin/violations/5/fine/pay', {});
   });
 
   it('notify hace POST al endpoint notify', () => {

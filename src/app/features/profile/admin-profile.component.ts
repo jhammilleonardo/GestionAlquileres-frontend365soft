@@ -99,7 +99,7 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
 
                 <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
                   <div class="form-row">
-                    <label class="field-group">
+                    <div class="field-group">
                       <app-text-field
                         formControlName="name"
                         [label]="'perfil.nameLabel' | transloco"
@@ -111,9 +111,9 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                       ) {
                         <span class="field-error">{{ 'perfil.required' | transloco }}</span>
                       }
-                    </label>
+                    </div>
 
-                    <label class="field-group">
+                    <div class="field-group">
                       <app-text-field
                         formControlName="email"
                         type="email"
@@ -129,17 +129,17 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                       @if (profileForm.get('email')?.hasError('email')) {
                         <span class="field-error">{{ 'auth.emailInvalid' | transloco }}</span>
                       }
-                    </label>
+                    </div>
                   </div>
 
-                  <label class="field-group">
+                  <div class="field-group">
                     <app-text-field
                       formControlName="phone"
                       type="tel"
                       [label]="'perfil.phoneLabel' | transloco"
                       [placeholder]="'perfil.phonePlaceholder' | transloco"
                     />
-                  </label>
+                  </div>
 
                   <div class="form-actions">
                     <app-button
@@ -178,7 +178,7 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                 }
 
                 <form [formGroup]="passwordForm" (ngSubmit)="savePassword()">
-                  <label class="field-group">
+                  <div class="field-group">
                     <app-text-field
                       formControlName="current_password"
                       type="password"
@@ -190,9 +190,9 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                     ) {
                       <span class="field-error">{{ 'perfil.required' | transloco }}</span>
                     }
-                  </label>
+                  </div>
 
-                  <label class="field-group">
+                  <div class="field-group">
                     <app-text-field
                       formControlName="new_password"
                       type="password"
@@ -208,9 +208,9 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                       <span class="field-error">{{ 'perfil.minChars6' | transloco }}</span>
                     }
                     <span class="field-hint">{{ 'perfil.passwordHint' | transloco }}</span>
-                  </label>
+                  </div>
 
-                  <label class="field-group">
+                  <div class="field-group">
                     <app-text-field
                       formControlName="confirm_password"
                       type="password"
@@ -228,7 +228,7 @@ function passwordMatchValidator(form: AbstractControl): ValidationErrors | null 
                     ) {
                       <span class="field-error">{{ 'perfil.passwordMismatch' | transloco }}</span>
                     }
-                  </label>
+                  </div>
 
                   <div class="form-actions">
                     <app-button

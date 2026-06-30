@@ -1,6 +1,12 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { CheckCircle2, ExternalLink, LucideAngularModule, XCircle } from 'lucide-angular';
+import {
+  CalendarCheck2,
+  CheckCircle2,
+  ExternalLink,
+  LucideAngularModule,
+  XCircle,
+} from 'lucide-angular';
 
 import {
   Currency,
@@ -47,6 +53,7 @@ export class PaymentDetailDialogComponent {
   readonly rejected = output<Payment>();
 
   readonly CheckCircle2 = CheckCircle2;
+  readonly CalendarCheck2 = CalendarCheck2;
   readonly ExternalLink = ExternalLink;
   readonly PaymentStatus = PaymentStatus;
   readonly XCircle = XCircle;
@@ -55,11 +62,11 @@ export class PaymentDetailDialogComponent {
     const tenant = payment.tenant;
     if (tenant?.name) return tenant.name;
     const fullName = `${tenant?.first_name ?? ''} ${tenant?.last_name ?? ''}`.trim();
-    return fullName || `Inquilino #${payment.tenant_id}`;
+    return fullName || 'Inquilino';
   }
 
   getPropertyName(payment: Payment): string {
-    return payment.property?.title || `ID ${payment.property_id}`;
+    return payment.property?.title || 'Propiedad';
   }
 
   getStatusLabel(status: PaymentStatus): string {
@@ -95,5 +102,55 @@ export class PaymentDetailDialogComponent {
 
   getMethodLabel(method: PaymentMethod): string {
     return PaymentMethodLabels[method];
+  }
+
+  isReservationPayment(payment: Payment): boolean {
+    return Boolean(payment.reservation_id || payment.reservation?.id);
+  }
+
+  getReservationDepositRequired(payment: Payment): number {
+    const required = Number(payment.reservation?.deposit_required ?? payment.amount ?? 0);
+    return Number.isFinite(required) ? required : 0;
+  }
+
+  getReservationTotal(payment: Payment): number {
+    const total = Number(payment.reservation?.total_amount ?? 0);
+    return Number.isFinite(total) ? total : 0;
+  }
+
+  getReservationPaid(payment: Payment): number {
+    const fallbackPaid = payment.status === PaymentStatus.APPROVED ? payment.amount : 0;
+    const paid = Number(payment.reservation?.paid_amount ?? fallbackPaid);
+    return Number.isFinite(paid) ? paid : 0;
+  }
+
+  getReservationDepositPercent(payment: Payment): number | null {
+    const total = this.getReservationTotal(payment);
+    const required = this.getReservationDepositRequired(payment);
+    if (!Number.isFinite(total) || total <= 0 || !Number.isFinite(required)) return null;
+    return Math.round((required / total) * 100);
+  }
+
+  getReservationBalance(payment: Payment): number {
+    const total = this.getReservationTotal(payment);
+    const paid = this.getReservationPaid(payment);
+    return Math.max(0, total - paid);
+  }
+
+  getDisplayNotes(payment: Payment): string {
+    return this.removeInternalReservationId(payment.notes ?? '');
+  }
+
+  getDisplayAdminNotes(payment: Payment): string {
+    return this.removeInternalReservationId(payment.admin_notes ?? '');
+  }
+
+  private removeInternalReservationId(value: string): string {
+    return value
+      .replace(/\s*-\s*Reserva\s*#\d+\b/gi, '')
+      .replace(/\s*-\s*Reservation\s*#\d+\b/gi, '')
+      .replace(/\bReserva\s*#\d+\b/gi, 'Reserva')
+      .replace(/\bReservation\s*#\d+\b/gi, 'Reservation')
+      .trim();
   }
 }

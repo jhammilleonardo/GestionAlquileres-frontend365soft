@@ -6,9 +6,12 @@ import { ApiClientService, QueryParams } from '../../http/api-client.service';
 import { SlugService } from '../slug.service';
 import { environment } from '../../../../environments/environment';
 import {
+  ChargeFineDto,
   CreateViolationDto,
   PaginatedViolations,
   Violation,
+  ViolationEvent,
+  ViolationStats,
   ViolationStatus,
 } from '../../models/violation.model';
 import { ImageOptimizationService } from '../image-optimization.service';
@@ -24,14 +27,59 @@ export class ViolationService {
     return this.api.get<PaginatedViolations>(this.endpoint('admin/violations'), { params });
   }
 
+  stats(): Observable<ViolationStats> {
+    return this.api.get<ViolationStats>(this.endpoint('admin/violations/stats'));
+  }
+
+  getById(id: number): Observable<Violation> {
+    return this.api.get<Violation>(this.endpoint(`admin/violations/${id}`));
+  }
+
   create(dto: CreateViolationDto): Observable<Violation> {
     return this.api.post<Violation, CreateViolationDto>(this.endpoint('admin/violations'), dto);
   }
 
-  updateStatus(id: number, status: ViolationStatus, resolvedNotes?: string): Observable<Violation> {
-    return this.api.patch<Violation, { status: ViolationStatus; resolved_notes?: string }>(
-      this.endpoint(`admin/violations/${id}/status`),
-      { status, resolved_notes: resolvedNotes },
+  updateStatus(
+    id: number,
+    status: ViolationStatus,
+    resolvedNotes?: string,
+    dueDate?: string,
+  ): Observable<Violation> {
+    return this.api.patch<
+      Violation,
+      { status: ViolationStatus; resolved_notes?: string; due_date?: string }
+    >(this.endpoint(`admin/violations/${id}/status`), {
+      status,
+      resolved_notes: resolvedNotes,
+      due_date: dueDate,
+    });
+  }
+
+  addNote(id: number, note: string): Observable<ViolationEvent[]> {
+    return this.api.post<ViolationEvent[], { note: string }>(
+      this.endpoint(`admin/violations/${id}/notes`),
+      { note },
+    );
+  }
+
+  chargeFine(id: number, dto: ChargeFineDto): Observable<Violation> {
+    return this.api.post<Violation, ChargeFineDto>(
+      this.endpoint(`admin/violations/${id}/fine`),
+      dto,
+    );
+  }
+
+  waiveFine(id: number): Observable<Violation> {
+    return this.api.post<Violation, Record<string, never>>(
+      this.endpoint(`admin/violations/${id}/fine/waive`),
+      {},
+    );
+  }
+
+  payFine(id: number): Observable<Violation> {
+    return this.api.post<Violation, Record<string, never>>(
+      this.endpoint(`admin/violations/${id}/fine/pay`),
+      {},
     );
   }
 

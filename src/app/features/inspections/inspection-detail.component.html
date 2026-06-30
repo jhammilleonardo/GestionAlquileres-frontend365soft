@@ -34,10 +34,12 @@
         </div>
       </div>
       <div class="detail-actions">
-        <app-button appearance="secondary" size="s" (clicked)="downloadPdf()">
-          <lucide-icon [img]="FileText" [size]="15" />
-          {{ 'inspections.pdf' | transloco }}
-        </app-button>
+        @if (isCompleted()) {
+          <app-button appearance="secondary" size="s" (clicked)="downloadPdf()">
+            <lucide-icon [img]="FileText" [size]="15" />
+            {{ 'inspections.pdf' | transloco }}
+          </app-button>
+        }
       </div>
     </header>
 
@@ -46,14 +48,37 @@
       <section class="area-section">
         <h2 class="area-title">{{ 'inspections.area.' + group.area | transloco }}</h2>
         <div class="items">
-          @for (item of group.items; track item.id ?? item.item_name) {
+          @for (item of group.items; track item.id ?? item._tempId ?? item.item_name) {
             <article class="item-card">
               <div class="item-head">
-                <strong>{{ item.item_name }}</strong>
-                <app-status-badge
-                  [label]="'inspections.condition.' + item.condition | transloco"
-                  [tone]="conditionTone(item.condition)"
-                />
+                @if (!isCompleted()) {
+                  <input
+                    type="text"
+                    class="item-name-input"
+                    [value]="item.item_name"
+                    [placeholder]="'inspections.newItemNamePlaceholder' | transloco"
+                    [attr.aria-label]="'inspections.newItemNamePlaceholder' | transloco"
+                    (input)="setName(item, inputValue($event))"
+                  />
+                } @else {
+                  <strong>{{ item.item_name }}</strong>
+                }
+                <div class="item-head-actions">
+                  <app-status-badge
+                    [label]="'inspections.condition.' + item.condition | transloco"
+                    [tone]="conditionTone(item.condition)"
+                  />
+                  @if (!isCompleted()) {
+                    <button
+                      type="button"
+                      class="remove-item-btn"
+                      [attr.aria-label]="'inspections.removeItemAria' | transloco"
+                      (click)="removeItem(item)"
+                    >
+                      <lucide-icon [img]="Trash2" [size]="15" />
+                    </button>
+                  }
+                </div>
               </div>
 
               <div class="condition-options" role="radiogroup">
@@ -83,9 +108,18 @@
               @if (item.photos && item.photos.length > 0) {
                 <div class="item-photos">
                   @for (photo of item.photos; track photo) {
-                    <a [href]="photoUrl(photo)" target="_blank" rel="noopener" class="item-photo">
-                      <img [src]="photoUrl(photo)" alt="foto" loading="lazy" />
-                    </a>
+                    @if (photoSrc(photo); as src) {
+                      <button
+                        type="button"
+                        class="item-photo"
+                        [attr.aria-label]="'inspections.viewPhoto' | transloco"
+                        (click)="openLightbox(src)"
+                      >
+                        <img [src]="src" alt="foto" />
+                      </button>
+                    } @else {
+                      <div class="item-photo item-photo--loading" aria-hidden="true"></div>
+                    }
                   }
                 </div>
               }
@@ -111,11 +145,23 @@
             </article>
           }
         </div>
+
+        @if (!isCompleted()) {
+          <button type="button" class="add-item-btn" (click)="addItem(group.area)">
+            + {{ 'inspections.addChecklistItem' | transloco }}
+          </button>
+        }
       </section>
     }
 
     @if (!isCompleted()) {
       <div class="detail-footer">
+        @if (dirty()) {
+          <span class="unsaved-badge" role="status" aria-live="polite">
+            <span class="unsaved-dot"></span>
+            {{ 'inspections.unsavedBadge' | transloco }}
+          </span>
+        }
         <app-button appearance="secondary" [disabled]="saving()" (clicked)="save(false)">
           <lucide-icon [img]="Save" [size]="16" />
           {{ 'inspections.saveDraft' | transloco }}
@@ -124,6 +170,60 @@
           <lucide-icon [img]="CheckCircle2" [size]="16" />
           {{ 'inspections.complete' | transloco }}
         </app-button>
+      </div>
+    }
+
+    @if (lightboxUrl(); as url) {
+      <div
+        class="lightbox-overlay"
+        role="dialog"
+        aria-modal="true"
+        tabindex="0"
+        (keydown.escape)="closeLightbox()"
+      >
+        <div class="lightbox-toolbar">
+          <button
+            type="button"
+            class="lightbox-btn"
+            [attr.aria-label]="'inspections.zoomOut' | transloco"
+            [disabled]="lightboxZoom() <= 1"
+            (click)="zoomOut()"
+          >
+            <lucide-icon [img]="ZoomOut" [size]="20" />
+          </button>
+          <span class="lightbox-zoom-level">{{ (lightboxZoom() * 100).toFixed(0) }}%</span>
+          <button
+            type="button"
+            class="lightbox-btn"
+            [attr.aria-label]="'inspections.zoomIn' | transloco"
+            [disabled]="lightboxZoom() >= 4"
+            (click)="zoomIn()"
+          >
+            <lucide-icon [img]="ZoomIn" [size]="20" />
+          </button>
+          <button
+            type="button"
+            class="lightbox-btn"
+            [attr.aria-label]="'common.close' | transloco"
+            (click)="closeLightbox()"
+          >
+            <lucide-icon [img]="X" [size]="20" />
+          </button>
+        </div>
+        <div
+          class="lightbox-stage"
+          (click)="$event.target === $event.currentTarget && closeLightbox()"
+          (wheel)="onWheelZoom($event)"
+        >
+          <img
+            [src]="url"
+            alt="foto"
+            class="lightbox-image"
+            [class.zoomed]="lightboxZoom() > 1"
+            [style.transform]="'scale(' + lightboxZoom() + ')'"
+            (click)="toggleZoom()"
+          />
+        </div>
       </div>
     }
   </div>

@@ -33,6 +33,50 @@
   @if (isLoading()) {
     <app-loading-state [label]="'dashboard.loading' | transloco" />
   } @else {
+    <!-- ── Centro de acciones ──────────────────────────────────────────── -->
+    <section
+      class="action-center"
+      [class.all-clear]="!hasActionItems()"
+      aria-labelledby="action-center-title"
+    >
+      <h2 id="action-center-title" class="action-center__title">
+        <lucide-icon [img]="ClipboardList" [size]="18" aria-hidden="true" />
+        {{ 'dashboard.actions.title' | transloco }}
+      </h2>
+
+      @if (hasActionItems()) {
+        <ul class="action-list">
+          @for (item of actionItems(); track item.key) {
+            <li>
+              <button
+                type="button"
+                class="action-item"
+                [attr.data-tone]="item.tone"
+                (click)="item.action()"
+              >
+                <span class="action-item__icon"><lucide-icon [img]="item.icon" [size]="18" /></span>
+                <span class="action-item__count">{{ item.count }}</span>
+                <span class="action-item__label">
+                  {{ 'dashboard.actions.' + item.key | transloco }}
+                </span>
+                <lucide-icon
+                  class="action-item__go"
+                  [img]="ArrowUpRight"
+                  [size]="16"
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="action-center__clear">
+          <lucide-icon [img]="CheckCircle" [size]="18" aria-hidden="true" />
+          {{ 'dashboard.actions.allClear' | transloco }}
+        </p>
+      }
+    </section>
+
     <!-- ── Barra de resumen ────────────────────────────────────────────── -->
     <div class="summary-bar">
       <button

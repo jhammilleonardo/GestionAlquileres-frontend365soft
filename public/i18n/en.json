@@ -48,6 +48,7 @@
     "myProfile": "My Profile",
     "save": "Save",
     "cancel": "Cancel",
+    "done": "Done",
     "delete": "Delete",
     "remove": "Remove",
     "edit": "Edit",
@@ -230,6 +231,44 @@
       "pending": "Pending application",
       "past": "Past lease",
       "none": "No lease"
+    },
+    "detail": {
+      "open": "View tenant detail",
+      "title": "Tenant detail",
+      "contact": "Contact",
+      "edit": "Edit details",
+      "editTitle": "Edit tenant",
+      "lease": "Lease",
+      "contractNumber": "Contract no.",
+      "property": "Property",
+      "noLease": "This tenant has no active lease.",
+      "ledger": "Account statement",
+      "ledgerLoading": "Loading transactions...",
+      "totalCharged": "Total charged",
+      "totalPaid": "Total paid",
+      "date": "Date",
+      "concept": "Concept",
+      "amount": "Amount",
+      "balance": "Balance",
+      "noMovements": "No transactions recorded",
+      "maintenance": "Maintenance",
+      "maintenanceLoading": "Loading requests...",
+      "noMaintenance": "No maintenance requests.",
+      "maintenanceStatus": {
+        "NEW": "New",
+        "IN_PROGRESS": "In progress",
+        "COMPLETED": "Completed",
+        "DEFERRED": "Deferred",
+        "CLOSED": "Closed"
+      },
+      "saveSuccess": "Tenant details updated",
+      "saveError": "Could not update details"
+    },
+    "form": {
+      "name": "Full name",
+      "namePlaceholder": "First and last name",
+      "email": "Email",
+      "phone": "Phone"
     }
   },
   "wizard": {
@@ -474,6 +513,8 @@
       "restorePropertyError": "Could not restore the booking property.",
       "restoreReservationError": "Could not restore the pending booking.",
       "loadError": "Could not load properties.",
+      "propertyUnavailable": "This property is no longer available.",
+      "longTermUnavailable": "This property does not support long-term applications. You can book it as a stay if it has availability.",
       "viewDetails": "View details",
       "loadingDetail": "Loading property details...",
       "imageCounter": "{{current}} / {{total}}",
@@ -669,7 +710,10 @@
     "title": "Notifications",
     "markReadShort": "Mark all",
     "noPending": "You have no pending notifications",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "newMessage": "New message",
+    "newMessageFrom": "New message from {{name}}",
+    "newMessageAttachment": "sent you an attachment"
   },
   "config": {
     "title": "Settings"

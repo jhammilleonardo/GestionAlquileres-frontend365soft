@@ -10,9 +10,16 @@
   "selectTenant": "Select tenant...",
   "typeLabel": "Type",
   "statusLabel": "Status",
+  "severityLabel": "Severity",
   "allStatuses": "All statuses",
   "allTypes": "All types",
+  "allSeverities": "All severities",
   "description": "Description",
+  "dueDate": "Cure-by date",
+  "dueOn": "Due {{date}}",
+  "overdueOn": "Overdue since {{date}}",
+  "fineOptional": "Fine (optional)",
+  "finePlaceholder": "Fine amount",
   "uploadEvidence": "Evidence photos",
   "uploadHint": "Images or PDF, up to 5 files",
   "createTitle": "Add violation",
@@ -30,6 +37,37 @@
   "resolveIntro": "Add a resolution comment (optional).",
   "resolveCommentPlaceholder": "Resolution comment...",
   "resolved": "Violation resolved",
+  "detail": "Details",
+  "detailTitle": "Violation details",
+  "reportedOn": "Reported",
+  "changeStage": "Change stage",
+  "statusUpdated": "Stage updated",
+  "evidence": "Evidence",
+  "fine": "Fine",
+  "fineAmount": "Amount",
+  "chargeFine": "Charge fine",
+  "updateFine": "Update fine",
+  "markPaid": "Mark paid",
+  "waive": "Waive",
+  "waiveTitle": "Waive fine",
+  "waiveMessage": "Waive the pending fine? The tenant will not be charged.",
+  "fineCharged": "Fine charged",
+  "fineWaived": "Fine waived",
+  "finePaid": "Fine marked as paid",
+  "fineAmountInvalid": "Enter a valid fine amount",
+  "addNote": "Add note",
+  "notePlaceholder": "Write an internal note...",
+  "saveNote": "Save note",
+  "noteAdded": "Note added",
+  "timeline": "Activity timeline",
+  "noEvents": "No activity recorded",
+  "stats": {
+    "total": "Total",
+    "open": "Open",
+    "overdue": "Overdue",
+    "escalated": "Escalated",
+    "finesOutstanding": "Outstanding fines"
+  },
   "type": {
     "noise": "Noise",
     "pets": "Pets",
@@ -38,9 +76,33 @@
     "cleanliness": "Cleanliness",
     "other": "Other"
   },
+  "severity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High"
+  },
   "status": {
     "open": "Open",
     "notified": "Notified",
-    "resolved": "Resolved"
+    "in_progress": "In progress",
+    "escalated": "Escalated",
+    "resolved": "Resolved",
+    "dismissed": "Dismissed"
+  },
+  "fineStatus": {
+    "none": "No fine",
+    "charged": "Pending",
+    "paid": "Paid",
+    "waived": "Waived"
+  },
+  "event": {
+    "created": "Violation recorded",
+    "status_changed": "Stage change",
+    "notified": "Notice sent",
+    "fine_charged": "Fine charged",
+    "fine_waived": "Fine waived",
+    "fine_paid": "Fine paid",
+    "evidence_added": "Evidence added",
+    "note": "Note"
   }
 }

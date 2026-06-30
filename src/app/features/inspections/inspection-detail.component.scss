@@ -80,6 +80,61 @@
   gap: 0.5rem;
 }
 
+.item-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.remove-item-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 0.25rem;
+  cursor: pointer;
+  color: var(--app-color-text-muted);
+  transition: all 0.12s;
+
+  &:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+.item-name-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--app-color-border);
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.add-item-btn {
+  justify-self: start;
+  border: 1px dashed var(--app-color-border);
+  background: transparent;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+  transition: all 0.12s;
+
+  &:hover {
+    border-color: var(--app-color-primary, #6366f1);
+    color: var(--app-color-primary, #6366f1);
+  }
+}
+
 .condition-options {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -147,11 +202,122 @@
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--app-color-border);
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  display: block;
+  transition: transform 0.12s;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+}
+
+.item-photo--loading {
+  cursor: default;
+  background: linear-gradient(
+    90deg,
+    var(--app-color-border) 25%,
+    rgba(0, 0, 0, 0.04) 37%,
+    var(--app-color-border) 63%
+  );
+  background-size: 400% 100%;
+  animation: photo-shimmer 1.2s ease-in-out infinite;
+
+  &:hover {
+    transform: none;
+  }
+}
+
+@keyframes photo-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.92);
+  display: flex;
+  flex-direction: column;
+}
+
+.lightbox-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  flex-shrink: 0;
+}
+
+.lightbox-zoom-level {
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.lightbox-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.lightbox-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2rem 2rem;
+
+  @media (max-width: 640px) {
+    padding: 0 1rem 1rem;
+  }
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 88vh;
+  object-fit: contain;
+  border-radius: 8px;
+  transition: transform 0.15s ease;
+  transform-origin: center center;
+  cursor: zoom-in;
+
+  &.zoomed {
+    cursor: zoom-out;
   }
 }
 
@@ -178,9 +344,42 @@
   bottom: 0;
   display: flex;
   gap: 0.5rem;
+  align-items: center;
   justify-content: flex-end;
   padding: 0.85rem 0;
   background: linear-gradient(transparent, var(--app-color-bg, #f7f8fb) 35%);
+}
+
+.unsaved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-right: auto;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.unsaved-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  animation: unsaved-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes unsaved-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 @media (max-width: 640px) {

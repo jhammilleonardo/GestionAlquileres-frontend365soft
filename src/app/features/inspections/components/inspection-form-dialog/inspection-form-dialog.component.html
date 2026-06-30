@@ -22,6 +22,12 @@
       [placeholder]="'inspections.selectInspector' | transloco"
       [options]="inspectorOptions()"
     />
+    <app-select
+      formControlName="template_id"
+      [label]="'inspections.templateLabel' | transloco"
+      [placeholder]="'inspections.noTemplate' | transloco"
+      [options]="templateOptions()"
+    />
     <p class="form-hint">{{ 'inspections.checklistHint' | transloco }}</p>
   </form>
 

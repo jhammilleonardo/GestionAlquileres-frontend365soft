@@ -26,7 +26,15 @@ import { PaymentScheduleItem } from '../tenant-create-payment.facade';
       </section>
     } @else if (schedule().length > 0) {
       <section class="calendar-card">
-        <div class="calendar-header" (click)="toggleExpanded.emit()">
+        <div
+          class="calendar-header"
+          role="button"
+          tabindex="0"
+          [attr.aria-expanded]="expanded()"
+          (click)="toggleExpanded.emit()"
+          (keydown.enter)="toggleExpanded.emit()"
+          (keydown.space)="toggleExpanded.emit()"
+        >
           <div class="calendar-title">
             <lucide-icon [img]="CalendarDays" [size]="20" class="cal-icon"></lucide-icon>
             <h2>{{ 'public.tenantPayments.calendarTitle' | transloco }}</h2>

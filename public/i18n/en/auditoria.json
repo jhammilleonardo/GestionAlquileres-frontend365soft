@@ -2,6 +2,8 @@
   "title": "Audit",
   "subtitle": "System action log",
   "readonly": "Read-only",
+  "export": "Export CSV",
+  "exportError": "Could not export the log",
   "actionLabel": "Action",
   "allActions": "All actions",
   "entity": "Entity",
@@ -10,6 +12,7 @@
   "system": "System",
   "performedBy": "Performed by",
   "ipAddress": "IP address",
+  "device": "Device",
   "from": "From",
   "to": "To",
   "date": "Date",
@@ -33,7 +36,11 @@
     "status_changed": "Status changed",
     "signed": "Signed",
     "renewed": "Renewed",
-    "permissions_updated": "Permissions updated"
+    "permissions_updated": "Permissions updated",
+    "logged_in": "Signed in",
+    "login_failed": "Failed sign-in",
+    "logged_out": "Signed out",
+    "password_changed": "Password changed"
   },
   "role": {
     "SUPERADMIN": "Superadmin",
@@ -45,7 +52,18 @@
   "entityType": {
     "contract": "Contract",
     "employee": "Employee",
-    "payment": "Payment"
+    "payment": "Payment",
+    "property": "Property",
+    "rental_owner": "Owner",
+    "vendor": "Vendor",
+    "expense": "Expense",
+    "violation": "Violation",
+    "inspection": "Inspection",
+    "maintenance": "Maintenance",
+    "reservation": "Reservation",
+    "application": "Application",
+    "config": "Settings",
+    "auth": "Authentication"
   },
   "fields": {
     "status": "Status",

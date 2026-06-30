@@ -17,50 +17,54 @@
     }
   </div>
 
-  <div class="field-group">
-    <app-text-field
-      formControlName="email"
-      type="email"
-      [label]="'common.email' | transloco"
-      [placeholder]="'employees.dialog.emailPlaceholder' | transloco"
-      autocomplete="off"
-    ></app-text-field>
-    @if (form.controls.email.hasError('required') && form.controls.email.touched) {
-      <p class="field-error">{{ 'employees.dialog.emailRequired' | transloco }}</p>
-    } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
-      <p class="field-error">{{ 'employees.dialog.emailInvalid' | transloco }}</p>
-    }
-  </div>
-
-  <div class="field-group">
-    <div class="password-row">
+  @if (!isEdit()) {
+    <div class="field-group">
       <app-text-field
-        formControlName="password"
-        [type]="showPassword() ? 'text' : 'password'"
-        [label]="'employees.dialog.tempPassword' | transloco"
-        autocomplete="new-password"
+        formControlName="email"
+        type="email"
+        [label]="'common.email' | transloco"
+        [placeholder]="'employees.dialog.emailPlaceholder' | transloco"
+        autocomplete="off"
       ></app-text-field>
-      <app-button
-        appearance="outline"
-        size="s"
-        [ariaLabel]="
-          (showPassword() ? 'employees.dialog.hidePassword' : 'employees.dialog.showPassword')
-            | transloco
-        "
-        (clicked)="showPassword.set(!showPassword())"
-      >
-        {{
-          (showPassword() ? 'employees.dialog.hidePassword' : 'employees.dialog.showPassword')
-            | transloco
-        }}
-      </app-button>
+      @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+        <p class="field-error">{{ 'employees.dialog.emailRequired' | transloco }}</p>
+      } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
+        <p class="field-error">{{ 'employees.dialog.emailInvalid' | transloco }}</p>
+      }
     </div>
-    @if (form.controls.password.hasError('required') && form.controls.password.touched) {
-      <p class="field-error">{{ 'employees.dialog.passwordRequired' | transloco }}</p>
-    } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
-      <p class="field-error">{{ 'employees.dialog.passwordMinLength' | transloco }}</p>
-    }
-  </div>
+  }
+
+  @if (!isEdit()) {
+    <div class="field-group">
+      <div class="password-row">
+        <app-text-field
+          formControlName="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          [label]="'employees.dialog.tempPassword' | transloco"
+          autocomplete="new-password"
+        ></app-text-field>
+        <app-button
+          appearance="outline"
+          size="s"
+          [ariaLabel]="
+            (showPassword() ? 'employees.dialog.hidePassword' : 'employees.dialog.showPassword')
+              | transloco
+          "
+          (clicked)="showPassword.set(!showPassword())"
+        >
+          {{
+            (showPassword() ? 'employees.dialog.hidePassword' : 'employees.dialog.showPassword')
+              | transloco
+          }}
+        </app-button>
+      </div>
+      @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+        <p class="field-error">{{ 'employees.dialog.passwordRequired' | transloco }}</p>
+      } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
+        <p class="field-error">{{ 'employees.dialog.passwordMinLength' | transloco }}</p>
+      }
+    </div>
+  }
 
   <app-text-field
     formControlName="phone"
@@ -76,9 +80,9 @@
     <app-button
       type="submit"
       [loading]="isLoading()"
-      [ariaLabel]="'employees.dialog.create' | transloco"
+      [ariaLabel]="(isEdit() ? 'employees.dialog.save' : 'employees.dialog.create') | transloco"
     >
-      {{ 'employees.dialog.create' | transloco }}
+      {{ (isEdit() ? 'employees.dialog.save' : 'employees.dialog.create') | transloco }}
     </app-button>
   </div>
 </form>

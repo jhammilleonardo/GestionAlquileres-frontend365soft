@@ -115,6 +115,16 @@
   <!-- Acciones -->
   <div class="panel-actions">
     <app-button
+      appearance="outline"
+      (clicked)="editRequested.emit(employee())"
+      [fullWidth]="true"
+      [attr.aria-label]="'employees.panel.editData' | transloco"
+    >
+      <lucide-icon [img]="PenLineIcon" [size]="16" aria-hidden="true"></lucide-icon>
+      {{ 'employees.panel.editData' | transloco }}
+    </app-button>
+
+    <app-button
       (clicked)="savePermissions()"
       [disabled]="isSaving()"
       [loading]="isSaving()"

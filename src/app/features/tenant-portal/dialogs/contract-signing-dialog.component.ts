@@ -201,9 +201,9 @@ import { SignaturePadComponent, SignatureResult } from './signature-pad.componen
             </ul>
 
             <div class="signature-confirmation">
-              <label>
+              <p class="signature-phrase-label">
                 {{ 'public.contractSigning.signaturePhraseLabel' | transloco }}
-              </label>
+              </p>
               <p>{{ 'public.contractSigning.signatureConsent' | transloco }}</p>
               <app-signature-pad (signatureChange)="onSignatureChange($event)" />
             </div>

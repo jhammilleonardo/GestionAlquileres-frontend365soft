@@ -7,6 +7,8 @@ import {
   TenantUserFilters,
   CreateTenantUserDto,
   UpdateTenantUserDto,
+  TenantLedger,
+  TenantMaintenanceItem,
   UserStatus,
 } from '../../models/tenant-user.model';
 import { ApiClientService } from '../../http/api-client.service';
@@ -163,12 +165,9 @@ export class TenantUserService {
    */
   updateUser(id: number, userData: UpdateTenantUserDto): Observable<TenantUser> {
     const slug = this.getTenantSlug();
-    return this.apiClient.patch<TenantUser>(`${slug}/users/${id}`, userData).pipe(
-      tap(() => {
-        // Reload users after updating
-        this.loadAllUsers();
-      }),
-    );
+    // El llamador decide cómo refrescar su vista (lista de inquilinos vs. todos
+    // los usuarios), para no sobrescribir el estado con un dataset que no le toca.
+    return this.apiClient.patch<TenantUser>(`${slug}/users/${id}`, userData);
   }
 
   /**
@@ -204,19 +203,21 @@ export class TenantUserService {
   }
 
   /**
-   * Get user contracts
+   * Rent ledger del inquilino: movimientos con saldo acumulado + resumen.
    */
-  getUserContracts(userId: number): Observable<Record<string, unknown>[]> {
+  getTenantLedger(tenantId: number): Observable<TenantLedger> {
     const slug = this.getTenantSlug();
-    return this.apiClient.get<Record<string, unknown>[]>(`${slug}/users/${userId}/contracts`);
+    return this.apiClient.get<TenantLedger>(`${slug}/users/tenants/${tenantId}/ledger`);
   }
 
   /**
-   * Get user payments
+   * Historial de solicitudes de mantenimiento del inquilino.
    */
-  getUserPayments(userId: number): Observable<Record<string, unknown>[]> {
+  getTenantMaintenance(tenantId: number): Observable<TenantMaintenanceItem[]> {
     const slug = this.getTenantSlug();
-    return this.apiClient.get<Record<string, unknown>[]>(`${slug}/users/${userId}/payments`);
+    return this.apiClient.get<TenantMaintenanceItem[]>(
+      `${slug}/users/tenants/${tenantId}/maintenance`,
+    );
   }
 
   private buildTenantParams(filters: TenantUserFilters): Record<string, string> {

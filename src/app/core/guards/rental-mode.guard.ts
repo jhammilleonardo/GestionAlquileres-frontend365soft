@@ -18,7 +18,7 @@ import { SlugService } from '../services/slug.service';
  * de los guards; por eso, si aún no está en `FormatService`, el guard lo trae él
  * mismo (y de paso lo cachea para el resto de la app).
  */
-export const rentalModeGuard: CanActivateFn = (route) => {
+export const rentalModeGuard: CanActivateFn = (route, state) => {
   const formatService = inject(FormatService);
   const tenantConfigService = inject(TenantConfigService);
   const slugService = inject(SlugService);
@@ -33,7 +33,11 @@ export const rentalModeGuard: CanActivateFn = (route) => {
   if (!slug) return router.createUrlTree(['/login']);
 
   const redirect = (): false => {
-    void router.navigate(['/', slug, 'dashboard'], {
+    const target = state.url.includes(`/${slug}/portal/`)
+      ? ['/', slug, 'portal', 'new-application']
+      : ['/', slug, 'dashboard'];
+
+    void router.navigate(target, {
       replaceUrl: true,
       state: { rentalModeBlocked: true, rentalMode: requiredMode },
     });

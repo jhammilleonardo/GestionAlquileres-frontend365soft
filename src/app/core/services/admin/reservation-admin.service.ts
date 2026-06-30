@@ -13,8 +13,6 @@ import {
   SeasonRule,
   CreateSeasonRule,
   AdminReview,
-  HousekeepingTask,
-  HousekeepingStatus,
   CalendarSyncSource,
   CreateSyncSource,
 } from '../../models/reservation-admin.model';
@@ -48,20 +46,6 @@ export class ReservationAdminService {
   getUnitCalendar(unitId: number): Observable<string> {
     const url = `${environment.apiUrl}${this.endpoint(`admin/units/${unitId}/calendar.ics`)}`;
     return this.http.get(url, { responseType: 'text' });
-  }
-
-  listHousekeeping(status?: HousekeepingStatus): Observable<HousekeepingTask[]> {
-    const params: QueryParams = status ? { status } : {};
-    return this.api.get<HousekeepingTask[]>(this.endpoint('admin/housekeeping'), {
-      params,
-    });
-  }
-
-  updateHousekeeping(id: number, status: HousekeepingStatus): Observable<HousekeepingTask> {
-    return this.api.patch<HousekeepingTask, { status: HousekeepingStatus }>(
-      this.endpoint(`admin/housekeeping/${id}`),
-      { status },
-    );
   }
 
   listReviews(propertyId?: number): Observable<AdminReview[]> {

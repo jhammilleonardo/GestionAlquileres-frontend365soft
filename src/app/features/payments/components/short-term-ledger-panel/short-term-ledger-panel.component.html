@@ -1,0 +1,89 @@
+<section class="short-term-ledger">
+  <header class="short-term-ledger__header">
+    <div>
+      <p class="eyebrow">{{ 'payments.shortTerm.eyebrow' | transloco }}</p>
+      <h2>{{ 'payments.shortTerm.title' | transloco }}</h2>
+      <p>{{ 'payments.shortTerm.subtitle' | transloco }}</p>
+    </div>
+
+    <div class="short-term-ledger__summary">
+      <div>
+        <lucide-icon [img]="CalendarCheck2" [size]="18" />
+        <span>{{ 'payments.shortTerm.reservations' | transloco }}</span>
+        <strong>{{ reservations().length }}</strong>
+      </div>
+      <div [class.is-alert]="balanceTotal() > 0">
+        <lucide-icon [img]="WalletCards" [size]="18" />
+        <span>{{ 'payments.shortTerm.balanceDue' | transloco }}</span>
+        <strong>{{ formatCurrency(balanceTotal()) }}</strong>
+      </div>
+      <div [class.is-alert]="pendingReviewTotal() > 0">
+        <lucide-icon [img]="AlertTriangle" [size]="18" />
+        <span>{{ 'payments.shortTerm.pendingReview' | transloco }}</span>
+        <strong>{{ formatCurrency(pendingReviewTotal()) }}</strong>
+      </div>
+    </div>
+  </header>
+
+  @if (reservations().length === 0) {
+    <div class="short-term-ledger__empty">
+      <span>{{ 'payments.shortTerm.empty' | transloco }}</span>
+    </div>
+  } @else {
+    <div class="reservation-ledger-list">
+      @for (reservation of reservations(); track trackReservation($index, reservation)) {
+        <article class="reservation-ledger" [attr.data-alert]="reservation.alert">
+          <div class="reservation-ledger__main">
+            <div>
+              <h3>{{ reservation.tenant_name }}</h3>
+              <p>{{ reservation.property_name }}</p>
+              @if (reservation.unit_number) {
+                <span>{{ reservation.unit_number }}</span>
+              }
+            </div>
+            <span class="reservation-ledger__status">
+              {{ alertKey(reservation.alert) | transloco }}
+            </span>
+          </div>
+
+          <div class="reservation-ledger__dates">
+            <span>
+              {{ formatDate(reservation.checkin_date) }} -
+              {{ formatDate(reservation.checkout_date) }}
+            </span>
+            <span>
+              {{ 'payments.shortTerm.nights' | transloco: { count: reservation.nights } }}
+            </span>
+          </div>
+
+          <dl class="reservation-ledger__money">
+            <div>
+              <dt>{{ 'payments.shortTerm.total' | transloco }}</dt>
+              <dd>{{ formatCurrency(reservation.total_amount, reservation.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'payments.shortTerm.depositRequired' | transloco }}</dt>
+              <dd>{{ formatCurrency(reservation.deposit_required, reservation.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'payments.shortTerm.paid' | transloco }}</dt>
+              <dd>{{ formatCurrency(reservation.paid_amount, reservation.currency) }}</dd>
+            </div>
+            <div [class.is-due]="reservation.balance_due > 0">
+              <dt>{{ 'payments.shortTerm.balance' | transloco }}</dt>
+              <dd>{{ formatCurrency(reservation.balance_due, reservation.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'payments.shortTerm.inReview' | transloco }}</dt>
+              <dd>{{ formatCurrency(reservation.pending_review, reservation.currency) }}</dd>
+            </div>
+            <div>
+              <dt>{{ 'payments.shortTerm.refunded' | transloco }}</dt>
+              <dd>{{ formatCurrency(reservation.refunded_amount, reservation.currency) }}</dd>
+            </div>
+          </dl>
+        </article>
+      }
+    </div>
+  }
+</section>

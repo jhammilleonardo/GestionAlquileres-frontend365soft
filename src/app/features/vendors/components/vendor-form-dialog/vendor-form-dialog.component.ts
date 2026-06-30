@@ -3,6 +3,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslocoModule } from '@jsverse/transloco';
 
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
+import { AppDatePickerComponent } from '../../../../shared/ui/date-picker/date-picker.component';
 import { AppDialogComponent } from '../../../../shared/ui/dialog/dialog.component';
 import { AppSelectComponent, AppSelectOption } from '../../../../shared/ui/select/select.component';
 import { AppTextareaComponent } from '../../../../shared/ui/textarea/textarea.component';
@@ -13,6 +14,7 @@ import { AppTextFieldComponent } from '../../../../shared/ui/text-field/text-fie
   standalone: true,
   imports: [
     AppButtonComponent,
+    AppDatePickerComponent,
     AppDialogComponent,
     AppSelectComponent,
     AppTextareaComponent,
@@ -29,6 +31,7 @@ export class VendorFormDialogComponent {
   readonly editing = input(false);
   readonly form = input.required<FormGroup>();
   readonly specialtyOptions = input.required<readonly AppSelectOption<string>[]>();
+  readonly showSpecialtyOther = input(false);
   readonly saving = input(false);
   readonly closed = output<void>();
   readonly saved = output<void>();

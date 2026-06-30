@@ -1,0 +1,95 @@
+<app-dialog
+  [open]="open()"
+  [title]="'inspections.templatesTitle' | transloco"
+  [showFooter]="false"
+  (closed)="onClose()"
+>
+  <div class="templates-dialog">
+    <!-- Plantillas existentes -->
+    <section class="tpl-list">
+      <h4>{{ 'inspections.existingTemplates' | transloco }}</h4>
+      @for (template of templates(); track template.id) {
+        <article class="tpl-row">
+          <div class="tpl-info">
+            <strong>{{ template.name }}</strong>
+            <span class="tpl-count">
+              {{ 'inspections.itemsCount' | transloco: { count: template.items.length } }}
+            </span>
+          </div>
+          @if (template.is_default) {
+            <span class="tpl-default">{{ 'inspections.defaultTemplate' | transloco }}</span>
+          } @else {
+            <app-button
+              size="s"
+              appearance="secondary"
+              [attr.aria-label]="'common.delete' | transloco"
+              (clicked)="deleted.emit(template.id)"
+            >
+              <lucide-icon [img]="Trash2" [size]="14" />
+            </app-button>
+          }
+        </article>
+      } @empty {
+        <p class="tpl-empty">{{ 'inspections.noTemplates' | transloco }}</p>
+      }
+    </section>
+
+    <!-- Nueva plantilla -->
+    <section class="tpl-new">
+      <h4>{{ 'inspections.newTemplate' | transloco }}</h4>
+      <form [formGroup]="form" class="tpl-form">
+        <app-text-field
+          formControlName="name"
+          [label]="'inspections.templateName' | transloco"
+          [placeholder]="'inspections.templateNamePlaceholder' | transloco"
+        />
+
+        <div class="tpl-add-row">
+          <app-select
+            formControlName="area"
+            [label]="'inspections.area' | transloco"
+            [options]="areaOptions()"
+          />
+          <app-text-field
+            formControlName="item_name"
+            [label]="'inspections.item' | transloco"
+            [placeholder]="'inspections.itemPlaceholder' | transloco"
+          />
+          <app-button size="s" appearance="secondary" (clicked)="addItem()">
+            <lucide-icon [img]="Plus" [size]="14" />
+            {{ 'inspections.addItem' | transloco }}
+          </app-button>
+        </div>
+
+        @if (draftItems().length > 0) {
+          <ul class="tpl-draft">
+            @for (item of draftItems(); track $index) {
+              <li class="tpl-draft-item">
+                <span>
+                  <strong>{{ areaLabel(item.area) }}</strong> · {{ item.item_name }}
+                </span>
+                <button
+                  type="button"
+                  class="tpl-remove"
+                  [attr.aria-label]="'common.delete' | transloco"
+                  (click)="removeItem($index)"
+                >
+                  <lucide-icon [img]="Trash2" [size]="13" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </form>
+    </section>
+  </div>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="onClose()">
+      {{ 'common.close' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving() || !canSubmit()" (clicked)="submit()">
+      {{ 'inspections.saveTemplate' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

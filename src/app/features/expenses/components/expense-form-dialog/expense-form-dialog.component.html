@@ -23,7 +23,28 @@
       />
     </div>
     <div class="form-row">
+      <app-select
+        formControlName="expense_scope"
+        [label]="'accounting.scopeLabel' | transloco"
+        [options]="scopeOptions()"
+      />
+      <app-select
+        formControlName="payment_status"
+        [label]="'accounting.paymentStatusLabel' | transloco"
+        [options]="paymentStatusOptions()"
+      />
+    </div>
+    <app-select
+      formControlName="responsibility"
+      [label]="'accounting.responsibilityLabel' | transloco"
+      [options]="responsibilityOptions()"
+    />
+    <div class="form-row">
       <app-date-picker formControlName="date" [label]="'accounting.date' | transloco" />
+      <app-date-picker formControlName="due_date" [label]="'accounting.dueDate' | transloco" />
+    </div>
+    <div class="form-row">
+      <app-date-picker formControlName="paid_date" [label]="'accounting.paidDate' | transloco" />
       <app-select
         formControlName="vendor_id"
         [label]="'accounting.vendor' | transloco"
@@ -31,8 +52,45 @@
         [options]="vendorOptions()"
       />
     </div>
-    <app-text-field formControlName="receipt_url" [label]="'accounting.receiptUrl' | transloco" />
+    <app-text-field
+      formControlName="invoice_number"
+      [label]="'accounting.invoiceNumber' | transloco"
+    />
+    <div class="receipt-upload-control" [class.invalid]="receiptError()">
+      <span class="receipt-upload-label">{{ 'accounting.receiptFile' | transloco }}</span>
+      <input
+        #receiptInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        hidden
+        (change)="onReceiptChange($event)"
+      />
+      <div class="receipt-upload-row">
+        <button type="button" class="receipt-upload-button" (click)="receiptInput.click()">
+          {{ 'accounting.selectReceipt' | transloco }}
+        </button>
+        <span class="receipt-upload-name">
+          {{
+            selectedReceipt()?.name ||
+              form().get('receipt_url')?.value ||
+              ('accounting.noReceiptSelected' | transloco)
+          }}
+        </span>
+      </div>
+      @if (receiptError()) {
+        <small class="receipt-upload-error">{{ receiptError() }}</small>
+      }
+    </div>
+    <div class="check-row">
+      <app-checkbox formControlName="affects_owner_statement">
+        <span>{{ 'accounting.affectsOwnerStatement' | transloco }}</span>
+      </app-checkbox>
+      <app-checkbox formControlName="is_reimbursable">
+        <span>{{ 'accounting.isReimbursable' | transloco }}</span>
+      </app-checkbox>
+    </div>
     <app-textarea formControlName="description" [label]="'accounting.description' | transloco" />
+    <app-textarea formControlName="notes" [label]="'accounting.internalNotes' | transloco" />
   </form>
 
   <div dialog-actions>

@@ -21,8 +21,12 @@ import {
   Mail,
   Phone,
   Send,
+  Pencil,
+  Ban,
   Link as LinkIcon,
 } from 'lucide-angular';
+import { DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 
 import { RentalOwnersService } from '../../../../core/services/admin/rental-owners.service';
@@ -30,6 +34,8 @@ import { PropertyService } from '../../../../core/services/admin/property.servic
 import { SlugService } from '../../../../core/services/slug.service';
 import type {
   OwnerAssignedProperty,
+  OwnerContract,
+  OwnerStatement,
   RentalOwnerInvite,
   RentalOwnerSummary,
 } from '../../../../core/models/rental-owner.model';
@@ -37,8 +43,14 @@ import { AppButtonComponent } from '../../../../shared/ui/button/button.componen
 import { AppSelectComponent } from '../../../../shared/ui/select/select.component';
 import type { AppSelectOption } from '../../../../shared/ui/select/select.component';
 import { AppStatusBadgeComponent } from '../../../../shared/ui/status-badge/status-badge.component';
+import type { AppStatusTone } from '../../../../shared/ui/status-badge/status-badge.component';
+import { AppTabsComponent } from '../../../../shared/ui/tabs/tabs.component';
+import type { AppTabOption } from '../../../../shared/ui/tabs/tabs.component';
+import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { ToastService } from '../../../../shared/ui/toast/toast.service';
 import { getApiErrorMessage } from '../../../../core/http/http-error.util';
+
+type OwnerTab = 'properties' | 'statements' | 'contracts';
 
 @Component({
   selector: 'app-owner-detail-panel',
@@ -46,11 +58,15 @@ import { getApiErrorMessage } from '../../../../core/http/http-error.util';
   providers: [provideTranslocoScope({ scope: 'propietarios', alias: 'rentalOwners' })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
+    FormsModule,
     LucideAngularModule,
     TranslocoModule,
     AppButtonComponent,
     AppSelectComponent,
     AppStatusBadgeComponent,
+    AppTabsComponent,
+    TenantCurrencyPipe,
   ],
   templateUrl: './owner-detail-panel.component.html',
   styleUrl: './owner-detail-panel.component.scss',
@@ -72,12 +88,16 @@ export class OwnerDetailPanelComponent {
   readonly MailIcon = Mail;
   readonly PhoneIcon = Phone;
   readonly SendIcon = Send;
+  readonly PencilIcon = Pencil;
+  readonly BanIcon = Ban;
   readonly LinkIcon = LinkIcon;
 
   readonly owner = input.required<RentalOwnerSummary>();
 
   readonly panelClosed = output<void>();
   readonly accountChanged = output<void>();
+  readonly editRequested = output<RentalOwnerSummary>();
+  readonly deactivateRequested = output<RentalOwnerSummary>();
 
   // Acceso al portal (invitación)
   readonly inviting = signal(false);
@@ -85,6 +105,22 @@ export class OwnerDetailPanelComponent {
   readonly copied = signal(false);
 
   readonly hasAccount = computed(() => this.owner().has_account);
+
+  // Pestañas del panel
+  readonly activeTab = signal<OwnerTab>('properties');
+  readonly tabs = computed<AppTabOption<OwnerTab>[]>(() => [
+    { value: 'properties', label: this.transloco.translate('rentalOwners.panel.tabs.properties') },
+    { value: 'statements', label: this.transloco.translate('rentalOwners.panel.tabs.statements') },
+    { value: 'contracts', label: this.transloco.translate('rentalOwners.panel.tabs.contracts') },
+  ]);
+
+  // Liquidaciones y contratos (carga perezosa por pestaña)
+  readonly statements = signal<OwnerStatement[]>([]);
+  readonly loadingStatements = signal(false);
+  readonly statementsLoaded = signal(false);
+  readonly contracts = signal<OwnerContract[]>([]);
+  readonly loadingContracts = signal(false);
+  readonly contractsLoaded = signal(false);
 
   // Propiedades asignadas
   readonly assignedProperties = signal<OwnerAssignedProperty[]>([]);
@@ -113,9 +149,86 @@ export class OwnerDetailPanelComponent {
         this.loadedOwnerId = current.id;
         this.invite.set(null);
         this.selectedPropertyId.set(null);
+        this.activeTab.set('properties');
+        this.statements.set([]);
+        this.statementsLoaded.set(false);
+        this.contracts.set([]);
+        this.contractsLoaded.set(false);
         this.loadProperties(current.id);
       }
     });
+  }
+
+  setTab(tab: OwnerTab): void {
+    this.activeTab.set(tab);
+    if (tab === 'statements' && !this.statementsLoaded()) {
+      this.loadStatements(this.owner().id);
+    } else if (tab === 'contracts' && !this.contractsLoaded()) {
+      this.loadContracts(this.owner().id);
+    }
+  }
+
+  private loadStatements(ownerId: number): void {
+    this.loadingStatements.set(true);
+    this.rentalOwnersService
+      .getStatements(this.slug, ownerId)
+      .pipe(
+        catchError((err: { error?: { message?: string } }) => {
+          this.loadingStatements.set(false);
+          this.toast.error(
+            getApiErrorMessage(err, this.transloco.translate('rentalOwners.panel.loadError')),
+          );
+          return EMPTY;
+        }),
+      )
+      .subscribe((rows) => {
+        this.statements.set(rows);
+        this.statementsLoaded.set(true);
+        this.loadingStatements.set(false);
+      });
+  }
+
+  private loadContracts(ownerId: number): void {
+    this.loadingContracts.set(true);
+    this.rentalOwnersService
+      .getContracts(this.slug, ownerId)
+      .pipe(
+        catchError((err: { error?: { message?: string } }) => {
+          this.loadingContracts.set(false);
+          this.toast.error(
+            getApiErrorMessage(err, this.transloco.translate('rentalOwners.panel.loadError')),
+          );
+          return EMPTY;
+        }),
+      )
+      .subscribe((rows) => {
+        this.contracts.set(rows);
+        this.contractsLoaded.set(true);
+        this.loadingContracts.set(false);
+      });
+  }
+
+  protected statementPeriod(statement: OwnerStatement): string {
+    return `${String(statement.period_month).padStart(2, '0')}/${statement.period_year}`;
+  }
+
+  protected statementDeductions(statement: OwnerStatement): number {
+    return Number(statement.maintenance_deduction) + Number(statement.management_commission);
+  }
+
+  protected contractTone(status: string): AppStatusTone {
+    const tones: Record<string, AppStatusTone> = {
+      ACTIVO: 'success',
+      FIRMADO: 'success',
+      POR_VENCER: 'warning',
+      PENDIENTE: 'warning',
+      BORRADOR: 'neutral',
+      VENCIDO: 'danger',
+      CANCELADO: 'danger',
+      FINALIZADO: 'neutral',
+      RENOVADO: 'info',
+    };
+    return tones[status] ?? 'neutral';
   }
 
   private loadProperties(ownerId: number): void {

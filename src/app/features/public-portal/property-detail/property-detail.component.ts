@@ -329,6 +329,17 @@ export class PropertyDetailComponent {
     }
   }
 
+  /**
+   * Tras crear la reserva desde el calendario público, lleva al huésped a "Mis
+   * Reservas" del portal para que vea la reserva pendiente y pueda pagarla, en
+   * vez de dejarlo en la página pública buscándola a mano.
+   */
+  onReservationCreated(): void {
+    const slug = this.slugService.getSlug();
+    if (!slug) return;
+    void this.router.navigate(['/', slug, 'portal', 'reservas']);
+  }
+
   closeApplicationModal(): void {
     this.showApplicationModal.set(false);
   }

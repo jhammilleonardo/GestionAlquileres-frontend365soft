@@ -2,6 +2,7 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   Component,
+  computed,
   ElementRef,
   QueryList,
   ViewChildren,
@@ -31,6 +32,7 @@ import {
 } from 'lucide-angular';
 import { provideTranslocoScope, TranslocoModule, TranslocoService } from '@jsverse/transloco';
 import { NotificationService, Notification } from '../../core/services/admin/notification.service';
+import { NotificationSocketService } from '../../core/services/notification-socket.service';
 import { SlugService } from '../../core/services/slug.service';
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -40,6 +42,16 @@ import { AppEmptyStateComponent } from '../../shared/ui/empty-state/empty-state.
 import { AppLoadingStateComponent } from '../../shared/ui/loading-state/loading-state.component';
 
 type NotificationFilter = 'all' | 'unread' | 'read';
+type NotificationTypeFilter = 'all' | 'maintenance' | 'property' | 'contract' | 'payment' | 'user';
+
+const NOTIFICATION_TYPE_FILTERS: NotificationTypeFilter[] = [
+  'all',
+  'maintenance',
+  'property',
+  'contract',
+  'payment',
+  'user',
+];
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +72,7 @@ type NotificationFilter = 'all' | 'unread' | 'read';
 })
 export class NotificationsComponent implements AfterViewInit {
   private notificationService = inject(NotificationService);
+  private notificationSocket = inject(NotificationSocketService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private slugService = inject(SlugService);
@@ -78,7 +91,17 @@ export class NotificationsComponent implements AfterViewInit {
 
   // State
   readonly currentFilter = signal<NotificationFilter>('all');
+  readonly typeFilter = signal<NotificationTypeFilter>('all');
   readonly highlightedId = signal<number | null>(null);
+  readonly typeFilters = NOTIFICATION_TYPE_FILTERS;
+
+  /** Lista visible tras aplicar el filtro por tipo (el de leído/no leído va al backend). */
+  readonly filteredNotifications = computed<Notification[]>(() => {
+    const type = this.typeFilter();
+    const list = this.notifications();
+    if (type === 'all') return list;
+    return list.filter((notification) => notification.event_type.includes(type));
+  });
 
   // Lucide icons
   readonly Bell = Bell;
@@ -102,6 +125,14 @@ export class NotificationsComponent implements AfterViewInit {
     if (highlightParam) this.highlightedId.set(Number(highlightParam));
     this.loadNotifications();
     this.loadStats();
+
+    // Tiempo real: el header mantiene el socket vivo a nivel de layout; aquí solo
+    // reaccionamos a sus eventos para refrescar la vista actual al instante. El
+    // polling queda como fallback por si el socket no está disponible.
+    this.notificationSocket.events$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.loadNotifications();
+      this.loadStats();
+    });
     this.notificationService.startPolling(60000);
     this.destroyRef.onDestroy(() => this.notificationService.stopPolling());
   }
@@ -151,6 +182,14 @@ export class NotificationsComponent implements AfterViewInit {
   setFilter(filter: NotificationFilter): void {
     this.currentFilter.set(filter);
     this.loadNotifications();
+  }
+
+  setTypeFilter(filter: NotificationTypeFilter): void {
+    this.typeFilter.set(filter);
+  }
+
+  typeFilterLabel(filter: NotificationTypeFilter): string {
+    return this.transloco.translate(`notifications.typeFilter.${filter}`);
   }
 
   refresh(): void {

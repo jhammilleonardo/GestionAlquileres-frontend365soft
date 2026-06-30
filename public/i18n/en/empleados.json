@@ -13,8 +13,16 @@
   "managePermissions": "Manage permissions",
   "viewPermissionsAria": "View permissions for {{name}}",
   "createdSuccess": "Employee {{name}} created",
+  "updatedSuccess": "Employee {{name}} updated",
+  "filters": {
+    "label": "Filter employees by status",
+    "all": "All"
+  },
   "dialog": {
     "title": "New Employee",
+    "editTitle": "Edit employee",
+    "save": "Save changes",
+    "updateError": "Error updating employee",
     "fullName": "Full name",
     "namePlaceholder": "e.g. Ana García",
     "nameRequired": "Name is required",
@@ -46,6 +54,7 @@
     "editAria": "Edit in {{module}}",
     "deleteAria": "Delete in {{module}}",
     "savePermissions": "Save permissions",
+    "editData": "Edit details",
     "saving": "Saving...",
     "deactivate": "Deactivate",
     "activate": "Activate",

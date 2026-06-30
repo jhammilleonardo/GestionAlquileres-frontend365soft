@@ -1,7 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { LucideAngularModule, Pencil, Receipt, Trash2 } from 'lucide-angular';
+import { LucideAngularModule, CreditCard, Pencil, Receipt, Trash2 } from 'lucide-angular';
 
 import { Expense } from '../../../../core/models/expense.model';
 
@@ -17,9 +17,15 @@ export class ExpenseTableComponent {
   readonly expenses = input.required<readonly Expense[]>();
 
   readonly editRequested = output<Expense>();
+  readonly paymentRequested = output<Expense>();
   readonly deleteRequested = output<Expense>();
 
+  readonly CreditCard = CreditCard;
   readonly Receipt = Receipt;
   readonly Pencil = Pencil;
   readonly Trash2 = Trash2;
+
+  balance(expense: Expense): number {
+    return Math.max(0, expense.amount - Number(expense.paid_amount ?? 0));
+  }
 }

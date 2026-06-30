@@ -102,7 +102,6 @@ describe('buildPropertySavePayloads', () => {
 
     expect(result.createDto).toMatchObject({
       monthly_rent: 0,
-      price_per_night: 100,
       security_deposit_amount: 0,
       bedrooms: 0,
       bathrooms: 0,
@@ -120,5 +119,55 @@ describe('buildPropertySavePayloads', () => {
     expect(result.updateDto).not.toHaveProperty('new_owners');
     expect(result.updateDto).not.toHaveProperty('rental_type');
     expect(result.updateDto).not.toHaveProperty('price_per_night');
+    expect(result.createDto).not.toHaveProperty('price_per_night');
+    expect(result.createDto).not.toHaveProperty('deposit_to_confirm_pct');
+  });
+
+  it('en corto plazo sólo manda precio por noche y configuración básica de reserva', () => {
+    const result = buildPropertySavePayloads({
+      title: 'Alojamiento temporal',
+      property_type_id: 1,
+      property_subtype_id: 2,
+      rental_type: 'SHORT_TERM',
+      monthly_rent: '2000',
+      price_per_night: '250',
+      min_lease_months: '12',
+      max_occupants: '4',
+      deposit_to_confirm_pct: '30',
+      checkin_time: '15:00',
+      checkout_time: '11:00',
+      cleaning_fee: '50',
+      weekly_discount_pct: '10',
+      advance_notice_days: '2',
+      addresses: [
+        {
+          street_address: 'Calle 1',
+          city: 'La Paz',
+          state: 'La Paz',
+          country: 'BO',
+        },
+      ],
+    });
+
+    expect(result.createDto).toMatchObject({
+      rental_type: 'SHORT_TERM',
+      price_per_night: 250,
+      deposit_to_confirm_pct: 30,
+      checkin_time: '15:00',
+      checkout_time: '11:00',
+      property_rules: {
+        max_occupants: 4,
+      },
+    });
+    expect(result.createDto).not.toHaveProperty('monthly_rent');
+    expect(result.createDto.property_rules).not.toHaveProperty('min_lease_months');
+    expect(result.createDto).not.toHaveProperty('cleaning_fee');
+    expect(result.createDto).not.toHaveProperty('weekly_discount_pct');
+    expect(result.createDto).not.toHaveProperty('advance_notice_days');
+    expect(result.updateDto).toMatchObject({
+      deposit_to_confirm_pct: 30,
+      checkin_time: '15:00',
+      checkout_time: '11:00',
+    });
   });
 });

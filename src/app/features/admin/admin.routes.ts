@@ -3,6 +3,7 @@ import { authGuard } from '../../core/guards/auth.guard';
 import { moduleGuard } from '../../core/guards/module.guard';
 import { rentalModeGuard } from '../../core/guards/rental-mode.guard';
 import { setupCompleteGuard } from '../../core/guards/setup-complete.guard';
+import { unsavedChangesGuard } from '../../core/guards/unsaved-changes.guard';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -173,15 +174,6 @@ export const ADMIN_ROUTES: Routes = [
         data: { module: 'reservations', rentalMode: 'short_term' },
       },
       {
-        path: 'limpieza',
-        loadComponent: () =>
-          import('../reservations/housekeeping/housekeeping.component').then(
-            (m) => m.HousekeepingComponent,
-          ),
-        canActivate: [moduleGuard, rentalModeGuard],
-        data: { module: 'reservations', rentalMode: 'short_term' },
-      },
-      {
         path: 'violaciones',
         loadComponent: () =>
           import('../violations/violations.component').then((m) => m.ViolationsComponent),
@@ -202,6 +194,7 @@ export const ADMIN_ROUTES: Routes = [
             (m) => m.InspectionDetailComponent,
           ),
         canActivate: [moduleGuard],
+        canDeactivate: [unsavedChangesGuard],
         data: { module: 'inspections' },
       },
       {

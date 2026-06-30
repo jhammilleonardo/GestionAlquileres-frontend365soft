@@ -388,8 +388,8 @@ export class WebsiteAdminComponent {
     const cardsFrom = (array: FormArray<FormGroup>) =>
       array.controls
         .map((group) => ({
-          title: (group.get('title')?.value ?? '').trim(),
-          description: (group.get('description')?.value ?? '').trim(),
+          title: ((group.get('title')?.value as string | null) ?? '').trim(),
+          description: ((group.get('description')?.value as string | null) ?? '').trim(),
         }))
         .filter((item) => item.title && item.description);
 

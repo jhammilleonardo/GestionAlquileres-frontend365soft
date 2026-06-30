@@ -13,7 +13,6 @@
             />
           }
         </th>
-        <th>ID</th>
         <th>{{ 'payments.tenant' | transloco }}</th>
         <th>{{ 'common.property' | transloco }}</th>
         <th class="payment-table__amount">{{ 'common.amount' | transloco }}</th>
@@ -39,14 +38,47 @@
               />
             }
           </td>
-          <td>#{{ payment.id }}</td>
           <td>{{ getTenantName(payment) }}</td>
           <td>{{ getPropertyName(payment) }}</td>
           <td class="payment-table__amount">
             <strong>{{ payment.amount | tenantCurrency }}</strong>
           </td>
           <td>{{ resolveCurrency(payment.currency) }}</td>
-          <td>{{ getTypeLabel(payment.payment_type) }}</td>
+          <td>
+            @if (isReservationPayment(payment)) {
+              <div class="payment-table__context">
+                <span class="payment-table__reservation-badge">
+                  <lucide-icon [img]="CalendarCheck2" [size]="15" />
+                  {{ 'payments.reservationPayment' | transloco }}
+                </span>
+                @if (getReservationDepositPercent(payment); as depositPercent) {
+                  <small>
+                    {{
+                      'payments.depositToConfirmPercent' | transloco: { percent: depositPercent }
+                    }}
+                  </small>
+                }
+                @if (payment.reservation) {
+                  <div class="payment-table__reservation-finance">
+                    <div>
+                      <span>{{ 'payments.reservationTotalShort' | transloco }}</span>
+                      <strong>{{ getReservationTotal(payment) | tenantCurrency }}</strong>
+                    </div>
+                    <div>
+                      <span>{{ 'payments.reservationPaid' | transloco }}</span>
+                      <strong>{{ getReservationPaid(payment) | tenantCurrency }}</strong>
+                    </div>
+                    <div [class.is-due]="getReservationBalance(payment) > 0">
+                      <span>{{ 'payments.reservationPending' | transloco }}</span>
+                      <strong>{{ getReservationBalance(payment) | tenantCurrency }}</strong>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              {{ getTypeLabel(payment.payment_type) }}
+            }
+          </td>
           <td>{{ getMethodLabel(payment.payment_method) }}</td>
           <td>{{ payment.payment_date | tenantDate }}</td>
           <td>

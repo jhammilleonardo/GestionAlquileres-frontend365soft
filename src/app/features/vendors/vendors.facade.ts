@@ -9,6 +9,7 @@ import {
   CreateVendorDto,
   Vendor,
   VendorHistoryItem,
+  VendorInvite,
   VendorSpecialty,
 } from '../../core/models/vendor.model';
 import { VendorService } from '../../core/services/admin/vendor.service';
@@ -29,13 +30,15 @@ export class VendorsFacade {
   readonly vendors = signal<Vendor[]>([]);
   readonly isLoading = signal(true);
   readonly specialtyFilter = signal<VendorSpecialty | ''>('');
+  readonly searchTerm = signal('');
+  readonly financeFilter = signal<'all' | 'payable' | 'open-orders' | 'missing-compliance'>('all');
 
   readonly selectedVendor = signal<Vendor | null>(null);
   readonly history = signal<VendorHistoryItem[]>([]);
   readonly historyLoading = signal(false);
 
-  readonly creatingAccount = signal(false);
-  readonly accountCredentials = signal<{ email: string; temporaryPassword: string } | null>(null);
+  readonly inviting = signal(false);
+  readonly inviteResult = signal<VendorInvite | null>(null);
 
   readonly dialogOpen = signal(false);
   readonly editingId = signal<number | null>(null);
@@ -44,11 +47,20 @@ export class VendorsFacade {
   readonly form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     specialty: [VendorSpecialty.GENERAL, Validators.required],
+    specialty_other: [''],
     phone: [''],
     email: ['', Validators.email],
+    address: [''],
+    tax_id: [''],
+    license_number: [''],
+    insurance_expires_at: [''],
     rate_per_hour: [null as number | null, Validators.min(0)],
     rate_flat: [null as number | null, Validators.min(0)],
     notes: [''],
+  });
+  readonly filtersForm = this.fb.group({
+    specialty: [''],
+    finance: ['all'],
   });
 
   // Recalcula las etiquetas cuando el scope lazy termina de cargar o cambia el
@@ -59,6 +71,12 @@ export class VendorsFacade {
       filter((event) => event.type === 'translationLoadSuccess' || event.type === 'langChanged'),
     ),
   );
+
+  // Cuando la especialidad es "Otro" se habilita un campo libre para nombrarla.
+  private readonly selectedSpecialty = toSignal(this.form.controls.specialty.valueChanges, {
+    initialValue: this.form.controls.specialty.value,
+  });
+  readonly showSpecialtyOther = computed(() => this.selectedSpecialty() === VendorSpecialty.OTHER);
 
   readonly specialtyOptions = computed<AppSelectOption<string>[]>(() => {
     this.translationsReady();
@@ -73,10 +91,55 @@ export class VendorsFacade {
     ...this.specialtyOptions(),
   ]);
 
+  readonly financeFilterOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return [
+      { value: 'all', label: this.transloco.translate('vendors.filters.all') },
+      { value: 'payable', label: this.transloco.translate('vendors.filters.payable') },
+      { value: 'open-orders', label: this.transloco.translate('vendors.filters.openOrders') },
+      {
+        value: 'missing-compliance',
+        label: this.transloco.translate('vendors.filters.missingCompliance'),
+      },
+    ];
+  });
+
+  readonly summary = computed(() => {
+    const vendors = this.vendors();
+    return {
+      active: vendors.filter((vendor) => vendor.is_active).length,
+      openOrders: vendors.reduce((sum, vendor) => sum + (vendor.open_orders ?? 0), 0),
+      payable: vendors.reduce((sum, vendor) => sum + (vendor.pending_balance ?? 0), 0),
+      incompleteCompliance: vendors.filter((vendor) => (vendor.compliance_score ?? 0) < 80).length,
+    };
+  });
+
   readonly filteredVendors = computed(() => {
     const specialty = this.specialtyFilter();
+    const term = this.searchTerm().trim().toLowerCase();
+    const finance = this.financeFilter();
     const all = this.vendors();
-    return specialty ? all.filter((vendor) => vendor.specialty === specialty) : all;
+    return all.filter((vendor) => {
+      const matchesSpecialty = !specialty || vendor.specialty === specialty;
+      const searchable = [
+        vendor.name,
+        vendor.email,
+        vendor.phone,
+        vendor.address,
+        vendor.tax_id,
+        vendor.license_number,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      const matchesSearch = !term || searchable.includes(term);
+      const matchesFinance =
+        finance === 'all' ||
+        (finance === 'payable' && (vendor.pending_balance ?? 0) > 0) ||
+        (finance === 'open-orders' && (vendor.open_orders ?? 0) > 0) ||
+        (finance === 'missing-compliance' && (vendor.compliance_score ?? 0) < 80);
+      return matchesSpecialty && matchesSearch && matchesFinance;
+    });
   });
 
   constructor() {
@@ -101,13 +164,33 @@ export class VendorsFacade {
     this.specialtyFilter.set(value as VendorSpecialty | '');
   }
 
+  onFinanceFilter(value: string): void {
+    this.financeFilter.set(
+      ['payable', 'open-orders', 'missing-compliance'].includes(value)
+        ? (value as 'payable' | 'open-orders' | 'missing-compliance')
+        : 'all',
+    );
+  }
+
+  onSearchInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    this.searchTerm.set(target?.value ?? '');
+  }
+
+  clearFilters(): void {
+    this.searchTerm.set('');
+    this.specialtyFilter.set('');
+    this.financeFilter.set('all');
+    this.filtersForm.reset({ specialty: '', finance: 'all' }, { emitEvent: false });
+  }
+
   filledStars(rating: number | null | undefined): number {
     return Math.round(rating ?? 0);
   }
 
   openCreate(): void {
     this.editingId.set(null);
-    this.form.reset({ specialty: VendorSpecialty.GENERAL });
+    this.form.reset({ specialty: VendorSpecialty.GENERAL, specialty_other: '' });
     this.dialogOpen.set(true);
   }
 
@@ -117,8 +200,15 @@ export class VendorsFacade {
     this.form.reset({
       name: vendor.name,
       specialty: vendor.specialty,
+      specialty_other: vendor.specialty_other ?? '',
       phone: vendor.phone ?? '',
       email: vendor.email ?? '',
+      address: vendor.address ?? '',
+      tax_id: vendor.tax_id ?? '',
+      license_number: vendor.license_number ?? '',
+      insurance_expires_at: vendor.insurance_expires_at
+        ? vendor.insurance_expires_at.slice(0, 10)
+        : '',
       rate_per_hour: vendor.rate_per_hour ?? null,
       rate_flat: vendor.rate_flat ?? null,
       notes: vendor.notes ?? '',
@@ -180,20 +270,22 @@ export class VendorsFacade {
     });
   }
 
-  createAccount(vendor: Vendor): void {
-    this.creatingAccount.set(true);
-    this.accountCredentials.set(null);
-    this.vendorService.createAccount(vendor.id).subscribe({
-      next: (credentials) => {
-        this.creatingAccount.set(false);
-        this.accountCredentials.set(credentials);
-        this.toast.success(this.transloco.translate('vendors.account.created'));
+  invite(vendor: Vendor): void {
+    this.inviting.set(true);
+    this.inviteResult.set(null);
+    this.vendorService.invite(vendor.id).subscribe({
+      next: (invite) => {
+        this.inviting.set(false);
+        this.inviteResult.set(invite);
+        this.toast.success(this.transloco.translate('vendors.invite.success'));
+        // El proveedor ya tiene cuenta tras invitar: refleja el estado al instante.
+        if (this.selectedVendor()?.id === vendor.id) {
+          this.selectedVendor.update((v) => (v ? { ...v, has_account: true } : v));
+        }
       },
       error: (err: unknown) => {
-        this.creatingAccount.set(false);
-        this.toast.error(
-          getApiErrorMessage(err, this.transloco.translate('vendors.account.error')),
-        );
+        this.inviting.set(false);
+        this.toast.error(getApiErrorMessage(err, this.transloco.translate('vendors.invite.error')));
       },
     });
   }
@@ -201,7 +293,7 @@ export class VendorsFacade {
   openDetail(vendor: Vendor): void {
     this.selectedVendor.set(vendor);
     this.history.set([]);
-    this.accountCredentials.set(null);
+    this.inviteResult.set(null);
     this.historyLoading.set(true);
     this.vendorService.getHistory(vendor.id).subscribe({
       next: (history) => {
@@ -224,8 +316,14 @@ export class VendorsFacade {
     return {
       name: raw.name!,
       specialty: raw.specialty!,
+      specialty_other:
+        raw.specialty === VendorSpecialty.OTHER ? raw.specialty_other || undefined : undefined,
       phone: raw.phone || undefined,
       email: raw.email || undefined,
+      address: raw.address || undefined,
+      tax_id: raw.tax_id || undefined,
+      license_number: raw.license_number || undefined,
+      insurance_expires_at: raw.insurance_expires_at || undefined,
       rate_per_hour: raw.rate_per_hour ?? undefined,
       rate_flat: raw.rate_flat ?? undefined,
       notes: raw.notes || undefined,

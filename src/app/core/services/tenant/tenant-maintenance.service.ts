@@ -31,6 +31,7 @@ export interface CreateTenantMaintenanceDto {
   has_pets?: boolean;
   entry_notes?: string;
   files?: string[];
+  reservation_id?: number;
 }
 
 export interface CreateTenantMessageDto {

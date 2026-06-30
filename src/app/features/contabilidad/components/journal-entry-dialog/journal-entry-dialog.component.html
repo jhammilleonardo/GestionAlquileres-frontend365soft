@@ -1,0 +1,99 @@
+<app-dialog
+  [open]="open()"
+  [title]="'accounting.journalEntry.title' | transloco"
+  [showFooter]="false"
+  (closed)="closed.emit()"
+>
+  <form [formGroup]="form" class="je-form" (ngSubmit)="submit()">
+    <div class="je-head">
+      <app-text-field
+        formControlName="entryDate"
+        [label]="'accounting.journalEntry.date' | transloco"
+        type="date"
+      />
+      <app-select
+        formControlName="basis"
+        [label]="'accounting.journalEntry.basis' | transloco"
+        [options]="basisOptions()"
+      />
+    </div>
+
+    <app-text-field
+      formControlName="description"
+      [label]="'accounting.journalEntry.description' | transloco"
+      [placeholder]="'accounting.journalEntry.descriptionPlaceholder' | transloco"
+    />
+
+    <div class="je-lines">
+      <div class="je-lines__header">
+        <span>{{ 'accounting.journalEntry.account' | transloco }}</span>
+        <span class="num">{{ 'accounting.journalEntry.debit' | transloco }}</span>
+        <span class="num">{{ 'accounting.journalEntry.credit' | transloco }}</span>
+        <span></span>
+      </div>
+
+      <div formArrayName="lines">
+        @for (line of lines.controls; track $index) {
+          <div class="je-line" [formGroupName]="$index">
+            <app-select
+              formControlName="accountCode"
+              [options]="accountOptions()"
+              [placeholder]="'accounting.journalEntry.selectAccount' | transloco"
+              [ariaLabel]="'accounting.journalEntry.account' | transloco"
+            />
+            <app-text-field
+              formControlName="debit"
+              type="number"
+              [ariaLabel]="'accounting.journalEntry.debit' | transloco"
+            />
+            <app-text-field
+              formControlName="credit"
+              type="number"
+              [ariaLabel]="'accounting.journalEntry.credit' | transloco"
+            />
+            <button
+              type="button"
+              class="je-remove"
+              [disabled]="lines.length <= 2"
+              (click)="removeLine($index)"
+              [attr.aria-label]="'accounting.journalEntry.removeLine' | transloco"
+            >
+              <lucide-icon [img]="Trash2" [size]="16" aria-hidden="true" />
+            </button>
+          </div>
+        }
+      </div>
+
+      <app-button appearance="outline" size="s" (clicked)="addLine()">
+        <lucide-icon [img]="Plus" [size]="15" aria-hidden="true" />
+        {{ 'accounting.journalEntry.addLine' | transloco }}
+      </app-button>
+    </div>
+
+    <div class="je-totals" [class.balanced]="isBalanced()">
+      <div>
+        <span>{{ 'accounting.journalEntry.totalDebit' | transloco }}</span>
+        <strong>{{ totalDebit() | tenantCurrency: currency() }}</strong>
+      </div>
+      <div>
+        <span>{{ 'accounting.journalEntry.totalCredit' | transloco }}</span>
+        <strong>{{ totalCredit() | tenantCurrency: currency() }}</strong>
+      </div>
+      <span class="je-balance" role="status" aria-live="polite">
+        {{
+          (isBalanced() ? 'accounting.journalEntry.balanced' : 'accounting.journalEntry.unbalanced')
+            | transloco
+        }}
+      </span>
+    </div>
+  </form>
+
+  <div dialog-actions>
+    <app-button appearance="secondary" (clicked)="closed.emit()">
+      {{ 'common.cancel' | transloco }}
+    </app-button>
+    <app-button [disabled]="saving() || form.invalid || !isBalanced()" (clicked)="submit()">
+      {{ 'accounting.journalEntry.post' | transloco }}
+    </app-button>
+  </div>
+</app-dialog>

@@ -10,13 +10,81 @@
     </app-button>
   </app-page-header>
 
-  <div class="vendors-toolbar">
+  <section class="vendor-summary" [attr.aria-label]="'vendors.summary.title' | transloco">
+    <article class="vendor-summary__item">
+      <span class="summary-icon">
+        <lucide-icon [img]="BriefcaseBusiness" [size]="18" />
+      </span>
+      <div>
+        <span>{{ 'vendors.summary.active' | transloco }}</span>
+        <strong>{{ summary().active }}</strong>
+      </div>
+    </article>
+    <article class="vendor-summary__item">
+      <span class="summary-icon">
+        <lucide-icon [img]="ClipboardCheck" [size]="18" />
+      </span>
+      <div>
+        <span>{{ 'vendors.summary.openOrders' | transloco }}</span>
+        <strong>{{ summary().openOrders }}</strong>
+      </div>
+    </article>
+    <article class="vendor-summary__item">
+      <span class="summary-icon">
+        <lucide-icon [img]="DollarSign" [size]="18" />
+      </span>
+      <div>
+        <span>{{ 'vendors.summary.payable' | transloco }}</span>
+        <strong>{{ summary().payable | tenantCurrency }}</strong>
+      </div>
+    </article>
+    <article class="vendor-summary__item">
+      <span class="summary-icon">
+        <lucide-icon [img]="ShieldCheck" [size]="18" />
+      </span>
+      <div>
+        <span>{{ 'vendors.summary.compliance' | transloco }}</span>
+        <strong>{{ summary().incompleteCompliance }}</strong>
+      </div>
+    </article>
+  </section>
+
+  <section
+    class="vendors-control"
+    [formGroup]="filtersForm"
+    [attr.aria-label]="'vendors.filters.title' | transloco"
+  >
+    <label class="vendor-search">
+      <lucide-icon [img]="Search" [size]="18" />
+      <input
+        type="search"
+        [value]="searchTerm()"
+        [placeholder]="'vendors.searchPlaceholder' | transloco"
+        (input)="onSearchInput($event)"
+      />
+    </label>
     <app-select
+      formControlName="specialty"
       [options]="specialtyFilterOptions()"
       [ariaLabel]="'vendors.filterBySpecialty' | transloco"
       [placeholder]="'vendors.allSpecialties' | transloco"
       (valueChanged)="onSpecialtyFilter($event ?? '')"
     />
+    <app-select
+      formControlName="finance"
+      [options]="financeFilterOptions()"
+      [ariaLabel]="'vendors.filters.finance' | transloco"
+      [placeholder]="'vendors.filters.all' | transloco"
+      (valueChanged)="onFinanceFilter($event ?? 'all')"
+    />
+    <button type="button" class="filter-reset" (click)="clearFilters()">
+      <lucide-icon [img]="RotateCcw" [size]="16" />
+      {{ 'vendors.filters.clear' | transloco }}
+    </button>
+  </section>
+
+  <div class="vendors-result-count">
+    {{ 'vendors.resultCount' | transloco: { count: filteredVendors().length } }}
   </div>
 
   @if (isLoading()) {
@@ -38,10 +106,10 @@
     [vendor]="vendor"
     [history]="history()"
     [historyLoading]="historyLoading()"
-    [creatingAccount]="creatingAccount()"
-    [accountCredentials]="accountCredentials()"
+    [inviting]="inviting()"
+    [inviteResult]="inviteResult()"
     (closed)="closeDetail()"
-    (accountRequested)="createAccount(vendor)"
+    (inviteRequested)="invite(vendor)"
   />
 }
 
@@ -50,6 +118,7 @@
   [editing]="editingId() !== null"
   [form]="form"
   [specialtyOptions]="specialtyOptions()"
+  [showSpecialtyOther]="showSpecialtyOther()"
   [saving]="saving()"
   (closed)="closeDialog()"
   (saved)="save()"

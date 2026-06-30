@@ -10,9 +10,16 @@
   "selectTenant": "Seleccionar inquilino...",
   "typeLabel": "Tipo",
   "statusLabel": "Estado",
+  "severityLabel": "Severidad",
   "allStatuses": "Todos los estados",
   "allTypes": "Todos los tipos",
+  "allSeverities": "Todas las severidades",
   "description": "Descripción",
+  "dueDate": "Plazo de corrección",
+  "dueOn": "Vence el {{date}}",
+  "overdueOn": "Venció el {{date}}",
+  "fineOptional": "Multa (opcional)",
+  "finePlaceholder": "Monto de la multa",
   "uploadEvidence": "Fotos de evidencia",
   "uploadHint": "Imágenes o PDF, hasta 5 archivos",
   "createTitle": "Registrar violación",
@@ -30,6 +37,37 @@
   "resolveIntro": "Agrega un comentario de resolución (opcional).",
   "resolveCommentPlaceholder": "Comentario de resolución...",
   "resolved": "Violación resuelta",
+  "detail": "Detalle",
+  "detailTitle": "Detalle de la infracción",
+  "reportedOn": "Registrada",
+  "changeStage": "Cambiar etapa",
+  "statusUpdated": "Etapa actualizada",
+  "evidence": "Evidencia",
+  "fine": "Multa",
+  "fineAmount": "Monto",
+  "chargeFine": "Aplicar multa",
+  "updateFine": "Actualizar multa",
+  "markPaid": "Marcar pagada",
+  "waive": "Condonar",
+  "waiveTitle": "Condonar multa",
+  "waiveMessage": "¿Condonar la multa pendiente? No se cobrará al inquilino.",
+  "fineCharged": "Multa aplicada",
+  "fineWaived": "Multa condonada",
+  "finePaid": "Multa marcada como pagada",
+  "fineAmountInvalid": "Ingresa un monto de multa válido",
+  "addNote": "Agregar nota",
+  "notePlaceholder": "Escribe una nota interna...",
+  "saveNote": "Guardar nota",
+  "noteAdded": "Nota agregada",
+  "timeline": "Línea de tiempo",
+  "noEvents": "Sin actividad registrada",
+  "stats": {
+    "total": "Total",
+    "open": "Abiertas",
+    "overdue": "Vencidas",
+    "escalated": "Escaladas",
+    "finesOutstanding": "Multas pendientes"
+  },
   "type": {
     "noise": "Ruido",
     "pets": "Mascotas",
@@ -38,9 +76,33 @@
     "cleanliness": "Limpieza",
     "other": "Otro"
   },
+  "severity": {
+    "low": "Baja",
+    "medium": "Media",
+    "high": "Alta"
+  },
   "status": {
     "open": "Abierta",
     "notified": "Notificada",
-    "resolved": "Resuelta"
+    "in_progress": "En proceso",
+    "escalated": "Escalada",
+    "resolved": "Resuelta",
+    "dismissed": "Desestimada"
+  },
+  "fineStatus": {
+    "none": "Sin multa",
+    "charged": "Pendiente",
+    "paid": "Pagada",
+    "waived": "Condonada"
+  },
+  "event": {
+    "created": "Infracción registrada",
+    "status_changed": "Cambio de etapa",
+    "notified": "Notificación enviada",
+    "fine_charged": "Multa aplicada",
+    "fine_waived": "Multa condonada",
+    "fine_paid": "Multa pagada",
+    "evidence_added": "Evidencia agregada",
+    "note": "Nota"
   }
 }

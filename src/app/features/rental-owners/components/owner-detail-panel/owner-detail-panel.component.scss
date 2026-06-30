@@ -270,3 +270,59 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Fase 2 — header con acciones, tabs, liquidaciones y contratos */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.close-btn.danger:hover {
+  color: var(--tui-status-negative);
+}
+
+.cell-sub {
+  display: block;
+  color: var(--tui-text-secondary);
+  font-size: 0.75rem;
+  margin-block-start: 0.125rem;
+}
+
+.contract-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.statements-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.statements-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.statements-table th,
+.statements-table td {
+  padding: 0.5rem 0.625rem;
+  text-align: start;
+  border-bottom: 1px solid var(--tui-background-neutral-1);
+  white-space: nowrap;
+}
+
+.statements-table th {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--tui-text-secondary);
+}
+
+.statements-table .num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}

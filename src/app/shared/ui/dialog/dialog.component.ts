@@ -8,6 +8,9 @@ import { LucideAngularModule } from 'lucide-angular';
   template: `
     @if (open()) {
       <div class="app-dialog" role="presentation" (click)="backdropClick()">
+        <!-- stopPropagation evita que un clic dentro del panel cierre el diálogo;
+             es solo de mouse. El teclado cierra con el botón de cerrar real. -->
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
         <section
           class="app-dialog__panel"
           role="dialog"

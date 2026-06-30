@@ -14,6 +14,8 @@ export interface TenantPaymentQrPayload {
   currency: Currency;
   paymentType: PaymentType;
   notes?: string;
+  /** Liga el QR a una reserva de corto plazo (en vez de a un contrato). */
+  reservationId?: number;
 }
 
 @Injectable()
@@ -47,6 +49,7 @@ export class TenantPaymentQrFlowFacade implements OnDestroy {
         currency: payload.currency,
         payment_type: payload.paymentType,
         notes: payload.notes,
+        reservation_id: payload.reservationId,
       })
       .subscribe({
         next: () => this.startPolling(),

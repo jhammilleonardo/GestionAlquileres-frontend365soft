@@ -38,6 +38,97 @@ interface PaymentsListResponse {
   limit: number;
 }
 
+export interface AdminLedgerMonth {
+  label: string;
+  due_date: string;
+  rent_amount: number;
+  paid_rent: number;
+  pending_review: number;
+  late_fee: number;
+  outstanding_rent: number;
+  total_due: number;
+  days_overdue: number;
+  status: 'paid' | 'partial' | 'review' | 'overdue' | 'current' | 'upcoming';
+}
+
+export interface AdminLongTermLedger {
+  contract_id: number;
+  contract_number: string;
+  tenant_id: number;
+  tenant_name: string;
+  property_id: number;
+  property_name: string;
+  start_date: string;
+  end_date: string;
+  duration_months: number;
+  elapsed_months: number;
+  paid_months: number;
+  overdue_months: number;
+  monthly_rent: number;
+  currency: string;
+  payment_day: number;
+  grace_days: number;
+  late_fee_percentage: number;
+  total_paid_rent: number;
+  total_pending_review: number;
+  base_debt: number;
+  late_fee_debt: number;
+  total_debt: number;
+  months: AdminLedgerMonth[];
+}
+
+export interface AdminShortTermLedger {
+  reservation_id: number;
+  tenant_id: number;
+  tenant_name: string;
+  property_id: number;
+  property_name: string;
+  unit_number: string | null;
+  checkin_date: string;
+  checkout_date: string;
+  nights: number;
+  status: string;
+  total_amount: number;
+  deposit_required: number;
+  paid_amount: number;
+  pending_review: number;
+  refunded_amount: number;
+  balance_due: number;
+  deposit_due: number;
+  cleaning_fee: number;
+  security_deposit: number;
+  currency: string;
+  alert:
+    | 'deposit_required'
+    | 'balance_before_checkin'
+    | 'checkout_debt'
+    | 'refund_pending'
+    | 'paid';
+  days_to_checkin: number;
+}
+
+export interface AdminPaymentLedger {
+  generated_at: string;
+  summary: {
+    long_term_contracts: number;
+    long_term_debt: number;
+    long_term_overdue_months: number;
+    short_term_reservations: number;
+    short_term_balance_due: number;
+    short_term_pending_review: number;
+    total_receivable: number;
+  };
+  long_term: AdminLongTermLedger[];
+  short_term: AdminShortTermLedger[];
+  alerts: Array<{
+    scope: 'long_term' | 'short_term';
+    severity: 'info' | 'warning' | 'danger';
+    message: string;
+    amount?: number;
+    entity_id?: number;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -115,6 +206,29 @@ export class PaymentService {
     };
   }
 
+  private buildParams(filters?: PaymentFilters): HttpParams {
+    let params = new HttpParams();
+    if (!filters) return params;
+
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.type) params = params.set('type', filters.type);
+    if (filters.method) params = params.set('method', filters.method);
+    if (filters.date_from) params = params.set('date_from', filters.date_from);
+    if (filters.date_to) params = params.set('date_to', filters.date_to);
+
+    return params;
+  }
+
+  getPayments(filters?: PaymentFilters): Observable<Payment[]> {
+    return this.http
+      .get<PaymentsListResponse>(this.getBaseUrl(), { params: this.buildParams(filters) })
+      .pipe(map((response) => (response.payments || []).map((p) => this.normalizePayment(p))));
+  }
+
+  getAdminLedger(): Observable<AdminPaymentLedger> {
+    return this.http.get<AdminPaymentLedger>(`${this.getBaseUrl()}/ledger`);
+  }
+
   /**
    * Cargar todos los pagos con filtros opcionales
    * GET /:slug/admin/payments
@@ -123,21 +237,10 @@ export class PaymentService {
     this.isLoadingSignal.set(true);
     this.errorSignal.set(null);
 
-    let params = new HttpParams();
-    if (filters) {
-      if (filters.status) params = params.set('status', filters.status);
-      if (filters.type) params = params.set('type', filters.type);
-      if (filters.method) params = params.set('method', filters.method);
-      if (filters.date_from) params = params.set('date_from', filters.date_from);
-      if (filters.date_to) params = params.set('date_to', filters.date_to);
-    }
-
-    this.http
-      .get<PaymentsListResponse>(this.getBaseUrl(), { params })
+    this.getPayments(filters)
       .pipe(
-        tap((response) => {
-          const normalizedPayments = (response.payments || []).map((p) => this.normalizePayment(p));
-          this.paymentsSignal.set(normalizedPayments);
+        tap((payments) => {
+          this.paymentsSignal.set(payments);
           this.isLoadingSignal.set(false);
         }),
         catchError((error: unknown) => {
@@ -146,7 +249,7 @@ export class PaymentService {
           );
           this.isLoadingSignal.set(false);
           this.paymentsSignal.set([]);
-          return of({ payments: [], total: 0, page: 1, limit: 50 });
+          return of([]);
         }),
       )
       .subscribe();

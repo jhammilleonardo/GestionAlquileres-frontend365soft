@@ -271,6 +271,7 @@
                 [cleaningFee]="unit.cleaning_fee ?? 0"
                 [minNights]="unit.min_nights ?? 1"
                 [currency]="property()?.currency ?? 'BOB'"
+                (reservationCreated)="onReservationCreated()"
               />
             } @placeholder {
               <div class="availability-loading-placeholder"></div>

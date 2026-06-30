@@ -6,6 +6,15 @@
   "all": "Todas",
   "unread": "No leídas",
   "read": "Leídas",
+  "byType": "Filtrar por tipo",
+  "typeFilter": {
+    "all": "Todos los tipos",
+    "maintenance": "Mantenimiento",
+    "property": "Propiedades",
+    "contract": "Contratos",
+    "payment": "Pagos",
+    "user": "Usuarios"
+  },
   "loading": "Cargando notificaciones...",
   "empty": "Sin notificaciones",
   "emptyUnread": "¡Excelente! No tienes notificaciones pendientes por leer.",

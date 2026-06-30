@@ -1,4 +1,11 @@
-import { Component, OnDestroy, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  OnDestroy,
+  inject,
+  computed,
+  ChangeDetectionStrategy,
+  signal,
+} from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import {
   LucideAngularModule,
@@ -29,6 +36,7 @@ import { SlugService } from '../../../core/services/slug.service';
 import { ContractService } from '../../../core/services/admin/contract.service';
 import { TenantConfigService } from '../../../core/services/admin/tenant-config.service';
 import { FormatService } from '../../../core/services/format.service';
+import { MyReservation, ReservationService } from '../../../core/services/reservation.service';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
 import { LanguageService } from '../../../core/services/language.service';
 
@@ -37,6 +45,8 @@ interface NavItem {
   route: string;
   icon: typeof Home;
 }
+
+const ACTIVE_STAY_RESERVATION_STATUSES = new Set(['confirmed', 'in_progress']);
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -69,6 +79,7 @@ export class TenantLayoutComponent implements OnDestroy {
   messageService = inject(InternalMessageService);
   notificationService = inject(TenantNotificationService);
   contractService = inject(ContractService);
+  reservationService = inject(ReservationService);
   private router = inject(Router);
   readonly languageService = inject(LanguageService);
   private slugService = inject(SlugService);
@@ -79,6 +90,7 @@ export class TenantLayoutComponent implements OnDestroy {
   sidebarCollapsed = false;
   isNotificationsDropdownOpen = false;
   isUserMenuOpen = false;
+  private readonly activeStayReservation = signal<MyReservation | null>(null);
 
   // Notifications
   notifications = this.notificationService.notifications;
@@ -88,14 +100,12 @@ export class TenantLayoutComponent implements OnDestroy {
   // El sidebar es dinámico según el estado del contrato
   navItems = computed<NavItem[]>(() => {
     const hasContract = !!this.authService.currentUser()?.contract;
+    const hasActiveStayReservation = !!this.activeStayReservation();
 
     // Gating por modo: un tenant solo-largo-plazo no ve "Mis Reservas"; uno
     // solo-corto-plazo no ve las solicitudes de alquiler (flujo de largo plazo).
     const shortTermUrls = [this.slugService.buildUrl('/portal/reservas')];
-    const longTermUrls = [
-      this.slugService.buildUrl('/portal/new-application'),
-      this.slugService.buildUrl('/portal/my-applications'),
-    ];
+    const longTermUrls = [this.slugService.buildUrl('/portal/my-applications')];
     const supportsShortTerm = this.formatService.supportsShortTerm();
     const supportsLongTerm = this.formatService.supportsLongTerm();
     const gate = (items: NavItem[]): NavItem[] =>
@@ -105,8 +115,44 @@ export class TenantLayoutComponent implements OnDestroy {
         return true;
       });
 
+    if (!hasContract && hasActiveStayReservation) {
+      // SIDEBAR DE HUESPED TEMPORAL (reserva confirmada/en curso, sin contrato largo)
+      return gate([
+        {
+          labelKey: 'public.tenantLayout.navHome',
+          route: this.slugService.buildUrl('/portal/estadia'),
+          icon: this.Home,
+        },
+        {
+          labelKey: 'public.tenantLayout.navReservations',
+          route: this.slugService.buildUrl('/portal/reservas'),
+          icon: this.CalendarCheck,
+        },
+        {
+          labelKey: 'public.tenantLayout.navMaintenance',
+          route: this.slugService.buildUrl('/portal/mantenimiento'),
+          icon: this.Wrench,
+        },
+        {
+          labelKey: 'public.tenantLayout.notifications',
+          route: this.slugService.buildUrl('/portal/notificaciones'),
+          icon: this.Bell,
+        },
+        {
+          labelKey: 'public.tenantMessages.title',
+          route: this.slugService.buildUrl('/portal/mensajes'),
+          icon: this.MessageSquare,
+        },
+        {
+          labelKey: 'public.tenantLayout.myProfile',
+          route: this.slugService.buildUrl('/portal/perfil'),
+          icon: this.User,
+        },
+      ]);
+    }
+
     if (!hasContract) {
-      // SIDEBAR PRE-CONTRATO (simplificado)
+      // SIDEBAR PRE-CONTRATO (sin contrato ni reserva activa)
       return gate([
         {
           labelKey: 'public.tenantLayout.navHome',
@@ -203,11 +249,16 @@ export class TenantLayoutComponent implements OnDestroy {
           next: (contracts) => {
             if (contracts && contracts.length > 0) {
               this.slugService.navigateTo(['portal', 'dashboard']);
+              return;
             }
+
+            this.loadActiveStayReservation(true);
           },
-          error: () => undefined,
+          error: () => this.loadActiveStayReservation(false),
         });
       }
+
+      this.loadActiveStayReservation(false);
     }
 
     const slug = this.slugService.getSlug();
@@ -223,6 +274,23 @@ export class TenantLayoutComponent implements OnDestroy {
 
     // Start polling (1 minute)
     this.notificationService.startPolling(60000);
+  }
+
+  private loadActiveStayReservation(redirectFromPreContractHome: boolean): void {
+    this.reservationService.getMyReservations().subscribe({
+      next: (reservations) => {
+        const activeReservation =
+          reservations.find((reservation) =>
+            ACTIVE_STAY_RESERVATION_STATUSES.has(String(reservation.status)),
+          ) ?? null;
+        this.activeStayReservation.set(activeReservation);
+
+        if (activeReservation && redirectFromPreContractHome) {
+          this.slugService.navigateTo(['portal', 'estadia']);
+        }
+      },
+      error: () => this.activeStayReservation.set(null),
+    });
   }
 
   ngOnDestroy(): void {

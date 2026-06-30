@@ -8,12 +8,31 @@
   </header>
 
   @if (vendor(); as v) {
+    <!-- Identidad del proveedor -->
     <div class="info-card">
-      <p class="info-row">
-        <lucide-icon [img]="User" [size]="18" />
-        <span class="label">{{ 'vendorPortal.profile.name' | transloco }}</span>
-        <strong>{{ v.name }}</strong>
-      </p>
+      <div class="identity-head">
+        <div>
+          <strong class="identity-name">{{ v.name }}</strong>
+          <span class="identity-specialty">
+            {{
+              v.specialty === 'other' && v.specialty_other
+                ? v.specialty_other
+                : ('vendorPortal.specialty.' + v.specialty | transloco)
+            }}
+          </span>
+        </div>
+        <span class="identity-rating" [attr.aria-label]="'vendorPortal.profile.rating' | transloco">
+          @for (s of stars; track s) {
+            <lucide-icon
+              [img]="Star"
+              [size]="16"
+              class="star"
+              [class.filled]="s <= filledStars(v.average_rating)"
+            />
+          }
+        </span>
+      </div>
+
       <p class="info-row">
         <lucide-icon [img]="Mail" [size]="18" />
         <span class="label">{{ 'vendorPortal.profile.email' | transloco }}</span>
@@ -26,14 +45,115 @@
           <strong>{{ v.phone }}</strong>
         </p>
       }
+      @if (v.address) {
+        <p class="info-row">
+          <lucide-icon [img]="User" [size]="18" />
+          <span class="label">{{ 'vendorPortal.profile.address' | transloco }}</span>
+          <strong>{{ v.address }}</strong>
+        </p>
+      }
     </div>
 
-    <div class="info-card account-card">
+    <!-- Finanzas -->
+    <div class="info-card">
+      <h2 class="info-title">
+        <lucide-icon [img]="Wallet" [size]="18" />
+        {{ 'vendorPortal.profile.finance' | transloco }}
+      </h2>
+      <div class="finance-grid">
+        <div class="finance-item">
+          <span class="finance-label">{{ 'vendorPortal.profile.payable' | transloco }}</span>
+          <strong class="finance-payable">{{ v.pending_balance | tenantCurrency }}</strong>
+        </div>
+        <div class="finance-item">
+          <span class="finance-label">{{ 'vendorPortal.profile.paid' | transloco }}</span>
+          <strong>{{ v.paid_total | tenantCurrency }}</strong>
+        </div>
+        @if (v.rate_per_hour) {
+          <div class="finance-item">
+            <span class="finance-label">{{ 'vendorPortal.profile.ratePerHour' | transloco }}</span>
+            <strong>{{ v.rate_per_hour | tenantCurrency }}</strong>
+          </div>
+        }
+        @if (v.rate_flat) {
+          <div class="finance-item">
+            <span class="finance-label">{{ 'vendorPortal.profile.rateFlat' | transloco }}</span>
+            <strong>{{ v.rate_flat | tenantCurrency }}</strong>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Documentación y cumplimiento -->
+    <div class="info-card">
+      <h2 class="info-title">
+        <lucide-icon [img]="BadgeCheck" [size]="18" />
+        {{ 'vendorPortal.profile.compliance' | transloco }}
+      </h2>
+
+      <div class="insurance-row" [attr.data-status]="insuranceStatus()">
+        <lucide-icon [img]="ShieldCheck" [size]="18" />
+        <span class="label">{{ 'vendorPortal.profile.insurance' | transloco }}</span>
+        @switch (insuranceStatus()) {
+          @case ('none') {
+            <strong>{{ 'vendorPortal.profile.insuranceNone' | transloco }}</strong>
+          }
+          @case ('expired') {
+            <strong class="status-bad">
+              {{ 'vendorPortal.profile.insuranceExpired' | transloco }}
+              ({{ v.insurance_expires_at | date: 'dd/MM/yyyy' }})
+            </strong>
+          }
+          @case ('soon') {
+            <strong class="status-warn">
+              {{ v.insurance_expires_at | date: 'dd/MM/yyyy' }}
+              — {{ 'vendorPortal.profile.insuranceSoon' | transloco }}
+            </strong>
+          }
+          @default {
+            <strong>{{ v.insurance_expires_at | date: 'dd/MM/yyyy' }}</strong>
+          }
+        }
+      </div>
+
+      <p class="info-row">
+        <span class="label">{{ 'vendorPortal.profile.license' | transloco }}</span>
+        <strong>{{ v.license_number || ('vendorPortal.profile.notSet' | transloco) }}</strong>
+      </p>
+      <p class="info-row">
+        <span class="label">{{ 'vendorPortal.profile.taxId' | transloco }}</span>
+        <strong>{{ v.tax_id || ('vendorPortal.profile.notSet' | transloco) }}</strong>
+      </p>
+      <p class="compliance-hint">{{ 'vendorPortal.profile.complianceHint' | transloco }}</p>
+    </div>
+
+    <!-- Seguridad: cambiar contraseña -->
+    <div class="info-card">
       <h2 class="info-title">
         <lucide-icon [img]="KeyRound" [size]="18" />
-        {{ 'vendorPortal.profile.account' | transloco }}
+        {{ 'vendorPortal.security.title' | transloco }}
       </h2>
-      <p class="account-hint">{{ 'vendorPortal.profile.accountHint' | transloco }}</p>
+      <form [formGroup]="form" class="password-form" (ngSubmit)="changePassword()">
+        <app-text-field
+          formControlName="currentPassword"
+          type="password"
+          [label]="'vendorPortal.security.current' | transloco"
+        />
+        <app-text-field
+          formControlName="newPassword"
+          type="password"
+          [label]="'vendorPortal.security.new' | transloco"
+        />
+        <app-text-field
+          formControlName="confirmPassword"
+          type="password"
+          [label]="'vendorPortal.security.confirm' | transloco"
+        />
+        <p class="password-hint">{{ 'vendorPortal.security.hint' | transloco }}</p>
+        <app-button type="submit" [loading]="saving()" [disabled]="form.invalid">
+          {{ 'vendorPortal.security.submit' | transloco }}
+        </app-button>
+      </form>
     </div>
   }
 </section>

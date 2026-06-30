@@ -122,6 +122,22 @@
   color: var(--app-color-primary, var(--brand-primary, #2563eb));
 }
 
+.booking-payment-card {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.85rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+
+  p {
+    margin: 0;
+    color: #475569;
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+}
+
 .sum-total {
   font-size: 1rem;
   padding-top: 0.75rem;

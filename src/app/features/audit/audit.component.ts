@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { TranslocoModule, TranslocoService, provideTranslocoScope } from '@jsverse/transloco';
-import { LucideAngularModule, Eye, ShieldCheck } from 'lucide-angular';
+import { LucideAngularModule, Eye, ShieldCheck, Download } from 'lucide-angular';
 
 import { AuditLog, AuditService } from '../../core/services/admin/audit.service';
 import { ToastService } from '../../shared/ui/toast/toast.service';
@@ -53,6 +54,7 @@ interface DiffRow {
 export class AuditComponent {
   readonly Eye = Eye;
   readonly ShieldCheck = ShieldCheck;
+  readonly Download = Download;
 
   private readonly fb = inject(FormBuilder);
   private readonly auditService = inject(AuditService);
@@ -66,6 +68,7 @@ export class AuditComponent {
   readonly loadingMore = signal(false);
 
   readonly selected = signal<AuditLog | null>(null);
+  readonly isExporting = signal(false);
 
   private readonly limit = 20;
 
@@ -79,15 +82,29 @@ export class AuditComponent {
     'signed',
     'renewed',
     'permissions_updated',
+    'logged_in',
+    'login_failed',
+    'logged_out',
+    'password_changed',
   ];
 
-  readonly actionOptions: AppSelectOption<string>[] = [
-    { value: '', label: this.transloco.translate('audit.allActions') },
-    ...this.actions.map((a) => ({
-      value: a,
-      label: this.transloco.translate(`audit.action.${a}`),
-    })),
-  ];
+  /**
+   * Se recalcula cada vez que Transloco emite (carga del scope lazy `auditoria` o
+   * cambio de idioma). Sin esto, al construirse el componente el scope aún no está
+   * cargado y `translate(...)` devolvería las claves crudas en el desplegable.
+   */
+  private readonly translationTick = signal(0);
+
+  readonly actionOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationTick();
+    return [
+      { value: '', label: this.transloco.translate('audit.allActions') },
+      ...this.actions.map((a) => ({
+        value: a,
+        label: this.transloco.translate(`audit.action.${a}`),
+      })),
+    ];
+  });
 
   readonly filterForm = this.fb.group({
     user_id: [''],
@@ -113,6 +130,11 @@ export class AuditComponent {
   });
 
   constructor() {
+    // Reconstruye las opciones traducidas cuando el scope lazy termina de cargar
+    // o cuando cambia el idioma en runtime.
+    this.transloco.events$
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.translationTick.update((n) => n + 1));
     this.load(true);
   }
 
@@ -160,6 +182,38 @@ export class AuditComponent {
     this.load(false);
   }
 
+  exportCsv(): void {
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+    const f = this.filterForm.value;
+    const params: Record<string, string> = {};
+    if (f.user_id) params['user_id'] = f.user_id;
+    if (f.entity_type) params['entity_type'] = f.entity_type;
+    if (f.action) params['action'] = f.action;
+    if (f.from) params['from'] = f.from;
+    if (f.to) params['to'] = f.to;
+
+    this.auditService.exportCsv(params).subscribe({
+      next: (blob) => {
+        this.downloadBlob(blob, `auditoria-${new Date().toISOString().slice(0, 10)}.csv`);
+        this.isExporting.set(false);
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error(this.transloco.translate('audit.exportError'));
+      },
+    });
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   userLabel(log: AuditLog): string {
     if (log.user_name) return log.user_name;
     if (log.user_email) return log.user_email;
@@ -197,15 +251,20 @@ export class AuditComponent {
       case 'created':
       case 'approved':
       case 'signed':
+      case 'logged_in':
         return 'success';
       case 'deleted':
       case 'rejected':
+      case 'login_failed':
         return 'danger';
       case 'updated':
       case 'status_changed':
       case 'renewed':
       case 'permissions_updated':
+      case 'password_changed':
         return 'warning';
+      case 'logged_out':
+        return 'info';
       default:
         return 'neutral';
     }

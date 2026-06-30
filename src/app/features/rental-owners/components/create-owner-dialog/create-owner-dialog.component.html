@@ -61,9 +61,11 @@
     <app-button
       type="submit"
       [loading]="isLoading()"
-      [ariaLabel]="'rentalOwners.dialog.create' | transloco"
+      [ariaLabel]="
+        (isEdit() ? 'rentalOwners.dialog.save' : 'rentalOwners.dialog.create') | transloco
+      "
     >
-      {{ 'rentalOwners.dialog.create' | transloco }}
+      {{ (isEdit() ? 'rentalOwners.dialog.save' : 'rentalOwners.dialog.create') | transloco }}
     </app-button>
   </div>
 </form>

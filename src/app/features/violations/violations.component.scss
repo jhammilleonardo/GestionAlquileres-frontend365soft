@@ -140,6 +140,198 @@
   justify-content: flex-end;
 }
 
+/* ── Métricas ── */
+.violation-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.stat-card {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  border-left: 4px solid var(--app-color-border);
+  border-radius: var(--app-radius-lg, 14px);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  &.tone-warning {
+    border-left-color: #d97706;
+  }
+  &.tone-danger {
+    border-left-color: #dc2626;
+  }
+  &.tone-info {
+    border-left-color: #2563eb;
+  }
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--app-color-text-muted);
+}
+
+/* ── Tarjeta: vencimiento ── */
+.violation-card.is-overdue {
+  border-color: #fca5a5;
+}
+
+.vc-due {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  &.overdue {
+    color: #dc2626;
+    font-weight: 600;
+  }
+}
+
+/* ── Panel de detalle ── */
+.vd {
+  display: grid;
+  gap: 1rem;
+}
+
+.vd-head {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.vd-badges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.vd-desc {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.vd-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  color: var(--app-color-text-muted);
+  font-size: 0.82rem;
+}
+
+.vd-overdue {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.vd-section {
+  border-top: 1px solid var(--app-color-border);
+  padding-top: 0.85rem;
+  display: grid;
+  gap: 0.6rem;
+
+  h4 {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+.vd-stage-actions,
+.vd-fine-form,
+.vd-note-action {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.vd-fine-current {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  strong {
+    font-size: 1.05rem;
+  }
+}
+
+.vd-input,
+.vd-textarea {
+  width: 100%;
+  max-width: 220px;
+  border: 1px solid var(--app-color-border, #dce3ea);
+  border-radius: 10px;
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+}
+
+.vd-textarea {
+  max-width: none;
+  resize: vertical;
+}
+
+.vd-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.vd-event {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.vd-event-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--app-color-surface-muted, #f1f5f9);
+  color: var(--app-color-text-muted);
+}
+
+.vd-event-body {
+  display: grid;
+  gap: 2px;
+}
+
+.vd-event-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.vd-event-note {
+  font-size: 0.82rem;
+}
+
+.vd-event-meta {
+  font-size: 0.74rem;
+  color: var(--app-color-text-muted);
+}
+
+.vd-empty,
+.vd-loading {
+  margin: 0;
+  color: var(--app-color-text-muted);
+  font-size: 0.82rem;
+}
+
+.vd-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 640px) {
   .violations-page {
     padding: var(--app-space-4, 1rem);

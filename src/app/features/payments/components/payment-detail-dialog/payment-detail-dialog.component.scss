@@ -23,6 +23,28 @@
   grid-column: 1 / -1;
 }
 
+.payment-detail__reservation {
+  grid-column: 1 / -1;
+  padding: 14px;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  background: #f0f9ff;
+}
+
+.payment-detail__reservation-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #075985;
+}
+
+.payment-detail__reservation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
 .payment-detail__actions {
   display: flex;
   justify-content: flex-end;
@@ -31,6 +53,10 @@
 
 @media (max-width: 768px) {
   .payment-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-detail__reservation-grid {
     grid-template-columns: 1fr;
   }
 

@@ -63,8 +63,18 @@ export class EmployeesComponent {
   isLoading = signal(true);
   errorMessage = signal<string | null>(null);
   isCreateDialogOpen = signal(false);
+  editingEmployee = signal<Employee | null>(null);
+  statusFilter = signal<'all' | 'active' | 'inactive'>('all');
 
   isPanelOpen = computed(() => this.selectedEmployee() !== null);
+
+  readonly filteredEmployees = computed(() => {
+    const status = this.statusFilter();
+    const list = this.employees();
+    if (status === 'all') return list;
+    const wantActive = status === 'active';
+    return list.filter((employee) => employee.is_active === wantActive);
+  });
 
   constructor() {
     this.loadEmployees();
@@ -115,18 +125,42 @@ export class EmployeesComponent {
   }
 
   openCreateDialog(): void {
+    this.editingEmployee.set(null);
+    this.isCreateDialogOpen.set(true);
+  }
+
+  openEditDialog(employee: Employee): void {
+    this.editingEmployee.set(employee);
     this.isCreateDialogOpen.set(true);
   }
 
   closeCreateDialog(): void {
     this.isCreateDialogOpen.set(false);
+    this.editingEmployee.set(null);
+  }
+
+  setStatusFilter(status: 'all' | 'active' | 'inactive'): void {
+    this.statusFilter.set(status);
   }
 
   onEmployeeCreated(newEmployee: Employee): void {
     this.employees.update((list) => [...list, newEmployee]);
-    this.isCreateDialogOpen.set(false);
+    this.closeCreateDialog();
     this.toast.success(
       this.transloco.translate('employees.createdSuccess', { name: newEmployee.name }),
+    );
+  }
+
+  onEmployeeUpdated(updated: Employee): void {
+    this.employees.update((list) =>
+      list.map((employee) => (employee.id === updated.id ? { ...employee, ...updated } : employee)),
+    );
+    if (this.selectedEmployee()?.id === updated.id) {
+      this.selectedEmployee.update((prev) => (prev ? { ...prev, ...updated } : prev));
+    }
+    this.closeCreateDialog();
+    this.toast.success(
+      this.transloco.translate('employees.updatedSuccess', { name: updated.name }),
     );
   }
 

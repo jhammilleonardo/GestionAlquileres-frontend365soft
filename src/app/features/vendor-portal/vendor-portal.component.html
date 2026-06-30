@@ -21,6 +21,43 @@
       </button>
     </header>
 
+    @if (profile(); as p) {
+      <div class="vendor-identity">
+        <div class="identity-main">
+          <span class="identity-specialty">
+            {{
+              p.specialty === 'other' && p.specialty_other
+                ? p.specialty_other
+                : ('vendorPortal.specialty.' + p.specialty | transloco)
+            }}
+          </span>
+          <span
+            class="identity-rating"
+            [attr.aria-label]="'vendorPortal.dashboard.rating' | transloco"
+          >
+            @for (s of stars; track s) {
+              <lucide-icon
+                [img]="Star"
+                [size]="15"
+                class="star"
+                [class.filled]="s <= filledStars(p.average_rating)"
+              />
+            }
+          </span>
+        </div>
+        <div class="identity-finance">
+          <div class="fin">
+            <span class="fin-label">{{ 'vendorPortal.dashboard.payable' | transloco }}</span>
+            <strong>{{ p.pending_balance | tenantCurrency }}</strong>
+          </div>
+          <div class="fin">
+            <span class="fin-label">{{ 'vendorPortal.dashboard.paid' | transloco }}</span>
+            <strong>{{ p.paid_total | tenantCurrency }}</strong>
+          </div>
+        </div>
+      </div>
+    }
+
     <div class="stats">
       <div class="stat">
         <span class="stat-value">{{ counts().total }}</span>

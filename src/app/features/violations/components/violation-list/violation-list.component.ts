@@ -10,10 +10,25 @@ import {
   untracked,
 } from '@angular/core';
 import { TranslocoModule } from '@jsverse/transloco';
-import { LucideAngularModule, Bell, CheckCircle2, Eye } from 'lucide-angular';
+import {
+  LucideAngularModule,
+  AlertTriangle,
+  Bell,
+  CalendarClock,
+  CheckCircle2,
+  Eye,
+  ListChecks,
+} from 'lucide-angular';
 
-import { Violation, ViolationStatus } from '../../../../core/models/violation.model';
+import {
+  Violation,
+  ViolationFineStatus,
+  ViolationSeverity,
+  ViolationStatus,
+  isViolationOverdue,
+} from '../../../../core/models/violation.model';
 import { SecureFileService } from '../../../../core/services/secure-file.service';
+import { TenantCurrencyPipe } from '../../../../shared/pipes/tenant-currency.pipe';
 import { AppButtonComponent } from '../../../../shared/ui/button/button.component';
 import {
   AppStatusBadgeComponent,
@@ -27,6 +42,7 @@ import {
     SlicePipe,
     TranslocoModule,
     LucideAngularModule,
+    TenantCurrencyPipe,
     AppButtonComponent,
     AppStatusBadgeComponent,
   ],
@@ -43,10 +59,16 @@ export class ViolationListComponent {
   readonly notified = output<Violation>();
   readonly pdfViewRequested = output<Violation>();
   readonly resolveRequested = output<Violation>();
+  readonly detailRequested = output<Violation>();
 
   readonly Bell = Bell;
   readonly Eye = Eye;
   readonly CheckCircle2 = CheckCircle2;
+  readonly CalendarClock = CalendarClock;
+  readonly AlertTriangle = AlertTriangle;
+  readonly ListChecks = ListChecks;
+
+  protected readonly FineStatus = ViolationFineStatus;
 
   // Las fotos de evidencia son privadas (requieren JWT), por lo que un <img src>
   // directo falla con 401. Se resuelven a object URLs autenticados.
@@ -68,14 +90,52 @@ export class ViolationListComponent {
       case ViolationStatus.OPEN:
         return 'warning';
       case ViolationStatus.NOTIFIED:
+      case ViolationStatus.IN_PROGRESS:
         return 'info';
+      case ViolationStatus.ESCALATED:
+        return 'danger';
       case ViolationStatus.RESOLVED:
         return 'success';
+      case ViolationStatus.DISMISSED:
+        return 'neutral';
     }
   }
 
+  severityTone(severity: ViolationSeverity): AppStatusTone {
+    switch (severity) {
+      case ViolationSeverity.LOW:
+        return 'neutral';
+      case ViolationSeverity.MEDIUM:
+        return 'warning';
+      case ViolationSeverity.HIGH:
+        return 'danger';
+    }
+  }
+
+  fineTone(status: ViolationFineStatus): AppStatusTone {
+    switch (status) {
+      case ViolationFineStatus.CHARGED:
+        return 'warning';
+      case ViolationFineStatus.PAID:
+        return 'success';
+      default:
+        return 'neutral';
+    }
+  }
+
+  isOverdue(violation: Violation): boolean {
+    return isViolationOverdue(violation);
+  }
+
+  hasFine(violation: Violation): boolean {
+    return violation.fine_status !== ViolationFineStatus.NONE && violation.fine_amount != null;
+  }
+
   isResolved(violation: Violation): boolean {
-    return violation.status === ViolationStatus.RESOLVED;
+    return (
+      violation.status === ViolationStatus.RESOLVED ||
+      violation.status === ViolationStatus.DISMISSED
+    );
   }
 
   private loadEvidenceUrls(violations: readonly Violation[]): void {

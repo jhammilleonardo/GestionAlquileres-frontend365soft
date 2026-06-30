@@ -48,6 +48,7 @@
     "myProfile": "Mi Perfil",
     "save": "Guardar",
     "cancel": "Cancelar",
+    "done": "Listo",
     "delete": "Eliminar",
     "remove": "Quitar",
     "edit": "Editar",
@@ -230,6 +231,44 @@
       "pending": "Solicitud pendiente",
       "past": "Contrato pasado",
       "none": "Sin contrato"
+    },
+    "detail": {
+      "open": "Ver detalle del inquilino",
+      "title": "Detalle del inquilino",
+      "contact": "Contacto",
+      "edit": "Editar datos",
+      "editTitle": "Editar inquilino",
+      "lease": "Contrato",
+      "contractNumber": "N.º de contrato",
+      "property": "Propiedad",
+      "noLease": "Este inquilino no tiene un contrato vigente.",
+      "ledger": "Estado de cuenta",
+      "ledgerLoading": "Cargando movimientos...",
+      "totalCharged": "Total facturado",
+      "totalPaid": "Total pagado",
+      "date": "Fecha",
+      "concept": "Concepto",
+      "amount": "Monto",
+      "balance": "Saldo",
+      "noMovements": "Sin movimientos registrados",
+      "maintenance": "Mantenimiento",
+      "maintenanceLoading": "Cargando solicitudes...",
+      "noMaintenance": "Sin solicitudes de mantenimiento.",
+      "maintenanceStatus": {
+        "NEW": "Nueva",
+        "IN_PROGRESS": "En progreso",
+        "COMPLETED": "Completada",
+        "DEFERRED": "Diferida",
+        "CLOSED": "Cerrada"
+      },
+      "saveSuccess": "Datos del inquilino actualizados",
+      "saveError": "No se pudieron actualizar los datos"
+    },
+    "form": {
+      "name": "Nombre completo",
+      "namePlaceholder": "Nombre y apellidos",
+      "email": "Correo electrónico",
+      "phone": "Teléfono"
     }
   },
   "wizard": {
@@ -474,6 +513,8 @@
       "restorePropertyError": "No se pudo recuperar la propiedad de la reserva.",
       "restoreReservationError": "No se pudo recuperar la reserva pendiente.",
       "loadError": "No se pudieron cargar las propiedades.",
+      "propertyUnavailable": "La propiedad ya no está disponible.",
+      "longTermUnavailable": "Esta propiedad no admite postulación de largo plazo. Puedes reservarla como estadía si tiene disponibilidad.",
       "viewDetails": "Ver detalles",
       "loadingDetail": "Cargando detalles de la propiedad...",
       "imageCounter": "{{current}} / {{total}}",
@@ -669,7 +710,10 @@
     "title": "Notificaciones",
     "markReadShort": "Marcar todo",
     "noPending": "No tienes notificaciones pendientes",
-    "viewAll": "Ver todas"
+    "viewAll": "Ver todas",
+    "newMessage": "Nuevo mensaje",
+    "newMessageFrom": "Nuevo mensaje de {{name}}",
+    "newMessageAttachment": "te envió un archivo adjunto"
   },
   "config": {
     "title": "Configuración"

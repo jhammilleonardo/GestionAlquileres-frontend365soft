@@ -9,6 +9,9 @@ import { SessionTokenService } from '../session-token.service';
 import { SessionExpirationService } from '../session-expiration.service';
 
 import { getApiErrorMessage } from '../../http/http-error.util';
+
+const AUTH_CONTEXT_OPTIONS = { headers: { 'X-Auth-Context': 'tenant' } };
+
 export interface TenantUser {
   id: number;
   userId?: number; // El backend a veces devuelve userId en lugar de id
@@ -68,7 +71,8 @@ export class TenantAuthService {
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
   constructor() {
-    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event.context && event.context !== 'tenant') return;
       this.currentUserSignal.set(null);
       this.slugService.clearSlug();
     });
@@ -141,7 +145,7 @@ export class TenantAuthService {
 
     // Revoca el refresh y limpia las cookies en el backend (best-effort).
     this.http
-      .post(`${environment.apiUrl}auth/logout`, {})
+      .post(`${environment.apiUrl}auth/logout`, {}, AUTH_CONTEXT_OPTIONS)
       .pipe(catchError(() => of(null)))
       .subscribe();
 
@@ -183,7 +187,7 @@ export class TenantAuthService {
    */
   private validateToken(): void {
     this.http
-      .get<TenantUser>(`${environment.apiUrl}auth/me`)
+      .get<TenantUser>(`${environment.apiUrl}auth/me`, AUTH_CONTEXT_OPTIONS)
       .pipe(
         catchError(() => {
           this.logout();
@@ -205,7 +209,7 @@ export class TenantAuthService {
   refreshUserData(): Observable<TenantUser | null> {
     // auth/me se autentica con la cookie HttpOnly; no dependemos de tokens en
     // local/sessionStorage para que el login tenant funcione sin exponer JWT.
-    return this.http.get<RawTenantUser>(`${environment.apiUrl}auth/me`).pipe(
+    return this.http.get<RawTenantUser>(`${environment.apiUrl}auth/me`, AUTH_CONTEXT_OPTIONS).pipe(
       map((user) => {
         if (!user) return null;
         const normalizedUser = this.normalizeUserData(user);
@@ -227,7 +231,7 @@ export class TenantAuthService {
     if (!this.currentUserSignal()) return;
 
     this.http
-      .get<RawTenantUser>(`${environment.apiUrl}auth/me`)
+      .get<RawTenantUser>(`${environment.apiUrl}auth/me`, AUTH_CONTEXT_OPTIONS)
       .pipe(
         catchError((error: { status?: number }) => {
           // Only clear storage if token is invalid (401)

@@ -154,7 +154,9 @@ describe('AuthService', () => {
     expect(service.isAuth()).toBe(true);
     expect(service.currentUser()?.tenant_slug).toBe('madacascar');
     expect(slugService.setSlug).toHaveBeenCalledWith('madacascar');
-    expect(http.get).toHaveBeenCalledWith(`${environment.apiUrl}auth/me`);
+    expect(http.get).toHaveBeenCalledWith(`${environment.apiUrl}auth/me`, {
+      headers: { 'X-Auth-Context': 'admin' },
+    });
     expect(sessionStorage.getItem('admin_access_token')).toBeNull();
   });
 

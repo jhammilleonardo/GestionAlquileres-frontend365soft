@@ -17,8 +17,14 @@ export interface Contract {
   property_id: number;
   start_date: string;
   end_date: string;
+  duration_months?: number | null;
   monthly_rent: number;
   currency: string;
+  payment_day?: number | null;
+  late_fee_percentage?: number | null;
+  grace_days?: number | null;
+  property_title?: string | null;
+  tenant_name?: string | null;
   status: string;
   property?: {
     id: number;
@@ -90,7 +96,7 @@ export class ContractService {
    * Formatear contrato para display
    */
   formatContractDisplay(contract: Contract): string {
-    const propertyName = contract.property?.title || `Propiedad #${contract.property_id}`;
+    const propertyName = contract.property?.title || contract.property_title || 'Propiedad';
     return `${contract.contract_number} - ${propertyName} (Bs ${contract.monthly_rent}/mes)`;
   }
 

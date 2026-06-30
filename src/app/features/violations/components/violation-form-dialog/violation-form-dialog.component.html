@@ -17,7 +17,19 @@
       [label]="'violations.typeLabel' | transloco"
       [options]="typeOptions()"
     />
+    <app-select
+      formControlName="severity"
+      [label]="'violations.severityLabel' | transloco"
+      [options]="severityOptions()"
+    />
     <app-textarea formControlName="description" [label]="'violations.description' | transloco" />
+    <app-date-picker formControlName="due_date" [label]="'violations.dueDate' | transloco" />
+    <app-text-field
+      formControlName="fine_amount"
+      type="number"
+      [label]="'violations.fineOptional' | transloco"
+      [placeholder]="'violations.finePlaceholder' | transloco"
+    />
     <app-file-upload
       [label]="'violations.uploadEvidence' | transloco"
       [hint]="'violations.uploadHint' | transloco"

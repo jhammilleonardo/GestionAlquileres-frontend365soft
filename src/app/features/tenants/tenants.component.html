@@ -73,7 +73,15 @@
   } @else {
     <div class="tenant-list">
       @for (tenant of filteredTenants(); track tenant.id) {
-        <article class="tenant-row">
+        <article
+          class="tenant-row tenant-row--clickable"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="('tenants.detail.open' | transloco) + ': ' + tenant.name"
+          (click)="openDetail(tenant)"
+          (keydown.enter)="openDetail(tenant)"
+          (keydown.space)="openDetail(tenant)"
+        >
           <div class="tenant-row__main">
             <div class="tenant-avatar" aria-hidden="true">
               {{ tenant.name.slice(0, 1).toUpperCase() }}
@@ -138,3 +146,23 @@
     </div>
   }
 </section>
+
+@if (selectedTenant(); as tenant) {
+  <app-tenant-detail-panel
+    [tenant]="tenant"
+    [ledger]="ledger()"
+    [ledgerLoading]="ledgerLoading()"
+    [maintenance]="maintenance()"
+    [maintenanceLoading]="maintenanceLoading()"
+    (closed)="closeDetail()"
+    (editRequested)="openEdit()"
+  />
+}
+
+<app-tenant-form-dialog
+  [open]="editOpen()"
+  [tenant]="selectedTenant()"
+  [saving]="saving()"
+  (closed)="closeEdit()"
+  (saved)="saveEdit($event)"
+/>

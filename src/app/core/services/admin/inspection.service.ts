@@ -7,9 +7,12 @@ import { SlugService } from '../slug.service';
 import { environment } from '../../../../environments/environment';
 import {
   CreateInspectionDto,
+  CreateInspectionTemplateDto,
   Inspection,
   InspectionComparisonItem,
   InspectionItem,
+  InspectionTemplate,
+  UpdateInspectionTemplateDto,
 } from '../../models/inspection.model';
 import { ImageOptimizationService } from '../image-optimization.service';
 
@@ -33,10 +36,23 @@ export class InspectionService {
   }
 
   updateItems(id: number, items: InspectionItem[], complete: boolean): Observable<Inspection> {
-    return this.api.patch<Inspection, { items: InspectionItem[]; complete: boolean }>(
+    // El backend valida con forbidNonWhitelisted: solo enviar los campos del DTO
+    // (las fotos se gestionan por su propio endpoint y romperían la validación).
+    const payload = items.map((item) => ({
+      ...(item.id ? { id: item.id } : {}),
+      area: item.area,
+      item_name: item.item_name,
+      condition: item.condition,
+      ...(item.notes != null ? { notes: item.notes } : {}),
+    }));
+    return this.api.patch<Inspection, { items: typeof payload; complete: boolean }>(
       this.endpoint(`admin/inspections/${id}/items`),
-      { items, complete },
+      { items: payload, complete },
     );
+  }
+
+  removeItem(id: number, itemId: number): Observable<Inspection> {
+    return this.api.delete<Inspection>(this.endpoint(`admin/inspections/${id}/items/${itemId}`));
   }
 
   uploadItemPhotos(id: number, itemId: number, files: File[]): Observable<{ photos: string[] }> {
@@ -60,6 +76,30 @@ export class InspectionService {
   downloadPdf(id: number): Observable<Blob> {
     const url = `${environment.apiUrl}${this.endpoint(`admin/inspections/${id}/pdf`)}`;
     return this.http.get(url, { responseType: 'blob' });
+  }
+
+  // ─── Plantillas ─────────────────────────────────────────────────────────────
+
+  listTemplates(): Observable<InspectionTemplate[]> {
+    return this.api.get<InspectionTemplate[]>(this.endpoint('admin/inspection-templates'));
+  }
+
+  createTemplate(dto: CreateInspectionTemplateDto): Observable<InspectionTemplate> {
+    return this.api.post<InspectionTemplate, CreateInspectionTemplateDto>(
+      this.endpoint('admin/inspection-templates'),
+      dto,
+    );
+  }
+
+  updateTemplate(id: number, dto: UpdateInspectionTemplateDto): Observable<InspectionTemplate> {
+    return this.api.patch<InspectionTemplate, UpdateInspectionTemplateDto>(
+      this.endpoint(`admin/inspection-templates/${id}`),
+      dto,
+    );
+  }
+
+  deleteTemplate(id: number): Observable<void> {
+    return this.api.delete<void>(this.endpoint(`admin/inspection-templates/${id}`));
   }
 
   private endpoint(path: string): string {

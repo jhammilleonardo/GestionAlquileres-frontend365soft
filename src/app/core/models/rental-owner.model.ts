@@ -56,3 +56,33 @@ export interface RentalOwnerInvite {
 export interface RentalOwnerMessage {
   message: string;
 }
+
+/** Liquidación del propietario (tabla dedicada owner_statements): bruto → deducciones → neto. */
+export interface OwnerStatement {
+  id: number;
+  period_month: number;
+  period_year: number;
+  property_id: number;
+  property_title: string | null;
+  gross_rent: string;
+  maintenance_deduction: string;
+  management_commission: string;
+  net_amount: string;
+  currency: string;
+  status: string;
+}
+
+/** Contrato de una propiedad asignada al propietario. */
+export interface OwnerContract {
+  id: number;
+  contract_number: string;
+  status: string;
+  start_date: string;
+  end_date: string;
+  monthly_rent: string;
+  currency: string;
+  tenant_id: number;
+  tenant_name: string;
+  property_id: number;
+  property_title: string;
+}

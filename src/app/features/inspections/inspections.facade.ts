@@ -1,14 +1,19 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
+import { filter } from 'rxjs';
 
 import {
   CreateInspectionDto,
+  CreateInspectionTemplateDto,
   DEFAULT_CHECKLIST,
   Inspection,
+  InspectionArea,
   InspectionComparisonItem,
   InspectionStatus,
+  InspectionTemplate,
   InspectionType,
   ItemCondition,
 } from '../../core/models/inspection.model';
@@ -20,6 +25,14 @@ import { TenantUserService } from '../../core/services/tenant/tenant-user.servic
 import { AppSelectOption } from '../../shared/ui/select/select.component';
 import { AppStatusTone } from '../../shared/ui/status-badge/status-badge.component';
 import { ToastService } from '../../shared/ui/toast/toast.service';
+
+export interface InspectionMetrics {
+  total: number;
+  scheduled: number;
+  inProgress: number;
+  completed: number;
+  overdue: number;
+}
 
 @Injectable()
 export class InspectionsFacade {
@@ -37,6 +50,7 @@ export class InspectionsFacade {
 
   readonly propertyOptions = signal<AppSelectOption<number>[]>([]);
   readonly inspectorOptions = signal<AppSelectOption<number>[]>([]);
+  readonly templates = signal<InspectionTemplate[]>([]);
 
   readonly dialogOpen = signal(false);
   readonly saving = signal(false);
@@ -45,18 +59,69 @@ export class InspectionsFacade {
   readonly comparison = signal<InspectionComparisonItem[] | null>(null);
   readonly comparing = signal(false);
 
-  readonly typeOptions: AppSelectOption<string>[] = Object.values(InspectionType).map((value) => ({
-    value,
-    label: this.transloco.translate(`inspections.type.${value}`),
-  }));
+  readonly templatesOpen = signal(false);
+  readonly savingTemplate = signal(false);
 
-  readonly statusFilterOptions: AppSelectOption<string>[] = [
-    { value: '', label: this.transloco.translate('inspections.allStatuses') },
-    ...Object.values(InspectionStatus).map((value) => ({
+  // Las traducciones del scope cargan async; este signal fuerza el recálculo de
+  // las etiquetas cuando el scope termina de cargar (y al cambiar de idioma).
+  private readonly translationsReady = toSignal(
+    this.transloco.events$.pipe(filter((event) => event.type === 'translationLoadSuccess')),
+    { initialValue: null },
+  );
+
+  readonly typeOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return Object.values(InspectionType).map((value) => ({
       value,
-      label: this.transloco.translate(`inspections.status.${value}`),
-    })),
-  ];
+      label: this.transloco.translate(`inspections.type.${value}`),
+    }));
+  });
+
+  readonly areaOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return Object.values(InspectionArea).map((value) => ({
+      value,
+      label: this.transloco.translate(`inspections.area.${value}`),
+    }));
+  });
+
+  readonly statusFilterOptions = computed<AppSelectOption<string>[]>(() => {
+    this.translationsReady();
+    return [
+      { value: '', label: this.transloco.translate('inspections.allStatuses') },
+      ...Object.values(InspectionStatus).map((value) => ({
+        value,
+        label: this.transloco.translate(`inspections.status.${value}`),
+      })),
+    ];
+  });
+
+  readonly typeFilterOptions = computed<AppSelectOption<string>[]>(() => [
+    { value: '', label: this.transloco.translate('inspections.allTypes') },
+    ...this.typeOptions(),
+  ]);
+
+  readonly templateOptions = computed<AppSelectOption<number>[]>(() =>
+    this.templates().map((template) => ({ value: template.id, label: template.name })),
+  );
+
+  readonly metrics = computed<InspectionMetrics>(() => {
+    const list = this.inspections();
+    const acc: InspectionMetrics = {
+      total: list.length,
+      scheduled: 0,
+      inProgress: 0,
+      completed: 0,
+      overdue: 0,
+    };
+    for (const inspection of list) {
+      if (inspection.status === InspectionStatus.SCHEDULED) acc.scheduled++;
+      else if (inspection.status === InspectionStatus.IN_PROGRESS) acc.inProgress++;
+      else if (inspection.status === InspectionStatus.COMPLETED) acc.completed++;
+      if (this.isOverdue(inspection)) acc.overdue++;
+    }
+    return acc;
+  });
 
   readonly filterForm = this.fb.group({
     property_id: [null as number | null],
@@ -69,6 +134,7 @@ export class InspectionsFacade {
     type: [InspectionType.MOVE_IN as string, Validators.required],
     scheduled_date: ['', Validators.required],
     inspector_user_id: [null as number | null],
+    template_id: [null as number | null],
   });
 
   readonly compareForm = this.fb.group({
@@ -79,6 +145,7 @@ export class InspectionsFacade {
   constructor() {
     this.loadProperties();
     this.loadInspectors();
+    this.loadTemplates();
     this.load();
   }
 
@@ -97,6 +164,13 @@ export class InspectionsFacade {
       next: (users) =>
         this.inspectorOptions.set(users.map((user) => ({ value: user.id, label: user.name }))),
       error: () => this.inspectorOptions.set([]),
+    });
+  }
+
+  loadTemplates(): void {
+    this.inspectionService.listTemplates().subscribe({
+      next: (templates) => this.templates.set(templates),
+      error: () => this.templates.set([]),
     });
   }
 
@@ -140,10 +214,19 @@ export class InspectionsFacade {
     }
   }
 
+  isOverdue(inspection: Inspection): boolean {
+    if (inspection.status === InspectionStatus.COMPLETED) {
+      return false;
+    }
+    return new Date(inspection.scheduled_date) < new Date(new Date().toDateString());
+  }
+
   openCreate(): void {
+    const defaultTemplate = this.templates().find((template) => template.is_default);
     this.form.reset({
       type: InspectionType.MOVE_IN,
       scheduled_date: toDateOnly(new Date()),
+      template_id: defaultTemplate?.id ?? null,
     });
     this.dialogOpen.set(true);
   }
@@ -209,6 +292,43 @@ export class InspectionsFacade {
     });
   }
 
+  // ─── Plantillas ─────────────────────────────────────────────────────────────
+
+  openTemplates(): void {
+    this.templatesOpen.set(true);
+  }
+
+  closeTemplates(): void {
+    this.templatesOpen.set(false);
+  }
+
+  createTemplate(dto: CreateInspectionTemplateDto): void {
+    this.savingTemplate.set(true);
+    this.inspectionService.createTemplate(dto).subscribe({
+      next: () => {
+        this.savingTemplate.set(false);
+        this.toast.success(this.transloco.translate('inspections.templateSaved'));
+        this.loadTemplates();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.savingTemplate.set(false);
+        this.toast.error(err.error?.message ?? this.transloco.translate('inspections.saveError'));
+      },
+    });
+  }
+
+  deleteTemplate(id: number): void {
+    this.inspectionService.deleteTemplate(id).subscribe({
+      next: () => {
+        this.toast.success(this.transloco.translate('inspections.templateDeleted'));
+        this.loadTemplates();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.toast.error(err.error?.message ?? this.transloco.translate('inspections.saveError'));
+      },
+    });
+  }
+
   conditionLabel(condition: ItemCondition | null): string {
     return condition ? this.transloco.translate(`inspections.condition.${condition}`) : '-';
   }
@@ -233,18 +353,30 @@ export class InspectionsFacade {
 
   private buildDto(): CreateInspectionDto {
     const raw = this.form.getRawValue();
-    return {
+    const base: CreateInspectionDto = {
       property_id: raw.property_id!,
       type: raw.type as InspectionType,
       scheduled_date: raw.scheduled_date!,
       inspector_user_id: raw.inspector_user_id ?? undefined,
-      items: DEFAULT_CHECKLIST.flatMap((group) =>
-        group.items.map((name) => ({
-          area: group.area,
-          item_name: name,
-          condition: ItemCondition.GOOD,
-        })),
-      ),
     };
+
+    // Con plantilla, el backend expande sus ítems. Sin plantilla y sin plantillas
+    // cargadas, se cae al checklist base para no crear inspecciones vacías.
+    if (raw.template_id) {
+      return { ...base, template_id: raw.template_id };
+    }
+    if (this.templates().length === 0) {
+      return {
+        ...base,
+        items: DEFAULT_CHECKLIST.flatMap((group) =>
+          group.items.map((name) => ({
+            area: group.area,
+            item_name: name,
+            condition: ItemCondition.GOOD,
+          })),
+        ),
+      };
+    }
+    return base;
   }
 }

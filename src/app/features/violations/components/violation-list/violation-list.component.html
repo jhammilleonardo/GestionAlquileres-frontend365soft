@@ -1,13 +1,27 @@
 <div class="violation-list">
   @for (violation of violations(); track violation.id) {
-    <article class="violation-card">
+    <article class="violation-card" [class.is-overdue]="isOverdue(violation)">
       <div class="vc-head">
         <div class="vc-title">
           <strong>{{ 'violations.type.' + violation.type | transloco }}</strong>
           <app-status-badge
+            [label]="'violations.severity.' + violation.severity | transloco"
+            [tone]="severityTone(violation.severity)"
+          />
+          <app-status-badge
             [label]="'violations.status.' + violation.status | transloco"
             [tone]="statusTone(violation.status)"
           />
+          @if (hasFine(violation)) {
+            <app-status-badge
+              [label]="
+                (violation.fine_amount | tenantCurrency: violation.fine_currency || undefined) +
+                ' · ' +
+                ('violations.fineStatus.' + violation.fine_status | transloco)
+              "
+              [tone]="fineTone(violation.fine_status)"
+            />
+          }
         </div>
         <span class="vc-date">{{ violation.created_at | slice: 0 : 10 }}</span>
       </div>
@@ -22,6 +36,15 @@
           }
         </span>
         <span>{{ violation.tenant_name }}</span>
+        @if (violation.due_date) {
+          <span class="vc-due" [class.overdue]="isOverdue(violation)">
+            <lucide-icon [img]="isOverdue(violation) ? AlertTriangle : CalendarClock" [size]="13" />
+            {{
+              (isOverdue(violation) ? 'violations.overdueOn' : 'violations.dueOn')
+                | transloco: { date: (violation.due_date | slice: 0 : 10) }
+            }}
+          </span>
+        }
       </div>
 
       @if (violation.evidence_photos.length > 0) {
@@ -43,6 +66,10 @@
       }
 
       <div class="vc-actions">
+        <app-button size="s" (clicked)="detailRequested.emit(violation)">
+          <lucide-icon [img]="ListChecks" [size]="14" />
+          {{ 'violations.detail' | transloco }}
+        </app-button>
         @if (!isResolved(violation)) {
           <app-button
             size="s"
@@ -64,7 +91,7 @@
           {{ 'violations.viewPdf' | transloco }}
         </app-button>
         @if (!isResolved(violation)) {
-          <app-button size="s" (clicked)="resolveRequested.emit(violation)">
+          <app-button size="s" appearance="secondary" (clicked)="resolveRequested.emit(violation)">
             <lucide-icon [img]="CheckCircle2" [size]="14" />
             {{ 'violations.resolve' | transloco }}
           </app-button>

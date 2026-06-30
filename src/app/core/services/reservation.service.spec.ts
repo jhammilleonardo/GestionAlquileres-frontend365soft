@@ -46,7 +46,7 @@ describe('ReservationService', () => {
     };
     service.createReservation(dto).subscribe();
     expect(post).toHaveBeenCalledWith('acme/tenant/reservations', dto, {
-      headers: { 'Idempotency-Key': expect.any(String) },
+      headers: { 'Idempotency-Key': expect.any(String) as unknown as string },
     });
   });
 

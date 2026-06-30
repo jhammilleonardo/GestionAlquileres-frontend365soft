@@ -24,6 +24,10 @@ export class ExpenseFiltersComponent {
   readonly form = input.required<FormGroup>();
   readonly propertyOptions = input.required<readonly AppSelectOption<number>[]>();
   readonly categoryOptions = input.required<readonly AppSelectOption<string>[]>();
+  readonly scopeOptions = input.required<readonly AppSelectOption<string>[]>();
+  readonly responsibilityOptions = input.required<readonly AppSelectOption<string>[]>();
+  readonly paymentStatusOptions = input.required<readonly AppSelectOption<string>[]>();
+  readonly reimbursableOptions = input.required<readonly AppSelectOption<string>[]>();
 
   readonly filtersApplied = output<void>();
   readonly filtersCleared = output<void>();

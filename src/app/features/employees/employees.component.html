@@ -27,6 +27,39 @@
     </div>
   </app-page-header>
 
+  @if (!isLoading() && !errorMessage() && employees().length > 0) {
+    <div
+      class="employees-toolbar"
+      role="group"
+      [attr.aria-label]="'employees.filters.label' | transloco"
+    >
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="statusFilter() === 'all'"
+        (click)="setStatusFilter('all')"
+      >
+        {{ 'employees.filters.all' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="statusFilter() === 'active'"
+        (click)="setStatusFilter('active')"
+      >
+        {{ 'common.active' | transloco }}
+      </button>
+      <button
+        type="button"
+        class="filter-tab"
+        [class.active]="statusFilter() === 'inactive'"
+        (click)="setStatusFilter('inactive')"
+      >
+        {{ 'common.inactive' | transloco }}
+      </button>
+    </div>
+  }
+
   <div class="content-layout" [class.panel-open]="isPanelOpen()">
     <div class="table-section">
       @if (isLoading()) {
@@ -70,7 +103,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (row of employees(); track row.id) {
+              @for (row of filteredEmployees(); track row.id) {
                 <tr
                   class="clickable-row"
                   [class.row-selected]="selectedEmployee()?.id === row.id"
@@ -129,6 +162,7 @@
           (panelClosed)="closePanel()"
           (permissionsSaved)="onPermissionsSaved($event)"
           (employeeStatusChanged)="onEmployeeStatusChanged($event)"
+          (editRequested)="openEditDialog($event)"
         ></app-employee-panel>
       </div>
     }
@@ -136,13 +170,17 @@
 
   <app-dialog
     [open]="isCreateDialogOpen()"
-    [title]="'employees.dialog.title' | transloco"
+    [title]="
+      (editingEmployee() ? 'employees.dialog.editTitle' : 'employees.dialog.title') | transloco
+    "
     [showFooter]="false"
     (closed)="closeCreateDialog()"
   >
     <app-create-employee-dialog
+      [editingEmployee]="editingEmployee()"
       (dialogClosed)="closeCreateDialog()"
       (employeeCreated)="onEmployeeCreated($event)"
+      (employeeUpdated)="onEmployeeUpdated($event)"
     ></app-create-employee-dialog>
   </app-dialog>
 </div>

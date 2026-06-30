@@ -16,14 +16,34 @@
         }
       </div>
     </div>
-    <button
-      type="button"
-      (click)="close()"
-      [attr.aria-label]="'common.close' | transloco"
-      class="close-btn"
-    >
-      <lucide-icon [img]="XIcon" [size]="18" aria-hidden="true"></lucide-icon>
-    </button>
+    <div class="header-actions">
+      <button
+        type="button"
+        (click)="editRequested.emit(owner())"
+        [attr.aria-label]="'rentalOwners.editAria' | transloco: { name: owner().name }"
+        class="close-btn"
+      >
+        <lucide-icon [img]="PencilIcon" [size]="18" aria-hidden="true"></lucide-icon>
+      </button>
+      @if (owner().is_active) {
+        <button
+          type="button"
+          (click)="deactivateRequested.emit(owner())"
+          [attr.aria-label]="'rentalOwners.deactivateAria' | transloco: { name: owner().name }"
+          class="close-btn danger"
+        >
+          <lucide-icon [img]="BanIcon" [size]="18" aria-hidden="true"></lucide-icon>
+        </button>
+      }
+      <button
+        type="button"
+        (click)="close()"
+        [attr.aria-label]="'common.close' | transloco"
+        class="close-btn"
+      >
+        <lucide-icon [img]="XIcon" [size]="18" aria-hidden="true"></lucide-icon>
+      </button>
+    </div>
   </div>
 
   <div class="panel-body">
@@ -93,61 +113,139 @@
       }
     </section>
 
+    <!-- Pestañas: propiedades / liquidaciones / contratos -->
+    <app-tabs
+      [ngModel]="activeTab()"
+      (ngModelChange)="setTab($event)"
+      [tabs]="tabs()"
+      [ariaLabel]="'rentalOwners.panel.tabsLabel' | transloco"
+    ></app-tabs>
+
     <!-- Propiedades asignadas -->
-    <section class="panel-section">
-      <div class="section-title">
-        <lucide-icon [img]="Building2Icon" [size]="16" aria-hidden="true"></lucide-icon>
-        <span>{{ 'rentalOwners.panel.properties' | transloco }}</span>
-      </div>
+    @if (activeTab() === 'properties') {
+      <section class="panel-section">
+        <div class="assign-row">
+          <app-select
+            class="assign-select"
+            [options]="availableOptions()"
+            [placeholder]="'rentalOwners.panel.selectProperty' | transloco"
+            [ariaLabel]="'rentalOwners.panel.selectProperty' | transloco"
+            [disabled]="!hasAvailable()"
+            (valueChanged)="selectedPropertyId.set($event)"
+          ></app-select>
+          <app-button
+            size="s"
+            [disabled]="selectedPropertyId() === null"
+            [loading]="assigning()"
+            (clicked)="assignProperty()"
+            [ariaLabel]="'rentalOwners.panel.assign' | transloco"
+          >
+            <lucide-icon [img]="PlusIcon" [size]="15"></lucide-icon>
+            {{ 'rentalOwners.panel.assign' | transloco }}
+          </app-button>
+        </div>
 
-      <div class="assign-row">
-        <app-select
-          class="assign-select"
-          [options]="availableOptions()"
-          [placeholder]="'rentalOwners.panel.selectProperty' | transloco"
-          [ariaLabel]="'rentalOwners.panel.selectProperty' | transloco"
-          [disabled]="!hasAvailable()"
-          (valueChanged)="selectedPropertyId.set($event)"
-        ></app-select>
-        <app-button
-          size="s"
-          [disabled]="selectedPropertyId() === null"
-          [loading]="assigning()"
-          (clicked)="assignProperty()"
-          [ariaLabel]="'rentalOwners.panel.assign' | transloco"
-        >
-          <lucide-icon [img]="PlusIcon" [size]="15"></lucide-icon>
-          {{ 'rentalOwners.panel.assign' | transloco }}
-        </app-button>
-      </div>
+        @if (loadingProperties()) {
+          <p class="section-help">{{ 'common.loading' | transloco }}</p>
+        } @else if (assignedProperties().length === 0) {
+          <p class="section-help">{{ 'rentalOwners.panel.noProperties' | transloco }}</p>
+        } @else {
+          <ul class="property-list">
+            @for (prop of assignedProperties(); track prop.id) {
+              <li class="property-item">
+                <div class="property-main">
+                  <strong>{{ prop.title }}</strong>
+                  @if (prop.status) {
+                    <app-status-badge [label]="prop.status" tone="info" />
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="icon-button"
+                  [disabled]="removingId() === prop.id"
+                  (click)="removeProperty(prop)"
+                  [attr.aria-label]="'rentalOwners.panel.remove' | transloco: { title: prop.title }"
+                >
+                  <lucide-icon [img]="Trash2Icon" [size]="16" aria-hidden="true"></lucide-icon>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
 
-      @if (loadingProperties()) {
-        <p class="section-help">{{ 'common.loading' | transloco }}</p>
-      } @else if (assignedProperties().length === 0) {
-        <p class="section-help">{{ 'rentalOwners.panel.noProperties' | transloco }}</p>
-      } @else {
-        <ul class="property-list">
-          @for (prop of assignedProperties(); track prop.id) {
-            <li class="property-item">
-              <div class="property-main">
-                <strong>{{ prop.title }}</strong>
-                @if (prop.status) {
-                  <app-status-badge [label]="prop.status" tone="info" />
+    <!-- Liquidaciones -->
+    @if (activeTab() === 'statements') {
+      <section class="panel-section">
+        @if (loadingStatements()) {
+          <p class="section-help">{{ 'common.loading' | transloco }}</p>
+        } @else if (statements().length === 0) {
+          <p class="section-help">{{ 'rentalOwners.panel.noStatements' | transloco }}</p>
+        } @else {
+          <div class="statements-wrapper">
+            <table class="statements-table">
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'rentalOwners.panel.period' | transloco }}</th>
+                  <th scope="col">{{ 'rentalOwners.panel.property' | transloco }}</th>
+                  <th scope="col" class="num">{{ 'rentalOwners.panel.gross' | transloco }}</th>
+                  <th scope="col" class="num">{{ 'rentalOwners.panel.deductions' | transloco }}</th>
+                  <th scope="col" class="num">{{ 'rentalOwners.panel.net' | transloco }}</th>
+                  <th scope="col">{{ 'rentalOwners.panel.status' | transloco }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (st of statements(); track st.id) {
+                  <tr>
+                    <td>{{ statementPeriod(st) }}</td>
+                    <td>{{ st.property_title || '—' }}</td>
+                    <td class="num">{{ +st.gross_rent | tenantCurrency: st.currency }}</td>
+                    <td class="num">{{ statementDeductions(st) | tenantCurrency: st.currency }}</td>
+                    <td class="num">{{ +st.net_amount | tenantCurrency: st.currency }}</td>
+                    <td>
+                      <app-status-badge
+                        [label]="'rentalOwners.panel.statementStatus.' + st.status | transloco"
+                        [tone]="st.status === 'transferred' ? 'success' : 'warning'"
+                      />
+                    </td>
+                  </tr>
                 }
-              </div>
-              <button
-                type="button"
-                class="icon-button"
-                [disabled]="removingId() === prop.id"
-                (click)="removeProperty(prop)"
-                [attr.aria-label]="'rentalOwners.panel.remove' | transloco: { title: prop.title }"
-              >
-                <lucide-icon [img]="Trash2Icon" [size]="16" aria-hidden="true"></lucide-icon>
-              </button>
-            </li>
-          }
-        </ul>
-      }
-    </section>
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Contratos -->
+    @if (activeTab() === 'contracts') {
+      <section class="panel-section">
+        @if (loadingContracts()) {
+          <p class="section-help">{{ 'common.loading' | transloco }}</p>
+        } @else if (contracts().length === 0) {
+          <p class="section-help">{{ 'rentalOwners.panel.noContracts' | transloco }}</p>
+        } @else {
+          <ul class="property-list">
+            @for (c of contracts(); track c.id) {
+              <li class="property-item">
+                <div class="property-main">
+                  <strong>{{ c.contract_number }}</strong>
+                  <span class="cell-sub">{{ c.property_title }} · {{ c.tenant_name }}</span>
+                  <span class="cell-sub">
+                    {{ c.start_date | date: 'mediumDate' }} —
+                    {{ c.end_date | date: 'mediumDate' }}
+                  </span>
+                </div>
+                <div class="contract-meta">
+                  <app-status-badge [label]="c.status" [tone]="contractTone(c.status)" />
+                  <span class="cell-sub">{{ +c.monthly_rent | tenantCurrency: c.currency }}</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
   </div>
 </div>

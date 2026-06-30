@@ -84,6 +84,10 @@ let selectInstanceId = 0;
           [style.max-block-size.px]="panelMaxHeight()"
         >
           @for (option of options(); track option.value; let i = $index) {
+            <!-- Listbox ARIA: la navegación por teclado vive en el trigger
+                 (onTriggerKeydown + aria-activedescendant); las opciones no deben
+                 ser focusables individualmente. -->
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
             <li
               class="app-select__option"
               role="option"

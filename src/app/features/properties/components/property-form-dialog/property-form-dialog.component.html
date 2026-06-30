@@ -200,25 +200,41 @@
               </div>
 
               <div class="form-grid-3">
-                @if (mode() === 'create' && isShortTerm()) {
+                @if (isShortTerm()) {
                   <div class="field-shell">
-                    <span class="form-label">{{ 'properties.pricePerNight' | transloco }} *</span>
-                    <app-text-field
-                      [label]="null"
-                      type="number"
-                      [placeholder]="'properties.pricePerNight' | transloco"
-                      formControlName="price_per_night"
-                    />
-                    @if (hasRequiredError('price_per_night')) {
-                      <p class="field-error">{{ 'common.required' | transloco }}</p>
-                    } @else if (hasError('price_per_night')) {
-                      <p class="field-error">{{ 'properties.errors.amount' | transloco }}</p>
+                    @if (mode() === 'create') {
+                      <span class="form-label icon-label">
+                        <lucide-icon [img]="DollarSign" [size]="16"></lucide-icon>
+                        {{ 'properties.pricePerNight' | transloco }} *
+                      </span>
+                      <app-text-field
+                        [label]="null"
+                        type="number"
+                        [placeholder]="'properties.pricePerNight' | transloco"
+                        formControlName="price_per_night"
+                      />
+                      @if (hasRequiredError('price_per_night')) {
+                        <p class="field-error">{{ 'common.required' | transloco }}</p>
+                      } @else if (hasError('price_per_night')) {
+                        <p class="field-error">{{ 'properties.errors.amount' | transloco }}</p>
+                      }
+                      <p class="field-hint">{{ 'properties.pricePerNightHint' | transloco }}</p>
+                    } @else {
+                      <span class="form-label icon-label">
+                        <lucide-icon [img]="CalendarCheck" [size]="16"></lucide-icon>
+                        {{ 'properties.pricePerNight' | transloco }}
+                      </span>
+                      <div class="locked-field">
+                        {{ 'properties.editShortTermPriceManagedInUnits' | transloco }}
+                      </div>
                     }
-                    <p class="field-hint">{{ 'properties.pricePerNightHint' | transloco }}</p>
                   </div>
                 } @else {
                   <div class="field-shell">
-                    <span class="form-label">{{ 'properties.monthlyRent' | transloco }} *</span>
+                    <span class="form-label icon-label">
+                      <lucide-icon [img]="DollarSign" [size]="16"></lucide-icon>
+                      {{ 'properties.monthlyRent' | transloco }} *
+                    </span>
                     <app-text-field
                       [label]="null"
                       type="number"
@@ -233,14 +249,19 @@
                   </div>
                 }
                 <div class="field-shell">
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="CreditCard" [size]="16"></lucide-icon>
+                    {{ 'common.currency' | transloco }}
+                  </span>
                   <app-select
-                    [label]="'common.currency' | transloco"
+                    [label]="null"
                     [options]="currencyOptions()"
                     formControlName="currency"
                   />
                 </div>
                 <div class="field-shell">
-                  <span class="form-label">
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="ShieldCheck" [size]="16"></lucide-icon>
                     {{ 'properties.deposit' | transloco }}
                     <span class="form-label__optional">({{ 'common.optional' | transloco }})</span>
                     <app-info-hint [text]="'properties.depositHelp' | transloco" />
@@ -257,7 +278,7 @@
                 </div>
               </div>
 
-              @if (mode() === 'create' && isShortTerm()) {
+              @if (isShortTerm()) {
                 <div class="section-title st-main-title">
                   <lucide-icon
                     [img]="CalendarCheck"
@@ -268,182 +289,46 @@
                 </div>
                 <p class="st-intro">{{ 'properties.shortTermConfigDesc' | transloco }}</p>
 
-                <!-- Grupo: Reserva y confirmación -->
                 <div class="st-group">
-                  <div class="st-group-head">
-                    <h4>{{ 'properties.stBooking' | transloco }}</h4>
-                    <p>{{ 'properties.stBookingDesc' | transloco }}</p>
-                  </div>
                   <div class="form-grid-3">
                     <div class="field-shell">
-                      <app-select
-                        [label]="'properties.units.bookingMode' | transloco"
-                        [options]="bookingModeOptions"
-                        formControlName="booking_mode"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-select
-                        [label]="'properties.units.cancellationPolicy' | transloco"
-                        [options]="cancellationPolicyOptions"
-                        formControlName="cancellation_policy"
-                      />
-                    </div>
-                    <div class="field-shell">
+                      <span class="form-label icon-label">
+                        <lucide-icon [img]="CreditCard" [size]="16"></lucide-icon>
+                        {{ 'properties.units.depositToConfirmPct' | transloco }}
+                      </span>
                       <app-text-field
-                        [label]="'properties.units.depositToConfirmPct' | transloco"
+                        [label]="null"
                         type="number"
                         placeholder="100"
                         formControlName="deposit_to_confirm_pct"
                       />
                     </div>
-                  </div>
-                  <p class="field-hint">
-                    {{ 'properties.units.depositToConfirmHint' | transloco }}
-                  </p>
-                </div>
-
-                <!-- Grupo: Estadía -->
-                <div class="st-group">
-                  <div class="st-group-head">
-                    <h4>{{ 'properties.stStay' | transloco }}</h4>
-                    <p>{{ 'properties.stStayDesc' | transloco }}</p>
-                  </div>
-                  <div class="form-grid-4">
                     <div class="field-shell">
+                      <span class="form-label icon-label">
+                        <lucide-icon [img]="Clock3" [size]="16"></lucide-icon>
+                        {{ 'properties.units.checkinTime' | transloco }}
+                      </span>
                       <app-text-field
-                        [label]="'properties.units.minNights' | transloco"
-                        type="number"
-                        placeholder="1"
-                        formControlName="min_nights"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.maxNights' | transloco"
-                        type="number"
-                        formControlName="max_nights"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.checkinTime' | transloco"
+                        [label]="null"
                         placeholder="15:00"
                         formControlName="checkin_time"
                       />
                     </div>
                     <div class="field-shell">
+                      <span class="form-label icon-label">
+                        <lucide-icon [img]="Clock3" [size]="16"></lucide-icon>
+                        {{ 'properties.units.checkoutTime' | transloco }}
+                      </span>
                       <app-text-field
-                        [label]="'properties.units.checkoutTime' | transloco"
+                        [label]="null"
                         placeholder="11:00"
                         formControlName="checkout_time"
                       />
                     </div>
                   </div>
-                </div>
-
-                <!-- Grupo: Precios y descuentos -->
-                <div class="st-group">
-                  <div class="st-group-head">
-                    <h4>{{ 'properties.stPricing' | transloco }}</h4>
-                    <p>{{ 'properties.stPricingDesc' | transloco }}</p>
-                  </div>
-                  <div class="form-grid-4">
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.cleaningFee' | transloco"
-                        type="number"
-                        placeholder="0"
-                        formControlName="cleaning_fee"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.weeklyDiscount' | transloco"
-                        type="number"
-                        placeholder="0"
-                        formControlName="weekly_discount_pct"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.monthlyDiscount' | transloco"
-                        type="number"
-                        placeholder="0"
-                        formControlName="monthly_discount_pct"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.weekendAdjustment' | transloco"
-                        type="number"
-                        placeholder="0"
-                        formControlName="weekend_adjustment_pct"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Grupo: Anticipación y ofertas -->
-                <div class="st-group">
-                  <div class="st-group-head">
-                    <h4>{{ 'properties.stAdvance' | transloco }}</h4>
-                    <p>{{ 'properties.stAdvanceDesc' | transloco }}</p>
-                  </div>
-                  <div class="form-grid-3">
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.advanceNotice' | transloco"
-                        type="number"
-                        formControlName="advance_notice_days"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.maxAdvanceDays' | transloco"
-                        type="number"
-                        formControlName="max_advance_days"
-                      />
-                    </div>
-                  </div>
-
-                  <p class="st-subhint">{{ 'properties.stEarlyBird' | transloco }}</p>
-                  <div class="form-grid-3">
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.earlyBirdDays' | transloco"
-                        type="number"
-                        formControlName="early_bird_min_days"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.earlyBirdDiscount' | transloco"
-                        type="number"
-                        placeholder="0"
-                        formControlName="early_bird_discount_pct"
-                      />
-                    </div>
-                  </div>
-
-                  <p class="st-subhint">{{ 'properties.stLastMinute' | transloco }}</p>
-                  <div class="form-grid-3">
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.lastMinuteDays' | transloco"
-                        type="number"
-                        formControlName="last_minute_max_days"
-                      />
-                    </div>
-                    <div class="field-shell">
-                      <app-text-field
-                        [label]="'properties.units.lastMinuteAdjustment' | transloco"
-                        type="number"
-                        placeholder="0"
-                        formControlName="last_minute_adjustment_pct"
-                      />
-                    </div>
-                  </div>
+                  <p class="field-hint">
+                    {{ 'properties.shortTermSimpleHint' | transloco }}
+                  </p>
                 </div>
               }
             </section>
@@ -460,8 +345,12 @@
 
               <div class="form-grid-4">
                 <div>
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="Ruler" [size]="16"></lucide-icon>
+                    {{ 'properties.area' | transloco }}
+                  </span>
                   <app-text-field
-                    [label]="'properties.area' | transloco"
+                    [label]="null"
                     type="number"
                     placeholder="85"
                     formControlName="square_meters"
@@ -471,8 +360,12 @@
                   }
                 </div>
                 <div>
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="BedDouble" [size]="16"></lucide-icon>
+                    {{ 'properties.bedrooms' | transloco }}
+                  </span>
                   <app-text-field
-                    [label]="'properties.bedrooms' | transloco"
+                    [label]="null"
                     type="number"
                     placeholder="3"
                     formControlName="bedrooms"
@@ -482,8 +375,12 @@
                   }
                 </div>
                 <div>
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="Bath" [size]="16"></lucide-icon>
+                    {{ 'properties.bathrooms' | transloco }}
+                  </span>
                   <app-text-field
-                    [label]="'properties.bathrooms' | transloco"
+                    [label]="null"
                     type="number"
                     placeholder="2"
                     formControlName="bathrooms"
@@ -493,8 +390,12 @@
                   }
                 </div>
                 <div>
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="Car" [size]="16"></lucide-icon>
+                    {{ 'properties.parking' | transloco }}
+                  </span>
                   <app-text-field
-                    [label]="'properties.parking' | transloco"
+                    [label]="null"
                     type="number"
                     placeholder="1"
                     formControlName="parking_spaces"
@@ -504,8 +405,12 @@
                   }
                 </div>
                 <div>
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="CalendarDays" [size]="16"></lucide-icon>
+                    {{ 'properties.yearBuilt' | transloco }}
+                  </span>
                   <app-text-field
-                    [label]="'properties.yearBuilt' | transloco"
+                    [label]="null"
                     type="number"
                     placeholder="2020"
                     formControlName="year_built"
@@ -516,7 +421,10 @@
                 </div>
                 <div class="checkbox-cell">
                   <app-checkbox formControlName="is_furnished">
-                    {{ 'properties.furnished' | transloco }}
+                    <span class="checkbox-rule__label">
+                      <lucide-icon [img]="Sofa" [size]="18"></lucide-icon>
+                      {{ 'properties.furnished' | transloco }}
+                    </span>
                   </app-checkbox>
                 </div>
               </div>
@@ -546,8 +454,12 @@
                   </app-checkbox>
                 </div>
                 <div>
+                  <span class="form-label icon-label">
+                    <lucide-icon [img]="Users" [size]="16"></lucide-icon>
+                    {{ 'properties.maxOccupants' | transloco }}
+                  </span>
                   <app-text-field
-                    [label]="'properties.maxOccupants' | transloco"
+                    [label]="null"
                     type="number"
                     placeholder="4"
                     formControlName="max_occupants"
@@ -559,8 +471,12 @@
                 </div>
                 @if (!isShortTerm()) {
                   <div>
+                    <span class="form-label icon-label">
+                      <lucide-icon [img]="Clock3" [size]="16"></lucide-icon>
+                      {{ 'properties.minContractMonths' | transloco }}
+                    </span>
                     <app-text-field
-                      [label]="'properties.minContractMonths' | transloco"
+                      [label]="null"
                       type="number"
                       placeholder="6"
                       formControlName="min_lease_months"

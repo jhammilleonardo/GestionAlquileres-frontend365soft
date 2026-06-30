@@ -187,6 +187,7 @@ export class PropertiesFacade {
       rental_type: this.defaultRentalTypeForTenant(),
       addresses: [{ country: this.formatService.country() }],
     });
+    this.applyPricingValidators();
     setTimeout(() => this.showModal.set(true), 10);
   }
 
@@ -209,7 +210,13 @@ export class PropertiesFacade {
 
     this.propertyService.getAdminPropertyById(property.id).subscribe({
       next: (fullProperty) => {
-        const p = fullProperty || property;
+        const p = fullProperty
+          ? {
+              ...property,
+              ...fullProperty,
+              rental_type: fullProperty.rental_type ?? property.rental_type,
+            }
+          : property;
         this.selectedProperty = p;
         this.populateEditForm(p);
       },
@@ -234,6 +241,7 @@ export class PropertiesFacade {
   }
 
   saveProperty(): void {
+    this.applyPricingValidators();
     this.markFormGroupTouched(this.propertyForm);
 
     if (this.propertyForm.invalid) {
@@ -446,7 +454,30 @@ export class PropertiesFacade {
     return this.propertyForm.get('addresses') as FormArray;
   }
 
+  private applyPricingValidators(): void {
+    const rentalType =
+      `${this.propertyForm.get('rental_type')?.value ?? 'LONG_TERM'}`.toUpperCase();
+    const isShortTerm = rentalType === 'SHORT_TERM';
+    const monthlyRent = this.propertyForm.get('monthly_rent');
+    const pricePerNight = this.propertyForm.get('price_per_night');
+
+    monthlyRent?.removeValidators(Validators.required);
+    pricePerNight?.removeValidators(Validators.required);
+
+    if (!isShortTerm) {
+      monthlyRent?.addValidators(Validators.required);
+    } else if (this.modalMode === 'create') {
+      pricePerNight?.addValidators(Validators.required);
+    }
+
+    monthlyRent?.updateValueAndValidity({ emitEvent: false });
+    pricePerNight?.updateValueAndValidity({ emitEvent: false });
+  }
+
   private populateEditForm(p: Property): void {
+    const shortTermUnit = (p.units ?? []).find((unit) =>
+      ['SHORT_TERM', 'BOTH'].includes(String(unit.rental_type ?? '').toUpperCase()),
+    );
     this.propertyForm = this.fb.group({
       title: [p.title, Validators.required],
       description: [p.description],
@@ -458,6 +489,12 @@ export class PropertiesFacade {
       price_per_night: [null, MONEY],
       currency: [p.currency || 'BOB'],
       security_deposit_amount: [p.security_deposit_amount ?? null, MONEY],
+      checkin_time: [shortTermUnit?.checkin_time ?? '15:00'],
+      checkout_time: [shortTermUnit?.checkout_time ?? '11:00'],
+      deposit_to_confirm_pct: [
+        shortTermUnit?.deposit_to_confirm_pct ?? null,
+        [Validators.min(0), Validators.max(100)],
+      ],
       square_meters: [p.square_meters ?? null, MONEY],
       bedrooms: [p.bedrooms ?? null, COUNT],
       bathrooms: [p.bathrooms ?? null, COUNT],
@@ -488,6 +525,7 @@ export class PropertiesFacade {
       ),
       new_owners: this.fb.array([this.createOwnerGroup()]),
     });
+    this.applyPricingValidators();
 
     const paths = Array.isArray(p.images) ? p.images : [];
     this.existingImages.set(paths.map((path) => ({ path, url: this.toImageUrl(path) })));

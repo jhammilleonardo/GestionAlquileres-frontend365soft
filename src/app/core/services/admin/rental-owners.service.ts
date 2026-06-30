@@ -6,6 +6,8 @@ import type {
   AssignOwnerPropertyDto,
   CreateRentalOwnerDto,
   OwnerAssignedProperty,
+  OwnerContract,
+  OwnerStatement,
   RentalOwner,
   RentalOwnerInvite,
   RentalOwnerMessage,
@@ -57,5 +59,15 @@ export class RentalOwnersService {
    */
   invite(slug: string, id: number): Observable<RentalOwnerInvite> {
     return this.http.post<RentalOwnerInvite>(`${this.base(slug)}/${id}/invite`, {});
+  }
+
+  /** Liquidaciones del propietario (pagos agrupados por período y propiedad). */
+  getStatements(slug: string, id: number): Observable<OwnerStatement[]> {
+    return this.http.get<OwnerStatement[]>(`${this.base(slug)}/${id}/statements`);
+  }
+
+  /** Contratos de las propiedades asignadas al propietario. */
+  getContracts(slug: string, id: number): Observable<OwnerContract[]> {
+    return this.http.get<OwnerContract[]>(`${this.base(slug)}/${id}/contracts`);
   }
 }

@@ -225,3 +225,26 @@
     display: block;
   }
 }
+
+/* Fase 5 — toolbar de filtros por estado */
+.employees-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-block-end: var(--app-space-4, 1rem);
+  flex-wrap: wrap;
+}
+
+.employees-toolbar .filter-tab {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--app-color-border, #e2e8f0);
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.employees-toolbar .filter-tab.active {
+  background: var(--app-color-primary, #2563eb);
+  border-color: var(--app-color-primary, #2563eb);
+  color: #fff;
+}

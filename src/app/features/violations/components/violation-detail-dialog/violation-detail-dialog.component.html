@@ -1,0 +1,192 @@
+<app-dialog
+  [open]="open()"
+  [title]="'violations.detailTitle' | transloco"
+  [showFooter]="false"
+  (closed)="closed.emit()"
+>
+  @if (violation(); as v) {
+    <div class="vd">
+      <!-- Encabezado -->
+      <div class="vd-head">
+        <div class="vd-badges">
+          <app-status-badge [label]="'violations.type.' + v.type | transloco" tone="neutral" />
+          <app-status-badge
+            [label]="'violations.severity.' + v.severity | transloco"
+            [tone]="severityTone(v.severity)"
+          />
+          <app-status-badge
+            [label]="'violations.status.' + v.status | transloco"
+            [tone]="statusTone(v.status)"
+          />
+        </div>
+        <p class="vd-desc">{{ v.description }}</p>
+        <div class="vd-meta">
+          <span
+            >{{ v.property_title }}
+            @if (v.unit_number) {
+              · {{ v.unit_number }}
+            }
+          </span>
+          <span>{{ v.tenant_name }}</span>
+          <span>{{ 'violations.reportedOn' | transloco }}: {{ v.created_at | tenantDate }}</span>
+          @if (v.due_date) {
+            <span [class.vd-overdue]="isOverdue(v)">
+              {{
+                (isOverdue(v) ? 'violations.overdueOn' : 'violations.dueOn')
+                  | transloco: { date: (v.due_date | slice: 0 : 10) }
+              }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Transiciones de etapa -->
+      <section class="vd-section">
+        <h4>{{ 'violations.changeStage' | transloco }}</h4>
+        <div class="vd-stage-actions">
+          @for (status of nextStatuses(); track status) {
+            <app-button
+              size="s"
+              appearance="secondary"
+              [disabled]="busy()"
+              (clicked)="statusChange.emit(status)"
+            >
+              {{ 'violations.status.' + status | transloco }}
+            </app-button>
+          }
+        </div>
+      </section>
+
+      <!-- Multa -->
+      <section class="vd-section">
+        <h4>{{ 'violations.fine' | transloco }}</h4>
+        @if (v.fine_status !== FineStatus.NONE) {
+          <div class="vd-fine-current">
+            <strong>{{ v.fine_amount | tenantCurrency: v.fine_currency || undefined }}</strong>
+            <app-status-badge
+              [label]="'violations.fineStatus.' + v.fine_status | transloco"
+              [tone]="fineTone(v.fine_status)"
+            />
+          </div>
+        }
+        <div class="vd-fine-form">
+          <input
+            class="vd-input"
+            type="number"
+            min="0.01"
+            step="0.01"
+            [placeholder]="'violations.fineAmount' | transloco"
+            [value]="fineAmount() ?? ''"
+            [disabled]="v.fine_status === FineStatus.PAID"
+            (input)="onFineInput($event)"
+          />
+          <app-button
+            size="s"
+            [disabled]="busy() || v.fine_status === FineStatus.PAID"
+            (clicked)="fineCharged.emit()"
+          >
+            {{
+              (v.fine_status === FineStatus.CHARGED
+                ? 'violations.updateFine'
+                : 'violations.chargeFine'
+              ) | transloco
+            }}
+          </app-button>
+          @if (hasPendingFine(v)) {
+            <app-button
+              size="s"
+              appearance="secondary"
+              [disabled]="busy()"
+              (clicked)="finePaid.emit()"
+            >
+              {{ 'violations.markPaid' | transloco }}
+            </app-button>
+            <app-button
+              size="s"
+              appearance="secondary"
+              [disabled]="busy()"
+              (clicked)="fineWaived.emit()"
+            >
+              {{ 'violations.waive' | transloco }}
+            </app-button>
+          }
+        </div>
+      </section>
+
+      <!-- Evidencia -->
+      @if (v.evidence_photos.length > 0) {
+        <section class="vd-section">
+          <h4>{{ 'violations.evidence' | transloco }}</h4>
+          <div class="vc-photos">
+            @for (photo of v.evidence_photos; track photo) {
+              @if (photoSrc(photo); as src) {
+                <a [href]="src" target="_blank" rel="noopener" class="vc-photo">
+                  <img [src]="src" [alt]="'violations.evidence' | transloco" loading="lazy" />
+                </a>
+              }
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Nota -->
+      <section class="vd-section">
+        <h4>{{ 'violations.addNote' | transloco }}</h4>
+        <textarea
+          class="vd-textarea"
+          rows="2"
+          [placeholder]="'violations.notePlaceholder' | transloco"
+          [value]="noteText()"
+          (input)="onNoteInput($event)"
+        ></textarea>
+        <div class="vd-note-action">
+          <app-button
+            size="s"
+            [disabled]="busy() || !noteText().trim()"
+            (clicked)="noteAdded.emit()"
+          >
+            {{ 'violations.saveNote' | transloco }}
+          </app-button>
+        </div>
+      </section>
+
+      <!-- Línea de tiempo -->
+      <section class="vd-section">
+        <h4>{{ 'violations.timeline' | transloco }}</h4>
+        @if (loading()) {
+          <p class="vd-loading">{{ 'violations.loading' | transloco }}</p>
+        } @else {
+          <ul class="vd-timeline">
+            @for (event of v.events; track event.id) {
+              <li class="vd-event">
+                <span class="vd-event-icon">
+                  <lucide-icon [img]="eventIcon(event.event_type)" [size]="14" />
+                </span>
+                <div class="vd-event-body">
+                  <span class="vd-event-label">{{ eventLabel(event) }}</span>
+                  @if (event.note) {
+                    <span class="vd-event-note">{{ event.note }}</span>
+                  }
+                  <span class="vd-event-meta">
+                    {{ event.created_at | tenantDate: true }}
+                    @if (event.created_by_name) {
+                      · {{ event.created_by_name }}
+                    }
+                  </span>
+                </div>
+              </li>
+            } @empty {
+              <li class="vd-empty">{{ 'violations.noEvents' | transloco }}</li>
+            }
+          </ul>
+        }
+      </section>
+
+      <div class="vd-footer">
+        <app-button appearance="secondary" (clicked)="closed.emit()">
+          {{ 'common.close' | transloco }}
+        </app-button>
+      </div>
+    </div>
+  }
+</app-dialog>

@@ -225,3 +225,9 @@
     display: block;
   }
 }
+
+/* Fase 2 — barra de búsqueda */
+.owners-toolbar {
+  margin-block-end: var(--app-space-4, 1rem);
+  max-inline-size: 28rem;
+}

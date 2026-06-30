@@ -9,7 +9,7 @@
 
 table {
   width: 100%;
-  min-width: 1040px;
+  min-width: 1160px;
   border-collapse: collapse;
 }
 
@@ -69,4 +69,67 @@ input[type='checkbox'] {
   justify-content: flex-end;
   gap: 0.25rem;
   width: 100%;
+}
+
+.payment-table__context {
+  display: grid;
+  min-inline-size: 270px;
+  gap: 0.45rem;
+
+  small {
+    color: var(--app-color-text-muted, #64748b);
+    font-size: 0.76rem;
+  }
+}
+
+.payment-table__reservation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: max-content;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  background: #ecfeff;
+  color: #0f766e;
+  font-weight: 800;
+}
+
+.payment-table__reservation-finance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(78px, 1fr));
+  gap: 0.4rem;
+  width: max-content;
+  max-width: 100%;
+
+  div {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 78px;
+    border-radius: 8px;
+    background: var(--app-color-surface-muted, #f8fafc);
+    padding: 0.35rem 0.5rem;
+  }
+
+  span {
+    color: var(--app-color-text-muted, #64748b);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--app-color-text, #0f172a);
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .is-due {
+    background: #fff7ed;
+
+    span,
+    strong {
+      color: #c2410c;
+    }
+  }
 }

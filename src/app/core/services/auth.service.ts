@@ -11,6 +11,8 @@ import { getApiErrorMessage } from '../http/http-error.util';
 import { SessionTokenService } from './session-token.service';
 import { SessionExpirationService } from './session-expiration.service';
 
+const AUTH_CONTEXT_OPTIONS = { headers: { 'X-Auth-Context': 'admin' } };
+
 export interface AdminUser {
   id: number;
   name: string;
@@ -77,7 +79,8 @@ export class AuthService {
   isAuthenticated = computed(() => this.currentUserSignal() !== null);
 
   constructor() {
-    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event.context && event.context !== 'admin') return;
       this.currentUserSignal.set(null);
       this.permissionsService.clear();
       this.slugService.clearSlug();
@@ -226,7 +229,7 @@ export class AuthService {
     // Revoca el refresh token y limpia las cookies HttpOnly en el backend.
     // Best-effort: la limpieza local procede aunque la llamada falle.
     this.http
-      .post(`${environment.apiUrl}auth/logout`, {})
+      .post(`${environment.apiUrl}auth/logout`, {}, AUTH_CONTEXT_OPTIONS)
       .pipe(catchError(() => of(null)))
       .subscribe();
 
@@ -278,7 +281,7 @@ export class AuthService {
     if (!this.currentUserSignal()) return;
 
     this.http
-      .get<AdminUser>(`${environment.apiUrl}auth/me`)
+      .get<AdminUser>(`${environment.apiUrl}auth/me`, AUTH_CONTEXT_OPTIONS)
       .pipe(
         catchError(() => {
           this.logout();
@@ -312,7 +315,7 @@ export class AuthService {
     if (!this.currentUserSignal()) return;
 
     this.http
-      .get<AdminUser>(`${environment.apiUrl}auth/me`)
+      .get<AdminUser>(`${environment.apiUrl}auth/me`, AUTH_CONTEXT_OPTIONS)
       .pipe(
         catchError((error: HttpErrorResponse) => {
           // Only clear storage if token is invalid (401)

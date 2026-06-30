@@ -4,7 +4,9 @@
       <div>
         <h2>{{ vendor().name }}</h2>
         <span class="detail-specialty">{{
-          'vendors.specialty.' + vendor().specialty | transloco
+          vendor().specialty === 'other' && vendor().specialty_other
+            ? vendor().specialty_other
+            : ('vendors.specialty.' + vendor().specialty | transloco)
         }}</span>
       </div>
       <button
@@ -35,6 +37,22 @@
         <span class="summary-label">{{ 'vendors.jobsDone' | transloco }}</span>
         <strong>{{ vendor().total_orders ?? 0 }}</strong>
       </div>
+      <div class="summary-item">
+        <span class="summary-label">{{ 'vendors.openOrders' | transloco }}</span>
+        <strong>{{ vendor().open_orders ?? 0 }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">{{ 'vendors.pendingPayable' | transloco }}</span>
+        <strong>{{ vendor().pending_balance | tenantCurrency }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">{{ 'vendors.paidTotal' | transloco }}</span>
+        <strong>{{ vendor().paid_total | tenantCurrency }}</strong>
+      </div>
+      <div class="summary-item">
+        <span class="summary-label">{{ 'vendors.complianceScore' | transloco }}</span>
+        <strong>{{ vendor().compliance_score ?? 0 }}%</strong>
+      </div>
       @if (vendor().phone) {
         <div class="summary-item">
           <span class="summary-label">{{ 'vendors.phone' | transloco }}</span>
@@ -49,21 +67,40 @@
       }
     </div>
 
+    <h3 class="detail-section-title">{{ 'vendors.complianceTitle' | transloco }}</h3>
+    <div class="compliance-grid">
+      <span [class.ready]="vendor().tax_id">{{ 'vendors.taxId' | transloco }}</span>
+      <span [class.ready]="vendor().license_number">{{ 'vendors.licenseNumber' | transloco }}</span>
+      <span [class.ready]="vendor().insurance_expires_at">
+        {{ 'vendors.insuranceExpiresAt' | transloco }}
+        @if (vendor().insurance_expires_at) {
+          <small>{{ vendor().insurance_expires_at | date: 'dd/MM/yyyy' }}</small>
+        }
+      </span>
+      <span [class.ready]="vendor().address">{{ 'vendors.address' | transloco }}</span>
+    </div>
+
     <h3 class="detail-section-title">{{ 'vendors.account.title' | transloco }}</h3>
-    @if (accountCredentials(); as creds) {
-      <div class="account-credentials" role="status">
-        <p class="account-hint">{{ 'vendors.account.shareHint' | transloco }}</p>
-        <p class="account-row">
-          <span>{{ 'vendors.email' | transloco }}</span>
-          <code>{{ creds.email }}</code>
-        </p>
-        <p class="account-row">
-          <span>{{ 'vendors.account.password' | transloco }}</span>
-          <code>{{ creds.temporaryPassword }}</code>
-        </p>
-        <p class="account-row">
-          <span>{{ 'vendors.account.loginLabel' | transloco }}</span>
-          <code>{{ loginUrl() }}</code>
+    @if (inviteResult(); as invite) {
+      <div class="account-invite" role="status">
+        <p class="account-hint">{{ 'vendors.invite.shareHint' | transloco }}</p>
+        <div class="invite-link-row">
+          <code class="invite-link">{{ invite.inviteUrl }}</code>
+          <app-button
+            appearance="secondary"
+            size="s"
+            [attr.aria-label]="'vendors.invite.copy' | transloco"
+            (click)="copyInviteUrl(invite.inviteUrl)"
+          >
+            <lucide-icon [img]="copied() ? CheckCircle2 : Copy" [size]="16" />
+            {{ (copied() ? 'vendors.invite.copiedShort' : 'vendors.invite.copy') | transloco }}
+          </app-button>
+        </div>
+        <p class="account-expiry">
+          {{
+            'vendors.invite.expiresAt'
+              | transloco: { date: (invite.expiresAt | date: 'dd/MM/yyyy HH:mm') }
+          }}
         </p>
       </div>
     } @else {
@@ -72,27 +109,18 @@
           <lucide-icon [img]="CheckCircle2" [size]="16" />
           {{ 'vendors.account.alreadyHas' | transloco }}
         </p>
-        <app-button
-          appearance="outline"
-          [loading]="creatingAccount()"
-          (click)="accountRequested.emit()"
-        >
-          <lucide-icon [img]="KeyRound" [size]="16" />
-          {{ 'vendors.account.regenerate' | transloco }}
-        </app-button>
-      } @else {
-        <app-button
-          appearance="secondary"
-          [loading]="creatingAccount()"
-          [disabled]="!vendor().email"
-          (click)="accountRequested.emit()"
-        >
-          <lucide-icon [img]="KeyRound" [size]="16" />
-          {{ 'vendors.account.create' | transloco }}
-        </app-button>
-        @if (!vendor().email) {
-          <p class="account-warning">{{ 'vendors.account.needsEmail' | transloco }}</p>
-        }
+      }
+      <app-button
+        appearance="secondary"
+        [loading]="inviting()"
+        [disabled]="!vendor().email"
+        (click)="inviteRequested.emit()"
+      >
+        <lucide-icon [img]="LinkIcon" [size]="16" />
+        {{ (vendor().has_account ? 'vendors.invite.resend' : 'vendors.invite.send') | transloco }}
+      </app-button>
+      @if (!vendor().email) {
+        <p class="account-warning">{{ 'vendors.account.needsEmail' | transloco }}</p>
       }
     }
 

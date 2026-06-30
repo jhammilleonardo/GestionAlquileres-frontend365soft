@@ -12,6 +12,8 @@ export interface CatalogUnit {
   max_nights?: number | null;
   checkin_time?: string | null;
   checkout_time?: string | null;
+  deposit_amount?: number | null;
+  deposit_to_confirm_pct?: number | null;
 }
 
 export interface Property {

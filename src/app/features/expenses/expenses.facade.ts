@@ -1,12 +1,16 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { TranslocoService } from '@jsverse/transloco';
+import { of, switchMap } from 'rxjs';
 
 import { getApiErrorMessage } from '../../core/http/http-error.util';
 import {
   CreateExpenseDto,
   Expense,
   ExpenseCategory,
+  ExpensePaymentStatus,
+  ExpenseResponsibility,
+  ExpenseScope,
   MonthlyBalancePoint,
 } from '../../core/models/expense.model';
 import { FileDownloadService } from '../../core/services/file-download.service';
@@ -25,6 +29,15 @@ export interface ChartBar {
   readonly incomeHeight: number;
   readonly expenseHeight: number;
 }
+
+const RECEIPT_MAX_BYTES = 10 * 1024 * 1024;
+const RECEIPT_ALLOWED_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+]);
 
 @Injectable()
 export class ExpensesFacade {
@@ -47,20 +60,85 @@ export class ExpensesFacade {
   readonly dialogOpen = signal(false);
   readonly editingId = signal<number | null>(null);
   readonly saving = signal(false);
+  readonly selectedReceipt = signal<File | null>(null);
+  readonly receiptError = signal<string | null>(null);
+  readonly paymentDialogOpen = signal(false);
+  readonly paymentExpense = signal<Expense | null>(null);
+  readonly registeringPayment = signal(false);
 
   readonly categoryValues = Object.values(ExpenseCategory);
-  readonly categoryOptions: AppSelectOption<string>[] = this.categoryValues.map((value) => ({
-    value,
-    label: this.transloco.translate(`accounting.category.${value}`),
-  }));
-  readonly categoryFilterOptions: AppSelectOption<string>[] = [
-    { value: '', label: this.transloco.translate('accounting.allCategories') },
-    ...this.categoryOptions,
-  ];
+
+  get categoryOptions(): AppSelectOption<string>[] {
+    return this.categoryValues.map((value) => ({
+      value,
+      label: this.transloco.translate(`accounting.category.${value}`),
+    }));
+  }
+
+  get categoryFilterOptions(): AppSelectOption<string>[] {
+    return [
+      { value: '', label: this.transloco.translate('accounting.allCategories') },
+      ...this.categoryOptions,
+    ];
+  }
+
+  get scopeOptions(): AppSelectOption<string>[] {
+    return Object.values(ExpenseScope).map((value) => ({
+      value,
+      label: this.transloco.translate(`accounting.scope.${value}`),
+    }));
+  }
+
+  get scopeFilterOptions(): AppSelectOption<string>[] {
+    return [
+      { value: '', label: this.transloco.translate('accounting.allScopes') },
+      ...this.scopeOptions,
+    ];
+  }
+
+  get responsibilityOptions(): AppSelectOption<string>[] {
+    return Object.values(ExpenseResponsibility).map((value) => ({
+      value,
+      label: this.transloco.translate(`accounting.responsibility.${value}`),
+    }));
+  }
+
+  get responsibilityFilterOptions(): AppSelectOption<string>[] {
+    return [
+      { value: '', label: this.transloco.translate('accounting.allResponsibilities') },
+      ...this.responsibilityOptions,
+    ];
+  }
+
+  get paymentStatusOptions(): AppSelectOption<string>[] {
+    return Object.values(ExpensePaymentStatus).map((value) => ({
+      value,
+      label: this.transloco.translate(`accounting.paymentStatus.${value}`),
+    }));
+  }
+
+  get paymentStatusFilterOptions(): AppSelectOption<string>[] {
+    return [
+      { value: '', label: this.transloco.translate('accounting.allPaymentStatuses') },
+      ...this.paymentStatusOptions,
+    ];
+  }
+
+  get reimbursableFilterOptions(): AppSelectOption<string>[] {
+    return [
+      { value: '', label: this.transloco.translate('accounting.allReimbursable') },
+      { value: 'true', label: this.transloco.translate('accounting.reimbursableOnly') },
+      { value: 'false', label: this.transloco.translate('accounting.notReimbursableOnly') },
+    ];
+  }
 
   readonly filterForm = this.fb.group({
     property_id: [null as number | null],
     category: [''],
+    expense_scope: [''],
+    responsibility: [''],
+    payment_status: [''],
+    is_reimbursable: [''],
     from: [''],
     to: [''],
   });
@@ -68,11 +146,28 @@ export class ExpensesFacade {
   readonly form = this.fb.group({
     property_id: [null as number | null, Validators.required],
     category: [ExpenseCategory.MAINTENANCE as string, Validators.required],
+    expense_scope: [ExpenseScope.GENERAL as string, Validators.required],
+    responsibility: [ExpenseResponsibility.COMPANY as string, Validators.required],
+    payment_status: [ExpensePaymentStatus.PAID as string, Validators.required],
     amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
     date: ['', Validators.required],
+    due_date: [''],
+    paid_date: [''],
     vendor_id: [null as number | null],
+    invoice_number: [''],
     description: [''],
     receipt_url: [''],
+    affects_owner_statement: [true],
+    is_reimbursable: [false],
+    notes: [''],
+  });
+
+  readonly paymentForm = this.fb.group({
+    amount: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    payment_date: [toDateOnly(new Date()), Validators.required],
+    payment_method: [''],
+    reference_number: [''],
+    notes: [''],
   });
 
   readonly totalIncome = computed(() =>
@@ -82,6 +177,34 @@ export class ExpensesFacade {
     this.monthlyBalance().reduce((sum, month) => sum + month.expenses, 0),
   );
   readonly netResult = computed(() => this.totalIncome() - this.totalExpenses());
+  readonly listedExpenseTotal = computed(() => this.sumBy((expense) => expense.amount));
+  readonly ownerDeductionTotal = computed(() =>
+    this.sumBy((expense) => ((expense.affects_owner_statement ?? true) ? expense.amount : 0)),
+  );
+  readonly reimbursableTotal = computed(() =>
+    this.sumBy((expense) => (expense.is_reimbursable ? expense.amount : 0)),
+  );
+  readonly pendingTotal = computed(() =>
+    this.sumBy((expense) =>
+      expense.payment_status === ExpensePaymentStatus.PENDING ||
+      expense.payment_status === ExpensePaymentStatus.PARTIALLY_PAID
+        ? this.expenseBalance(expense)
+        : 0,
+    ),
+  );
+  readonly shortTermTotal = computed(() =>
+    this.sumBy((expense) =>
+      expense.expense_scope === ExpenseScope.SHORT_TERM ? expense.amount : 0,
+    ),
+  );
+  readonly longTermTotal = computed(() =>
+    this.sumBy((expense) =>
+      expense.expense_scope === ExpenseScope.LONG_TERM ? expense.amount : 0,
+    ),
+  );
+  readonly hasChartData = computed(() =>
+    this.monthlyBalance().some((month) => month.income > 0 || month.expenses > 0),
+  );
 
   readonly chartBars = computed<ChartBar[]>(() => {
     const data = this.monthlyBalance();
@@ -125,6 +248,10 @@ export class ExpensesFacade {
     const params: Record<string, string | number> = { limit: 200 };
     if (filters.property_id) params['property_id'] = filters.property_id;
     if (filters.category) params['category'] = filters.category;
+    if (filters.expense_scope) params['expense_scope'] = filters.expense_scope;
+    if (filters.responsibility) params['responsibility'] = filters.responsibility;
+    if (filters.payment_status) params['payment_status'] = filters.payment_status;
+    if (filters.is_reimbursable) params['is_reimbursable'] = filters.is_reimbursable;
     if (filters.from) params['from'] = filters.from;
     if (filters.to) params['to'] = filters.to;
 
@@ -150,35 +277,140 @@ export class ExpensesFacade {
   }
 
   clearFilters(): void {
-    this.filterForm.reset({ property_id: null, category: '', from: '', to: '' });
+    this.filterForm.reset({
+      property_id: null,
+      category: '',
+      expense_scope: '',
+      responsibility: '',
+      payment_status: '',
+      is_reimbursable: '',
+      from: '',
+      to: '',
+    });
     this.load();
   }
 
   openCreate(): void {
     this.editingId.set(null);
+    this.selectedReceipt.set(null);
+    this.receiptError.set(null);
     this.form.reset({
       category: ExpenseCategory.MAINTENANCE,
+      expense_scope: ExpenseScope.GENERAL,
+      responsibility: ExpenseResponsibility.COMPANY,
+      payment_status: ExpensePaymentStatus.PAID,
       date: toDateOnly(new Date()),
+      due_date: '',
+      paid_date: toDateOnly(new Date()),
+      affects_owner_statement: true,
+      is_reimbursable: false,
     });
     this.dialogOpen.set(true);
   }
 
   openEdit(expense: Expense): void {
     this.editingId.set(expense.id);
+    this.selectedReceipt.set(null);
+    this.receiptError.set(null);
     this.form.reset({
       property_id: expense.property_id,
       category: expense.category,
+      expense_scope: expense.expense_scope ?? ExpenseScope.GENERAL,
+      responsibility: expense.responsibility ?? ExpenseResponsibility.COMPANY,
+      payment_status: expense.payment_status ?? ExpensePaymentStatus.PAID,
       amount: expense.amount,
       date: expense.date?.slice(0, 10) ?? '',
+      due_date: expense.due_date?.slice(0, 10) ?? '',
+      paid_date: expense.paid_date?.slice(0, 10) ?? '',
       vendor_id: expense.vendor_id ?? null,
+      invoice_number: expense.invoice_number ?? '',
       description: expense.description ?? '',
       receipt_url: expense.receipt_url ?? '',
+      affects_owner_statement: expense.affects_owner_statement ?? true,
+      is_reimbursable: expense.is_reimbursable ?? false,
+      notes: expense.notes ?? '',
     });
     this.dialogOpen.set(true);
   }
 
   closeDialog(): void {
     this.dialogOpen.set(false);
+    this.selectedReceipt.set(null);
+    this.receiptError.set(null);
+  }
+
+  openPaymentDialog(expense: Expense): void {
+    this.paymentExpense.set(expense);
+    this.paymentForm.reset({
+      amount: this.expenseBalance(expense),
+      payment_date: toDateOnly(new Date()),
+      payment_method: '',
+      reference_number: '',
+      notes: '',
+    });
+    this.paymentDialogOpen.set(true);
+  }
+
+  closePaymentDialog(): void {
+    this.paymentDialogOpen.set(false);
+    this.paymentExpense.set(null);
+  }
+
+  registerPayment(): void {
+    const expense = this.paymentExpense();
+    if (!expense) return;
+    if (this.paymentForm.invalid) {
+      this.paymentForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.paymentForm.getRawValue();
+    this.registeringPayment.set(true);
+    this.expenseService
+      .registerPayment(expense.id, {
+        amount: Number(raw.amount),
+        currency: expense.currency,
+        payment_date: raw.payment_date!,
+        payment_method: raw.payment_method?.trim() || undefined,
+        reference_number: raw.reference_number?.trim() || undefined,
+        notes: raw.notes?.trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.registeringPayment.set(false);
+          this.closePaymentDialog();
+          this.toast.success(this.transloco.translate('accounting.paymentRegistered'));
+          this.load();
+        },
+        error: (err: unknown) => {
+          this.registeringPayment.set(false);
+          this.toast.error(
+            getApiErrorMessage(err, this.transloco.translate('accounting.paymentRegisterError')),
+          );
+        },
+      });
+  }
+
+  selectReceipt(file: File | null): void {
+    this.receiptError.set(null);
+    if (!file) {
+      this.selectedReceipt.set(null);
+      return;
+    }
+
+    if (!RECEIPT_ALLOWED_TYPES.has(file.type)) {
+      this.selectedReceipt.set(null);
+      this.receiptError.set(this.transloco.translate('accounting.receiptTypeError'));
+      return;
+    }
+
+    if (file.size > RECEIPT_MAX_BYTES) {
+      this.selectedReceipt.set(null);
+      this.receiptError.set(this.transloco.translate('accounting.receiptSizeError'));
+      return;
+    }
+
+    this.selectedReceipt.set(file);
   }
 
   save(): void {
@@ -191,21 +423,32 @@ export class ExpensesFacade {
     this.saving.set(true);
     const id = this.editingId();
     const request$ = id ? this.expenseService.update(id, dto) : this.expenseService.create(dto);
+    const receipt = this.selectedReceipt();
 
-    request$.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.dialogOpen.set(false);
-        this.toast.success(
-          this.transloco.translate(id ? 'accounting.updated' : 'accounting.created'),
-        );
-        this.load();
-      },
-      error: (err: unknown) => {
-        this.saving.set(false);
-        this.toast.error(getApiErrorMessage(err, this.transloco.translate('accounting.saveError')));
-      },
-    });
+    request$
+      .pipe(
+        switchMap((expense) =>
+          receipt ? this.expenseService.uploadReceipt(expense.id, receipt) : of(expense),
+        ),
+      )
+      .subscribe({
+        next: () => {
+          this.saving.set(false);
+          this.dialogOpen.set(false);
+          this.selectedReceipt.set(null);
+          this.receiptError.set(null);
+          this.toast.success(
+            this.transloco.translate(id ? 'accounting.updated' : 'accounting.created'),
+          );
+          this.load();
+        },
+        error: (err: unknown) => {
+          this.saving.set(false);
+          this.toast.error(
+            getApiErrorMessage(err, this.transloco.translate('accounting.saveError')),
+          );
+        },
+      });
   }
 
   async deleteExpense(expense: Expense): Promise<void> {
@@ -230,14 +473,39 @@ export class ExpensesFacade {
   exportCsv(): void {
     const rows = this.expenses();
     if (rows.length === 0) return;
-    const header = ['Fecha', 'Categoría', 'Monto', 'Moneda', 'Proveedor', 'Descripción'];
+    const header = [
+      'Fecha',
+      'Propiedad',
+      'Ámbito',
+      'Categoría',
+      'Responsable',
+      'Estado',
+      'Vence',
+      'Pagado el',
+      'Monto',
+      'Moneda',
+      'Proveedor',
+      'Deducible propietario',
+      'Reembolsable',
+      'Documento',
+      'Descripción',
+    ];
     const lines = rows.map((expense) =>
       [
         expense.date,
+        expense.property?.title ?? '',
+        this.scopeLabel(expense.expense_scope),
         this.transloco.translate(`accounting.category.${expense.category}`),
+        this.responsibilityLabel(expense.responsibility),
+        this.paymentStatusLabel(expense.payment_status),
+        expense.due_date ?? '',
+        expense.paid_date ?? '',
         expense.amount,
         expense.currency,
         expense.vendor_name ?? '',
+        (expense.affects_owner_statement ?? true) ? 'Si' : 'No',
+        expense.is_reimbursable ? 'Si' : 'No',
+        expense.invoice_number ?? '',
         (expense.description ?? '').replace(/"/g, '""'),
       ]
         .map((cell) => `"${cell}"`)
@@ -253,19 +521,52 @@ export class ExpensesFacade {
     return this.transloco.translate(`accounting.category.${category}`);
   }
 
+  scopeLabel(scope: string | null | undefined): string {
+    return this.transloco.translate(`accounting.scope.${scope ?? ExpenseScope.GENERAL}`);
+  }
+
+  responsibilityLabel(responsibility: string | null | undefined): string {
+    return this.transloco.translate(
+      `accounting.responsibility.${responsibility ?? ExpenseResponsibility.COMPANY}`,
+    );
+  }
+
+  paymentStatusLabel(status: string | null | undefined): string {
+    return this.transloco.translate(
+      `accounting.paymentStatus.${status ?? ExpensePaymentStatus.PAID}`,
+    );
+  }
+
   private buildDto(): CreateExpenseDto {
     const raw = this.form.getRawValue();
     const vendorName = this.vendorOptions().find((vendor) => vendor.value === raw.vendor_id)?.label;
     return {
       property_id: raw.property_id!,
       category: raw.category!,
-      amount: raw.amount!,
+      expense_scope: raw.expense_scope ?? ExpenseScope.GENERAL,
+      responsibility: raw.responsibility ?? ExpenseResponsibility.COMPANY,
+      payment_status: raw.payment_status ?? ExpensePaymentStatus.PAID,
+      amount: Number(raw.amount),
       date: raw.date!,
+      due_date: raw.due_date || undefined,
+      paid_date: raw.paid_date || undefined,
       vendor_id: raw.vendor_id ?? undefined,
       vendor_name: vendorName,
-      description: raw.description || undefined,
-      receipt_url: raw.receipt_url || undefined,
+      description: raw.description?.trim() || undefined,
+      receipt_url: raw.receipt_url?.trim() || undefined,
+      invoice_number: raw.invoice_number?.trim() || undefined,
+      affects_owner_statement: raw.affects_owner_statement ?? true,
+      is_reimbursable: raw.is_reimbursable ?? false,
+      notes: raw.notes?.trim() || undefined,
     };
+  }
+
+  private sumBy(selector: (expense: Expense) => number): number {
+    return this.expenses().reduce((sum, expense) => sum + selector(expense), 0);
+  }
+
+  expenseBalance(expense: Expense): number {
+    return Math.max(0, expense.amount - Number(expense.paid_amount ?? 0));
   }
 
   private monthLabel(month: string): string {

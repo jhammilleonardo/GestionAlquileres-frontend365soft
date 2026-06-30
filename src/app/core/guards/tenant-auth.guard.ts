@@ -1,12 +1,14 @@
 import { inject } from '@angular/core';
 import { Router, CanActivateFn, ActivatedRouteSnapshot } from '@angular/router';
-import { map, catchError, of } from 'rxjs';
+import { map, catchError, of, switchMap } from 'rxjs';
 import { TenantAuthService } from '../services/tenant/tenant-auth.service';
 import { SlugService } from '../services/slug.service';
 import { ContractService } from '../services/admin/contract.service';
+import { MyReservation, ReservationService } from '../services/reservation.service';
 
 const ACTIVE_TENANT_CONTRACT_STATUSES = new Set(['ACTIVO', 'FIRMADO', 'POR_VENCER']);
 const DRAFT_TENANT_CONTRACT_STATUSES = new Set(['BORRADOR', 'PENDIENTE']);
+const ACTIVE_STAY_RESERVATION_STATUSES = new Set(['confirmed', 'in_progress']);
 
 function getRouteSlug(route: ActivatedRouteSnapshot): string | null {
   for (const snapshot of route.pathFromRoot) {
@@ -14,6 +16,20 @@ function getRouteSlug(route: ActivatedRouteSnapshot): string | null {
     if (slug) return slug;
   }
   return null;
+}
+
+function hasActiveContract(contracts: Array<{ status: string }>): boolean {
+  return contracts.some((contract) => ACTIVE_TENANT_CONTRACT_STATUSES.has(String(contract.status)));
+}
+
+function hasDraftContract(contracts: Array<{ status: string }>): boolean {
+  return contracts.some((contract) => DRAFT_TENANT_CONTRACT_STATUSES.has(String(contract.status)));
+}
+
+function hasActiveStayReservation(reservations: MyReservation[]): boolean {
+  return reservations.some((reservation) =>
+    ACTIVE_STAY_RESERVATION_STATUSES.has(String(reservation.status)),
+  );
 }
 
 export const tenantAuthGuard: CanActivateFn = (route, state) => {
@@ -66,6 +82,8 @@ export const tenantLoginGuard: CanActivateFn = (route, _state) => {
   const authService = inject(TenantAuthService);
   const slugService = inject(SlugService);
   const router = inject(Router);
+  const contractService = inject(ContractService);
+  const reservationService = inject(ReservationService);
 
   // Get slug from URL
   const slug = getRouteSlug(route);
@@ -88,11 +106,38 @@ export const tenantLoginGuard: CanActivateFn = (route, _state) => {
         return false;
       }
 
-      // No contract in user object, default to home pre-contract
-      // The tenant-layout component will do a more thorough check via ContractService
-      // and redirect if contracts are found
-      void router.navigate(['/', slug, 'portal', 'home'], { replaceUrl: true });
-      return false;
+      return contractService.hasAnyContracts().pipe(
+        switchMap((contracts) => {
+          if (hasActiveContract(contracts)) {
+            void router.navigate(['/', slug, 'portal', 'dashboard'], { replaceUrl: true });
+            return of(false);
+          }
+          if (hasDraftContract(contracts)) {
+            void router.navigate(['/', slug, 'portal', 'documentos', 'contratos'], {
+              replaceUrl: true,
+            });
+            return of(false);
+          }
+
+          return reservationService.getMyReservations().pipe(
+            map((reservations) => {
+              void router.navigate(
+                ['/', slug, 'portal', hasActiveStayReservation(reservations) ? 'estadia' : 'home'],
+                { replaceUrl: true },
+              );
+              return false;
+            }),
+            catchError(() => {
+              void router.navigate(['/', slug, 'portal', 'home'], { replaceUrl: true });
+              return of(false);
+            }),
+          );
+        }),
+        catchError(() => {
+          void router.navigate(['/', slug, 'portal', 'home'], { replaceUrl: true });
+          return of(false);
+        }),
+      );
     } else if (!slug) {
       void router.navigate(['/portal/dashboard'], { replaceUrl: true });
       return false;
@@ -135,9 +180,7 @@ export const tenantPreContractGuard: CanActivateFn = (route, state) => {
   return contractService.hasAnyContracts().pipe(
     map((contracts) => {
       if (contracts && contracts.length > 0) {
-        const hasActive = contracts.some((c) =>
-          ACTIVE_TENANT_CONTRACT_STATUSES.has(String(c.status)),
-        );
+        const hasActive = hasActiveContract(contracts);
         if (hasActive) {
           slugService.navigateTo(['portal', 'dashboard']);
         } else {
@@ -179,15 +222,11 @@ export const tenantWithContractGuard: CanActivateFn = (route, state) => {
   if (!currentUser.contract) {
     return contractService.hasAnyContracts().pipe(
       map((contracts) => {
-        const hasActive = contracts.some((contract) =>
-          ACTIVE_TENANT_CONTRACT_STATUSES.has(String(contract.status)),
-        );
+        const hasActive = hasActiveContract(contracts);
 
         if (hasActive) return true;
 
-        const hasDraft = contracts.some((contract) =>
-          DRAFT_TENANT_CONTRACT_STATUSES.has(String(contract.status)),
-        );
+        const hasDraft = hasDraftContract(contracts);
         slugService.navigateTo(
           hasDraft ? ['portal', 'documentos', 'contratos'] : ['portal', 'home'],
         );
@@ -202,6 +241,66 @@ export const tenantWithContractGuard: CanActivateFn = (route, state) => {
 
   // Tiene contrato, permitir acceso
   return true;
+};
+
+/**
+ * Guard para rutas de portal que no dependen de contrato largo.
+ * Permite contrato activo o reserva temporal confirmada/en curso.
+ */
+export const tenantWithPortalAccessGuard: CanActivateFn = (route, state) => {
+  const authService = inject(TenantAuthService);
+  const contractService = inject(ContractService);
+  const reservationService = inject(ReservationService);
+  const router = inject(Router);
+  const slugService = inject(SlugService);
+
+  const currentUser = authService.currentUser();
+  const slug = getRouteSlug(route);
+
+  if (!currentUser) {
+    if (slug) {
+      void router.navigate(['/', slug, 'login'], {
+        queryParams: { returnUrl: state.url },
+      });
+    }
+    return false;
+  }
+
+  if (currentUser.contract) {
+    return true;
+  }
+
+  return contractService.hasAnyContracts().pipe(
+    switchMap((contracts) => {
+      if (hasActiveContract(contracts)) {
+        return of(true);
+      }
+
+      if (hasDraftContract(contracts)) {
+        slugService.navigateTo(['portal', 'documentos', 'contratos']);
+        return of(false);
+      }
+
+      return reservationService.getMyReservations().pipe(
+        map((reservations) => {
+          if (hasActiveStayReservation(reservations)) {
+            return true;
+          }
+
+          slugService.navigateTo(['portal', 'reservas']);
+          return false;
+        }),
+        catchError(() => {
+          slugService.navigateTo(['portal', 'home']);
+          return of(false);
+        }),
+      );
+    }),
+    catchError(() => {
+      slugService.navigateTo(['portal', 'home']);
+      return of(false);
+    }),
+  );
 };
 
 /**

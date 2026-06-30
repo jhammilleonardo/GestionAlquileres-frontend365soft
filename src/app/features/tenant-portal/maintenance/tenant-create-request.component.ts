@@ -1,4 +1,11 @@
-import { Component, inject, computed, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import {
+  Component,
+  inject,
+  computed,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -25,6 +32,7 @@ import {
 } from '../../../core/services/tenant/tenant-maintenance.service';
 import { TenantAuthService } from '../../../core/services/tenant/tenant-auth.service';
 import { SlugService } from '../../../core/services/slug.service';
+import { MyReservation, ReservationService } from '../../../core/services/reservation.service';
 import {
   MaintenanceCategory,
   MaintenanceRequestType,
@@ -536,6 +544,14 @@ export class TenantCreateRequestComponent {
   private fb = inject(FormBuilder);
   private slugService = inject(SlugService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly reservationService = inject(ReservationService);
+  private readonly reservations = signal<MyReservation[]>([]);
+  readonly activeStayReservation = computed<MyReservation | null>(
+    () =>
+      this.reservations().find(
+        (reservation) => reservation.status === 'confirmed' || reservation.status === 'in_progress',
+      ) ?? null,
+  );
 
   // URL para volver a la lista de mantenimiento
   mantenimientoUrl = computed(() => this.slugService.buildUrl('/portal/mantenimiento'));
@@ -595,6 +611,11 @@ export class TenantCreateRequestComponent {
   });
 
   constructor() {
+    this.reservationService.getMyReservations().subscribe({
+      next: (reservations) => this.reservations.set(reservations),
+      error: () => this.reservations.set([]),
+    });
+
     this.requestForm
       .get('request_type')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
@@ -641,6 +662,11 @@ export class TenantCreateRequestComponent {
       if (formValue.entry_notes) {
         dto.entry_notes = formValue.entry_notes;
       }
+    }
+
+    const activeReservation = this.activeStayReservation();
+    if (!this.authService.currentUser()?.contract && activeReservation) {
+      dto.reservation_id = activeReservation.id;
     }
 
     this.maintenanceService.createRequest(dto).subscribe({

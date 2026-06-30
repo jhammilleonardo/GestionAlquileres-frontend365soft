@@ -3,10 +3,18 @@
     <thead>
       <tr>
         <th>{{ 'accounting.date' | transloco }}</th>
+        <th>{{ 'accounting.dueDateShort' | transloco }}</th>
+        <th>{{ 'accounting.paidDateShort' | transloco }}</th>
+        <th>{{ 'accounting.property' | transloco }}</th>
+        <th>{{ 'accounting.scopeLabel' | transloco }}</th>
         <th>{{ 'accounting.categoryLabel' | transloco }}</th>
+        <th>{{ 'accounting.paymentStatusLabel' | transloco }}</th>
+        <th>{{ 'accounting.responsibilityLabel' | transloco }}</th>
         <th>{{ 'accounting.vendor' | transloco }}</th>
         <th>{{ 'accounting.description' | transloco }}</th>
         <th class="num">{{ 'accounting.amount' | transloco }}</th>
+        <th class="num">{{ 'accounting.paidAmount' | transloco }}</th>
+        <th class="num">{{ 'accounting.balanceAmount' | transloco }}</th>
         <th class="actions-col"></th>
       </tr>
     </thead>
@@ -15,13 +23,56 @@
         <tr>
           <td>{{ expense.date }}</td>
           <td>
+            @if (expense.payment_status === 'PENDING' && expense.due_date) {
+              <span class="date-chip due">{{ expense.due_date }}</span>
+            } @else {
+              <span class="muted-cell">-</span>
+            }
+          </td>
+          <td>
+            @if (expense.payment_status !== 'PENDING' && expense.paid_date) {
+              <span class="date-chip paid">{{ expense.paid_date }}</span>
+            } @else {
+              <span class="muted-cell">-</span>
+            }
+          </td>
+          <td>{{ expense.property?.title || '-' }}</td>
+          <td>
+            <span class="scope-chip">
+              {{ 'accounting.scope.' + (expense.expense_scope || 'GENERAL') | transloco }}
+            </span>
+          </td>
+          <td>
             <span class="cat-chip">
               {{ 'accounting.category.' + expense.category | transloco }}
             </span>
           </td>
+          <td>
+            <span
+              class="status-chip"
+              [class.pending]="expense.payment_status === 'PENDING'"
+              [class.reimbursed]="expense.payment_status === 'REIMBURSED'"
+            >
+              {{ 'accounting.paymentStatus.' + (expense.payment_status || 'PAID') | transloco }}
+            </span>
+          </td>
+          <td>
+            {{ 'accounting.responsibility.' + (expense.responsibility || 'COMPANY') | transloco }}
+          </td>
           <td>{{ expense.vendor_name || '-' }}</td>
-          <td class="desc-cell">{{ expense.description || '-' }}</td>
+          <td class="desc-cell">
+            {{ expense.description || expense.invoice_number || '-' }}
+            @if (expense.is_reimbursable) {
+              <span class="mini-flag">{{ 'accounting.reimbursableShort' | transloco }}</span>
+            }
+          </td>
           <td class="num">{{ expense.amount | number: '1.2-2' }} {{ expense.currency }}</td>
+          <td class="num">
+            {{ expense.paid_amount || 0 | number: '1.2-2' }} {{ expense.currency }}
+          </td>
+          <td class="num" [class.balance-due]="balance(expense) > 0">
+            {{ balance(expense) | number: '1.2-2' }} {{ expense.currency }}
+          </td>
           <td class="actions-col">
             @if (expense.receipt_url) {
               <a
@@ -33,6 +84,16 @@
               >
                 <lucide-icon [img]="Receipt" [size]="16" />
               </a>
+            }
+            @if (balance(expense) > 0) {
+              <button
+                type="button"
+                class="icon-btn"
+                [attr.aria-label]="'accounting.registerPayment' | transloco"
+                (click)="paymentRequested.emit(expense)"
+              >
+                <lucide-icon [img]="CreditCard" [size]="16" />
+              </button>
             }
             <button
               type="button"

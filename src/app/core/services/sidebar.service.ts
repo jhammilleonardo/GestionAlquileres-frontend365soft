@@ -61,14 +61,6 @@ const ALL_MENU_ITEMS: MenuOption[] = [
     group: 'sidebar.groups.operations',
   },
   {
-    label: 'sidebar.menu.housekeeping',
-    icon: 'Sparkles',
-    route: '/limpieza',
-    module: 'reservations',
-    mode: 'short_term',
-    group: 'sidebar.groups.operations',
-  },
-  {
     label: 'sidebar.menu.payments',
     icon: 'CreditCard',
     route: '/pagos',

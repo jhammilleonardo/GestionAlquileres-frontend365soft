@@ -9,6 +9,8 @@ import { SessionTokenService } from '../session-token.service';
 import { SlugService } from '../slug.service';
 import { SessionExpirationService } from '../session-expiration.service';
 
+const AUTH_CONTEXT_OPTIONS = { headers: { 'X-Auth-Context': 'owner' } };
+
 export interface OwnerUser {
   id: number;
   email: string;
@@ -41,7 +43,8 @@ export class OwnerAuthService {
   readonly error = this.errorSignal.asReadonly();
 
   constructor() {
-    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe(() => {
+    this.sessionExpiration.expired$.pipe(takeUntilDestroyed()).subscribe((event) => {
+      if (event.context && event.context !== 'owner') return;
       this.currentOwnerSignal.set(null);
     });
   }
@@ -76,7 +79,7 @@ export class OwnerAuthService {
 
   logout(slug = this.slugService.getSlug()): void {
     this.http
-      .post(`${environment.apiUrl}auth/logout`, {})
+      .post(`${environment.apiUrl}auth/logout`, {}, AUTH_CONTEXT_OPTIONS)
       .pipe(catchError(() => of(null)))
       .subscribe();
     this.sessionToken.clearToken('owner');

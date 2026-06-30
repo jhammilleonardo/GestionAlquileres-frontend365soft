@@ -1,0 +1,356 @@
+:host {
+  display: block;
+}
+
+.long-term-ledger {
+  margin-block: 24px;
+  border: 1px solid var(--app-color-border, #dbe3ef);
+  border-radius: 10px;
+  background: var(--app-color-surface, #fff);
+  padding: 20px;
+}
+
+.long-term-ledger__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 18px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--app-color-text-muted, #64748b);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h2 {
+  color: var(--app-color-text, #0f172a);
+  font-size: 1.18rem;
+}
+
+.long-term-ledger__header p:not(.eyebrow),
+.contract-ledger__header p,
+.contract-ledger__meta,
+.long-term-ledger__empty {
+  color: var(--app-color-text-muted, #64748b);
+}
+
+.long-term-ledger__summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(9.25rem, 1fr));
+  gap: 8px;
+
+  div {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    grid-template-areas:
+      'icon label'
+      'icon value';
+    align-items: center;
+    column-gap: 0.625rem;
+    min-width: 0;
+    min-height: 3.75rem;
+    border: 1px solid var(--app-color-border, #dbe3ef);
+    border-radius: 8px;
+    background: var(--app-color-surface-muted, #f8fafc);
+    padding: 0.625rem 0.75rem;
+  }
+
+  lucide-icon {
+    grid-area: icon;
+    display: inline-grid;
+    place-items: center;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: var(--app-color-primary, #2563eb);
+  }
+
+  lucide-icon :is(svg) {
+    inline-size: 1rem;
+    block-size: 1rem;
+    stroke-width: 2.25;
+  }
+
+  ::ng-deep lucide-icon svg {
+    inline-size: 1rem !important;
+    block-size: 1rem !important;
+  }
+
+  span {
+    grid-area: label;
+    color: var(--app-color-text-muted, #64748b);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
+  strong {
+    grid-area: value;
+    color: var(--app-color-text, #0f172a);
+    font-size: 0.95rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .is-alert {
+    border-color: #fed7aa;
+    background: #fff7ed;
+
+    lucide-icon {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    strong {
+      color: #c2410c;
+    }
+  }
+}
+
+.long-term-ledger__empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 10px;
+}
+
+.long-term-ledger__contracts {
+  display: grid;
+  gap: 16px;
+}
+
+.contract-ledger {
+  border: 1px solid var(--app-color-border, #dbe3ef);
+  border-radius: 10px;
+  background: #fff;
+  padding: 16px;
+
+  &.has-debt {
+    border-color: #fed7aa;
+  }
+}
+
+.contract-ledger__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 10px;
+
+  h3 {
+    color: var(--app-color-text, #0f172a);
+    font-size: 1rem;
+  }
+}
+
+.contract-ledger__progress,
+.month-card__status {
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.contract-ledger__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+}
+
+.contract-ledger__money {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+
+  div {
+    display: grid;
+    gap: 4px;
+    border-radius: 8px;
+    background: var(--app-color-surface-muted, #f8fafc);
+    padding: 10px;
+  }
+
+  span {
+    color: var(--app-color-text-muted, #64748b);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  strong {
+    color: var(--app-color-text, #0f172a);
+  }
+
+  .is-warning {
+    background: #fff7ed;
+
+    span,
+    strong {
+      color: #c2410c;
+    }
+  }
+}
+
+.contract-ledger__review {
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
+  gap: 10px;
+}
+
+.month-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--app-color-border, #dbe3ef);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+
+  &[data-status='paid'] {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+  }
+
+  &[data-status='overdue'],
+  &[data-status='partial'] {
+    border-color: #fed7aa;
+    background: #fff7ed;
+  }
+
+  &[data-status='review'] {
+    border-color: #c7d2fe;
+    background: #eef2ff;
+  }
+}
+
+.month-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: start;
+
+  strong {
+    color: var(--app-color-text, #0f172a);
+  }
+
+  span {
+    color: var(--app-color-text-muted, #64748b);
+    font-size: 0.72rem;
+    text-align: end;
+  }
+}
+
+.month-card__status {
+  width: max-content;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.month-card[data-status='paid'] .month-card__status {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.month-card[data-status='overdue'] .month-card__status,
+.month-card[data-status='partial'] .month-card__status {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.month-card[data-status='review'] .month-card__status {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+dl {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.78rem;
+
+  dt {
+    color: var(--app-color-text-muted, #64748b);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--app-color-text, #0f172a);
+    font-weight: 700;
+  }
+
+  &.is-due {
+    dt,
+    dd {
+      color: #c2410c;
+    }
+  }
+}
+
+.month-card__late {
+  border-top: 1px solid #fed7aa;
+  color: #c2410c;
+  padding-top: 6px;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .long-term-ledger__header {
+    grid-template-columns: 1fr;
+  }
+
+  .long-term-ledger__summary,
+  .contract-ledger__money {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .long-term-ledger {
+    padding: 14px;
+  }
+
+  .long-term-ledger__summary,
+  .contract-ledger__money,
+  .month-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contract-ledger__header {
+    display: grid;
+  }
+}

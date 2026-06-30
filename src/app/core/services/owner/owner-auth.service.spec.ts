@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionTokenService } from '../session-token.service';
 import { SlugService } from '../slug.service';
+import { SessionExpirationEvent, SessionExpirationService } from '../session-expiration.service';
 import { OwnerAuthService } from './owner-auth.service';
 
 describe('OwnerAuthService', () => {
@@ -14,6 +15,7 @@ describe('OwnerAuthService', () => {
     clearToken: ReturnType<typeof vi.fn>;
     getToken: ReturnType<typeof vi.fn>;
   };
+  let sessionExpired: Subject<SessionExpirationEvent>;
   let service: OwnerAuthService;
 
   beforeEach(() => {
@@ -25,6 +27,7 @@ describe('OwnerAuthService', () => {
       clearToken: vi.fn(),
       getToken: vi.fn(),
     };
+    sessionExpired = new Subject<SessionExpirationEvent>();
 
     TestBed.configureTestingModule({
       providers: [
@@ -32,6 +35,10 @@ describe('OwnerAuthService', () => {
         { provide: HttpClient, useValue: http },
         { provide: SessionTokenService, useValue: sessionToken },
         { provide: SlugService, useValue: { setSlug: vi.fn(), getSlug: () => 'demo' } },
+        {
+          provide: SessionExpirationService,
+          useValue: { expired$: sessionExpired.asObservable() },
+        },
       ],
     });
     service = TestBed.inject(OwnerAuthService);

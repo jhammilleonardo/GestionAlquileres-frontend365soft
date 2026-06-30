@@ -236,6 +236,13 @@ export class NewApplicationFacade {
   }
 
   applyLongTerm(property: Property): void {
+    if (!this.supportsLongTerm(property)) {
+      this.toast.error(
+        this.translocoService.translate('tenantApplications.marketplace.longTermUnavailable'),
+      );
+      return;
+    }
+
     this.slugService.navigateTo(['portal', 'application-wizard', property.id.toString()]);
   }
 
